@@ -7,6 +7,11 @@ using Microsoft.IdentityModel.Tokens;
 using NUH_PORTAL.Data;
 using NUH_PORTAL.Models;
 using NUH_PORTAL.Services;
+using NUH_PORTAL.Repositories;
+using NUH_PORTAL.Repositories.Interfaces;
+using NUH_PORTAL.Data.Interfaces;
+using NUH_PORTAL.Core.Middleware;
+using AutoMapper;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
@@ -173,6 +178,12 @@ builder.Services.AddScoped<SmsService>();
 builder.Services.AddScoped<WorkflowService>();
 builder.Services.AddScoped<RegistrationService>();
 
+// ✅ Layered architecture (Repository + UnitOfWork + AutoMapper) — نمط permits
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddAutoMapper(typeof(Program).Assembly);
+builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+builder.Services.AddScoped<IUnitOfWork, HttpUnitOfWork>();
+
 var svcAcct = builder.Configuration.GetSection("ADServiceAccount").Get<ADServiceAccountConfig>();
 if (svcAcct == null || string.IsNullOrEmpty(svcAcct.Username) || svcAcct.Username == "#{AD_SERVICE_USERNAME}#")
 {
@@ -190,6 +201,9 @@ var app = builder.Build();
 
 // ✅ Forwarded Headers — لازم يكون أول Middleware
 app.UseForwardedHeaders();
+
+// ✅ معالجة الأخطاء المركزية (UserFriendlyException → JSON نظيف، وأي خطأ تاني → 500 من غير تسريب تفاصيل)
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 // ملاحظة: مخطط قاعدة البيانات يُدار عبر EF Migrations (مجلد Migrations + سكربتات deployment/migrations).
 // التعديلات اللي كانت بتتنفّذ هنا وقت التشغيل (drop CHECK / add bulk_request_id / varchar→nvarchar)
