@@ -22,6 +22,7 @@ namespace NUH_PORTAL.Core.Middleware
             }
             catch (UserFriendlyException ex)
             {
+                if (context.Response.HasStarted) throw;
                 context.Response.StatusCode = ex.StatusCode;
                 context.Response.ContentType = "application/json; charset=utf-8";
                 await context.Response.WriteAsJsonAsync(new { message = ex.Message });
@@ -29,6 +30,7 @@ namespace NUH_PORTAL.Core.Middleware
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unhandled exception");
+                if (context.Response.HasStarted) throw;
                 context.Response.StatusCode = 500;
                 context.Response.ContentType = "application/json; charset=utf-8";
                 await context.Response.WriteAsJsonAsync(new { message = "حدث خطأ غير متوقع، برجاء المحاولة لاحقًا" });

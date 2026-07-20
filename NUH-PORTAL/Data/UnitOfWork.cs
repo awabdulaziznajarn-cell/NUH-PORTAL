@@ -6,10 +6,12 @@ namespace NUH_PORTAL.Data
     {
         protected readonly AppDbContext Context;
         protected int CurrentUserId;
+        protected string? CurrentUserRole;
 
         public UnitOfWork(AppDbContext context) => Context = context;
 
         public async Task<bool> SaveAsync() => await Context.SaveChangesAsync() > 0;
         public int GetCurrentUserId() => CurrentUserId;
+        public string? GetCurrentUserRole() => CurrentUserRole;
     }
 }

@@ -7,6 +7,7 @@ using Microsoft.IdentityModel.Tokens;
 using NUH_PORTAL.Data;
 using NUH_PORTAL.Models;
 using NUH_PORTAL.Services;
+using NUH_PORTAL.Services.Interfaces;
 using NUH_PORTAL.Repositories;
 using NUH_PORTAL.Repositories.Interfaces;
 using NUH_PORTAL.Data.Interfaces;
@@ -183,6 +184,8 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddAutoMapper(typeof(Program).Assembly);
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IUnitOfWork, HttpUnitOfWork>();
+builder.Services.AddScoped<IAuditService, AuditService>();
+builder.Services.AddScoped<IStudentService, StudentService>();
 
 var svcAcct = builder.Configuration.GetSection("ADServiceAccount").Get<ADServiceAccountConfig>();
 if (svcAcct == null || string.IsNullOrEmpty(svcAcct.Username) || svcAcct.Username == "#{AD_SERVICE_USERNAME}#")
