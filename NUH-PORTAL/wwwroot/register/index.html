@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>بوابة تسجيل السكن الجامعي | Najran University</title>
+<meta name="description" content="بوابة تسجيل طلبات خدمات السكن الجامعي للطلاب - جامعة نجران">
+<link rel="icon" href="../favicon.ico" type="image/x-icon">
+<script src="../i18n.js"></script>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  @font-face{font-family:'IBM Plex Sans Arabic';font-style:normal;font-weight:400;src:url('../fonts/IBMPlexSansArabic-Regular.woff2') format('woff2')}
+  @font-face{font-family:'IBM Plex Sans Arabic';font-style:normal;font-weight:600;src:url('../fonts/IBMPlexSansArabic-SemiBold.woff2') format('woff2')}
+  @font-face{font-family:'IBM Plex Sans Arabic';font-style:normal;font-weight:800;src:url('../fonts/IBMPlexSansArabic-SemiBold.woff2') format('woff2')}
+  :root{
+    --navy:#1B2A5E;--navy-dark:#111C42;--navy-light:#2B3E7E;
+    --gold:#C9A84C;--gold-light:#E8C96A;
+    --white:#FFFFFF;--gray-50:#F4F6FB;--gray-100:#EEF1F8;
+    --gray-200:#DDE3F0;--gray-300:#C8CFDF;--gray-500:#8891A8;--gray-700:#4A5270;
+    --green:#0F6E56;--green-light:#E1F5EE;
+    --red:#991B1B;--red-light:#FEF2F2;
+  }
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'IBM Plex Sans Arabic',sans-serif;
+    background:var(--gray-50);color:var(--navy-dark);
+    display:flex;flex-direction:column;min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{text-decoration:none;color:inherit}
+  img{max-width:100%;height:auto;display:block}
+
+  /* === HERO === */
+  .hero{
+    background:linear-gradient(135deg,var(--navy-dark) 0%,var(--navy) 50%,#1f3270 100%);
+    padding:48px 20px 40px;text-align:center;position:relative;overflow:hidden;
+  }
+  .hero::before{
+    content:'';position:absolute;inset:0;
+    background:radial-gradient(ellipse 80% 60% at 50% 100%,rgba(201,168,76,0.12) 0%,transparent 70%);
+    pointer-events:none;
+  }
+  .hero-accent{
+    width:80px;height:3px;background:linear-gradient(90deg,var(--gold),var(--gold-light));
+    margin:0 auto 24px;border-radius:2px;
+  }
+  .hero-logo{background:var(--white);border-radius:16px;padding:10px 24px;display:inline-flex;margin:0 auto 20px;box-shadow:0 4px 20px rgba(0,0,0,0.15);border:1px solid rgba(201,168,76,0.25)}
+  .hero-logo img{width:56px;height:56px;object-fit:contain}
+  .hero h1{font-size:26px;font-weight:800;color:var(--white);line-height:1.3;margin-bottom:8px}
+  .hero p{font-size:14px;color:rgba(255,255,255,0.7);font-weight:500}
+  .hero .hero-sub{font-size:13px;color:rgba(201,168,76,0.9);font-weight:600;margin-top:4px;line-height:1.5}
+  .hero-badge{
+    display:inline-flex;align-items:center;gap:6px;
+    background:rgba(201,168,76,0.15);color:var(--gold-light);
+    border:1px solid rgba(201,168,76,0.2);border-radius:20px;
+    padding:6px 16px;font-size:11px;font-weight:600;margin-top:16px;
+  }
+
+  /* === CONTAINER === */
+  .container{width:100%;max-width:960px;margin:0 auto;padding:0 16px}
+
+  /* === ACTIONS === */
+  .actions{padding:32px 0 24px}
+  .actions h2{font-size:15px;font-weight:700;color:var(--gray-500);text-align:center;margin-bottom:16px;letter-spacing:0.5px}
+  .action-grid{display:flex;flex-direction:column;gap:12px}
+  .action-card{
+    display:flex;align-items:center;gap:14px;
+    background:var(--white);border-radius:14px;padding:18px 20px;
+    border:1.5px solid var(--gray-100);
+    box-shadow:0 2px 8px rgba(27,42,94,0.05);
+    transition:all 0.2s;cursor:pointer;
+    text-decoration:none;color:var(--navy-dark);
+  }
+  .action-card:hover{border-color:var(--navy);box-shadow:0 4px 20px rgba(27,42,94,0.1);transform:translateY(-2px)}
+  .action-icon{
+    width:48px;height:48px;border-radius:12px;
+    display:flex;align-items:center;justify-content:center;
+    flex-shrink:0;font-size:22px;font-weight:700;
+  }
+  .action-icon.blue{background:#E8F0FE;color:var(--navy)}
+  .action-icon.gold{background:#FEF7E6;color:#B8860B}
+  .action-icon.green{background:var(--green-light);color:var(--green)}
+  .action-text{flex:1}
+  .action-text strong{display:block;font-size:15px;font-weight:700;margin-bottom:2px}
+  .action-text span{font-size:12px;color:var(--gray-500)}
+  .action-arrow{font-size:18px;color:var(--gray-300);transition:color 0.2s}
+  .action-card:hover .action-arrow{color:var(--navy)}
+
+  /* === PROCESS === */
+  .process{background:var(--white);padding:36px 0;border-top:1px solid var(--gray-100)}
+  .process h2{text-align:center;font-size:18px;font-weight:800;color:var(--navy-dark);margin-bottom:28px}
+  .process-grid{display:grid;grid-template-columns:1fr;gap:0;max-width:600px;margin:0 auto}
+  .process-item{
+    display:flex;align-items:flex-start;gap:16px;
+    padding:14px 0;position:relative;
+  }
+  .process-item:not(:last-child)::after{
+    content:'';position:absolute;top:44px;right:17px;
+    width:2px;height:calc(100% - 20px);
+    background:var(--gray-200);
+  }
+  .process-item.completed .step-dot{background:var(--green);color:var(--white)}
+  .process-item.active .step-dot{background:var(--navy);color:var(--white);box-shadow:0 0 0 4px rgba(27,42,94,0.12)}
+  .step-dot{
+    width:36px;height:36px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:14px;font-weight:700;
+    background:var(--gray-100);color:var(--gray-500);
+    flex-shrink:0;position:relative;z-index:1;
+    transition:all 0.2s;
+  }
+  .step-info{padding-top:5px}
+  .step-info strong{display:block;font-size:14px;font-weight:700;color:var(--navy-dark);margin-bottom:2px}
+  .step-info span{font-size:12px;color:var(--gray-500);line-height:1.4}
+
+  /* === SUPPORT === */
+  .support{padding:36px 0 32px}
+  .support-card{
+    background:var(--white);border-radius:16px;padding:28px 24px;
+    border:1px solid var(--gray-100);
+    box-shadow:0 2px 8px rgba(27,42,94,0.05);text-align:center;
+  }
+  .support-card h2{font-size:18px;font-weight:800;color:var(--navy-dark);margin-bottom:6px}
+  .support-card .sub{font-size:13px;color:var(--gray-500);margin-bottom:20px}
+  .support-items{display:flex;flex-direction:column;gap:12px}
+  .support-item{
+    display:flex;align-items:center;gap:12px;
+    padding:14px 16px;background:var(--gray-50);
+    border-radius:12px;font-size:14px;
+  }
+  .support-item .s-icon{font-size:18px;width:24px;text-align:center}
+  .support-item .s-label{font-size:12px;color:var(--gray-500);min-width:100px}
+  .support-item .s-value{font-weight:600;color:var(--navy-dark)}
+
+  /* === FOOTER === */
+  .footer{
+    background:var(--navy-dark);color:rgba(255,255,255,0.6);
+    padding:32px 16px 24px;margin-top:auto;text-align:center;
+  }
+  .footer-logo{margin-bottom:16px}
+  .footer-logo img{width:36px;height:36px;margin:0 auto;opacity:0.7}
+  .footer-links{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 20px;margin-bottom:16px;font-size:12px}
+  .footer-links a{color:rgba(255,255,255,0.5);transition:color 0.2s}
+  .footer-links a:hover{color:var(--gold-light)}
+  .footer-divider{width:40px;height:1px;background:rgba(255,255,255,0.1);margin:0 auto 16px}
+  .footer-copy{font-size:11px;color:rgba(255,255,255,0.35);line-height:1.6}
+
+  /* === RESPONSIVE === */
+  .lang-btn{position:absolute;top:12px;background:rgba(255,255,255,0.1);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:6px 14px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;z-index:10;color:#fff}
+  [dir="rtl"] .lang-btn{left:12px}
+  [dir="ltr"] .lang-btn{right:12px}
+  .lang-btn:hover{background:rgba(255,255,255,0.2)}
+  @media(min-width:375px){
+    .hero h1{font-size:28px}
+  }
+  @media(min-width:414px){
+    .hero{padding:52px 24px 44px}
+    .hero h1{font-size:30px}
+  }
+  @media(min-width:768px){
+    .hero{padding:64px 32px 56px}
+    .hero h1{font-size:34px}
+    .hero p{font-size:15px}
+    .hero .hero-sub{font-size:14px}
+    .action-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+    .action-card{flex-direction:column;text-align:center;padding:32px 20px 24px}
+    .action-icon{width:56px;height:56px;font-size:26px}
+    .action-text strong{font-size:16px;margin-bottom:4px}
+    .action-arrow{display:none}
+    .process-grid{grid-template-columns:repeat(4,1fr);max-width:none;gap:0}
+    .process-item{flex-direction:column;align-items:center;text-align:center;padding:20px 12px}
+    .process-item:not(:last-child)::after{top:48px;right:auto;left:50%;width:calc(100% - 0px);height:2px}
+    .step-info{padding-top:10px}
+    .step-info strong{font-size:13px}
+    .step-info span{font-size:11px}
+    .support-items{flex-direction:row;flex-wrap:wrap;justify-content:center}
+    .support-item{flex:1;min-width:200px;max-width:300px}
+  }
+  @media(min-width:1024px){
+    .container{padding:0 32px}
+    .process-grid{grid-template-columns:repeat(7,1fr)}
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<header class="hero" style="position:relative">
+  <button class="lang-btn" id="langBtn" onclick="toggleLang()">English</button>
+  <div class="hero-accent"></div>
+  <div class="hero-logo"><img src="../nu-logo.png" alt="جامعة نجران"></div>
+  <h1>بوابة تسجيل السكن الجامعي</h1>
+  <p>Najran University Housing &mdash; Student Portal</p>
+  <p class="hero-sub">منصة إدارة طلبات وإجراءات السكن الجامعي بجامعة نجران</p>
+  <span class="hero-badge">تسجيل طلبات خدمات السكن الجامعي للطلاب</span>
+</header>
+
+<!-- ACTIONS -->
+<section class="actions">
+  <div class="container">
+    <h2>الخدمات الإلكترونية</h2>
+    <div class="action-grid">
+      <a href="register-phone.html" class="action-card">
+        <div class="action-icon blue">+</div>
+        <div class="action-text">
+          <strong>تقديم طلب جديد</strong>
+          <span>بدء طلب تسجيل سكن جامعي</span>
+        </div>
+        <span class="action-arrow">←</span>
+      </a>
+      <a href="track-request.html" class="action-card">
+        <div class="action-icon gold">🔍</div>
+        <div class="action-text">
+          <strong>متابعة طلب قائم</strong>
+          <span>استعلام عن طلب سابق باستخدام رقم الطلب</span>
+        </div>
+        <span class="action-arrow">←</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- PROCESS -->
+<section class="process">
+  <div class="container">
+    <h2>خطوات التسجيل</h2>
+    <div class="process-grid">
+      <div class="process-item">
+        <div class="step-dot">1</div>
+        <div class="step-info">
+          <strong>التحقق من رقم الجوال</strong>
+          <span>إدخال رقم الجوال واستلام رمز التحقق</span>
+        </div>
+      </div>
+      <div class="process-item">
+        <div class="step-dot">2</div>
+        <div class="step-info">
+          <strong>الموافقة على الإقرارات</strong>
+          <span>الاطلاع على التعهدات والموافقة عليها</span>
+        </div>
+      </div>
+      <div class="process-item">
+        <div class="step-dot">3</div>
+        <div class="step-info">
+          <strong>إدخال بيانات الطالب</strong>
+          <span>تعبئة معلومات الطالب الشخصية والأكاديمية</span>
+        </div>
+      </div>
+      <div class="process-item">
+        <div class="step-dot">4</div>
+        <div class="step-info">
+          <strong>مراجعة المشرف</strong>
+          <span>مراجعة الطلب من قبل مشرف السكن الجامعي</span>
+        </div>
+      </div>
+      <div class="process-item">
+        <div class="step-dot">5</div>
+        <div class="step-info">
+          <strong>مراجعة الأمن السيبراني</strong>
+          <span>التحقق الأمني من البيانات والمعلومات</span>
+        </div>
+      </div>
+      <div class="process-item">
+        <div class="step-dot">6</div>
+        <div class="step-info">
+          <strong>اعتماد الطلب</strong>
+          <span>الموافقة النهائية على طلب التسجيل</span>
+        </div>
+      </div>
+      <div class="process-item">
+        <div class="step-dot">7</div>
+        <div class="step-info">
+          <strong>استلام الخدمة</strong>
+          <span>تأكيد استلام الخدمة السكنية</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SUPPORT -->
+<section class="support">
+  <div class="container">
+    <div class="support-card">
+      <h2>تواصل معنا</h2>
+      <p class="sub">إدارة السكن الجامعي &mdash; جامعة نجران</p>
+      <div class="support-items">
+        <div class="support-item">
+          <span class="s-icon">✉</span>
+          <span class="s-label">البريد الإلكتروني</span>
+          <span class="s-value">housing@nu.edu.sa</span>
+        </div>
+        <div class="support-item">
+          <span class="s-icon">📞</span>
+          <span class="s-label">رقم الدعم</span>
+          <span class="s-value">800 XXX XXXX</span>
+        </div>
+        <div class="support-item">
+          <span class="s-icon">📍</span>
+          <span class="s-label">المقر</span>
+          <span class="s-value">جامعة نجران</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-logo"><img src="../nu-logo.png" alt="جامعة نجران"></div>
+  <div class="footer-links">
+    <a href="https://www.nu.edu.sa" target="_blank" rel="noopener">جامعة نجران</a>
+    <span>•</span>
+    <a href="#">السكن الجامعي</a>
+    <span>•</span>
+    <a href="#">إدارة الأمن السيبراني</a>
+    <span>•</span>
+    <a href="#">عمادة تقنية المعلومات</a>
+  </div>
+  <div class="footer-divider"></div>
+  <div class="footer-copy">
+    جميع الحقوق محفوظة &copy; 2026 جامعة نجران &mdash; عمادة التحول الرقمي ومصادر المعرفة &mdash; تقنية المعلومات
+  </div>
+</footer>
+
+<script>
+setLang(localStorage.getItem('uiLanguage') || 'ar');
+function toggleLang() { applyLang(window.currentLang === 'ar' ? 'en' : 'ar'); }
+</script>
+</body>
+</html>

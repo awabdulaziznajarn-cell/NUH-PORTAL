@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" id="html-root">
+<head>
+<link rel="icon" href="../favicon.ico">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>طلباتي</title>
+<script src="../i18n.js"></script>
+<style>
+@font-face { font-family:'IBM Plex Sans Arabic'; font-style:normal; font-weight:400; src:url('../fonts/IBMPlexSansArabic-Regular.woff2') format('woff2'); }
+@font-face { font-family:'IBM Plex Sans Arabic'; font-style:normal; font-weight:600; src:url('../fonts/IBMPlexSansArabic-SemiBold.woff2') format('woff2'); }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+input,select,textarea{font-size:16px;-webkit-appearance:none;appearance:none;border-radius:0}
+button{touch-action:manipulation}
+:root{--navy:#1B2A5E;--navy-dark:#111C42;--navy-light:#2B3E7E;--gold:#C9A84C;--gold-light:#E8C96A;--white:#FFFFFF;--gray-50:#F4F6FB;--gray-100:#EEF1F8;--gray-200:#DDE3F0;--gray-300:#C8CFDF;--gray-500:#8891A8;--gray-700:#4A5270;--green:#0F6E56;--green-light:#E1F5EE;--red:#991B1B;--red-light:#FEF2F2}
+body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);color:var(--navy-dark);min-height:100vh;display:flex;flex-direction:column;align-items:center}
+.portal-header{text-align:center;padding:28px 16px 0;width:100%;position:relative}
+.portal-header img{width:80px;height:auto;margin-bottom:10px}
+.portal-header h1{font-size:17px;font-weight:800;color:var(--navy-dark)}
+.lang-btn{position:absolute;top:12px;background:#fff;border:1px solid #e2e6ef;border-radius:6px;padding:6px 14px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;z-index:10}
+[dir="rtl"] .lang-btn{left:12px}
+[dir="ltr"] .lang-btn{right:12px}
+.lang-btn:hover{background:#f4f6fb}
+.content{padding:20px 16px;flex:1;width:100%;max-width:860px}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.page-header h2{font-size:20px;font-weight:800;color:var(--navy-dark)}
+.page-header p{font-size:13px;color:var(--gray-500)}
+.card{background:var(--white);border-radius:16px;border:1px solid var(--gray-100);box-shadow:0 2px 8px rgba(27,42,94,0.05);overflow:hidden;transition:box-shadow 0.2s}
+.card:hover{box-shadow:0 4px 20px rgba(27,42,94,0.09)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:var(--gray-50);padding:11px 16px;text-align:right;font-size:11px;font-weight:600;color:var(--gray-500);border-bottom:1px solid var(--gray-100);text-transform:uppercase;letter-spacing:0.5px}
+tbody td{padding:13px 16px;border-bottom:1px solid var(--gray-100);color:var(--navy-dark);font-weight:500;vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--gray-50)}
+.status-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.status-pending_supervisor{background:#FFF8E1;color:#B8860B}
+.status-pending_cyber{background:#E3F2FD;color:#1565C0}
+.status-pending_admin{background:#F3E5F5;color:#7B1FA2}
+.status-approved{background:var(--green-light);color:var(--green)}
+.status-rejected{background:var(--red-light);color:var(--red)}
+.status-need_more_info{background:#FFF3E0;color:#E65100}
+.tl{display:inline-flex;align-items:center;gap:0;direction:ltr;margin-top:4px}
+.tl-dot{width:10px;height:10px;border-radius:50%;border:2px solid var(--gray-300);background:var(--white);flex-shrink:0;transition:all 0.2s}
+.tl-dot.done{background:var(--green);border-color:var(--green)}
+.tl-dot.active{background:var(--navy);border-color:var(--navy);box-shadow:0 0 0 3px rgba(27,42,94,0.13)}
+.tl-bar{width:14px;height:2px;background:var(--gray-200);flex-shrink:0}
+.tl-bar.done{background:var(--green)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 16px;border-radius:8px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;border:none;text-decoration:none}
+.btn-sm{background:var(--gray-100);color:var(--navy)}
+.btn-sm:hover{background:var(--navy);color:var(--white)}
+.btn-primary{background:var(--navy);color:var(--white)}
+.btn-primary:hover{background:var(--navy-light);transform:translateY(-1px)}
+.btn-outline{background:transparent;border:1.5px solid var(--gray-200);color:var(--gray-700)}
+.btn-outline:hover{border-color:var(--navy);color:var(--navy)}
+.btn-gold{background:var(--gold);color:var(--navy-dark)}
+.btn-gold:hover{background:var(--gold-light)}
+.empty-state{padding:48px;text-align:center;color:var(--gray-500);font-size:14px}
+@media(max-width:768px){.portal-header{padding:20px 16px 0}.portal-header img{width:64px}.portal-header h1{font-size:16px}.content{padding:16px}.card{overflow-x:auto}.page-header h2{font-size:18px}table{min-width:500px}}
+@media(max-width:414px){.page-header h2{font-size:18px}thead th{padding:8px 10px;font-size:10px}tbody td{padding:10px;font-size:12px}.status-badge{font-size:10px;padding:2px 8px}.tl-bar{width:10px}}
+@media(max-width:375px){.content{padding:12px}.btn{padding:6px 10px;font-size:12px}.card{border-radius:12px}.empty-state{padding:32px 16px}.portal-header{padding:16px 12px 0}.portal-header img{width:56px}.portal-header h1{font-size:15px}}
+@media(max-width:320px){thead th{padding:6px 8px;font-size:9px}tbody td{padding:8px;font-size:11px}}
+</style>
+</head>
+<body>
+<div class="portal-header">
+<img src="../nu-logo.png" alt="جامعة نجران">
+<h1>بوابة الطلاب</h1>
+<button class="lang-btn" id="langBtn" onclick="toggleLang()">English</button>
+</div>
+<div class="content">
+<div class="page-header">
+<div>
+<h2>طلبات التسجيل في الإسكان</h2>
+<p>جميع طلبات التسجيل المقدمة منك</p>
+</div>
+<div style="display:flex;gap:8px">
+<a href="register-phone.html" class="btn btn-primary">تسجيل جديد</a>
+<a href="index.html" class="btn btn-outline">العودة</a>
+</div>
+</div>
+<div class="card">
+<table>
+<thead><tr><th>رقم الطلب</th><th>الحالة</th><th>تاريخ التقديم</th><th></th><th></th></tr></thead>
+<tbody id="requestsBody">
+<tr><td colspan="5" class="empty-state">جاري التحميل...</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<script>
+setLang(localStorage.getItem('uiLanguage') || 'ar');
+function toggleLang() { applyLang(window.currentLang === 'ar' ? 'en' : 'ar'); }
+var token = localStorage.getItem('studentToken');
+
+var STAGES = [
+  { label: 'تم تقديم الطلب' },
+  { label: 'تمت موافقة إدارة الإسكان' },
+  { label: 'تمت مراجعة إدارة الأمن السيبراني' },
+  { label: 'جاري إنشاء حساب شبكة السكن' },
+  { label: 'مكتمل' }
+];
+
+var PROGRESS_MAP = {
+  pending_supervisor: { progress: 0, label: 'بانتظار موافقة إدارة الإسكان', icon: '⏳' },
+  pending_cyber: { progress: 1, label: 'بانتظار مراجعة إدارة الأمن السيبراني', icon: '⏳' },
+  ready_for_provisioning: { progress: 2, label: 'جاري إنشاء حساب شبكة السكن', icon: '⏳' },
+  completed: { progress: 4, label: 'مكتمل', icon: '✅' },
+  approved: { progress: 4, label: 'مكتمل', icon: '✅' },
+  rejected: { progress: -1, label: 'مرفوض', icon: '❌' },
+  need_more_info: { progress: 0, label: 'بانتظار موافقة إدارة الإسكان', icon: '⏳' }
+};
+
+function renderTimeline(status) {
+  var info = PROGRESS_MAP[status];
+  if (!info) return '<span class="status-badge">' + status + '</span>';
+  if (info.progress === -1) return '<span class="status-badge status-' + status + '">' + info.icon + ' ' + info.label + '</span>';
+  var html = '<div class="tl">';
+  for (var i = 0; i < STAGES.length; i++) {
+    if (i > 0) {
+      var barCls = i <= info.progress ? ' done' : '';
+      html += '<div class="tl-bar' + barCls + '"></div>';
+    }
+    var isDone = i < info.progress;
+    var isActive = i === info.progress;
+    var dotCls = isDone ? 'done' : (isActive ? 'active' : '');
+    html += '<div class="tl-dot ' + dotCls + '"></div>';
+  }
+  html += '</div>';
+  html += '<div style="margin-top:4px"><span class="status-badge status-' + status + '">' + info.icon + ' ' + info.label + '</span></div>';
+  return html;
+}
+
+async function loadRequests() {
+  try {
+    var mobile = localStorage.getItem('regMobile') || '';
+    var url = '/api/Registration/my-requests' + (mobile ? '?mobile=' + encodeURIComponent(mobile) : '');
+    var r = await fetch(url, { headers: {'Authorization':'Bearer '+token} });
+    if (r.status === 401) { window.location.href = '../login.html'; return; }
+    var data = await r.json();
+    var tbody = document.getElementById('requestsBody');
+    if (!data || data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty-state">لا توجد طلبات</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(function(req) {
+      var date = new Date(req.submittedAt).toLocaleDateString('ar-SA');
+      var editBtn = req.status === 'need_more_info'
+        ? '<a href="register-form.html?edit=' + req.id + '" class="btn btn-sm" style="background:var(--gold);color:var(--navy-dark)">تعديل وإعادة تقديم</a>'
+        : '';
+      return '<tr><td><strong>' + req.requestNumber + '</strong></td>' +
+        '<td>' + renderTimeline(req.status) + '</td>' +
+        '<td>' + date + '</td>' +
+        '<td>' + editBtn + '</td>' +
+        '<td><a href="my-requests.html?view=' + req.id + '" class="btn btn-sm" onclick="showDetail(' + req.id + ');return false">عرض</a></td></tr>';
+    }).join('');
+  } catch(e) { document.getElementById('requestsBody').innerHTML = '<tr><td colspan="5" class="empty-state">تعذر التحميل</td></tr>'; }
+}
+
+function showDetail(id) {
+  localStorage.setItem('viewRequestId', id);
+  window.location.href = 'request-review.html';
+}
+loadRequests();
+</script>
+</body>
+</html>

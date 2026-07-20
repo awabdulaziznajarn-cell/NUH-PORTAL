@@ -1,0 +1,1343 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl" id="html-root">
+<head>
+<link rel="icon" href="favicon.ico">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard - نظام إسكان الطلاب والطالبات</title>
+<script src="i18n.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  @font-face {
+    font-family: 'IBM Plex Sans Arabic';
+    font-style: normal;
+    font-weight: 400;
+    src: url('fonts/IBMPlexSansArabic-Regular.woff2') format('woff2');
+  }
+  @font-face {
+    font-family: 'IBM Plex Sans Arabic';
+    font-style: normal;
+    font-weight: 600;
+    src: url('fonts/IBMPlexSansArabic-SemiBold.woff2') format('woff2');
+  }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --navy: #1B2A5E;
+  --navy-dark: #111C42;
+  --navy-light: #2B3E7E;
+  --gold: #C9A84C;
+  --gold-light: #E8C96A;
+  --white: #FFFFFF;
+  --gray-50: #F4F6FB;
+  --gray-100: #EEF1F8;
+  --gray-200: #DDE3F0;
+  --gray-300: #C8CFDF;
+  --gray-500: #8891A8;
+  --gray-700: #4A5270;
+  --green: #0F6E56;
+  --green-light: #E1F5EE;
+  --red: #991B1B;
+  --red-light: #FEF2F2;
+  --sidebar-w: 240px;
+}
+body {
+  font-family: 'IBM Plex Sans Arabic', sans-serif;
+  background: var(--gray-50);
+  color: var(--navy-dark);
+  min-height: 100vh;
+  display: flex;
+}
+
+/* Sidebar */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--navy-dark);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  right: 0; top: 0;
+  z-index: 100;
+  box-shadow: -4px 0 24px rgba(0,0,0,0.18);
+}
+[dir="ltr"] .sidebar { right: auto; left: 0; box-shadow: 4px 0 24px rgba(0,0,0,0.18); }
+
+.sidebar-logo {
+  padding: 24px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.sidebar-logo-image-container {
+  background: #fff;
+  border-radius: 16px;
+  padding: 12px 24px;
+  border: 1px solid rgba(201,168,76,0.2);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08), 0 0 0 1px rgba(201,168,76,0.06);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+  margin-bottom: 24px;
+}
+.sidebar-logo-image-container:hover {
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12), 0 0 0 1px rgba(201,168,76,0.15);
+  transform: translateY(-2px);
+}
+.sidebar-logo-image-container img {
+  display: block;
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+}
+.sidebar-logo-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--white);
+  text-align: center;
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+.sidebar-logo-sub {
+  font-size: 10px;
+  color: var(--gold-light);
+  text-align: center;
+  position: relative;
+  padding-bottom: 12px;
+}
+.sidebar-logo-sub::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-light));
+  border-radius: 1px;
+}
+.sidebar-nav {
+  flex: 1;
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.nav-section {
+  font-size: 10px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.3);
+  padding: 12px 8px 6px;
+  letter-spacing: 1px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: rgba(255,255,255,0.65);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+.nav-item:hover { background: rgba(255,255,255,0.07); color: var(--white); }
+.nav-item.active { background: var(--gold); color: var(--navy-dark); font-weight: 700; }
+.nav-item svg { flex-shrink: 0; }
+
+.sidebar-footer {
+  padding: 16px 12px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.06);
+  margin-bottom: 8px;
+}
+.user-avatar {
+  width: 36px; height: 36px;
+  background: var(--gold);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 14px;
+  color: var(--navy-dark);
+  flex-shrink: 0;
+}
+.user-name { font-size: 12px; font-weight: 600; color: var(--white); }
+.user-role { font-size: 10px; color: rgba(255,255,255,0.4); }
+.logout-btn {
+  width: 100%;
+  padding: 8px;
+  background: rgba(255,255,255,0.06);
+  border: none;
+  border-radius: 8px;
+  color: rgba(255,255,255,0.5);
+  font-family: 'IBM Plex Sans Arabic', sans-serif;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.logout-btn:hover { background: rgba(255,255,255,0.12); color: var(--white); }
+
+/* Main */
+.main {
+  margin-right: var(--sidebar-w);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+[dir="ltr"] .main { margin-right: 0; margin-left: var(--sidebar-w); }
+
+/* Topbar */
+.topbar {
+  background: var(--white);
+  border-bottom: 1px solid var(--gray-200);
+  padding: 0 28px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky; top: 0; z-index: 50;
+  box-shadow: 0 1px 8px rgba(27,42,94,0.06);
+}
+.topbar-title { font-size: 18px; font-weight: 800; color: var(--navy-dark); }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.topbar-date { font-size: 12px; color: var(--gray-500); }
+
+/* Language toggle */
+.lang-toggle {
+  display: flex;
+  align-items: center;
+  background: var(--gray-100);
+  border-radius: 20px;
+  padding: 3px;
+  gap: 2px;
+}
+.lang-btn {
+  padding: 4px 12px;
+  border-radius: 16px;
+  border: none;
+  font-family: 'IBM Plex Sans Arabic', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: transparent;
+  color: var(--gray-500);
+}
+.lang-btn.active {
+  background: var(--navy);
+  color: var(--white);
+  box-shadow: 0 2px 8px rgba(27,42,94,0.2);
+}
+
+.notif-btn {
+  width: 36px; height: 36px;
+  background: var(--gray-100);
+  border: none; border-radius: 10px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--gray-700); position: relative; transition: background 0.2s;
+}
+.notif-btn:hover { background: var(--gray-200); }
+.notif-dot {
+  position: absolute; top: 6px; left: 6px;
+  width: 8px; height: 8px;
+  background: #EF4444; border-radius: 50%;
+  border: 2px solid var(--white);
+}
+.notif-dot.hidden { display: none; }
+.notif-wrapper { position: relative; }
+.notif-dropdown{position:fixed;top:72px;inset-inline-end:28px;width:400px;max-height:480px;overflow-y:auto;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.12);z-index:1000;display:none;border:1px solid var(--gray-100)}
+[dir="rtl"] .notif-dropdown { right:28px; left:auto; }
+[dir="ltr"] .notif-dropdown { left:28px; right:auto; }
+.notif-dropdown.open { display: block; }
+.notif-badge {
+  position: absolute; top: 2px; right: 2px;
+  background: #EF4444; color: #fff; font-size: 10px; font-weight: 700;
+  min-width: 16px; height: 16px; border-radius: 8px;
+  display: none; align-items: center; justify-content: center;
+  padding: 0 4px;
+}
+.notif-badge.show { display: flex; }
+.notif-header {
+  padding: 14px 16px; border-bottom: 1px solid var(--gray-100);
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 14px; font-weight: 700; color: var(--navy-dark);
+}
+.notif-header button {
+  background: none; border: none; font-size: 12px; color: var(--navy);
+  cursor: pointer; font-weight: 600;
+  font-family: 'IBM Plex Sans Arabic', sans-serif;
+}
+.notif-header button:hover { text-decoration: underline; }
+.notif-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 12px 16px; border-bottom: 1px solid var(--gray-100);
+  cursor: pointer; transition: background 0.15s;
+}
+.notif-item:hover { background: var(--gray-50); }
+.notif-item:last-child { border-bottom: none; }
+.notif-item-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+.notif-item-text { font-size: 13px; color: var(--navy-dark); font-weight: 500; flex: 1; line-height: 1.4; }
+.notif-item-time { font-size: 11px; color: var(--gray-500); margin-top: 2px; }
+.notif-empty {
+  padding: 32px 16px; text-align: center; color: var(--gray-500); font-size: 13px;
+}
+
+/* Content */
+.content { padding: 28px; flex: 1; }
+.page-header { margin-bottom: 24px; }
+.page-header h2 { font-size: 22px; font-weight: 800; color: var(--navy-dark); margin-bottom: 4px; }
+.page-header p { font-size: 13px; color: var(--gray-500); }
+
+/* Stats */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--white);
+  border-radius: 16px;
+  padding: 20px;
+  border: 1px solid var(--gray-100);
+  box-shadow: 0 2px 8px rgba(27,42,94,0.05);
+  display: flex; flex-direction: column; gap: 12px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(27,42,94,0.1); }
+.stat-top { display: flex; align-items: center; justify-content: space-between; }
+.stat-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+.stat-badge { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 20px; }
+.stat-num { font-size: 32px; font-weight: 900; color: var(--navy-dark); line-height: 1; }
+.stat-label { font-size: 13px; color: var(--gray-500); font-weight: 500; }
+
+/* Grid */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+#chartsRow { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+
+/* Cards */
+.card {
+  background: var(--white);
+  border-radius: 16px;
+  border: 1px solid var(--gray-100);
+  box-shadow: 0 2px 8px rgba(27,42,94,0.05);
+  overflow: hidden;
+}
+.card-header {
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--gray-100);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.card-title { font-size: 15px; font-weight: 700; color: var(--navy-dark); }
+.card-action {
+  font-size: 12px; color: var(--navy); font-weight: 600;
+  cursor: pointer; text-decoration: none;
+  background: var(--gray-100); padding: 4px 12px;
+  border-radius: 20px; transition: background 0.2s;
+}
+.card-action:hover { background: var(--gray-200); }
+
+/* Table */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th {
+  background: var(--gray-50); padding: 11px 16px;
+  text-align: right; font-size: 11px; font-weight: 600;
+  color: var(--gray-500); border-bottom: 1px solid var(--gray-100);
+}
+[dir="ltr"] thead th { text-align: left; }
+tbody td { padding: 13px 16px; border-bottom: 1px solid var(--gray-100); color: var(--navy-dark); font-weight: 500; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: var(--gray-50); }
+
+/* Badges */
+.badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; }
+.badge-active { background: var(--green-light); color: var(--green); }
+.badge-pending { background: #FFF7ED; color: #92400E; }
+.badge-approved { background: var(--green-light); color: var(--green); }
+.badge-rejected { background: var(--red-light); color: var(--red); }
+.badge-left { background: var(--gray-100); color: var(--gray-500); }
+
+/* Activity */
+.activity-list { padding: 8px 0; }
+.activity-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px 20px; border-bottom: 1px solid var(--gray-100);
+}
+.activity-item:last-child { border-bottom: none; }
+.activity-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+.activity-text { font-size: 13px; color: var(--navy-dark); font-weight: 500; line-height: 1.5; }
+.activity-time { font-size: 11px; color: var(--gray-500); margin-top: 2px; }
+
+/* Quick Actions */
+.actions-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 16px; }
+.action-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 16px 12px; border-radius: 12px;
+  border: 1.5px solid var(--gray-100); background: var(--gray-50);
+  cursor: pointer; transition: all 0.2s; text-decoration: none;
+}
+.action-btn:hover {
+  border-color: var(--navy); background: var(--white);
+  transform: translateY(-2px); box-shadow: 0 4px 12px rgba(27,42,94,0.1);
+}
+.action-btn span { font-size: 12px; font-weight: 600; color: var(--navy-dark); text-align: center; }
+.user-version { font-size:10px;color:rgba(255,255,255,0.35);margin-top:2px; }
+.about-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:0;pointer-events:none;transition:opacity 0.3s;padding:20px; }
+.about-overlay.open { opacity:1;pointer-events:all; }
+.about-modal { background:var(--white);border-radius:20px;max-width:420px;width:100%;position:relative;box-shadow:0 25px 60px rgba(0,0,0,0.3);overflow:hidden; }
+.about-close { position:absolute;top:12px;right:16px;background:none;border:none;font-size:24px;color:rgba(255,255,255,0.6);cursor:pointer;z-index:2;line-height:1; }
+[dir="ltr"] .about-close { right:auto;left:16px; }
+.about-close:hover { color:#fff; }
+.about-header { background:linear-gradient(135deg,var(--navy-dark) 0%,#2b3e7e 100%);padding:32px 24px 24px;text-align:center; }
+.about-header img { width:72px;height:72px;border-radius:50%;border:3px solid rgba(255,255,255,0.2);object-fit:contain;background:var(--white);padding:8px; }
+.about-body { padding:24px;text-align:center; }
+.about-body h2 { font-size:16px;font-weight:800;color:var(--navy-dark);margin-bottom:16px; }
+.about-badges { display:flex;gap:8px;justify-content:center;margin-bottom:12px;flex-wrap:wrap; }
+.about-badge { padding:4px 14px;border-radius:20px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:4px; }
+.about-badge-version { background:var(--navy);color:var(--white); }
+.about-badge-status { background:#E1F5EE;color:#0F6E56; }
+.about-meta { font-size:12px;color:var(--gray-500);margin-bottom:20px; }
+.about-features { display:grid;grid-template-columns:1fr 1fr;gap:6px;text-align:right; }
+[dir="ltr"] .about-features { text-align:left; }
+.about-feature { font-size:12px;color:var(--gray-700);padding:6px 10px;background:var(--gray-50);border-radius:8px;font-weight:500; }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-image-container">
+      <img src="nu-logo.png" alt="جامعة نجران">
+    </div>
+    <div class="sidebar-logo-title" data-ar="نظام إسكان الطلاب والطالبات" data-en="Students Housing System">نظام إسكان الطلاب والطالبات</div>
+    <div class="sidebar-logo-sub" data-ar="جامعة نجران" data-en="Najran University">جامعة نجران</div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section" data-ar="الرئيسية" data-en="MAIN">الرئيسية</div>
+    <a class="nav-item" href="dashboard.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <span data-ar="لوحة التحكم" data-en="Dashboard">لوحة التحكم</span>
+    </a>
+
+    <div class="nav-section" data-ar="الطلاب" data-en="STUDENTS">الطلاب</div>
+    <a class="nav-item" id="studentsTab" href="students.html">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /></svg>
+        <span data-ar="قائمة الطلاب" data-en="Students List">قائمة الطلاب</span>
+    </a>
+    <div style="font-size:10px;font-weight:600;color:rgba(255,255,255,0.3);padding:4px 8px 6px 24px;letter-spacing:0.5px" data-ar="إدارة التسجيل" data-en="REGISTRATION">إدارة التسجيل</div>
+    <a class="nav-item" id="registerStudentTab" href="register_student.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+      <span data-ar="تسجيل فردي" data-en="Individual Registration">تسجيل فردي</span>
+    </a>
+    <a class="nav-item" id="bulkRegistrationTab" href="bulk-registration.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 11 9 11 11 13 11 13 12 10 12 10 9"/></svg>
+      <span data-ar="تسجيل جماعي (Excel)" data-en="Bulk Registration (Excel)">تسجيل جماعي (Excel)</span>
+    </a>
+    <a class="nav-item" id="studentStatusTab" href="student-status.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <span data-ar="تحديث حالة الطالب" data-en="Update Student Status">تحديث حالة الطالب</span>
+    </a>
+
+    <div class="nav-section" data-ar="الطلبات" data-en="REQUESTS">الطلبات</div>
+    <a class="nav-item" id="allRequestsTab" href="requests.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <span data-ar="كل الطلبات" data-en="All Requests">كل الطلبات</span>
+    </a>
+    <a class="nav-item" id="housingManagementTab" href="housing-management.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+      <span data-ar="إدارة السكن" data-en="Housing Management">إدارة السكن</span>
+    </a>
+    <div class="nav-section" data-ar="النظام" data-en="SYSTEM">النظام</div>
+    <a class="nav-item" id="reportsTab" href="reports.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 11 9 11 11 13 11 13 12 10 12 10 9"/></svg>
+      <span data-ar="التقارير" data-en="Reports">التقارير</span>
+    </a>
+    <a class="nav-item" id="auditTab" href="auditlog.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <span data-ar="سجل العمليات" data-en="Audit Log">سجل العمليات</span>
+    </a>
+    <a class="nav-item" onclick="showAbout();return false" style="cursor:pointer">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      <span data-ar="حول النظام" data-en="About System">حول النظام</span>
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-card">
+  <div class="user-avatar">👤</div>
+  <div>
+    <div class="user-name" id="sidebar-user-name"></div>
+    <div class="user-role" id="sidebar-user-role"></div>
+    <div class="user-version">v<span id="sidebarVer">1.0.0</span></div>
+  </div>
+</div>
+
+    <button class="logout-btn" onclick="window.location.href='login.html'">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <span data-ar="تسجيل الخروج" data-en="Logout">تسجيل الخروج</span>
+    </button>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" data-ar="لوحة التحكم" data-en="Dashboard">لوحة التحكم</div>
+    <div class="topbar-right">
+      <div class="topbar-date" id="dateNow"></div>
+      <div class="lang-toggle">
+        <button class="lang-btn active" id="btn-ar" onclick="setLang('ar')">عربي</button>
+        <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
+      </div>
+      <div class="notif-wrapper">
+        <button class="notif-btn" onclick="toggleNotifDropdown(event)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="notif-dot"></span>
+          <span class="notif-badge" id="notif-badge"></span>
+        </button>
+        <div class="notif-dropdown" id="notif-dropdown">
+          <div class="notif-header">
+            <span data-ar="الإشعارات" data-en="Notifications">الإشعارات</span>
+            <button onclick="markAllNotifRead()" data-ar="تحديد الكل مقروء" data-en="Mark all read">تحديد الكل مقروء</button>
+          </div>
+          <div class="notif-list" id="notif-dropdown-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="page-header">
+      <h2 id="welcome-msg">مرحباً، مشرف السكن 👋</h2>
+      <p data-ar="إليك ملخص النظام لليوم" data-en="Here's your system summary for today">إليك ملخص النظام لليوم</p>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-icon" style="background:#E6F1FB;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <span class="stat-badge" style="background:#E6F1FB;color:#1B2A5E;" data-ar="+3 هذا الشهر" data-en="+3 this month">+3 هذا الشهر</span>
+        </div>
+        <div class="stat-num" id="cnt-students">0</div>
+        <div class="stat-label" data-ar="إجمالي الطلاب" data-en="Total Students">إجمالي الطلاب</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-icon" style="background:#FFF7ED;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#92400E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          <span class="stat-badge" style="background:#FFF7ED;color:#92400E;" data-ar="مراجعة إسكان" data-en="Housing Review">مراجعة إسكان</span>
+        </div>
+        <div class="stat-num" id="cnt-submitted">0</div>
+        <div class="stat-label" data-ar="بانتظار مراجعة الإسكان" data-en="Pending Housing Review">بانتظار مراجعة الإسكان</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-icon" style="background:#E0F2FE;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0369A1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          <span class="stat-badge" style="background:#E0F2FE;color:#0369A1;" data-ar="موافقة إدارة الإسكان" data-en="Housing Approved">موافقة إدارة الإسكان</span>
+        </div>
+        <div class="stat-num" id="cnt-housing_approved">0</div>
+        <div class="stat-label" data-ar="بانتظار مراجعة إدارة الأمن السيبراني" data-en="Pending Cyber Review">بانتظار مراجعة إدارة الأمن السيبراني</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-icon" style="background:#F3E8FF;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B21A8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <span class="stat-badge" style="background:#F3E8FF;color:#6B21A8;" data-ar="مراجعة إدارة الأمن السيبراني" data-en="Cyber Review">مراجعة إدارة الأمن السيبراني</span>
+        </div>
+        <div class="stat-num" id="cnt-cyber_review">0</div>
+        <div class="stat-label" data-ar="بانتظار مراجعة إدارة الأمن السيبراني" data-en="Awaiting Cyber Review">بانتظار مراجعة إدارة الأمن السيبراني</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-icon" style="background:#E1F5EE;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <span class="stat-badge" style="background:#E1F5EE;color:#0F6E56;" data-ar="معتمد" data-en="Approved">معتمد</span>
+        </div>
+        <div class="stat-num" id="cnt-cyber_approved">0</div>
+        <div class="stat-label" data-ar="طلبات معتمدة" data-en="Approved Requests">طلبات معتمدة</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-icon" style="background:#FFF7ED;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#92400E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          </div>
+          <span class="stat-badge" style="background:#FFF7ED;color:#92400E;" data-ar="جاهز لإنشاء حساب شبكة السكن" data-en="Ready For Housing">جاهز لإنشاء حساب شبكة السكن</span>
+        </div>
+        <div class="stat-num" id="cnt-ready_for_provisioning">0</div>
+        <div class="stat-label" data-ar="جاهزة لإنشاء حساب شبكة السكن" data-en="Ready For Housing Network Account Creation">جاهزة لإنشاء حساب شبكة السكن</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-icon" style="background:#E1F5EE;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <span class="stat-badge" style="background:#E1F5EE;color:#0F6E56;" data-ar="مكتمل" data-en="Completed">مكتمل</span>
+        </div>
+        <div class="stat-num" id="cnt-completed">0</div>
+        <div class="stat-label" data-ar="مكتملة" data-en="Completed">مكتملة</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-icon" style="background:#FEF2F2;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#991B1B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          </div>
+          <span class="stat-badge" style="background:#FEF2F2;color:#991B1B;" data-ar="هذا الشهر" data-en="This month">هذا الشهر</span>
+        </div>
+        <div class="stat-num" id="cnt-left">0</div>
+        <div class="stat-label" data-ar="طلاب غادروا" data-en="Checked Out">طلاب غادروا</div>
+      </div>
+    </div>
+
+    <div class="section-heading"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span data-ar="إحصائيات الطلاب" data-en="Student Statistics">إحصائيات الطلاب</span></div>
+
+    <div class="stats-grid">
+
+      <div class="stat-card" style="cursor:pointer" onclick="location.href='students.html?status=active'">
+
+        <div class="stat-top">
+
+          <div class="stat-icon" style="background:#E1F5EE;">
+
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+
+          </div>
+
+          <span class="stat-badge" style="background:#E1F5EE;color:#0F6E56;" data-ar="نشط" data-en="Active">نشط</span>
+
+        </div>
+
+        <div class="stat-num" id="cnt-active">0</div>
+
+        <div class="stat-label" data-ar="الطلاب النشطون" data-en="Active Students">الطلاب النشطون</div>
+
+      </div>
+
+      <div class="stat-card" style="cursor:pointer" onclick="location.href='students.html?status=graduated'">
+
+        <div class="stat-top">
+
+          <div class="stat-icon" style="background:#DBEAFE;">
+
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1E40AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+
+          </div>
+
+          <span class="stat-badge" style="background:#DBEAFE;color:#1E40AF;" data-ar="متخرج" data-en="Graduated">متخرج</span>
+
+        </div>
+
+        <div class="stat-num" id="cnt-graduated">0</div>
+
+        <div class="stat-label" data-ar="الطلاب المتخرجون" data-en="Graduated">الطلاب المتخرجون</div>
+
+      </div>
+
+      <div class="stat-card" style="cursor:pointer" onclick="location.href='students.html?status=dismissed'">
+
+        <div class="stat-top">
+
+          <div class="stat-icon" style="background:#FEF2F2;">
+
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#991B1B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+
+          </div>
+
+          <span class="stat-badge" style="background:#FEF2F2;color:#991B1B;" data-ar="مفصول" data-en="Dismissed">مفصول</span>
+
+        </div>
+
+        <div class="stat-num" id="cnt-dismissed">0</div>
+
+        <div class="stat-label" data-ar="الطلاب المفصولون" data-en="Dismissed">الطلاب المفصولون</div>
+
+      </div>
+
+      <div class="stat-card" style="cursor:pointer" onclick="location.href='students.html?status=transferred'">
+
+        <div class="stat-top">
+
+          <div class="stat-icon" style="background:#FFF7ED;">
+
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#92400E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+
+          </div>
+
+          <span class="stat-badge" style="background:#FFF7ED;color:#92400E;" data-ar="منقول" data-en="Transferred">منقول</span>
+
+        </div>
+
+        <div class="stat-num" id="cnt-transferred">0</div>
+
+        <div class="stat-label" data-ar="الطلاب المنقولون" data-en="Transferred">الطلاب المنقولون</div>
+
+      </div>
+
+    </div>
+
+    <div class="stats-grid" style="margin-top:-8px">
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-icon" style="background:#E8F4FD;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          </div>
+          <span class="stat-badge" style="background:#E8F4FD;color:#1B2A5E;" data-ar="اليوم" data-en="Today">اليوم</span>
+        </div>
+        <div class="stat-num" id="cnt-today-logins">0</div>
+        <div class="stat-label" data-ar="تسجيلات الدخول اليوم" data-en="Today's Logins">تسجيلات الدخول اليوم</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-icon" style="background:#E1F5EE;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <span class="stat-badge" style="background:#E1F5EE;color:#0F6E56;" data-ar="اليوم" data-en="Today">اليوم</span>
+        </div>
+        <div class="stat-num" id="cnt-today-student-ops">0</div>
+        <div class="stat-label" data-ar="عمليات الطلاب اليوم" data-en="Today's Student Operations">عمليات الطلاب اليوم</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-icon" style="background:#FFF7ED;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#92400E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
+          </div>
+          <span class="stat-badge" style="background:#FFF7ED;color:#92400E;" data-ar="اليوم" data-en="Today">اليوم</span>
+        </div>
+        <div class="stat-num" id="cnt-today-request-ops">0</div>
+        <div class="stat-label" data-ar="عمليات الطلبات اليوم" data-en="Today's Request Operations">عمليات الطلبات اليوم</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-icon" style="background:#F3E8FF;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B21A8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <span class="stat-badge" style="background:#F3E8FF;color:#6B21A8;" data-ar="اليوم" data-en="Today">اليوم</span>
+        </div>
+        <div class="stat-num" id="cnt-today-total-ops">0</div>
+        <div class="stat-label" data-ar="إجمالي عمليات اليوم" data-en="Today's Operations">إجمالي عمليات اليوم</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-icon" style="background:#FEF2F2;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#991B1B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          </div>
+          <span class="stat-badge" style="background:#FEF2F2;color:#991B1B;" data-ar="اليوم" data-en="Today">اليوم</span>
+        </div>
+        <div class="stat-num" id="cnt-today-failed-logins">0</div>
+        <div class="stat-label" data-ar="محاولات الدخول الفاشلة اليوم" data-en="Failed Logins Today">محاولات الدخول الفاشلة اليوم</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-icon" style="background:#FEF2F2;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#991B1B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </div>
+          <span class="stat-badge" style="background:#FEF2F2;color:#991B1B;" data-ar="اليوم" data-en="Today">اليوم</span>
+        </div>
+        <div class="stat-num" id="cnt-today-deletes">0</div>
+        <div class="stat-label" data-ar="عمليات الحذف اليوم" data-en="Today's Deletions">عمليات الحذف اليوم</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-icon" style="background:#E6F1FB;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <span class="stat-badge" style="background:#E6F1FB;color:#1B2A5E;" data-ar="اليوم" data-en="Today">اليوم</span>
+        </div>
+        <div class="stat-num" id="cnt-today-active-users">0</div>
+        <div class="stat-label" data-ar="المستخدمين النشطين اليوم" data-en="Active Users Today">المستخدمين النشطين اليوم</div>
+      </div>
+    </div>
+
+    <div id="housingStatsSection">
+      <div class="section-title" style="margin-top:24px;margin-bottom:12px;font-size:15px;font-weight:700;color:var(--navy-dark)" data-i18n="housingStats">إحصائيات السكن</div>
+      <div class="stat-pills">
+        <div class="stat-pill">
+          <div class="stat-pill-num" id="hs-total-accounts">0</div>
+          <div class="stat-pill-label" data-ar="إجمالي الحسابات" data-en="Total Accounts">إجمالي الحسابات</div>
+        </div>
+        <div class="stat-pill">
+          <div class="stat-pill-num" id="hs-enabled">0</div>
+          <div class="stat-pill-label" data-ar="مفعل" data-en="Enabled">مفعل</div>
+        </div>
+        <div class="stat-pill">
+          <div class="stat-pill-num" id="hs-disabled">0</div>
+          <div class="stat-pill-label" data-ar="معطل" data-en="Disabled">معطل</div>
+        </div>
+        <div class="stat-pill">
+          <div class="stat-pill-num" id="hs-synced-today">0</div>
+          <div class="stat-pill-label" data-ar="تم المزامنة اليوم" data-en="Synced Today">تم المزامنة اليوم</div>
+        </div>
+        <div class="stat-pill">
+          <div class="stat-pill-num" id="hs-without">0</div>
+          <div class="stat-pill-label" data-ar="بدون حسابات" data-en="Without Accounts">بدون حسابات</div>
+        </div>
+        <div class="stat-pill">
+          <div class="stat-pill-num" id="hs-total-students">0</div>
+          <div class="stat-pill-label" data-ar="إجمالي الطلاب" data-en="Total Students">إجمالي الطلاب</div>
+        </div>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title" data-ar="آخر الطلاب المسجلين" data-en="Latest Registered Students">آخر الطلاب المسجلين</div>
+          <a class="card-action" href="#" data-ar="عرض الكل" data-en="View All">عرض الكل</a>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th data-ar="الاسم" data-en="Name">الاسم</th>
+              <th data-ar="الكلية" data-en="College">الكلية</th>
+              <th data-ar="المبنى" data-en="Building">المبنى</th>
+              <th data-ar="الحالة" data-en="Status">الحالة</th>
+            </tr>
+          </thead>
+          <tbody id="students-tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title" data-ar="آخر الطلبات" data-en="Latest Requests">آخر الطلبات</div>
+          <a class="card-action" href="#" data-ar="عرض الكل" data-en="View All">عرض الكل</a>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th data-ar="نوع الطلب" data-en="Request Type">نوع الطلب</th>
+              <th data-ar="التاريخ" data-en="Date">التاريخ</th>
+              <th data-ar="الحالة" data-en="Status">الحالة</th>
+            </tr>
+          </thead>
+          <tbody id="requests-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid-2 grid-3">
+      <div class="card" id="auditActivityCard" style="grid-column:1/-1;margin-bottom:0">
+        <div class="card-header">
+          <div class="card-title" data-ar="آخر العمليات" data-en="Recent Activity">آخر العمليات</div>
+          <a class="card-action" href="auditlog.html" data-ar="عرض الكل" data-en="View All">عرض الكل</a>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th data-ar="المستخدم" data-en="User">المستخدم</th>
+              <th data-ar="الإجراء" data-en="Action">الإجراء</th>
+              <th data-ar="الوقت" data-en="Time">الوقت</th>
+            </tr>
+          </thead>
+          <tbody id="audit-activity-tbody">
+            <tr><td colspan="3" style="text-align:center;padding:30px;color:var(--gray-500)" data-ar="جاري التحميل..." data-en="Loading...">جاري التحميل...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="grid-2" id="chartsRow" style="margin-bottom:24px">
+      <div class="card"><div class="card-header"><div class="card-title" data-ar="العمليات آخر 7 أيام" data-en="Operations (7 days)">العمليات آخر 7 أيام</div></div><div style="padding:16px;height:220px"><canvas id="chartOps7"></canvas></div></div>
+      <div class="card"><div class="card-header"><div class="card-title" data-ar="نشاط تسجيل الدخول آخر 30 يوم" data-en="Login Activity (30 days)">نشاط تسجيل الدخول آخر 30 يوم</div></div><div style="padding:16px;height:220px"><canvas id="chartLogins30"></canvas></div></div>
+      <div class="card"><div class="card-header"><div class="card-title" data-ar="عمليات الطلاب" data-en="Student Operations">عمليات الطلاب</div></div><div style="padding:16px;height:220px"><canvas id="chartStudents"></canvas></div></div>
+      <div class="card"><div class="card-header"><div class="card-title" data-ar="عمليات الطلبات" data-en="Request Operations">عمليات الطلبات</div></div><div style="padding:16px;height:220px"><canvas id="chartRequests"></canvas></div></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card" id="securityAlertsCard">
+        <div class="card-header">
+          <div class="card-title" data-ar="تنبيهات الأمان" data-en="Security Alerts">تنبيهات الأمان</div>
+          <a class="card-action" onclick="loadAlerts()" data-ar="تحديث" data-en="Refresh">تحديث</a>
+        </div>
+        <div id="alerts-body" style="padding:16px;color:var(--gray-500);text-align:center" data-ar="لا توجد تنبيهات" data-en="No alerts">لا توجد تنبيهات</div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title" data-ar="إجراءات سريعة" data-en="Quick Actions">إجراءات سريعة</div>
+        </div>
+        <div class="actions-grid">
+          <a class="action-btn" href="register_student.html"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg><span data-ar="تسجيل طالب" data-en="Register Student">تسجيل طالب</span></a>
+          <a class="action-btn" href="students.html"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span data-ar="عرض الطلاب" data-en="View Students">عرض الطلاب</span></a>
+          <a class="action-btn" href="requests.html"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg><span data-ar="طلب جديد" data-en="New Request">طلب جديد</span></a>
+          <a class="action-btn" href="auditlog.html"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span data-ar="تصدير تقرير" data-en="Export Report">تصدير تقرير</span></a>
+          <a class="action-btn" href="auditlog.html"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span data-ar="سجل العمليات" data-en="Audit Log">سجل العمليات</span></a>
+          <a class="action-btn" href="reports.html"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 11 9 11 11 13 11 13 12 10 12 10 9"/></svg><span data-ar="التقارير" data-en="Reports">التقارير</span></a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title" data-ar="آخر الإشعارات" data-en="Latest Notifications">آخر الإشعارات</div>
+          <a class="card-action" href="#" data-ar="عرض الكل" data-en="View All">عرض الكل</a>
+        </div>
+        <div class="activity-list" id="notif-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const token = localStorage.getItem('staffToken');
+if (!token) window.location.replace('login.html');
+const currentUser = JSON.parse(localStorage.getItem('staffUser') || '{}');
+const _userRole = (currentUser.role || '').toLowerCase();
+if (_userRole === 'cyber' || _userRole === 'user') {
+  document.querySelectorAll('.action-btn').forEach(function(btn) {
+    if (btn.getAttribute('href') === 'register_student.html') btn.remove();
+  });
+}
+const actionTranslations = {
+  login: { ar: 'تسجيل دخول', en: 'Login' },
+  logout: { ar: 'تسجيل خروج', en: 'Logout' },
+  login_failed: { ar: 'فشل تسجيل دخول', en: 'Login Failed' },
+  set_password: { ar: 'تغيير كلمة المرور', en: 'Set Password' },
+  create_request: { ar: 'إنشاء طلب', en: 'Create Request' },
+  approve_request: { ar: 'قبول الطلب', en: 'Approve Request' },
+  reject_request: { ar: 'رفض الطلب', en: 'Reject Request' },
+  create_student: { ar: 'إضافة طالب', en: 'Create Student' },
+  update_student: { ar: 'تحديث طالب', en: 'Update Student' },
+  delete_student: { ar: 'حذف طالب', en: 'Delete Student' },
+  checkout_student: { ar: 'مغادرة طالب', en: 'Checkout Student' },
+  housing_approve_request: { ar: 'موافقة إدارة الإسكان', en: 'Housing Approve' },
+  housing_reject_request: { ar: 'رفض إسكان', en: 'Housing Reject' },
+  submit_cyber_review: { ar: 'إحالة لسيبر', en: 'Submit to Cyber' },
+  cyber_approve_request: { ar: 'موافقة إدارة الأمن السيبراني', en: 'Cyber Approve' },
+  cyber_reject_request: { ar: 'رفض إدارة الأمن السيبراني', en: 'Cyber Reject' },
+  ready_for_provisioning_request: { ar: 'تجهيز لإنشاء حساب شبكة السكن', en: 'Ready For Housing Network Account Creation' },
+  complete_request: { ar: 'إكمال الطلب', en: 'Complete Request' },
+  user_created_ad: { ar: 'إنشاء مستخدم من Active Directory', en: 'AD User Created' },
+  user_updated_ad: { ar: 'تحديث مستخدم من Active Directory', en: 'AD User Updated' },
+};
+
+function translateAction(action) {
+  const lang = document.getElementById('html-root').getAttribute('lang') || 'ar';
+  return actionTranslations[action]?.[lang] || action;
+}
+
+function escHtml(str) {
+  return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function logout() {
+  localStorage.removeItem('staffToken');
+  localStorage.removeItem('staffUser');
+  window.location.replace('login.html');
+}
+
+async function apiFetch(url) {
+  try {
+    const res = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (res.status === 401) {
+      localStorage.removeItem('staffToken');
+localStorage.removeItem('staffUser');
+      window.location.replace('login.html');
+      return null;
+    }
+    return await res.json();
+  } catch(e) {
+    return null;
+  }
+}
+
+window.onLanguageChange = function(l) {
+  var d = new Date();
+  document.getElementById('welcome-msg').textContent =
+    l === 'ar'
+      ? `مرحباً، ${currentUser.full_name || 'مشرف السكن'} 👋`
+      : `Welcome, ${currentUser.full_name || 'Housing Supervisor'} 👋`;
+};
+
+function animateNum(id, target) {
+  let cur = 0;
+  const el = document.getElementById(id);
+  el.textContent = '0';
+  const step = Math.max(1, Math.ceil(target / 30));
+  const timer = setInterval(() => {
+    cur = Math.min(cur + step, target);
+    el.textContent = cur;
+    if (cur >= target) clearInterval(timer);
+  }, 40);
+}
+
+async function loadStats() {
+  const data = await apiFetch('/api/students/stats');
+  if (!data) {
+    ['cnt-students','cnt-submitted','cnt-housing_approved','cnt-cyber_review','cnt-cyber_approved','cnt-ready_for_provisioning','cnt-completed','cnt-left'].forEach(id => {
+      document.getElementById(id).textContent = '—';
+    });
+    return;
+  }
+  animateNum('cnt-students', data.total || 0);
+  animateNum('cnt-submitted', data.submitted || 0);
+  animateNum('cnt-housing_approved', data.housing_approved || 0);
+  animateNum('cnt-cyber_review', data.cyber_review || 0);
+  animateNum('cnt-cyber_approved', data.cyber_approved || 0);
+  animateNum('cnt-ready_for_provisioning', data.ready_for_provisioning || 0);
+  animateNum('cnt-completed', data.completed || 0);
+  animateNum('cnt-left', data.left || 0);
+}
+
+async function loadStatusStats() {
+  const data = await apiFetch('/api/student-status/stats');
+  if (!data) {
+    ['cnt-active','cnt-graduated','cnt-dismissed','cnt-transferred'].forEach(function(id) {
+      document.getElementById(id).textContent = '—';
+    });
+    return;
+  }
+  animateNum('cnt-active', data.active || 0);
+  animateNum('cnt-graduated', data.graduated || 0);
+  animateNum('cnt-dismissed', data.dismissed || 0);
+  animateNum('cnt-transferred', data.transferred || 0);
+}
+
+async function loadHousingStats() {
+  try {
+    var res = await fetch('/api/HousingAccountManagement/stats', {
+      headers: { 'Authorization': 'Bearer ' + staffToken }
+    });
+    if (!res.ok) return;
+    var data = await res.json();
+    var map = {
+      'hs-total-accounts': data.withAccounts || data.with_accounts || 0,
+      'hs-enabled': data.enabled || 0,
+      'hs-disabled': data.disabled || 0,
+      'hs-synced-today': data.syncedLast24h || data.synced_last_24h || 0,
+      'hs-without': data.withoutUsername || data.without_username || 0,
+      'hs-total-students': data.totalStudents || data.total_students || 0
+    };
+    Object.keys(map).forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = map[id];
+    });
+  } catch(e) { console.error('Housing stats error:', e); }
+}
+
+async function loadStudents() {
+  const data = await apiFetch('/api/students');
+  const tbody = document.getElementById('students-tbody');
+  if (!data) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:#991B1B;">' + t('apiError') + '</td></tr>';
+    return;
+  }
+  const all = data.slice().reverse();
+tbody.innerHTML = all.length ? all.map(s => `
+    <tr>
+      <td>${escHtml(s.full_name)}</td>
+<td>${escHtml(s.college)}</td>
+<td>${escHtml(s.housing_building)}</td>
+      <td><span class="badge badge-${s.status}">${s.status === 'active' || s.status === 'Active' ? t('statusActive') : t('statusLeft')}</span></td>
+    </tr>`).join('')
+    : '<tr><td colspan="4" style="text-align:center;padding:20px;color:#8891A8;">' + t('noData') + '</td></tr>';
+}
+
+async function loadRequests() {
+  const data = await apiFetch('/api/requests');
+  const tbody = document.getElementById('requests-tbody');
+  if (!data) {
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:20px;color:#991B1B;">' + t('apiError') + '</td></tr>';
+    return;
+  }
+  const statusMap = { submitted: t('statusPending'), housing_approved: t('statusApproved'), housing_rejected: t('statusRejected'), cyber_review: t('review'), cyber_approved: t('cyberApprove'), cyber_rejected: t('cyberReject') };
+const all = data.slice().reverse();
+tbody.innerHTML = all.length ? all.map(r => `
+    <tr>
+      <td>${escHtml(r.requestType)}</td>
+      <td>${r.submittedAt ? new Date(r.submittedAt).toLocaleDateString('ar-EG') : '—'}</td>
+      <td><span class="badge badge-${r.status?.toLowerCase()}">${statusMap[r.status?.toLowerCase()] || r.status}</span></td>
+    </tr>`).join('')
+      : '<tr><td colspan="3" style="text-align:center;padding:20px;color:#8891A8;">' + t('noRequests') + '</td></tr>';
+}
+
+async function loadNotifications() {
+  const data = await apiFetch('/api/notifications?role=' + encodeURIComponent(_userRole));
+  const list = document.getElementById('notif-list');
+  if (!data) {
+      list.innerHTML = '<div style="padding:16px;color:#991B1B;">' + t('apiError') + '</div>';
+    return;
+  }
+  list.innerHTML = data.length ? data.map(n => `
+    <div class="activity-item">
+      <div class="activity-dot" style="background:#C9A84C;"></div>
+      <div>
+        <div class="activity-text">${escHtml(n.message)}</div>
+        <div class="activity-time">${new Date(n.sent_at || Date.now()).toLocaleDateString('ar-SA')}</div>
+      </div>
+    </div>`).join('')
+    : '<div style="padding:20px;text-align:center;color:#8891A8;">لا توجد إشعارات</div>';
+}
+
+async function loadNotifDropdown() {
+  const data = await apiFetch('/api/notifications?role=' + encodeURIComponent(_userRole));
+  const list = document.getElementById('notif-dropdown-list');
+  if (!data) {
+    list.innerHTML = '<div class="notif-empty">' + t('apiError') + '</div>';
+    return;
+  }
+  list.innerHTML = data.length ? data.map(n => `
+    <div class="notif-item" onclick="markNotifRead(${n.id},this)" data-id="${n.id}">
+      <div class="notif-item-dot" style="background:${n.status === 'pending' ? '#1B2A5E' : '#CBD5E1'};"></div>
+      <div>
+        <div class="notif-item-text">${escHtml(n.message)}</div>
+        <div class="notif-item-time">${new Date(n.sent_at || Date.now()).toLocaleDateString('ar-SA')}</div>
+      </div>
+    </div>`).join('')
+    : '<div class="notif-empty">لا توجد إشعارات</div>';
+}
+
+async function loadUnreadCount() {
+  const data = await apiFetch('/api/notifications/unread-count?role=' + encodeURIComponent(_userRole));
+  const badge = document.getElementById('notif-badge');
+  const dot = document.querySelector('.notif-dot');
+  if (data && data.count > 0) {
+    badge.textContent = data.count;
+    badge.classList.add('show');
+    if (dot) dot.classList.remove('hidden');
+  } else {
+    badge.classList.remove('show');
+    if (dot) dot.classList.add('hidden');
+  }
+}
+
+function toggleNotifDropdown(e) {
+  e.stopPropagation();
+  const dd = document.getElementById('notif-dropdown');
+  const isOpen = dd.classList.contains('open');
+  document.querySelectorAll('.notif-dropdown.open').forEach(function(d) { d.classList.remove('open'); });
+  if (!isOpen) {
+    dd.classList.add('open');
+    if (!dd.dataset.loaded) {
+      loadNotifDropdown();
+      dd.dataset.loaded = '1';
+    }
+  }
+}
+
+async function markNotifRead(id, el) {
+  await fetch('/api/notifications/read', {
+    method: 'PATCH',
+    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+    body: JSON.stringify([id])
+  });
+  el.querySelector('.notif-item-dot').style.background = '#CBD5E1';
+  loadUnreadCount();
+}
+
+async function markAllNotifRead() {
+  const items = document.querySelectorAll('#notif-dropdown-list .notif-item[data-id]');
+  var ids = [];
+  items.forEach(function(el) { ids.push(parseInt(el.dataset.id)); });
+  if (!ids.length) return;
+  await fetch('/api/notifications/read', {
+    method: 'PATCH',
+    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+    body: JSON.stringify(ids)
+  });
+  document.querySelectorAll('#notif-dropdown-list .notif-item-dot').forEach(function(d) { d.style.background = '#CBD5E1'; });
+  loadUnreadCount();
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.notif-wrapper')) {
+    document.querySelectorAll('.notif-dropdown.open').forEach(function(d) { d.classList.remove('open'); });
+  }
+});
+
+async function loadAuditStats() {
+  const data = await apiFetch('/api/auditlogs/today-stats');
+  if (!data) return;
+  animateNum('cnt-today-logins', data.todayLogins || 0);
+  animateNum('cnt-today-student-ops', data.todayStudentOps || 0);
+  animateNum('cnt-today-request-ops', data.todayRequestOps || 0);
+  animateNum('cnt-today-failed-logins', data.todayFailedLogins || 0);
+  animateNum('cnt-today-deletes', data.todayDeletes || 0);
+  animateNum('cnt-today-active-users', data.todayActiveUsers || 0);
+  animateNum('cnt-today-total-ops', data.todayTotalOps || 0);
+}
+
+async function loadAuditActivity() {
+  const data = await apiFetch('/api/auditlogs?pageSize=10&page=1');
+  const tbody = document.getElementById('audit-activity-tbody');
+  if (!data || !data.data) {
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:20px;color:#991B1B;">' + t('apiError') + '</td></tr>';
+    return;
+  }
+  const lang = document.getElementById('html-root').getAttribute('lang') || 'ar';
+  const fmt = lang === 'ar'
+    ? new Intl.DateTimeFormat('ar-SA', { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' })
+    : new Intl.DateTimeFormat('en-US', { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+  tbody.innerHTML = data.data.slice(0, 10).map(r => {
+    const user = r.user?.full_name || r.user?.username || r.user_id;
+    const actionT = translateAction(r.action);
+    const dt = r.action_at ? fmt.format(new Date(r.action_at)) : '—';
+    return `<tr>
+      <td>${escHtml(user)}</td>
+      <td>${escHtml(actionT)}</td>
+      <td>${dt}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function loadAlerts() {
+  const data = await apiFetch('/api/auditlogs/alerts');
+  const el = document.getElementById('alerts-body');
+  if (!data || data.length === 0) {
+    const lang = document.getElementById('html-root').getAttribute('lang') || 'ar';
+    el.innerHTML = `<div style="padding:8px;color:var(--gray-500);text-align:center">${lang === 'ar' ? '✓ لا توجد تنبيهات أمان' : '✓ No security alerts'}</div>`;
+    return;
+  }
+  el.innerHTML = data.map(a => {
+    const bg = a.severity === 'high' ? '#FEF2F2' : '#FFF7ED';
+    const clr = a.severity === 'high' ? '#991B1B' : '#92400E';
+    const lang = document.getElementById('html-root').getAttribute('lang') || 'ar';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:8px;border-radius:10px;background:${bg};border:1px solid ${clr}20">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${clr}" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <div><div style="font-weight:600;font-size:13px;color:${clr}">${lang === 'ar' ? a.message_ar : a.message_en}</div>
+      <div style="font-size:11px;color:${clr}CC">${t('count')}: ${a.count}</div></div>
+    </div>`;
+  }).join('');
+}
+
+let chartInstances = {};
+
+function renderChart(id, type, labels, data, bgColors, label) {
+  if (chartInstances[id]) chartInstances[id].destroy();
+  const ctx = document.getElementById(id).getContext('2d');
+  chartInstances[id] = new Chart(ctx, {
+    type,
+    data: {
+      labels,
+      datasets: [{
+        label: label || '',
+        data,
+        backgroundColor: bgColors || '#1B2A5E',
+        borderColor: '#1B2A5E',
+        borderWidth: 1.5,
+        tension: 0.3,
+        fill: false
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+    }
+  });
+}
+
+async function loadCharts() {
+  const data = await apiFetch('/api/auditlogs/chart-data');
+  if (!data) return;
+
+  if (data.last7Days && data.last7Days.length) {
+    const labels = data.last7Days.map(d => d.date.slice(5, 10));
+    const counts = data.last7Days.map(d => d.count);
+    renderChart('chartOps7', 'bar', labels, counts, '#1B2A5E');
+  }
+  if (data.login30 && data.login30.length) {
+    const labels = data.login30.map(d => d.date.slice(5, 10));
+    const counts = data.login30.map(d => d.count);
+    renderChart('chartLogins30', 'line', labels, counts, '#C9A84C');
+  }
+  if (data.studentOps && data.studentOps.length) {
+    const labels = data.studentOps.map(d => d.action);
+    const counts = data.studentOps.map(d => d.count);
+    const colors = ['#1B2A5E','#C9A84C','#991B1B'];
+    renderChart('chartStudents', 'doughnut', labels, counts, colors);
+  }
+  if (data.requestOps && data.requestOps.length) {
+    const labels = data.requestOps.map(d => d.action);
+    const counts = data.requestOps.map(d => d.count);
+    const colors = ['#0F6E56','#C9A84C','#991B1B'];
+    renderChart('chartRequests', 'doughnut', labels, counts, colors);
+  }
+}
+
+document.querySelector('.logout-btn').onclick = logout;
+
+setLang(localStorage.getItem('uiLanguage') || 'ar');
+loadStats();
+loadStudents();
+loadRequests();
+loadNotifications();
+loadAuditStats();
+loadAuditActivity();
+loadAlerts();
+loadHousingStats();
+loadStatusStats();
+loadCharts();
+loadUnreadCount();
+setInterval(loadUnreadCount, 30000);
+</script>
+<script src="VersionInfo.js"></script>
+<div class="about-overlay" id="aboutModal" onclick="if(event.target===this)closeAbout()">
+  <div class="about-modal">
+    <button onclick="closeAbout()" class="about-close">&times;</button>
+    <div class="about-header">
+      <img src="nu-logo.png" alt="جامعة نجران">
+    </div>
+    <div class="about-body">
+      <div class="about-badges">
+        <span class="about-badge about-badge-version">v<span id="aboutVersion">1.0.0</span></span>
+        <span class="about-badge about-badge-status">Production Ready</span>
+      </div>
+      <h2 id="aboutSysName">نظام إسكان الطلاب والطالبات</h2>
+      <div class="about-meta" id="aboutBuildDate">Build: 2026-07-01</div>
+      <div class="about-features">
+        <span data-ar="إدارة الطلاب" data-en="Student Management" class="about-feature">إدارة الطلاب</span>
+        <span data-ar="سجل التدقيق" data-en="Audit Trail" class="about-feature">سجل التدقيق</span>
+        <span data-ar="التقارير" data-en="Reports" class="about-feature">التقارير</span>
+        <span data-ar="الطلبات" data-en="Requests" class="about-feature">الطلبات</span>
+        <span data-ar="لوحة البيانات" data-en="Dashboard" class="about-feature">لوحة البيانات</span>
+        <span data-ar="تصدير Excel" data-en="Excel Export" class="about-feature">تصدير Excel</span>
+        <span data-ar="تتبع IP" data-en="IP Tracking" class="about-feature">تتبع IP</span>
+        <span data-ar="أمني" data-en="Security" class="about-feature">أمني</span>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function showAbout() {
+  var lang = (document.getElementById('html-root') || document.documentElement).getAttribute('lang') || 'ar';
+  document.getElementById('aboutSysName').textContent = lang === 'ar' ? (typeof SYSTEM_NAME_AR !== 'undefined' ? SYSTEM_NAME_AR : 'نظام إسكان الطلاب والطالبات') : (typeof SYSTEM_NAME_EN !== 'undefined' ? SYSTEM_NAME_EN : 'Students Housing System - Najran University');
+  document.getElementById('aboutVersion').textContent = typeof APP_VERSION !== 'undefined' ? APP_VERSION : '1.0.0';
+  document.getElementById('aboutBuildDate').textContent = 'Build: ' + (typeof BUILD_DATE !== 'undefined' ? BUILD_DATE : '2026-07-01');
+  document.getElementById('aboutModal').classList.add('open');
+}
+function closeAbout() { document.getElementById('aboutModal').classList.remove('open'); }
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeAbout(); });
+</script>
+<script src="sidebar.js"></script>
+<script src="inactivity.js"></script>
+</body>
+</html>

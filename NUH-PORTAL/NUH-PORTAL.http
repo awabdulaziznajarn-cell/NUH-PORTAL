@@ -1,0 +1,6 @@
+@NUH_PORTAL_HostAddress = http://localhost:5058
+
+GET {{NUH_PORTAL_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

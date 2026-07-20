@@ -1,0 +1,725 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl" id="html-root">
+<head>
+<link rel="icon" href="favicon.ico">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تسجيل طالب جديد - نظام إسكان الطلاب والطالبات</title>
+<script src="i18n.js"></script>
+<style>
+  @font-face {
+    font-family: 'IBM Plex Sans Arabic';
+    font-style: normal;
+    font-weight: 400;
+    src: url('fonts/IBMPlexSansArabic-Regular.woff2') format('woff2');
+  }
+  @font-face {
+    font-family: 'IBM Plex Sans Arabic';
+    font-style: normal;
+    font-weight: 600;
+    src: url('fonts/IBMPlexSansArabic-SemiBold.woff2') format('woff2');
+  }
+</style>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --navy: #1B2A5E; --navy-dark: #111C42; --navy-light: #2B3E7E;
+  --gold: #C9A84C; --gold-light: #E8C96A;
+  --white: #FFFFFF; --gray-50: #F4F6FB; --gray-100: #EEF1F8;
+  --gray-200: #DDE3F0; --gray-300: #C8CFDF; --gray-500: #8891A8;
+  --gray-700: #4A5270; --green: #0F6E56; --green-light: #E1F5EE;
+  --red: #991B1B; --red-light: #FEF2F2; --sidebar-w: 240px;
+}
+body { font-family: 'IBM Plex Sans Arabic', sans-serif; background: var(--gray-50); color: var(--navy-dark); min-height: 100vh; display: flex; }
+.sidebar { width: var(--sidebar-w); background: var(--navy-dark); min-height: 100vh; display: flex; flex-direction: column; position: fixed; right: 0; top: 0; z-index: 100; box-shadow: -4px 0 24px rgba(0,0,0,0.18); }
+[dir="ltr"] .sidebar { right: auto; left: 0; box-shadow: 4px 0 24px rgba(0,0,0,0.18); }
+[dir="ltr"] .main { margin-right: 0; margin-left: var(--sidebar-w); }
+.nav-item svg { flex-shrink: 0; }
+.sidebar-logo { padding: 24px 20px 20px; display: flex; flex-direction: column; align-items: center; }
+.sidebar-logo-image-container { background: #fff; border-radius: 16px; padding: 12px 24px; border: 1px solid rgba(201,168,76,0.2); box-shadow: 0 4px 16px rgba(0,0,0,0.08), 0 0 0 1px rgba(201,168,76,0.06); transition: box-shadow 0.3s ease, transform 0.3s ease; margin-bottom: 24px; }
+.sidebar-logo-image-container:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.12), 0 0 0 1px rgba(201,168,76,0.15); transform: translateY(-2px); }
+.sidebar-logo-image-container img { display: block; width: 72px; height: 72px; object-fit: contain; }
+.sidebar-logo-title { font-size: 13px; font-weight: 700; color: var(--white); text-align: center; line-height: 1.5; margin-bottom: 4px; }
+.sidebar-logo-sub { font-size: 10px; color: var(--gold-light); text-align: center; position: relative; padding-bottom: 12px; }
+.sidebar-logo-sub::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 32px; height: 2px; background: linear-gradient(90deg, var(--gold), var(--gold-light)); border-radius: 1px; }
+.sidebar-nav { flex: 1; padding: 16px 12px; display: flex; flex-direction: column; gap: 4px; }
+.nav-section { font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.3); padding: 12px 8px 6px; letter-spacing: 1px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; color: rgba(255,255,255,0.65); font-size: 13.5px; font-weight: 500; cursor: pointer; transition: all 0.2s; text-decoration: none; }
+.nav-item:hover { background: rgba(255,255,255,0.07); color: var(--white); }
+.nav-item.active { background: var(--gold); color: var(--navy-dark); font-weight: 700; }
+.sidebar-footer { padding: 16px 12px; border-top: 1px solid rgba(255,255,255,0.08); }
+.user-card { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 10px; background: rgba(255,255,255,0.06); margin-bottom: 8px; }
+.user-avatar { width: 36px; height: 36px; background: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: var(--navy-dark); }
+.user-name { font-size: 12px; font-weight: 600; color: var(--white); }
+.user-role { font-size: 10px; color: rgba(255,255,255,0.4); }
+.logout-btn { width: 100%; padding: 8px; background: rgba(255,255,255,0.06); border: none; border-radius: 8px; color: rgba(255,255,255,0.5); font-family: 'IBM Plex Sans Arabic', sans-serif; font-size: 12px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.logout-btn:hover { background: rgba(255,255,255,0.12); color: var(--white); }
+.main { margin-right: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; }
+.topbar { background: var(--white); border-bottom: 1px solid var(--gray-200); padding: 0 28px; height: 64px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; box-shadow: 0 1px 8px rgba(27,42,94,0.06); }
+.topbar-title { font-size: 18px; font-weight: 800; color: var(--navy-dark); }
+.topbar-date { font-size: 12px; color: var(--gray-500); }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.lang-toggle { display: flex; align-items: center; background: var(--gray-100); border-radius: 20px; padding: 3px; gap: 2px; }
+.lang-btn { padding: 4px 12px; border-radius: 16px; border: none; font-family: 'IBM Plex Sans Arabic', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; background: transparent; color: var(--gray-500); }
+.lang-btn.active { background: var(--navy); color: var(--white); }
+.breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--gray-500); margin-bottom: 20px; }
+.breadcrumb a { color: var(--navy); text-decoration: none; font-weight: 500; }
+.breadcrumb span { color: var(--gray-300); }
+.content { padding: 28px; flex: 1; }
+.page-header { margin-bottom: 24px; }
+.page-header h2 { font-size: 22px; font-weight: 800; color: var(--navy-dark); margin-bottom: 4px; }
+.page-header p { font-size: 13px; color: var(--gray-500); }
+.form-card { background: var(--white); border-radius: 16px; border: 1px solid var(--gray-100); box-shadow: 0 2px 8px rgba(27,42,94,0.05); overflow: hidden; margin-bottom: 20px; }
+.form-card-header { padding: 18px 24px; border-bottom: 1px solid var(--gray-100); display: flex; align-items: center; gap: 10px; }
+.form-card-header-icon { width: 36px; height: 36px; border-radius: 10px; background: var(--gray-100); display: flex; align-items: center; justify-content: center; }
+.form-card-title { font-size: 15px; font-weight: 700; color: var(--navy-dark); }
+.form-card-body { padding: 24px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+.field { display: flex; flex-direction: column; gap: 7px; }
+.field.full { grid-column: 1 / -1; }
+.field label { font-size: 13px; font-weight: 600; color: var(--gray-700); }
+.field label span { color: #EF4444; margin-right: 2px; }
+.input-wrap { position: relative; }
+.input-wrap input, .input-wrap select {
+  width: 100%; height: 46px;
+  background: var(--gray-50); border: 1.5px solid var(--gray-200);
+  border-radius: 10px; padding: 0 14px 0 40px;
+  font-family: 'IBM Plex Sans Arabic', sans-serif; font-size: 14px; color: var(--navy-dark);
+  direction: inherit; outline: none; transition: all 0.2s;
+}
+.input-wrap input:focus, .input-wrap select:focus { border-color: var(--navy); background: var(--white); box-shadow: 0 0 0 3px rgba(27,42,94,0.08); }
+.input-wrap input.error, .input-wrap select.error { border-color: #EF4444; }
+.input-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--gray-300); pointer-events: none; }
+.field-error { font-size: 11px; color: #EF4444; font-weight: 500; display: none; }
+.field-error.show { display: block; }
+.radio-group { display: flex; gap: 12px; }
+.radio-option { flex: 1; }
+.radio-option input { display: none; }
+.radio-option label { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px; border-radius: 10px; border: 1.5px solid var(--gray-200); background: var(--gray-50); cursor: pointer; font-size: 13px; font-weight: 500; color: var(--gray-700); transition: all 0.2s; }
+.radio-option input:checked + label { border-color: var(--navy); background: #E6F1FB; color: var(--navy); font-weight: 700; }
+.form-actions { display: flex; gap: 12px; justify-content: flex-end; padding: 20px 24px; border-top: 1px solid var(--gray-100); }
+.btn { padding: 0 28px; height: 46px; border-radius: 10px; font-family: 'IBM Plex Sans Arabic', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; border: none; transition: all 0.2s; display: flex; align-items: center; gap: 8px; }
+.btn-primary { background: var(--navy); color: var(--white); box-shadow: 0 4px 12px rgba(27,42,94,0.25); }
+.btn-primary:hover { background: var(--navy-light); }
+.btn-secondary { background: var(--gray-100); color: var(--gray-700); }
+.btn.loading { pointer-events: none; opacity: 0.75; }
+.btn .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.6s linear infinite; display: none; }
+.btn.loading .spinner { display: block; }
+.btn.loading .btn-text { display: none; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.toast { position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-80px); background: var(--green); color: white; padding: 14px 24px; border-radius: 12px; font-size: 14px; font-weight: 600; box-shadow: 0 8px 32px rgba(0,0,0,0.2); z-index: 999; transition: transform 0.4s cubic-bezier(0.16,1,0.3,1); display: flex; align-items: center; gap: 10px; }
+.toast.show { transform: translateX(-50%) translateY(0); }
+.user-version { font-size:10px;color:rgba(255,255,255,0.35);margin-top:2px }
+.about-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:0;pointer-events:none;transition:opacity 0.3s;padding:20px }
+.about-overlay.open { opacity:1;pointer-events:all }
+.about-modal { background:var(--white);border-radius:20px;max-width:420px;width:100%;position:relative;box-shadow:0 25px 60px rgba(0,0,0,0.3);overflow:hidden }
+.about-close { position:absolute;top:12px;right:16px;background:none;border:none;font-size:24px;color:rgba(255,255,255,0.6);cursor:pointer;z-index:2;line-height:1 }
+[dir="ltr"] .about-close { right:auto;left:16px }
+.about-close:hover { color:#fff }
+.about-header { background:linear-gradient(135deg,var(--navy-dark) 0%,#2b3e7e 100%);padding:32px 24px 24px;text-align:center }
+.about-header img { width:72px;height:72px;border-radius:50%;border:3px solid rgba(255,255,255,0.2);object-fit:contain;background:var(--white);padding:8px }
+.about-body { padding:24px;text-align:center }
+.about-body h2 { font-size:16px;font-weight:800;color:var(--navy-dark);margin-bottom:16px }
+.about-badges { display:flex;gap:8px;justify-content:center;margin-bottom:12px;flex-wrap:wrap }
+.about-badge { padding:4px 14px;border-radius:20px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:4px }
+.about-badge-version { background:var(--navy);color:var(--white) }
+.about-badge-status { background:#E1F5EE;color:#0F6E56 }
+.about-meta { font-size:12px;color:var(--gray-500);margin-bottom:20px }
+.about-features { display:grid;grid-template-columns:1fr 1fr;gap:6px;text-align:right }
+[dir="ltr"] .about-features { text-align:left }
+.about-feature { font-size:12px;color:var(--gray-700);padding:6px 10px;background:var(--gray-50);border-radius:8px;font-weight:500 }
+.notif-btn{width:36px;height:36px;background:var(--gray-100);border:none;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--gray-700);position:relative;transition:background 0.2s}.notif-btn:hover{background:var(--gray-200)}.notif-dot{position:absolute;top:6px;left:6px;width:8px;height:8px;background:#EF4444;border-radius:50%;border:2px solid var(--white)}.notif-dot.hidden{display:none}.notif-wrapper{position:relative}.notif-dropdown{position:fixed;top:72px;inset-inline-end:28px;width:400px;max-height:480px;overflow-y:auto;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.12);z-index:1000;display:none;border:1px solid var(--gray-100)}.notif-dropdown.open{display:block}
+[dir="rtl"] .notif-dropdown { right:28px; left:auto; }
+[dir="ltr"] .notif-dropdown { left:28px; right:auto; }.notif-badge{position:absolute;top:2px;right:2px;background:#EF4444;color:#fff;font-size:10px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:none;align-items:center;justify-content:center;padding:0 4px}.notif-badge.show{display:flex}.notif-header{padding:14px 16px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between;font-size:14px;font-weight:700;color:var(--navy-dark)}.notif-header button{background:none;border:none;font-size:12px;color:var(--navy);cursor:pointer;font-weight:600;font-family:'IBM Plex Sans Arabic',sans-serif}.notif-header button:hover{text-decoration:underline}.notif-item{display:flex;align-items:flex-start;gap:10px;padding:12px 16px;border-bottom:1px solid var(--gray-100);cursor:pointer;transition:background 0.15s}.notif-item:hover{background:var(--gray-50)}.notif-item:last-child{border-bottom:none}.notif-item-dot{width:8px;height:8px;border-radius:50%;margin-top:6px;flex-shrink:0}.notif-item-text{font-size:13px;color:var(--navy-dark);font-weight:500;flex:1;line-height:1.4}.notif-item-time{font-size:11px;color:var(--gray-500);margin-top:2px}.notif-empty{padding:32px 16px;text-align:center;color:var(--gray-500);font-size:13px}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-image-container">
+      <img src="nu-logo.png" alt="جامعة نجران">
+    </div>
+    <div class="sidebar-logo-title" data-ar="نظام إسكان الطلاب والطالبات" data-en="Students Housing System">نظام إسكان الطلاب والطالبات</div>
+    <div class="sidebar-logo-sub" data-ar="جامعة نجران" data-en="Najran University">جامعة نجران</div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section" data-ar="الرئيسية" data-en="MAIN">الرئيسية</div>
+    <a class="nav-item" href="dashboard.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <span data-ar="لوحة التحكم" data-en="Dashboard">لوحة التحكم</span>
+    </a>
+
+    <div class="nav-section" data-ar="الطلاب" data-en="STUDENTS">الطلاب</div>
+    <a class="nav-item" id="studentsTab" href="students.html">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /></svg>
+        <span data-ar="قائمة الطلاب" data-en="Students List">قائمة الطلاب</span>
+    </a>
+    <div style="font-size:10px;font-weight:600;color:rgba(255,255,255,0.3);padding:4px 8px 6px 24px;letter-spacing:0.5px" data-ar="إدارة التسجيل" data-en="REGISTRATION">إدارة التسجيل</div>
+    <a class="nav-item" id="registerStudentTab" href="register_student.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+      <span data-ar="تسجيل فردي" data-en="Individual Registration">تسجيل فردي</span>
+    </a>
+    <a class="nav-item" id="bulkRegistrationTab" href="bulk-registration.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 11 9 11 11 13 11 13 12 10 12 10 9"/></svg>
+      <span data-ar="تسجيل جماعي (Excel)" data-en="Bulk Registration (Excel)">تسجيل جماعي (Excel)</span>
+    </a>
+    <a class="nav-item" id="studentStatusTab" href="student-status.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <span data-ar="تحديث حالة الطالب" data-en="Update Student Status">تحديث حالة الطالب</span>
+    </a>
+
+    <div class="nav-section" data-ar="الطلبات" data-en="REQUESTS">الطلبات</div>
+    <a class="nav-item" id="allRequestsTab" href="requests.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <span data-ar="كل الطلبات" data-en="All Requests">كل الطلبات</span>
+    </a>
+    <a class="nav-item" id="housingManagementTab" href="housing-management.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+      <span data-ar="إدارة السكن" data-en="Housing Management">إدارة السكن</span>
+    </a>
+    <div class="nav-section" data-ar="النظام" data-en="SYSTEM">النظام</div>
+    <a class="nav-item" id="reportsTab" href="reports.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 11 9 11 11 13 11 13 12 10 12 10 9"/></svg>
+      <span data-ar="التقارير" data-en="Reports">التقارير</span>
+    </a>
+    <a class="nav-item" id="auditTab" href="auditlog.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <span data-ar="سجل العمليات" data-en="Audit Log">سجل العمليات</span>
+    </a>
+    <a class="nav-item" onclick="showAbout();return false" style="cursor:pointer">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      <span data-ar="حول النظام" data-en="About System">حول النظام</span>
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-card">
+  <div class="user-avatar">👤</div>
+  <div>
+    <div class="user-name" id="sidebar-user-name"></div>
+    <div class="user-role" id="sidebar-user-role"></div>
+    <div class="user-version">v<span id="sidebarVer">1.0.0</span></div>
+  </div>
+</div>
+
+    <button class="logout-btn" onclick="window.location.href='login.html'">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <span data-ar="تسجيل الخروج" data-en="Logout">تسجيل الخروج</span>
+    </button>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" data-ar="تسجيل طالب جديد" data-en="Register Student">تسجيل طالب جديد</div>
+    <div class="topbar-right">
+      <div class="topbar-date" id="dateNow"></div>
+      <div class="lang-toggle">
+        <button class="lang-btn active" id="btn-ar" onclick="setLang('ar')">عربي</button>
+        <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
+      </div>
+      <div class="notif-wrapper">
+        <button class="notif-btn" onclick="toggleNotifDropdown(event)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="notif-dot"></span>
+          <span class="notif-badge" id="notif-badge"></span>
+        </button>
+        <div class="notif-dropdown" id="notif-dropdown">
+          <div class="notif-header">
+            <span data-ar="الإشعارات" data-en="Notifications">الإشعارات</span>
+            <button onclick="markAllNotifRead()" data-ar="تحديد الكل مقروء" data-en="Mark all read">تحديد الكل مقروء</button>
+          </div>
+          <div class="notif-list" id="notif-dropdown-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="breadcrumb">
+      <a href="dashboard.html" data-ar="الرئيسية" data-en="Home">الرئيسية</a>
+      <span>›</span>
+      <span data-ar="تسجيل طالب جديد" data-en="Register Student">تسجيل طالب جديد</span>
+    </div>
+    <div class="page-header">
+      <h2 data-ar="تسجيل طالب جديد" data-en="Register Student">تسجيل طالب جديد</h2>
+      <p data-ar="أدخل بيانات الطالب للتسجيل في نظام السكن" data-en="Enter student details to register in the housing system">أدخل بيانات الطالب للتسجيل في نظام السكن</p>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-header">
+        <div class="form-card-header-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <div class="form-card-title" data-ar="المعلومات الشخصية" data-en="Personal Information">المعلومات الشخصية</div>
+      </div>
+      <div class="form-card-body">
+        <div class="form-grid">
+          <div class="field">
+            <label data-i18n="fullName">الاسم الكامل <span>*</span></label>
+            <div class="input-wrap">
+              <input type="text" id="full_name" data-i18n-placeholder="fullNamePlaceholder" placeholder="أدخل الاسم الكامل">
+              <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <span class="field-error" id="err-full_name" data-i18n="fieldRequired">حقل مطلوب</span>
+            <span class="field-error" id="val-full_name" data-i18n="arabicNameValidation">يرجى إدخال الاسم باللغة العربية فقط</span>
+          </div>
+          <div class="field">
+            <label data-i18n="studentId">الرقم الجامعي <span>*</span></label>
+            <div class="input-wrap">
+              <input type="text" id="student_id" maxlength="10" data-i18n-placeholder="studentIdPlaceholder" placeholder="">
+              <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8a2 2 0 0 0-2 2v2h12V5a2 2 0 0 0-2-2z"/></svg>
+            </div>
+            <span class="field-error" id="err-student_id" data-i18n="fieldRequired">حقل مطلوب</span>
+            <span class="field-error" id="val-student_id" data-i18n="studentIdValidation">يجب أن يتكون الرقم الجامعي من 10 أرقام</span>
+          </div>
+          <div class="field">
+            <label data-i18n="fullNameEnglish">الاسم بالإنجليزية <span>*</span></label>
+            <div class="input-wrap">
+              <input type="text" id="full_name_english" data-i18n-placeholder="fullNameEnglishPlaceholder" placeholder="أدخل الاسم بالإنجليزية">
+              <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <span class="field-error" id="err-full_name_english" data-i18n="fieldRequired">حقل مطلوب</span>
+            <span class="field-error" id="val-full_name_english" data-i18n="englishNameValidation">يرجى إدخال الاسم باللغة الإنجليزية فقط</span>
+          </div>
+          <div class="field">
+            <label data-i18n="nationalId">رقم الهوية <span>*</span></label>
+            <div class="input-wrap">
+              <input type="text" id="national_id" data-i18n-placeholder="nationalIdPlaceholder" placeholder="" maxlength="10">
+              <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+            </div>
+            <span class="field-error" id="err-national_id" data-i18n="fieldRequired">حقل مطلوب</span>
+            <span class="field-error" id="val-national_id" data-i18n="nationalIdValidation">يجب أن يتكون رقم الهوية من 10 أرقام</span>
+          </div>
+          <div class="field">
+            <label data-i18n="phone">رقم الجوال</label>
+            <div class="input-wrap">
+              <input type="tel" id="phone" data-i18n-placeholder="phonePlaceholder" placeholder="9665" maxlength="12">
+              <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.41 2 2 0 0 1 3.6 1.24h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16.92z"/></svg>
+            </div>
+            <span class="field-error" id="val-phone" data-i18n="phoneValidation">يجب أن يبدأ الرقم بـ 9665 ويتكون من 12 رقمًا</span>
+          </div>
+          <div class="field">
+            <label data-i18n="gender">الجنس <span>*</span></label>
+            <div class="input-wrap">
+              <select id="gender">
+                <option value="" data-i18n="selectGender">اختر الجنس</option>
+                <option value="male" data-i18n="male">ذكر</option>
+                <option value="female" data-i18n="female">أنثى</option>
+              </select>
+              <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/></svg>
+            </div>
+            <span class="field-error" id="err-gender" data-i18n="selectGender">اختر الجنس</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-header">
+        <div class="form-card-header-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        </div>
+        <div class="form-card-title" data-i18n="academicInfo">المعلومات الأكاديمية</div>
+      </div>
+      <div class="form-card-body">
+        <div class="form-grid">
+          <div class="field">
+            <label data-i18n="college">الكلية <span>*</span></label>
+            <div class="input-wrap">
+              <select id="college">
+<option value="" data-i18n="collegePlaceholder">اختر الكلية</option>
+                <option value="engineering" data-i18n="collegeEngineering">الهندسة</option>
+                <option value="medicine" data-i18n="collegeMedicine">الطب</option>
+                <option value="cs" data-i18n="collegeCS">علوم الحاسب والمعلومات</option>
+                <option value="science" data-i18n="collegeScience">العلوم</option>
+                <option value="business" data-i18n="collegeBusiness">إدارة الأعمال</option>
+                <option value="arts" data-i18n="collegeArts">الآداب والعلوم الإنسانية</option>
+                <option value="education" data-i18n="collegeEducation">التربية</option>
+                <option value="pharmacy" data-i18n="collegePharmacy">الصيدلة</option>
+              </select>
+              <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/></svg>
+            </div>
+            <span class="field-error" id="err-college" data-i18n="selectCollege">اختر الكلية</span>
+          </div>
+          <div class="field">
+            <label data-i18n="departmentLabel">القسم <span>*</span></label>
+            <div class="input-wrap">
+              <select id="department">
+                <option value="" data-i18n="departmentPlaceholder">اختر القسم</option>
+                <option value="cs" data-i18n="collegeCS">علوم الحاسب والمعلومات</option>
+                <option value="computer">هندسة الحاسب</option>
+                <option value="electrical">الهندسة الكهربائية</option>
+                <option value="mechanical">الهندسة الميكانيكية</option>
+                <option value="civil">الهندسة المدنية</option>
+                <option value="math">الرياضيات</option>
+                <option value="physics">الفيزياء</option>
+                <option value="chemistry">الكيمياء</option>
+                <option value="biology">الأحياء</option>
+                <option value="business">إدارة الأعمال</option>
+                <option value="accounting">المحاسبة</option>
+                <option value="islamic">الدراسات الإسلامية</option>
+                <option value="arabic">اللغة العربية</option>
+                <option value="english">اللغة الإنجليزية</option>
+              </select>
+              <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/></svg>
+            </div>
+            <span class="field-error" id="err-department" data-i18n="departmentLabel">اختر القسم</span>
+          </div>
+          <div class="field">
+            <label data-i18n="academicLevel">المستوى الدراسي <span>*</span></label>
+            <div class="input-wrap">
+              <select id="academic_level">
+                <option value="" data-i18n="selectAcademicLevel">اختر المستوى</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+              </select>
+              <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/></svg>
+            </div>
+            <span class="field-error" id="err-academic_level" data-i18n="selectAcademicLevel">اختر المستوى</span>
+          </div>
+          <div class="field">
+            <label data-i18n="usernameLabel">اسم المستخدم</label>
+            <div class="input-wrap">
+              <input type="text" id="ad_username">
+              <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-header">
+        <div class="form-card-header-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        </div>
+        <div class="form-card-title" data-i18n="housingInfo">معلومات السكن</div>
+      </div>
+      <div class="form-card-body">
+        <div class="form-grid-3">
+          <div class="field">
+            <label data-i18n="housingBuilding">المبنى السكني <span>*</span></label>
+            <div class="input-wrap">
+              <select id="housing_building">
+                <option value="" data-i18n="buildingPlaceholder">اختر المبنى</option>
+                <option value="65">65</option>
+                <option value="66">66</option>
+                <option value="67">67</option>
+                <option value="68">68</option>
+                <option value="69">69</option>
+                <option value="70">70</option>
+              </select>
+              <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+            </div>
+            <span class="field-error" id="err-housing_building" data-i18n="selectBuilding">اختر المبنى</span>
+          </div>
+          <div class="field">
+            <label data-i18n="roomNumber">رقم الغرفة <span>*</span></label>
+            <div class="input-wrap">
+              <input type="text" id="room_number" data-i18n-placeholder="roomPlaceholder" placeholder="مثال: 101">
+              <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+            </div>
+            <span class="field-error" id="err-room_number" data-i18n="fieldRequired">حقل مطلوب</span>
+          </div>
+          <div class="field">
+            <label data-i18n="apartmentNumber">رقم الشقة <span>*</span></label>
+            <div class="input-wrap">
+              <input type="text" id="apartment_number" data-i18n-placeholder="apartmentPlaceholder" placeholder="أدخل رقم الشقة">
+              <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+            </div>
+            <span class="field-error" id="err-apartment_number" data-i18n="fieldRequired">حقل مطلوب</span>
+          </div>
+          <div class="field">
+            <label data-i18n="status">الحالة</label>
+            <div class="input-wrap">
+              <select id="status">
+                <option value="active" data-i18n="active">نشط</option>
+                <option value="inactive" data-i18n="inactive">غير نشط</option>
+              </select>
+              <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" id="registerStudentButton" onclick="submitForm()">
+          <svg class="btn-text" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+          <span class="btn-text" data-ar="تسجيل طالب جديد" data-en="Register Student">تسجيل طالب جديد</span>
+          <div class="spinner"></div>
+        </button>
+        <button class="btn btn-secondary" onclick="resetForm()">
+          <span data-ar="مسح" data-en="Clear">مسح</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+  <span id="toast-msg" data-i18n="studentRegistered">تم تسجيل الطالب بنجاح!</span>
+</div>
+
+<script>
+const token = localStorage.getItem('staffToken');
+if (!token) window.location.replace('login.html');
+const currentUser = JSON.parse(localStorage.getItem('staffUser') || '{}');
+
+const _userRole = (currentUser.role || '').toLowerCase();
+if (_userRole === 'user' || _userRole === 'cyber') document.getElementById('registerStudentButton')?.remove();
+
+function escHtml(str) {
+  return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function logout() {
+  localStorage.removeItem('staffToken');
+  localStorage.removeItem('staffUser');
+  window.location.replace('login.html');
+}
+
+function validate() {
+  let ok = true;
+  const required = ['full_name','full_name_english','student_id','national_id','college','department','academic_level','housing_building','room_number','apartment_number'];
+  required.forEach(id => {
+    const el = document.getElementById(id);
+    const err = document.getElementById('err-' + id);
+    if (!el.value.trim()) {
+      el.classList.add('error');
+      if (err) err.classList.add('show');
+      ok = false;
+    } else {
+      el.classList.remove('error');
+      if (err) err.classList.remove('show');
+    }
+  });
+  function showValError(id, valId, condition) {
+    const el = document.getElementById(id);
+    const val = document.getElementById(valId);
+    if (el.value.trim() && !condition) {
+      el.classList.add('error');
+      if (val) val.classList.add('show');
+      ok = false;
+    } else if (el.value.trim()) {
+      el.classList.remove('error');
+      if (val) val.classList.remove('show');
+    }
+  }
+  showValError('full_name', 'val-full_name', /^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\s]+$/.test(document.getElementById('full_name').value.trim()));
+  showValError('full_name_english', 'val-full_name_english', /^[a-zA-Z\s]+$/.test(document.getElementById('full_name_english').value.trim()));
+  showValError('student_id', 'val-student_id', /^\d{9,10}$/.test(document.getElementById('student_id').value.trim()));
+  showValError('national_id', 'val-national_id', /^\d{10}$/.test(document.getElementById('national_id').value.trim()));
+  showValError('phone', 'val-phone', /^9665\d{8}$/.test(document.getElementById('phone').value.trim()));
+  const gender = document.getElementById('gender');
+  const errGender = document.getElementById('err-gender');
+  if (!gender.value) { gender.classList.add('error'); errGender.classList.add('show'); ok = false; }
+  else { gender.classList.remove('error'); errGender.classList.remove('show'); }
+  return ok;
+}
+
+async function submitForm() {
+  if (!validate()) return;
+  const btn = document.getElementById('registerStudentButton');
+  btn.classList.add('loading');
+  const data = {
+    full_name: document.getElementById('full_name').value.trim(),
+    full_name_english: document.getElementById('full_name_english').value.trim(),
+    student_id: document.getElementById('student_id').value.trim(),
+    national_id: document.getElementById('national_id').value.trim(),
+    phone: document.getElementById('phone').value.trim(),
+    gender: document.getElementById('gender').value,
+    college: document.getElementById('college').value,
+    department: document.getElementById('department').value,
+    academic_level: document.getElementById('academic_level').value,
+    ad_username: document.getElementById('ad_username').value.trim(),
+    housing_building: document.getElementById('housing_building').value,
+    room_number: document.getElementById('room_number').value.trim(),
+    apartment_number: document.getElementById('apartment_number').value.trim(),
+    status: document.getElementById('status').value
+  };
+  try {
+    const res = await fetch('/api/students', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(data)
+    });
+    if (res.status === 401) { sessionStorage.clear(); window.location.replace('login.html'); return; }
+    if (res.ok) {
+      const createdStudent = await res.json();
+      await fetch('/api/requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ requestType: 'housing', studentId: createdStudent.id, submittedBy: currentUser.id })
+      });
+      showToast(t('studentRegistered'));
+      resetForm();
+    } else {
+      const err = await res.json().catch(() => ({}));
+      showToast(t('error') + ': ' + (err.message || t('errorOccurred')), true);
+    }
+  } catch(e) {
+    showToast(t('serverError'), true);
+  } finally {
+    btn.classList.remove('loading');
+  }
+}
+
+function resetForm() {
+  ['full_name','full_name_english','student_id','national_id','phone','ad_username','room_number','apartment_number'].forEach(id => {
+    document.getElementById(id).value = '';
+    document.getElementById(id).classList.remove('error');
+  });
+  ['college','department','academic_level','gender','housing_building','status'].forEach(id => {
+    document.getElementById(id).selectedIndex = 0;
+    document.getElementById(id).classList.remove('error');
+  });
+  document.querySelectorAll('.field-error').forEach(e => e.classList.remove('show'));
+}
+
+function showToast(msg, isError = false) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.style.background = isError ? '#991B1B' : '#0F6E56';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+document.querySelector('.logout-btn').onclick = logout;
+
+async function fetchNotifs() {
+  try {
+    const res = await fetch('/api/notifications?role=' + encodeURIComponent(_userRole), { headers: { 'Authorization': 'Bearer ' + token } });
+    if (res.status === 401) { localStorage.removeItem('staffToken'); localStorage.removeItem('staffUser'); window.location.replace('login.html'); return null; }
+    return await res.json();
+  } catch(e) { return null; }
+}
+async function loadNotifDropdown() {
+  const data = await fetchNotifs();
+  const list = document.getElementById('notif-dropdown-list');
+  if (!data) { list.innerHTML = '<div class="notif-empty">تعذر الاتصال بالـ API</div>'; return; }
+  list.innerHTML = data.length ? data.map(function(n) {
+    return '<div class="notif-item" onclick="markNotifRead(' + n.id + ',this)" data-id="' + n.id + '">' +
+      '<div class="notif-item-dot" style="background:' + (n.status === 'pending' ? '#1B2A5E' : '#CBD5E1') + ';"></div>' +
+      '<div>' +
+        '<div class="notif-item-text">' + escHtml(n.message) + '</div>' +
+        '<div class="notif-item-time">' + new Date(n.sent_at || Date.now()).toLocaleDateString('ar-SA') + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('') : '<div class="notif-empty">لا توجد إشعارات</div>';
+}
+async function loadUnreadCount() {
+  try {
+    const res = await fetch('/api/notifications/unread-count?role=' + encodeURIComponent(_userRole), { headers: { 'Authorization': 'Bearer ' + token } });
+    if (res.status === 401) { localStorage.removeItem('staffToken'); localStorage.removeItem('staffUser'); window.location.replace('login.html'); return; }
+    var d = await res.json();
+    var badge = document.getElementById('notif-badge');
+    var dot = document.querySelector('.notif-dot');
+    if (d && d.count > 0) { badge.textContent = d.count; badge.classList.add('show'); if (dot) dot.classList.remove('hidden'); } else { badge.classList.remove('show'); if (dot) dot.classList.add('hidden'); }
+  } catch(e) {}
+}
+function toggleNotifDropdown(e) {
+  e.stopPropagation();
+  var dd = document.getElementById('notif-dropdown');
+  var isOpen = dd.classList.contains('open');
+  document.querySelectorAll('.notif-dropdown.open').forEach(function(d) { d.classList.remove('open'); });
+  if (!isOpen) { dd.classList.add('open'); if (!dd.dataset.loaded) { loadNotifDropdown(); dd.dataset.loaded = '1'; } }
+}
+async function markNotifRead(id, el) {
+  try { await fetch('/api/notifications/read', { method: 'PATCH', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify([id]) }); el.querySelector('.notif-item-dot').style.background = '#CBD5E1'; loadUnreadCount(); } catch(e) {}
+}
+async function markAllNotifRead() {
+  var items = document.querySelectorAll('#notif-dropdown-list .notif-item[data-id]'), ids = [];
+  items.forEach(function(el) { ids.push(parseInt(el.dataset.id)); });
+  if (!ids.length) return;
+  try { await fetch('/api/notifications/read', { method: 'PATCH', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify(ids) }); document.querySelectorAll('#notif-dropdown-list .notif-item-dot').forEach(function(d) { d.style.background = '#CBD5E1'; }); loadUnreadCount(); } catch(e) {}
+}
+document.addEventListener('click', function(e) { if (!e.target.closest('.notif-wrapper')) { document.querySelectorAll('.notif-dropdown.open').forEach(function(d) { d.classList.remove('open'); }); } });
+
+setLang(localStorage.getItem('uiLanguage') || 'ar');
+loadUnreadCount();
+setInterval(loadUnreadCount, 30000);
+
+function digitsOnly(e) { e.value = e.value.replace(/\D/g,''); }
+function validateField(id, valId, regex) {
+  var el = document.getElementById(id);
+  var val = document.getElementById(valId);
+  if (el.value.trim() && !regex.test(el.value.trim())) { el.classList.add('error'); if (val) val.classList.add('show'); }
+  else { el.classList.remove('error'); if (val) val.classList.remove('show'); }
+}
+['student_id','national_id','phone'].forEach(function(id) {
+  document.getElementById(id).addEventListener('input', function() { digitsOnly(this); });
+});
+document.getElementById('full_name').addEventListener('input', function() {
+  validateField('full_name','val-full_name',/^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\s]+$/);
+  var err = document.getElementById('err-full_name'); if (this.value.trim()) err.classList.remove('show');
+});
+document.getElementById('full_name_english').addEventListener('input', function() {
+  validateField('full_name_english','val-full_name_english',/^[a-zA-Z\s]+$/);
+  var err = document.getElementById('err-full_name_english'); if (this.value.trim()) err.classList.remove('show');
+});
+document.getElementById('student_id').addEventListener('input', function() {
+  document.getElementById('ad_username').value = this.value;
+  validateField('student_id','val-student_id',/^\d{9,10}$/);
+  var err = document.getElementById('err-student_id'); if (this.value.trim()) err.classList.remove('show');
+});
+document.getElementById('national_id').addEventListener('input', function() {
+  validateField('national_id','val-national_id',/^\d{10}$/);
+  var err = document.getElementById('err-national_id'); if (this.value.trim()) err.classList.remove('show');
+});
+document.getElementById('phone').addEventListener('input', function() {
+  validateField('phone','val-phone',/^9665\d{8}$/);
+});
+</script>
+<script src="VersionInfo.js"></script>
+<div class="about-overlay" id="aboutModal" onclick="if(event.target===this)closeAbout()">
+  <div class="about-modal">
+    <button onclick="closeAbout()" class="about-close">&times;</button>
+    <div class="about-header">
+      <img src="nu-logo.png" alt="جامعة نجران">
+    </div>
+    <div class="about-body">
+      <div class="about-badges">
+        <span class="about-badge about-badge-version">v<span id="aboutVersion">1.0.0</span></span>
+        <span class="about-badge about-badge-status">Production Ready</span>
+      </div>
+      <h2 id="aboutSysName">نظام إسكان الطلاب والطالبات</h2>
+      <div class="about-meta" id="aboutBuildDate">Build: 2026-07-01</div>
+      <div class="about-features">
+        <span data-ar="إدارة الطلاب" data-en="Student Management" class="about-feature">إدارة الطلاب</span>
+        <span data-ar="سجل العمليات" data-en="Audit Trail" class="about-feature">سجل العمليات</span>
+        <span data-ar="التقارير" data-en="Reports" class="about-feature">التقارير</span>
+        <span data-ar="الطلبات" data-en="Requests" class="about-feature">الطلبات</span>
+        <span data-ar="لوحة التحكم" data-en="Dashboard" class="about-feature">لوحة التحكم</span>
+        <span data-ar="تصدير Excel" data-en="Excel Export" class="about-feature">تصدير Excel</span>
+        <span data-ar="تتبع IP" data-en="IP Tracking" class="about-feature">تتبع IP</span>
+        <span data-ar="الأمان" data-en="Security" class="about-feature">الأمان</span>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function showAbout() {
+  var lang = (document.getElementById('html-root') || document.documentElement).getAttribute('lang') || 'ar';
+  document.getElementById('aboutSysName').textContent = lang === 'ar' ? (typeof SYSTEM_NAME_AR !== 'undefined' ? SYSTEM_NAME_AR : 'نظام إسكان الطلاب والطالبات') : (typeof SYSTEM_NAME_EN !== 'undefined' ? SYSTEM_NAME_EN : 'Students Housing System - Najran University');
+  document.getElementById('aboutVersion').textContent = typeof APP_VERSION !== 'undefined' ? APP_VERSION : '1.0.0';
+  document.getElementById('aboutBuildDate').textContent = 'Build: ' + (typeof BUILD_DATE !== 'undefined' ? BUILD_DATE : '2026-07-01');
+  document.getElementById('aboutModal').classList.add('open');
+}
+function closeAbout() { document.getElementById('aboutModal').classList.remove('open'); }
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeAbout(); });
+</script>
+<script src="sidebar.js"></script>
+<script src="inactivity.js"></script>
+<script>if (typeof setLang === 'function') setLang(currentLang);</script>
+</body>
+</html>

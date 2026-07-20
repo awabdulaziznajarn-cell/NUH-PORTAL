@@ -1,0 +1,52 @@
+# OS files
+Thumbs.db
+*.DS_Store
+
+# IDE
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+.vs/
+.vscode/
+
+# Build
+bin/
+obj/
+packages/
+*.nupkg
+
+# Deployment artifacts (these have placeholders but production overrides are local)
+deployment/build/
+deployment/migrations/*.sql
+deployment/rollback/*.sql
+
+# Production config (contains real secrets - NEVER commit)
+appsettings.Production.json
+
+# Logs
+*.log
+server-log.txt
+stderr.txt
+stdout.txt
+stderr_diag.txt
+stdout_diag.txt
+dbdiag.log
+
+# Runtime
+publish/
+
+# Scratch
+scratch/
+query
+stop
+0
+x
+qc
+
+# NuGet
+.nuget/
+
+# User-specific
+NUH-PORTAL.csproj.user

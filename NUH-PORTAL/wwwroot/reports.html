@@ -1,0 +1,1163 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl" id="html-root">
+<head>
+<link rel="icon" href="favicon.ico">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مركز التقارير</title>
+<script src="i18n.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  @font-face { font-family: 'IBM Plex Sans Arabic'; font-style: normal; font-weight: 400; src: url('fonts/IBMPlexSansArabic-Regular.woff2') format('woff2'); }
+  @font-face { font-family: 'IBM Plex Sans Arabic'; font-style: normal; font-weight: 600; src: url('fonts/IBMPlexSansArabic-SemiBold.woff2') format('woff2'); }
+</style>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --navy: #1B2A5E; --navy-dark: #111C42; --navy-light: #2B3E7E;
+  --gold: #C9A84C; --gold-light: #E8C96A;
+  --white: #FFFFFF; --gray-50: #F4F6FB; --gray-100: #EEF1F8;
+  --gray-200: #DDE3F0; --gray-300: #C8CFDF; --gray-500: #8891A8;
+  --gray-700: #4A5270; --green: #0F6E56; --green-light: #E1F5EE;
+  --red: #991B1B; --red-light: #FEF2F2; --sidebar-w: 240px;
+}
+body { font-family: 'IBM Plex Sans Arabic', sans-serif; background: var(--gray-50); color: var(--navy-dark); min-height: 100vh; display: flex; }
+.sidebar { width: var(--sidebar-w); background: var(--navy-dark); min-height: 100vh; display: flex; flex-direction: column; position: fixed; right: 0; top: 0; z-index: 100; box-shadow: -4px 0 24px rgba(0,0,0,0.18); }
+[dir="ltr"] .sidebar { right: auto; left: 0; box-shadow: 4px 0 24px rgba(0,0,0,0.18); }
+.sidebar-logo { padding: 24px 20px 20px; display: flex; flex-direction: column; align-items: center; }
+.sidebar-logo-image-container { background: #fff; border-radius: 16px; padding: 12px 24px; border: 1px solid rgba(201,168,76,0.2); box-shadow: 0 4px 16px rgba(0,0,0,0.08), 0 0 0 1px rgba(201,168,76,0.06); transition: box-shadow 0.3s ease, transform 0.3s ease; margin-bottom: 24px; }
+.sidebar-logo-image-container:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.12), 0 0 0 1px rgba(201,168,76,0.15); transform: translateY(-2px); }
+.sidebar-logo-image-container img { display: block; width: 72px; height: 72px; object-fit: contain; }
+.sidebar-logo-title { font-size: 13px; font-weight: 700; color: var(--white); text-align: center; line-height: 1.5; margin-bottom: 4px; }
+.sidebar-logo-sub { font-size: 10px; color: var(--gold-light); text-align: center; position: relative; padding-bottom: 12px; }
+.sidebar-logo-sub::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 32px; height: 2px; background: linear-gradient(90deg, var(--gold), var(--gold-light)); border-radius: 1px; }
+.sidebar-nav { flex: 1; padding: 16px 12px; display: flex; flex-direction: column; gap: 4px; }
+.nav-section { font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.3); padding: 12px 8px 6px; letter-spacing: 1px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; color: rgba(255,255,255,0.65); font-size: 13.5px; font-weight: 500; cursor: pointer; transition: all 0.2s; text-decoration: none; }
+.nav-item:hover { background: rgba(255,255,255,0.07); color: var(--white); }
+.nav-item.active { background: var(--gold); color: var(--navy-dark); font-weight: 700; }
+.nav-item svg { flex-shrink: 0; }
+.sidebar-footer { padding: 16px 12px; border-top: 1px solid rgba(255,255,255,0.08); }
+.user-card { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 10px; background: rgba(255,255,255,0.06); margin-bottom: 8px; }
+.user-avatar { width: 36px; height: 36px; background: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: var(--navy-dark); flex-shrink: 0; }
+.user-name { font-size: 12px; font-weight: 600; color: var(--white); }
+.user-role { font-size: 10px; color: rgba(255,255,255,0.4); }
+.logout-btn { width: 100%; padding: 8px; background: rgba(255,255,255,0.06); border: none; border-radius: 8px; color: rgba(255,255,255,0.5); font-family: 'IBM Plex Sans Arabic', sans-serif; font-size: 12px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.logout-btn:hover { background: rgba(255,255,255,0.12); color: var(--white); }
+.main { margin-right: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+[dir="ltr"] .main { margin-right: 0; margin-left: var(--sidebar-w); }
+.topbar { background: var(--white); border-bottom: 1px solid var(--gray-200); padding: 0 28px; height: 64px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; box-shadow: 0 1px 8px rgba(27,42,94,0.06); }
+.topbar-title { font-size: 18px; font-weight: 800; color: var(--navy-dark); }
+.topbar-date { font-size: 12px; color: var(--gray-500); }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
+.lang-toggle { display: flex; align-items: center; background: var(--gray-100); border-radius: 20px; padding: 3px; gap: 2px; }
+.lang-btn { padding: 4px 12px; border-radius: 16px; border: none; font-family: 'IBM Plex Sans Arabic', sans-serif; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; background: transparent; color: var(--gray-500); }
+.lang-btn.active { background: var(--navy); color: var(--white); box-shadow: 0 2px 8px rgba(27,42,94,0.2); }
+.content { padding: 28px; flex: 1; }
+.page-header { margin-bottom: 24px; }
+.page-header h2 { font-size: 22px; font-weight: 800; color: var(--navy-dark); margin-bottom: 4px; }
+.page-header p { font-size: 13px; color: var(--gray-500); }
+.card { background: var(--white); border-radius: 16px; border: 1px solid var(--gray-100); box-shadow: 0 2px 8px rgba(27,42,94,0.05); overflow: hidden; }
+.card-header { padding: 18px 20px; border-bottom: 1px solid var(--gray-100); display: flex; align-items: center; justify-content: space-between; }
+.card-title { font-size: 15px; font-weight: 700; color: var(--navy-dark); }
+.card-action { font-size: 12px; color: var(--navy); font-weight: 600; cursor: pointer; text-decoration: none; background: var(--gray-100); padding: 4px 12px; border-radius: 20px; transition: background 0.2s; border: none; font-family: inherit; }
+.card-action:hover { background: var(--gray-200); }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.stat-card { background: var(--white); border-radius: 14px; padding: 16px; border: 1px solid var(--gray-100); box-shadow: 0 2px 8px rgba(27,42,94,0.05); display: flex; flex-direction: column; gap: 8px; transition: transform 0.2s, box-shadow 0.2s; }
+.stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(27,42,94,0.1); }
+.stat-top { display: flex; align-items: center; justify-content: space-between; }
+.stat-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+.stat-num { font-size: 26px; font-weight: 900; color: var(--navy-dark); line-height: 1; }
+.stat-label { font-size: 12px; color: var(--gray-500); font-weight: 500; }
+.report-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.report-tab { padding: 8px 18px; border-radius: 20px; border: 1.5px solid var(--gray-200); background: var(--white); font-family: inherit; font-size: 13px; font-weight: 600; color: var(--gray-500); cursor: pointer; transition: all 0.2s; }
+.report-tab:hover { border-color: var(--navy); color: var(--navy); }
+.report-tab.active { background: var(--navy); color: var(--white); border-color: var(--navy); }
+.filters-bar { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; align-items: end; }
+.filter-group { display: flex; flex-direction: column; gap: 4px; }
+.filter-group label { font-size: 11px; font-weight: 600; color: var(--gray-500); }
+.filter-group select, .filter-group input { padding: 8px 10px; border: 1px solid var(--gray-200); border-radius: 8px; font-family: inherit; font-size: 13px; background: var(--white); color: var(--navy-dark); min-width: 140px; }
+.filter-group input[type=text] { min-width: 160px; }
+.export-bar { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+.export-btn { padding: 8px 16px; border: none; border-radius: 8px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap; transition: all 0.2s; }
+.export-btn-excel { background: #0F6E56; color: #fff; }
+.export-btn-excel:hover { background: var(--navy); }
+.export-btn-pdf { background: #991B1B; color: #fff; }
+.export-btn-pdf:hover { background: #7F1D1D; }
+.export-btn-print { background: var(--gray-100); color: var(--navy-dark); }
+.export-btn-print:hover { background: var(--gray-200); }
+.stats-bar { display: flex; flex-wrap: wrap; gap: 24px; margin-bottom: 16px; padding: 12px 20px; background: var(--gray-50); border-radius: 10px; font-size: 13px; }
+.stat-item { display: flex; align-items: center; gap: 6px; }
+.stat-value { color: var(--navy-dark); font-weight: 700; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead th { background: var(--gray-50); padding: 11px 16px; text-align: right; font-size: 11px; font-weight: 600; color: var(--gray-500); border-bottom: 1px solid var(--gray-100); position: sticky; top: 0; z-index: 2; }
+[dir="ltr"] thead th { text-align: left; }
+tbody td { padding: 13px 16px; border-bottom: 1px solid var(--gray-100); color: var(--navy-dark); font-weight: 500; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: var(--gray-50); }
+tbody tr:nth-child(even) { background: #FAFBFD; }
+tbody tr:nth-child(even):hover { background: var(--gray-50); }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+#chartsRow { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+.spinner { width: 32px; height: 32px; border: 3px solid var(--gray-200); border-top-color: var(--navy); border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto; }
+@keyframes spin { to { transform: rotate(360deg) } }
+.empty-state { text-align: center; padding: 40px 20px; color: var(--gray-500); }
+.empty-state .empty-icon { font-size: 36px; margin-bottom: 8px; }
+.empty-state .empty-text { font-size: 14px; }
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.badge-green { background: var(--green-light); color: var(--green); }
+.badge-blue { background: #E6F1FB; color: #1B2A5E; }
+.badge-red { background: var(--red-light); color: var(--red); }
+.badge-gray { background: var(--gray-100); color: var(--gray-700); }
+.badge-orange { background: #FFF7ED; color: #92400E; }
+.badge-purple { background: #F3E8FF; color: #6B21A8; }
+.badge-darkred { background: #FEF2F2; color: #7F1D1D; }
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 1000; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--white); border-radius: 16px; padding: 28px; min-width: 360px; max-width: 480px; width: 90%; box-shadow: 0 8px 40px rgba(0,0,0,.15); position: relative; }
+.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.modal-title { font-size: 16px; font-weight: 700; color: var(--navy-dark); }
+.modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--gray-500); padding: 4px; line-height: 1; }
+.modal-close:hover { color: var(--navy-dark); }
+.modal-body { display: flex; flex-direction: column; gap: 14px; }
+.modal-row { display: flex; flex-direction: column; gap: 2px; }
+.modal-row-label { font-size: 11px; font-weight: 600; color: var(--gray-500); }
+.modal-row-value { font-size: 14px; font-weight: 500; color: var(--navy-dark); }
+
+/* Date presets */
+.date-presets { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.date-preset-btn { padding: 6px 14px; border-radius: 16px; border: 1px solid var(--gray-200); background: var(--white); font-family: inherit; font-size: 12px; font-weight: 500; color: var(--gray-700); cursor: pointer; transition: all 0.2s; }
+.date-preset-btn:hover { border-color: var(--navy); color: var(--navy); background: var(--gray-50); }
+.date-preset-btn.active { background: var(--navy); color: var(--white); border-color: var(--navy); }
+
+/* Mini widgets */
+.mini-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.mini-card { background: var(--white); border-radius: 14px; padding: 16px; border: 1px solid var(--gray-100); box-shadow: 0 2px 8px rgba(27,42,94,0.05); }
+.mini-card-title { font-size: 12px; font-weight: 700; color: var(--gray-500); margin-bottom: 12px; }
+.mini-card-title svg { vertical-align: middle; margin-left: 6px; }
+[dir="ltr"] .mini-card-title svg { margin-left: 0; margin-right: 6px; }
+.mini-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.mini-list-item { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; border-radius: 8px; cursor: pointer; transition: background 0.15s; font-size: 13px; }
+.mini-list-item:hover { background: var(--gray-50); }
+.mini-list-item .name { font-weight: 500; color: var(--navy-dark); }
+.mini-list-item .count { font-weight: 700; color: var(--navy); font-size: 13px; }
+.kpi-value { font-size: 22px; font-weight: 900; color: var(--navy-dark); line-height: 1; margin-bottom: 4px; }
+
+/* Executive summary */
+.exec-summary { background: var(--white); border-radius: 16px; padding: 20px; border: 1px solid var(--gray-100); box-shadow: 0 2px 8px rgba(27,42,94,0.05); margin-bottom: 24px; }
+.exec-summary-title { font-size: 15px; font-weight: 700; color: var(--navy-dark); margin-bottom: 12px; }
+.exec-summary-text { font-size: 13px; line-height: 1.8; color: var(--gray-700); }
+
+/* Clickable stat cards for drill-down */
+.stat-card-clickable { cursor: pointer; }
+.stat-card-clickable:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(27,42,94,0.1); }
+.user-version { font-size:10px;color:rgba(255,255,255,0.35);margin-top:2px; }
+.about-overlay { position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:0;pointer-events:none;transition:opacity 0.3s;padding:20px; }
+.about-overlay.open { opacity:1;pointer-events:all; }
+.about-modal { background:var(--white);border-radius:20px;max-width:420px;width:100%;position:relative;box-shadow:0 25px 60px rgba(0,0,0,0.3);overflow:hidden; }
+.about-close { position:absolute;top:12px;right:16px;background:none;border:none;font-size:24px;color:rgba(255,255,255,0.6);cursor:pointer;z-index:2;line-height:1; }
+[dir="ltr"] .about-close { right:auto;left:16px; }
+.about-close:hover { color:#fff; }
+.about-header { background:linear-gradient(135deg,var(--navy-dark) 0%,#2b3e7e 100%);padding:32px 24px 24px;text-align:center; }
+.about-header img { width:72px;height:72px;border-radius:50%;border:3px solid rgba(255,255,255,0.2);object-fit:contain;background:var(--white);padding:8px; }
+.about-body { padding:24px;text-align:center; }
+.about-body h2 { font-size:16px;font-weight:800;color:var(--navy-dark);margin-bottom:16px; }
+.about-badges { display:flex;gap:8px;justify-content:center;margin-bottom:12px;flex-wrap:wrap; }
+.about-badge { padding:4px 14px;border-radius:20px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:4px; }
+.about-badge-version { background:var(--navy);color:var(--white); }
+.about-badge-status { background:#E1F5EE;color:#0F6E56; }
+.about-meta { font-size:12px;color:var(--gray-500);margin-bottom:20px; }
+.about-features { display:grid;grid-template-columns:1fr 1fr;gap:6px;text-align:right; }
+[dir="ltr"] .about-features { text-align:left; }
+.about-feature { font-size:12px;color:var(--gray-700);padding:6px 10px;background:var(--gray-50);border-radius:8px;font-weight:500; }
+.notif-btn{width:36px;height:36px;background:var(--gray-100);border:none;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--gray-700);position:relative;transition:background 0.2s}.notif-btn:hover{background:var(--gray-200)}.notif-dot{position:absolute;top:6px;left:6px;width:8px;height:8px;background:#EF4444;border-radius:50%;border:2px solid var(--white)}.notif-dot.hidden{display:none}.notif-wrapper{position:relative}.notif-dropdown{position:absolute;top:100%;margin-top:8px;width:360px;max-height:400px;overflow-y:auto;background:#fff;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.12);z-index:1000;display:none;border:1px solid var(--gray-100)}.notif-dropdown.open{display:block}.notif-badge{position:absolute;top:2px;right:2px;background:#EF4444;color:#fff;font-size:10px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:none;align-items:center;justify-content:center;padding:0 4px}.notif-badge.show{display:flex}.notif-header{padding:14px 16px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between;font-size:14px;font-weight:700;color:var(--navy-dark)}.notif-header button{background:none;border:none;font-size:12px;color:var(--navy);cursor:pointer;font-weight:600;font-family:'IBM Plex Sans Arabic',sans-serif}.notif-header button:hover{text-decoration:underline}.notif-item{display:flex;align-items:flex-start;gap:10px;padding:12px 16px;border-bottom:1px solid var(--gray-100);cursor:pointer;transition:background 0.15s}.notif-item:hover{background:var(--gray-50)}.notif-item:last-child{border-bottom:none}.notif-item-dot{width:8px;height:8px;border-radius:50%;margin-top:6px;flex-shrink:0}.notif-item-text{font-size:13px;color:var(--navy-dark);font-weight:500;flex:1;line-height:1.4}.notif-item-time{font-size:11px;color:var(--gray-500);margin-top:2px}.notif-empty{padding:32px 16px;text-align:center;color:var(--gray-500);font-size:13px}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-image-container">
+      <img src="nu-logo.png" alt="Najran University Logo">
+    </div>
+    <div class="sidebar-logo-title" data-ar="نظام إسكان الطلاب والطالبات" data-en="Students Housing System">نظام إسكان الطلاب والطالبات</div>
+    <div class="sidebar-logo-sub" data-ar="جامعة نجران" data-en="Najran University">جامعة نجران</div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section" data-ar="الرئيسية" data-en="MAIN">الرئيسية</div>
+    <a class="nav-item" href="dashboard.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      <span data-ar="لوحة التحكم" data-en="Dashboard">لوحة التحكم</span>
+    </a>
+    <div class="nav-section" data-ar="الطلاب" data-en="STUDENTS">الطلاب</div>
+    <a class="nav-item" id="studentsTab" href="students.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      <span data-ar="قائمة الطلاب" data-en="Students List">قائمة الطلاب</span>
+    </a>
+    <div style="font-size:10px;font-weight:600;color:rgba(255,255,255,0.3);padding:4px 8px 6px 24px;letter-spacing:0.5px" data-ar="إدارة التسجيل" data-en="REGISTRATION">إدارة التسجيل</div>
+    <a class="nav-item" id="registerStudentTab" href="register_student.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+      <span data-ar="تسجيل فردي" data-en="Individual Registration">تسجيل فردي</span>
+    </a>
+    <a class="nav-item" id="bulkRegistrationTab" href="bulk-registration.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 11 9 11 11 13 11 13 12 10 12 10 9"/></svg>
+      <span data-ar="تسجيل جماعي (Excel)" data-en="Bulk Registration (Excel)">تسجيل جماعي (Excel)</span>
+    </a>
+    <a class="nav-item" id="studentStatusTab" href="student-status.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <span data-ar="تحديث حالة الطالب" data-en="Update Student Status">تحديث حالة الطالب</span>
+    </a>
+
+    <div class="nav-section" data-ar="الطلبات" data-en="REQUESTS">الطلبات</div>
+    <a class="nav-item" id="allRequestsTab" href="requests.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <span data-ar="كل الطلبات" data-en="All Requests">كل الطلبات</span>
+    </a>
+    <a class="nav-item" id="housingManagementTab" href="housing-management.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+      <span data-ar="إدارة السكن" data-en="Housing Management">إدارة السكن</span>
+    </a>
+    <div class="nav-section" data-ar="النظام" data-en="SYSTEM">النظام</div>
+    <a class="nav-item" id="reportsTab" href="reports.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 11 9 11 11 13 11 13 12 10 12 10 9"/></svg>
+      <span data-ar="التقارير" data-en="Reports">التقارير</span>
+    </a>
+    <a class="nav-item" id="auditTab" href="auditlog.html">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <span data-ar="سجل العمليات" data-en="Audit Log">سجل العمليات</span>
+    </a>
+    <a class="nav-item" onclick="showAbout();return false" style="cursor:pointer">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+      <span data-ar="حول النظام" data-en="About System">حول النظام</span>
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-card">
+      <div class="user-avatar">👤</div>
+      <div>
+        <div class="user-name" id="sidebar-user-name"></div>
+        <div class="user-role" id="sidebar-user-role"></div>
+        <div class="user-version">v<span id="sidebarVer">1.0.0</span></div>
+      </div>
+    </div>
+    <button class="logout-btn" onclick="window.location.href='login.html'">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <span data-ar="تسجيل الخروج" data-en="Logout">تسجيل الخروج</span>
+    </button>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" data-ar="مركز التقارير" data-en="Reports Center">مركز التقارير</div>
+    <div class="topbar-right">
+      <div class="topbar-date" id="dateNow"></div>
+      <div class="lang-toggle">
+        <button class="lang-btn active" id="btn-ar" onclick="setLang('ar')">عربي</button>
+        <button class="lang-btn" id="btn-en" onclick="setLang('en')">EN</button>
+      </div>
+      <div class="notif-wrapper">
+        <button class="notif-btn" onclick="toggleNotifDropdown(event)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="notif-dot"></span>
+          <span class="notif-badge" id="notif-badge"></span>
+        </button>
+        <div class="notif-dropdown" id="notif-dropdown">
+          <div class="notif-header">
+            <span data-ar="الإشعارات" data-en="Notifications">الإشعارات</span>
+            <button onclick="markAllNotifRead()" data-ar="تحديد الكل مقروء" data-en="Mark all read">تحديد الكل مقروء</button>
+          </div>
+          <div class="notif-list" id="notif-dropdown-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="page-header">
+      <h2 data-ar="مركز التقارير" data-en="Reports Center">مركز التقارير</h2>
+      <p data-ar="تقارير تحليلية وأمنية للنظام" data-en="Analytical and security reports">تقارير تحليلية وأمنية للنظام</p>
+    </div>
+
+    <div class="report-tabs" id="reportTabs">
+      <button class="report-tab active" data-group="" data-ar="الكل" data-en="All">الكل</button>
+      <button class="report-tab" data-group="login" data-ar="تسجيل الدخول" data-en="Login">تسجيل الدخول</button>
+      <button class="report-tab" data-group="student" data-ar="عمليات الطلاب" data-en="Student Ops">عمليات الطلاب</button>
+      <button class="report-tab" data-group="request" data-ar="عمليات الطلبات" data-en="Request Ops">عمليات الطلبات</button>
+      <button class="report-tab" data-group="security" data-ar="التقارير الأمنية" data-en="Security">التقارير الأمنية</button>
+    </div>
+
+    <div class="date-presets" id="datePresets">
+      <button class="date-preset-btn active" data-days="" data-ar="الكل" data-en="All">الكل</button>
+      <button class="date-preset-btn" data-days="1" data-ar="آخر 24 ساعة" data-en="Last 24h">آخر 24 ساعة</button>
+      <button class="date-preset-btn" data-days="7" data-ar="آخر 7 أيام" data-en="Last 7 days">آخر 7 أيام</button>
+      <button class="date-preset-btn" data-days="30" data-ar="آخر 30 يوم" data-en="Last 30 days">آخر 30 يوم</button>
+      <button class="date-preset-btn" data-days="this-month" data-ar="هذا الشهر" data-en="This month">هذا الشهر</button>
+      <button class="date-preset-btn" data-days="last-month" data-ar="الشهر الماضي" data-en="Last month">الشهر الماضي</button>
+      <button class="date-preset-btn" data-days="this-year" data-ar="هذه السنة" data-en="This year">هذه السنة</button>
+    </div>
+
+    <div class="stats-grid" id="summaryCards">
+      <div class="stat-card stat-card-clickable" data-drill="tot"><div class="stat-top"><div class="stat-icon" style="background:#E6F1FB;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div></div><div class="stat-num" id="statTotOps">0</div><div class="stat-label" data-ar="إجمالي العمليات" data-en="Total Ops">إجمالي العمليات</div></div>
+      <div class="stat-card stat-card-clickable" data-drill="users"><div class="stat-top"><div class="stat-icon" style="background:#E1F5EE;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div></div><div class="stat-num" id="statUsers">0</div><div class="stat-label" data-ar="مستخدمون نشطون" data-en="Active Users">مستخدمون نشطون</div></div>
+      <div class="stat-card stat-card-clickable" data-drill="student"><div class="stat-top"><div class="stat-icon" style="background:#FFF7ED;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#92400E" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg></div></div><div class="stat-num" id="statStudentOps">0</div><div class="stat-label" data-ar="عمليات طلاب" data-en="Student Ops">عمليات طلاب</div></div>
+      <div class="stat-card stat-card-clickable" data-drill="request"><div class="stat-top"><div class="stat-icon" style="background:#F3E8FF;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B21A8" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div></div><div class="stat-num" id="statRequestOps">0</div><div class="stat-label" data-ar="عمليات طلبات" data-en="Request Ops">عمليات طلبات</div></div>
+      <div class="stat-card" data-drill="fail"><div class="stat-top"><div class="stat-icon" style="background:#FEF2F2;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#991B1B" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div></div><div class="stat-num" id="statFailed">0</div><div class="stat-label" data-ar="فاشلة اليوم" data-en="Failed Today">فاشلة اليوم</div></div>
+      <div class="stat-card" data-drill="delete"><div class="stat-top"><div class="stat-icon" style="background:#FEF2F2;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#991B1B" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div></div><div class="stat-num" id="statDeletes">0</div><div class="stat-label" data-ar="حذف اليوم" data-en="Deletions">حذف اليوم</div></div>
+    </div>
+
+    <div class="filters-bar">
+      <div class="filter-group"><label data-ar="من تاريخ" data-en="From Date">من تاريخ</label><input type="date" id="fromDate"></div>
+      <div class="filter-group"><label data-ar="إلى تاريخ" data-en="To Date">إلى تاريخ</label><input type="date" id="toDate"></div>
+      <div class="filter-group"><label data-ar="المستخدم" data-en="User">المستخدم</label><select id="userFilter"><option value="" data-ar="الكل" data-en="All">الكل</option></select></div>
+      <div class="filter-group"><label data-ar="العملية" data-en="Action">العملية</label><select id="actionFilter"></select></div>
+      <div class="filter-group"><label data-ar="بحث" data-en="Search">بحث</label><input type="text" id="searchBox" placeholder=""></div>
+      <button class="card-action" onclick="applyFilters()" style="height:37px;align-self:end;display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> <span data-ar="تطبيق" data-en="Apply">تطبيق</span></button>
+    </div>
+
+    <div class="grid-2" id="chartsRow" style="margin-bottom:24px">
+      <div class="card"><div class="card-header"><div class="card-title" data-ar="العمليات آخر 7 أيام" data-en="Ops (7 days)">العمليات آخر 7 أيام</div></div><div style="padding:16px;height:200px"><canvas id="chartOps7"></canvas></div></div>
+      <div class="card"><div class="card-header"><div class="card-title" data-ar="تسجيل الدخول 30 يوم" data-en="Login (30 days)">تسجيل الدخول 30 يوم</div></div><div style="padding:16px;height:200px"><canvas id="chartLogins30"></canvas></div></div>
+      <div class="card"><div class="card-header"><div class="card-title" data-ar="عمليات الطلاب" data-en="Student Ops">عمليات الطلاب</div></div><div style="padding:16px;height:200px"><canvas id="chartStudents"></canvas></div></div>
+      <div class="card"><div class="card-header"><div class="card-title" data-ar="عمليات الطلبات" data-en="Request Ops">عمليات الطلبات</div></div><div style="padding:16px;height:200px"><canvas id="chartRequests"></canvas></div></div>
+    </div>
+
+    <div class="stats-bar" id="statsBar">
+      <div class="stat-item"><span class="stat-label" data-ar="إجمالي" data-en="Total">إجمالي</span><span class="stat-value" id="statTotalRecords">0</span></div>
+      <div class="stat-item"><span class="stat-label" data-ar="طلاب" data-en="Students">طلاب</span><span class="stat-value" id="statStudentRecs">0</span></div>
+      <div class="stat-item"><span class="stat-label" data-ar="طلبات" data-en="Requests">طلبات</span><span class="stat-value" id="statRequestRecs">0</span></div>
+    </div>
+
+    <div class="card" id="alertsCard" style="margin-bottom:24px">
+      <div class="card-header"><div class="card-title" data-ar="تنبيهات الأمان" data-en="Security Alerts">تنبيهات الأمان</div><button class="card-action" onclick="loadAlerts()" data-ar="تحديث" data-en="Refresh">تحديث</button></div>
+      <div id="alertsBody" style="padding:16px;text-align:center;color:var(--gray-500)" data-ar="جاري التحميل..." data-en="Loading...">جاري التحميل...</div>
+    </div>
+
+    <div class="exec-summary" id="execSummary" style="display:none">
+      <div class="exec-summary-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2" style="vertical-align:middle;margin-left:6px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span data-ar="ملخص تنفيذي" data-en="Executive Summary">ملخص تنفيذي</span></div>
+      <div class="exec-summary-text" id="execSummaryText"></div>
+    </div>
+
+    <div class="mini-grid" id="miniGrid">
+      <div class="mini-card" id="miniKpi">
+        <div class="mini-card-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span data-ar="مؤشرات الأداء" data-en="KPI">مؤشرات الأداء</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div><div class="kpi-value" id="kpiDailyAvg">0</div><div style="font-size:11px;color:var(--gray-500)" data-ar="متوسط العمليات/يوم" data-en="Avg ops/day">متوسط العمليات/يوم</div></div>
+          <div><div class="kpi-value" id="kpiPeakDay">-</div><div style="font-size:11px;color:var(--gray-500)" data-ar="أكثر يوم نشاطاً" data-en="Peak day">أكثر يوم نشاطاً</div></div>
+          <div><div class="kpi-value" id="kpiLastTime">-</div><div style="font-size:11px;color:var(--gray-500)" data-ar="آخر نشاط" data-en="Last activity">آخر نشاط</div></div>
+          <div><div class="kpi-value" id="kpiActiveUsers">0</div><div style="font-size:11px;color:var(--gray-500)" data-ar="مستخدمون فريدون" data-en="Unique users">مستخدمون فريدون</div></div>
+        </div>
+      </div>
+      <div class="mini-card" id="miniTopUsers">
+        <div class="mini-card-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span data-ar="أكثر المستخدمين نشاطاً" data-en="Top Users">أكثر المستخدمين نشاطاً</span></div>
+        <ul class="mini-list" id="topUsersList"><li style="font-size:12px;color:var(--gray-400)" data-ar="جاري التحميل..." data-en="Loading...">جاري التحميل...</li></ul>
+      </div>
+      <div class="mini-card" id="miniTopActions">
+        <div class="mini-card-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span data-ar="أكثر الإجراءات شيوعاً" data-en="Top Actions">أكثر الإجراءات شيوعاً</span></div>
+        <ul class="mini-list" id="topActionsList"><li style="font-size:12px;color:var(--gray-400)" data-ar="جاري التحميل..." data-en="Loading...">جاري التحميل...</li></ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>#</th><th data-ar="المستخدم" data-en="User">المستخدم</th><th data-ar="الإجراء" data-en="Action">الإجراء</th><th data-ar="الجدول" data-en="Table">الجدول</th><th data-ar="المعرف" data-en="ID">المعرف</th><th data-ar="التاريخ" data-en="Date">التاريخ</th></tr></thead>
+          <tbody id="logTbody"><tr><td colspan="6" style="text-align:center;padding:60px 20px"><div class="spinner"></div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="export-bar">
+      <button class="export-btn export-btn-excel" onclick="exportExcel()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> <span data-ar="Excel" data-en="Excel">Excel</span></button>
+      <button class="export-btn export-btn-pdf" onclick="exportPdf()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 11 9 11 11 13 11 13 12 10 12 10 9"/></svg> <span data-ar="PDF" data-en="PDF">PDF</span></button>
+      <button class="export-btn export-btn-print" onclick="window.print()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> <span data-ar="طباعة" data-en="Print">طباعة</span></button>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:0 4px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:13px;color:var(--gray-500)" data-ar="عرض" data-en="Show">عرض</span>
+        <select id="pageSizeSelect" style="padding:6px 10px;border:1px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:13px;background:var(--white);color:var(--navy-dark);cursor:pointer"><option value="50">50</option><option value="100">100</option><option value="200">200</option></select>
+        <span style="font-size:13px;color:var(--gray-500)" data-ar="سجل" data-en="records">سجل</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span id="totalRecordsLabel" style="font-size:13px;color:var(--gray-500)"></span>
+        <button id="prevPageBtn" style="padding:6px 14px;border:1px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:13px;background:var(--white);color:var(--navy-dark);cursor:pointer;display:flex;align-items:center;gap:4px" disabled><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg> <span data-ar="السابق" data-en="Prev">السابق</span></button>
+        <span id="pageIndicator" style="font-size:13px;font-weight:600;color:var(--navy-dark);min-width:60px;text-align:center">1 / 1</span>
+        <button id="nextPageBtn" style="padding:6px 14px;border:1px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:13px;background:var(--white);color:var(--navy-dark);cursor:pointer;display:flex;align-items:center;gap:4px" disabled><span data-ar="التالي" data-en="Next">التالي</span> <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" data-ar="تفاصيل" data-en="Details">تفاصيل</div><button class="modal-close" id="modalCloseBtn">&times;</button></div>
+    <div class="modal-body">
+      <div class="modal-row"><span class="modal-row-label" data-ar="المستخدم" data-en="User">المستخدم</span><span class="modal-row-value" id="modalUser"></span></div>
+      <div class="modal-row"><span class="modal-row-label" data-ar="العملية" data-en="Action">العملية</span><span class="modal-row-value" id="modalAction"></span></div>
+      <div class="modal-row"><span class="modal-row-label" data-ar="الجدول" data-en="Table">الجدول</span><span class="modal-row-value" id="modalTable"></span></div>
+      <div class="modal-row"><span class="modal-row-label" data-ar="المعرف" data-en="Target ID">المعرف</span><span class="modal-row-value" id="modalTargetId"></span></div>
+      <div class="modal-row"><span class="modal-row-label" data-ar="التاريخ" data-en="Date">التاريخ</span><span class="modal-row-value" id="modalDate"></span></div>
+    </div>
+  </div>
+</div>
+<script>
+const token = localStorage.getItem('staffToken');
+if (!token) window.location.replace('login.html');
+const currentUser = JSON.parse(localStorage.getItem('staffUser') || '{}');
+const _userRole = (currentUser.role || '').toLowerCase();
+
+const actionTranslations = {
+  login: { ar: 'تسجيل دخول', en: 'Login' },
+  logout: { ar: 'تسجيل خروج', en: 'Logout' },
+  login_failed: { ar: 'فشل تسجيل دخول', en: 'Login Failed' },
+  set_password: { ar: 'تغيير كلمة المرور', en: 'Set Password' },
+  create_request: { ar: 'إنشاء طلب', en: 'Create Request' },
+  approve_request: { ar: 'قبول الطلب', en: 'Approve Request' },
+  reject_request: { ar: 'رفض الطلب', en: 'Reject Request' },
+  create_student: { ar: 'إضافة طالب', en: 'Create Student' },
+  update_student: { ar: 'تحديث طالب', en: 'Update Student' },
+  delete_student: { ar: 'حذف طالب', en: 'Delete Student' },
+  checkout_student: { ar: 'مغادرة طالب', en: 'Checkout Student' },
+  user_created_ad: { ar: 'إنشاء مستخدم من AD', en: 'AD User Created' },
+  user_updated_ad: { ar: 'تحديث مستخدم من AD', en: 'AD User Updated' },
+  login_admin_fallback: { ar: 'دخول المسؤول المحلي', en: 'Admin Local Login' },
+  login_admin_fallback_failed: { ar: 'فشل دخول المسؤول المحلي', en: 'Admin Local Login Failed' },
+  housing_approve_request: { ar: 'موافقة إدارة الإسكان', en: 'Housing Approve' },
+  housing_reject_request: { ar: 'رفض إسكان', en: 'Housing Reject' },
+  submit_cyber_review: { ar: 'إحالة لسيبر', en: 'Submit to Cyber' },
+  cyber_approve_request: { ar: 'موافقة إدارة الأمن السيبراني', en: 'Cyber Approve' },
+  cyber_reject_request: { ar: 'رفض إدارة الأمن السيبراني', en: 'Cyber Reject' },
+  ready_for_provisioning_request: { ar: 'تجهيز لإنشاء حساب شبكة السكن', en: 'Ready For Housing Network Account Creation' },
+  complete_request: { ar: 'إكمال الطلب', en: 'Complete Request' }
+};
+
+function translateAction(action) {
+  const lang = document.getElementById('html-root').getAttribute('lang') || 'ar';
+  return actionTranslations[action]?.[lang] || action;
+}
+
+function escHtml(str) {
+  return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function logout() {
+  localStorage.removeItem('staffToken');
+  localStorage.removeItem('staffUser');
+  window.location.replace('login.html');
+}
+
+async function apiFetch(url) {
+  try {
+    const res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
+    if (res.status === 401) { localStorage.removeItem('staffToken'); localStorage.removeItem('staffUser'); window.location.replace('login.html'); return null; }
+    return await res.json();
+  } catch(e) { return null; }
+}
+
+function setLang(l) {
+  __baseSetLang(l);
+  var d = new Date();
+  document.getElementById('dateNow').textContent = l === 'ar'
+    ? d.toLocaleDateString('ar-SA', {weekday:'long', year:'numeric', month:'long', day:'numeric'})
+    : d.toLocaleDateString('en-US', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+  document.getElementById('sidebar-user-name').textContent = currentUser.full_name || currentUser.username || '';
+  document.getElementById('sidebar-user-role').textContent = currentUser.role || '';
+  rebuildActionFilter();
+  var userFilterEl = document.getElementById('userFilter');
+  var allOption = userFilterEl.options[0];
+  if (allOption) { allOption.textContent = t('all'); }
+  if (dataLoaded) { updatePagination(totalRecords); renderTable(); }
+}
+
+var actionFilterOptions = {
+  ar: [
+    { value: '', label: 'الكل' },
+    { value: 'login', label: 'تسجيل الدخول' },
+    { value: 'student', label: 'عمليات الطلاب' },
+    { value: 'request', label: 'عمليات الطلبات' },
+    { value: 'password', label: 'تغيير كلمة المرور' },
+    { value: 'logout', label: 'تسجيل الخروج' },
+    { value: 'ad', label: 'مزامنة Active Directory' }
+  ],
+  en: [
+    { value: '', label: 'All' },
+    { value: 'login', label: 'Login' },
+    { value: 'student', label: 'Student Operations' },
+    { value: 'request', label: 'Request Operations' },
+    { value: 'password', label: 'Password Changes' },
+    { value: 'logout', label: 'Logout' },
+    { value: 'ad', label: 'AD Sync' }
+  ]
+};
+
+function rebuildActionFilter() {
+  var lang = document.getElementById('html-root').getAttribute('lang') || 'ar';
+  var sel = document.getElementById('actionFilter');
+  var currentVal = sel.value;
+  sel.innerHTML = '';
+  (actionFilterOptions[lang] || []).forEach(function(opt) {
+    var el = document.createElement('option');
+    el.value = opt.value;
+    el.textContent = opt.label;
+    sel.appendChild(el);
+  });
+  sel.value = currentVal;
+}
+
+function populateUserFilter(users) {
+  var sel = document.getElementById('userFilter');
+  var currentVal = sel.value;
+  sel.innerHTML = '<option value="" data-ar="الكل" data-en="All"></option>';
+  users.forEach(function(u) {
+    var el = document.createElement('option');
+    el.value = u.id;
+    el.textContent = u.name;
+    sel.appendChild(el);
+  });
+  sel.value = currentVal;
+}
+
+var currentPage = 1;
+var currentPageSize = 50;
+var totalPages = 1;
+var totalRecords = 0;
+var cachedUsers = [];
+var cachedData = null;
+var dataLoaded = false;
+var cachedChartData = null;
+var topDataLoaded = false;
+var execTimeout = null;
+
+function badgeClass(action) {
+  var map = {
+    'create_student':'badge-green','update_student':'badge-blue','delete_student':'badge-red',
+    'checkout_student':'badge-orange','create_request':'badge-green','approve_request':'badge-green',
+    'reject_request':'badge-red','housing_approve_request':'badge-blue','housing_reject_request':'badge-red','submit_cyber_review':'badge-purple','cyber_approve_request':'badge-purple','cyber_reject_request':'badge-red','ready_for_provisioning_request':'badge-orange','complete_request':'badge-green','login':'badge-gray','logout':'badge-gray','login_failed':'badge-darkred',
+    'set_password':'badge-orange','login_admin_fallback':'badge-purple','login_admin_fallback_failed':'badge-darkred',
+    'user_created_ad':'badge-blue','user_updated_ad':'badge-purple'
+  };
+  return map[action] || 'badge-gray';
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  var d = new Date(dateStr);
+  if (isNaN(d.getTime())) return '';
+  var lang = document.getElementById('html-root').getAttribute('lang') || 'ar';
+  var y = d.getFullYear();
+  var mo = String(d.getMonth() + 1).padStart(2, '0');
+  var da = String(d.getDate()).padStart(2, '0');
+  var h = String(d.getHours()).padStart(2, '0');
+  var mi = String(d.getMinutes()).padStart(2, '0');
+  return lang === 'ar' ? da + '/' + mo + '/' + y + ' ' + h + ':' + mi : mo + '/' + da + '/' + y + ' ' + h + ':' + mi;
+}
+
+function getFilters() {
+  return {
+    userId: document.getElementById('userFilter').value,
+    actionGroup: document.getElementById('actionFilter').value,
+    fromDate: document.getElementById('fromDate').value,
+    toDate: document.getElementById('toDate').value,
+    search: document.getElementById('searchBox').value.trim()
+  };
+}
+
+function buildUrl(p, ps) {
+  var url = '/api/auditlogs?page=' + p + '&pageSize=' + ps;
+  var f = getFilters();
+  if (f.userId) url += '&userId=' + encodeURIComponent(f.userId);
+  if (f.actionGroup) url += '&actionGroup=' + encodeURIComponent(f.actionGroup);
+  if (f.fromDate) url += '&fromDate=' + encodeURIComponent(f.fromDate);
+  if (f.toDate) url += '&toDate=' + encodeURIComponent(f.toDate);
+  if (f.search) url += '&search=' + encodeURIComponent(f.search);
+  return url;
+}
+
+function renderTable() {
+  if (!dataLoaded) return;
+  var tbody = document.getElementById('logTbody');
+  if (!cachedData || !cachedData.length) {
+    tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text" data-ar="لا توجد سجلات" data-en="No records">لا توجد سجلات</div></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = cachedData.map(function(l, i) {
+    var rowNum = (currentPage - 1) * currentPageSize + i + 1;
+    var bCls = badgeClass(l.action);
+    var bLabel = escHtml(translateAction(l.action));
+    return '<tr onclick="openModal(cachedData[' + i + '])"><td style="color:#8891A8">' + rowNum +
+    '</td><td>' + escHtml(l.user?.full_name ?? l.user?.username ?? l.user_id) +
+    '</td><td><span class="badge ' + bCls + '">' + bLabel + '</span>' +
+    '</td><td>' + escHtml(l.target_table || '') +
+    '</td><td>' + escHtml(String(l.target_id || '')) +
+    '</td><td>' + formatDate(l.action_at) +
+    '</td></tr>';
+  }).join('');
+}
+
+function updatePagination(recs) {
+  document.getElementById('pageIndicator').textContent = currentPage + ' / ' + (totalPages || 1);
+  document.getElementById('prevPageBtn').disabled = currentPage <= 1;
+  document.getElementById('nextPageBtn').disabled = currentPage >= totalPages;
+  var lang = document.getElementById('html-root').getAttribute('lang') || 'ar';
+  document.getElementById('totalRecordsLabel').textContent = t('totalRecords') + ': ' + recs;
+}
+
+function updateStats(stats) {
+  if (!stats) return;
+  document.getElementById('statTotalRecords').textContent = stats.totalRecords || 0;
+  document.getElementById('statStudentRecs').textContent = stats.studentOperations || 0;
+  document.getElementById('statRequestRecs').textContent = stats.requestOperations || 0;
+}
+
+function openModal(record) {
+  var lang = document.getElementById('html-root').getAttribute('lang') || 'ar';
+  document.getElementById('modalUser').textContent = record.user?.full_name ?? record.user?.username ?? record.user_id;
+  document.getElementById('modalAction').innerHTML = escHtml(translateAction(record.action));
+  document.getElementById('modalTable').textContent = record.target_table || '';
+  document.getElementById('modalTargetId').textContent = String(record.target_id || '');
+  document.getElementById('modalDate').textContent = formatDate(record.action_at);
+  document.getElementById('detailModal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('detailModal').classList.remove('open');
+}
+
+async function loadLogs(page, pageSize) {
+  const p = page || currentPage;
+  const ps = pageSize || currentPageSize;
+  currentPage = p;
+  currentPageSize = ps;
+  try {
+    const res = await fetch(buildUrl(p, ps), { headers: { 'Authorization': 'Bearer ' + token } });
+    if (res.status === 401) { localStorage.removeItem('staffToken'); localStorage.removeItem('staffUser'); window.location.replace('login.html'); return; }
+    const body = await res.json();
+    cachedData = body.data;
+    totalPages = body.totalPages;
+    totalRecords = body.totalRecords;
+    dataLoaded = true;
+    renderTable();
+    updatePagination(body.totalRecords);
+    updateStats(body.stats);
+    syncUrlParams();
+    if (!topDataLoaded) loadTopData();
+    if (cachedChartData) { computeKpi(); computeTopWidgets(); generateExecSummary(); }
+  } catch(e) {
+    dataLoaded = true;
+    document.getElementById('logTbody').innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-text" style="color:#991B1B" data-ar="تعذر الاتصال بالخادم" data-en="Connection error">تعذر الاتصال بالخادم.</div></div></td></tr>';
+  }
+}
+
+async function loadAuditUsers() {
+  try {
+    const res = await fetch('/api/auditlogs/users', { headers: { 'Authorization': 'Bearer ' + token } });
+    if (res.ok) {
+      const users = await res.json();
+      cachedUsers = users;
+      populateUserFilter(users);
+    }
+  } catch(e) {}
+}
+
+function applyFilters() {
+  loadLogs(1, currentPageSize);
+}
+
+function onFilterChange() {
+  loadLogs(1, currentPageSize);
+}
+
+async function loadSummaryStats() {
+  const data = await apiFetch('/api/auditlogs/today-stats');
+  if (!data) return;
+  document.getElementById('statTotOps').textContent = data.todayTotalOps || 0;
+  document.getElementById('statUsers').textContent = data.todayActiveUsers || 0;
+  document.getElementById('statStudentOps').textContent = data.todayStudentOps || 0;
+  document.getElementById('statRequestOps').textContent = data.todayRequestOps || 0;
+  document.getElementById('statFailed').textContent = data.todayFailedLogins || 0;
+  document.getElementById('statDeletes').textContent = data.todayDeletes || 0;
+}
+
+async function loadCharts() {
+  const data = await apiFetch('/api/auditlogs/chart-data');
+  if (!data) return;
+  cachedChartData = data;
+  if (data.last7Days && data.last7Days.length) {
+    var labels = data.last7Days.map(function(d) { return d.date.slice(5, 10); });
+    var counts = data.last7Days.map(function(d) { return d.count; });
+    renderChart('chartOps7', 'bar', labels, counts, '#1B2A5E');
+  }
+  if (data.login30 && data.login30.length) {
+    var labels = data.login30.map(function(d) { return d.date.slice(5, 10); });
+    var counts = data.login30.map(function(d) { return d.count; });
+    renderChart('chartLogins30', 'line', labels, counts, '#C9A84C');
+  }
+  if (data.studentOps && data.studentOps.length) {
+    var labels = data.studentOps.map(function(d) { return d.action; });
+    var counts = data.studentOps.map(function(d) { return d.count; });
+    var colors = ['#1B2A5E','#C9A84C','#991B1B'];
+    renderChart('chartStudents', 'doughnut', labels, counts, colors);
+  }
+  if (data.requestOps && data.requestOps.length) {
+    var labels = data.requestOps.map(function(d) { return d.action; });
+    var counts = data.requestOps.map(function(d) { return d.count; });
+    var colors = ['#0F6E56','#C9A84C','#991B1B'];
+    renderChart('chartRequests', 'doughnut', labels, counts, colors);
+  }
+  if (dataLoaded) { computeKpi(); computeTopWidgets(); generateExecSummary(); }
+}
+
+var chartInstances = {};
+
+function renderChart(id, type, labels, data, bgColors) {
+  if (chartInstances[id]) chartInstances[id].destroy();
+  var ctx = document.getElementById(id).getContext('2d');
+  chartInstances[id] = new Chart(ctx, {
+    type: type,
+    data: {
+      labels: labels,
+      datasets: [{
+        data: data,
+        backgroundColor: bgColors || '#1B2A5E',
+        borderColor: '#1B2A5E',
+        borderWidth: 1.5,
+        tension: 0.3,
+        fill: false
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+    }
+  });
+}
+
+async function loadAlerts() {
+  const data = await apiFetch('/api/auditlogs/alerts');
+  var el = document.getElementById('alertsBody');
+  if (!data || data.length === 0) {
+    var lang = document.getElementById('html-root').getAttribute('lang') || 'ar';
+    el.innerHTML = '<div style="padding:8px;color:var(--gray-500);text-align:center">' + t('noSecurityAlerts') + '</div>';
+    return;
+  }
+  el.innerHTML = data.map(function(a) {
+    var bg = a.severity === 'high' ? '#FEF2F2' : '#FFF7ED';
+    var clr = a.severity === 'high' ? '#991B1B' : '#92400E';
+    var lang = document.getElementById('html-root').getAttribute('lang') || 'ar';
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:8px;border-radius:10px;background:' + bg + ';border:1px solid ' + clr + '20">' +
+      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="' + clr + '" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' +
+      '<div><div style="font-weight:600;font-size:13px;color:' + clr + '">' + (lang === 'ar' ? a.message_ar : a.message_en) + '</div>' +
+      '<div style="font-size:11px;color:' + clr + 'CC">' + t('count') + ': ' + a.count + '</div></div></div>';
+  }).join('');
+  generateExecSummary();
+}
+
+async function exportExcel() {
+  try {
+    var url = '/api/auditlogs/export';
+    var f = getFilters();
+    var qs = [];
+    if (f.userId) qs.push('userId=' + encodeURIComponent(f.userId));
+    if (f.actionGroup) qs.push('actionGroup=' + encodeURIComponent(f.actionGroup));
+    if (f.fromDate) qs.push('fromDate=' + encodeURIComponent(f.fromDate));
+    if (f.toDate) qs.push('toDate=' + encodeURIComponent(f.toDate));
+    if (f.search) qs.push('search=' + encodeURIComponent(f.search));
+    if (qs.length) url += '?' + qs.join('&');
+    const res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
+    if (!res.ok) return;
+    var blob = await res.blob();
+    if (blob.size === 0) return;
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'AuditLogs.xlsx';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+  } catch(e) {}
+}
+
+function exportPdf() {
+  var lang = document.getElementById('html-root').getAttribute('lang') || 'ar';
+  var activeGroup = document.querySelector('.report-tab.active')?.getAttribute('data-group') || '';
+  var typeMap = { '': 'activity', 'login': 'login', 'student': 'student', 'request': 'request' };
+  var reportType = typeMap[activeGroup] || 'activity';
+  window.open('/api/auditlogs/report-html?type=' + reportType, '_blank');
+}
+
+/* ====== Phase 2: Date Presets ====== */
+function applyDatePreset(days) {
+  document.querySelectorAll('.date-preset-btn').forEach(function(b) { b.classList.toggle('active', b.getAttribute('data-days') === days); });
+  var now = new Date();
+  var from = '', to = '';
+  if (days) {
+    var adjust = 3; // KSA offset hours
+    now.setHours(now.getHours() + adjust);
+    to = now.toISOString().slice(0, 10);
+    if (days === 'this-month') { from = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-01'; }
+    else if (days === 'last-month') {
+      var d = new Date(now.getFullYear(), now.getMonth(), 0);
+      from = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-01';
+      to = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    } else if (days === 'this-year') { from = now.getFullYear() + '-01-01'; }
+    else {
+      var ms = parseInt(days) * 86400000;
+      var past = new Date(now.getTime() - ms);
+      from = past.toISOString().slice(0, 10);
+    }
+  } else {
+    document.getElementById('fromDate').value = '';
+    document.getElementById('toDate').value = '';
+    onFilterChange();
+    return;
+  }
+  document.getElementById('fromDate').value = from;
+  document.getElementById('toDate').value = to;
+  onFilterChange();
+}
+
+/* ====== Phase 3 & 4: Top Users & Top Actions ====== */
+var cachedTopData = [];
+
+async function loadTopData() {
+  try {
+    var res = await fetch('/api/auditlogs?page=1&pageSize=500&sort=action_at&order=desc', { headers: { 'Authorization': 'Bearer ' + token } });
+    if (!res.ok) return;
+    var body = await res.json();
+    if (body.data) cachedTopData = body.data;
+    topDataLoaded = true;
+    computeTopWidgets();
+    computeKpi();
+    generateExecSummary();
+  } catch(e) {}
+}
+
+function computeTopWidgets() {
+  if (!cachedTopData.length && !cachedData) return;
+  var source = cachedTopData.length ? cachedTopData : (cachedData || []);
+  var userMap = {};
+  var actionMap = {};
+  source.forEach(function(r) {
+    var name = r.user?.full_name || r.user?.username || String(r.user_id);
+    userMap[name] = (userMap[name] || 0) + 1;
+    actionMap[r.action] = (actionMap[r.action] || 0) + 1;
+  });
+  var topUsers = Object.entries(userMap).sort(function(a,b) { return b[1]-a[1]; }).slice(0, 5);
+  var topActions = Object.entries(actionMap).sort(function(a,b) { return b[1]-a[1]; }).slice(0, 5);
+  var lang = document.getElementById('html-root').getAttribute('lang') || 'ar';
+  document.getElementById('topUsersList').innerHTML = topUsers.length ? topUsers.map(function(u) {
+    return '<li class="mini-list-item" onclick="applyUserFilter(\'' + escHtml(u[0]) + '\')"><span class="name">' + escHtml(u[0]) + '</span><span class="count">' + u[1] + '</span></li>';
+  }).join('') : '<li style="font-size:12px;color:var(--gray-400)">' + t('noData') + '</li>';
+  document.getElementById('topActionsList').innerHTML = topActions.length ? topActions.map(function(a) {
+    return '<li class="mini-list-item" onclick="applyActionFilter(\'' + escHtml(a[0]) + '\')"><span class="name">' + escHtml(translateAction(a[0])) + '</span><span class="count">' + a[1] + '</span></li>';
+  }).join('') : '<li style="font-size:12px;color:var(--gray-400)">' + t('noData') + '</li>';
+}
+
+function applyUserFilter(name) {
+  var user = cachedUsers.find(function(u) { return (u.name === name || u.full_name === name); });
+  if (user) { document.getElementById('userFilter').value = user.id; onFilterChange(); }
+}
+
+function applyActionFilter(action) {
+  var val = '';
+  if (action === 'login' || action === 'login_failed' || action === 'login_admin_fallback' || action === 'login_admin_fallback_failed') val = 'login';
+  else if (action === 'logout') val = 'logout';
+  else if (action === 'set_password') val = 'password';
+  else if (action === 'create_student' || action === 'update_student' || action === 'delete_student' || action === 'checkout_student') val = 'student';
+  else if (action === 'create_request' || action === 'approve_request' || action === 'reject_request' ||
+           action === 'housing_approve_request' || action === 'housing_reject_request' ||
+           action === 'submit_cyber_review' ||
+           action === 'cyber_approve_request' || action === 'cyber_reject_request') val = 'request';
+  else if (action === 'user_created_ad' || action === 'user_updated_ad') val = 'ad';
+  document.getElementById('actionFilter').value = val;
+  onFilterChange();
+}
+
+/* ====== Phase 5: KPI Analytics ====== */
+function computeKpi() {
+  if (!cachedChartData) return;
+  var d7 = cachedChartData.last7Days || [];
+  var total7 = d7.reduce(function(s,d) { return s + d.count; }, 0);
+  var avg = d7.length ? Math.round(total7 / d7.length) : 0;
+  document.getElementById('kpiDailyAvg').textContent = avg;
+  var peak = d7.reduce(function(b,d) { return (!b || d.count > b.count) ? d : b; }, null);
+  document.getElementById('kpiPeakDay').textContent = peak ? peak.date.slice(5,10) : '-';
+  var d30 = cachedChartData.login30 || [];
+  var lastLogin = d30[d30.length-1];
+  document.getElementById('kpiLastTime').textContent = lastLogin ? lastLogin.date.slice(5,10) : '-';
+  var userCount = new Set((cachedTopData.length ? cachedTopData : (cachedData || [])).map(function(r) { return r.user_id; })).size;
+  document.getElementById('kpiActiveUsers').textContent = userCount || document.getElementById('statUsers').textContent || '0';
+}
+
+/* ====== Phase 6: Drill-down Analytics ====== */
+function applyDrill(type) {
+  document.getElementById('actionFilter').value = '';
+  document.getElementById('userFilter').value = '';
+  document.getElementById('fromDate').value = '';
+  document.getElementById('toDate').value = '';
+  document.getElementById('searchBox').value = '';
+  document.querySelectorAll('.report-tab').forEach(function(t) { t.classList.remove('active'); });
+  if (type === 'tot') { document.querySelector('.report-tab[data-group=""]').classList.add('active'); }
+  else if (type === 'users') { document.querySelector('.report-tab[data-group=""]').classList.add('active'); }
+  else if (type === 'student') {
+    document.querySelector('.report-tab[data-group="student"]').classList.add('active');
+    document.getElementById('actionFilter').value = 'student';
+  } else if (type === 'request') {
+    document.querySelector('.report-tab[data-group="request"]').classList.add('active');
+    document.getElementById('actionFilter').value = 'request';
+  } else if (type === 'fail') {
+    document.querySelector('.report-tab[data-group="login"]').classList.add('active');
+    document.getElementById('actionFilter').value = 'login';
+  } else if (type === 'delete') {
+    document.querySelector('.report-tab[data-group=""]').classList.add('active');
+  }
+  onFilterChange();
+}
+
+/* ====== Phase 7: Shareable URL ====== */
+function syncUrlParams() {
+  var f = getFilters();
+  var p = new URLSearchParams();
+  if (f.userId) p.set('user', f.userId);
+  if (f.actionGroup) p.set('action', f.actionGroup);
+  if (f.fromDate) p.set('from', f.fromDate);
+  if (f.toDate) p.set('to', f.toDate);
+  if (f.search) p.set('q', f.search);
+  var g = document.querySelector('.report-tab.active')?.getAttribute('data-group') || '';
+  if (g) p.set('tab', g);
+  var qs = p.toString();
+  var url = window.location.pathname + (qs ? '?' + qs : '');
+  window.history.replaceState(null, '', url);
+}
+
+function loadFromUrlParams() {
+  var p = new URLSearchParams(window.location.search);
+  if (p.has('user')) document.getElementById('userFilter').value = p.get('user');
+  if (p.has('action')) document.getElementById('actionFilter').value = p.get('action');
+  if (p.has('from')) document.getElementById('fromDate').value = p.get('from');
+  if (p.has('to')) document.getElementById('toDate').value = p.get('to');
+  if (p.has('q')) document.getElementById('searchBox').value = p.get('q');
+  if (p.has('tab')) {
+    document.querySelectorAll('.report-tab').forEach(function(t) { t.classList.toggle('active', t.getAttribute('data-group') === p.get('tab')); });
+    if (p.get('tab') === 'security') {
+      document.getElementById('logTbody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px"><div class="spinner"></div></td></tr>';
+      loadAlerts();
+      return;
+    }
+  }
+}
+
+/* ====== Phase 8: Executive Summary ====== */
+function generateExecSummary() {
+  if (!cachedChartData && !dataLoaded) return;
+  if (execTimeout) clearTimeout(execTimeout);
+  execTimeout = setTimeout(function() {
+    var lang = document.getElementById('html-root').getAttribute('lang') || 'ar';
+    var el = document.getElementById('execSummary');
+    var txt = document.getElementById('execSummaryText');
+    var parts = [];
+    if (cachedChartData) {
+      var d7 = cachedChartData.last7Days || [];
+      var total7 = d7.reduce(function(s,d) { return s + d.count; }, 0);
+      var avg7 = d7.length ? Math.round(total7 / d7.length) : 0;
+      if (lang === 'ar') {
+        parts.push('إجمالي العمليات في آخر 7 أيام: ' + total7 + ' عملية، بمتوسط ' + avg7 + ' عملية يومياً.');
+      } else {
+        parts.push('Total operations in the last 7 days: ' + total7 + ', averaging ' + avg7 + ' per day.');
+      }
+    }
+    var tot = document.getElementById('statTotOps').textContent;
+    if (tot && tot !== '0') {
+      if (lang === 'ar') { parts.push('عدد عمليات اليوم: ' + tot + ' عملية.'); }
+      else { parts.push('Today\'s operations: ' + tot + '.'); }
+    }
+    var userEl = document.getElementById('statUsers');
+    if (userEl.textContent !== '0') {
+      if (lang === 'ar') { parts.push('عدد المستخدمين النشطين اليوم: ' + userEl.textContent + ' مستخدم.'); }
+      else { parts.push('Active users today: ' + userEl.textContent + '.'); }
+    }
+    if (cachedChartData && cachedChartData.last7Days && cachedChartData.last7Days.length) {
+      var peak = cachedChartData.last7Days.reduce(function(b,d) { return (!b || d.count > b.count) ? d : b; }, null);
+      if (peak) {
+        if (lang === 'ar') { parts.push('اليوم الأكثر نشاطاً: ' + peak.date.slice(5,10) + ' (' + peak.count + ' عملية).'); }
+        else { parts.push('Peak day: ' + peak.date.slice(5,10) + ' (' + peak.count + ' ops).'); }
+      }
+    }
+    var alertEl = document.getElementById('alertsBody');
+    if (alertEl && alertEl.textContent.indexOf('لا توجد') === -1 && alertEl.textContent.indexOf('No security') === -1 && alertEl.textContent.indexOf('✓') === -1 && alertEl.textContent !== 'جاري التحميل...' && alertEl.textContent !== 'Loading...') {
+      if (lang === 'ar') { parts.push('توجد تنبيهات أمان تتطلب المراجعة.'); }
+      else { parts.push('Security alerts require attention.'); }
+    }
+    if (parts.length) {
+      el.style.display = 'block';
+      txt.textContent = parts.join(' ');
+    } else {
+      el.style.display = 'none';
+    }
+  }, 300);
+}
+
+/* ====== Phase 9: Performance - debounced search ====== */
+var searchDebounce = null;
+document.getElementById('searchBox').addEventListener('keyup', function(e) {
+  if (e.key === 'Enter') { if (searchDebounce) clearTimeout(searchDebounce); onFilterChange(); return; }
+  if (searchDebounce) clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(function() { onFilterChange(); }, 400);
+});
+
+document.querySelector('.logout-btn').onclick = logout;
+
+document.getElementById('prevPageBtn').addEventListener('click', function() {
+  if (currentPage > 1) loadLogs(currentPage - 1, currentPageSize);
+});
+
+document.getElementById('nextPageBtn').addEventListener('click', function() {
+  if (currentPage < totalPages) loadLogs(currentPage + 1, currentPageSize);
+});
+
+document.getElementById('pageSizeSelect').addEventListener('change', function() {
+  loadLogs(1, parseInt(this.value));
+});
+
+document.getElementById('userFilter').addEventListener('change', onFilterChange);
+document.getElementById('actionFilter').addEventListener('change', onFilterChange);
+document.getElementById('fromDate').addEventListener('change', onFilterChange);
+document.getElementById('toDate').addEventListener('change', onFilterChange);
+
+document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
+document.getElementById('detailModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeModal();
+});
+
+document.querySelectorAll('.report-tab').forEach(function(tab) {
+  tab.addEventListener('click', function() {
+    document.querySelectorAll('.report-tab').forEach(function(t) { t.classList.remove('active'); });
+    this.classList.add('active');
+    var group = this.getAttribute('data-group');
+    if (group === 'security') {
+      document.getElementById('logTbody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px"><div class="spinner"></div></td></tr>';
+      loadAlerts();
+      return;
+    }
+    document.getElementById('actionFilter').value = group;
+    onFilterChange();
+  });
+});
+
+document.querySelectorAll('.date-preset-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() { applyDatePreset(this.getAttribute('data-days')); });
+});
+
+document.querySelectorAll('.stat-card-clickable').forEach(function(card) {
+  card.addEventListener('click', function() { applyDrill(this.getAttribute('data-drill')); });
+});
+
+async function fetchNotifs() {
+  try {
+    const res = await fetch('/api/notifications?role=' + encodeURIComponent(_userRole), { headers: { 'Authorization': 'Bearer ' + token } });
+    if (res.status === 401) { localStorage.removeItem('staffToken'); localStorage.removeItem('staffUser'); window.location.replace('login.html'); return null; }
+    return await res.json();
+  } catch(e) { return null; }
+}
+async function loadNotifDropdown() {
+  const data = await fetchNotifs();
+  const list = document.getElementById('notif-dropdown-list');
+  if (!data) { list.innerHTML = '<div class="notif-empty">تعذر الاتصال بالـ API</div>'; return; }
+  list.innerHTML = data.length ? data.map(function(n) {
+    return '<div class="notif-item" onclick="markNotifRead(' + n.id + ',this)" data-id="' + n.id + '">' +
+      '<div class="notif-item-dot" style="background:' + (n.status === 'pending' ? '#1B2A5E' : '#CBD5E1') + ';"></div>' +
+      '<div>' +
+        '<div class="notif-item-text">' + escHtml(n.message) + '</div>' +
+        '<div class="notif-item-time">' + new Date(n.sent_at || Date.now()).toLocaleDateString('ar-SA') + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('') : '<div class="notif-empty">لا توجد إشعارات</div>';
+}
+async function loadUnreadCount() {
+  try {
+    const res = await fetch('/api/notifications/unread-count?role=' + encodeURIComponent(_userRole), { headers: { 'Authorization': 'Bearer ' + token } });
+    if (res.status === 401) { localStorage.removeItem('staffToken'); localStorage.removeItem('staffUser'); window.location.replace('login.html'); return; }
+    var d = await res.json();
+    var badge = document.getElementById('notif-badge');
+    var dot = document.querySelector('.notif-dot');
+    if (d && d.count > 0) { badge.textContent = d.count; badge.classList.add('show'); if (dot) dot.classList.remove('hidden'); } else { badge.classList.remove('show'); if (dot) dot.classList.add('hidden'); }
+  } catch(e) {}
+}
+function toggleNotifDropdown(e) {
+  e.stopPropagation();
+  var dd = document.getElementById('notif-dropdown');
+  var isOpen = dd.classList.contains('open');
+  document.querySelectorAll('.notif-dropdown.open').forEach(function(d) { d.classList.remove('open'); });
+  if (!isOpen) { dd.classList.add('open'); if (!dd.dataset.loaded) { loadNotifDropdown(); dd.dataset.loaded = '1'; } }
+}
+async function markNotifRead(id, el) {
+  try { await fetch('/api/notifications/read', { method: 'PATCH', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify([id]) }); el.querySelector('.notif-item-dot').style.background = '#CBD5E1'; loadUnreadCount(); } catch(e) {}
+}
+async function markAllNotifRead() {
+  var items = document.querySelectorAll('#notif-dropdown-list .notif-item[data-id]'), ids = [];
+  items.forEach(function(el) { ids.push(parseInt(el.dataset.id)); });
+  if (!ids.length) return;
+  try { await fetch('/api/notifications/read', { method: 'PATCH', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify(ids) }); document.querySelectorAll('#notif-dropdown-list .notif-item-dot').forEach(function(d) { d.style.background = '#CBD5E1'; }); loadUnreadCount(); } catch(e) {}
+}
+document.addEventListener('click', function(e) { if (!e.target.closest('.notif-wrapper')) { document.querySelectorAll('.notif-dropdown.open').forEach(function(d) { d.classList.remove('open'); }); } });
+
+loadFromUrlParams();
+setLang(localStorage.getItem('uiLanguage') || 'ar');
+rebuildActionFilter();
+loadLogs(1, currentPageSize);
+loadAuditUsers();
+loadSummaryStats();
+loadCharts();
+loadAlerts();
+loadUnreadCount();
+setInterval(loadUnreadCount, 30000);
+</script>
+<script src="VersionInfo.js"></script>
+<div class="about-overlay" id="aboutModal" onclick="if(event.target===this)closeAbout()">
+  <div class="about-modal">
+    <button onclick="closeAbout()" class="about-close">&times;</button>
+    <div class="about-header">
+      <img src="nu-logo.png" alt="جامعة نجران">
+    </div>
+    <div class="about-body">
+      <div class="about-badges">
+        <span class="about-badge about-badge-version">v<span id="aboutVersion">1.0.0</span></span>
+        <span class="about-badge about-badge-status">Production Ready</span>
+      </div>
+      <h2 id="aboutSysName">نظام إسكان الطلاب والطالبات</h2>
+      <div class="about-meta" id="aboutBuildDate">Build: 2026-07-01</div>
+      <div class="about-features">
+        <span data-ar="إدارة الطلاب" data-en="Student Management" class="about-feature">إدارة الطلاب</span>
+        <span data-ar="سجل التدقيق" data-en="Audit Trail" class="about-feature">سجل التدقيق</span>
+        <span data-ar="التقارير" data-en="Reports" class="about-feature">التقارير</span>
+        <span data-ar="الطلبات" data-en="Requests" class="about-feature">الطلبات</span>
+        <span data-ar="لوحة البيانات" data-en="Dashboard" class="about-feature">لوحة البيانات</span>
+        <span data-ar="تصدير Excel" data-en="Excel Export" class="about-feature">تصدير Excel</span>
+        <span data-ar="تتبع IP" data-en="IP Tracking" class="about-feature">تتبع IP</span>
+        <span data-ar="أمني" data-en="Security" class="about-feature">أمني</span>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function showAbout() {
+  var lang = (document.getElementById('html-root') || document.documentElement).getAttribute('lang') || 'ar';
+  document.getElementById('aboutSysName').textContent = lang === 'ar' ? (typeof SYSTEM_NAME_AR !== 'undefined' ? SYSTEM_NAME_AR : 'نظام إسكان الطلاب والطالبات') : (typeof SYSTEM_NAME_EN !== 'undefined' ? SYSTEM_NAME_EN : 'Students Housing System - Najran University');
+  document.getElementById('aboutVersion').textContent = typeof APP_VERSION !== 'undefined' ? APP_VERSION : '1.0.0';
+  document.getElementById('aboutBuildDate').textContent = 'Build: ' + (typeof BUILD_DATE !== 'undefined' ? BUILD_DATE : '2026-07-01');
+  document.getElementById('aboutModal').classList.add('open');
+}
+function closeAbout() { document.getElementById('aboutModal').classList.remove('open'); }
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeAbout(); });
+</script>
+<script src="sidebar.js"></script>
+<script src="inactivity.js"></script>
+</body>
+</html>
