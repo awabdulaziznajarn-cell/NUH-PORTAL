@@ -14,7 +14,8 @@ namespace NUH_PORTAL.Controllers
     [Route("Account")]
     public class AccountController : Controller
     {
-        private const string DefaultRedirect = "/dashboard.html";
+        // بعد ما لوحة التحكم بقت MVC — الدخول بيودّي على /Home (الصفحة القديمة dashboard.html لسه شغالة لحد ما نخلص التحويل)
+        private const string DefaultRedirect = "/Home";
 
         private readonly IAuthService _auth;
         private readonly ITokenService _tokens;

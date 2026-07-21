@@ -1,12 +1,638 @@
+@model NUH_PORTAL.ViewModels.DashboardViewModel
 @{
-    ViewData["Title"] = "صفحة MVC التجريبية";
+    ViewData["Title"] = "لوحة التحكم";
+    var role = (User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "").ToLowerInvariant();
+    var fullName = User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "مشرف السكن";
+    var isAdmin = role == "admin";
+    var canRegister = role != "cyber" && role != "user";
 }
 
-<div class="card" style="max-width:640px">
-  <div class="card-header"><div>خط إنتاج الـ MVC شغال ✅</div></div>
-  <div style="padding:20px;font-size:14px;line-height:2">
-    <p>الصفحة دي متولدة من <strong>Razor View</strong> جوه <strong>_Layout</strong> الموحد، بنفس هوية النظام من <code>site.css</code>.</p>
-    <p style="color:var(--gray-500)">السايدبار على يمينك بيوصّل للصفحات الحالية عادي — ومع كل خطوة تحويل، صفحة هتسيب القائمة القديمة وتيجي هنا.</p>
-    <p><span class="badge badge-active">الخطوة 1 تمّت</span></p>
+<style>
+  /* خاص بلوحة التحكم فقط — الباقي كله من site.css */
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-bottom:24px}
+  .stat-card{background:var(--white);border-radius:16px;padding:20px;border:1px solid var(--gray-100);box-shadow:0 2px 8px rgba(27,42,94,.05);display:flex;flex-direction:column;gap:12px;transition:transform .2s,box-shadow .2s}
+  .stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(27,42,94,.1)}
+  .stat-top{display:flex;align-items:center;justify-content:space-between}
+  .stat-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center}
+  .stat-badge{font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px}
+  .stat-num{font-size:32px;font-weight:900;color:var(--navy-dark);line-height:1}
+  .stat-label{font-size:13px;color:var(--gray-500);font-weight:500}
+  .section-heading{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;color:var(--navy-dark);margin-bottom:12px}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+  #chartsRow{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+  .activity-list{padding:8px 0}
+  .activity-item{display:flex;align-items:flex-start;gap:12px;padding:12px 20px;border-bottom:1px solid var(--gray-100)}
+  .activity-item:last-child{border-bottom:none}
+  .activity-dot{width:8px;height:8px;border-radius:50%;margin-top:6px;flex-shrink:0}
+  .activity-text{font-size:13px;color:var(--navy-dark);font-weight:500;line-height:1.5}
+  .activity-time{font-size:11px;color:var(--gray-500);margin-top:2px}
+  .actions-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px}
+  .action-btn{display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 12px;border-radius:12px;border:1.5px solid var(--gray-100);background:var(--gray-50);cursor:pointer;transition:all .2s;text-decoration:none}
+  .action-btn:hover{border-color:var(--navy);background:var(--white);transform:translateY(-2px);box-shadow:0 4px 12px rgba(27,42,94,.1)}
+  .action-btn span{font-size:12px;font-weight:600;color:var(--navy-dark);text-align:center}
+</style>
+
+<div class="page-header">
+  <h2>مرحباً، @fullName 👋</h2>
+  <p>إليك ملخص النظام لليوم</p>
+</div>
+
+@* ===== إحصائيات مسار الطلبات — أرقام حقيقية من السيرفر ===== *@
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-top">
+      <div class="stat-icon" style="background:#E6F1FB">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <span class="stat-badge" style="background:#E6F1FB;color:#1B2A5E">الإجمالي</span>
+    </div>
+    <div class="stat-num">@Model.Stats.total</div>
+    <div class="stat-label">إجمالي الطلاب</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-top">
+      <div class="stat-icon" style="background:#FFF7ED">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#92400E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      </div>
+      <span class="stat-badge" style="background:#FFF7ED;color:#92400E">مراجعة إسكان</span>
+    </div>
+    <div class="stat-num">@Model.Stats.submitted</div>
+    <div class="stat-label">بانتظار مراجعة الإسكان</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-top">
+      <div class="stat-icon" style="background:#E0F2FE">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0369A1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      </div>
+      <span class="stat-badge" style="background:#E0F2FE;color:#0369A1">موافقة الإسكان</span>
+    </div>
+    <div class="stat-num">@Model.Stats.housing_approved</div>
+    <div class="stat-label">بانتظار مراجعة الأمن السيبراني</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-top">
+      <div class="stat-icon" style="background:#F3E8FF">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B21A8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <span class="stat-badge" style="background:#F3E8FF;color:#6B21A8">مراجعة سيبراني</span>
+    </div>
+    <div class="stat-num">@Model.Stats.cyber_review</div>
+    <div class="stat-label">تحت مراجعة الأمن السيبراني</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-top">
+      <div class="stat-icon" style="background:#E1F5EE">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <span class="stat-badge" style="background:#E1F5EE;color:#0F6E56">معتمد</span>
+    </div>
+    <div class="stat-num">@Model.Stats.cyber_approved</div>
+    <div class="stat-label">طلبات معتمدة</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-top">
+      <div class="stat-icon" style="background:#FFF7ED">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#92400E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      </div>
+      <span class="stat-badge" style="background:#FFF7ED;color:#92400E">جاهز للإنشاء</span>
+    </div>
+    <div class="stat-num">@Model.Stats.ready_for_provisioning</div>
+    <div class="stat-label">جاهزة لإنشاء حساب شبكة السكن</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-top">
+      <div class="stat-icon" style="background:#E1F5EE">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <span class="stat-badge" style="background:#E1F5EE;color:#0F6E56">مكتمل</span>
+    </div>
+    <div class="stat-num">@Model.Stats.completed</div>
+    <div class="stat-label">طلبات مكتملة</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-top">
+      <div class="stat-icon" style="background:#FEF2F2">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#991B1B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+      </div>
+      <span class="stat-badge" style="background:#FEF2F2;color:#991B1B">مغادرة</span>
+    </div>
+    <div class="stat-num">@Model.Stats.left</div>
+    <div class="stat-label">طلاب غادروا</div>
   </div>
 </div>
+
+@* ===== إحصائيات حالة الطلاب — من السيرفر ===== *@
+<div class="section-heading">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+  <span>إحصائيات الطلاب</span>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card" style="cursor:pointer" onclick="location.href='/Students'">
+    <div class="stat-top">
+      <div class="stat-icon" style="background:#E1F5EE">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <span class="stat-badge" style="background:#E1F5EE;color:#0F6E56">نشط</span>
+    </div>
+    <div class="stat-num">@Model.StatusStats.Active</div>
+    <div class="stat-label">الطلاب النشطون</div>
+  </div>
+
+  <div class="stat-card" style="cursor:pointer" onclick="location.href='/Students'">
+    <div class="stat-top">
+      <div class="stat-icon" style="background:#DBEAFE">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1E40AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+      <span class="stat-badge" style="background:#DBEAFE;color:#1E40AF">متخرج</span>
+    </div>
+    <div class="stat-num">@Model.StatusStats.Graduated</div>
+    <div class="stat-label">الطلاب المتخرجون</div>
+  </div>
+
+  <div class="stat-card" style="cursor:pointer" onclick="location.href='/Students'">
+    <div class="stat-top">
+      <div class="stat-icon" style="background:#FEF2F2">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#991B1B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+      </div>
+      <span class="stat-badge" style="background:#FEF2F2;color:#991B1B">مفصول</span>
+    </div>
+    <div class="stat-num">@Model.StatusStats.Dismissed</div>
+    <div class="stat-label">الطلاب المفصولون</div>
+  </div>
+
+  <div class="stat-card" style="cursor:pointer" onclick="location.href='/Students'">
+    <div class="stat-top">
+      <div class="stat-icon" style="background:#FFF7ED">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#92400E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      </div>
+      <span class="stat-badge" style="background:#FFF7ED;color:#92400E">منقول</span>
+    </div>
+    <div class="stat-num">@Model.StatusStats.Transferred</div>
+    <div class="stat-label">الطلاب المنقولون</div>
+  </div>
+</div>
+
+@* ===== نشاط اليوم — بيتحمّل بالـ JS من سجل العمليات ===== *@
+<div class="section-heading">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+  <span>نشاط اليوم</span>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-top">
+      <div class="stat-icon" style="background:#E8F4FD">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+      </div>
+      <span class="stat-badge" style="background:#E8F4FD;color:#1B2A5E">اليوم</span>
+    </div>
+    <div class="stat-num" id="cnt-today-logins">0</div>
+    <div class="stat-label">تسجيلات الدخول اليوم</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-top">
+      <div class="stat-icon" style="background:#E1F5EE">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+      </div>
+      <span class="stat-badge" style="background:#E1F5EE;color:#0F6E56">اليوم</span>
+    </div>
+    <div class="stat-num" id="cnt-today-student-ops">0</div>
+    <div class="stat-label">عمليات الطلاب اليوم</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-top">
+      <div class="stat-icon" style="background:#FFF7ED">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#92400E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
+      </div>
+      <span class="stat-badge" style="background:#FFF7ED;color:#92400E">اليوم</span>
+    </div>
+    <div class="stat-num" id="cnt-today-request-ops">0</div>
+    <div class="stat-label">عمليات الطلبات اليوم</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-top">
+      <div class="stat-icon" style="background:#F3E8FF">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B21A8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      </div>
+      <span class="stat-badge" style="background:#F3E8FF;color:#6B21A8">اليوم</span>
+    </div>
+    <div class="stat-num" id="cnt-today-total-ops">0</div>
+    <div class="stat-label">إجمالي عمليات اليوم</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-top">
+      <div class="stat-icon" style="background:#FEF2F2">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#991B1B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+      </div>
+      <span class="stat-badge" style="background:#FEF2F2;color:#991B1B">اليوم</span>
+    </div>
+    <div class="stat-num" id="cnt-today-failed-logins">0</div>
+    <div class="stat-label">محاولات الدخول الفاشلة اليوم</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-top">
+      <div class="stat-icon" style="background:#FEF2F2">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#991B1B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      </div>
+      <span class="stat-badge" style="background:#FEF2F2;color:#991B1B">اليوم</span>
+    </div>
+    <div class="stat-num" id="cnt-today-deletes">0</div>
+    <div class="stat-label">عمليات الحذف اليوم</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-top">
+      <div class="stat-icon" style="background:#E6F1FB">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <span class="stat-badge" style="background:#E6F1FB;color:#1B2A5E">اليوم</span>
+    </div>
+    <div class="stat-num" id="cnt-today-active-users">0</div>
+    <div class="stat-label">المستخدمين النشطين اليوم</div>
+  </div>
+</div>
+
+@if (isAdmin)
+{
+  @* ===== إحصائيات حسابات شبكة السكن — admin فقط (نفس صلاحية الـ API) ===== *@
+  <div class="section-heading">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+    <span>إحصائيات حسابات السكن</span>
+  </div>
+  <div class="stats-row" style="flex-wrap:wrap">
+    <div class="stat-pill"><div class="stat-pill-num" id="hs-total-accounts">0</div><div class="stat-pill-label">إجمالي الحسابات</div></div>
+    <div class="stat-pill"><div class="stat-pill-num" id="hs-enabled">0</div><div class="stat-pill-label">مفعل</div></div>
+    <div class="stat-pill"><div class="stat-pill-num" id="hs-disabled">0</div><div class="stat-pill-label">معطل</div></div>
+    <div class="stat-pill"><div class="stat-pill-num" id="hs-synced-today">0</div><div class="stat-pill-label">تمت مزامنته اليوم</div></div>
+    <div class="stat-pill"><div class="stat-pill-num" id="hs-without">0</div><div class="stat-pill-label">بدون حسابات</div></div>
+    <div class="stat-pill"><div class="stat-pill-num" id="hs-total-students">0</div><div class="stat-pill-label">إجمالي الطلاب</div></div>
+  </div>
+}
+
+@* ===== آخر الطلاب + آخر الطلبات — من السيرفر ===== *@
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">آخر الطلاب المسجلين</div>
+      <a class="card-action" href="/Students">عرض الكل</a>
+    </div>
+    <table>
+      <thead>
+        <tr><th>الاسم</th><th>الكلية</th><th>المبنى</th><th>الحالة</th></tr>
+      </thead>
+      <tbody>
+        @if (Model.LatestStudents.Count == 0)
+        {
+          <tr><td colspan="4" style="text-align:center;padding:20px;color:var(--gray-500)">لا توجد بيانات</td></tr>
+        }
+        @foreach (var s in Model.LatestStudents)
+        {
+          <tr>
+            <td>@s.full_name</td>
+            <td>@s.college</td>
+            <td>@s.housing_building</td>
+            <td>
+              @if (s.status == "left")
+              {
+                <span class="badge badge-left">غادر</span>
+              }
+              else
+              {
+                <span class="badge badge-active">مقيم</span>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">آخر الطلبات</div>
+      <a class="card-action" href="/requests.html">عرض الكل</a>
+    </div>
+    <table>
+      <thead>
+        <tr><th>نوع الطلب</th><th>التاريخ</th><th>الحالة</th></tr>
+      </thead>
+      <tbody>
+        @if (Model.LatestRequests.Count == 0)
+        {
+          <tr><td colspan="3" style="text-align:center;padding:20px;color:var(--gray-500)">لا توجد طلبات</td></tr>
+        }
+        @foreach (var r in Model.LatestRequests)
+        {
+          <tr>
+            <td>@ReqTypeAr(r.RequestType)</td>
+            <td><span data-dt="@DateTime.SpecifyKind(r.SubmittedAt, DateTimeKind.Utc).ToString("o")">@r.SubmittedAt.ToString("yyyy/MM/dd")</span></td>
+            <td><span class="badge @ReqBadge(r.Status)">@ReqStatusAr(r.Status)</span></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+@* ===== آخر العمليات — JS من سجل العمليات ===== *@
+<div class="grid-2">
+  <div class="card" style="grid-column:1/-1;margin-bottom:0">
+    <div class="card-header">
+      <div class="card-title">آخر العمليات</div>
+      <a class="card-action" href="/auditlog.html">عرض الكل</a>
+    </div>
+    <table>
+      <thead>
+        <tr><th>المستخدم</th><th>الإجراء</th><th>الوقت</th></tr>
+      </thead>
+      <tbody id="audit-activity-tbody">
+        <tr><td colspan="3" style="text-align:center;padding:30px;color:var(--gray-500)">جاري التحميل...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+@* ===== الرسوم البيانية ===== *@
+<div class="grid-2" id="chartsRow" style="margin-bottom:24px">
+  <div class="card"><div class="card-header"><div class="card-title">العمليات آخر 7 أيام</div></div><div style="padding:16px;height:220px"><canvas id="chartOps7"></canvas></div></div>
+  <div class="card"><div class="card-header"><div class="card-title">نشاط تسجيل الدخول آخر 30 يوم</div></div><div style="padding:16px;height:220px"><canvas id="chartLogins30"></canvas></div></div>
+  <div class="card"><div class="card-header"><div class="card-title">عمليات الطلاب</div></div><div style="padding:16px;height:220px"><canvas id="chartStudents"></canvas></div></div>
+  <div class="card"><div class="card-header"><div class="card-title">عمليات الطلبات</div></div><div style="padding:16px;height:220px"><canvas id="chartRequests"></canvas></div></div>
+</div>
+
+@* ===== تنبيهات الأمان + إجراءات سريعة + آخر الإشعارات ===== *@
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">تنبيهات الأمان</div>
+      <a class="card-action" onclick="loadAlerts()">تحديث</a>
+    </div>
+    <div id="alerts-body" style="padding:16px;color:var(--gray-500);text-align:center">لا توجد تنبيهات</div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">إجراءات سريعة</div>
+    </div>
+    <div class="actions-grid">
+      @if (canRegister)
+      {
+        <a class="action-btn" href="/register_student.html"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg><span>تسجيل طالب</span></a>
+      }
+      <a class="action-btn" href="/Students"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>عرض الطلاب</span></a>
+      <a class="action-btn" href="/requests.html"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg><span>كل الطلبات</span></a>
+      <a class="action-btn" href="/auditlog.html"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>تصدير تقرير</span></a>
+      <a class="action-btn" href="/auditlog.html"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>سجل العمليات</span></a>
+      <a class="action-btn" href="/reports.html"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span>التقارير</span></a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">آخر الإشعارات</div>
+    </div>
+    <div class="activity-list" id="notif-list"></div>
+  </div>
+</div>
+
+@functions {
+    private static string ReqTypeAr(string? t) => (t ?? "").ToLowerInvariant() switch
+    {
+        "self_registration" => "تسجيل ذاتي",
+        "registration" => "تسجيل سكن",
+        "bulk_registration" => "تسجيل جماعي",
+        _ => string.IsNullOrEmpty(t) ? "—" : t
+    };
+
+    private static string ReqStatusAr(string? s) => (s ?? "").ToLowerInvariant() switch
+    {
+        "submitted" => "قيد الانتظار",
+        "housing_approved" => "موافقة الإسكان",
+        "housing_rejected" => "مرفوض من الإسكان",
+        "cyber_review" => "مراجعة الأمن السيبراني",
+        "cyber_approved" => "معتمد",
+        "cyber_rejected" => "مرفوض من الأمن السيبراني",
+        "ready_for_provisioning" => "جاهز لإنشاء الحساب",
+        "completed" => "مكتمل",
+        _ => string.IsNullOrEmpty(s) ? "—" : s
+    };
+
+    private static string ReqBadge(string? s) => (s ?? "").ToLowerInvariant() switch
+    {
+        "housing_approved" or "cyber_approved" or "ready_for_provisioning" or "completed" => "badge-approved",
+        "housing_rejected" or "cyber_rejected" => "badge-rejected",
+        _ => "badge-pending"
+    };
+}
+
+@section Scripts {
+@* @@ للهروب من الـ Razor — الرابط النهائي فيه @ عادية زي الصفحة القديمة *@
+<script src="https://cdn.jsdelivr.net/npm/chart.js@@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+  var IS_ADMIN = @(isAdmin ? "true" : "false");
+
+  // تواريخ الطلبات — نحولها لتوقيت المتصفح بنفس أسلوب الصفحة القديمة
+  document.querySelectorAll('[data-dt]').forEach(function (el) {
+    var d = new Date(el.dataset.dt);
+    if (!isNaN(d)) el.textContent = d.toLocaleDateString('ar-EG');
+  });
+
+  async function apiFetch(url) {
+    try {
+      var res = await fetch(url, { headers: NUH.headers() });
+      if (res.status === 401) { window.location.replace('/Account/Login'); return null; }
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (e) { return null; }
+  }
+
+  function animateNum(id, target) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var cur = 0;
+    el.textContent = '0';
+    var step = Math.max(1, Math.ceil(target / 30));
+    var timer = setInterval(function () {
+      cur = Math.min(cur + step, target);
+      el.textContent = cur;
+      if (cur >= target) clearInterval(timer);
+    }, 40);
+  }
+
+  var actionAr = {
+    login: 'تسجيل دخول',
+    logout: 'تسجيل خروج',
+    login_failed: 'فشل تسجيل دخول',
+    login_local_fallback: 'تسجيل دخول (محلي)',
+    login_local_fallback_failed: 'فشل تسجيل دخول (محلي)',
+    set_password: 'تغيير كلمة المرور',
+    create_request: 'إنشاء طلب',
+    approve_request: 'قبول الطلب',
+    reject_request: 'رفض الطلب',
+    create_student: 'إضافة طالب',
+    update_student: 'تحديث طالب',
+    delete_student: 'حذف طالب',
+    checkout_student: 'مغادرة طالب',
+    housing_approve_request: 'موافقة إدارة الإسكان',
+    housing_reject_request: 'رفض إسكان',
+    submit_cyber_review: 'إحالة للأمن السيبراني',
+    cyber_approve_request: 'موافقة الأمن السيبراني',
+    cyber_reject_request: 'رفض الأمن السيبراني',
+    ready_for_provisioning_request: 'تجهيز لإنشاء حساب شبكة السكن',
+    complete_request: 'إكمال الطلب',
+    user_created_ad: 'إنشاء مستخدم من Active Directory',
+    user_updated_ad: 'تحديث مستخدم من Active Directory'
+  };
+  function translateAction(a) { return actionAr[a] || a; }
+
+  async function loadAuditStats() {
+    var data = await apiFetch('/api/auditlogs/today-stats');
+    if (!data) return;
+    animateNum('cnt-today-logins', data.todayLogins || 0);
+    animateNum('cnt-today-student-ops', data.todayStudentOps || 0);
+    animateNum('cnt-today-request-ops', data.todayRequestOps || 0);
+    animateNum('cnt-today-failed-logins', data.todayFailedLogins || 0);
+    animateNum('cnt-today-deletes', data.todayDeletes || 0);
+    animateNum('cnt-today-active-users', data.todayActiveUsers || 0);
+    animateNum('cnt-today-total-ops', data.todayTotalOps || 0);
+  }
+
+  async function loadAuditActivity() {
+    var data = await apiFetch('/api/auditlogs?pageSize=10&page=1');
+    var tbody = document.getElementById('audit-activity-tbody');
+    if (!data || !data.data) {
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:20px;color:#991B1B">تعذر تحميل البيانات</td></tr>';
+      return;
+    }
+    var fmt = new Intl.DateTimeFormat('ar-EG', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    tbody.innerHTML = data.data.slice(0, 10).map(function (r) {
+      var user = (r.user && (r.user.full_name || r.user.username)) || r.user_id;
+      var dt = r.action_at ? fmt.format(new Date(r.action_at)) : '—';
+      return '<tr><td>' + escHtml(user) + '</td><td>' + escHtml(translateAction(r.action)) + '</td><td>' + dt + '</td></tr>';
+    }).join('') || '<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--gray-500)">لا توجد عمليات</td></tr>';
+  }
+
+  async function loadAlerts() {
+    var data = await apiFetch('/api/auditlogs/alerts');
+    var el = document.getElementById('alerts-body');
+    if (!data || data.length === 0) {
+      el.innerHTML = '<div style="padding:8px;color:var(--gray-500);text-align:center">✓ لا توجد تنبيهات أمان</div>';
+      return;
+    }
+    el.innerHTML = data.map(function (a) {
+      var bg = a.severity === 'high' ? '#FEF2F2' : '#FFF7ED';
+      var clr = a.severity === 'high' ? '#991B1B' : '#92400E';
+      return '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:8px;border-radius:10px;background:' + bg + ';border:1px solid ' + clr + '20">' +
+        '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="' + clr + '" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' +
+        '<div><div style="font-weight:600;font-size:13px;color:' + clr + '">' + escHtml(a.message_ar) + '</div>' +
+        '<div style="font-size:11px;color:' + clr + 'CC">العدد: ' + a.count + '</div></div></div>';
+    }).join('');
+  }
+
+  async function loadHousingStats() {
+    // ملحوظة: النسخة القديمة كان فيها باج (متغير staffToken مش معرّف) فالأرقام دي ما كانتش بتتحمّل — متصلّح هنا
+    var data = await apiFetch('/api/HousingAccountManagement/stats');
+    if (!data) return;
+    var map = {
+      'hs-total-accounts': data.withAccounts || data.with_accounts || 0,
+      'hs-enabled': data.enabled || 0,
+      'hs-disabled': data.disabled || 0,
+      'hs-synced-today': data.syncedLast24h || data.synced_last_24h || 0,
+      'hs-without': data.withoutUsername || data.without_username || 0,
+      'hs-total-students': data.totalStudents || data.total_students || 0
+    };
+    Object.keys(map).forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = map[id];
+    });
+  }
+
+  async function loadNotifCard() {
+    var data = await apiFetch('/api/notifications?role=' + encodeURIComponent(NUH.role));
+    var list = document.getElementById('notif-list');
+    if (!data) {
+      list.innerHTML = '<div style="padding:16px;color:#991B1B">تعذر تحميل الإشعارات</div>';
+      return;
+    }
+    list.innerHTML = data.length ? data.slice(0, 8).map(function (n) {
+      return '<div class="activity-item">' +
+        '<div class="activity-dot" style="background:#C9A84C"></div>' +
+        '<div><div class="activity-text">' + escHtml(n.message) + '</div>' +
+        '<div class="activity-time">' + new Date(n.sent_at || Date.now()).toLocaleDateString('ar-EG') + '</div></div>' +
+      '</div>';
+    }).join('') : '<div style="padding:20px;text-align:center;color:var(--gray-500)">لا توجد إشعارات</div>';
+  }
+
+  var chartInstances = {};
+  function renderChart(id, type, labels, data, bgColors) {
+    if (chartInstances[id]) chartInstances[id].destroy();
+    var ctx = document.getElementById(id).getContext('2d');
+    chartInstances[id] = new Chart(ctx, {
+      type: type,
+      data: {
+        labels: labels,
+        datasets: [{
+          label: '',
+          data: data,
+          backgroundColor: bgColors || '#1B2A5E',
+          borderColor: '#1B2A5E',
+          borderWidth: 1.5,
+          tension: 0.3,
+          fill: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+      }
+    });
+  }
+
+  async function loadCharts() {
+    var data = await apiFetch('/api/auditlogs/chart-data');
+    if (!data) return;
+    if (data.last7Days && data.last7Days.length) {
+      renderChart('chartOps7', 'bar',
+        data.last7Days.map(function (d) { return d.date.slice(5, 10); }),
+        data.last7Days.map(function (d) { return d.count; }), '#1B2A5E');
+    }
+    if (data.login30 && data.login30.length) {
+      renderChart('chartLogins30', 'line',
+        data.login30.map(function (d) { return d.date.slice(5, 10); }),
+        data.login30.map(function (d) { return d.count; }), '#C9A84C');
+    }
+    if (data.studentOps && data.studentOps.length) {
+      renderChart('chartStudents', 'doughnut',
+        data.studentOps.map(function (d) { return translateAction(d.action); }),
+        data.studentOps.map(function (d) { return d.count; }), ['#1B2A5E', '#C9A84C', '#991B1B']);
+    }
+    if (data.requestOps && data.requestOps.length) {
+      renderChart('chartRequests', 'doughnut',
+        data.requestOps.map(function (d) { return translateAction(d.action); }),
+        data.requestOps.map(function (d) { return d.count; }), ['#0F6E56', '#C9A84C', '#991B1B']);
+    }
+  }
+
+  loadAuditStats();
+  loadAuditActivity();
+  loadAlerts();
+  loadNotifCard();
+  loadCharts();
+  if (IS_ADMIN) loadHousingStats();
+</script>
+}

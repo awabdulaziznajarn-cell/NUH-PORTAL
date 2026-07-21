@@ -14,6 +14,20 @@
       <div class="topbar-title">@ViewData["Title"]</div>
       <div class="topbar-right">
         <div class="topbar-date" id="dateNow"></div>
+        <div class="notif-wrapper">
+          <button class="notif-btn" type="button" onclick="toggleNotifDropdown(event)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="notif-dot hidden"></span>
+            <span class="notif-badge" id="notif-badge"></span>
+          </button>
+          <div class="notif-dropdown" id="notif-dropdown">
+            <div class="notif-header">
+              <span>الإشعارات</span>
+              <button type="button" onclick="markAllNotifRead()">تحديد الكل مقروء</button>
+            </div>
+            <div class="notif-list" id="notif-dropdown-list"></div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -23,8 +37,112 @@
   </div>
 
   <script>
+    // حاجات مشتركة لكل صفحات الـ MVC — الدور من كليم السيرفر، والتوكن من نفس مفاتيح الصفحات القديمة
+    var NUH = {
+      role: '@(User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "")',
+      token: function () { return localStorage.getItem('staffToken') || ''; },
+      headers: function () {
+        var t = NUH.token();
+        return t ? { 'Authorization': 'Bearer ' + t } : {};
+      }
+    };
+
     document.getElementById('dateNow').textContent =
       new Date().toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+    function escHtml(v) {
+      return String(v == null ? '' : v)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    // ===== جرس الإشعارات (موحّد في كل الصفحات) =====
+    async function loadUnreadCount() {
+      try {
+        var res = await fetch('/api/notifications/unread-count?role=' + encodeURIComponent(NUH.role), { headers: NUH.headers() });
+        if (!res.ok) return;
+        var data = await res.json();
+        var badge = document.getElementById('notif-badge');
+        var dot = document.querySelector('.notif-dot');
+        if (data && data.count > 0) {
+          badge.textContent = data.count;
+          badge.classList.add('show');
+          if (dot) dot.classList.remove('hidden');
+        } else {
+          badge.classList.remove('show');
+          if (dot) dot.classList.add('hidden');
+        }
+      } catch (e) { /* صامت — الجرس مش أساسي */ }
+    }
+
+    async function loadNotifDropdown() {
+      var list = document.getElementById('notif-dropdown-list');
+      try {
+        var res = await fetch('/api/notifications?role=' + encodeURIComponent(NUH.role), { headers: NUH.headers() });
+        if (!res.ok) { list.innerHTML = '<div class="notif-empty">تعذر تحميل الإشعارات</div>'; return; }
+        var data = await res.json();
+        list.innerHTML = (data && data.length) ? data.map(function (n) {
+          return '<div class="notif-item" onclick="markNotifRead(' + n.id + ', this)" data-id="' + n.id + '">' +
+            '<div class="notif-item-dot" style="background:' + (n.status === 'pending' ? '#1B2A5E' : '#CBD5E1') + '"></div>' +
+            '<div>' +
+              '<div class="notif-item-text">' + escHtml(n.message) + '</div>' +
+              '<div class="notif-item-time">' + new Date(n.sent_at || Date.now()).toLocaleDateString('ar-EG') + '</div>' +
+            '</div>' +
+          '</div>';
+        }).join('') : '<div class="notif-empty">لا توجد إشعارات</div>';
+      } catch (e) {
+        list.innerHTML = '<div class="notif-empty">تعذر تحميل الإشعارات</div>';
+      }
+    }
+
+    function toggleNotifDropdown(e) {
+      e.stopPropagation();
+      var dd = document.getElementById('notif-dropdown');
+      var isOpen = dd.classList.contains('open');
+      document.querySelectorAll('.notif-dropdown.open').forEach(function (d) { d.classList.remove('open'); });
+      if (!isOpen) {
+        dd.classList.add('open');
+        if (!dd.dataset.loaded) { loadNotifDropdown(); dd.dataset.loaded = '1'; }
+      }
+    }
+
+    async function markNotifRead(id, el) {
+      try {
+        await fetch('/api/notifications/read', {
+          method: 'PATCH',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, NUH.headers()),
+          body: JSON.stringify([id])
+        });
+        el.querySelector('.notif-item-dot').style.background = '#CBD5E1';
+        loadUnreadCount();
+      } catch (e) { }
+    }
+
+    async function markAllNotifRead() {
+      var ids = [];
+      document.querySelectorAll('#notif-dropdown-list .notif-item[data-id]').forEach(function (el) {
+        ids.push(parseInt(el.dataset.id));
+      });
+      if (!ids.length) return;
+      try {
+        await fetch('/api/notifications/read', {
+          method: 'PATCH',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, NUH.headers()),
+          body: JSON.stringify(ids)
+        });
+        document.querySelectorAll('#notif-dropdown-list .notif-item-dot').forEach(function (d) { d.style.background = '#CBD5E1'; });
+        loadUnreadCount();
+      } catch (e) { }
+    }
+
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.notif-wrapper')) {
+        document.querySelectorAll('.notif-dropdown.open').forEach(function (d) { d.classList.remove('open'); });
+      }
+    });
+
+    loadUnreadCount();
+    setInterval(loadUnreadCount, 30000);
   </script>
   @await RenderSectionAsync("Scripts", required: false)
 </body>
