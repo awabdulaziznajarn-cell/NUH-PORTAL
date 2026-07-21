@@ -15,7 +15,7 @@ namespace NUH_PORTAL.Services
         private readonly IRepository<User> _users;
         private readonly OtpService _otpService;
         private readonly SmsService _smsService;
-        private readonly WorkflowService _workflow;   // بيسمح بتسجيل audit بدون مستخدم (otp_sent)
+        private readonly IWorkflowService _workflow;   // بيسمح بتسجيل audit بدون مستخدم (otp_sent)
         private readonly ITokenService _tokens;
         private readonly IConfiguration _config;
         private readonly IHttpContextAccessor _http;
@@ -25,7 +25,7 @@ namespace NUH_PORTAL.Services
             IRepository<User> users,
             OtpService otpService,
             SmsService smsService,
-            WorkflowService workflow,
+            IWorkflowService workflow,
             ITokenService tokens,
             IConfiguration config,
             IHttpContextAccessor http,

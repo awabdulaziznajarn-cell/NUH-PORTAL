@@ -16,16 +16,16 @@ namespace NUH_PORTAL.Services
         private readonly IRepository<Student> _students;
         private readonly IRepository<Request> _requests;
         private readonly IRepository<StudentDeclaration> _declarations;
-        private readonly RegistrationService _registration;
-        private readonly WorkflowService _workflow;
+        private readonly IRegistrationService _registration;
+        private readonly IWorkflowService _workflow;
         private readonly IHttpContextAccessor _http;
 
         public RegistrationFlowService(
             IRepository<Student> students,
             IRepository<Request> requests,
             IRepository<StudentDeclaration> declarations,
-            RegistrationService registration,
-            WorkflowService workflow,
+            IRegistrationService registration,
+            IWorkflowService workflow,
             IHttpContextAccessor http,
             IUnitOfWork unitOfWork,
             IMapper mapper) : base(unitOfWork, mapper)

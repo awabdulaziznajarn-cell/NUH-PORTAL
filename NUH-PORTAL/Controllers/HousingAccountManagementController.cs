@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using NUH_PORTAL.Common.Pagination;
 using NUH_PORTAL.DTOs.Housing;
 using NUH_PORTAL.Services.Interfaces;
 
@@ -19,6 +20,11 @@ namespace NUH_PORTAL.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll([FromQuery] string? status)
             => Ok(await _service.GetAllAsync(status));
+
+        // GET api/HousingAccountManagement/paged?page=&pageSize=&filterText=&sortBy=&sortAsc=&status=
+        [HttpGet("paged")]
+        public async Task<IActionResult> GetPaged([FromQuery] QueryParams queryParams, [FromQuery] string? status = null)
+            => Ok(await _service.GetPagedAsync(queryParams, status));
 
         // GET api/HousingAccountManagement/{studentId}
         [HttpGet("{studentId}")]

@@ -13,14 +13,14 @@ namespace NUH_PORTAL.Services
     public class WorkflowActionService : AppServiceBase, IWorkflowActionService
     {
         private readonly IRepository<Request> _requests;
-        private readonly RegistrationService _registration;
-        private readonly WorkflowService _workflow;
+        private readonly IRegistrationService _registration;
+        private readonly IWorkflowService _workflow;
         private readonly IAuditService _audit;
 
         public WorkflowActionService(
             IRepository<Request> requests,
-            RegistrationService registration,
-            WorkflowService workflow,
+            IRegistrationService registration,
+            IWorkflowService workflow,
             IAuditService audit,
             IUnitOfWork unitOfWork,
             IMapper mapper) : base(unitOfWork, mapper)

@@ -1,10 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using NUH_PORTAL.Data;
 using NUH_PORTAL.Models;
+using NUH_PORTAL.Services.Interfaces;
 
 namespace NUH_PORTAL.Services
 {
-    public class WorkflowService
+    public class WorkflowService : IWorkflowService
     {
         private readonly AppDbContext _context;
         private readonly ILogger<WorkflowService> _logger;

@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using NUH_PORTAL.Common.Pagination;
 using NUH_PORTAL.Core.Exceptions;
 using NUH_PORTAL.Data.Interfaces;
 using NUH_PORTAL.DTOs.Housing;
@@ -46,21 +47,7 @@ namespace NUH_PORTAL.Services
 
         public async Task<List<HousingAccountListItemDto>> GetAllAsync(string? status)
         {
-            var query = _students.Query().AsNoTracking()
-                .Where(s => !s.IsDeleted && s.ad_username != null);
-
-            if (!string.IsNullOrEmpty(status))
-            {
-                query = status.ToLower() switch
-                {
-                    "enabled" => query.Where(s => s.ad_status == "enabled"),
-                    "disabled" => query.Where(s => s.ad_status == "disabled"),
-                    "unknown" => query.Where(s => s.ad_status == null || s.ad_status == ""),
-                    _ => query
-                };
-            }
-
-            return await query
+            return await BuildAccountsQuery(status)
                 .OrderBy(s => s.full_name)
                 .Select(s => new HousingAccountListItemDto
                 {
@@ -80,6 +67,74 @@ namespace NUH_PORTAL.Services
                     student_status = s.student_status
                 })
                 .ToListAsync();
+        }
+
+
+        public async Task<QueryResult<HousingAccountListItemDto>> GetPagedAsync(QueryParams queryParams, string? status)
+        {
+            var query = BuildAccountsQuery(status);
+
+            var f = queryParams.FilterText?.Trim();
+            if (!string.IsNullOrEmpty(f))
+            {
+                query = query.Where(s =>
+                    (s.student_id != null && s.student_id.Contains(f)) ||
+                    (s.full_name != null && s.full_name.Contains(f)) ||
+                    (s.ad_username != null && s.ad_username.Contains(f)));
+            }
+
+            query = (queryParams.SortBy?.ToLowerInvariant(), queryParams.SortAsc) switch
+            {
+                ("student_id", true) => query.OrderBy(s => s.student_id),
+                ("student_id", false) => query.OrderByDescending(s => s.student_id),
+                ("ad_status", true) => query.OrderBy(s => s.ad_status),
+                ("ad_status", false) => query.OrderByDescending(s => s.ad_status),
+                ("ad_last_sync_at", true) => query.OrderBy(s => s.ad_last_sync_at),
+                ("ad_last_sync_at", false) => query.OrderByDescending(s => s.ad_last_sync_at),
+                ("full_name", false) => query.OrderByDescending(s => s.full_name),
+                _ => query.OrderBy(s => s.full_name)
+            };
+
+            var paged = await query
+                .Select(s => new HousingAccountListItemDto
+                {
+                    Id = s.Id,
+                    student_id = s.student_id,
+                    full_name = s.full_name,
+                    full_name_english = s.full_name_english,
+                    college = s.college,
+                    department = s.department,
+                    gender = s.gender,
+                    housing_building = s.housing_building,
+                    room_number = s.room_number,
+                    ad_username = s.ad_username,
+                    ad_status = s.ad_status,
+                    ad_last_sync_at = s.ad_last_sync_at,
+                    status = s.status,
+                    student_status = s.student_status
+                })
+                .ToPagedResultAsync(queryParams);
+
+            return paged;
+        }
+
+        private IQueryable<Student> BuildAccountsQuery(string? status)
+        {
+            var query = _students.Query().AsNoTracking()
+                .Where(s => !s.IsDeleted && s.ad_username != null);
+
+            if (!string.IsNullOrEmpty(status))
+            {
+                query = status.ToLower() switch
+                {
+                    "enabled" => query.Where(s => s.ad_status == "enabled"),
+                    "disabled" => query.Where(s => s.ad_status == "disabled"),
+                    "unknown" => query.Where(s => s.ad_status == null || s.ad_status == ""),
+                    _ => query
+                };
+            }
+
+            return query;
         }
 
         public async Task<HousingAccountDetailsDto> GetDetailsAsync(int studentId)

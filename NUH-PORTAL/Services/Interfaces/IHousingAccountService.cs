@@ -1,3 +1,4 @@
+using NUH_PORTAL.Common.Pagination;
 using NUH_PORTAL.DTOs.Housing;
 using NUH_PORTAL.DTOs.Students;
 
@@ -7,6 +8,7 @@ namespace NUH_PORTAL.Services.Interfaces
     public interface IHousingAccountService
     {
         Task<List<HousingAccountListItemDto>> GetAllAsync(string? status);
+        Task<QueryResult<HousingAccountListItemDto>> GetPagedAsync(QueryParams queryParams, string? status);
         Task<HousingAccountDetailsDto> GetDetailsAsync(int studentId);
         Task<ToggleAccountResultDto> EnableAccountAsync(int studentId);
         Task<ToggleAccountResultDto> DisableAccountAsync(int studentId);

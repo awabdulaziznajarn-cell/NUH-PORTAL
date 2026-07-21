@@ -13,12 +13,12 @@ namespace NUH_PORTAL.Services
     {
         private readonly IRepository<Student> _students;
         private readonly IRepository<Request> _requests;
-        private readonly WorkflowService _workflow;
+        private readonly IWorkflowService _workflow;
 
         public RequestTrackingService(
             IRepository<Student> students,
             IRepository<Request> requests,
-            WorkflowService workflow,
+            IWorkflowService workflow,
             IUnitOfWork unitOfWork,
             IMapper mapper) : base(unitOfWork, mapper)
         {

@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using NUH_PORTAL.Common.Pagination;
 using NUH_PORTAL.Core.Exceptions;
 using NUH_PORTAL.Data.Interfaces;
 using NUH_PORTAL.DTOs.Students;
@@ -38,6 +39,50 @@ namespace NUH_PORTAL.Services
 
         public async Task<List<StudentDto>> GetStudentsAsync(bool showDeleted, string? adStatus)
         {
+            var list = await BuildStudentsQuery(showDeleted, adStatus).ToListAsync();
+            return Mapper.Map<List<StudentDto>>(list);
+        }
+
+        public async Task<QueryResult<StudentDto>> GetPagedAsync(QueryParams queryParams, bool showDeleted, string? adStatus)
+        {
+            var query = BuildStudentsQuery(showDeleted, adStatus);
+
+            // بحث حر في أهم الحقول
+            var f = queryParams.FilterText?.Trim();
+            if (!string.IsNullOrEmpty(f))
+            {
+                query = query.Where(s =>
+                    (s.student_id != null && s.student_id.Contains(f)) ||
+                    (s.full_name != null && s.full_name.Contains(f)) ||
+                    (s.full_name_english != null && s.full_name_english.Contains(f)) ||
+                    (s.national_id != null && s.national_id.Contains(f)) ||
+                    (s.phone != null && s.phone.Contains(f)) ||
+                    (s.college != null && s.college.Contains(f)));
+            }
+
+            // ترتيب
+            query = (queryParams.SortBy?.ToLowerInvariant(), queryParams.SortAsc) switch
+            {
+                ("student_id", true) => query.OrderBy(s => s.student_id),
+                ("student_id", false) => query.OrderByDescending(s => s.student_id),
+                ("full_name", true) => query.OrderBy(s => s.full_name),
+                ("full_name", false) => query.OrderByDescending(s => s.full_name),
+                ("college", true) => query.OrderBy(s => s.college),
+                ("college", false) => query.OrderByDescending(s => s.college),
+                ("created_at", true) => query.OrderBy(s => s.created_at),
+                ("created_at", false) => query.OrderByDescending(s => s.created_at),
+                ("status", true) => query.OrderBy(s => s.status),
+                ("status", false) => query.OrderByDescending(s => s.status),
+                ("id", true) => query.OrderBy(s => s.Id),
+                _ => query.OrderByDescending(s => s.Id)
+            };
+
+            var result = await query.ToPagedResultAsync(queryParams);
+            return result.Map<Student, StudentDto>(Mapper);
+        }
+
+        private IQueryable<Student> BuildStudentsQuery(bool showDeleted, string? adStatus)
+        {
             var query = _students.Query().AsNoTracking();
             if (!showDeleted)
                 query = query.Where(s => !s.IsDeleted);
@@ -54,8 +99,7 @@ namespace NUH_PORTAL.Services
                 };
             }
 
-            var list = await query.ToListAsync();
-            return Mapper.Map<List<StudentDto>>(list);
+            return query;
         }
 
         public async Task<StudentStatsDto> GetStatsAsync()

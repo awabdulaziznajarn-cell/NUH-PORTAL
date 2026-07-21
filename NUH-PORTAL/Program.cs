@@ -176,8 +176,8 @@ builder.Services.AddSingleton<ActiveDirectoryService>();
 builder.Services.AddScoped<ADProvisioningService>();
 builder.Services.AddScoped<OtpService>();
 builder.Services.AddScoped<SmsService>();
-builder.Services.AddScoped<WorkflowService>();
-builder.Services.AddScoped<RegistrationService>();
+builder.Services.AddScoped<IWorkflowService, WorkflowService>();
+builder.Services.AddScoped<IRegistrationService, RegistrationService>();
 
 // ✅ Layered architecture (Repository + UnitOfWork + AutoMapper) — نمط permits
 builder.Services.AddHttpContextAccessor();

@@ -1,18 +1,19 @@
 using Microsoft.EntityFrameworkCore;
 using NUH_PORTAL.Data;
 using NUH_PORTAL.Models;
+using NUH_PORTAL.Services.Interfaces;
 using System.Text.Json;
 
 namespace NUH_PORTAL.Services
 {
-    public class RegistrationService
+    public class RegistrationService : IRegistrationService
     {
         private readonly AppDbContext _context;
-        private readonly WorkflowService _workflowService;
+        private readonly IWorkflowService _workflowService;
         private readonly ADProvisioningService _adProvisioning;
         private readonly ILogger<RegistrationService> _logger;
 
-        public RegistrationService(AppDbContext context, WorkflowService workflowService, ADProvisioningService adProvisioning, ILogger<RegistrationService> logger)
+        public RegistrationService(AppDbContext context, IWorkflowService workflowService, ADProvisioningService adProvisioning, ILogger<RegistrationService> logger)
         {
             _context = context;
             _workflowService = workflowService;

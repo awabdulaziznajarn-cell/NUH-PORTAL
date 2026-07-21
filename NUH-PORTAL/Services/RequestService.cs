@@ -2,6 +2,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using NUH_PORTAL.Common.Pagination;
 using NUH_PORTAL.Core.Exceptions;
 using NUH_PORTAL.Data.Interfaces;
 using NUH_PORTAL.DTOs.Requests;
@@ -51,6 +52,43 @@ namespace NUH_PORTAL.Services
                 .Include(r => r.Student)
                 .ToListAsync();
             return Mapper.Map<List<RequestDto>>(list);
+        }
+
+
+        public async Task<QueryResult<RequestDto>> GetPagedAsync(QueryParams queryParams, string? status, string? requestType)
+        {
+            var query = _requests.Query().AsNoTracking()
+                .Include(r => r.Student)
+                .AsQueryable();
+
+            if (!string.IsNullOrEmpty(status))
+                query = query.Where(r => r.Status == status);
+            if (!string.IsNullOrEmpty(requestType))
+                query = query.Where(r => r.RequestType == requestType);
+
+            var f = queryParams.FilterText?.Trim();
+            if (!string.IsNullOrEmpty(f))
+            {
+                query = query.Where(r =>
+                    (r.RequestNumber != null && r.RequestNumber.Contains(f)) ||
+                    (r.Student != null && r.Student.full_name != null && r.Student.full_name.Contains(f)) ||
+                    (r.Student != null && r.Student.student_id != null && r.Student.student_id.Contains(f)));
+            }
+
+            query = (queryParams.SortBy?.ToLowerInvariant(), queryParams.SortAsc) switch
+            {
+                ("id", true) => query.OrderBy(r => r.Id),
+                ("id", false) => query.OrderByDescending(r => r.Id),
+                ("status", true) => query.OrderBy(r => r.Status),
+                ("status", false) => query.OrderByDescending(r => r.Status),
+                ("requestnumber", true) => query.OrderBy(r => r.RequestNumber),
+                ("requestnumber", false) => query.OrderByDescending(r => r.RequestNumber),
+                ("submittedat", true) => query.OrderBy(r => r.SubmittedAt),
+                _ => query.OrderByDescending(r => r.SubmittedAt)
+            };
+
+            var result = await query.ToPagedResultAsync(queryParams);
+            return result.Map<Request, RequestDto>(Mapper);
         }
 
         public async Task<RequestDetailsDto> GetDetailsAsync(int id)

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using NUH_PORTAL.Common.Pagination;
 using NUH_PORTAL.DTOs.Students;
 using NUH_PORTAL.Services.Interfaces;
 
@@ -20,6 +21,11 @@ namespace NUH_PORTAL.Controllers
         [HttpGet]
         public async Task<IActionResult> GetStudents([FromQuery] bool showDeleted = false, [FromQuery] string? adStatus = null)
             => Ok(await _service.GetStudentsAsync(showDeleted, adStatus));
+
+        // GET api/Students/paged?page=&pageSize=&filterText=&sortBy=&sortAsc=&showDeleted=&adStatus=
+        [HttpGet("paged")]
+        public async Task<IActionResult> GetStudentsPaged([FromQuery] QueryParams queryParams, [FromQuery] bool showDeleted = false, [FromQuery] string? adStatus = null)
+            => Ok(await _service.GetPagedAsync(queryParams, showDeleted, adStatus));
 
         // GET api/Students/stats
         [HttpGet("stats")]
