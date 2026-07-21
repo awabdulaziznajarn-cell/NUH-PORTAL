@@ -1,0 +1,213 @@
+@model NUH_PORTAL.ViewModels.StudentsIndexViewModel
+@{
+    ViewData["Title"] = "قائمة الطلاب";
+}
+
+<div class="stats-row">
+  <div class="stat-pill">
+    <div class="stat-pill-num" id="cnt-total">@Model.Stats.total</div>
+    <div class="stat-pill-label">إجمالي الطلاب</div>
+  </div>
+  <div class="stat-pill">
+    <div class="stat-pill-num" style="color:#0F6E56" id="cnt-active">@Model.Stats.active</div>
+    <div class="stat-pill-label">نشط</div>
+  </div>
+  <div class="stat-pill">
+    <div class="stat-pill-num" style="color:#92400E" id="cnt-pending">@Model.Stats.submitted</div>
+    <div class="stat-pill-label">قيد الانتظار</div>
+  </div>
+  <div class="stat-pill">
+    <div class="stat-pill-num" style="color:#8891A8" id="cnt-left">@Model.Stats.left</div>
+    <div class="stat-pill-label">مغادر</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <div>الطلاب المسجلون</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="search-wrap">
+        <input id="searchBox" type="text" placeholder="بحث بالاسم / الرقم الجامعي / الهوية / الجوال..." />
+        <span class="search-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </span>
+      </div>
+      <a class="btn btn-primary" href="/register_student.html">+ تسجيل طالب جديد</a>
+    </div>
+  </div>
+
+  <div style="overflow-x:auto">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>الاسم</th>
+          <th>رقم الطالب</th>
+          <th>رقم الهوية</th>
+          <th>الجوال</th>
+          <th>الكلية</th>
+          <th>المستوى الدراسي</th>
+          <th>الاسم بالإنجليزية</th>
+          <th>المبنى</th>
+          <th>الغرفة</th>
+          <th>الوضع الأكاديمي</th>
+          <th>الحالة</th>
+          <th>حذف</th>
+        </tr>
+      </thead>
+      <tbody id="studentsBody">
+        @{ int i = (Model.Page.Page - 1) * Model.Page.PageSize; }
+        @foreach (var s in Model.Page.Items)
+        {
+          i++;
+          <tr>
+            <td>@i</td>
+            <td>@s.full_name</td>
+            <td>@s.student_id</td>
+            <td>@s.national_id</td>
+            <td>@s.phone</td>
+            <td>@s.college</td>
+            <td>@s.academic_level</td>
+            <td>@s.full_name_english</td>
+            <td>@s.housing_building</td>
+            <td>@s.room_number</td>
+            <td>@(s.student_status == "active" ? "نشط" :
+                 s.student_status == "graduated" ? "تخرج من الكلية" :
+                 s.student_status == "dismissed" ? "فصل من الكلية" :
+                 s.student_status == "transferred" ? "تحويل لجامعة أخرى" :
+                 s.student_status == "left_housing" ? "ترك السكن" : s.student_status)</td>
+            <td>
+              @if (s.status == "left")
+              {
+                <span class="badge badge-left">غادر</span>
+              }
+              else
+              {
+                <span class="badge badge-active">مقيم</span>
+              }
+            </td>
+            <td><button class="action-btn action-delete" onclick="deleteStudent(@s.Id, this)">حذف</button></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-top:1px solid var(--gray-100)">
+    <div style="font-size:12px;color:var(--gray-500)" id="pageInfo">
+      صفحة @Model.Page.Page من @Model.Page.TotalPages — إجمالي @Model.Page.TotalCount طالب
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-cancel" id="prevBtn" onclick="changePage(-1)">السابق</button>
+      <button class="btn btn-cancel" id="nextBtn" onclick="changePage(1)">التالي</button>
+    </div>
+  </div>
+</div>
+
+@section Scripts {
+<style>
+  .action-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:8px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;cursor:pointer;border:none;transition:all .2s}
+  .action-delete{background:var(--red-light);color:var(--red)}
+  .action-delete:hover{background:#fee2e2}
+</style>
+<script>
+  // حالة الصفحة (أول تحميل جاي جاهز من السيرفر)
+  var state = {
+    page: @Model.Page.Page,
+    pageSize: @Model.Page.PageSize,
+    totalPages: @Model.Page.TotalPages,
+    filter: ''
+  };
+
+  function authHeaders() {
+    var t = localStorage.getItem('staffToken');
+    return t ? { 'Authorization': 'Bearer ' + t } : {};
+  }
+
+  var esc = function (v) {
+    return String(v == null ? '' : v)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  };
+
+  function studentStatusAr(st) {
+    switch (st) {
+      case 'active': return 'نشط';
+      case 'graduated': return 'تخرج من الكلية';
+      case 'dismissed': return 'فصل من الكلية';
+      case 'transferred': return 'تحويل لجامعة أخرى';
+      case 'left_housing': return 'ترك السكن';
+      default: return st || '';
+    }
+  }
+
+  async function loadPage() {
+    var url = '/api/Students/paged?page=' + state.page + '&pageSize=' + state.pageSize +
+              '&filterText=' + encodeURIComponent(state.filter);
+    var res = await fetch(url, { headers: authHeaders() });
+    if (!res.ok) return;
+    var data = await res.json();
+    state.totalPages = data.totalPages;
+
+    var rows = '';
+    var i = (data.page - 1) * data.pageSize;
+    (data.items || []).forEach(function (s) {
+      i++;
+      rows += '<tr>' +
+        '<td>' + i + '</td>' +
+        '<td>' + esc(s.full_name) + '</td>' +
+        '<td>' + esc(s.student_id) + '</td>' +
+        '<td>' + esc(s.national_id) + '</td>' +
+        '<td>' + esc(s.phone) + '</td>' +
+        '<td>' + esc(s.college) + '</td>' +
+        '<td>' + esc(s.academic_level) + '</td>' +
+        '<td>' + esc(s.full_name_english) + '</td>' +
+        '<td>' + esc(s.housing_building) + '</td>' +
+        '<td>' + esc(s.room_number) + '</td>' +
+        '<td>' + esc(studentStatusAr(s.student_status)) + '</td>' +
+        '<td>' + (s.status === 'left'
+            ? '<span class="badge badge-left">غادر</span>'
+            : '<span class="badge badge-active">مقيم</span>') + '</td>' +
+        '<td><button class="action-btn action-delete" onclick="deleteStudent(' + s.id + ', this)">حذف</button></td>' +
+      '</tr>';
+    });
+    document.getElementById('studentsBody').innerHTML = rows ||
+      '<tr><td colspan="13" style="text-align:center;color:var(--gray-500);padding:28px">لا توجد نتائج</td></tr>';
+    document.getElementById('pageInfo').textContent =
+      'صفحة ' + data.page + ' من ' + data.totalPages + ' — إجمالي ' + data.totalCount + ' طالب';
+    updatePagerButtons();
+  }
+
+  function updatePagerButtons() {
+    document.getElementById('prevBtn').disabled = state.page <= 1;
+    document.getElementById('nextBtn').disabled = state.page >= state.totalPages;
+  }
+
+  function changePage(delta) {
+    var next = state.page + delta;
+    if (next < 1 || (state.totalPages && next > state.totalPages)) return;
+    state.page = next;
+    loadPage();
+  }
+
+  var searchTimer = null;
+  document.getElementById('searchBox').addEventListener('input', function (e) {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(function () {
+      state.filter = e.target.value.trim();
+      state.page = 1;
+      loadPage();
+    }, 350);
+  });
+
+  async function deleteStudent(id, btn) {
+    if (!confirm('متأكد من حذف الطالب؟')) return;
+    var res = await fetch('/api/Students/' + id, { method: 'DELETE', headers: authHeaders() });
+    var data = await res.json().catch(function () { return {}; });
+    if (res.ok) { loadPage(); }
+    else { alert(data.message || 'تعذر حذف الطالب'); }
+  }
+
+  updatePagerButtons();
+</script>
+}
