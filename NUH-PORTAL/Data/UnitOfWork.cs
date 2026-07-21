@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore.Storage;
 using NUH_PORTAL.Data.Interfaces;
 
 namespace NUH_PORTAL.Data
@@ -13,5 +14,6 @@ namespace NUH_PORTAL.Data
         public async Task<bool> SaveAsync() => await Context.SaveChangesAsync() > 0;
         public int GetCurrentUserId() => CurrentUserId;
         public string? GetCurrentUserRole() => CurrentUserRole;
+        public Task<IDbContextTransaction> BeginTransactionAsync() => Context.Database.BeginTransactionAsync();
     }
 }

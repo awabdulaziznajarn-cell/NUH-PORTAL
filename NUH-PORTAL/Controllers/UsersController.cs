@@ -1,52 +1,27 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using NUH_PORTAL.Data;
-using NUH_PORTAL.Models;
+using NUH_PORTAL.Services.Interfaces;
 
 namespace NUH_PORTAL.Controllers
 {
+    // كنترولر رفيع — المنطق في IUserService
     [Authorize(Roles = "admin")]
     [Route("api/[controller]")]
     [ApiController]
     public class UsersController : ControllerBase
     {
-        private readonly AppDbContext _context;
-        public UsersController(AppDbContext context) => _context = context;
+        private readonly IUserService _service;
 
+        public UsersController(IUserService service) => _service = service;
+
+        // GET api/Users
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<object>>> GetUsers()
-            => await _context.Users
-                .Select(u => new
-                {
-                    u.Id,
-                    u.username,
-                    u.full_name,
-                    u.email,
-                    u.role,
-                    u.created_at,
-                    u.is_active
-                })
-                .ToListAsync();
+        public async Task<IActionResult> GetUsers()
+            => Ok(await _service.GetUsersAsync());
 
+        // GET api/Users/{id}
         [HttpGet("{id}")]
-        public async Task<ActionResult<object>> GetUser(int id)
-        {
-            var user = await _context.Users
-                .Where(u => u.Id == id)
-                .Select(u => new
-                {
-                    u.Id,
-                    u.username,
-                    u.full_name,
-                    u.email,
-                    u.role,
-                    u.created_at,
-                    u.is_active
-                })
-                .FirstOrDefaultAsync();
-
-            return user == null ? NotFound() : Ok(user);
-        }
+        public async Task<IActionResult> GetUser(int id)
+            => Ok(await _service.GetUserAsync(id));
     }
 }

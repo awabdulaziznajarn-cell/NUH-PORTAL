@@ -186,6 +186,22 @@ builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IUnitOfWork, HttpUnitOfWork>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IRequestTrackingService, RequestTrackingService>();
+builder.Services.AddScoped<IRequestService, RequestService>();
+builder.Services.AddScoped<IStudentStatusService, StudentStatusService>();
+builder.Services.AddScoped<IWorkflowActionService, WorkflowActionService>();
+builder.Services.AddScoped<IHousingAccountService, HousingAccountService>();
+builder.Services.AddScoped<ISupervisorHousingTransferService, SupervisorHousingTransferService>();
+builder.Services.AddScoped<IAttachmentService, AttachmentService>();
+builder.Services.AddScoped<IAuditLogQueryService, AuditLogQueryService>();
+builder.Services.AddScoped<IRegistrationFlowService, RegistrationFlowService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IOtpFlowService, OtpFlowService>();
+builder.Services.AddScoped<IBulkRegistrationService, BulkRegistrationService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IADSetupService, ADSetupService>();
 
 var svcAcct = builder.Configuration.GetSection("ADServiceAccount").Get<ADServiceAccountConfig>();
 if (svcAcct == null || string.IsNullOrEmpty(svcAcct.Username) || svcAcct.Username == "#{AD_SERVICE_USERNAME}#")
