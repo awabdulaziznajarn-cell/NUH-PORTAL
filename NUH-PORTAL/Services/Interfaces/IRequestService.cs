@@ -8,6 +8,7 @@ namespace NUH_PORTAL.Services.Interfaces
     {
         Task<List<RequestDto>> GetAllAsync();
         Task<QueryResult<RequestDto>> GetPagedAsync(QueryParams queryParams, string? status, string? requestType);
+        Task<RequestStatsDto> GetStatsAsync();
         Task<RequestDetailsDto> GetDetailsAsync(int id);
         Task<List<RequestDto>> GetPendingAsync();
         Task<RequestDto> CreateAsync(RequestCreateDto dto);

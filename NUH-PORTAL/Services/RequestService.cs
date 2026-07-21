@@ -62,7 +62,13 @@ namespace NUH_PORTAL.Services
                 .AsQueryable();
 
             if (!string.IsNullOrEmpty(status))
-                query = query.Where(r => r.Status == status);
+            {
+                // "rejected" حالة مجمّعة لتبويب المرفوض — بتجمع رفض الإسكان ورفض الأمن السيبراني
+                if (status == "rejected")
+                    query = query.Where(r => r.Status == "housing_rejected" || r.Status == "cyber_rejected");
+                else
+                    query = query.Where(r => r.Status == status);
+            }
             if (!string.IsNullOrEmpty(requestType))
                 query = query.Where(r => r.RequestType == requestType);
 
@@ -89,6 +95,29 @@ namespace NUH_PORTAL.Services
 
             var result = await query.ToPagedResultAsync(queryParams);
             return result.Map<Request, RequestDto>(Mapper);
+        }
+
+        public async Task<RequestStatsDto> GetStatsAsync()
+        {
+            // عدّة واحدة على السيرفر (GroupBy) بدل تحميل كل الطلبات وعدّها في المتصفح
+            var counts = await _requests.Query().AsNoTracking()
+                .GroupBy(r => r.Status)
+                .Select(g => new { Status = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            int Of(string s) => counts.Where(c => c.Status == s).Sum(c => c.Count);
+
+            return new RequestStatsDto
+            {
+                Total = counts.Sum(c => c.Count),
+                Submitted = Of("submitted"),
+                HousingApproved = Of("housing_approved"),
+                CyberReview = Of("cyber_review"),
+                CyberApproved = Of("cyber_approved"),
+                ReadyForProvisioning = Of("ready_for_provisioning"),
+                Completed = Of("completed"),
+                Rejected = Of("housing_rejected") + Of("cyber_rejected")
+            };
         }
 
         public async Task<RequestDetailsDto> GetDetailsAsync(int id)

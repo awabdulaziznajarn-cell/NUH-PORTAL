@@ -36,6 +36,11 @@ namespace NUH_PORTAL.Controllers
         public async Task<IActionResult> GetPending()
             => Ok(await _service.GetPendingAsync());
 
+        // GET api/Requests/stats — عدادات الحالات لصفحة إدارة الطلبات
+        [HttpGet("stats")]
+        public async Task<IActionResult> GetStats()
+            => Ok(await _service.GetStatsAsync());
+
         // POST api/Requests
         [HttpPost]
         public async Task<IActionResult> CreateRequest([FromBody] RequestCreateDto dto)

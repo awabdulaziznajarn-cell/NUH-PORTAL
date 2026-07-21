@@ -1,0 +1,314 @@
+@model NUH_PORTAL.ViewModels.RequestsIndexViewModel
+@{
+    ViewData["Title"] = "الطلبات";
+    var role = (User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "").ToLowerInvariant();
+    var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0";
+}
+
+<style>
+  /* خاص بصفحة الطلبات فقط — الباقي من site.css */
+  .tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+  .tab-btn{padding:8px 20px;border-radius:10px;border:1.5px solid var(--gray-200);background:var(--white);font-family:'IBM Plex Sans Arabic',sans-serif;font-size:13px;font-weight:600;cursor:pointer;color:var(--gray-500);transition:all .2s}
+  .tab-btn.active{background:var(--navy);color:var(--white);border-color:var(--navy)}
+  .tab-btn:hover{border-color:var(--navy)}
+  .stats-row{flex-wrap:wrap}
+  .stats-row .stat-pill{min-width:120px}
+  .badge-submitted{background:#FFF7ED;color:#92400E}
+  .badge-housing_approved{background:#E0F2FE;color:#0369A1}
+  .badge-housing_rejected{background:var(--red-light);color:var(--red)}
+  .badge-cyber_review{background:#F3E8FF;color:#6B21A8}
+  .badge-cyber_approved{background:var(--green-light);color:var(--green)}
+  .badge-cyber_rejected{background:var(--red-light);color:var(--red)}
+  .badge-ready_for_provisioning{background:#FFF7ED;color:#92400E}
+  .badge-completed{background:var(--green-light);color:var(--green)}
+  .action-btn{padding:4px 12px;border-radius:8px;border:none;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;font-weight:600;cursor:pointer;margin:0 2px;transition:opacity .2s}
+  .action-btn:hover{opacity:.8}
+  .btn-approve{background:var(--green-light);color:var(--green)}
+  .btn-reject{background:var(--red-light);color:var(--red)}
+  .btn-cyber{background:#F3E8FF;color:#6B21A8}
+</style>
+
+<div class="page-header">
+  <h2>إدارة الطلبات</h2>
+  <p>مراجعة وإدارة جميع طلبات السكن</p>
+</div>
+
+@* ===== العدادات — من السيرفر ===== *@
+<div class="stats-row">
+  <div class="stat-pill"><div class="stat-pill-num">@Model.Stats.Total</div><div class="stat-pill-label">الكل</div></div>
+  <div class="stat-pill"><div class="stat-pill-num">@Model.Stats.Submitted</div><div class="stat-pill-label">مقدم</div></div>
+  <div class="stat-pill"><div class="stat-pill-num">@Model.Stats.HousingApproved</div><div class="stat-pill-label">موافقة إدارة الإسكان</div></div>
+  <div class="stat-pill"><div class="stat-pill-num">@Model.Stats.CyberReview</div><div class="stat-pill-label">مراجعة الأمن السيبراني</div></div>
+  <div class="stat-pill"><div class="stat-pill-num">@Model.Stats.CyberApproved</div><div class="stat-pill-label">معتمد</div></div>
+  <div class="stat-pill"><div class="stat-pill-num">@Model.Stats.ReadyForProvisioning</div><div class="stat-pill-label">جاهز لإنشاء الحساب</div></div>
+  <div class="stat-pill"><div class="stat-pill-num">@Model.Stats.Completed</div><div class="stat-pill-label">مكتمل</div></div>
+  <div class="stat-pill"><div class="stat-pill-num">@Model.Stats.Rejected</div><div class="stat-pill-label">مرفوض</div></div>
+</div>
+
+@* ===== التبويبات — بتفلتر عبر /api/Requests/paged ===== *@
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('all', this)">الكل</button>
+  <button class="tab-btn" onclick="switchTab('submitted', this)">مقدم</button>
+  <button class="tab-btn" onclick="switchTab('housing_approved', this)">موافقة إدارة الإسكان</button>
+  <button class="tab-btn" onclick="switchTab('cyber_review', this)">مراجعة الأمن السيبراني</button>
+  <button class="tab-btn" onclick="switchTab('cyber_approved', this)">معتمد</button>
+  <button class="tab-btn" onclick="switchTab('ready_for_provisioning', this)">جاهز لإنشاء الحساب</button>
+  <button class="tab-btn" onclick="switchTab('completed', this)">مكتمل</button>
+  <button class="tab-btn" onclick="switchTab('rejected', this)">مرفوض</button>
+</div>
+
+<div class="card">
+  <div style="overflow-x:auto">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>نوع الطلب</th>
+          <th>الطالب</th>
+          <th>التاريخ</th>
+          <th>الحالة</th>
+          <th>المرحلة الحالية</th>
+          <th>الإجراء</th>
+        </tr>
+      </thead>
+      <tbody id="requests-tbody">
+        @if (Model.Page.Items.Count == 0)
+        {
+          <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--gray-500)">لا توجد طلبات</td></tr>
+        }
+        @foreach (var r in Model.Page.Items)
+        {
+          var s = (r.Status ?? "").ToLowerInvariant();
+          <tr style="cursor:pointer" onclick="location.href='/request-details.html?id=@r.Id'">
+            <td style="color:var(--gray-500)">@ReqNum(r.RequestNumber, r.RequestType, r.Id)</td>
+            <td>@TypeAr(r.RequestType)</td>
+            <td>@(r.Student?.full_name ?? r.StudentId.ToString())</td>
+            <td><span data-dt="@DateTime.SpecifyKind(r.SubmittedAt, DateTimeKind.Utc).ToString("o")">@r.SubmittedAt.ToString("yyyy/MM/dd")</span></td>
+            <td><span class="badge badge-@s">@BadgeAr(s)</span></td>
+            <td>@StageAr(s)</td>
+            <td>
+              @if (s == "submitted" && (role == "admin" || role == "supervisor"))
+              {
+                <button class="action-btn btn-approve" onclick="event.stopPropagation(); reviewRequest(@r.Id, 'housing_approved')">موافقة الإسكان</button>
+                <button class="action-btn btn-reject" onclick="event.stopPropagation(); reviewRequest(@r.Id, 'housing_rejected')">رفض الإسكان</button>
+              }
+              else if (s == "housing_approved" && role == "admin")
+              {
+                <button class="action-btn btn-cyber" onclick="event.stopPropagation(); reviewRequest(@r.Id, 'cyber_review')">إحالة للأمن السيبراني</button>
+              }
+              else if (s == "cyber_review" && (role == "cyber" || role == "admin"))
+              {
+                <button class="action-btn btn-approve" onclick="event.stopPropagation(); reviewRequest(@r.Id, 'cyber_approved')">موافقة الأمن السيبراني</button>
+                <button class="action-btn btn-reject" onclick="event.stopPropagation(); reviewRequest(@r.Id, 'cyber_rejected')">رفض الأمن السيبراني</button>
+              }
+              else if (s == "cyber_approved" && role == "admin")
+              {
+                <button class="action-btn btn-cyber" onclick="event.stopPropagation(); reviewRequest(@r.Id, 'ready_for_provisioning')">جاهز لإنشاء الحساب</button>
+              }
+              else if (s == "ready_for_provisioning" && role == "admin")
+              {
+                <button class="action-btn btn-approve" onclick="event.stopPropagation(); reviewRequest(@r.Id, 'completed')">إكمال الطلب</button>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-top:1px solid var(--gray-100)">
+    <div style="font-size:12px;color:var(--gray-500)" id="pageInfo">
+      صفحة @Model.Page.Page من @Model.Page.TotalPages — إجمالي @Model.Page.TotalCount طلب
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-cancel" id="prevBtn" onclick="changePage(-1)">السابق</button>
+      <button class="btn btn-cancel" id="nextBtn" onclick="changePage(1)">التالي</button>
+    </div>
+  </div>
+</div>
+
+@functions {
+    private static string ReqNum(string? requestNumber, string? type, int id)
+        => !string.IsNullOrEmpty(requestNumber)
+            ? requestNumber
+            : (type == "bulk_req" ? "BRQ-" : "REQ-") + id.ToString("D6");
+
+    private static string TypeAr(string? t) => (t ?? "").ToLowerInvariant() switch
+    {
+        "registration" => "تسجيل فردي",
+        "self_registration" => "تسجيل ذاتي",
+        "bulk_req" or "bulk_registration" => "تسجيل جماعي",
+        _ => string.IsNullOrEmpty(t) ? "—" : t
+    };
+
+    private static string BadgeAr(string s) => s switch
+    {
+        "submitted" => "مقدم",
+        "housing_approved" => "موافقة الإسكان",
+        "housing_rejected" => "مرفوض",
+        "cyber_review" => "مراجعة",
+        "cyber_approved" => "معتمد",
+        "cyber_rejected" => "مرفوض",
+        "ready_for_provisioning" => "جاهز للإنشاء",
+        "completed" => "مكتمل",
+        _ => string.IsNullOrEmpty(s) ? "—" : s
+    };
+
+    private static string StageAr(string s) => s switch
+    {
+        "submitted" => "مقدم",
+        "housing_approved" => "موافقة إدارة الإسكان",
+        "housing_rejected" => "رفض إسكان",
+        "cyber_review" => "مراجعة الأمن السيبراني",
+        "cyber_approved" => "موافقة الأمن السيبراني",
+        "cyber_rejected" => "رفض الأمن السيبراني",
+        "ready_for_provisioning" => "جاهز لإنشاء حساب شبكة السكن",
+        "completed" => "مكتمل",
+        _ => string.IsNullOrEmpty(s) ? "—" : s
+    };
+}
+
+@section Scripts {
+<script>
+  var ROLE = '@role';
+  var USER_ID = @userId;
+
+  // حالة الصفحة (أول صفحة جاهزة من السيرفر)
+  var state = {
+    page: @Model.Page.Page,
+    pageSize: @Model.Page.PageSize,
+    totalPages: @Model.Page.TotalPages,
+    status: 'all'
+  };
+
+  document.querySelectorAll('[data-dt]').forEach(function (el) {
+    var d = new Date(el.dataset.dt);
+    if (!isNaN(d)) el.textContent = d.toLocaleDateString('ar-EG');
+  });
+
+  var badgeAr = {
+    submitted: 'مقدم',
+    housing_approved: 'موافقة الإسكان',
+    housing_rejected: 'مرفوض',
+    cyber_review: 'مراجعة',
+    cyber_approved: 'معتمد',
+    cyber_rejected: 'مرفوض',
+    ready_for_provisioning: 'جاهز للإنشاء',
+    completed: 'مكتمل'
+  };
+  var stageAr = {
+    submitted: 'مقدم',
+    housing_approved: 'موافقة إدارة الإسكان',
+    housing_rejected: 'رفض إسكان',
+    cyber_review: 'مراجعة الأمن السيبراني',
+    cyber_approved: 'موافقة الأمن السيبراني',
+    cyber_rejected: 'رفض الأمن السيبراني',
+    ready_for_provisioning: 'جاهز لإنشاء حساب شبكة السكن',
+    completed: 'مكتمل'
+  };
+  var typeAr = {
+    registration: 'تسجيل فردي',
+    self_registration: 'تسجيل ذاتي',
+    bulk_req: 'تسجيل جماعي',
+    bulk_registration: 'تسجيل جماعي'
+  };
+
+  function reqNum(r) {
+    if (r.requestNumber) return r.requestNumber;
+    var prefix = r.requestType === 'bulk_req' ? 'BRQ-' : 'REQ-';
+    return prefix + String(r.id).padStart(6, '0');
+  }
+
+  function actionsFor(s, id) {
+    var stop = 'event.stopPropagation(); ';
+    if (s === 'submitted' && (ROLE === 'admin' || ROLE === 'supervisor')) {
+      return '<button class="action-btn btn-approve" onclick="' + stop + 'reviewRequest(' + id + ', \'housing_approved\')">موافقة الإسكان</button>' +
+             '<button class="action-btn btn-reject" onclick="' + stop + 'reviewRequest(' + id + ', \'housing_rejected\')">رفض الإسكان</button>';
+    }
+    if (s === 'housing_approved' && ROLE === 'admin') {
+      return '<button class="action-btn btn-cyber" onclick="' + stop + 'reviewRequest(' + id + ', \'cyber_review\')">إحالة للأمن السيبراني</button>';
+    }
+    if (s === 'cyber_review' && (ROLE === 'cyber' || ROLE === 'admin')) {
+      return '<button class="action-btn btn-approve" onclick="' + stop + 'reviewRequest(' + id + ', \'cyber_approved\')">موافقة الأمن السيبراني</button>' +
+             '<button class="action-btn btn-reject" onclick="' + stop + 'reviewRequest(' + id + ', \'cyber_rejected\')">رفض الأمن السيبراني</button>';
+    }
+    if (s === 'cyber_approved' && ROLE === 'admin') {
+      return '<button class="action-btn btn-cyber" onclick="' + stop + 'reviewRequest(' + id + ', \'ready_for_provisioning\')">جاهز لإنشاء الحساب</button>';
+    }
+    if (s === 'ready_for_provisioning' && ROLE === 'admin') {
+      return '<button class="action-btn btn-approve" onclick="' + stop + 'reviewRequest(' + id + ', \'completed\')">إكمال الطلب</button>';
+    }
+    return '';
+  }
+
+  async function loadPage() {
+    var url = '/api/Requests/paged?page=' + state.page + '&pageSize=' + state.pageSize;
+    if (state.status !== 'all') url += '&status=' + encodeURIComponent(state.status);
+    var res = await fetch(url, { headers: NUH.headers() });
+    if (res.status === 401) { window.location.replace('/Account/Login'); return; }
+    if (!res.ok) return;
+    var data = await res.json();
+    state.totalPages = data.totalPages;
+
+    var rows = '';
+    (data.items || []).forEach(function (r) {
+      var s = (r.status || '').toLowerCase();
+      rows += '<tr style="cursor:pointer" onclick="location.href=\'/request-details.html?id=' + r.id + '\'">' +
+        '<td style="color:var(--gray-500)">' + reqNum(r) + '</td>' +
+        '<td>' + escHtml(typeAr[r.requestType] || r.requestType || '—') + '</td>' +
+        '<td>' + escHtml((r.student && r.student.full_name) || r.studentId || '') + '</td>' +
+        '<td>' + (r.submittedAt ? new Date(r.submittedAt).toLocaleDateString('ar-EG') : '—') + '</td>' +
+        '<td><span class="badge badge-' + s + '">' + (badgeAr[s] || s) + '</span></td>' +
+        '<td>' + escHtml(stageAr[s] || s) + '</td>' +
+        '<td>' + actionsFor(s, r.id) + '</td>' +
+      '</tr>';
+    });
+    document.getElementById('requests-tbody').innerHTML = rows ||
+      '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--gray-500)">لا توجد طلبات</td></tr>';
+    document.getElementById('pageInfo').textContent =
+      'صفحة ' + data.page + ' من ' + data.totalPages + ' — إجمالي ' + data.totalCount + ' طلب';
+    updatePagerButtons();
+  }
+
+  function updatePagerButtons() {
+    document.getElementById('prevBtn').disabled = state.page <= 1;
+    document.getElementById('nextBtn').disabled = state.page >= state.totalPages;
+  }
+
+  function changePage(delta) {
+    var next = state.page + delta;
+    if (next < 1 || (state.totalPages && next > state.totalPages)) return;
+    state.page = next;
+    loadPage();
+  }
+
+  function switchTab(status, btn) {
+    document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    state.status = status;
+    state.page = 1;
+    loadPage();
+  }
+
+  async function reviewRequest(id, newStatus) {
+    var label = badgeAr[newStatus] || newStatus;
+    if (!confirm('هل تريد تغيير حالة الطلب إلى "' + label + '"؟')) return;
+    try {
+      var res = await fetch('/api/requests/' + id + '/review', {
+        method: 'PUT',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, NUH.headers()),
+        body: JSON.stringify({ status: newStatus, reviewedBy: USER_ID, notes: '' })
+      });
+      if (!res.ok) {
+        var err = await res.json().catch(function () { return {}; });
+        alert(err.message || 'فشل تحديث الطلب');
+        return;
+      }
+      // إعادة تحميل الصفحة علشان العدادات وأول صفحة يتحدّثوا من السيرفر
+      location.reload();
+    } catch (e) { }
+  }
+
+  updatePagerButtons();
+</script>
+}
