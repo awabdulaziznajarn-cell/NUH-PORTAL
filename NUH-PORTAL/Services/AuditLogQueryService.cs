@@ -1,4 +1,4 @@
-using AutoMapper;
+using MapsterMapper;
 using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
 using NUH_PORTAL.Core.Exceptions;

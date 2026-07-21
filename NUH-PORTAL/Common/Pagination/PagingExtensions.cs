@@ -1,4 +1,4 @@
-using AutoMapper;
+using MapsterMapper;
 using Microsoft.EntityFrameworkCore;
 
 namespace NUH_PORTAL.Common.Pagination

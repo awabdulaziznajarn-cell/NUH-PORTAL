@@ -1,4 +1,4 @@
-using AutoMapper;
+using MapsterMapper;
 using NUH_PORTAL.Data.Interfaces;
 
 namespace NUH_PORTAL.Services

@@ -1,4 +1,4 @@
-using AutoMapper;
+using MapsterMapper;
 using NUH_PORTAL.Core.Exceptions;
 using NUH_PORTAL.Data.Interfaces;
 using NUH_PORTAL.DTOs.ADSetup;

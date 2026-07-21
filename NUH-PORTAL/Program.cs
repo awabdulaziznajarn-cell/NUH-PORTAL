@@ -12,7 +12,6 @@ using NUH_PORTAL.Repositories;
 using NUH_PORTAL.Repositories.Interfaces;
 using NUH_PORTAL.Data.Interfaces;
 using NUH_PORTAL.Core.Middleware;
-using AutoMapper;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
@@ -179,9 +178,10 @@ builder.Services.AddScoped<SmsService>();
 builder.Services.AddScoped<IWorkflowService, WorkflowService>();
 builder.Services.AddScoped<IRegistrationService, RegistrationService>();
 
-// ✅ Layered architecture (Repository + UnitOfWork + AutoMapper) — نمط permits
+// ✅ Layered architecture (Repository + UnitOfWork + Mapster) — نمط permits
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddAutoMapper(typeof(Program).Assembly);
+builder.Services.AddSingleton(Mapster.TypeAdapterConfig.GlobalSettings);
+builder.Services.AddScoped<MapsterMapper.IMapper, MapsterMapper.ServiceMapper>();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IUnitOfWork, HttpUnitOfWork>();
 builder.Services.AddScoped<IAuditService, AuditService>();
