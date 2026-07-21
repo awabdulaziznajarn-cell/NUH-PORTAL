@@ -34,6 +34,13 @@ namespace NUH_PORTAL.Data.Configurations
             builder.Property(r => r.RequestNumber).HasColumnName("request_number");
             builder.Property(r => r.RegistrationData).HasColumnName("registration_data");
 
+            // فهارس العدّادات والطوابير (dashboard/queues بتفلتر بالحالة والنوع)
+            builder.HasIndex(r => r.Status)
+                .HasDatabaseName("IX_Requests_status");
+
+            builder.HasIndex(r => new { r.RequestType, r.Status })
+                .HasDatabaseName("IX_Requests_type_status");
+
             builder.HasIndex(r => r.RequestNumber)
                 .IsUnique()
                 .HasDatabaseName("IX_Requests_request_number")

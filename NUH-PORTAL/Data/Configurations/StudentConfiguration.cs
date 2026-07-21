@@ -13,6 +13,13 @@ namespace NUH_PORTAL.Data.Configurations
 
             builder.HasIndex(s => s.student_id).IsUnique();
             builder.HasIndex(s => s.national_id).IsUnique();
+
+            // البحث بالجوال (تتبع/OTP) والعدّادات (محذوف + حالة)
+            builder.HasIndex(s => s.phone)
+                .HasDatabaseName("IX_Students_phone");
+
+            builder.HasIndex(s => new { s.IsDeleted, s.status })
+                .HasDatabaseName("IX_Students_deleted_status");
         }
     }
 }

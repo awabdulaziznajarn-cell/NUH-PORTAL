@@ -14,6 +14,13 @@ namespace NUH_PORTAL.Data.Configurations
             builder.Property(a => a.action_at)
                 .HasConversion(v => v, v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
 
+            // صفحة السجل بترتب بالتاريخ وبتفلتر بالإجراء
+            builder.HasIndex(a => a.action_at)
+                .HasDatabaseName("IX_AuditLogs_action_at");
+
+            builder.HasIndex(a => a.action)
+                .HasDatabaseName("IX_AuditLogs_action");
+
             builder.HasOne(a => a.User)
                 .WithMany()
                 .HasForeignKey(a => a.user_id)

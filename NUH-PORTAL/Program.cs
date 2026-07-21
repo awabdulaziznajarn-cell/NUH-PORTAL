@@ -235,6 +235,7 @@ if (app.Environment.IsDevelopment())
     using var seedScope = app.Services.CreateScope();
     var seedDb = seedScope.ServiceProvider.GetRequiredService<AppDbContext>();
     DbSeeder.SeedDevUsers(seedDb);
+    DbSeeder.SeedDevData(seedDb);
 }
 
 // ✅ Security headers — حماية أساسية على مستوى كل الردود
