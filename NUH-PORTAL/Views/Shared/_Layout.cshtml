@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>@ViewData["Title"] — نظام إسكان الطلاب والطالبات</title>
+  <link rel="stylesheet" href="/css/site.css" />
+</head>
+<body>
+  <partial name="_Sidebar" />
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title">@ViewData["Title"]</div>
+      <div class="topbar-right">
+        <div class="topbar-date" id="dateNow"></div>
+      </div>
+    </div>
+
+    <div class="content">
+      @RenderBody()
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('dateNow').textContent =
+      new Date().toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  </script>
+  @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

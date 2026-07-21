@@ -6,6 +6,8 @@ namespace NUH_PORTAL.Services.Interfaces
     public interface IAuthService
     {
         Task<LoginResultDto> LoginAsync(LoginRequest request);
+        // نفس فلو الدخول بالظبط (AD أولًا ثم fallback) بس بترجع المستخدم نفسه — بيستخدمها مسار الكوكي
+        Task<NUH_PORTAL.Models.User> AuthenticateAsync(string username, string password);
         Task SetPasswordAsync(SetPasswordRequest request);
         void RecordActivity();
         Task LogoutAsync();

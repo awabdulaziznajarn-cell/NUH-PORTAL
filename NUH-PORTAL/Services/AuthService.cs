@@ -50,8 +50,16 @@ namespace NUH_PORTAL.Services
 
         public async Task<LoginResultDto> LoginAsync(LoginRequest request)
         {
-            if (string.IsNullOrWhiteSpace(request.username) || string.IsNullOrWhiteSpace(request.password))
+            var user = await AuthenticateAsync(request.username, request.password);
+            var token = _tokens.GenerateToken(user);
+            return BuildResult(user, token);
+        }
+
+        public async Task<User> AuthenticateAsync(string username, string password)
+        {
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
                 throw new UserFriendlyException("اسم المستخدم وكلمة المرور مطلوبان", 400);
+            var request = new LoginRequest { username = username, password = password };
 
             var (clientIp, _) = ClientInfo();
             var adResult = await _adService.AuthenticateAsync(request.username, request.password, clientIp);
@@ -76,8 +84,6 @@ namespace NUH_PORTAL.Services
                         throw;
                     }
 
-                    var token = _tokens.GenerateToken(user);
-
                     await AddAuditLogAsync(user.Id, isNew ? "user_created_ad" : "user_updated_ad", "Users", user.Id);
                     await AddAuditLogAsync(user.Id, "login", "Users", user.Id);
                     await UnitOfWork.SaveAsync();
@@ -85,7 +91,7 @@ namespace NUH_PORTAL.Services
                     _logger.LogInformation("AD login succeeded for {Username}, role: {Role}, IP: {ClientIp}",
                         request.username, user.role, clientIp ?? "unknown");
 
-                    return BuildResult(user, token);
+                    return user;
                 }
 
                 _logger.LogWarning("AD login failed for {Username}, IP: {ClientIp}", request.username, clientIp ?? "unknown");
@@ -104,15 +110,13 @@ namespace NUH_PORTAL.Services
 
             if (localUser != null && BCrypt.Net.BCrypt.Verify(request.password, localUser.password_hash))
             {
-                var token = _tokens.GenerateToken(localUser);
-
                 await AddAuditLogAsync(localUser.Id, "login_local_fallback", "Users", localUser.Id);
                 await UnitOfWork.SaveAsync();
 
                 _logger.LogInformation("Local fallback login succeeded for {Username} (role={Role}), IP: {ClientIp}",
                     request.username, localUser.role, clientIp ?? "unknown");
 
-                return BuildResult(localUser, token);
+                return localUser;
             }
 
             if (!loginFailedLogged)
