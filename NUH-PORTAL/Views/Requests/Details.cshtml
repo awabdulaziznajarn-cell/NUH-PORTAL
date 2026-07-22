@@ -1,0 +1,112 @@
+@{
+    ViewData["Title"] = "تفاصيل الطلب";
+    var reqId = (int)(ViewData["ReqId"] ?? 0);
+}
+
+<style>
+  /* خاص بصفحة تفاصيل الطلب — الباقي من site.css */
+.card:hover { box-shadow:0 4px 20px rgba(27,42,94,0.09); }
+.card-header svg { flex-shrink:0; }
+.card-body { padding:20px; }
+.info-grid { display:grid; grid-template-columns:1fr 1fr; gap:0; }
+.info-field { display:flex; flex-direction:column; padding:10px 12px; border-bottom:1px solid var(--gray-100); font-size:14px; border-radius:4px; margin:0 -4px; transition:background 0.15s; }
+.info-field:hover { background:var(--gray-50); }
+.info-field:nth-last-child(-n+2):nth-child(odd) { border-bottom:none; }
+.info-field:last-child, .info-field:nth-last-child(2):nth-child(even) { border-bottom:none; }
+.info-label { font-weight:600; color:var(--gray-500); font-size:11px; margin-bottom:2px; }
+.info-value { color:var(--navy-dark); font-weight:600; font-size:14px; }
+@@media(max-width:640px){.info-grid{grid-template-columns:1fr}.info-field{border-bottom:1px solid var(--gray-100)}.info-field:nth-last-child(-n+2):nth-child(odd){border-bottom:1px solid var(--gray-100)}.info-field:last-child{border-bottom:none}}
+.badge-submitted { background:#FFF7ED; color:#92400E; }
+.badge-housing_approved { background:#E0F2FE; color:#0369A1; }
+.badge-housing_rejected { background:var(--red-light); color:var(--red); }
+.badge-cyber_review { background:#F3E8FF; color:#6B21A8; }
+.badge-cyber_approved { background:var(--green-light); color:var(--green); }
+.badge-cyber_rejected { background:var(--red-light); color:var(--red); }
+.badge-ready_for_provisioning { background:#FFF7ED; color:#92400E; }
+.badge-completed { background:var(--green-light); color:var(--green); }
+.badge-pending_supervisor { background:#FFF8E1; color:#B8860B; }
+.badge-pending_cyber { background:#E3F2FD; color:#1565C0; }
+.badge-pending_admin { background:#F3E5F5; color:#7B1FA2; }
+.badge-need_more_info { background:#FFF3E0; color:#E65100; }
+.badge-approved { background:var(--green-light); color:var(--green); }
+.badge-rejected { background:var(--red-light); color:var(--red); }
+.timeline { position:relative; padding:0; margin:0; list-style:none; }
+.timeline::before { content:''; position:absolute; top:8px; bottom:8px; inset-inline-start:15px; width:2px; background:var(--gray-200); }
+.timeline-item { position:relative; padding:0 0 24px 44px; }
+.timeline-item:last-child { padding-bottom:0; }
+.timeline-dot { position:absolute; inset-inline-start:9px; top:4px; width:14px; height:14px; border-radius:50%; border:2px solid var(--gray-300); background:var(--white); z-index:1; }
+.timeline-item.active .timeline-dot { border-color:var(--navy); background:var(--navy); box-shadow:0 0 0 4px rgba(27,42,94,0.1); }
+.timeline-item.completed .timeline-dot { border-color:var(--green); background:var(--green); }
+.timeline-item.rejected .timeline-dot { border-color:var(--red); background:var(--red); }
+.timeline-label { font-size:13px; font-weight:600; color:var(--gray-500); }
+.timeline-item.active .timeline-label, .timeline-item.completed .timeline-label { color:var(--navy-dark); }
+.timeline-date { font-size:11px; color:var(--gray-500); margin-top:2px; }
+.review-actions { display:flex; flex-direction:column; gap:16px; }
+.review-option { display:flex; align-items:center; gap:12px; padding:16px; border:2px solid var(--gray-200); border-radius:12px; cursor:pointer; transition:all 0.2s ease; }
+.review-option:hover { border-color:var(--gray-300); transform:translateY(-1px); box-shadow:0 2px 8px rgba(0,0,0,0.04); }
+.review-option.selected-approve { border-color:var(--green); background:var(--green-light); }
+.review-option.selected-reject { border-color:var(--red); background:var(--red-light); }
+.review-option input[type="radio"] { width:18px; height:18px; accent-color:var(--navy); cursor:pointer; }
+.review-option-text { font-size:14px; font-weight:600; color:var(--navy-dark); }
+.review-option-desc { font-size:12px; color:var(--gray-500); }
+.reject-reason-field { display:none; margin-top:12px; }
+.reject-reason-field.visible { display:block; }
+.reject-reason-field textarea { width:100%; padding:12px; border:1.5px solid var(--gray-200); border-radius:10px; font-family:'IBM Plex Sans Arabic',sans-serif; font-size:13px; resize:vertical; min-height:80px; transition:border-color 0.2s; }
+.reject-reason-field textarea:focus { outline:none; border-color:var(--navy); }
+.reject-reason-field textarea.error { border-color:var(--red); }
+.reject-reason-field .error-msg { font-size:11px; color:var(--red); margin-top:4px; display:none; }
+.submit-review-btn { padding:12px 28px; background:var(--navy); color:var(--white); border:none; border-radius:10px; font-family:'IBM Plex Sans Arabic',sans-serif; font-size:14px; font-weight:600; cursor:pointer; transition:all 0.2s; box-shadow:0 2px 8px rgba(27,42,94,0.2); }
+.submit-review-btn:hover { opacity:0.92; transform:translateY(-1px); box-shadow:0 4px 12px rgba(27,42,94,0.3); }
+.submit-review-btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; box-shadow:none; }
+.rejection-info { background:var(--red-light); border:1px solid #FECACA; border-radius:12px; padding:16px; margin-top:16px; display:flex; align-items:flex-start; gap:10px; }
+.rejection-info svg { flex-shrink:0; margin-top:1px; }
+.rejection-info-label { font-size:12px; font-weight:600; color:var(--red); margin-bottom:4px; }
+.rejection-info-text { font-size:13px; color:var(--navy-dark); font-weight:500; }
+.workflow-bar { display:flex; align-items:flex-start; justify-content:space-around; padding:12px 0 4px; position:relative; overflow:visible; }
+.workflow-bar::before { content:''; position:absolute; top:22px; left:30px; right:30px; height:3px; background:var(--gray-200); z-index:0; border-radius:2px; }
+.workflow-step { display:flex; flex-direction:column; align-items:center; position:relative; z-index:1; flex:0 1 auto; text-align:center; padding:0 4px; }
+.workflow-circle { width:36px; height:36px; border-radius:50%; background:var(--white); border:3px solid var(--gray-200); display:flex; align-items:center; justify-content:center; margin-bottom:10px; transition:all 0.3s ease; flex-shrink:0; }
+.workflow-step.active .workflow-circle { border-color:var(--navy); background:var(--navy); box-shadow:0 0 0 4px rgba(27,42,94,0.15); transform:scale(1.05); }
+.workflow-step.completed .workflow-circle { border-color:var(--green); background:var(--green); }
+.workflow-step.completed ~ .workflow-bar::before { /* no effect, handled via JS */ }
+.workflow-step.rejected .workflow-circle { border-color:var(--red); background:var(--red); box-shadow:0 0 0 4px rgba(153,27,27,0.15); }
+.workflow-step-label { font-size:11px; font-weight:600; color:var(--gray-500); max-width:120px; line-height:1.4; transition:color 0.3s; white-space:normal; word-break:keep-all; overflow-wrap:break-word; }
+.workflow-step.active .workflow-step-label, .workflow-step.completed .workflow-step-label { color:var(--navy-dark); font-weight:700; }
+.workflow-step.rejected .workflow-step-label { color:var(--red); }
+.workflow-bar-connector { position:absolute; top:20px; height:3px; background:var(--gray-200); z-index:0; border-radius:2px; transition:background 0.5s ease; }
+.workflow-bar-connector.done { background:linear-gradient(90deg,var(--green),var(--green-light)); }
+.review-timeline { position:relative; padding:4px 0; }
+.review-timeline::before { content:''; position:absolute; width:2px; background:var(--gray-200); top:12px; bottom:12px; }
+.tl-item { position:relative; }
+.tl-item:last-child { padding-bottom:0; }
+.tl-dot { position:absolute; top:24px; width:20px; height:20px; border-radius:50%; border:3px solid var(--gray-300); background:var(--white); z-index:1; box-shadow:0 0 0 4px var(--gray-50); }
+.tl-dot.approved { border-color:var(--green); background:var(--green); }
+.tl-dot.rejected { border-color:var(--red); background:var(--red); }
+.tl-content { background:var(--white); border:1px solid var(--gray-100); border-radius:12px; padding:16px 20px; transition:box-shadow 0.2s; box-shadow:0 1px 4px rgba(27,42,94,0.04); }
+.tl-content:hover { box-shadow:0 4px 16px rgba(27,42,94,0.08); }
+.tl-title { font-size:14px; font-weight:800; color:var(--navy-dark); margin-bottom:10px; }
+.tl-row { display:flex; align-items:baseline; gap:6px; font-size:12px; line-height:1.8; }
+.tl-label { color:var(--gray-500); font-weight:500; flex-shrink:0; }
+.tl-value { color:var(--gray-700); font-weight:400; }
+.tl-value.username { font-weight:600; color:var(--navy); }
+.tl-notes { font-size:12px; color:var(--gray-700); margin-top:10px; background:var(--gray-50); padding:10px 14px; border-radius:8px; }
+.history-empty { padding:24px; text-align:center; color:var(--gray-500); font-size:13px; }
+  @@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+
+<div id="loading-state" style="text-align:center;padding:60px 20px;color:var(--gray-500)">
+  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+  <div>جاري تحميل تفاصيل الطلب...</div>
+</div>
+<div id="error-state" style="display:none;text-align:center;padding:60px 20px;color:var(--red)">
+  <div id="error-message"></div>
+  <button onclick="location.reload()" style="margin-top:12px;padding:8px 20px;background:var(--navy);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:'IBM Plex Sans Arabic',sans-serif">إعادة المحاولة</button>
+</div>
+<div id="detail-content" style="display:none">
+</div>
+
+@section Scripts {
+<script>var __REQ_ID = @reqId;</script>
+<script src="/i18n.js"></script>
+<script src="/js/request-details-page.js"></script>
+}

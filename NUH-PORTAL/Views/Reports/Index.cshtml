@@ -1,0 +1,214 @@
+@{
+    ViewData["Title"] = "التقارير";
+}
+
+<style>
+  /* خاص بمركز التقارير — الباقي من site.css */
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.stat-card { background: var(--white); border-radius: 14px; padding: 16px; border: 1px solid var(--gray-100); box-shadow: 0 2px 8px rgba(27,42,94,0.05); display: flex; flex-direction: column; gap: 8px; transition: transform 0.2s, box-shadow 0.2s; }
+.stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(27,42,94,0.1); }
+.stat-top { display: flex; align-items: center; justify-content: space-between; }
+.stat-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
+.stat-num { font-size: 26px; font-weight: 900; color: var(--navy-dark); line-height: 1; }
+.stat-label { font-size: 12px; color: var(--gray-500); font-weight: 500; }
+.report-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.report-tab { padding: 8px 18px; border-radius: 20px; border: 1.5px solid var(--gray-200); background: var(--white); font-family: inherit; font-size: 13px; font-weight: 600; color: var(--gray-500); cursor: pointer; transition: all 0.2s; }
+.report-tab:hover { border-color: var(--navy); color: var(--navy); }
+.report-tab.active { background: var(--navy); color: var(--white); border-color: var(--navy); }
+.filters-bar { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; align-items: end; }
+.filter-group { display: flex; flex-direction: column; gap: 4px; }
+.filter-group label { font-size: 11px; font-weight: 600; color: var(--gray-500); }
+.filter-group select, .filter-group input { padding: 8px 10px; border: 1px solid var(--gray-200); border-radius: 8px; font-family: inherit; font-size: 13px; background: var(--white); color: var(--navy-dark); min-width: 140px; }
+.filter-group input[type=text] { min-width: 160px; }
+.export-bar { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
+.export-btn { padding: 8px 16px; border: none; border-radius: 8px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap; transition: all 0.2s; }
+.export-btn-excel { background: #0F6E56; color: #fff; }
+.export-btn-excel:hover { background: var(--navy); }
+.export-btn-pdf { background: #991B1B; color: #fff; }
+.export-btn-pdf:hover { background: #7F1D1D; }
+.export-btn-print { background: var(--gray-100); color: var(--navy-dark); }
+.export-btn-print:hover { background: var(--gray-200); }
+.stats-bar { display: flex; flex-wrap: wrap; gap: 24px; margin-bottom: 16px; padding: 12px 20px; background: var(--gray-50); border-radius: 10px; font-size: 13px; }
+.stat-item { display: flex; align-items: center; gap: 6px; }
+.stat-value { color: var(--navy-dark); font-weight: 700; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+#chartsRow { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
+.spinner { width: 32px; height: 32px; border: 3px solid var(--gray-200); border-top-color: var(--navy); border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto; }
+.empty-state { text-align: center; padding: 40px 20px; color: var(--gray-500); }
+.empty-state .empty-icon { font-size: 36px; margin-bottom: 8px; }
+.empty-state .empty-text { font-size: 14px; }
+.badge-green { background: var(--green-light); color: var(--green); }
+.badge-blue { background: #E6F1FB; color: #1B2A5E; }
+.badge-red { background: var(--red-light); color: var(--red); }
+.badge-gray { background: var(--gray-100); color: var(--gray-700); }
+.badge-orange { background: #FFF7ED; color: #92400E; }
+.badge-purple { background: #F3E8FF; color: #6B21A8; }
+.badge-darkred { background: #FEF2F2; color: #7F1D1D; }
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 1000; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--white); border-radius: 16px; padding: 28px; min-width: 360px; max-width: 480px; width: 90%; box-shadow: 0 8px 40px rgba(0,0,0,.15); position: relative; }
+.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.modal-title { font-size: 16px; font-weight: 700; color: var(--navy-dark); }
+.modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--gray-500); padding: 4px; line-height: 1; }
+.modal-close:hover { color: var(--navy-dark); }
+.modal-body { display: flex; flex-direction: column; gap: 14px; }
+.modal-row { display: flex; flex-direction: column; gap: 2px; }
+.modal-row-label { font-size: 11px; font-weight: 600; color: var(--gray-500); }
+.modal-row-value { font-size: 14px; font-weight: 500; color: var(--navy-dark); }
+.date-presets { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.date-preset-btn { padding: 6px 14px; border-radius: 16px; border: 1px solid var(--gray-200); background: var(--white); font-family: inherit; font-size: 12px; font-weight: 500; color: var(--gray-700); cursor: pointer; transition: all 0.2s; }
+.date-preset-btn:hover { border-color: var(--navy); color: var(--navy); background: var(--gray-50); }
+.date-preset-btn.active { background: var(--navy); color: var(--white); border-color: var(--navy); }
+.mini-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.mini-card { background: var(--white); border-radius: 14px; padding: 16px; border: 1px solid var(--gray-100); box-shadow: 0 2px 8px rgba(27,42,94,0.05); }
+.mini-card-title { font-size: 12px; font-weight: 700; color: var(--gray-500); margin-bottom: 12px; }
+.mini-card-title svg { vertical-align: middle; margin-left: 6px; }
+.mini-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.mini-list-item { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; border-radius: 8px; cursor: pointer; transition: background 0.15s; font-size: 13px; }
+.mini-list-item:hover { background: var(--gray-50); }
+.mini-list-item .name { font-weight: 500; color: var(--navy-dark); }
+.mini-list-item .count { font-weight: 700; color: var(--navy); font-size: 13px; }
+.kpi-value { font-size: 22px; font-weight: 900; color: var(--navy-dark); line-height: 1; margin-bottom: 4px; }
+.exec-summary { background: var(--white); border-radius: 16px; padding: 20px; border: 1px solid var(--gray-100); box-shadow: 0 2px 8px rgba(27,42,94,0.05); margin-bottom: 24px; }
+.exec-summary-title { font-size: 15px; font-weight: 700; color: var(--navy-dark); margin-bottom: 12px; }
+.exec-summary-text { font-size: 13px; line-height: 1.8; color: var(--gray-700); }
+.stat-card-clickable { cursor: pointer; }
+.stat-card-clickable:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(27,42,94,0.1); }
+@@keyframes spin{to{transform:rotate(360deg)}}
+  tbody tr{cursor:pointer}
+</style>
+
+    <div class="page-header">
+      <h2 data-ar="مركز التقارير" data-en="Reports Center">مركز التقارير</h2>
+      <p data-ar="تقارير تحليلية وأمنية للنظام" data-en="Analytical and security reports">تقارير تحليلية وأمنية للنظام</p>
+    </div>
+
+    <div class="report-tabs" id="reportTabs">
+      <button class="report-tab active" data-group="" data-ar="الكل" data-en="All">الكل</button>
+      <button class="report-tab" data-group="login" data-ar="تسجيل الدخول" data-en="Login">تسجيل الدخول</button>
+      <button class="report-tab" data-group="student" data-ar="عمليات الطلاب" data-en="Student Ops">عمليات الطلاب</button>
+      <button class="report-tab" data-group="request" data-ar="عمليات الطلبات" data-en="Request Ops">عمليات الطلبات</button>
+      <button class="report-tab" data-group="security" data-ar="التقارير الأمنية" data-en="Security">التقارير الأمنية</button>
+    </div>
+
+    <div class="date-presets" id="datePresets">
+      <button class="date-preset-btn active" data-days="" data-ar="الكل" data-en="All">الكل</button>
+      <button class="date-preset-btn" data-days="1" data-ar="آخر 24 ساعة" data-en="Last 24h">آخر 24 ساعة</button>
+      <button class="date-preset-btn" data-days="7" data-ar="آخر 7 أيام" data-en="Last 7 days">آخر 7 أيام</button>
+      <button class="date-preset-btn" data-days="30" data-ar="آخر 30 يوم" data-en="Last 30 days">آخر 30 يوم</button>
+      <button class="date-preset-btn" data-days="this-month" data-ar="هذا الشهر" data-en="This month">هذا الشهر</button>
+      <button class="date-preset-btn" data-days="last-month" data-ar="الشهر الماضي" data-en="Last month">الشهر الماضي</button>
+      <button class="date-preset-btn" data-days="this-year" data-ar="هذه السنة" data-en="This year">هذه السنة</button>
+    </div>
+
+    <div class="stats-grid" id="summaryCards">
+      <div class="stat-card stat-card-clickable" data-drill="tot"><div class="stat-top"><div class="stat-icon" style="background:#E6F1FB;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div></div><div class="stat-num" id="statTotOps">0</div><div class="stat-label" data-ar="إجمالي العمليات" data-en="Total Ops">إجمالي العمليات</div></div>
+      <div class="stat-card stat-card-clickable" data-drill="users"><div class="stat-top"><div class="stat-icon" style="background:#E1F5EE;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div></div><div class="stat-num" id="statUsers">0</div><div class="stat-label" data-ar="مستخدمون نشطون" data-en="Active Users">مستخدمون نشطون</div></div>
+      <div class="stat-card stat-card-clickable" data-drill="student"><div class="stat-top"><div class="stat-icon" style="background:#FFF7ED;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#92400E" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg></div></div><div class="stat-num" id="statStudentOps">0</div><div class="stat-label" data-ar="عمليات طلاب" data-en="Student Ops">عمليات طلاب</div></div>
+      <div class="stat-card stat-card-clickable" data-drill="request"><div class="stat-top"><div class="stat-icon" style="background:#F3E8FF;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6B21A8" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div></div><div class="stat-num" id="statRequestOps">0</div><div class="stat-label" data-ar="عمليات طلبات" data-en="Request Ops">عمليات طلبات</div></div>
+      <div class="stat-card" data-drill="fail"><div class="stat-top"><div class="stat-icon" style="background:#FEF2F2;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#991B1B" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div></div><div class="stat-num" id="statFailed">0</div><div class="stat-label" data-ar="فاشلة اليوم" data-en="Failed Today">فاشلة اليوم</div></div>
+      <div class="stat-card" data-drill="delete"><div class="stat-top"><div class="stat-icon" style="background:#FEF2F2;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#991B1B" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div></div><div class="stat-num" id="statDeletes">0</div><div class="stat-label" data-ar="حذف اليوم" data-en="Deletions">حذف اليوم</div></div>
+    </div>
+
+    <div class="filters-bar">
+      <div class="filter-group"><label data-ar="من تاريخ" data-en="From Date">من تاريخ</label><input type="date" id="fromDate"></div>
+      <div class="filter-group"><label data-ar="إلى تاريخ" data-en="To Date">إلى تاريخ</label><input type="date" id="toDate"></div>
+      <div class="filter-group"><label data-ar="المستخدم" data-en="User">المستخدم</label><select id="userFilter"><option value="" data-ar="الكل" data-en="All">الكل</option></select></div>
+      <div class="filter-group"><label data-ar="العملية" data-en="Action">العملية</label><select id="actionFilter"></select></div>
+      <div class="filter-group"><label data-ar="بحث" data-en="Search">بحث</label><input type="text" id="searchBox" placeholder=""></div>
+      <button class="card-action" onclick="applyFilters()" style="height:37px;align-self:end;display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> <span data-ar="تطبيق" data-en="Apply">تطبيق</span></button>
+    </div>
+
+    <div class="grid-2" id="chartsRow" style="margin-bottom:24px">
+      <div class="card"><div class="card-header"><div class="card-title" data-ar="العمليات آخر 7 أيام" data-en="Ops (7 days)">العمليات آخر 7 أيام</div></div><div style="padding:16px;height:200px"><canvas id="chartOps7"></canvas></div></div>
+      <div class="card"><div class="card-header"><div class="card-title" data-ar="تسجيل الدخول 30 يوم" data-en="Login (30 days)">تسجيل الدخول 30 يوم</div></div><div style="padding:16px;height:200px"><canvas id="chartLogins30"></canvas></div></div>
+      <div class="card"><div class="card-header"><div class="card-title" data-ar="عمليات الطلاب" data-en="Student Ops">عمليات الطلاب</div></div><div style="padding:16px;height:200px"><canvas id="chartStudents"></canvas></div></div>
+      <div class="card"><div class="card-header"><div class="card-title" data-ar="عمليات الطلبات" data-en="Request Ops">عمليات الطلبات</div></div><div style="padding:16px;height:200px"><canvas id="chartRequests"></canvas></div></div>
+    </div>
+
+    <div class="stats-bar" id="statsBar">
+      <div class="stat-item"><span class="stat-label" data-ar="إجمالي" data-en="Total">إجمالي</span><span class="stat-value" id="statTotalRecords">0</span></div>
+      <div class="stat-item"><span class="stat-label" data-ar="طلاب" data-en="Students">طلاب</span><span class="stat-value" id="statStudentRecs">0</span></div>
+      <div class="stat-item"><span class="stat-label" data-ar="طلبات" data-en="Requests">طلبات</span><span class="stat-value" id="statRequestRecs">0</span></div>
+    </div>
+
+    <div class="card" id="alertsCard" style="margin-bottom:24px">
+      <div class="card-header"><div class="card-title" data-ar="تنبيهات الأمان" data-en="Security Alerts">تنبيهات الأمان</div><button class="card-action" onclick="loadAlerts()" data-ar="تحديث" data-en="Refresh">تحديث</button></div>
+      <div id="alertsBody" style="padding:16px;text-align:center;color:var(--gray-500)" data-ar="جاري التحميل..." data-en="Loading...">جاري التحميل...</div>
+    </div>
+
+    <div class="exec-summary" id="execSummary" style="display:none">
+      <div class="exec-summary-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2" style="vertical-align:middle;margin-left:6px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span data-ar="ملخص تنفيذي" data-en="Executive Summary">ملخص تنفيذي</span></div>
+      <div class="exec-summary-text" id="execSummaryText"></div>
+    </div>
+
+    <div class="mini-grid" id="miniGrid">
+      <div class="mini-card" id="miniKpi">
+        <div class="mini-card-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span data-ar="مؤشرات الأداء" data-en="KPI">مؤشرات الأداء</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div><div class="kpi-value" id="kpiDailyAvg">0</div><div style="font-size:11px;color:var(--gray-500)" data-ar="متوسط العمليات/يوم" data-en="Avg ops/day">متوسط العمليات/يوم</div></div>
+          <div><div class="kpi-value" id="kpiPeakDay">-</div><div style="font-size:11px;color:var(--gray-500)" data-ar="أكثر يوم نشاطاً" data-en="Peak day">أكثر يوم نشاطاً</div></div>
+          <div><div class="kpi-value" id="kpiLastTime">-</div><div style="font-size:11px;color:var(--gray-500)" data-ar="آخر نشاط" data-en="Last activity">آخر نشاط</div></div>
+          <div><div class="kpi-value" id="kpiActiveUsers">0</div><div style="font-size:11px;color:var(--gray-500)" data-ar="مستخدمون فريدون" data-en="Unique users">مستخدمون فريدون</div></div>
+        </div>
+      </div>
+      <div class="mini-card" id="miniTopUsers">
+        <div class="mini-card-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span data-ar="أكثر المستخدمين نشاطاً" data-en="Top Users">أكثر المستخدمين نشاطاً</span></div>
+        <ul class="mini-list" id="topUsersList"><li style="font-size:12px;color:var(--gray-400)" data-ar="جاري التحميل..." data-en="Loading...">جاري التحميل...</li></ul>
+      </div>
+      <div class="mini-card" id="miniTopActions">
+        <div class="mini-card-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span data-ar="أكثر الإجراءات شيوعاً" data-en="Top Actions">أكثر الإجراءات شيوعاً</span></div>
+        <ul class="mini-list" id="topActionsList"><li style="font-size:12px;color:var(--gray-400)" data-ar="جاري التحميل..." data-en="Loading...">جاري التحميل...</li></ul>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>#</th><th data-ar="المستخدم" data-en="User">المستخدم</th><th data-ar="الإجراء" data-en="Action">الإجراء</th><th data-ar="الجدول" data-en="Table">الجدول</th><th data-ar="المعرف" data-en="ID">المعرف</th><th data-ar="التاريخ" data-en="Date">التاريخ</th></tr></thead>
+          <tbody id="logTbody"><tr><td colspan="6" style="text-align:center;padding:60px 20px"><div class="spinner"></div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="export-bar">
+      <button class="export-btn export-btn-excel" onclick="exportExcel()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> <span data-ar="Excel" data-en="Excel">Excel</span></button>
+      <button class="export-btn export-btn-pdf" onclick="exportPdf()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 11 9 11 11 13 11 13 12 10 12 10 9"/></svg> <span data-ar="PDF" data-en="PDF">PDF</span></button>
+      <button class="export-btn export-btn-print" onclick="window.print()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> <span data-ar="طباعة" data-en="Print">طباعة</span></button>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:0 4px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:13px;color:var(--gray-500)" data-ar="عرض" data-en="Show">عرض</span>
+        <select id="pageSizeSelect" style="padding:6px 10px;border:1px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:13px;background:var(--white);color:var(--navy-dark);cursor:pointer"><option value="50">50</option><option value="100">100</option><option value="200">200</option></select>
+        <span style="font-size:13px;color:var(--gray-500)" data-ar="سجل" data-en="records">سجل</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span id="totalRecordsLabel" style="font-size:13px;color:var(--gray-500)"></span>
+        <button id="prevPageBtn" style="padding:6px 14px;border:1px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:13px;background:var(--white);color:var(--navy-dark);cursor:pointer;display:flex;align-items:center;gap:4px" disabled><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg> <span data-ar="السابق" data-en="Prev">السابق</span></button>
+        <span id="pageIndicator" style="font-size:13px;font-weight:600;color:var(--navy-dark);min-width:60px;text-align:center">1 / 1</span>
+        <button id="nextPageBtn" style="padding:6px 14px;border:1px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:13px;background:var(--white);color:var(--navy-dark);cursor:pointer;display:flex;align-items:center;gap:4px" disabled><span data-ar="التالي" data-en="Next">التالي</span> <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
+      </div>
+    </div>
+  </div>
+
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title" data-ar="تفاصيل" data-en="Details">تفاصيل</div><button class="modal-close" id="modalCloseBtn">&times;</button></div>
+    <div class="modal-body">
+      <div class="modal-row"><span class="modal-row-label" data-ar="المستخدم" data-en="User">المستخدم</span><span class="modal-row-value" id="modalUser"></span></div>
+      <div class="modal-row"><span class="modal-row-label" data-ar="العملية" data-en="Action">العملية</span><span class="modal-row-value" id="modalAction"></span></div>
+      <div class="modal-row"><span class="modal-row-label" data-ar="الجدول" data-en="Table">الجدول</span><span class="modal-row-value" id="modalTable"></span></div>
+      <div class="modal-row"><span class="modal-row-label" data-ar="المعرف" data-en="Target ID">المعرف</span><span class="modal-row-value" id="modalTargetId"></span></div>
+      <div class="modal-row"><span class="modal-row-label" data-ar="التاريخ" data-en="Date">التاريخ</span><span class="modal-row-value" id="modalDate"></span></div>
+    </div>
+  </div>
+</div>
+
+
+@section Scripts {
+<script src="/i18n.js"></script>
+@* @@ للهروب — الرابط النهائي فيه @ عادية *@
+<script src="https://cdn.jsdelivr.net/npm/chart.js@@4.4.7/dist/chart.umd.min.js"></script>
+<script src="/js/reports-page.js"></script>
+}

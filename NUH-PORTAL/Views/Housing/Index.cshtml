@@ -1,0 +1,137 @@
+@{
+    ViewData["Title"] = "إدارة حسابات السكن";
+}
+
+<style>
+  /* خاص بصفحة إدارة حسابات السكن — نفس ستايلات الصفحة القديمة عشان housing-management.js يشتغل زي ما هو */
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-bottom:24px}
+  .stat-card{background:var(--white);border-radius:12px;padding:16px 20px;border:1px solid var(--gray-100);box-shadow:0 2px 8px rgba(0,0,0,.04)}
+  .stat-card .stat-label{font-size:13px;color:var(--gray-500);margin-bottom:4px}
+  .stat-card .stat-value{font-size:28px;font-weight:700;color:var(--navy)}
+  .search-box{display:flex;gap:8px;align-items:center}
+  .search-box select{padding:8px 12px;border:1px solid var(--gray-300);border-radius:8px;font-family:inherit;font-size:13px;background:var(--white)}
+  .hbtn{padding:8px 16px;border:none;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+  .btn-outline{background:transparent;border:1px solid var(--gray-300);color:var(--gray-700)}
+  .btn-outline:hover{background:var(--gray-50)}
+  .btn-sm{padding:4px 10px;font-size:12px}
+  .btn-success{background:var(--green);color:var(--white)}
+  .btn-danger{background:var(--red);color:var(--white)}
+  .btn-warning{background:var(--gold);color:var(--navy-dark)}
+  .badge-enabled{background:var(--green-light);color:var(--green)}
+  .badge-disabled{background:var(--red-light);color:var(--red)}
+  .badge-unknown{background:var(--gray-200);color:var(--gray-700)}
+  .table-wrap{overflow-x:auto}
+  .card-body{padding:20px}
+  .loading{text-align:center;padding:40px;color:var(--gray-500)}
+  .loading::after{content:'';display:inline-block;width:24px;height:24px;border:3px solid var(--gray-200);border-top-color:var(--navy);border-radius:50%;animation:spin 1s linear infinite;margin-right:8px;vertical-align:middle}
+  @@keyframes spin{to{transform:rotate(360deg)}}
+  .empty-state{text-align:center;padding:60px 20px;color:var(--gray-500)}
+  .empty-state svg{width:64px;height:64px;stroke:var(--gray-300);margin-bottom:16px}
+  .empty-state p{font-size:14px}
+  .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 24px}
+  .detail-item label{font-size:11px;color:var(--gray-500);display:block;margin-bottom:2px}
+  .detail-item span{font-size:14px;font-weight:600}
+  .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;display:none;align-items:center;justify-content:center}
+  .modal-overlay.show{display:flex}
+  .modal{background:var(--white);border-radius:16px;width:90%;max-width:700px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 48px rgba(0,0,0,.2)}
+  .modal-header{padding:16px 20px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between}
+  .modal-header h3{font-size:16px;font-weight:700}
+  .modal-close{background:none;border:none;font-size:24px;cursor:pointer;color:var(--gray-500);padding:4px}
+  .modal-body{padding:20px}
+  .modal-footer{padding:12px 20px;border-top:1px solid var(--gray-100);display:flex;justify-content:flex-end;gap:8px}
+  .group-tag{display:inline-block;background:var(--gray-100);border-radius:6px;padding:2px 8px;font-size:11px;margin:2px;direction:ltr}
+</style>
+
+<div class="stats-grid" id="statsGrid"></div>
+
+<div class="card">
+  <div class="card-header">
+    <h3 style="font-size:15px;font-weight:700;color:var(--navy-dark)">حسابات السكن</h3>
+    <div class="search-box">
+      <select id="statusFilter" onchange="loadAccounts()">
+        <option value="">الكل</option>
+        <option value="enabled">مفعل</option>
+        <option value="disabled">معطل</option>
+        <option value="unknown">غير معروف</option>
+      </select>
+      <button class="hbtn btn-outline btn-sm" onclick="loadAccounts()">تحديث</button>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>الرقم الجامعي</th>
+            <th>الاسم بالإنجليزية</th>
+            <th>الكلية</th>
+            <th>حالة الحساب</th>
+            <th>اسم المستخدم</th>
+            <th>آخر مزامنة</th>
+            <th>إجراءات</th>
+          </tr>
+        </thead>
+        <tbody id="accountsTableBody"></tbody>
+      </table>
+    </div>
+    <div class="loading" id="loadingIndicator"></div>
+    <div class="empty-state" id="emptyState" style="display:none">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+      <p>لا يوجد طلاب</p>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="detailsModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>إدارة الحساب</h3>
+      <button class="modal-close" onclick="closeModal('detailsModal')">&times;</button>
+    </div>
+    <div class="modal-body" id="detailsModalBody"></div>
+    <div class="modal-footer">
+      <button class="hbtn btn-outline" onclick="closeModal('detailsModal')">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="lifecycleModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>سجل دورة الحياة</h3>
+      <button class="modal-close" onclick="closeModal('lifecycleModal')">&times;</button>
+    </div>
+    <div class="modal-body" id="lifecycleModalBody"></div>
+    <div class="modal-footer">
+      <button class="hbtn btn-outline" onclick="closeModal('lifecycleModal')">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="adSearchModal">
+  <div class="modal" style="max-width:800px">
+    <div class="modal-header">
+      <h3>بحث في Active Directory</h3>
+      <button class="modal-close" onclick="closeModal('adSearchModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <input type="text" id="adSearchInput" style="flex:1;padding:8px 12px;border:1px solid var(--gray-300);border-radius:8px;font-family:inherit;font-size:13px" placeholder="ابحث بالاسم أو الرقم الجامعي">
+        <button class="hbtn" style="background:var(--navy);color:#fff" onclick="performADSearch()">بحث</button>
+      </div>
+      <div id="adSearchResults"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="hbtn btn-outline" onclick="closeModal('adSearchModal')">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+@section Scripts {
+<script>
+  // housing-management.js القديم بيعتمد على i18n و token من التخزين — بنوفرهم بنفس الأسماء
+  var currentLang = 'ar';
+</script>
+<script src="/i18n.js"></script>
+<script src="/housing-management.js"></script>
+}

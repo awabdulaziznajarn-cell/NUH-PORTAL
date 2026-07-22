@@ -162,3 +162,15 @@ tbody tr:hover{background:var(--gray-50)}
 .about-features{display:grid;grid-template-columns:1fr 1fr;gap:6px;text-align:right}
 [dir=ltr] .about-features{text-align:left}
 .about-feature{font-size:12px;color:var(--gray-700);padding:6px 10px;background:var(--gray-50);border-radius:8px;font-weight:500}
+
+/* ===== سكرول المحتوى بين الصفحة والسايدبار (صفحات الـ MVC الموحدة فقط — body.app-shell) =====
+   الفكرة: الصفحة نفسها مبتسكرولش، منطقة المحتوى .main هي اللي بتسكرول،
+   وبنخليها ltr علشان المتصفح يحط شريط السكرول على يمينها (جنب السايدبار) بدل طرف الشاشة،
+   والمحتوى جواها بيرجع rtl طبيعي. */
+body.app-shell{overflow:hidden;height:100vh}
+.app-shell .main{height:100vh;overflow-y:auto;direction:ltr;scrollbar-width:thin;scrollbar-color:var(--gray-300) transparent}
+.app-shell .main>.topbar,.app-shell .main>.content{direction:rtl}
+.app-shell .main::-webkit-scrollbar{width:10px}
+.app-shell .main::-webkit-scrollbar-track{background:transparent}
+.app-shell .main::-webkit-scrollbar-thumb{background:var(--gray-300);border-radius:8px;border:2px solid var(--gray-50)}
+.app-shell .main::-webkit-scrollbar-thumb:hover{background:var(--gray-500)}

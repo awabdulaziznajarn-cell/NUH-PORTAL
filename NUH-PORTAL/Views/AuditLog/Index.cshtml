@@ -1,0 +1,442 @@
+@{
+    ViewData["Title"] = "سجل العمليات";
+}
+
+<style>
+  /* خاص بصفحة سجل العمليات — الباقي من site.css */
+  .filters-bar{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px;align-items:end}
+  .filter-group{display:flex;flex-direction:column;gap:4px}
+  .filter-group label{font-size:11px;font-weight:600;color:var(--gray-500)}
+  .filter-group select,.filter-group input{padding:8px 10px;border:1px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:13px;background:var(--white);color:var(--navy-dark);min-width:140px}
+  .filter-group input[type=text]{min-width:180px}
+  .export-btn{padding:8px 16px;background:var(--green);color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;height:37px;align-self:end}
+  .export-btn:hover{background:var(--navy)}
+  .stats-bar{display:flex;flex-wrap:wrap;gap:24px;margin-bottom:16px;padding:12px 20px;background:var(--gray-50);border-radius:10px;font-size:13px}
+  .stat-item{display:flex;align-items:center;gap:6px}
+  .stat-label{color:var(--gray-500);font-weight:500}
+  .stat-value{color:var(--navy-dark);font-weight:700}
+  .badge-green{background:var(--green-light);color:var(--green)}
+  .badge-blue{background:#E6F1FB;color:#1B2A5E}
+  .badge-red{background:var(--red-light);color:var(--red)}
+  .badge-gray{background:var(--gray-100);color:var(--gray-700)}
+  .badge-orange{background:#FFF7ED;color:#92400E}
+  .badge-purple{background:#F3E8FF;color:#6B21A8}
+  .badge-darkred{background:#FEF2F2;color:#7F1D1D}
+  .spinner{width:32px;height:32px;border:3px solid var(--gray-200);border-top-color:var(--navy);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto}
+  @@keyframes spin{to{transform:rotate(360deg)}}
+  .empty-state{text-align:center;padding:60px 20px;color:var(--gray-500)}
+  .empty-state .empty-icon{font-size:48px;margin-bottom:12px}
+  .empty-state .empty-text{font-size:14px}
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center}
+  .modal-overlay.open{display:flex}
+  .modal{background:var(--white);border-radius:16px;padding:28px;min-width:360px;max-width:480px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,.15);position:relative}
+  .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+  .modal-title{font-size:16px;font-weight:700;color:var(--navy-dark)}
+  .modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--gray-500);padding:4px;line-height:1}
+  .modal-row{display:flex;flex-direction:column;gap:2px;margin-bottom:12px}
+  .modal-row-label{font-size:11px;font-weight:600;color:var(--gray-500)}
+  .modal-row-value{font-size:14px;font-weight:500;color:var(--navy-dark)}
+  tbody tr{cursor:pointer}
+</style>
+
+<div class="page-header">
+  <h2>جميع العمليات التي تمت في النظام</h2>
+  <p>سجل تدقيق كامل بكل عملية وتوقيتها ومن نفّذها</p>
+</div>
+
+<div class="filters-bar">
+  <div class="filter-group">
+    <label>المستخدم</label>
+    <select id="userFilter"><option value="">الكل</option></select>
+  </div>
+  <div class="filter-group">
+    <label>العملية</label>
+    <select id="actionFilter"></select>
+  </div>
+  <div class="filter-group">
+    <label>من تاريخ</label>
+    <input type="date" id="fromDate">
+  </div>
+  <div class="filter-group">
+    <label>إلى تاريخ</label>
+    <input type="date" id="toDate">
+  </div>
+  <div class="filter-group">
+    <label>بحث</label>
+    <input type="text" id="searchBox" placeholder="">
+  </div>
+  <button class="export-btn" id="exportBtn">⬇ <span>تصدير XLSX</span></button>
+</div>
+
+<div class="stats-bar" id="statsBar">
+  <div class="stat-item"><span class="stat-label">إجمالي السجلات</span><span class="stat-value" id="statTotalRecords">0</span></div>
+  <div class="stat-item"><span class="stat-label">المستخدمون</span><span class="stat-value" id="statUsers">0</span></div>
+  <div class="stat-item"><span class="stat-label">عمليات الطلاب</span><span class="stat-value" id="statStudentOps">0</span></div>
+  <div class="stat-item"><span class="stat-label">عمليات الطلبات</span><span class="stat-value" id="statRequestOps">0</span></div>
+</div>
+
+<div class="card">
+  <div style="overflow-x:auto">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>المستخدم</th>
+          <th>الإجراء</th>
+          <th>الجدول</th>
+          <th>المعرف</th>
+          <th>التاريخ</th>
+        </tr>
+      </thead>
+      <tbody id="log-tbody">
+        <tr><td colspan="6" style="text-align:center;padding:60px 20px"><div class="spinner"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-top:16px;padding:0 4px">
+  <div style="display:flex;align-items:center;gap:8px">
+    <span style="font-size:13px;color:var(--gray-500)">عرض</span>
+    <select id="pageSizeSelect" style="padding:6px 10px;border:1px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:13px;background:var(--white);color:var(--navy-dark);cursor:pointer">
+      <option value="50">50</option>
+      <option value="100">100</option>
+      <option value="200">200</option>
+    </select>
+    <span style="font-size:13px;color:var(--gray-500)">سجل</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <span id="totalRecordsLabel" style="font-size:13px;color:var(--gray-500)"></span>
+    <button id="prevPageBtn" class="btn btn-cancel" disabled>السابق</button>
+    <span id="pageIndicator" style="font-size:13px;font-weight:600;color:var(--navy-dark);min-width:60px;text-align:center">1 / 1</span>
+    <button id="nextPageBtn" class="btn btn-cancel" disabled>التالي</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">تفاصيل السجل</div>
+      <button class="modal-close" id="modalCloseBtn">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-row"><span class="modal-row-label">المستخدم</span><span class="modal-row-value" id="modalUser"></span></div>
+      <div class="modal-row"><span class="modal-row-label">العملية</span><span class="modal-row-value" id="modalAction"></span></div>
+      <div class="modal-row"><span class="modal-row-label">الجدول</span><span class="modal-row-value" id="modalTable"></span></div>
+      <div class="modal-row"><span class="modal-row-label">المعرف</span><span class="modal-row-value" id="modalTargetId"></span></div>
+      <div class="modal-row"><span class="modal-row-label">التاريخ</span><span class="modal-row-value" id="modalDate"></span></div>
+      <div class="modal-row" id="modalChangesRow" style="display:none">
+        <span class="modal-row-label">التغييرات</span>
+        <div id="modalChangesContent" style="font-size:13px;margin-top:4px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+@section Scripts {
+<script>
+  var actionTranslations = {
+    login: 'تسجيل الدخول',
+    logout: 'تسجيل الخروج',
+    login_failed: 'فشل تسجيل الدخول',
+    set_password: 'تغيير كلمة المرور',
+    create_student: 'إضافة طالب',
+    update_student: 'تعديل بيانات طالب',
+    delete_student: 'حذف طالب',
+    checkout_student: 'إخلاء سكن طالب',
+    create_request: 'إنشاء طلب',
+    approve_request: 'الموافقة على طلب',
+    reject_request: 'رفض طلب',
+    housing_approve_request: 'موافقة إدارة الإسكان',
+    housing_reject_request: 'رفض إسكان',
+    submit_cyber_review: 'إحالة للأمن السيبراني',
+    cyber_approve_request: 'موافقة إدارة الأمن السيبراني',
+    cyber_reject_request: 'رفض إدارة الأمن السيبراني',
+    ready_for_provisioning_request: 'تجهيز لإنشاء حساب شبكة السكن',
+    complete_request: 'إكمال الطلب',
+    login_admin_fallback: 'دخول المسؤول المحلي',
+    login_admin_fallback_failed: 'فشل دخول المسؤول المحلي',
+    login_local_fallback: 'تسجيل دخول (محلي)',
+    login_local_fallback_failed: 'فشل تسجيل دخول (محلي)',
+    user_created_ad: 'إنشاء مستخدم من Active Directory',
+    user_updated_ad: 'تحديث مستخدم من Active Directory'
+  };
+  function translateAction(a) { return actionTranslations[a] || a || ''; }
+
+  function badgeClass(action) {
+    var map = {
+      create_student: 'badge-green', update_student: 'badge-blue', delete_student: 'badge-red',
+      checkout_student: 'badge-orange',
+      create_request: 'badge-green', approve_request: 'badge-green', reject_request: 'badge-red',
+      housing_approve_request: 'badge-blue', housing_reject_request: 'badge-red',
+      submit_cyber_review: 'badge-purple', cyber_approve_request: 'badge-purple', cyber_reject_request: 'badge-red',
+      ready_for_provisioning_request: 'badge-orange', complete_request: 'badge-green',
+      login: 'badge-gray', logout: 'badge-gray', login_failed: 'badge-darkred',
+      set_password: 'badge-orange',
+      login_admin_fallback: 'badge-purple', login_admin_fallback_failed: 'badge-darkred',
+      user_created_ad: 'badge-blue', user_updated_ad: 'badge-purple'
+    };
+    return map[action] || 'badge-gray';
+  }
+
+  function badgeIcon(action) {
+    var map = {
+      create_student: '➕', update_student: '📝', delete_student: '🗑',
+      checkout_student: '🚪',
+      create_request: '📋', approve_request: '✅', reject_request: '❌',
+      login: '🔐', logout: '🚪', login_failed: '❌',
+      set_password: '🔑',
+      login_admin_fallback: '👑', login_admin_fallback_failed: '⛔',
+      user_created_ad: '👤', user_updated_ad: '🔄',
+      ready_for_provisioning_request: '✅', complete_request: '🎯'
+    };
+    return map[action] || '';
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return '';
+    var d = new Date(dateStr);
+    if (isNaN(d.getTime())) return '';
+    var y = d.getFullYear();
+    var mo = String(d.getMonth() + 1).padStart(2, '0');
+    var da = String(d.getDate()).padStart(2, '0');
+    var h = String(d.getHours()).padStart(2, '0');
+    var mi = String(d.getMinutes()).padStart(2, '0');
+    return da + '/' + mo + '/' + y + ' ' + h + ':' + mi;
+  }
+
+  var actionFilterOptions = [
+    { value: '', label: 'الكل' },
+    { value: 'login', label: 'تسجيل الدخول' },
+    { value: 'student', label: 'عمليات الطلاب' },
+    { value: 'request', label: 'عمليات الطلبات' },
+    { value: 'password', label: 'تغيير كلمة المرور' },
+    { value: 'logout', label: 'تسجيل الخروج' },
+    { value: 'ad', label: 'مزامنة Active Directory' }
+  ];
+
+  var currentPage = 1;
+  var currentPageSize = 50;
+  var totalPages = 1;
+  var totalRecords = 0;
+  var cachedData = null;
+  var dataLoaded = false;
+
+  function getFilters() {
+    return {
+      userId: document.getElementById('userFilter').value,
+      actionGroup: document.getElementById('actionFilter').value,
+      fromDate: document.getElementById('fromDate').value,
+      toDate: document.getElementById('toDate').value,
+      search: document.getElementById('searchBox').value.trim()
+    };
+  }
+
+  function saveFilters() {
+    var f = getFilters();
+    localStorage.setItem('auditUserId', f.userId);
+    localStorage.setItem('auditActionGroup', f.actionGroup);
+    localStorage.setItem('auditFromDate', f.fromDate);
+    localStorage.setItem('auditToDate', f.toDate);
+    localStorage.setItem('auditSearch', f.search);
+    localStorage.setItem('auditPageSize', String(currentPageSize));
+  }
+
+  function restoreFilters() {
+    document.getElementById('userFilter').value = localStorage.getItem('auditUserId') || '';
+    document.getElementById('actionFilter').value = localStorage.getItem('auditActionGroup') || '';
+    document.getElementById('fromDate').value = localStorage.getItem('auditFromDate') || '';
+    document.getElementById('toDate').value = localStorage.getItem('auditToDate') || '';
+    document.getElementById('searchBox').value = localStorage.getItem('auditSearch') || '';
+    var ps = parseInt(localStorage.getItem('auditPageSize')) || 50;
+    currentPageSize = ps;
+    document.getElementById('pageSizeSelect').value = String(ps);
+  }
+
+  function buildUrl(p, ps) {
+    var url = '/api/auditlogs?page=' + p + '&pageSize=' + ps;
+    var f = getFilters();
+    if (f.userId) url += '&userId=' + encodeURIComponent(f.userId);
+    if (f.actionGroup) url += '&actionGroup=' + encodeURIComponent(f.actionGroup);
+    if (f.fromDate) url += '&fromDate=' + encodeURIComponent(f.fromDate);
+    if (f.toDate) url += '&toDate=' + encodeURIComponent(f.toDate);
+    if (f.search) url += '&search=' + encodeURIComponent(f.search);
+    return url;
+  }
+
+  function rebuildActionFilter() {
+    var sel = document.getElementById('actionFilter');
+    var currentVal = sel.value;
+    sel.innerHTML = '';
+    actionFilterOptions.forEach(function (opt) {
+      var el = document.createElement('option');
+      el.value = opt.value;
+      el.textContent = opt.label;
+      sel.appendChild(el);
+    });
+    sel.value = currentVal;
+  }
+
+  function populateUserFilter(users) {
+    var sel = document.getElementById('userFilter');
+    var currentVal = sel.value;
+    sel.innerHTML = '<option value="">الكل</option>';
+    users.forEach(function (u) {
+      var el = document.createElement('option');
+      el.value = u.id;
+      el.textContent = u.name;
+      sel.appendChild(el);
+    });
+    sel.value = currentVal;
+  }
+
+  function openModal(record) {
+    document.getElementById('modalUser').textContent = (record.user && (record.user.full_name || record.user.username)) || record.user_id;
+    document.getElementById('modalAction').innerHTML = badgeIcon(record.action) + ' ' + escHtml(translateAction(record.action));
+    document.getElementById('modalTable').textContent = record.target_table || '';
+    document.getElementById('modalTargetId').textContent = String(record.target_id || '');
+    document.getElementById('modalDate').textContent = formatDate(record.action_at);
+    var changesDiv = document.getElementById('modalChangesRow');
+    var changesContent = document.getElementById('modalChangesContent');
+    if (record.changes && record.changes.length > 0) {
+      changesDiv.style.display = '';
+      changesContent.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:12px">' +
+        '<tr style="background:var(--gray-100)"><th style="padding:6px 8px;text-align:start;font-weight:600">الحقل' +
+        '</th><th style="padding:6px 8px;text-align:start;font-weight:600">القيمة القديمة' +
+        '</th><th style="padding:6px 8px;text-align:start;font-weight:600">القيمة الجديدة</th></tr>' +
+        record.changes.map(function (c) {
+          return '<tr style="border-bottom:1px solid var(--gray-100)"><td style="padding:6px 8px;font-weight:500">' + escHtml(c.fieldName) +
+            '</td><td style="padding:6px 8px;color:var(--red)">' + escHtml(c.oldValue || '—') +
+            '</td><td style="padding:6px 8px;color:var(--green)">' + escHtml(c.newValue || '—') + '</td></tr>';
+        }).join('') + '</table>';
+    } else {
+      changesDiv.style.display = 'none';
+    }
+    document.getElementById('detailModal').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('detailModal').classList.remove('open');
+  }
+
+  function renderTable() {
+    if (!dataLoaded) return;
+    var tbody = document.getElementById('log-tbody');
+    if (!cachedData || !cachedData.length) {
+      tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">لا توجد سجلات</div></div></td></tr>';
+      return;
+    }
+    tbody.innerHTML = cachedData.map(function (l, i) {
+      var rowNum = (currentPage - 1) * currentPageSize + i + 1;
+      return '<tr onclick="openModal(cachedData[' + i + '])"><td style="color:var(--gray-500)">' + rowNum +
+        '</td><td>' + escHtml((l.user && (l.user.full_name || l.user.username)) || l.user_id) +
+        '</td><td><span class="badge ' + badgeClass(l.action) + '">' + badgeIcon(l.action) + ' ' + escHtml(translateAction(l.action)) + '</span>' +
+        '</td><td>' + escHtml(l.target_table || '') +
+        '</td><td>' + escHtml(String(l.target_id || '')) +
+        '</td><td>' + formatDate(l.action_at) +
+        '</td></tr>';
+    }).join('');
+  }
+
+  async function loadLogs(page, pageSize) {
+    var p = page || currentPage;
+    var ps = pageSize || currentPageSize;
+    currentPage = p;
+    currentPageSize = ps;
+    saveFilters();
+    try {
+      var res = await fetch(buildUrl(p, ps), { headers: NUH.headers() });
+      if (res.status === 401) { window.location.replace('/Account/Login'); return; }
+      var body = await res.json();
+      cachedData = body.data;
+      totalPages = body.totalPages;
+      totalRecords = body.totalRecords;
+      dataLoaded = true;
+      renderTable();
+      updatePagination(body.totalRecords);
+      updateStats(body.stats);
+    } catch (e) {
+      dataLoaded = true;
+      document.getElementById('log-tbody').innerHTML =
+        '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-text" style="color:#991B1B">تعذر الاتصال بالخادم.</div></div></td></tr>';
+    }
+  }
+
+  async function loadAuditUsers() {
+    try {
+      var res = await fetch('/api/auditlogs/users', { headers: NUH.headers() });
+      if (res.ok) populateUserFilter(await res.json());
+    } catch (e) { }
+  }
+
+  function onFilterChange() { loadLogs(1, currentPageSize); }
+
+  function updatePagination(recs) {
+    document.getElementById('pageIndicator').textContent = currentPage + ' / ' + (totalPages || 1);
+    document.getElementById('prevPageBtn').disabled = currentPage <= 1;
+    document.getElementById('nextPageBtn').disabled = currentPage >= totalPages;
+    document.getElementById('totalRecordsLabel').textContent = 'إجمالي السجلات: ' + recs;
+  }
+
+  function updateStats(stats) {
+    if (!stats) return;
+    document.getElementById('statTotalRecords').textContent = stats.totalRecords || 0;
+    document.getElementById('statUsers').textContent = stats.totalUsers || 0;
+    document.getElementById('statStudentOps').textContent = stats.studentOperations || 0;
+    document.getElementById('statRequestOps').textContent = stats.requestOperations || 0;
+  }
+
+  async function exportExcel() {
+    try {
+      var url = '/api/auditlogs/export';
+      var f = getFilters();
+      var qs = [];
+      if (f.userId) qs.push('userId=' + encodeURIComponent(f.userId));
+      if (f.actionGroup) qs.push('actionGroup=' + encodeURIComponent(f.actionGroup));
+      if (f.fromDate) qs.push('fromDate=' + encodeURIComponent(f.fromDate));
+      if (f.toDate) qs.push('toDate=' + encodeURIComponent(f.toDate));
+      if (f.search) qs.push('search=' + encodeURIComponent(f.search));
+      if (qs.length) url += '?' + qs.join('&');
+
+      var res = await fetch(url, { headers: NUH.headers() });
+      if (!res.ok) return;
+      var blob = await res.blob();
+      if (blob.size === 0) return;
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'AuditLogs.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+    } catch (e) { }
+  }
+
+  document.getElementById('prevPageBtn').addEventListener('click', function () {
+    if (currentPage > 1) loadLogs(currentPage - 1, currentPageSize);
+  });
+  document.getElementById('nextPageBtn').addEventListener('click', function () {
+    if (currentPage < totalPages) loadLogs(currentPage + 1, currentPageSize);
+  });
+  document.getElementById('pageSizeSelect').addEventListener('change', function () {
+    loadLogs(1, parseInt(this.value));
+  });
+  document.getElementById('userFilter').addEventListener('change', onFilterChange);
+  document.getElementById('actionFilter').addEventListener('change', onFilterChange);
+  document.getElementById('fromDate').addEventListener('change', onFilterChange);
+  document.getElementById('toDate').addEventListener('change', onFilterChange);
+  document.getElementById('searchBox').addEventListener('keyup', function (e) {
+    if (e.key === 'Enter') onFilterChange();
+  });
+  document.getElementById('exportBtn').addEventListener('click', exportExcel);
+  document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
+  document.getElementById('detailModal').addEventListener('click', function (e) {
+    if (e.target === this) closeModal();
+  });
+
+  rebuildActionFilter();
+  restoreFilters();
+  loadLogs(1, currentPageSize);
+  loadAuditUsers();
+</script>
+}

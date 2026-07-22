@@ -316,6 +316,49 @@ app.Use(async (context, next) =>
 app.UseAuthorization();
 
 app.MapControllers();
+
+// ✅ تحويلات الصفحات القديمة → صفحات الـ MVC الجديدة
+// الملفات القديمة لسه موجودة على الديسك كباك أب، بس أي رابط ليها بيترمي على الجديد —
+// كده السايدبار والشكل موحدين في كل الشاشات مهما كان مصدر الرابط (هيستوري/بوكمارك/لينك جوه صفحة قديمة).
+// (index.html بوابة الدخول بره الخريطة دي عمدًا — هي نقطة البداية زي ما هي)
+var legacyPageMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+{
+    ["/dashboard.html"] = "/Home",
+    ["/students.html"] = "/Students",
+    ["/register_student.html"] = "/Register",
+    ["/bulk-registration.html"] = "/Bulk",
+    ["/student-status.html"] = "/StudentStatus",
+    ["/requests.html"] = "/Requests",
+    ["/housing-management.html"] = "/Housing",
+    ["/reports.html"] = "/Reports",
+    ["/auditlog.html"] = "/AuditLog",
+    ["/supervisor-departure.html"] = "/Departure",
+    ["/login.html"] = "/Account/Login",
+    ["/login-v2.html"] = "/Account/Login",
+    ["/login-lang.html"] = "/Account/Login",
+    ["/sidebar.html"] = "/Home"
+};
+app.Use(async (context, next) =>
+{
+    var path = context.Request.Path.Value ?? string.Empty;
+
+    // تفاصيل الطلب القديمة بتشيل الـ id من الكويري — ننقله للراوت الجديد
+    if (path.Equals("/request-details.html", StringComparison.OrdinalIgnoreCase))
+    {
+        var id = context.Request.Query["id"].ToString();
+        context.Response.Redirect(string.IsNullOrEmpty(id) ? "/Requests" : $"/Requests/Details/{id}");
+        return;
+    }
+
+    if (legacyPageMap.TryGetValue(path, out var target))
+    {
+        context.Response.Redirect(target);
+        return;
+    }
+
+    await next();
+});
+
 var defaultFilesOptions = new DefaultFilesOptions();
 defaultFilesOptions.DefaultFileNames.Clear();
 defaultFilesOptions.DefaultFileNames.Add("index.html");

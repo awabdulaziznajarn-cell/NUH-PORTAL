@@ -1,0 +1,841 @@
+@model NUH_PORTAL.DTOs.StudentStatus.StudentStatusStatsDto
+@{
+    ViewData["Title"] = "تحديث حالة الطالب";
+}
+
+<style>
+  /* خاص بصفحة حالة الطالب فقط — الباقي من site.css */
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-bottom:24px}
+  .stat-card{background:var(--white);border-radius:14px;padding:16px;border:1px solid var(--gray-100);box-shadow:0 2px 8px rgba(27,42,94,.05);display:flex;flex-direction:column;gap:8px;transition:transform .2s,box-shadow .2s}
+  .stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(27,42,94,.1)}
+  .stat-top{display:flex;align-items:center;justify-content:space-between}
+  .stat-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center}
+  .stat-num{font-size:26px;font-weight:900;color:var(--navy-dark);line-height:1}
+  .stat-label{font-size:12px;color:var(--gray-500);font-weight:500}
+  .stat-badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
+  .two-col .col-form{min-width:0}
+  .two-col .col-history{min-width:0}
+  .form-card{background:var(--white);border-radius:16px;border:1px solid var(--gray-100);box-shadow:0 2px 8px rgba(27,42,94,.05);overflow:hidden;margin-bottom:20px}
+  .form-card-header{padding:18px 24px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;gap:10px}
+  .form-card-header-icon{width:36px;height:36px;border-radius:10px;background:var(--gray-100);display:flex;align-items:center;justify-content:center}
+  .form-card-title{font-size:15px;font-weight:700;color:var(--navy-dark)}
+  .form-card-body{padding:24px}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .field{display:flex;flex-direction:column;gap:7px}
+  .field.full{grid-column:1/-1}
+  .field label{font-size:13px;font-weight:600;color:var(--gray-700)}
+  .input-wrap{position:relative}
+  .input-wrap input,.input-wrap select{width:100%;height:46px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:10px;padding:0 14px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;color:var(--navy-dark);transition:all .2s;appearance:none;outline:none}
+  .input-wrap input:focus,.input-wrap select:focus{border-color:var(--navy);background:var(--white);box-shadow:0 0 0 3px rgba(27,42,94,.08)}
+  .input-wrap input.error,.input-wrap select.error,textarea.error{border-color:#EF4444}
+  .field-error{font-size:11px;color:#EF4444;font-weight:500;display:none}
+  .field-error.show{display:block}
+  .form-actions-btn{padding:0 28px;height:46px;border-radius:10px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;font-weight:700;cursor:pointer;border:none;transition:all .2s;display:flex;align-items:center;gap:8px}
+  .status-option{display:flex;align-items:center;gap:12px;padding:12px 16px;border:1.5px solid var(--gray-200);border-radius:10px;cursor:pointer;transition:all .2s;margin-bottom:8px}
+  .status-option:hover{border-color:var(--navy-light);background:var(--gray-50)}
+  .status-option.selected{border-color:var(--navy);background:#E6F1FB}
+  .status-option input[type=radio]{display:none}
+  .status-option-text{font-size:14px;font-weight:600;color:var(--navy-dark)}
+  .status-option-desc{font-size:12px;color:var(--gray-500)}
+  .student-info-card{display:none;grid-column:1/-1;padding:16px;border-radius:12px;background:var(--gray-50);margin-bottom:12px}
+  .student-field{display:flex;flex-direction:column;gap:4px;margin-bottom:8px;padding:10px 14px;background:var(--gray-50);border-radius:10px}
+  .student-field .field-label{font-size:12px;color:var(--gray-500);font-weight:600}
+  .student-field .field-value{font-size:14px;color:var(--navy-dark);font-weight:700}
+  .file-upload-wrap{position:relative}
+  .file-upload-wrap input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+  .file-upload-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:var(--gray-100);border:1.5px dashed var(--gray-300);border-radius:10px;font-size:13px;color:var(--gray-700);font-weight:500;cursor:pointer;transition:all .2s}
+  .file-upload-wrap:hover .file-upload-btn{border-color:var(--navy);color:var(--navy);background:var(--gray-50)}
+  .file-name{font-size:12px;color:var(--gray-500);margin-top:4px}
+  .history-list{max-height:400px;overflow-y:auto}
+  .history-item{padding:12px;border-bottom:1px solid var(--gray-100);font-size:13px}
+  .history-item:last-child{border-bottom:none}
+  .badge-status-active{background:var(--green-light);color:var(--green)}
+  .badge-status-graduated{background:#DBEAFE;color:#1E40AF}
+  .badge-status-dismissed{background:var(--red-light);color:var(--red)}
+  .badge-status-transferred{background:#FFF7ED;color:#92400E}
+  .badge-status-left_housing{background:#F3E8FF;color:#6B21A8}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+  .modal-overlay.show{display:flex}
+  .modal-box{background:var(--white);border-radius:16px;padding:28px;max-width:480px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+  .modal-icon{width:48px;height:48px;border-radius:12px;background:#FEF2F2;display:flex;align-items:center;justify-content:center;margin-bottom:16px;color:#991B1B}
+  .modal-title{font-size:18px;font-weight:800;color:var(--navy-dark);margin-bottom:8px}
+  .modal-body{font-size:14px;color:var(--gray-700);line-height:1.6;margin-bottom:16px}
+  .modal-body strong{color:var(--navy-dark)}
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end}
+  .modal-actions .form-actions-btn{min-width:120px;justify-content:center}
+  .modal-divider{border:none;border-top:1px solid var(--gray-100);margin:12px 0}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:12px 28px;border-radius:12px;font-size:14px;font-weight:600;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,.15);opacity:0;transition:opacity .3s;pointer-events:none}
+  .toast.show{opacity:1}
+  .toast-success{background:#0F6E56;color:#fff}
+  .toast-error{background:#991B1B;color:#fff}
+  @@media(max-width:768px){.form-grid{grid-template-columns:1fr}.two-col{grid-template-columns:1fr!important}.stats-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+
+<div class="page-header">
+  <h2>تحديث حالة الطالب</h2>
+  <p>تسجيل وتحديث الحالة الأكاديمية وبيانات السكن الجامعي للطالب</p>
+</div>
+
+@* ===== الإحصائيات — من السيرفر ===== *@
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-top">
+      <div class="stat-icon" style="background:#E6F1FB">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+    </div>
+    <div class="stat-num">@Model.Total</div>
+    <div class="stat-label">إجمالي الطلاب</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-top">
+      <div class="stat-icon" style="background:#E1F5EE">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <span class="stat-badge" style="background:#E1F5EE;color:#0F6E56">نشط</span>
+    </div>
+    <div class="stat-num">@Model.Active</div>
+    <div class="stat-label">عدد النشطين</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-top">
+      <div class="stat-icon" style="background:#DBEAFE">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1E40AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      </div>
+      <span class="stat-badge" style="background:#DBEAFE;color:#1E40AF">خريجون</span>
+    </div>
+    <div class="stat-num">@Model.Graduated</div>
+    <div class="stat-label">عدد الخريجين</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-top">
+      <div class="stat-icon" style="background:#FEF2F2">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#991B1B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+      </div>
+      <span class="stat-badge" style="background:#FEF2F2;color:#991B1B">مفصولون</span>
+    </div>
+    <div class="stat-num">@Model.Dismissed</div>
+    <div class="stat-label">عدد المفصولين</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-top">
+      <div class="stat-icon" style="background:#FFF7ED">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#92400E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      </div>
+      <span class="stat-badge" style="background:#FFF7ED;color:#92400E">محولون</span>
+    </div>
+    <div class="stat-num">@Model.Transferred</div>
+    <div class="stat-label">عدد المحولين</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-top">
+      <div class="stat-icon" style="background:#F3E8FF">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B21A8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </div>
+      <span class="stat-badge" style="background:#F3E8FF;color:#6B21A8">غادر السكن</span>
+    </div>
+    <div class="stat-num">@Model.LeftHousing</div>
+    <div class="stat-label">عدد من غادروا السكن</div>
+  </div>
+</div>
+
+@* ===== تحديث الحالة الأكاديمية + آخر التحديثات ===== *@
+<div class="two-col">
+  <div class="col-form">
+    <div class="form-card">
+      <div class="form-card-header">
+        <div class="form-card-header-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <div class="form-card-title">تحديث الحالة الأكاديمية للطالب في السكن الجامعي</div>
+      </div>
+      <div class="form-card-body">
+        <div class="form-grid">
+          <div class="field full">
+            <label>الرقم الجامعي <span style="color:#EF4444">*</span></label>
+            <div class="input-wrap">
+              <input type="text" id="studentNumber" placeholder="مثال: 123456789" autocomplete="off">
+            </div>
+            <div class="field-error" id="studentNumberError">الرجاء إدخال رقم جامعي صحيح</div>
+          </div>
+
+          <div class="student-info-card" id="studentInfo">
+            <div class="student-field">
+              <span class="field-label">الرقم الجامعي للطالب</span>
+              <span class="field-value" id="studentInfoId">--</span>
+            </div>
+            <div class="student-field">
+              <span class="field-label">اسم الطالب</span>
+              <span class="field-value" id="studentInfoName">--</span>
+            </div>
+            <div class="student-field">
+              <span class="field-label">الحالة الحالية</span>
+              <span class="field-value" id="studentInfoStatus">--</span>
+            </div>
+          </div>
+
+          <div class="field full">
+            <label>نوع الحالة <span style="color:#EF4444">*</span></label>
+            <div id="statusOptions">
+              <div class="status-option" data-value="graduated" onclick="selectStatus(this)">
+                <input type="radio" name="statusType" value="graduated">
+                <div>
+                  <div class="status-option-text">تخرج من الكلية</div>
+                  <div class="status-option-desc">الطالب أكمل متطلبات التخرج بنجاح</div>
+                </div>
+              </div>
+              <div class="status-option" data-value="dismissed" onclick="selectStatus(this)">
+                <input type="radio" name="statusType" value="dismissed">
+                <div>
+                  <div class="status-option-text">فصل من الكلية</div>
+                  <div class="status-option-desc">صدر قرار فصل أكاديمي بحق الطالب</div>
+                </div>
+              </div>
+              <div class="status-option" data-value="transferred" onclick="selectStatus(this)">
+                <input type="radio" name="statusType" value="transferred">
+                <div>
+                  <div class="status-option-text">تحويل إلى جامعة أخرى</div>
+                  <div class="status-option-desc">تم تحويل الطالب إلى جامعة أخرى</div>
+                </div>
+              </div>
+              <div class="status-option" data-value="left_housing" onclick="selectStatus(this)">
+                <input type="radio" name="statusType" value="left_housing">
+                <div>
+                  <div class="status-option-text">ترك الإسكان الجامعي</div>
+                  <div class="status-option-desc">الطالب غادر السكن الجامعي نهائياً</div>
+                </div>
+              </div>
+            </div>
+            <div class="field-error" id="statusTypeError">الرجاء اختيار نوع الحالة</div>
+          </div>
+
+          <div class="field full">
+            <label>سبب الإجراء <span style="color:#EF4444">*</span></label>
+            <div class="input-wrap">
+              <textarea id="notes" style="width:100%;height:100px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:10px;padding:12px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;color:var(--navy-dark);direction:inherit;outline:none;resize:vertical;transition:all .2s" placeholder="أدخل سبب الإجراء (إلزامي، 5 أحرف على الأقل)"></textarea>
+            </div>
+            <div class="field-error" id="notesError">الرجاء إدخال سبب الإجراء (5 أحرف على الأقل)</div>
+          </div>
+
+          <div class="field full">
+            <label>إرفاق مستند داعم (اختياري)</label>
+            <div class="file-upload-wrap">
+              <input type="file" id="attachmentFile" accept=".pdf,.jpg,.jpeg,.png,.docx" onchange="updateFileName(this)">
+              <div class="file-upload-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <span>اختيار ملف</span>
+              </div>
+            </div>
+            <div class="file-name" id="fileName"></div>
+          </div>
+        </div>
+
+        <div style="margin-top:24px;display:flex;gap:12px">
+          <button class="form-actions-btn" id="submitBtn" onclick="handleSubmit()" style="background:var(--navy);color:#fff">
+            <span>تأكيد الإجراء</span>
+          </button>
+          <button class="form-actions-btn" style="background:var(--gray-100);color:var(--gray-700)" onclick="resetForm()">
+            <span>مسح</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-history">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">آخر التحديثات</div>
+      </div>
+      <div class="history-list" id="historyList">
+        <div style="text-align:center;padding:30px;color:var(--gray-500)">لا توجد تحديثات</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+@* ===== نقل السكن + سجل التنقلات ===== *@
+<div class="two-col">
+  <div class="col-form">
+    <div class="form-card">
+      <div class="form-card-header">
+        <div class="form-card-header-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </div>
+        <div class="form-card-title">تحديث بيانات السكن الجامعي</div>
+      </div>
+      <div class="form-card-body">
+        <div class="form-grid">
+          <div class="field full">
+            <label>الرقم الجامعي <span style="color:#EF4444">*</span></label>
+            <div class="input-wrap">
+              <input type="text" id="transferStudentNumber" placeholder="مثال: 123456789" autocomplete="off">
+            </div>
+          </div>
+
+          <div id="transferStudentInfo" style="display:none;grid-column:1/-1;padding:12px 16px;border-radius:10px;background:var(--gray-50)">
+            <div style="font-size:13px;font-weight:600;color:var(--navy-dark)" id="transferStudentInfoText"></div>
+          </div>
+
+          <div class="field full">
+            <div style="background:var(--gray-50);border-radius:10px;padding:12px 16px">
+              <div style="font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:8px">بيانات السكن الحالية</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:13px">
+                <div><span style="color:var(--gray-500);font-size:12px">رقم المبنى الحالي</span><br><strong id="transferOldBuilding">--</strong></div>
+                <div><span style="color:var(--gray-500);font-size:12px">رقم الشقة الحالية</span><br><strong id="transferOldApartment">--</strong></div>
+                <div><span style="color:var(--gray-500);font-size:12px">رقم الغرفة الحالية</span><br><strong id="transferOldRoom">--</strong></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="field full">
+            <div style="background:var(--green-light);border-radius:10px;padding:12px 16px">
+              <div style="font-size:13px;font-weight:600;color:var(--green);margin-bottom:8px">بيانات السكن الجديدة</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+                <div class="field" style="gap:4px">
+                  <label>رقم المبنى الجديد <span style="color:#EF4444">*</span></label>
+                  <div class="input-wrap">
+                    <input type="text" id="transferNewBuilding" placeholder="مثال: 10" autocomplete="off">
+                  </div>
+                </div>
+                <div class="field" style="gap:4px">
+                  <label>رقم الشقة الجديدة <span style="color:#EF4444">*</span></label>
+                  <div class="input-wrap">
+                    <input type="text" id="transferNewApartment" placeholder="مثال: 5" autocomplete="off">
+                  </div>
+                </div>
+                <div class="field" style="gap:4px">
+                  <label>رقم الغرفة الجديدة <span style="color:#EF4444">*</span></label>
+                  <div class="input-wrap">
+                    <input type="text" id="transferNewRoom" placeholder="مثال: 3" autocomplete="off">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="field full">
+            <label>سبب النقل <span style="color:#EF4444">*</span></label>
+            <div class="input-wrap">
+              <select id="transferReason">
+                <option value="">-- اختر --</option>
+                <option value="student_request">طلب الطالب</option>
+                <option value="major_change">تغيير تخصص</option>
+                <option value="housing_issue">مشكلة سكنية</option>
+                <option value="room_maintenance">صيانة غرفة</option>
+                <option value="admin_decision">قرار الإدارة</option>
+                <option value="other">أخرى</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field full" id="customReasonField" style="display:none">
+            <label>وصف السبب <span style="color:#EF4444">*</span></label>
+            <div class="input-wrap">
+              <textarea id="transferCustomReason" style="width:100%;height:80px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:10px;padding:12px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;color:var(--navy-dark);direction:inherit;outline:none;resize:vertical;transition:all .2s" placeholder="اكتب وصف السبب"></textarea>
+            </div>
+          </div>
+
+          <div class="field full">
+            <label>إرفاق مستند داعم (اختياري)</label>
+            <div class="file-upload-wrap">
+              <input type="file" id="transferAttachmentFile" accept=".pdf,.jpg,.jpeg,.png,.docx" onchange="updateTransferFileName(this)">
+              <div class="file-upload-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                <span>اختيار ملف</span>
+              </div>
+            </div>
+            <div class="file-name" id="transferFileName"></div>
+          </div>
+        </div>
+
+        <div style="margin-top:24px;display:flex;gap:12px">
+          <button class="form-actions-btn" id="transferBtn" onclick="handleTransfer()" disabled style="background:var(--gray-300);color:#fff">
+            <span>نقل الطالب</span>
+          </button>
+          <button class="form-actions-btn" style="background:var(--gray-100);color:var(--gray-700)" onclick="resetTransferForm()">
+            <span>مسح</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-history">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">سجل التنقلات</div>
+      </div>
+      <div class="history-list" id="transferHistoryList">
+        <div style="text-align:center;padding:30px;color:var(--gray-500)">لا توجد حالات</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-overlay" id="confirmDialog">
+  <div class="modal-box">
+    <div class="modal-icon">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    </div>
+    <div class="modal-title">تحذير</div>
+    <div class="modal-body" id="confirmBody">
+      <p>سيتم تعطيل حساب الطالب في Active Directory.</p>
+      <hr class="modal-divider">
+      <p><strong>اسم المستخدم:</strong> <span id="confirmUsername">--</span></p>
+      <p><strong>سبب الإجراء:</strong> <span id="confirmStatus">--</span></p>
+      <hr class="modal-divider">
+      <p>هل تريد المتابعة؟</p>
+    </div>
+    <div class="modal-actions">
+      <button class="form-actions-btn" style="background:var(--gray-100);color:var(--gray-700)" onclick="closeConfirmDialog()">إلغاء</button>
+      <button class="form-actions-btn" id="confirmYesBtn" onclick="executeSubmit()" style="background:#991B1B;color:#fff">نعم، تعطيل الحساب</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="transferConfirmDialog">
+  <div class="modal-box">
+    <div class="modal-icon" style="background:#E1F5EE;color:#0F6E56">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    </div>
+    <div class="modal-title">تأكيد نقل الطالب</div>
+    <div class="modal-body">
+      <p>سيتم نقل الطالب إلى السكن الجديد:</p>
+      <hr class="modal-divider">
+      <p><strong>الطالب:</strong> <span id="transferConfirmName">--</span></p>
+      <p><strong>السكن الحالي:</strong> <span id="transferConfirmOld">--</span></p>
+      <p><strong>السكن الجديد:</strong> <span id="transferConfirmNew">--</span></p>
+      <p><strong>السبب:</strong> <span id="transferConfirmReason">--</span></p>
+      <hr class="modal-divider">
+      <p>هل تريد المتابعة؟</p>
+    </div>
+    <div class="modal-actions">
+      <button class="form-actions-btn" style="background:var(--gray-100);color:var(--gray-700)" onclick="closeTransferConfirm()">إلغاء</button>
+      <button class="form-actions-btn" id="transferConfirmYesBtn" onclick="executeTransfer()" style="background:var(--green);color:#fff">نعم، نقل الطالب</button>
+    </div>
+  </div>
+</div>
+
+@section Scripts {
+<script>
+  function showToast(msg, type) {
+    var el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = 'toast show toast-' + (type || 'success');
+    setTimeout(function () { el.className = 'toast'; }, 3500);
+  }
+
+  async function apiFetch(url) {
+    try {
+      var res = await fetch(url, { headers: NUH.headers() });
+      if (res.status === 401) { window.location.replace('/Account/Login'); return null; }
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (e) { return null; }
+  }
+
+  var statusLabels = {
+    graduated: 'تخرج من الكلية',
+    dismissed: 'فصل من الكلية',
+    transferred: 'تحويل إلى جامعة أخرى',
+    left_housing: 'ترك الإسكان الجامعي'
+  };
+  function getStatusLabel(v) { return statusLabels[v] || v; }
+
+  var studentStatusAr = {
+    active: 'نشط',
+    graduated: 'تخرج من الكلية',
+    dismissed: 'فصل من الكلية',
+    transferred: 'تحويل لجامعة أخرى',
+    left_housing: 'ترك السكن'
+  };
+
+  var userMap = {};
+  async function loadUsers() {
+    var data = await apiFetch('/api/users');
+    if (data) data.forEach(function (u) { userMap[u.id] = u.full_name || u.username || ''; });
+  }
+
+  function clearErrors() {
+    document.querySelectorAll('.field-error').forEach(function (el) { el.classList.remove('show'); });
+    document.querySelectorAll('.input-wrap input.error, .input-wrap select.error, textarea.error').forEach(function (el) { el.classList.remove('error'); });
+  }
+  function showError(id) {
+    document.getElementById(id).classList.add('show');
+    var input = document.getElementById(id.replace('Error', ''));
+    if (input) input.classList.add('error');
+  }
+
+  function selectStatus(el) {
+    document.querySelectorAll('.status-option').forEach(function (s) { s.classList.remove('selected'); });
+    el.classList.add('selected');
+    el.querySelector('input[type=radio]').checked = true;
+  }
+
+  function updateFileName(input) {
+    document.getElementById('fileName').textContent = input.files.length > 0 ? input.files[0].name : '';
+  }
+
+  var pendingSubmitData = null;
+
+  function closeConfirmDialog() {
+    document.getElementById('confirmDialog').classList.remove('show');
+    pendingSubmitData = null;
+  }
+
+  function resetForm() {
+    document.getElementById('studentNumber').value = '';
+    document.querySelectorAll('.status-option').forEach(function (s) { s.classList.remove('selected'); });
+    document.querySelectorAll('input[name=statusType]').forEach(function (r) { r.checked = false; });
+    document.getElementById('notes').value = '';
+    document.getElementById('attachmentFile').value = '';
+    document.getElementById('fileName').textContent = '';
+    document.getElementById('studentInfo').style.display = 'none';
+    document.getElementById('studentInfoId').textContent = '--';
+    document.getElementById('studentInfoName').textContent = '--';
+    document.getElementById('studentInfoStatus').textContent = '--';
+    clearErrors();
+    pendingSubmitData = null;
+  }
+
+  async function handleSubmit() {
+    clearErrors();
+    var studentNumber = document.getElementById('studentNumber').value.trim();
+    var statusEl = document.querySelector('input[name=statusType]:checked');
+    var notes = document.getElementById('notes').value.trim();
+    var file = document.getElementById('attachmentFile').files[0];
+    var valid = true;
+
+    if (!studentNumber) { showError('studentNumberError'); valid = false; }
+    if (!statusEl) { showError('statusTypeError'); valid = false; }
+    if (!notes || notes.length < 5) { showError('notesError'); valid = false; }
+    if (!valid) return;
+
+    document.getElementById('submitBtn').disabled = true;
+    document.getElementById('submitBtn').innerHTML = '<span>...</span>';
+
+    try {
+      var res = await fetch('/api/students', { headers: NUH.headers() });
+      if (!res.ok) { showToast('تعذر الاتصال بالخادم', 'error'); enableSubmitBtn(); return; }
+      var students = await res.json();
+      var student = Array.isArray(students) ? students.find(function (s) { return s.student_id === studentNumber; }) : null;
+      if (!student) { showToast('الطالب غير موجود', 'error'); enableSubmitBtn(); return; }
+
+      document.getElementById('confirmUsername').textContent = student.ad_username || '--';
+      document.getElementById('confirmStatus').textContent = getStatusLabel(statusEl.value);
+      document.getElementById('confirmDialog').classList.add('show');
+
+      pendingSubmitData = { studentNumber: studentNumber, statusType: statusEl.value, notes: notes, file: file };
+      window._pendingStatus = pendingSubmitData;
+    } catch (e) {
+      showToast('تعذر الاتصال بالخادم', 'error');
+    } finally {
+      enableSubmitBtn();
+    }
+  }
+
+  function enableSubmitBtn() {
+    document.getElementById('submitBtn').disabled = false;
+    document.getElementById('submitBtn').innerHTML = '<span>تأكيد الإجراء</span>';
+  }
+
+  async function executeSubmit() {
+    closeConfirmDialog();
+    // النسخة المحفوظة في window لأن closeConfirmDialog بيصفّر pendingSubmitData
+    var data = window._pendingStatus;
+    if (!data) return;
+    window._pendingStatus = null;
+
+    document.getElementById('submitBtn').disabled = true;
+    document.getElementById('submitBtn').innerHTML = '<span>...</span>';
+
+    try {
+      var formData = new FormData();
+      formData.append('studentNumber', data.studentNumber);
+      formData.append('statusType', data.statusType);
+      formData.append('notes', data.notes);
+      if (data.file) formData.append('file', data.file);
+
+      var res = await fetch('/api/student-status', {
+        method: 'POST',
+        headers: NUH.headers(),
+        body: formData
+      });
+
+      if (res.status === 401) { window.location.replace('/Account/Login'); return; }
+      if (res.status === 403) { showToast('غير مصرح لك بهذا الإجراء', 'error'); return; }
+
+      var result = await res.json();
+      if (!res.ok) { showToast(result.message || 'حدث خطأ', 'error'); return; }
+
+      if (result.warning) showToast(result.message + '. ' + result.warning, 'error');
+      else showToast(result.message || 'تم حفظ الحالة بنجاح', 'success');
+
+      resetForm();
+      loadHistory();
+      // الأرقام فوق سيرفرية — نحدّثها بإعادة تحميل بعد ثانية علشان التوست يبان
+      setTimeout(function () { location.reload(); }, 1200);
+    } catch (e) {
+      showToast('تعذر الاتصال بالخادم', 'error');
+    } finally {
+      enableSubmitBtn();
+    }
+  }
+
+  async function loadHistory() {
+    var data = await apiFetch('/api/student-status/recent');
+    var list = document.getElementById('historyList');
+    if (!data || !data.length) {
+      list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--gray-500)">لا توجد تحديثات</div>';
+      return;
+    }
+    list.innerHTML = data.map(function (a) {
+      var label = getStatusLabel(a.statusType) || a.statusType;
+      var badgeClass = 'badge-status-' + a.statusType;
+      var dateObj = new Date(a.createdDate);
+      var dateStr = dateObj.toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' });
+      var timeStr = dateObj.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+      var userName = userMap[a.createdBy] || 'غير معروف';
+      return '<div class="history-item" style="display:block;padding:14px 16px;border-bottom:1px solid var(--gray-100)">' +
+        '<div style="margin-bottom:8px"><span class="badge ' + badgeClass + '" style="font-size:13px;padding:4px 12px">' + escHtml(label) + '</span></div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px;color:var(--navy-dark)">' +
+          '<div><span style="color:var(--gray-500);font-size:12px">الرقم الجامعي</span><br><strong>' + escHtml(a.studentNumber) + '</strong></div>' +
+          (a.studentName ? '<div><span style="color:var(--gray-500);font-size:12px">اسم الطالب</span><br>' + escHtml(a.studentName) + '</div>' : '') +
+          '<div><span style="color:var(--gray-500);font-size:12px">بواسطة</span><br>' + escHtml(userName) + '</div>' +
+          '<div><span style="color:var(--gray-500);font-size:12px">التاريخ</span><br>' + dateStr + ' ' + timeStr + '</div>' +
+        '</div>' +
+        (a.notes ? '<div style="margin-top:8px;padding:8px 12px;background:var(--gray-50);border-radius:8px;font-size:13px;color:var(--gray-700)"><span style="color:var(--gray-500);font-size:12px;font-weight:600">الملاحظات</span><br>' + escHtml(a.notes) + '</div>' : '') +
+      '</div>';
+    }).join('');
+  }
+
+  // ===== نقل السكن =====
+  var transferStudentLoaded = false;
+  var transferStudentData = null;
+
+  function updateTransferBtnState() {
+    var nb = document.getElementById('transferNewBuilding').value.trim();
+    var na = document.getElementById('transferNewApartment').value.trim();
+    var nr = document.getElementById('transferNewRoom').value.trim();
+    var reason = document.getElementById('transferReason').value;
+    var customReason = document.getElementById('transferCustomReason').value.trim();
+    var btn = document.getElementById('transferBtn');
+    var canTransfer = transferStudentLoaded && nb && na && nr && reason && (reason !== 'other' || customReason.length >= 3);
+    btn.disabled = !canTransfer;
+    btn.style.background = canTransfer ? 'var(--navy)' : 'var(--gray-300)';
+  }
+
+  function updateTransferFileName(input) {
+    document.getElementById('transferFileName').textContent = input.files.length > 0 ? input.files[0].name : '';
+  }
+
+  function resetTransferForm() {
+    ['transferStudentNumber', 'transferNewBuilding', 'transferNewApartment', 'transferNewRoom', 'transferCustomReason'].forEach(function (id) {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('transferReason').value = '';
+    document.getElementById('transferAttachmentFile').value = '';
+    document.getElementById('transferFileName').textContent = '';
+    document.getElementById('transferStudentInfo').style.display = 'none';
+    document.getElementById('customReasonField').style.display = 'none';
+    document.getElementById('transferOldBuilding').textContent = '--';
+    document.getElementById('transferOldApartment').textContent = '--';
+    document.getElementById('transferOldRoom').textContent = '--';
+    transferStudentLoaded = false;
+    transferStudentData = null;
+    updateTransferBtnState();
+  }
+
+  var transferReasonLabels = {
+    student_request: 'طلب الطالب',
+    major_change: 'تغيير تخصص',
+    housing_issue: 'مشكلة سكنية',
+    room_maintenance: 'صيانة غرفة',
+    admin_decision: 'قرار الإدارة',
+    other: 'أخرى'
+  };
+  function getTransferReasonLabel(v) { return transferReasonLabels[v] || v; }
+
+  async function handleTransfer() {
+    var sn = document.getElementById('transferStudentNumber').value.trim();
+    var nb = document.getElementById('transferNewBuilding').value.trim();
+    var na = document.getElementById('transferNewApartment').value.trim();
+    var nr = document.getElementById('transferNewRoom').value.trim();
+    var reason = document.getElementById('transferReason').value;
+    var customReason = document.getElementById('transferCustomReason').value.trim();
+
+    if (!transferStudentData) { showToast('الطالب غير موجود', 'error'); return; }
+    if (!nb || !na || !nr) { showToast('أكمل بيانات السكن الجديدة', 'error'); return; }
+    if (!reason) { showToast('اختر سبب النقل', 'error'); return; }
+    if (reason === 'other' && customReason.length < 3) { showToast('اكتب وصف السبب', 'error'); return; }
+
+    var student = transferStudentData;
+    var oldLoc = (student.housing_building || '--') + '/' + (student.apartment_number || '--') + '/' + (student.room_number || '--');
+    var newLoc = nb + '/' + na + '/' + nr;
+    var reasonLabel = reason === 'other' ? customReason : getTransferReasonLabel(reason);
+
+    document.getElementById('transferConfirmName').textContent = student.full_name;
+    document.getElementById('transferConfirmOld').textContent = oldLoc;
+    document.getElementById('transferConfirmNew').textContent = newLoc;
+    document.getElementById('transferConfirmReason').textContent = reasonLabel;
+    document.getElementById('transferConfirmDialog').classList.add('show');
+
+    window._pendingTransfer = {
+      studentNumber: sn, newBuilding: nb, newApartment: na, newRoom: nr,
+      reason: reason, customReason: reason === 'other' ? customReason : null,
+      file: document.getElementById('transferAttachmentFile').files[0]
+    };
+  }
+
+  function closeTransferConfirm() {
+    document.getElementById('transferConfirmDialog').classList.remove('show');
+  }
+
+  async function executeTransfer() {
+    closeTransferConfirm();
+    var data = window._pendingTransfer;
+    if (!data) return;
+    window._pendingTransfer = null;
+
+    var btn = document.getElementById('transferBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span>...</span>';
+
+    try {
+      var formData = new FormData();
+      formData.append('studentNumber', data.studentNumber);
+      formData.append('newBuilding', data.newBuilding);
+      formData.append('newApartment', data.newApartment);
+      formData.append('newRoom', data.newRoom);
+      formData.append('reason', data.reason);
+      if (data.customReason) formData.append('customReason', data.customReason);
+      if (data.file) formData.append('file', data.file);
+
+      var res = await fetch('/api/supervisor/housing-transfer', {
+        method: 'POST',
+        headers: NUH.headers(),
+        body: formData
+      });
+
+      if (res.status === 401) { window.location.replace('/Account/Login'); return; }
+      if (res.status === 403) { showToast('غير مصرح لك بهذا الإجراء', 'error'); return; }
+
+      var result = await res.json();
+      if (!res.ok) { showToast(result.message || 'حدث خطأ', 'error'); return; }
+
+      showToast(result.message || 'تم نقل الطالب بنجاح', 'success');
+      resetTransferForm();
+      loadTransferHistory();
+    } catch (e) {
+      showToast('تعذر الاتصال بالخادم', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<span>نقل الطالب</span>';
+      updateTransferBtnState();
+    }
+  }
+
+  async function loadTransferHistory() {
+    var data = await apiFetch('/api/supervisor/housing-transfer/recent');
+    var list = document.getElementById('transferHistoryList');
+    if (!data || !data.length) {
+      list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--gray-500)">لا توجد حالات</div>';
+      return;
+    }
+    list.innerHTML = data.map(function (x) {
+      var dateObj = new Date(x.createdAt);
+      var dateStr = dateObj.toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' });
+      var timeStr = dateObj.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+      var userName = userMap[x.createdBy] || 'غير معروف';
+      var oldLoc = (x.oldBuilding || '--') + '/' + (x.oldApartment || '--') + '/' + (x.oldRoom || '--');
+      var newLoc = (x.newBuilding || '--') + '/' + (x.newApartment || '--') + '/' + (x.newRoom || '--');
+      var reasonLabel = x.customReason || getTransferReasonLabel(x.reason);
+      var attachHtml = '';
+      if (x.originalFileName) {
+        attachHtml = '<div style="margin-top:6px;font-size:12px;color:var(--navy)">📎 <a href="/uploads/housing-transfer/' + x.id + '/' + encodeURIComponent(x.originalFileName) + '" target="_blank" style="color:var(--navy);text-decoration:underline">' + escHtml(x.originalFileName) + '</a></div>';
+      }
+      return '<div class="history-item" style="display:block;padding:14px 16px;border-bottom:1px solid var(--gray-100)">' +
+        '<div style="margin-bottom:8px"><span class="badge badge-status-transferred" style="font-size:13px;padding:4px 12px">🏠 نقل سكن</span></div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px;color:var(--navy-dark)">' +
+          '<div><span style="color:var(--gray-500);font-size:12px">الرقم الجامعي</span><br><strong>' + escHtml(x.studentNumber) + '</strong></div>' +
+          (x.studentName ? '<div><span style="color:var(--gray-500);font-size:12px">اسم الطالب</span><br>' + escHtml(x.studentName) + '</div>' : '') +
+          '<div><span style="color:var(--gray-500);font-size:12px">السكن الحالي</span><br>' + escHtml(oldLoc) + '</div>' +
+          '<div><span style="color:var(--gray-500);font-size:12px">السكن الجديد</span><br>' + escHtml(newLoc) + '</div>' +
+          '<div><span style="color:var(--gray-500);font-size:12px">بواسطة</span><br>' + escHtml(userName) + '</div>' +
+          '<div><span style="color:var(--gray-500);font-size:12px">التاريخ</span><br>' + dateStr + ' ' + timeStr + '</div>' +
+        '</div>' +
+        '<div style="margin-top:8px;padding:8px 12px;background:var(--gray-50);border-radius:8px;font-size:13px;color:var(--gray-700)"><span style="color:var(--gray-500);font-size:12px;font-weight:600">سبب النقل</span><br>' + escHtml(reasonLabel) + '</div>' +
+        attachHtml +
+      '</div>';
+    }).join('');
+  }
+
+  // ===== ملء بيانات الطالب عند كتابة الرقم الجامعي =====
+  document.getElementById('studentNumber').addEventListener('blur', async function () {
+    var val = this.value.trim();
+    if (!val) return;
+    var students = await apiFetch('/api/students');
+    var list = Array.isArray(students) ? students : [];
+    var found = list.find(function (s) { return s.student_id === val; });
+    var info = document.getElementById('studentInfo');
+    if (found) {
+      var st = (found.student_status || 'active');
+      var badgeClass = 'badge-status-' + st;
+      document.getElementById('studentInfoId').textContent = found.student_id;
+      document.getElementById('studentInfoName').textContent = found.full_name;
+      document.getElementById('studentInfoStatus').innerHTML = '<span class="badge ' + badgeClass + '">' + (studentStatusAr[st] || st) + '</span>';
+      info.style.display = 'block';
+      info.style.background = '';
+    } else {
+      document.getElementById('studentInfoId').textContent = '✗ الطالب غير موجود';
+      document.getElementById('studentInfoName').textContent = '';
+      document.getElementById('studentInfoStatus').textContent = '';
+      info.style.display = 'block';
+      info.style.background = '#FEF2F2';
+    }
+  });
+
+  document.getElementById('transferStudentNumber').addEventListener('blur', async function () {
+    var val = this.value.trim();
+    transferStudentLoaded = false;
+    transferStudentData = null;
+    updateTransferBtnState();
+    if (!val) return;
+    var students = await apiFetch('/api/students');
+    var list = Array.isArray(students) ? students : [];
+    var found = list.find(function (s) { return s.student_id === val; });
+    var info = document.getElementById('transferStudentInfo');
+    var text = document.getElementById('transferStudentInfoText');
+    if (found) {
+      transferStudentLoaded = true;
+      transferStudentData = found;
+      text.textContent = '✓ ' + found.full_name + ' — ' + found.student_id;
+      info.style.display = 'block';
+      info.style.background = '';
+      document.getElementById('transferOldBuilding').textContent = found.housing_building || '--';
+      document.getElementById('transferOldApartment').textContent = found.apartment_number || '--';
+      document.getElementById('transferOldRoom').textContent = found.room_number || '--';
+    } else {
+      text.textContent = '✗ الطالب غير موجود';
+      info.style.display = 'block';
+      info.style.background = '#FEF2F2';
+    }
+    updateTransferBtnState();
+  });
+
+  ['transferNewBuilding', 'transferNewApartment', 'transferNewRoom', 'transferCustomReason'].forEach(function (id) {
+    document.getElementById(id).addEventListener('input', updateTransferBtnState);
+  });
+  document.getElementById('transferReason').addEventListener('change', function () {
+    document.getElementById('customReasonField').style.display = this.value === 'other' ? 'block' : 'none';
+    updateTransferBtnState();
+  });
+
+  loadUsers().then(function () {
+    loadHistory();
+    loadTransferHistory();
+  });
+</script>
+}

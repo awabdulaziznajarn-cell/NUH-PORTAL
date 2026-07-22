@@ -79,7 +79,7 @@
         @foreach (var r in Model.Page.Items)
         {
           var s = (r.Status ?? "").ToLowerInvariant();
-          <tr style="cursor:pointer" onclick="location.href='/request-details.html?id=@r.Id'">
+          <tr style="cursor:pointer" onclick="location.href='/Requests/Details/@r.Id'">
             <td style="color:var(--gray-500)">@ReqNum(r.RequestNumber, r.RequestType, r.Id)</td>
             <td>@TypeAr(r.RequestType)</td>
             <td>@(r.Student?.full_name ?? r.StudentId.ToString())</td>
@@ -253,7 +253,7 @@
     var rows = '';
     (data.items || []).forEach(function (r) {
       var s = (r.status || '').toLowerCase();
-      rows += '<tr style="cursor:pointer" onclick="location.href=\'/request-details.html?id=' + r.id + '\'">' +
+      rows += '<tr style="cursor:pointer" onclick="location.href=\'/Requests/Details/' + r.id + '\'">' +
         '<td style="color:var(--gray-500)">' + reqNum(r) + '</td>' +
         '<td>' + escHtml(typeAr[r.requestType] || r.requestType || '—') + '</td>' +
         '<td>' + escHtml((r.student && r.student.full_name) || r.studentId || '') + '</td>' +

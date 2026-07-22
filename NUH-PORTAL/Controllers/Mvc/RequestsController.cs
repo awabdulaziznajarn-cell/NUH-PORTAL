@@ -29,5 +29,13 @@ namespace NUH_PORTAL.Controllers.Mvc
             };
             return View(vm);
         }
+
+        // GET /Requests/Details/{id} — الصفحة بتتبني بالـ JS من /api/requests/{id} (نفس منطق request-details.html)
+        [HttpGet("Details/{id:int}")]
+        public IActionResult Details(int id)
+        {
+            ViewData["ReqId"] = id;
+            return View();
+        }
     }
 }
