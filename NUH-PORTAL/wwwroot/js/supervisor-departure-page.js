@@ -87,10 +87,10 @@ function resetForm() {
 
 function getStatusLabel(value) {
   var labels = {
-    graduated: t('studentStatusGraduated') || 'تخرج من الكلية',
-    dismissed: t('studentStatusDismissed') || 'فصل من الكلية',
-    transferred: t('studentStatusTransferred') || 'تحويل إلى جامعة أخرى',
-    left_housing: t('studentStatusLeftHousing') || 'ترك الإسكان الجامعي'
+    graduated: t('studentStatusGraduated'),
+    dismissed: t('studentStatusDismissed'),
+    transferred: t('studentStatusTransferred'),
+    left_housing: t('studentStatusLeftHousing')
   };
   return labels[value] || value;
 }
@@ -141,7 +141,7 @@ async function handleSubmit() {
 
 function enableSubmitBtn() {
   document.getElementById('submitBtn').disabled = false;
-  var btnText = t('confirmAction') || 'تأكيد الإجراء';
+  var btnText = t('confirmAction');
   document.getElementById('submitBtn').innerHTML = '<span>' + btnText + '</span>';
 }
 
@@ -259,7 +259,7 @@ document.getElementById('studentNumber').addEventListener('blur', async function
       studentLoaded = true;
       var st = found.student_status || 'active';
       var stLabel = getStatusLabel(st);
-      if (st === 'active') stLabel = t('studentStatusActive') || 'نشط';
+      if (st === 'active') stLabel = t('studentStatusActive');
       var badgeClass = 'badge-status-' + st;
       var adLine = '';
       if (found.ad_username) {

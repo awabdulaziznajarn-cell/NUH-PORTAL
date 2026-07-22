@@ -2992,4 +2992,454 @@
   <data name="rep_54" xml:space="preserve">
     <value>المعرف</value>
   </data>
+  <data name="rdp_stage_submitted" xml:space="preserve">
+    <value>مقدم</value>
+  </data>
+  <data name="rdp_stage_housingApproved" xml:space="preserve">
+    <value>موافقة إدارة الإسكان</value>
+  </data>
+  <data name="rdp_stage_housingRejected" xml:space="preserve">
+    <value>رفض إسكان</value>
+  </data>
+  <data name="rdp_stage_cyberReview" xml:space="preserve">
+    <value>مراجعة إدارة الأمن السيبراني</value>
+  </data>
+  <data name="rdp_stage_cyberApproved" xml:space="preserve">
+    <value>موافقة إدارة الأمن السيبراني</value>
+  </data>
+  <data name="rdp_stage_cyberRejected" xml:space="preserve">
+    <value>رفض إدارة الأمن السيبراني</value>
+  </data>
+  <data name="rdp_stage_readyForProvisioning" xml:space="preserve">
+    <value>جاهز لإنشاء حساب شبكة السكن</value>
+  </data>
+  <data name="rdp_stage_completed" xml:space="preserve">
+    <value>مكتمل</value>
+  </data>
+  <data name="rdp_stage_pendingSupervisor" xml:space="preserve">
+    <value>موافقة إدارة الإسكان</value>
+  </data>
+  <data name="rdp_stage_needMoreInfo" xml:space="preserve">
+    <value>بحاجة معلومات إضافية</value>
+  </data>
+  <data name="rdp_stage_rejected" xml:space="preserve">
+    <value>مرفوض</value>
+  </data>
+  <data name="rdp_status_pending" xml:space="preserve">
+    <value>معلق</value>
+  </data>
+  <data name="rdp_status_approved" xml:space="preserve">
+    <value>معتمد</value>
+  </data>
+  <data name="rdp_gender_male" xml:space="preserve">
+    <value>ذكر</value>
+  </data>
+  <data name="rdp_gender_female" xml:space="preserve">
+    <value>أنثى</value>
+  </data>
+  <data name="rdp_msg_requestNotAvailable" xml:space="preserve">
+    <value>الطلب لم يعد متاحاً</value>
+  </data>
+  <data name="rdp_msg_loadError" xml:space="preserve">
+    <value>حدث خطأ أثناء تحميل بيانات الطلب.</value>
+  </data>
+  <data name="rdp_msg_noNotes" xml:space="preserve">
+    <value>لا توجد ملاحظات</value>
+  </data>
+  <data name="rdp_msg_noReviews" xml:space="preserve">
+    <value>لا توجد مراجعات بعد</value>
+  </data>
+  <data name="rdp_msg_accountCreated" xml:space="preserve">
+    <value>تم إنشاء حساب شبكة السكن بنجاح</value>
+  </data>
+  <data name="rdp_msg_credentialsSms" xml:space="preserve">
+    <value>سيتم إرسال بيانات الاعتماد عبر الرسائل النصية لاحقاً</value>
+  </data>
+  <data name="rdp_msg_updateFailed" xml:space="preserve">
+    <value>فشل تحديث الطلب</value>
+  </data>
+  <data name="rdp_msg_connectionError" xml:space="preserve">
+    <value>حدث خطأ في الاتصال</value>
+  </data>
+  <data name="rdp_pageTitle" xml:space="preserve">
+    <value>تفاصيل الطلب</value>
+  </data>
+  <data name="rdp_step_submitted" xml:space="preserve">
+    <value>تقديم الطلب</value>
+  </data>
+  <data name="rdp_wf_housingApp" xml:space="preserve">
+    <value>موافقة إدارة الإسكان</value>
+  </data>
+  <data name="rdp_wf_cyberApprovedReady" xml:space="preserve">
+    <value>موافقة إدارة الأمن السيبراني - جاهز لإنشاء حساب شبكة السكن</value>
+  </data>
+  <data name="rdp_wf_readyHousing" xml:space="preserve">
+    <value>جاهز لإنشاء حساب شبكة السكن</value>
+  </data>
+  <data name="rdp_tl_requestCreated" xml:space="preserve">
+    <value>تقديم الطلب</value>
+  </data>
+  <data name="rdp_tl_housingRejected" xml:space="preserve">
+    <value>رفض الإسكان</value>
+  </data>
+  <data name="rdp_tl_assignedToCyber" xml:space="preserve">
+    <value>إحالة للمراجعة الإلكترونية</value>
+  </data>
+  <data name="rdp_lbl_user" xml:space="preserve">
+    <value>المستخدم:</value>
+  </data>
+  <data name="rdp_lbl_notes" xml:space="preserve">
+    <value>الملاحظات:</value>
+  </data>
+  <data name="rdp_lbl_date" xml:space="preserve">
+    <value>التاريخ:</value>
+  </data>
+  <data name="rdp_lbl_time" xml:space="preserve">
+    <value>الوقت:</value>
+  </data>
+  <data name="rdp_lbl_rejectionReason" xml:space="preserve">
+    <value>سبب الرفض</value>
+  </data>
+  <data name="rdp_lbl_rejectionReasonRequired" xml:space="preserve">
+    <value>سبب الرفض *</value>
+  </data>
+  <data name="rdp_ph_rejectionReason" xml:space="preserve">
+    <value>الرجاء إدخال سبب الرفض</value>
+  </data>
+  <data name="rdp_err_rejectionReasonRequired" xml:space="preserve">
+    <value>الرجاء إدخال سبب الرفض</value>
+  </data>
+  <data name="rdp_action_approveRequest" xml:space="preserve">
+    <value>اعتماد الطلب</value>
+  </data>
+  <data name="rdp_actionDesc_approveToCyber" xml:space="preserve">
+    <value>الموافقة على الطلب وإرساله لمراجعة الأمن السيبراني</value>
+  </data>
+  <data name="rdp_actionDesc_approveToNetwork" xml:space="preserve">
+    <value>الموافقة على الطلب وإرساله لإنشاء حساب الشبكة</value>
+  </data>
+  <data name="rdp_action_completeRequest" xml:space="preserve">
+    <value>إكمال الطلب</value>
+  </data>
+  <data name="rdp_actionDesc_approveComplete" xml:space="preserve">
+    <value>الموافقة على الطلب وإكماله مع إنشاء حساب الشبكة</value>
+  </data>
+  <data name="rdp_action_sendToCyber" xml:space="preserve">
+    <value>إرسال للمراجعة الإلكترونية</value>
+  </data>
+  <data name="rdp_actionDesc_submitToCyber" xml:space="preserve">
+    <value>إرسال الطلب لمراجعة الأمن السيبراني</value>
+  </data>
+  <data name="rdp_action_approveHousingAccount" xml:space="preserve">
+    <value>الموافقة على إنشاء حساب شبكة السكن</value>
+  </data>
+  <data name="rdp_action_agreeRequest" xml:space="preserve">
+    <value>الموافقة على الطلب</value>
+  </data>
+  <data name="rdp_actionDesc_approveNextStage" xml:space="preserve">
+    <value>الموافقة على الطلب وإرساله للمرحلة التالية</value>
+  </data>
+  <data name="rdp_actionDesc_approveNextStageShort" xml:space="preserve">
+    <value>الموافقة وإرساله للمرحلة التالية</value>
+  </data>
+  <data name="rdp_action_markReady" xml:space="preserve">
+    <value>تأكيد الجاهزية لإنشاء حساب شبكة السكن</value>
+  </data>
+  <data name="rdp_actionDesc_markReady" xml:space="preserve">
+    <value>تحديد الطلب كجاهز لإنشاء حساب شبكة السكن</value>
+  </data>
+  <data name="rdp_actionDesc_completeNetwork" xml:space="preserve">
+    <value>إنهاء الطلب وإنشاء حساب الشبكة</value>
+  </data>
+  <data name="rdp_card_reviewActions" xml:space="preserve">
+    <value>إجراءات المراجعة</value>
+  </data>
+  <data name="rdp_option_needMoreInfo" xml:space="preserve">
+    <value>طلب معلومات إضافية</value>
+  </data>
+  <data name="rdp_optionDesc_needMoreInfo" xml:space="preserve">
+    <value>طلب معلومات إضافية من الطالب</value>
+  </data>
+  <data name="rdp_option_rejectRequest" xml:space="preserve">
+    <value>رفض الطلب</value>
+  </data>
+  <data name="rdp_optionDesc_rejectReason" xml:space="preserve">
+    <value>رفض الطلب مع ذكر السبب</value>
+  </data>
+  <data name="rdp_btn_submitReview" xml:space="preserve">
+    <value>تأكيد المراجعة</value>
+  </data>
+  <data name="rdp_btn_submitting" xml:space="preserve">
+    <value>جاري الإرسال...</value>
+  </data>
+  <data name="rdp_lbl_apt" xml:space="preserve">
+    <value>شقة </value>
+  </data>
+  <data name="rdp_field_housing" xml:space="preserve">
+    <value>الإسكان</value>
+  </data>
+  <data name="rdp_card_requestInfo" xml:space="preserve">
+    <value>معلومات الطلب</value>
+  </data>
+  <data name="rdp_field_requestNumber" xml:space="preserve">
+    <value>رقم الطلب</value>
+  </data>
+  <data name="rdp_field_requestType" xml:space="preserve">
+    <value>نوع الطلب</value>
+  </data>
+  <data name="rdp_val_bulkRegistration" xml:space="preserve">
+    <value>تسجيل جماعي</value>
+  </data>
+  <data name="rdp_field_status" xml:space="preserve">
+    <value>الحالة</value>
+  </data>
+  <data name="rdp_field_submittedBy" xml:space="preserve">
+    <value>مقدم من</value>
+  </data>
+  <data name="rdp_field_submittedDate" xml:space="preserve">
+    <value>تاريخ التقديم</value>
+  </data>
+  <data name="rdp_bulkStatus_pending" xml:space="preserve">
+    <value>قيد الانتظار</value>
+  </data>
+  <data name="rdp_bulkStatus_processing" xml:space="preserve">
+    <value>قيد المعالجة</value>
+  </data>
+  <data name="rdp_card_bulkDetails" xml:space="preserve">
+    <value>تفاصيل التسجيل الجماعي</value>
+  </data>
+  <data name="rdp_field_brqNumber" xml:space="preserve">
+    <value>رقم الطلب الجماعي</value>
+  </data>
+  <data name="rdp_field_fileName" xml:space="preserve">
+    <value>اسم الملف</value>
+  </data>
+  <data name="rdp_field_totalStudents" xml:space="preserve">
+    <value>إجمالي الطلاب</value>
+  </data>
+  <data name="rdp_field_validCount" xml:space="preserve">
+    <value>عدد الطلاب الصحيح</value>
+  </data>
+  <data name="rdp_field_errors" xml:space="preserve">
+    <value>الأخطاء</value>
+  </data>
+  <data name="rdp_field_createdDate" xml:space="preserve">
+    <value>تاريخ الإنشاء</value>
+  </data>
+  <data name="rdp_card_studentSummary" xml:space="preserve">
+    <value>ملخص الطلاب</value>
+  </data>
+  <data name="rdp_field_maleStudents" xml:space="preserve">
+    <value>الطلاب (ذكر)</value>
+  </data>
+  <data name="rdp_field_femaleStudents" xml:space="preserve">
+    <value>الطلاب (أنثى)</value>
+  </data>
+  <data name="rdp_card_studentList" xml:space="preserve">
+    <value>قائمة الطلاب (أول 50)</value>
+  </data>
+  <data name="rdp_field_studentId" xml:space="preserve">
+    <value>الرقم الجامعي</value>
+  </data>
+  <data name="rdp_field_nameAr" xml:space="preserve">
+    <value>الاسم (عربي)</value>
+  </data>
+  <data name="rdp_field_nameEn" xml:space="preserve">
+    <value>الاسم (إنجليزي)</value>
+  </data>
+  <data name="rdp_field_college" xml:space="preserve">
+    <value>الكلية</value>
+  </data>
+  <data name="rdp_field_level" xml:space="preserve">
+    <value>المستوى</value>
+  </data>
+  <data name="rdp_card_studentInfo" xml:space="preserve">
+    <value>معلومات الطالب</value>
+  </data>
+  <data name="rdp_field_nationalId" xml:space="preserve">
+    <value>رقم الهوية</value>
+  </data>
+  <data name="rdp_field_mobile" xml:space="preserve">
+    <value>الجوال</value>
+  </data>
+  <data name="rdp_card_academicInfo" xml:space="preserve">
+    <value>المعلومات الأكاديمية</value>
+  </data>
+  <data name="rdp_field_department" xml:space="preserve">
+    <value>القسم</value>
+  </data>
+  <data name="rdp_field_gender" xml:space="preserve">
+    <value>الجنس</value>
+  </data>
+  <data name="rdp_housingAccounts" xml:space="preserve">
+    <value>حساب السكن</value>
+  </data>
+  <data name="rdp_loading" xml:space="preserve">
+    <value>جاري التحميل...</value>
+  </data>
+  <data name="rdp_card_workflow" xml:space="preserve">
+    <value>سير العمل</value>
+  </data>
+  <data name="rdp_lbl_username" xml:space="preserve">
+    <value>اسم المستخدم</value>
+  </data>
+  <data name="rdp_card_reviewHistory" xml:space="preserve">
+    <value>سجل المراجعات</value>
+  </data>
+  <data name="rdp_about_sysName" xml:space="preserve">
+    <value>نظام إسكان الطلاب والطالبات</value>
+  </data>
+  <data name="repj_action_login" xml:space="preserve">
+    <value>تسجيل دخول</value>
+  </data>
+  <data name="repj_action_logout" xml:space="preserve">
+    <value>تسجيل خروج</value>
+  </data>
+  <data name="repj_action_login_failed" xml:space="preserve">
+    <value>فشل تسجيل دخول</value>
+  </data>
+  <data name="repj_action_set_password" xml:space="preserve">
+    <value>تغيير كلمة المرور</value>
+  </data>
+  <data name="repj_action_create_request" xml:space="preserve">
+    <value>إنشاء طلب</value>
+  </data>
+  <data name="repj_action_approve_request" xml:space="preserve">
+    <value>قبول الطلب</value>
+  </data>
+  <data name="repj_action_reject_request" xml:space="preserve">
+    <value>رفض الطلب</value>
+  </data>
+  <data name="repj_action_create_student" xml:space="preserve">
+    <value>إضافة طالب</value>
+  </data>
+  <data name="repj_action_update_student" xml:space="preserve">
+    <value>تحديث طالب</value>
+  </data>
+  <data name="repj_action_delete_student" xml:space="preserve">
+    <value>حذف طالب</value>
+  </data>
+  <data name="repj_action_checkout_student" xml:space="preserve">
+    <value>مغادرة طالب</value>
+  </data>
+  <data name="repj_action_user_created_ad" xml:space="preserve">
+    <value>إنشاء مستخدم من AD</value>
+  </data>
+  <data name="repj_action_user_updated_ad" xml:space="preserve">
+    <value>تحديث مستخدم من AD</value>
+  </data>
+  <data name="repj_action_login_admin_fallback" xml:space="preserve">
+    <value>دخول المسؤول المحلي</value>
+  </data>
+  <data name="repj_action_login_admin_fallback_failed" xml:space="preserve">
+    <value>فشل دخول المسؤول المحلي</value>
+  </data>
+  <data name="repj_action_housing_approve_request" xml:space="preserve">
+    <value>موافقة إدارة الإسكان</value>
+  </data>
+  <data name="repj_action_housing_reject_request" xml:space="preserve">
+    <value>رفض إسكان</value>
+  </data>
+  <data name="repj_action_submit_cyber_review" xml:space="preserve">
+    <value>إحالة لسيبر</value>
+  </data>
+  <data name="repj_action_cyber_approve_request" xml:space="preserve">
+    <value>موافقة إدارة الأمن السيبراني</value>
+  </data>
+  <data name="repj_action_cyber_reject_request" xml:space="preserve">
+    <value>رفض إدارة الأمن السيبراني</value>
+  </data>
+  <data name="repj_action_ready_for_provisioning_request" xml:space="preserve">
+    <value>تجهيز لإنشاء حساب شبكة السكن</value>
+  </data>
+  <data name="repj_action_complete_request" xml:space="preserve">
+    <value>إكمال الطلب</value>
+  </data>
+  <data name="repj_filter_all" xml:space="preserve">
+    <value>الكل</value>
+  </data>
+  <data name="repj_filter_login" xml:space="preserve">
+    <value>تسجيل الدخول</value>
+  </data>
+  <data name="repj_filter_student" xml:space="preserve">
+    <value>عمليات الطلاب</value>
+  </data>
+  <data name="repj_filter_request" xml:space="preserve">
+    <value>عمليات الطلبات</value>
+  </data>
+  <data name="repj_filter_password" xml:space="preserve">
+    <value>تغيير كلمة المرور</value>
+  </data>
+  <data name="repj_filter_logout" xml:space="preserve">
+    <value>تسجيل الخروج</value>
+  </data>
+  <data name="repj_filter_ad" xml:space="preserve">
+    <value>مزامنة Active Directory</value>
+  </data>
+  <data name="repj_empty_noRecords" xml:space="preserve">
+    <value>لا توجد سجلات</value>
+  </data>
+  <data name="repj_error_connection" xml:space="preserve">
+    <value>تعذر الاتصال بالخادم.</value>
+  </data>
+  <data name="repj_exec_last7Prefix" xml:space="preserve">
+    <value>إجمالي العمليات في آخر 7 أيام: </value>
+  </data>
+  <data name="repj_exec_last7Mid" xml:space="preserve">
+    <value> عملية، بمتوسط </value>
+  </data>
+  <data name="repj_exec_last7Suffix" xml:space="preserve">
+    <value> عملية يومياً.</value>
+  </data>
+  <data name="repj_exec_todayOpsPrefix" xml:space="preserve">
+    <value>عدد عمليات اليوم: </value>
+  </data>
+  <data name="repj_exec_todayOpsSuffix" xml:space="preserve">
+    <value> عملية.</value>
+  </data>
+  <data name="repj_exec_activeUsersPrefix" xml:space="preserve">
+    <value>عدد المستخدمين النشطين اليوم: </value>
+  </data>
+  <data name="repj_exec_activeUsersSuffix" xml:space="preserve">
+    <value> مستخدم.</value>
+  </data>
+  <data name="repj_exec_peakDayPrefix" xml:space="preserve">
+    <value>اليوم الأكثر نشاطاً: </value>
+  </data>
+  <data name="repj_exec_peakDaySuffix" xml:space="preserve">
+    <value> عملية).</value>
+  </data>
+  <data name="repj_exec_securityAlerts" xml:space="preserve">
+    <value>توجد تنبيهات أمان تتطلب المراجعة.</value>
+  </data>
+  <data name="repj_notif_apiError" xml:space="preserve">
+    <value>تعذر الاتصال بالـ API</value>
+  </data>
+  <data name="repj_notif_empty" xml:space="preserve">
+    <value>لا توجد إشعارات</value>
+  </data>
+  <data name="stu_edit" xml:space="preserve">
+    <value>تعديل</value>
+  </data>
+  <data name="stu_editTitle" xml:space="preserve">
+    <value>تعديل بيانات الطالب</value>
+  </data>
+  <data name="stu_editSubtitle" xml:space="preserve">
+    <value>عدّل الحقول المطلوبة ثم احفظ التغييرات</value>
+  </data>
+  <data name="stu_editSave" xml:space="preserve">
+    <value>حفظ التعديلات</value>
+  </data>
+  <data name="stu_editCancel" xml:space="preserve">
+    <value>إلغاء</value>
+  </data>
+  <data name="stu_editSuccess" xml:space="preserve">
+    <value>تم تحديث بيانات الطالب بنجاح</value>
+  </data>
+  <data name="stu_editLoadError" xml:space="preserve">
+    <value>تعذّر تحميل بيانات الطالب</value>
+  </data>
+  <data name="stu_col_actions" xml:space="preserve">
+    <value>إجراءات</value>
+  </data>
 </root>

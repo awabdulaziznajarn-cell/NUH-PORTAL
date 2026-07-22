@@ -111,8 +111,8 @@ async function loadAccounts() {
         '<td style="direction:ltr;text-align:' + (document.documentElement.dir === 'ltr' ? 'left' : 'right') + '">' + (a.ad_username || '-') + '</td>' +
         '<td>' + lastSync + '</td>' +
         '<td><div class="ad-actions">' +
-          '<button class="btn btn-primary btn-sm" onclick="openDetails(' + a.id + ')" data-i18n="details">تفاصيل</button>' +
-          '<button class="btn btn-outline btn-sm" onclick="openLifecycle(' + a.id + ')" data-i18n="lifecycleLog">السجل</button>' +
+          '<button class="btn btn-primary btn-sm" onclick="openDetails(' + a.id + ')">' + t('details') + '</button>' +
+          '<button class="btn btn-outline btn-sm" onclick="openLifecycle(' + a.id + ')">' + t('lifecycleLog') + '</button>' +
         '</div></td>' +
       '</tr>';
     });

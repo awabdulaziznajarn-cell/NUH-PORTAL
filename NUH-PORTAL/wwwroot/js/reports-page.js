@@ -4,33 +4,32 @@ const currentUser = JSON.parse(localStorage.getItem('staffUser') || '{}');
 const _userRole = (currentUser.role || '').toLowerCase();
 
 const actionTranslations = {
-  login: { ar: 'تسجيل دخول', en: 'Login' },
-  logout: { ar: 'تسجيل خروج', en: 'Logout' },
-  login_failed: { ar: 'فشل تسجيل دخول', en: 'Login Failed' },
-  set_password: { ar: 'تغيير كلمة المرور', en: 'Set Password' },
-  create_request: { ar: 'إنشاء طلب', en: 'Create Request' },
-  approve_request: { ar: 'قبول الطلب', en: 'Approve Request' },
-  reject_request: { ar: 'رفض الطلب', en: 'Reject Request' },
-  create_student: { ar: 'إضافة طالب', en: 'Create Student' },
-  update_student: { ar: 'تحديث طالب', en: 'Update Student' },
-  delete_student: { ar: 'حذف طالب', en: 'Delete Student' },
-  checkout_student: { ar: 'مغادرة طالب', en: 'Checkout Student' },
-  user_created_ad: { ar: 'إنشاء مستخدم من AD', en: 'AD User Created' },
-  user_updated_ad: { ar: 'تحديث مستخدم من AD', en: 'AD User Updated' },
-  login_admin_fallback: { ar: 'دخول المسؤول المحلي', en: 'Admin Local Login' },
-  login_admin_fallback_failed: { ar: 'فشل دخول المسؤول المحلي', en: 'Admin Local Login Failed' },
-  housing_approve_request: { ar: 'موافقة إدارة الإسكان', en: 'Housing Approve' },
-  housing_reject_request: { ar: 'رفض إسكان', en: 'Housing Reject' },
-  submit_cyber_review: { ar: 'إحالة لسيبر', en: 'Submit to Cyber' },
-  cyber_approve_request: { ar: 'موافقة إدارة الأمن السيبراني', en: 'Cyber Approve' },
-  cyber_reject_request: { ar: 'رفض إدارة الأمن السيبراني', en: 'Cyber Reject' },
-  ready_for_provisioning_request: { ar: 'تجهيز لإنشاء حساب شبكة السكن', en: 'Ready For Housing Network Account Creation' },
-  complete_request: { ar: 'إكمال الطلب', en: 'Complete Request' }
+  login: 'repj_action_login',
+  logout: 'repj_action_logout',
+  login_failed: 'repj_action_login_failed',
+  set_password: 'repj_action_set_password',
+  create_request: 'repj_action_create_request',
+  approve_request: 'repj_action_approve_request',
+  reject_request: 'repj_action_reject_request',
+  create_student: 'repj_action_create_student',
+  update_student: 'repj_action_update_student',
+  delete_student: 'repj_action_delete_student',
+  checkout_student: 'repj_action_checkout_student',
+  user_created_ad: 'repj_action_user_created_ad',
+  user_updated_ad: 'repj_action_user_updated_ad',
+  login_admin_fallback: 'repj_action_login_admin_fallback',
+  login_admin_fallback_failed: 'repj_action_login_admin_fallback_failed',
+  housing_approve_request: 'repj_action_housing_approve_request',
+  housing_reject_request: 'repj_action_housing_reject_request',
+  submit_cyber_review: 'repj_action_submit_cyber_review',
+  cyber_approve_request: 'repj_action_cyber_approve_request',
+  cyber_reject_request: 'repj_action_cyber_reject_request',
+  ready_for_provisioning_request: 'repj_action_ready_for_provisioning_request',
+  complete_request: 'repj_action_complete_request'
 };
 
 function translateAction(action) {
-  const lang = document.getElementById('html-root').getAttribute('lang') || 'ar';
-  return actionTranslations[action]?.[lang] || action;
+  return actionTranslations[action] ? t(actionTranslations[action]) : action;
 }
 
 function escHtml(str) {
@@ -66,33 +65,21 @@ function setLang(l) {
   if (dataLoaded) { updatePagination(totalRecords); renderTable(); }
 }
 
-var actionFilterOptions = {
-  ar: [
-    { value: '', label: 'الكل' },
-    { value: 'login', label: 'تسجيل الدخول' },
-    { value: 'student', label: 'عمليات الطلاب' },
-    { value: 'request', label: 'عمليات الطلبات' },
-    { value: 'password', label: 'تغيير كلمة المرور' },
-    { value: 'logout', label: 'تسجيل الخروج' },
-    { value: 'ad', label: 'مزامنة Active Directory' }
-  ],
-  en: [
-    { value: '', label: 'All' },
-    { value: 'login', label: 'Login' },
-    { value: 'student', label: 'Student Operations' },
-    { value: 'request', label: 'Request Operations' },
-    { value: 'password', label: 'Password Changes' },
-    { value: 'logout', label: 'Logout' },
-    { value: 'ad', label: 'AD Sync' }
-  ]
-};
+var actionFilterOptions = [
+  { value: '', label: t('repj_filter_all') },
+  { value: 'login', label: t('repj_filter_login') },
+  { value: 'student', label: t('repj_filter_student') },
+  { value: 'request', label: t('repj_filter_request') },
+  { value: 'password', label: t('repj_filter_password') },
+  { value: 'logout', label: t('repj_filter_logout') },
+  { value: 'ad', label: t('repj_filter_ad') }
+];
 
 function rebuildActionFilter() {
-  var lang = document.getElementById('html-root').getAttribute('lang') || 'ar';
   var sel = document.getElementById('actionFilter');
   var currentVal = sel.value;
   sel.innerHTML = '';
-  (actionFilterOptions[lang] || []).forEach(function(opt) {
+  (actionFilterOptions || []).forEach(function(opt) {
     var el = document.createElement('option');
     el.value = opt.value;
     el.textContent = opt.label;
@@ -104,7 +91,7 @@ function rebuildActionFilter() {
 function populateUserFilter(users) {
   var sel = document.getElementById('userFilter');
   var currentVal = sel.value;
-  sel.innerHTML = '<option value="" data-ar="الكل" data-en="All"></option>';
+  sel.innerHTML = '<option value="">' + t('all') + '</option>';
   users.forEach(function(u) {
     var el = document.createElement('option');
     el.value = u.id;
@@ -174,7 +161,7 @@ function renderTable() {
   if (!dataLoaded) return;
   var tbody = document.getElementById('logTbody');
   if (!cachedData || !cachedData.length) {
-    tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text" data-ar="لا توجد سجلات" data-en="No records">لا توجد سجلات</div></div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">' + t('repj_empty_noRecords') + '</div></div></td></tr>';
     return;
   }
   tbody.innerHTML = cachedData.map(function(l, i) {
@@ -241,7 +228,7 @@ async function loadLogs(page, pageSize) {
     if (cachedChartData) { computeKpi(); computeTopWidgets(); generateExecSummary(); }
   } catch(e) {
     dataLoaded = true;
-    document.getElementById('logTbody').innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-text" style="color:#991B1B" data-ar="تعذر الاتصال بالخادم" data-en="Connection error">تعذر الاتصال بالخادم.</div></div></td></tr>';
+    document.getElementById('logTbody').innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-text" style="color:#991B1B">' + t('repj_error_connection') + '</div></div></td></tr>';
   }
 }
 
@@ -559,33 +546,25 @@ function generateExecSummary() {
       var d7 = cachedChartData.last7Days || [];
       var total7 = d7.reduce(function(s,d) { return s + d.count; }, 0);
       var avg7 = d7.length ? Math.round(total7 / d7.length) : 0;
-      if (lang === 'ar') {
-        parts.push('إجمالي العمليات في آخر 7 أيام: ' + total7 + ' عملية، بمتوسط ' + avg7 + ' عملية يومياً.');
-      } else {
-        parts.push('Total operations in the last 7 days: ' + total7 + ', averaging ' + avg7 + ' per day.');
-      }
+      parts.push(t('repj_exec_last7Prefix') + total7 + t('repj_exec_last7Mid') + avg7 + t('repj_exec_last7Suffix'));
     }
     var tot = document.getElementById('statTotOps').textContent;
     if (tot && tot !== '0') {
-      if (lang === 'ar') { parts.push('عدد عمليات اليوم: ' + tot + ' عملية.'); }
-      else { parts.push('Today\'s operations: ' + tot + '.'); }
+      parts.push(t('repj_exec_todayOpsPrefix') + tot + t('repj_exec_todayOpsSuffix'));
     }
     var userEl = document.getElementById('statUsers');
     if (userEl.textContent !== '0') {
-      if (lang === 'ar') { parts.push('عدد المستخدمين النشطين اليوم: ' + userEl.textContent + ' مستخدم.'); }
-      else { parts.push('Active users today: ' + userEl.textContent + '.'); }
+      parts.push(t('repj_exec_activeUsersPrefix') + userEl.textContent + t('repj_exec_activeUsersSuffix'));
     }
     if (cachedChartData && cachedChartData.last7Days && cachedChartData.last7Days.length) {
       var peak = cachedChartData.last7Days.reduce(function(b,d) { return (!b || d.count > b.count) ? d : b; }, null);
       if (peak) {
-        if (lang === 'ar') { parts.push('اليوم الأكثر نشاطاً: ' + peak.date.slice(5,10) + ' (' + peak.count + ' عملية).'); }
-        else { parts.push('Peak day: ' + peak.date.slice(5,10) + ' (' + peak.count + ' ops).'); }
+        parts.push(t('repj_exec_peakDayPrefix') + peak.date.slice(5,10) + ' (' + peak.count + t('repj_exec_peakDaySuffix'));
       }
     }
     var alertEl = document.getElementById('alertsBody');
-    if (alertEl && alertEl.textContent.indexOf('لا توجد') === -1 && alertEl.textContent.indexOf('No security') === -1 && alertEl.textContent.indexOf('✓') === -1 && alertEl.textContent !== 'جاري التحميل...' && alertEl.textContent !== 'Loading...') {
-      if (lang === 'ar') { parts.push('توجد تنبيهات أمان تتطلب المراجعة.'); }
-      else { parts.push('Security alerts require attention.'); }
+    if (alertEl && alertEl.textContent.indexOf(t('noSecurityAlerts')) === -1 && alertEl.textContent.indexOf('No security') === -1 && alertEl.textContent.indexOf('✓') === -1 && alertEl.textContent !== t('loading') && alertEl.textContent !== 'Loading...') {
+      parts.push(t('repj_exec_securityAlerts'));
     }
     if (parts.length) {
       el.style.display = 'block';
@@ -664,7 +643,7 @@ async function fetchNotifs() {
 async function loadNotifDropdown() {
   const data = await fetchNotifs();
   const list = document.getElementById('notif-dropdown-list');
-  if (!data) { list.innerHTML = '<div class="notif-empty">تعذر الاتصال بالـ API</div>'; return; }
+  if (!data) { list.innerHTML = '<div class="notif-empty">' + t('repj_notif_apiError') + '</div>'; return; }
   list.innerHTML = data.length ? data.map(function(n) {
     return '<div class="notif-item" onclick="markNotifRead(' + n.id + ',this)" data-id="' + n.id + '">' +
       '<div class="notif-item-dot" style="background:' + (n.status === 'pending' ? '#1B2A5E' : '#CBD5E1') + ';"></div>' +
@@ -673,7 +652,7 @@ async function loadNotifDropdown() {
         '<div class="notif-item-time">' + new Date(n.sent_at || Date.now()).toLocaleDateString('ar-SA') + '</div>' +
       '</div>' +
     '</div>';
-  }).join('') : '<div class="notif-empty">لا توجد إشعارات</div>';
+  }).join('') : '<div class="notif-empty">' + t('repj_notif_empty') + '</div>';
 }
 async function loadUnreadCount() {
   try {

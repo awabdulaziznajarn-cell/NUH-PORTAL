@@ -1,6 +1,8 @@
 @model NUH_PORTAL.ViewModels.StudentsIndexViewModel
 @{
     ViewData["Title"] = SharedLocalizer["Page_Students"].Value;
+    var role = (User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "").ToLowerInvariant();
+    var canEdit = role != "user" && role != "cyber";
 }
 
 <div class="stats-row">
@@ -52,7 +54,7 @@
           <th >@SharedLocalizer["stu_col_room"]</th>
           <th >@SharedLocalizer["stu_col_academic"]</th>
           <th >@SharedLocalizer["stu_col_status"]</th>
-          <th >@SharedLocalizer["stu_col_delete"]</th>
+          <th >@SharedLocalizer["stu_col_actions"]</th>
         </tr>
       </thead>
       <tbody id="studentsBody">
@@ -82,7 +84,15 @@
                 <span class="badge badge-active" >@SharedLocalizer["stu_resident"]</span>
               }
             </td>
-            <td><button class="action-btn action-delete" onclick="deleteStudent(@s.Id, this)" >@SharedLocalizer["stu_delete"]</button></td>
+            <td>
+              <div class="row-actions">
+                @if (canEdit)
+                {
+                  <button class="action-btn action-edit" onclick="openEditModal(@s.Id)" >@SharedLocalizer["stu_edit"]</button>
+                }
+                <button class="action-btn action-delete" onclick="deleteStudent(@s.Id, this)" >@SharedLocalizer["stu_delete"]</button>
+              </div>
+            </td>
           </tr>
         }
       </tbody>
@@ -98,14 +108,193 @@
   </div>
 </div>
 
+@if (canEdit)
+{
+<div class="edit-overlay" id="editOverlay" onclick="if(event.target===this)closeEditModal()">
+  <div class="edit-modal" role="dialog" aria-modal="true">
+    <div class="edit-modal-header">
+      <div>
+        <div class="edit-modal-title" >@SharedLocalizer["stu_editTitle"]</div>
+        <div class="edit-modal-sub" >@SharedLocalizer["stu_editSubtitle"]</div>
+      </div>
+      <button class="edit-close" type="button" onclick="closeEditModal()" aria-label='@(SharedLocalizer["stu_editCancel"].Value)'>✕</button>
+    </div>
+    <div class="edit-modal-body">
+      <input type="hidden" id="e_id">
+      <div class="e-grid">
+        <div class="e-field">
+          <label >@SharedLocalizer["reg_lblFullName"]<span>*</span></label>
+          <input type="text" id="e_full_name" placeholder='@(SharedLocalizer["reg_phFullName"].Value)'>
+          <span class="field-error" id="e-err-full_name" >@SharedLocalizer["reg_errRequired"]</span>
+          <span class="field-error" id="e-val-full_name" >@SharedLocalizer["reg_valArabicName"]</span>
+        </div>
+        <div class="e-field">
+          <label >@SharedLocalizer["reg_lblStudentId"]</label>
+          <input type="text" id="e_student_id" maxlength="10" readonly>
+        </div>
+        <div class="e-field">
+          <label >@SharedLocalizer["reg_lblFullNameEn"]<span>*</span></label>
+          <input type="text" id="e_full_name_english" placeholder='@(SharedLocalizer["reg_phFullNameEn"].Value)'>
+          <span class="field-error" id="e-err-full_name_english" >@SharedLocalizer["reg_errRequired"]</span>
+          <span class="field-error" id="e-val-full_name_english" >@SharedLocalizer["reg_valEnglishName"]</span>
+        </div>
+        <div class="e-field">
+          <label >@SharedLocalizer["reg_lblNationalId"]<span>*</span></label>
+          <input type="text" id="e_national_id" maxlength="10">
+          <span class="field-error" id="e-err-national_id" >@SharedLocalizer["reg_errRequired"]</span>
+          <span class="field-error" id="e-val-national_id" >@SharedLocalizer["reg_valNationalId"]</span>
+        </div>
+        <div class="e-field">
+          <label >@SharedLocalizer["reg_lblPhone"]</label>
+          <input type="tel" id="e_phone" maxlength="12" placeholder='@(SharedLocalizer["reg_phPhone"].Value)'>
+          <span class="field-error" id="e-val-phone" >@SharedLocalizer["reg_valPhone"]</span>
+        </div>
+        <div class="e-field">
+          <label >@SharedLocalizer["reg_lblGender"]<span>*</span></label>
+          <select id="e_gender">
+            <option value="" >@SharedLocalizer["reg_optSelectGender"]</option>
+            <option value="male" >@SharedLocalizer["reg_optMale"]</option>
+            <option value="female" >@SharedLocalizer["reg_optFemale"]</option>
+          </select>
+          <span class="field-error" id="e-err-gender" >@SharedLocalizer["reg_optSelectGender"]</span>
+        </div>
+        <div class="e-field">
+          <label >@SharedLocalizer["reg_lblCollege"]<span>*</span></label>
+          <select id="e_college">
+            <option value="" >@SharedLocalizer["reg_optSelectCollege"]</option>
+            <option value="engineering" >@SharedLocalizer["reg_collegeEngineering"]</option>
+            <option value="medicine" >@SharedLocalizer["reg_collegeMedicine"]</option>
+            <option value="cs" >@SharedLocalizer["reg_collegeCS"]</option>
+            <option value="science" >@SharedLocalizer["reg_collegeScience"]</option>
+            <option value="business" >@SharedLocalizer["reg_collegeBusiness"]</option>
+            <option value="arts" >@SharedLocalizer["reg_collegeArts"]</option>
+            <option value="education" >@SharedLocalizer["reg_collegeEducation"]</option>
+            <option value="pharmacy" >@SharedLocalizer["reg_collegePharmacy"]</option>
+          </select>
+          <span class="field-error" id="e-err-college" >@SharedLocalizer["reg_optSelectCollege"]</span>
+        </div>
+        <div class="e-field">
+          <label >@SharedLocalizer["reg_lblDepartment"]<span>*</span></label>
+          <select id="e_department">
+            <option value="" >@SharedLocalizer["reg_optSelectDepartment"]</option>
+            <option value="cs" >@SharedLocalizer["reg_deptCS"]</option>
+            <option value="computer" >@SharedLocalizer["reg_deptComputer"]</option>
+            <option value="electrical" >@SharedLocalizer["reg_deptElectrical"]</option>
+            <option value="mechanical" >@SharedLocalizer["reg_deptMechanical"]</option>
+            <option value="civil" >@SharedLocalizer["reg_deptCivil"]</option>
+            <option value="math" >@SharedLocalizer["reg_deptMath"]</option>
+            <option value="physics" >@SharedLocalizer["reg_deptPhysics"]</option>
+            <option value="chemistry" >@SharedLocalizer["reg_deptChemistry"]</option>
+            <option value="biology" >@SharedLocalizer["reg_deptBiology"]</option>
+            <option value="business" >@SharedLocalizer["reg_deptBusiness"]</option>
+            <option value="accounting" >@SharedLocalizer["reg_deptAccounting"]</option>
+            <option value="islamic" >@SharedLocalizer["reg_deptIslamic"]</option>
+            <option value="arabic" >@SharedLocalizer["reg_deptArabic"]</option>
+            <option value="english" >@SharedLocalizer["reg_deptEnglish"]</option>
+          </select>
+          <span class="field-error" id="e-err-department" >@SharedLocalizer["reg_optSelectDepartment"]</span>
+        </div>
+        <div class="e-field">
+          <label >@SharedLocalizer["reg_lblAcademicLevel"]<span>*</span></label>
+          <select id="e_academic_level">
+            <option value="" >@SharedLocalizer["reg_optSelectLevel"]</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+          </select>
+          <span class="field-error" id="e-err-academic_level" >@SharedLocalizer["reg_optSelectLevel"]</span>
+        </div>
+        <div class="e-field">
+          <label >@SharedLocalizer["reg_lblBuilding"]<span>*</span></label>
+          <select id="e_housing_building">
+            <option value="" >@SharedLocalizer["reg_optSelectBuilding"]</option>
+            <option value="65">65</option>
+            <option value="66">66</option>
+            <option value="67">67</option>
+            <option value="68">68</option>
+            <option value="69">69</option>
+            <option value="70">70</option>
+          </select>
+          <span class="field-error" id="e-err-housing_building" >@SharedLocalizer["reg_optSelectBuilding"]</span>
+        </div>
+        <div class="e-field">
+          <label >@SharedLocalizer["reg_lblRoom"]<span>*</span></label>
+          <input type="text" id="e_room_number" placeholder='@(SharedLocalizer["reg_phRoom"].Value)'>
+          <span class="field-error" id="e-err-room_number" >@SharedLocalizer["reg_errRequired"]</span>
+        </div>
+        <div class="e-field">
+          <label >@SharedLocalizer["reg_lblApartment"]<span>*</span></label>
+          <input type="text" id="e_apartment_number" placeholder='@(SharedLocalizer["reg_phApartment"].Value)'>
+          <span class="field-error" id="e-err-apartment_number" >@SharedLocalizer["reg_errRequired"]</span>
+        </div>
+        <div class="e-field">
+          <label >@SharedLocalizer["reg_lblStatus"]</label>
+          <select id="e_status">
+            <option value="active" >@SharedLocalizer["reg_statusActive"]</option>
+            <option value="inactive" >@SharedLocalizer["reg_statusInactive"]</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="edit-modal-actions">
+      <button class="btn btn-primary" id="editSaveBtn" type="button" onclick="submitEdit()">
+        <span class="btn-text" >@SharedLocalizer["stu_editSave"]</span>
+        <div class="spinner2"></div>
+      </button>
+      <button class="btn btn-cancel" type="button" onclick="closeEditModal()" >@SharedLocalizer["stu_editCancel"]</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <span id="toast-msg"></span>
+</div>
+}
+
 @section Scripts {
 <style>
   .action-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:8px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;cursor:pointer;border:none;transition:all .2s}
   .action-delete{background:var(--red-light);color:var(--red)}
   .action-delete:hover{background:#fee2e2}
+  .action-edit{background:#eef1f8;color:var(--navy)}
+  .action-edit:hover{background:#e0e6f5}
+  .row-actions{display:flex;gap:6px;align-items:center}
+  /* مودال تعديل بيانات الطالب */
+  .edit-overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;z-index:1000;padding:20px}
+  .edit-overlay.show{display:flex}
+  .edit-modal{background:#fff;border-radius:16px;width:100%;max-width:780px;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden}
+  .edit-modal-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 24px;border-bottom:1px solid var(--gray-100)}
+  .edit-modal-title{font-size:16px;font-weight:700;color:var(--navy-dark)}
+  .edit-modal-sub{font-size:12px;color:var(--gray-500);margin-top:4px}
+  .edit-close{background:var(--gray-100);border:none;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--gray-700);flex-shrink:0}
+  .edit-close:hover{background:#e5e7eb}
+  .edit-modal-body{padding:24px;overflow-y:auto}
+  .e-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .e-field{display:flex;flex-direction:column;gap:6px}
+  .e-field label{font-size:13px;font-weight:600;color:var(--gray-700)}
+  .e-field label span{color:#EF4444;margin-right:2px}
+  .e-field input,.e-field select{width:100%;height:44px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:10px;padding:0 14px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;color:var(--navy-dark);outline:none;appearance:none}
+  .e-field input:focus,.e-field select:focus{border-color:var(--navy);background:#fff;box-shadow:0 0 0 3px rgba(27,42,94,.08)}
+  .e-field input.error,.e-field select.error{border-color:#EF4444}
+  .e-field input[readonly]{background:#eef0f4;color:var(--gray-500);cursor:not-allowed}
+  .e-field .field-error{font-size:11px;color:#EF4444;font-weight:500;display:none}
+  .e-field .field-error.show{display:block}
+  .edit-modal-actions{display:flex;gap:12px;justify-content:flex-end;padding:18px 24px;border-top:1px solid var(--gray-100)}
+  .edit-modal-actions .btn{padding:0 24px;height:44px;border-radius:10px;font-family:'IBM Plex Sans Arabic',sans-serif;font-weight:700;font-size:14px;cursor:pointer;border:none;display:flex;align-items:center;gap:8px}
+  .edit-modal-actions .btn.loading{opacity:.75;pointer-events:none}
+  .spinner2{width:16px;height:16px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin2 .6s linear infinite;display:none}
+  .btn.loading .spinner2{display:block}
+  .btn.loading .btn-text{display:none}
+  @@keyframes spin2{to{transform:rotate(360deg)}}
+  .toast{position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-90px);background:#0F6E56;color:#fff;padding:14px 24px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:0 8px 32px rgba(0,0,0,.2);z-index:1100;transition:transform .4s cubic-bezier(.16,1,.3,1)}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+  @@media(max-width:640px){.e-grid{grid-template-columns:1fr}}
 </style>
 <script src="/i18n.js"></script>
 <script>
+  var CAN_EDIT = @(canEdit ? "true" : "false");
   // حالة الصفحة (أول تحميل جاي جاهز من السيرفر)
   var state = {
     page: @Model.Page.Page,
@@ -169,7 +358,10 @@
         '<td>' + (s.status === 'left'
             ? '<span class="badge badge-left">' + t('stu_badge_left') + '</span>'
             : '<span class="badge badge-active">' + t('stu_resident') + '</span>') + '</td>' +
-        '<td><button class="action-btn action-delete" onclick="deleteStudent(' + s.id + ', this)">' + t('stu_delete') + '</button></td>' +
+        '<td><div class="row-actions">' +
+          (CAN_EDIT ? '<button class="action-btn action-edit" onclick="openEditModal(' + s.id + ')">' + t('stu_edit') + '</button>' : '') +
+          '<button class="action-btn action-delete" onclick="deleteStudent(' + s.id + ', this)">' + t('stu_delete') + '</button>' +
+        '</div></td>' +
       '</tr>';
     });
     document.getElementById('studentsBody').innerHTML = rows ||
@@ -206,6 +398,141 @@
     var data = await res.json().catch(function () { return {}; });
     if (res.ok) { loadPage(); }
     else { alert(data.message || t('stu_deleteFailed')); }
+  }
+
+  // ===== تعديل بيانات الطالب =====
+  function eGet(id) { return document.getElementById('e_' + id); }
+
+  function showToast(msg, isError) {
+    var el = document.getElementById('toast');
+    if (!el) return;
+    document.getElementById('toast-msg').textContent = msg;
+    el.style.background = isError ? '#991B1B' : '#0F6E56';
+    el.classList.add('show');
+    setTimeout(function () { el.classList.remove('show'); }, 3500);
+  }
+
+  function normalizeGender(g) {
+    g = (g || '').toString().trim().toLowerCase();
+    if (g === 'm' || g === 'male' || g === 'ذكر') return 'male';
+    if (g === 'f' || g === 'female' || g === 'أنثى' || g === 'انثى') return 'female';
+    return '';
+  }
+
+  function setEditSelect(id, val) {
+    var el = eGet(id);
+    if (!el) return;
+    el.value = (val == null ? '' : String(val));
+    if (el.selectedIndex < 0) el.selectedIndex = 0;
+  }
+
+  function clearEditErrors() {
+    var ov = document.getElementById('editOverlay');
+    if (!ov) return;
+    ov.querySelectorAll('.field-error').forEach(function (e) { e.classList.remove('show'); });
+    ov.querySelectorAll('input, select').forEach(function (e) { e.classList.remove('error'); });
+  }
+
+  async function openEditModal(id) {
+    clearEditErrors();
+    var data;
+    try {
+      var res = await fetch('/api/Students/' + id, { headers: authHeaders() });
+      if (res.status === 401) { localStorage.removeItem('staffToken'); window.location.replace('/Account/Login'); return; }
+      if (!res.ok) { showToast(t('stu_editLoadError'), true); return; }
+      data = await res.json();
+    } catch (e) { showToast(t('reg_toastConnError'), true); return; }
+
+    eGet('id').value = data.id;
+    ['full_name', 'full_name_english', 'student_id', 'national_id', 'phone', 'room_number', 'apartment_number'].forEach(function (f) {
+      eGet(f).value = (data[f] == null ? '' : data[f]);
+    });
+    setEditSelect('gender', normalizeGender(data.gender));
+    ['college', 'department', 'academic_level', 'housing_building', 'status'].forEach(function (f) {
+      setEditSelect(f, data[f]);
+    });
+    if (!eGet('status').value) eGet('status').value = 'active';
+    document.getElementById('editOverlay').classList.add('show');
+  }
+
+  function closeEditModal() {
+    var ov = document.getElementById('editOverlay');
+    if (ov) ov.classList.remove('show');
+  }
+
+  function validateEdit() {
+    var ok = true;
+    var required = ['full_name', 'full_name_english', 'national_id', 'college', 'department', 'academic_level', 'housing_building', 'room_number', 'apartment_number'];
+    required.forEach(function (id) {
+      var el = eGet(id);
+      var err = document.getElementById('e-err-' + id);
+      if (!el.value.trim()) { el.classList.add('error'); if (err) err.classList.add('show'); ok = false; }
+      else { el.classList.remove('error'); if (err) err.classList.remove('show'); }
+    });
+    function valErr(id, valId, cond) {
+      var el = eGet(id);
+      var val = document.getElementById(valId);
+      if (el.value.trim() && !cond) { el.classList.add('error'); if (val) val.classList.add('show'); ok = false; }
+      else if (el.value.trim()) { el.classList.remove('error'); if (val) val.classList.remove('show'); }
+    }
+    valErr('full_name', 'e-val-full_name', /^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\s]+$/.test(eGet('full_name').value.trim()));
+    valErr('full_name_english', 'e-val-full_name_english', /^[a-zA-Z\s]+$/.test(eGet('full_name_english').value.trim()));
+    valErr('national_id', 'e-val-national_id', /^\d{10}$/.test(eGet('national_id').value.trim()));
+    valErr('phone', 'e-val-phone', /^9665\d{8}$/.test(eGet('phone').value.trim()));
+    var g = eGet('gender'), ge = document.getElementById('e-err-gender');
+    if (!g.value) { g.classList.add('error'); if (ge) ge.classList.add('show'); ok = false; }
+    else { g.classList.remove('error'); if (ge) ge.classList.remove('show'); }
+    return ok;
+  }
+
+  async function submitEdit() {
+    if (!validateEdit()) return;
+    var btn = document.getElementById('editSaveBtn');
+    btn.classList.add('loading');
+    var id = eGet('id').value;
+    var payload = {
+      full_name: eGet('full_name').value.trim(),
+      full_name_english: eGet('full_name_english').value.trim(),
+      student_id: eGet('student_id').value.trim(),
+      national_id: eGet('national_id').value.trim(),
+      phone: eGet('phone').value.trim(),
+      gender: eGet('gender').value,
+      college: eGet('college').value,
+      department: eGet('department').value,
+      academic_level: eGet('academic_level').value,
+      housing_building: eGet('housing_building').value,
+      room_number: eGet('room_number').value.trim(),
+      apartment_number: eGet('apartment_number').value.trim(),
+      status: eGet('status').value
+    };
+    try {
+      var res = await fetch('/api/Students/' + id, {
+        method: 'PUT',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify(payload)
+      });
+      if (res.status === 401) { localStorage.removeItem('staffToken'); window.location.replace('/Account/Login'); return; }
+      if (res.ok) { closeEditModal(); loadPage(); showToast(t('stu_editSuccess')); }
+      else {
+        var err = await res.json().catch(function () { return {}; });
+        showToast(t('reg_toastErrorFmt').replace('{0}', (err.message || t('reg_errGeneric'))), true);
+      }
+    } catch (e) {
+      showToast(t('reg_toastConnError'), true);
+    } finally {
+      btn.classList.remove('loading');
+    }
+  }
+
+  // أرقام فقط + تحقق لحظي داخل المودال
+  if (CAN_EDIT) {
+    ['national_id', 'phone'].forEach(function (id) {
+      var el = eGet(id);
+      if (el) el.addEventListener('input', function () { this.value = this.value.replace(/\D/g, ''); });
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeEditModal();
+    });
   }
 
   // اللغة تتبع ثقافة السيرفر — setLang بيترجم كل عناصر الترجمة وبيستدعي onLanguageChange
