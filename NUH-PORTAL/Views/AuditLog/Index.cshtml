@@ -1,5 +1,5 @@
 @{
-    ViewData["Title"] = "سجل العمليات";
+    ViewData["Title"] = SharedLocalizer["Page_AuditLog"].Value;
 }
 
 <style>
@@ -40,39 +40,39 @@
 </style>
 
 <div class="page-header">
-  <h2>جميع العمليات التي تمت في النظام</h2>
-  <p>سجل تدقيق كامل بكل عملية وتوقيتها ومن نفّذها</p>
+  <h2 >@SharedLocalizer["aud_pageTitle"]</h2>
+  <p >@SharedLocalizer["aud_pageSubtitle"]</p>
 </div>
 
 <div class="filters-bar">
   <div class="filter-group">
-    <label>المستخدم</label>
-    <select id="userFilter"><option value="">الكل</option></select>
+    <label >@SharedLocalizer["aud_lblUser"]</label>
+    <select id="userFilter"><option value="" >@SharedLocalizer["aud_optAll"]</option></select>
   </div>
   <div class="filter-group">
-    <label>العملية</label>
+    <label >@SharedLocalizer["aud_lblAction"]</label>
     <select id="actionFilter"></select>
   </div>
   <div class="filter-group">
-    <label>من تاريخ</label>
+    <label >@SharedLocalizer["aud_lblFromDate"]</label>
     <input type="date" id="fromDate">
   </div>
   <div class="filter-group">
-    <label>إلى تاريخ</label>
+    <label >@SharedLocalizer["aud_lblToDate"]</label>
     <input type="date" id="toDate">
   </div>
   <div class="filter-group">
-    <label>بحث</label>
+    <label >@SharedLocalizer["aud_lblSearch"]</label>
     <input type="text" id="searchBox" placeholder="">
   </div>
-  <button class="export-btn" id="exportBtn">⬇ <span>تصدير XLSX</span></button>
+  <button class="export-btn" id="exportBtn">⬇ <span >@SharedLocalizer["aud_exportBtn"]</span></button>
 </div>
 
 <div class="stats-bar" id="statsBar">
-  <div class="stat-item"><span class="stat-label">إجمالي السجلات</span><span class="stat-value" id="statTotalRecords">0</span></div>
-  <div class="stat-item"><span class="stat-label">المستخدمون</span><span class="stat-value" id="statUsers">0</span></div>
-  <div class="stat-item"><span class="stat-label">عمليات الطلاب</span><span class="stat-value" id="statStudentOps">0</span></div>
-  <div class="stat-item"><span class="stat-label">عمليات الطلبات</span><span class="stat-value" id="statRequestOps">0</span></div>
+  <div class="stat-item"><span class="stat-label" >@SharedLocalizer["aud_statTotalRecords"]</span><span class="stat-value" id="statTotalRecords">0</span></div>
+  <div class="stat-item"><span class="stat-label" >@SharedLocalizer["aud_statUsers"]</span><span class="stat-value" id="statUsers">0</span></div>
+  <div class="stat-item"><span class="stat-label" >@SharedLocalizer["aud_statStudentOps"]</span><span class="stat-value" id="statStudentOps">0</span></div>
+  <div class="stat-item"><span class="stat-label" >@SharedLocalizer["aud_statRequestOps"]</span><span class="stat-value" id="statRequestOps">0</span></div>
 </div>
 
 <div class="card">
@@ -81,11 +81,11 @@
       <thead>
         <tr>
           <th>#</th>
-          <th>المستخدم</th>
-          <th>الإجراء</th>
-          <th>الجدول</th>
-          <th>المعرف</th>
-          <th>التاريخ</th>
+          <th >@SharedLocalizer["aud_col_user"]</th>
+          <th >@SharedLocalizer["aud_col_action"]</th>
+          <th >@SharedLocalizer["aud_col_table"]</th>
+          <th >@SharedLocalizer["aud_col_targetId"]</th>
+          <th >@SharedLocalizer["aud_col_date"]</th>
         </tr>
       </thead>
       <tbody id="log-tbody">
@@ -97,36 +97,36 @@
 
 <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-top:16px;padding:0 4px">
   <div style="display:flex;align-items:center;gap:8px">
-    <span style="font-size:13px;color:var(--gray-500)">عرض</span>
+    <span style="font-size:13px;color:var(--gray-500)" >@SharedLocalizer["aud_show"]</span>
     <select id="pageSizeSelect" style="padding:6px 10px;border:1px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:13px;background:var(--white);color:var(--navy-dark);cursor:pointer">
       <option value="50">50</option>
       <option value="100">100</option>
       <option value="200">200</option>
     </select>
-    <span style="font-size:13px;color:var(--gray-500)">سجل</span>
+    <span style="font-size:13px;color:var(--gray-500)" >@SharedLocalizer["aud_entries"]</span>
   </div>
   <div style="display:flex;align-items:center;gap:8px">
     <span id="totalRecordsLabel" style="font-size:13px;color:var(--gray-500)"></span>
-    <button id="prevPageBtn" class="btn btn-cancel" disabled>السابق</button>
+    <button id="prevPageBtn" class="btn btn-cancel" disabled >@SharedLocalizer["aud_prev"]</button>
     <span id="pageIndicator" style="font-size:13px;font-weight:600;color:var(--navy-dark);min-width:60px;text-align:center">1 / 1</span>
-    <button id="nextPageBtn" class="btn btn-cancel" disabled>التالي</button>
+    <button id="nextPageBtn" class="btn btn-cancel" disabled >@SharedLocalizer["aud_next"]</button>
   </div>
 </div>
 
 <div class="modal-overlay" id="detailModal">
   <div class="modal">
     <div class="modal-header">
-      <div class="modal-title">تفاصيل السجل</div>
+      <div class="modal-title" >@SharedLocalizer["aud_modalTitle"]</div>
       <button class="modal-close" id="modalCloseBtn">&times;</button>
     </div>
     <div class="modal-body">
-      <div class="modal-row"><span class="modal-row-label">المستخدم</span><span class="modal-row-value" id="modalUser"></span></div>
-      <div class="modal-row"><span class="modal-row-label">العملية</span><span class="modal-row-value" id="modalAction"></span></div>
-      <div class="modal-row"><span class="modal-row-label">الجدول</span><span class="modal-row-value" id="modalTable"></span></div>
-      <div class="modal-row"><span class="modal-row-label">المعرف</span><span class="modal-row-value" id="modalTargetId"></span></div>
-      <div class="modal-row"><span class="modal-row-label">التاريخ</span><span class="modal-row-value" id="modalDate"></span></div>
+      <div class="modal-row"><span class="modal-row-label" >@SharedLocalizer["aud_modalUser"]</span><span class="modal-row-value" id="modalUser"></span></div>
+      <div class="modal-row"><span class="modal-row-label" >@SharedLocalizer["aud_modalAction"]</span><span class="modal-row-value" id="modalAction"></span></div>
+      <div class="modal-row"><span class="modal-row-label" >@SharedLocalizer["aud_modalTable"]</span><span class="modal-row-value" id="modalTable"></span></div>
+      <div class="modal-row"><span class="modal-row-label" >@SharedLocalizer["aud_modalTargetId"]</span><span class="modal-row-value" id="modalTargetId"></span></div>
+      <div class="modal-row"><span class="modal-row-label" >@SharedLocalizer["aud_modalDate"]</span><span class="modal-row-value" id="modalDate"></span></div>
       <div class="modal-row" id="modalChangesRow" style="display:none">
-        <span class="modal-row-label">التغييرات</span>
+        <span class="modal-row-label" >@SharedLocalizer["aud_modalChanges"]</span>
         <div id="modalChangesContent" style="font-size:13px;margin-top:4px"></div>
       </div>
     </div>
@@ -134,34 +134,14 @@
 </div>
 
 @section Scripts {
+<script src="/i18n.js"></script>
 <script>
-  var actionTranslations = {
-    login: 'تسجيل الدخول',
-    logout: 'تسجيل الخروج',
-    login_failed: 'فشل تسجيل الدخول',
-    set_password: 'تغيير كلمة المرور',
-    create_student: 'إضافة طالب',
-    update_student: 'تعديل بيانات طالب',
-    delete_student: 'حذف طالب',
-    checkout_student: 'إخلاء سكن طالب',
-    create_request: 'إنشاء طلب',
-    approve_request: 'الموافقة على طلب',
-    reject_request: 'رفض طلب',
-    housing_approve_request: 'موافقة إدارة الإسكان',
-    housing_reject_request: 'رفض إسكان',
-    submit_cyber_review: 'إحالة للأمن السيبراني',
-    cyber_approve_request: 'موافقة إدارة الأمن السيبراني',
-    cyber_reject_request: 'رفض إدارة الأمن السيبراني',
-    ready_for_provisioning_request: 'تجهيز لإنشاء حساب شبكة السكن',
-    complete_request: 'إكمال الطلب',
-    login_admin_fallback: 'دخول المسؤول المحلي',
-    login_admin_fallback_failed: 'فشل دخول المسؤول المحلي',
-    login_local_fallback: 'تسجيل دخول (محلي)',
-    login_local_fallback_failed: 'فشل تسجيل دخول (محلي)',
-    user_created_ad: 'إنشاء مستخدم من Active Directory',
-    user_updated_ad: 'تحديث مستخدم من Active Directory'
-  };
-  function translateAction(a) { return actionTranslations[a] || a || ''; }
+  // نص الإجراء من القاموس (fallback للقيمة الخام لو مفيش مفتاح)
+  function translateAction(a) {
+    var k = 'aud_action_' + a;
+    var v = t(k);
+    return v === k ? (a || '') : v;
+  }
 
   function badgeClass(action) {
     var map = {
@@ -206,13 +186,13 @@
   }
 
   var actionFilterOptions = [
-    { value: '', label: 'الكل' },
-    { value: 'login', label: 'تسجيل الدخول' },
-    { value: 'student', label: 'عمليات الطلاب' },
-    { value: 'request', label: 'عمليات الطلبات' },
-    { value: 'password', label: 'تغيير كلمة المرور' },
-    { value: 'logout', label: 'تسجيل الخروج' },
-    { value: 'ad', label: 'مزامنة Active Directory' }
+    { value: '', i18n: 'aud_filterAll' },
+    { value: 'login', i18n: 'aud_filterLogin' },
+    { value: 'student', i18n: 'aud_filterStudent' },
+    { value: 'request', i18n: 'aud_filterRequest' },
+    { value: 'password', i18n: 'aud_filterPassword' },
+    { value: 'logout', i18n: 'aud_filterLogout' },
+    { value: 'ad', i18n: 'aud_filterAd' }
   ];
 
   var currentPage = 1;
@@ -271,7 +251,7 @@
     actionFilterOptions.forEach(function (opt) {
       var el = document.createElement('option');
       el.value = opt.value;
-      el.textContent = opt.label;
+      el.textContent = t(opt.i18n);
       sel.appendChild(el);
     });
     sel.value = currentVal;
@@ -280,7 +260,7 @@
   function populateUserFilter(users) {
     var sel = document.getElementById('userFilter');
     var currentVal = sel.value;
-    sel.innerHTML = '<option value="">الكل</option>';
+    sel.innerHTML = '<option value="" >@SharedLocalizer["aud_optAll"]</option>';
     users.forEach(function (u) {
       var el = document.createElement('option');
       el.value = u.id;
@@ -301,9 +281,9 @@
     if (record.changes && record.changes.length > 0) {
       changesDiv.style.display = '';
       changesContent.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:12px">' +
-        '<tr style="background:var(--gray-100)"><th style="padding:6px 8px;text-align:start;font-weight:600">الحقل' +
-        '</th><th style="padding:6px 8px;text-align:start;font-weight:600">القيمة القديمة' +
-        '</th><th style="padding:6px 8px;text-align:start;font-weight:600">القيمة الجديدة</th></tr>' +
+        '<tr style="background:var(--gray-100)"><th style="padding:6px 8px;text-align:start;font-weight:600">' + t('aud_changeField') +
+        '</th><th style="padding:6px 8px;text-align:start;font-weight:600">' + t('aud_changeOldValue') +
+        '</th><th style="padding:6px 8px;text-align:start;font-weight:600">' + t('aud_changeNewValue') + '</th></tr>' +
         record.changes.map(function (c) {
           return '<tr style="border-bottom:1px solid var(--gray-100)"><td style="padding:6px 8px;font-weight:500">' + escHtml(c.fieldName) +
             '</td><td style="padding:6px 8px;color:var(--red)">' + escHtml(c.oldValue || '—') +
@@ -323,7 +303,7 @@
     if (!dataLoaded) return;
     var tbody = document.getElementById('log-tbody');
     if (!cachedData || !cachedData.length) {
-      tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">لا توجد سجلات</div></div></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">' + t('aud_noRecords') + '</div></div></td></tr>';
       return;
     }
     tbody.innerHTML = cachedData.map(function (l, i) {
@@ -358,7 +338,7 @@
     } catch (e) {
       dataLoaded = true;
       document.getElementById('log-tbody').innerHTML =
-        '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-text" style="color:#991B1B">تعذر الاتصال بالخادم.</div></div></td></tr>';
+        '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-text" style="color:#991B1B">' + t('aud_serverError') + '</div></div></td></tr>';
     }
   }
 
@@ -375,7 +355,7 @@
     document.getElementById('pageIndicator').textContent = currentPage + ' / ' + (totalPages || 1);
     document.getElementById('prevPageBtn').disabled = currentPage <= 1;
     document.getElementById('nextPageBtn').disabled = currentPage >= totalPages;
-    document.getElementById('totalRecordsLabel').textContent = 'إجمالي السجلات: ' + recs;
+    document.getElementById('totalRecordsLabel').textContent = t('aud_totalRecordsFmt').replace('{0}', recs);
   }
 
   function updateStats(stats) {
@@ -434,8 +414,14 @@
     if (e.target === this) closeModal();
   });
 
+  // اللغة تتبع ثقافة السيرفر — setLang بيترجم كل عناصر الترجمة وبيستدعي onLanguageChange
+  window.onLanguageChange = function () {
+    if (dataLoaded) { renderTable(); updatePagination(totalRecords); }
+  };
+
   rebuildActionFilter();
   restoreFilters();
+  setLang(localStorage.getItem('uiLanguage') || 'ar');
   loadLogs(1, currentPageSize);
   loadAuditUsers();
 </script>

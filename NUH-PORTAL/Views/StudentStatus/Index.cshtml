@@ -1,6 +1,6 @@
 @model NUH_PORTAL.DTOs.StudentStatus.StudentStatusStatsDto
 @{
-    ViewData["Title"] = "تحديث حالة الطالب";
+    ViewData["Title"] = SharedLocalizer["Page_StudentStatus"].Value;
 }
 
 <style>
@@ -73,8 +73,8 @@
 </style>
 
 <div class="page-header">
-  <h2>تحديث حالة الطالب</h2>
-  <p>تسجيل وتحديث الحالة الأكاديمية وبيانات السكن الجامعي للطالب</p>
+  <h2 >@SharedLocalizer["ss_pageTitle"]</h2>
+  <p >@SharedLocalizer["ss_pageDesc"]</p>
 </div>
 
 @* ===== الإحصائيات — من السيرفر ===== *@
@@ -86,57 +86,57 @@
       </div>
     </div>
     <div class="stat-num">@Model.Total</div>
-    <div class="stat-label">إجمالي الطلاب</div>
+    <div class="stat-label" >@SharedLocalizer["ss_totalLabel"]</div>
   </div>
   <div class="stat-card">
     <div class="stat-top">
       <div class="stat-icon" style="background:#E1F5EE">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       </div>
-      <span class="stat-badge" style="background:#E1F5EE;color:#0F6E56">نشط</span>
+      <span class="stat-badge" style="background:#E1F5EE;color:#0F6E56" >@SharedLocalizer["ss_activeBadge"]</span>
     </div>
     <div class="stat-num">@Model.Active</div>
-    <div class="stat-label">عدد النشطين</div>
+    <div class="stat-label" >@SharedLocalizer["ss_activeLabel"]</div>
   </div>
   <div class="stat-card">
     <div class="stat-top">
       <div class="stat-icon" style="background:#DBEAFE">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1E40AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
       </div>
-      <span class="stat-badge" style="background:#DBEAFE;color:#1E40AF">خريجون</span>
+      <span class="stat-badge" style="background:#DBEAFE;color:#1E40AF" >@SharedLocalizer["ss_graduatedBadge"]</span>
     </div>
     <div class="stat-num">@Model.Graduated</div>
-    <div class="stat-label">عدد الخريجين</div>
+    <div class="stat-label" >@SharedLocalizer["ss_graduatedLabel"]</div>
   </div>
   <div class="stat-card">
     <div class="stat-top">
       <div class="stat-icon" style="background:#FEF2F2">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#991B1B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
       </div>
-      <span class="stat-badge" style="background:#FEF2F2;color:#991B1B">مفصولون</span>
+      <span class="stat-badge" style="background:#FEF2F2;color:#991B1B" >@SharedLocalizer["ss_dismissedBadge"]</span>
     </div>
     <div class="stat-num">@Model.Dismissed</div>
-    <div class="stat-label">عدد المفصولين</div>
+    <div class="stat-label" >@SharedLocalizer["ss_dismissedLabel"]</div>
   </div>
   <div class="stat-card">
     <div class="stat-top">
       <div class="stat-icon" style="background:#FFF7ED">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#92400E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
       </div>
-      <span class="stat-badge" style="background:#FFF7ED;color:#92400E">محولون</span>
+      <span class="stat-badge" style="background:#FFF7ED;color:#92400E" >@SharedLocalizer["ss_transferredBadge"]</span>
     </div>
     <div class="stat-num">@Model.Transferred</div>
-    <div class="stat-label">عدد المحولين</div>
+    <div class="stat-label" >@SharedLocalizer["ss_transferredLabel"]</div>
   </div>
   <div class="stat-card">
     <div class="stat-top">
       <div class="stat-icon" style="background:#F3E8FF">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B21A8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
       </div>
-      <span class="stat-badge" style="background:#F3E8FF;color:#6B21A8">غادر السكن</span>
+      <span class="stat-badge" style="background:#F3E8FF;color:#6B21A8" >@SharedLocalizer["ss_leftHousingBadge"]</span>
     </div>
     <div class="stat-num">@Model.LeftHousing</div>
-    <div class="stat-label">عدد من غادروا السكن</div>
+    <div class="stat-label" >@SharedLocalizer["ss_leftHousingLabel"]</div>
   </div>
 </div>
 
@@ -148,83 +148,83 @@
         <div class="form-card-header-icon">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         </div>
-        <div class="form-card-title">تحديث الحالة الأكاديمية للطالب في السكن الجامعي</div>
+        <div class="form-card-title" >@SharedLocalizer["ss_statusFormTitle"]</div>
       </div>
       <div class="form-card-body">
         <div class="form-grid">
           <div class="field full">
-            <label>الرقم الجامعي <span style="color:#EF4444">*</span></label>
+            <label><span >@SharedLocalizer["ss_studentNumber"]</span> <span style="color:#EF4444">*</span></label>
             <div class="input-wrap">
-              <input type="text" id="studentNumber" placeholder="مثال: 123456789" autocomplete="off">
+              <input type="text" id="studentNumber" placeholder='@(SharedLocalizer["ss_studentNumberPlaceholder"].Value)' autocomplete="off">
             </div>
-            <div class="field-error" id="studentNumberError">الرجاء إدخال رقم جامعي صحيح</div>
+            <div class="field-error" id="studentNumberError" >@SharedLocalizer["ss_studentNumberError"]</div>
           </div>
 
           <div class="student-info-card" id="studentInfo">
             <div class="student-field">
-              <span class="field-label">الرقم الجامعي للطالب</span>
+              <span class="field-label" >@SharedLocalizer["ss_infoStudentId"]</span>
               <span class="field-value" id="studentInfoId">--</span>
             </div>
             <div class="student-field">
-              <span class="field-label">اسم الطالب</span>
+              <span class="field-label" >@SharedLocalizer["ss_infoStudentName"]</span>
               <span class="field-value" id="studentInfoName">--</span>
             </div>
             <div class="student-field">
-              <span class="field-label">الحالة الحالية</span>
+              <span class="field-label" >@SharedLocalizer["ss_infoCurrentStatus"]</span>
               <span class="field-value" id="studentInfoStatus">--</span>
             </div>
           </div>
 
           <div class="field full">
-            <label>نوع الحالة <span style="color:#EF4444">*</span></label>
+            <label><span >@SharedLocalizer["ss_statusType"]</span> <span style="color:#EF4444">*</span></label>
             <div id="statusOptions">
               <div class="status-option" data-value="graduated" onclick="selectStatus(this)">
                 <input type="radio" name="statusType" value="graduated">
                 <div>
-                  <div class="status-option-text">تخرج من الكلية</div>
-                  <div class="status-option-desc">الطالب أكمل متطلبات التخرج بنجاح</div>
+                  <div class="status-option-text" >@SharedLocalizer["ss_status_graduated"]</div>
+                  <div class="status-option-desc" >@SharedLocalizer["ss_graduatedDesc"]</div>
                 </div>
               </div>
               <div class="status-option" data-value="dismissed" onclick="selectStatus(this)">
                 <input type="radio" name="statusType" value="dismissed">
                 <div>
-                  <div class="status-option-text">فصل من الكلية</div>
-                  <div class="status-option-desc">صدر قرار فصل أكاديمي بحق الطالب</div>
+                  <div class="status-option-text" >@SharedLocalizer["ss_status_dismissed"]</div>
+                  <div class="status-option-desc" >@SharedLocalizer["ss_dismissedDesc"]</div>
                 </div>
               </div>
               <div class="status-option" data-value="transferred" onclick="selectStatus(this)">
                 <input type="radio" name="statusType" value="transferred">
                 <div>
-                  <div class="status-option-text">تحويل إلى جامعة أخرى</div>
-                  <div class="status-option-desc">تم تحويل الطالب إلى جامعة أخرى</div>
+                  <div class="status-option-text" >@SharedLocalizer["ss_status_transferred"]</div>
+                  <div class="status-option-desc" >@SharedLocalizer["ss_transferredDesc"]</div>
                 </div>
               </div>
               <div class="status-option" data-value="left_housing" onclick="selectStatus(this)">
                 <input type="radio" name="statusType" value="left_housing">
                 <div>
-                  <div class="status-option-text">ترك الإسكان الجامعي</div>
-                  <div class="status-option-desc">الطالب غادر السكن الجامعي نهائياً</div>
+                  <div class="status-option-text" >@SharedLocalizer["ss_status_left_housing"]</div>
+                  <div class="status-option-desc" >@SharedLocalizer["ss_leftHousingDesc"]</div>
                 </div>
               </div>
             </div>
-            <div class="field-error" id="statusTypeError">الرجاء اختيار نوع الحالة</div>
+            <div class="field-error" id="statusTypeError" >@SharedLocalizer["ss_statusTypeError"]</div>
           </div>
 
           <div class="field full">
-            <label>سبب الإجراء <span style="color:#EF4444">*</span></label>
+            <label><span >@SharedLocalizer["ss_actionReason"]</span> <span style="color:#EF4444">*</span></label>
             <div class="input-wrap">
-              <textarea id="notes" style="width:100%;height:100px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:10px;padding:12px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;color:var(--navy-dark);direction:inherit;outline:none;resize:vertical;transition:all .2s" placeholder="أدخل سبب الإجراء (إلزامي، 5 أحرف على الأقل)"></textarea>
+              <textarea id="notes" style="width:100%;height:100px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:10px;padding:12px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;color:var(--navy-dark);direction:inherit;outline:none;resize:vertical;transition:all .2s" placeholder='@(SharedLocalizer["ss_actionReasonPlaceholder"].Value)'></textarea>
             </div>
-            <div class="field-error" id="notesError">الرجاء إدخال سبب الإجراء (5 أحرف على الأقل)</div>
+            <div class="field-error" id="notesError" >@SharedLocalizer["ss_notesError"]</div>
           </div>
 
           <div class="field full">
-            <label>إرفاق مستند داعم (اختياري)</label>
+            <label >@SharedLocalizer["ss_attachDocument"]</label>
             <div class="file-upload-wrap">
               <input type="file" id="attachmentFile" accept=".pdf,.jpg,.jpeg,.png,.docx" onchange="updateFileName(this)">
               <div class="file-upload-btn">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                <span>اختيار ملف</span>
+                <span >@SharedLocalizer["ss_chooseFile"]</span>
               </div>
             </div>
             <div class="file-name" id="fileName"></div>
@@ -233,10 +233,10 @@
 
         <div style="margin-top:24px;display:flex;gap:12px">
           <button class="form-actions-btn" id="submitBtn" onclick="handleSubmit()" style="background:var(--navy);color:#fff">
-            <span>تأكيد الإجراء</span>
+            <span >@SharedLocalizer["ss_confirmAction"]</span>
           </button>
           <button class="form-actions-btn" style="background:var(--gray-100);color:var(--gray-700)" onclick="resetForm()">
-            <span>مسح</span>
+            <span >@SharedLocalizer["ss_clear"]</span>
           </button>
         </div>
       </div>
@@ -245,10 +245,10 @@
   <div class="col-history">
     <div class="card">
       <div class="card-header">
-        <div class="card-title">آخر التحديثات</div>
+        <div class="card-title" >@SharedLocalizer["ss_recentUpdates"]</div>
       </div>
       <div class="history-list" id="historyList">
-        <div style="text-align:center;padding:30px;color:var(--gray-500)">لا توجد تحديثات</div>
+        <div style="text-align:center;padding:30px;color:var(--gray-500)" >@SharedLocalizer["ss_noUpdates"]</div>
       </div>
     </div>
   </div>
@@ -262,14 +262,14 @@
         <div class="form-card-header-icon">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         </div>
-        <div class="form-card-title">تحديث بيانات السكن الجامعي</div>
+        <div class="form-card-title" >@SharedLocalizer["ss_transferFormTitle"]</div>
       </div>
       <div class="form-card-body">
         <div class="form-grid">
           <div class="field full">
-            <label>الرقم الجامعي <span style="color:#EF4444">*</span></label>
+            <label><span >@SharedLocalizer["ss_studentNumber"]</span> <span style="color:#EF4444">*</span></label>
             <div class="input-wrap">
-              <input type="text" id="transferStudentNumber" placeholder="مثال: 123456789" autocomplete="off">
+              <input type="text" id="transferStudentNumber" placeholder='@(SharedLocalizer["ss_studentNumberPlaceholder"].Value)' autocomplete="off">
             </div>
           </div>
 
@@ -279,35 +279,35 @@
 
           <div class="field full">
             <div style="background:var(--gray-50);border-radius:10px;padding:12px 16px">
-              <div style="font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:8px">بيانات السكن الحالية</div>
+              <div style="font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:8px" >@SharedLocalizer["ss_currentHousing"]</div>
               <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:13px">
-                <div><span style="color:var(--gray-500);font-size:12px">رقم المبنى الحالي</span><br><strong id="transferOldBuilding">--</strong></div>
-                <div><span style="color:var(--gray-500);font-size:12px">رقم الشقة الحالية</span><br><strong id="transferOldApartment">--</strong></div>
-                <div><span style="color:var(--gray-500);font-size:12px">رقم الغرفة الحالية</span><br><strong id="transferOldRoom">--</strong></div>
+                <div><span style="color:var(--gray-500);font-size:12px" >@SharedLocalizer["ss_currentBuilding"]</span><br><strong id="transferOldBuilding">--</strong></div>
+                <div><span style="color:var(--gray-500);font-size:12px" >@SharedLocalizer["ss_currentApartment"]</span><br><strong id="transferOldApartment">--</strong></div>
+                <div><span style="color:var(--gray-500);font-size:12px" >@SharedLocalizer["ss_currentRoom"]</span><br><strong id="transferOldRoom">--</strong></div>
               </div>
             </div>
           </div>
 
           <div class="field full">
             <div style="background:var(--green-light);border-radius:10px;padding:12px 16px">
-              <div style="font-size:13px;font-weight:600;color:var(--green);margin-bottom:8px">بيانات السكن الجديدة</div>
+              <div style="font-size:13px;font-weight:600;color:var(--green);margin-bottom:8px" >@SharedLocalizer["ss_newHousing"]</div>
               <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
                 <div class="field" style="gap:4px">
-                  <label>رقم المبنى الجديد <span style="color:#EF4444">*</span></label>
+                  <label><span >@SharedLocalizer["ss_newBuilding"]</span> <span style="color:#EF4444">*</span></label>
                   <div class="input-wrap">
-                    <input type="text" id="transferNewBuilding" placeholder="مثال: 10" autocomplete="off">
+                    <input type="text" id="transferNewBuilding" placeholder='@(SharedLocalizer["ss_newBuildingPlaceholder"].Value)' autocomplete="off">
                   </div>
                 </div>
                 <div class="field" style="gap:4px">
-                  <label>رقم الشقة الجديدة <span style="color:#EF4444">*</span></label>
+                  <label><span >@SharedLocalizer["ss_newApartment"]</span> <span style="color:#EF4444">*</span></label>
                   <div class="input-wrap">
-                    <input type="text" id="transferNewApartment" placeholder="مثال: 5" autocomplete="off">
+                    <input type="text" id="transferNewApartment" placeholder='@(SharedLocalizer["ss_newApartmentPlaceholder"].Value)' autocomplete="off">
                   </div>
                 </div>
                 <div class="field" style="gap:4px">
-                  <label>رقم الغرفة الجديدة <span style="color:#EF4444">*</span></label>
+                  <label><span >@SharedLocalizer["ss_newRoom"]</span> <span style="color:#EF4444">*</span></label>
                   <div class="input-wrap">
-                    <input type="text" id="transferNewRoom" placeholder="مثال: 3" autocomplete="off">
+                    <input type="text" id="transferNewRoom" placeholder='@(SharedLocalizer["ss_newRoomPlaceholder"].Value)' autocomplete="off">
                   </div>
                 </div>
               </div>
@@ -315,34 +315,34 @@
           </div>
 
           <div class="field full">
-            <label>سبب النقل <span style="color:#EF4444">*</span></label>
+            <label><span >@SharedLocalizer["ss_transferReason"]</span> <span style="color:#EF4444">*</span></label>
             <div class="input-wrap">
               <select id="transferReason">
-                <option value="">-- اختر --</option>
-                <option value="student_request">طلب الطالب</option>
-                <option value="major_change">تغيير تخصص</option>
-                <option value="housing_issue">مشكلة سكنية</option>
-                <option value="room_maintenance">صيانة غرفة</option>
-                <option value="admin_decision">قرار الإدارة</option>
-                <option value="other">أخرى</option>
+                <option value="" >@SharedLocalizer["ss_selectDefault"]</option>
+                <option value="student_request" >@SharedLocalizer["ss_reason_student_request"]</option>
+                <option value="major_change" >@SharedLocalizer["ss_reason_major_change"]</option>
+                <option value="housing_issue" >@SharedLocalizer["ss_reason_housing_issue"]</option>
+                <option value="room_maintenance" >@SharedLocalizer["ss_reason_room_maintenance"]</option>
+                <option value="admin_decision" >@SharedLocalizer["ss_reason_admin_decision"]</option>
+                <option value="other" >@SharedLocalizer["ss_reason_other"]</option>
               </select>
             </div>
           </div>
 
           <div class="field full" id="customReasonField" style="display:none">
-            <label>وصف السبب <span style="color:#EF4444">*</span></label>
+            <label><span >@SharedLocalizer["ss_customReason"]</span> <span style="color:#EF4444">*</span></label>
             <div class="input-wrap">
-              <textarea id="transferCustomReason" style="width:100%;height:80px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:10px;padding:12px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;color:var(--navy-dark);direction:inherit;outline:none;resize:vertical;transition:all .2s" placeholder="اكتب وصف السبب"></textarea>
+              <textarea id="transferCustomReason" style="width:100%;height:80px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:10px;padding:12px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;color:var(--navy-dark);direction:inherit;outline:none;resize:vertical;transition:all .2s" placeholder='@(SharedLocalizer["ss_customReasonPlaceholder"].Value)'></textarea>
             </div>
           </div>
 
           <div class="field full">
-            <label>إرفاق مستند داعم (اختياري)</label>
+            <label >@SharedLocalizer["ss_attachDocument"]</label>
             <div class="file-upload-wrap">
               <input type="file" id="transferAttachmentFile" accept=".pdf,.jpg,.jpeg,.png,.docx" onchange="updateTransferFileName(this)">
               <div class="file-upload-btn">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                <span>اختيار ملف</span>
+                <span >@SharedLocalizer["ss_chooseFile"]</span>
               </div>
             </div>
             <div class="file-name" id="transferFileName"></div>
@@ -351,10 +351,10 @@
 
         <div style="margin-top:24px;display:flex;gap:12px">
           <button class="form-actions-btn" id="transferBtn" onclick="handleTransfer()" disabled style="background:var(--gray-300);color:#fff">
-            <span>نقل الطالب</span>
+            <span >@SharedLocalizer["ss_transferStudent"]</span>
           </button>
           <button class="form-actions-btn" style="background:var(--gray-100);color:var(--gray-700)" onclick="resetTransferForm()">
-            <span>مسح</span>
+            <span >@SharedLocalizer["ss_clear"]</span>
           </button>
         </div>
       </div>
@@ -363,10 +363,10 @@
   <div class="col-history">
     <div class="card">
       <div class="card-header">
-        <div class="card-title">سجل التنقلات</div>
+        <div class="card-title" >@SharedLocalizer["ss_transferHistory"]</div>
       </div>
       <div class="history-list" id="transferHistoryList">
-        <div style="text-align:center;padding:30px;color:var(--gray-500)">لا توجد حالات</div>
+        <div style="text-align:center;padding:30px;color:var(--gray-500)" >@SharedLocalizer["ss_noTransfers"]</div>
       </div>
     </div>
   </div>
@@ -379,18 +379,18 @@
     <div class="modal-icon">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
     </div>
-    <div class="modal-title">تحذير</div>
+    <div class="modal-title" >@SharedLocalizer["ss_warningTitle"]</div>
     <div class="modal-body" id="confirmBody">
-      <p>سيتم تعطيل حساب الطالب في Active Directory.</p>
+      <p >@SharedLocalizer["ss_disableIntro"]</p>
       <hr class="modal-divider">
-      <p><strong>اسم المستخدم:</strong> <span id="confirmUsername">--</span></p>
-      <p><strong>سبب الإجراء:</strong> <span id="confirmStatus">--</span></p>
+      <p><strong >@SharedLocalizer["ss_usernameColonLabel"]</strong> <span id="confirmUsername">--</span></p>
+      <p><strong >@SharedLocalizer["ss_reasonColonLabel"]</strong> <span id="confirmStatus">--</span></p>
       <hr class="modal-divider">
-      <p>هل تريد المتابعة؟</p>
+      <p >@SharedLocalizer["ss_proceedQuestion"]</p>
     </div>
     <div class="modal-actions">
-      <button class="form-actions-btn" style="background:var(--gray-100);color:var(--gray-700)" onclick="closeConfirmDialog()">إلغاء</button>
-      <button class="form-actions-btn" id="confirmYesBtn" onclick="executeSubmit()" style="background:#991B1B;color:#fff">نعم، تعطيل الحساب</button>
+      <button class="form-actions-btn" style="background:var(--gray-100);color:var(--gray-700)" onclick="closeConfirmDialog()" >@SharedLocalizer["ss_cancel"]</button>
+      <button class="form-actions-btn" id="confirmYesBtn" onclick="executeSubmit()" style="background:#991B1B;color:#fff" >@SharedLocalizer["ss_confirmDisableYes"]</button>
     </div>
   </div>
 </div>
@@ -400,25 +400,26 @@
     <div class="modal-icon" style="background:#E1F5EE;color:#0F6E56">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     </div>
-    <div class="modal-title">تأكيد نقل الطالب</div>
+    <div class="modal-title" >@SharedLocalizer["ss_transferConfirmTitle"]</div>
     <div class="modal-body">
-      <p>سيتم نقل الطالب إلى السكن الجديد:</p>
+      <p >@SharedLocalizer["ss_transferConfirmIntro"]</p>
       <hr class="modal-divider">
-      <p><strong>الطالب:</strong> <span id="transferConfirmName">--</span></p>
-      <p><strong>السكن الحالي:</strong> <span id="transferConfirmOld">--</span></p>
-      <p><strong>السكن الجديد:</strong> <span id="transferConfirmNew">--</span></p>
-      <p><strong>السبب:</strong> <span id="transferConfirmReason">--</span></p>
+      <p><strong >@SharedLocalizer["ss_studentColonLabel"]</strong> <span id="transferConfirmName">--</span></p>
+      <p><strong >@SharedLocalizer["ss_currentHousingColonLabel"]</strong> <span id="transferConfirmOld">--</span></p>
+      <p><strong >@SharedLocalizer["ss_newHousingColonLabel"]</strong> <span id="transferConfirmNew">--</span></p>
+      <p><strong >@SharedLocalizer["ss_reasonShortColonLabel"]</strong> <span id="transferConfirmReason">--</span></p>
       <hr class="modal-divider">
-      <p>هل تريد المتابعة؟</p>
+      <p >@SharedLocalizer["ss_proceedQuestion"]</p>
     </div>
     <div class="modal-actions">
-      <button class="form-actions-btn" style="background:var(--gray-100);color:var(--gray-700)" onclick="closeTransferConfirm()">إلغاء</button>
-      <button class="form-actions-btn" id="transferConfirmYesBtn" onclick="executeTransfer()" style="background:var(--green);color:#fff">نعم، نقل الطالب</button>
+      <button class="form-actions-btn" style="background:var(--gray-100);color:var(--gray-700)" onclick="closeTransferConfirm()" >@SharedLocalizer["ss_cancel"]</button>
+      <button class="form-actions-btn" id="transferConfirmYesBtn" onclick="executeTransfer()" style="background:var(--green);color:#fff" >@SharedLocalizer["ss_transferConfirmYes"]</button>
     </div>
   </div>
 </div>
 
 @section Scripts {
+<script src="/i18n.js"></script>
 <script>
   function showToast(msg, type) {
     var el = document.getElementById('toast');
@@ -436,21 +437,12 @@
     } catch (e) { return null; }
   }
 
-  var statusLabels = {
-    graduated: 'تخرج من الكلية',
-    dismissed: 'فصل من الكلية',
-    transferred: 'تحويل إلى جامعة أخرى',
-    left_housing: 'ترك الإسكان الجامعي'
-  };
-  function getStatusLabel(v) { return statusLabels[v] || v; }
-
-  var studentStatusAr = {
-    active: 'نشط',
-    graduated: 'تخرج من الكلية',
-    dismissed: 'فصل من الكلية',
-    transferred: 'تحويل لجامعة أخرى',
-    left_housing: 'ترك السكن'
-  };
+  // نص الحالة من القاموس (fallback للقيمة الخام لو مفيش مفتاح)
+  function getStatusLabel(v) {
+    var k = 'ss_status_' + v;
+    var val = t(k);
+    return val === k ? (v || '') : val;
+  }
 
   var userMap = {};
   async function loadUsers() {
@@ -518,10 +510,10 @@
 
     try {
       var res = await fetch('/api/students', { headers: NUH.headers() });
-      if (!res.ok) { showToast('تعذر الاتصال بالخادم', 'error'); enableSubmitBtn(); return; }
+      if (!res.ok) { showToast(t('ss_serverError'), 'error'); enableSubmitBtn(); return; }
       var students = await res.json();
       var student = Array.isArray(students) ? students.find(function (s) { return s.student_id === studentNumber; }) : null;
-      if (!student) { showToast('الطالب غير موجود', 'error'); enableSubmitBtn(); return; }
+      if (!student) { showToast(t('ss_studentNotFound'), 'error'); enableSubmitBtn(); return; }
 
       document.getElementById('confirmUsername').textContent = student.ad_username || '--';
       document.getElementById('confirmStatus').textContent = getStatusLabel(statusEl.value);
@@ -530,7 +522,7 @@
       pendingSubmitData = { studentNumber: studentNumber, statusType: statusEl.value, notes: notes, file: file };
       window._pendingStatus = pendingSubmitData;
     } catch (e) {
-      showToast('تعذر الاتصال بالخادم', 'error');
+      showToast(t('ss_serverError'), 'error');
     } finally {
       enableSubmitBtn();
     }
@@ -538,7 +530,7 @@
 
   function enableSubmitBtn() {
     document.getElementById('submitBtn').disabled = false;
-    document.getElementById('submitBtn').innerHTML = '<span>تأكيد الإجراء</span>';
+    document.getElementById('submitBtn').innerHTML = '<span>' + t('ss_confirmAction') + '</span>';
   }
 
   async function executeSubmit() {
@@ -565,30 +557,38 @@
       });
 
       if (res.status === 401) { window.location.replace('/Account/Login'); return; }
-      if (res.status === 403) { showToast('غير مصرح لك بهذا الإجراء', 'error'); return; }
+      if (res.status === 403) { showToast(t('ss_forbidden'), 'error'); return; }
 
       var result = await res.json();
-      if (!res.ok) { showToast(result.message || 'حدث خطأ', 'error'); return; }
+      if (!res.ok) { showToast(result.message || t('ss_errorOccurred'), 'error'); return; }
 
       if (result.warning) showToast(result.message + '. ' + result.warning, 'error');
-      else showToast(result.message || 'تم حفظ الحالة بنجاح', 'success');
+      else showToast(result.message || t('ss_statusSaved'), 'success');
 
       resetForm();
       loadHistory();
       // الأرقام فوق سيرفرية — نحدّثها بإعادة تحميل بعد ثانية علشان التوست يبان
       setTimeout(function () { location.reload(); }, 1200);
     } catch (e) {
-      showToast('تعذر الاتصال بالخادم', 'error');
+      showToast(t('ss_serverError'), 'error');
     } finally {
       enableSubmitBtn();
     }
   }
 
+  // نخزّن نسخة من البيانات علشان نقدر نعيد الرسم عند تغيير اللغة بدون إعادة تحميل
+  var _statusHistoryData = null;
   async function loadHistory() {
-    var data = await apiFetch('/api/student-status/recent');
+    _statusHistoryData = await apiFetch('/api/student-status/recent');
+    renderHistory();
+  }
+
+  function renderHistory() {
+    var data = _statusHistoryData;
     var list = document.getElementById('historyList');
+    if (!list) return;
     if (!data || !data.length) {
-      list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--gray-500)">لا توجد تحديثات</div>';
+      list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--gray-500)">' + t('ss_noUpdates') + '</div>';
       return;
     }
     list.innerHTML = data.map(function (a) {
@@ -597,16 +597,16 @@
       var dateObj = new Date(a.createdDate);
       var dateStr = dateObj.toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' });
       var timeStr = dateObj.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-      var userName = userMap[a.createdBy] || 'غير معروف';
+      var userName = userMap[a.createdBy] || t('ss_unknown');
       return '<div class="history-item" style="display:block;padding:14px 16px;border-bottom:1px solid var(--gray-100)">' +
         '<div style="margin-bottom:8px"><span class="badge ' + badgeClass + '" style="font-size:13px;padding:4px 12px">' + escHtml(label) + '</span></div>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px;color:var(--navy-dark)">' +
-          '<div><span style="color:var(--gray-500);font-size:12px">الرقم الجامعي</span><br><strong>' + escHtml(a.studentNumber) + '</strong></div>' +
-          (a.studentName ? '<div><span style="color:var(--gray-500);font-size:12px">اسم الطالب</span><br>' + escHtml(a.studentName) + '</div>' : '') +
-          '<div><span style="color:var(--gray-500);font-size:12px">بواسطة</span><br>' + escHtml(userName) + '</div>' +
-          '<div><span style="color:var(--gray-500);font-size:12px">التاريخ</span><br>' + dateStr + ' ' + timeStr + '</div>' +
+          '<div><span style="color:var(--gray-500);font-size:12px">' + t('ss_studentNumber') + '</span><br><strong>' + escHtml(a.studentNumber) + '</strong></div>' +
+          (a.studentName ? '<div><span style="color:var(--gray-500);font-size:12px">' + t('ss_infoStudentName') + '</span><br>' + escHtml(a.studentName) + '</div>' : '') +
+          '<div><span style="color:var(--gray-500);font-size:12px">' + t('ss_by') + '</span><br>' + escHtml(userName) + '</div>' +
+          '<div><span style="color:var(--gray-500);font-size:12px">' + t('ss_date') + '</span><br>' + dateStr + ' ' + timeStr + '</div>' +
         '</div>' +
-        (a.notes ? '<div style="margin-top:8px;padding:8px 12px;background:var(--gray-50);border-radius:8px;font-size:13px;color:var(--gray-700)"><span style="color:var(--gray-500);font-size:12px;font-weight:600">الملاحظات</span><br>' + escHtml(a.notes) + '</div>' : '') +
+        (a.notes ? '<div style="margin-top:8px;padding:8px 12px;background:var(--gray-50);border-radius:8px;font-size:13px;color:var(--gray-700)"><span style="color:var(--gray-500);font-size:12px;font-weight:600">' + t('ss_notes') + '</span><br>' + escHtml(a.notes) + '</div>' : '') +
       '</div>';
     }).join('');
   }
@@ -648,15 +648,12 @@
     updateTransferBtnState();
   }
 
-  var transferReasonLabels = {
-    student_request: 'طلب الطالب',
-    major_change: 'تغيير تخصص',
-    housing_issue: 'مشكلة سكنية',
-    room_maintenance: 'صيانة غرفة',
-    admin_decision: 'قرار الإدارة',
-    other: 'أخرى'
-  };
-  function getTransferReasonLabel(v) { return transferReasonLabels[v] || v; }
+  // نص سبب النقل من القاموس (fallback للقيمة الخام لو مفيش مفتاح)
+  function getTransferReasonLabel(v) {
+    var k = 'ss_reason_' + v;
+    var val = t(k);
+    return val === k ? (v || '') : val;
+  }
 
   async function handleTransfer() {
     var sn = document.getElementById('transferStudentNumber').value.trim();
@@ -666,10 +663,10 @@
     var reason = document.getElementById('transferReason').value;
     var customReason = document.getElementById('transferCustomReason').value.trim();
 
-    if (!transferStudentData) { showToast('الطالب غير موجود', 'error'); return; }
-    if (!nb || !na || !nr) { showToast('أكمل بيانات السكن الجديدة', 'error'); return; }
-    if (!reason) { showToast('اختر سبب النقل', 'error'); return; }
-    if (reason === 'other' && customReason.length < 3) { showToast('اكتب وصف السبب', 'error'); return; }
+    if (!transferStudentData) { showToast(t('ss_studentNotFound'), 'error'); return; }
+    if (!nb || !na || !nr) { showToast(t('ss_completeNewHousing'), 'error'); return; }
+    if (!reason) { showToast(t('ss_selectTransferReason'), 'error'); return; }
+    if (reason === 'other' && customReason.length < 3) { showToast(t('ss_customReasonPlaceholder'), 'error'); return; }
 
     var student = transferStudentData;
     var oldLoc = (student.housing_building || '--') + '/' + (student.apartment_number || '--') + '/' + (student.room_number || '--');
@@ -720,35 +717,42 @@
       });
 
       if (res.status === 401) { window.location.replace('/Account/Login'); return; }
-      if (res.status === 403) { showToast('غير مصرح لك بهذا الإجراء', 'error'); return; }
+      if (res.status === 403) { showToast(t('ss_forbidden'), 'error'); return; }
 
       var result = await res.json();
-      if (!res.ok) { showToast(result.message || 'حدث خطأ', 'error'); return; }
+      if (!res.ok) { showToast(result.message || t('ss_errorOccurred'), 'error'); return; }
 
-      showToast(result.message || 'تم نقل الطالب بنجاح', 'success');
+      showToast(result.message || t('ss_transferSuccess'), 'success');
       resetTransferForm();
       loadTransferHistory();
     } catch (e) {
-      showToast('تعذر الاتصال بالخادم', 'error');
+      showToast(t('ss_serverError'), 'error');
     } finally {
       btn.disabled = false;
-      btn.innerHTML = '<span>نقل الطالب</span>';
+      btn.innerHTML = '<span>' + t('ss_transferStudent') + '</span>';
       updateTransferBtnState();
     }
   }
 
+  var _transferHistoryData = null;
   async function loadTransferHistory() {
-    var data = await apiFetch('/api/supervisor/housing-transfer/recent');
+    _transferHistoryData = await apiFetch('/api/supervisor/housing-transfer/recent');
+    renderTransferHistory();
+  }
+
+  function renderTransferHistory() {
+    var data = _transferHistoryData;
     var list = document.getElementById('transferHistoryList');
+    if (!list) return;
     if (!data || !data.length) {
-      list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--gray-500)">لا توجد حالات</div>';
+      list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--gray-500)">' + t('ss_noTransfers') + '</div>';
       return;
     }
     list.innerHTML = data.map(function (x) {
       var dateObj = new Date(x.createdAt);
       var dateStr = dateObj.toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' });
       var timeStr = dateObj.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-      var userName = userMap[x.createdBy] || 'غير معروف';
+      var userName = userMap[x.createdBy] || t('ss_unknown');
       var oldLoc = (x.oldBuilding || '--') + '/' + (x.oldApartment || '--') + '/' + (x.oldRoom || '--');
       var newLoc = (x.newBuilding || '--') + '/' + (x.newApartment || '--') + '/' + (x.newRoom || '--');
       var reasonLabel = x.customReason || getTransferReasonLabel(x.reason);
@@ -757,16 +761,16 @@
         attachHtml = '<div style="margin-top:6px;font-size:12px;color:var(--navy)">📎 <a href="/uploads/housing-transfer/' + x.id + '/' + encodeURIComponent(x.originalFileName) + '" target="_blank" style="color:var(--navy);text-decoration:underline">' + escHtml(x.originalFileName) + '</a></div>';
       }
       return '<div class="history-item" style="display:block;padding:14px 16px;border-bottom:1px solid var(--gray-100)">' +
-        '<div style="margin-bottom:8px"><span class="badge badge-status-transferred" style="font-size:13px;padding:4px 12px">🏠 نقل سكن</span></div>' +
+        '<div style="margin-bottom:8px"><span class="badge badge-status-transferred" style="font-size:13px;padding:4px 12px">🏠 ' + t('ss_housingTransferBadge') + '</span></div>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px;color:var(--navy-dark)">' +
-          '<div><span style="color:var(--gray-500);font-size:12px">الرقم الجامعي</span><br><strong>' + escHtml(x.studentNumber) + '</strong></div>' +
-          (x.studentName ? '<div><span style="color:var(--gray-500);font-size:12px">اسم الطالب</span><br>' + escHtml(x.studentName) + '</div>' : '') +
-          '<div><span style="color:var(--gray-500);font-size:12px">السكن الحالي</span><br>' + escHtml(oldLoc) + '</div>' +
-          '<div><span style="color:var(--gray-500);font-size:12px">السكن الجديد</span><br>' + escHtml(newLoc) + '</div>' +
-          '<div><span style="color:var(--gray-500);font-size:12px">بواسطة</span><br>' + escHtml(userName) + '</div>' +
-          '<div><span style="color:var(--gray-500);font-size:12px">التاريخ</span><br>' + dateStr + ' ' + timeStr + '</div>' +
+          '<div><span style="color:var(--gray-500);font-size:12px">' + t('ss_studentNumber') + '</span><br><strong>' + escHtml(x.studentNumber) + '</strong></div>' +
+          (x.studentName ? '<div><span style="color:var(--gray-500);font-size:12px">' + t('ss_infoStudentName') + '</span><br>' + escHtml(x.studentName) + '</div>' : '') +
+          '<div><span style="color:var(--gray-500);font-size:12px">' + t('ss_currentHousingShort') + '</span><br>' + escHtml(oldLoc) + '</div>' +
+          '<div><span style="color:var(--gray-500);font-size:12px">' + t('ss_newHousingShort') + '</span><br>' + escHtml(newLoc) + '</div>' +
+          '<div><span style="color:var(--gray-500);font-size:12px">' + t('ss_by') + '</span><br>' + escHtml(userName) + '</div>' +
+          '<div><span style="color:var(--gray-500);font-size:12px">' + t('ss_date') + '</span><br>' + dateStr + ' ' + timeStr + '</div>' +
         '</div>' +
-        '<div style="margin-top:8px;padding:8px 12px;background:var(--gray-50);border-radius:8px;font-size:13px;color:var(--gray-700)"><span style="color:var(--gray-500);font-size:12px;font-weight:600">سبب النقل</span><br>' + escHtml(reasonLabel) + '</div>' +
+        '<div style="margin-top:8px;padding:8px 12px;background:var(--gray-50);border-radius:8px;font-size:13px;color:var(--gray-700)"><span style="color:var(--gray-500);font-size:12px;font-weight:600">' + t('ss_transferReason') + '</span><br>' + escHtml(reasonLabel) + '</div>' +
         attachHtml +
       '</div>';
     }).join('');
@@ -785,11 +789,11 @@
       var badgeClass = 'badge-status-' + st;
       document.getElementById('studentInfoId').textContent = found.student_id;
       document.getElementById('studentInfoName').textContent = found.full_name;
-      document.getElementById('studentInfoStatus').innerHTML = '<span class="badge ' + badgeClass + '">' + (studentStatusAr[st] || st) + '</span>';
+      document.getElementById('studentInfoStatus').innerHTML = '<span class="badge ' + badgeClass + '">' + getStatusLabel(st) + '</span>';
       info.style.display = 'block';
       info.style.background = '';
     } else {
-      document.getElementById('studentInfoId').textContent = '✗ الطالب غير موجود';
+      document.getElementById('studentInfoId').textContent = '✗ ' + t('ss_studentNotFound');
       document.getElementById('studentInfoName').textContent = '';
       document.getElementById('studentInfoStatus').textContent = '';
       info.style.display = 'block';
@@ -818,7 +822,7 @@
       document.getElementById('transferOldApartment').textContent = found.apartment_number || '--';
       document.getElementById('transferOldRoom').textContent = found.room_number || '--';
     } else {
-      text.textContent = '✗ الطالب غير موجود';
+      text.textContent = '✗ ' + t('ss_studentNotFound');
       info.style.display = 'block';
       info.style.background = '#FEF2F2';
     }
@@ -837,5 +841,12 @@
     loadHistory();
     loadTransferHistory();
   });
+
+  // اللغة تتبع ثقافة السيرفر — setLang بيترجم عناصر الترجمة وبيستدعي onLanguageChange لإعادة رسم السجلات من الكاش
+  window.onLanguageChange = function () {
+    renderHistory();
+    renderTransferHistory();
+  };
+  setLang(localStorage.getItem('uiLanguage') || 'ar');
 </script>
 }

@@ -1,0 +1,2995 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="AppTitleSuffix" xml:space="preserve">
+    <value>نظام إسكان الطلاب والطالبات</value>
+  </data>
+  <data name="Brand_Sub" xml:space="preserve">
+    <value>جامعة نجران</value>
+  </data>
+  <data name="Brand_Title" xml:space="preserve">
+    <value>نظام إسكان الطلاب والطالبات</value>
+  </data>
+  <data name="Lang_Switch_ToAr" xml:space="preserve">
+    <value>عربي</value>
+  </data>
+  <data name="Lang_Switch_ToEn" xml:space="preserve">
+    <value>English</value>
+  </data>
+  <data name="Logout" xml:space="preserve">
+    <value>تسجيل الخروج</value>
+  </data>
+  <data name="MarkAllRead" xml:space="preserve">
+    <value>تحديد الكل مقروء</value>
+  </data>
+  <data name="Nav_AllRequests" xml:space="preserve">
+    <value>كل الطلبات</value>
+  </data>
+  <data name="Nav_AuditLog" xml:space="preserve">
+    <value>سجل العمليات</value>
+  </data>
+  <data name="Nav_BulkExcel" xml:space="preserve">
+    <value>تسجيل جماعي (Excel)</value>
+  </data>
+  <data name="Nav_Dashboard" xml:space="preserve">
+    <value>لوحة التحكم</value>
+  </data>
+  <data name="Nav_Housing" xml:space="preserve">
+    <value>إدارة السكن</value>
+  </data>
+  <data name="Nav_RegisterSingle" xml:space="preserve">
+    <value>تسجيل فردي</value>
+  </data>
+  <data name="Nav_Reports" xml:space="preserve">
+    <value>التقارير</value>
+  </data>
+  <data name="Nav_Section_Main" xml:space="preserve">
+    <value>الرئيسية</value>
+  </data>
+  <data name="Nav_Section_Requests" xml:space="preserve">
+    <value>الطلبات</value>
+  </data>
+  <data name="Nav_Section_Students" xml:space="preserve">
+    <value>الطلاب</value>
+  </data>
+  <data name="Nav_Section_System" xml:space="preserve">
+    <value>النظام</value>
+  </data>
+  <data name="Nav_StudentsList" xml:space="preserve">
+    <value>قائمة الطلاب</value>
+  </data>
+  <data name="Nav_UpdateStatus" xml:space="preserve">
+    <value>تحديث حالة الطالب</value>
+  </data>
+  <data name="Notif_Empty" xml:space="preserve">
+    <value>لا توجد إشعارات</value>
+  </data>
+  <data name="Notif_LoadError" xml:space="preserve">
+    <value>تعذر تحميل الإشعارات</value>
+  </data>
+  <data name="Notifications" xml:space="preserve">
+    <value>الإشعارات</value>
+  </data>
+  <data name="Page_AuditLog" xml:space="preserve">
+    <value>سجل العمليات</value>
+  </data>
+  <data name="Page_Bulk" xml:space="preserve">
+    <value>التسجيل الجماعي</value>
+  </data>
+  <data name="Page_Departure" xml:space="preserve">
+    <value>مغادرة وتحديث حالة الطالب</value>
+  </data>
+  <data name="Page_Home" xml:space="preserve">
+    <value>لوحة التحكم</value>
+  </data>
+  <data name="Page_Housing" xml:space="preserve">
+    <value>إدارة حسابات السكن</value>
+  </data>
+  <data name="Page_Register" xml:space="preserve">
+    <value>تسجيل طالب جديد</value>
+  </data>
+  <data name="Page_Reports" xml:space="preserve">
+    <value>مركز التقارير</value>
+  </data>
+  <data name="Page_RequestDetails" xml:space="preserve">
+    <value>تفاصيل الطلب</value>
+  </data>
+  <data name="Page_Requests" xml:space="preserve">
+    <value>إدارة الطلبات</value>
+  </data>
+  <data name="Page_StudentStatus" xml:space="preserve">
+    <value>تحديث حالة الطالب</value>
+  </data>
+  <data name="Page_Students" xml:space="preserve">
+    <value>قائمة الطلاب</value>
+  </data>
+  <data name="about" xml:space="preserve">
+    <value>حول النظام</value>
+  </data>
+  <data name="academicInfo" xml:space="preserve">
+    <value>المعلومات الأكاديمية</value>
+  </data>
+  <data name="academicLevel" xml:space="preserve">
+    <value>المستوى الدراسي</value>
+  </data>
+  <data name="acceptAndContinue" xml:space="preserve">
+    <value>قبول والمتابعة</value>
+  </data>
+  <data name="accessDenied" xml:space="preserve">
+    <value>ليس لديك صلاحية الوصول إلى هذه الصفحة</value>
+  </data>
+  <data name="accountActions" xml:space="preserve">
+    <value>إجراءات الحساب</value>
+  </data>
+  <data name="accountLifecycle" xml:space="preserve">
+    <value>دورة حياة الحساب</value>
+  </data>
+  <data name="accountManagement" xml:space="preserve">
+    <value>إدارة الحساب</value>
+  </data>
+  <data name="accountsDisabled" xml:space="preserve">
+    <value>المعطلة</value>
+  </data>
+  <data name="accountsEnabled" xml:space="preserve">
+    <value>المفعلة</value>
+  </data>
+  <data name="actionDisabled" xml:space="preserve">
+    <value>تم التعطيل</value>
+  </data>
+  <data name="actionEnabled" xml:space="preserve">
+    <value>تم التفعيل</value>
+  </data>
+  <data name="actionExtensionAttrsSynced" xml:space="preserve">
+    <value>مزامنة الخصائص الإضافية</value>
+  </data>
+  <data name="actionLogin" xml:space="preserve">
+    <value>تسجيل دخول</value>
+  </data>
+  <data name="actionLoginFailed" xml:space="preserve">
+    <value>فشل تسجيل دخول</value>
+  </data>
+  <data name="actionLogout" xml:space="preserve">
+    <value>تسجيل خروج</value>
+  </data>
+  <data name="actionPasswordReset" xml:space="preserve">
+    <value>إعادة تعيين كلمة المرور</value>
+  </data>
+  <data name="actionProvisioned" xml:space="preserve">
+    <value>تم التزويد</value>
+  </data>
+  <data name="actionReason" xml:space="preserve">
+    <value>سبب الإجراء</value>
+  </data>
+  <data name="actionReasonError" xml:space="preserve">
+    <value>الرجاء إدخال سبب الإجراء (5 أحرف على الأقل)</value>
+  </data>
+  <data name="actionReasonLabel" xml:space="preserve">
+    <value>سبب الإجراء:</value>
+  </data>
+  <data name="actionReasonPlaceholder" xml:space="preserve">
+    <value>أدخل سبب الإجراء (إلزامي، 5 أحرف على الأقل)</value>
+  </data>
+  <data name="actionReprovisioned" xml:space="preserve">
+    <value>إعادة تزويد</value>
+  </data>
+  <data name="actions" xml:space="preserve">
+    <value>الإجراءات</value>
+  </data>
+  <data name="active" xml:space="preserve">
+    <value>نشط</value>
+  </data>
+  <data name="activeResidents" xml:space="preserve">
+    <value>مقيمون حالياً</value>
+  </data>
+  <data name="adAccountDisabled" xml:space="preserve">
+    <value>تم تعطيل الحساب</value>
+  </data>
+  <data name="adAccountEnabled" xml:space="preserve">
+    <value>تم تفعيل الحساب</value>
+  </data>
+  <data name="adAccountStatus" xml:space="preserve">
+    <value>حالة حساب الشبكة</value>
+  </data>
+  <data name="adConfig" xml:space="preserve">
+    <value>إعدادات AD</value>
+  </data>
+  <data name="adConfigUpdated" xml:space="preserve">
+    <value>تم تحديث إعدادات AD</value>
+  </data>
+  <data name="adDisabled" xml:space="preserve">
+    <value>معطل</value>
+  </data>
+  <data name="adEnabled" xml:space="preserve">
+    <value>مفعل</value>
+  </data>
+  <data name="adLastSync" xml:space="preserve">
+    <value>آخر مزامنة</value>
+  </data>
+  <data name="adNoAccount" xml:space="preserve">
+    <value>لا يوجد حساب</value>
+  </data>
+  <data name="adSearch" xml:space="preserve">
+    <value>بحث في Active Directory</value>
+  </data>
+  <data name="adSearchResults" xml:space="preserve">
+    <value>نتائج البحث</value>
+  </data>
+  <data name="adUnknown" xml:space="preserve">
+    <value>غير معروف</value>
+  </data>
+  <data name="adUserNotFound" xml:space="preserve">
+    <value>لم يتم العثور على المستخدم</value>
+  </data>
+  <data name="adUsername" xml:space="preserve">
+    <value>اسم المستخدم في AD</value>
+  </data>
+  <data name="adUsernameLabel" xml:space="preserve">
+    <value>اسم المستخدم:</value>
+  </data>
+  <data name="additionalNotes" xml:space="preserve">
+    <value>ملاحظات إضافية</value>
+  </data>
+  <data name="address" xml:space="preserve">
+    <value>العنوان الحالي</value>
+  </data>
+  <data name="all" xml:space="preserve">
+    <value>الكل</value>
+  </data>
+  <data name="allRequests" xml:space="preserve">
+    <value>كل الطلبات</value>
+  </data>
+  <data name="apartmentNumber" xml:space="preserve">
+    <value>رقم الشقة الجديدة</value>
+  </data>
+  <data name="apartmentNumberPlaceholder" xml:space="preserve">
+    <value>مثال: 5</value>
+  </data>
+  <data name="apartmentPlaceholder" xml:space="preserve">
+    <value>أدخل رقم الشقة</value>
+  </data>
+  <data name="apiError" xml:space="preserve">
+    <value>خطأ في الاتصال بالـ API</value>
+  </data>
+  <data name="appTitle" xml:space="preserve">
+    <value>نظام إسكان الطلاب والطالبات</value>
+  </data>
+  <data name="appTitleShort" xml:space="preserve">
+    <value>نظام إسكان الطلاب والطالبات</value>
+  </data>
+  <data name="apply" xml:space="preserve">
+    <value>تطبيق</value>
+  </data>
+  <data name="approve" xml:space="preserve">
+    <value>اعتماد</value>
+  </data>
+  <data name="approved" xml:space="preserve">
+    <value>تم الاعتماد</value>
+  </data>
+  <data name="arabicNameValidation" xml:space="preserve">
+    <value>يجب إدخال الاسم باللغة العربية فقط</value>
+  </data>
+  <data name="attachmentDelete" xml:space="preserve">
+    <value>حذف الملف</value>
+  </data>
+  <data name="attachmentDeleteSuccess" xml:space="preserve">
+    <value>تم حذف الملف</value>
+  </data>
+  <data name="attachmentNoFiles" xml:space="preserve">
+    <value>لا توجد مرفقات</value>
+  </data>
+  <data name="attachmentNotAllowed" xml:space="preserve">
+    <value>نوع الملف غير مسموح به</value>
+  </data>
+  <data name="attachmentTooLarge" xml:space="preserve">
+    <value>حجم الملف يتجاوز الحد المسموح به</value>
+  </data>
+  <data name="attachmentType" xml:space="preserve">
+    <value>نوع المستند</value>
+  </data>
+  <data name="attachmentUpload" xml:space="preserve">
+    <value>رفع ملف</value>
+  </data>
+  <data name="attachmentUploadSuccess" xml:space="preserve">
+    <value>تم رفع الملفات بنجاح</value>
+  </data>
+  <data name="attachments" xml:space="preserve">
+    <value>المرفقات</value>
+  </data>
+  <data name="aud_action_approve_request" xml:space="preserve">
+    <value>الموافقة على طلب</value>
+  </data>
+  <data name="aud_action_checkout_student" xml:space="preserve">
+    <value>إخلاء سكن طالب</value>
+  </data>
+  <data name="aud_action_complete_request" xml:space="preserve">
+    <value>إكمال الطلب</value>
+  </data>
+  <data name="aud_action_create_request" xml:space="preserve">
+    <value>إنشاء طلب</value>
+  </data>
+  <data name="aud_action_create_student" xml:space="preserve">
+    <value>إضافة طالب</value>
+  </data>
+  <data name="aud_action_cyber_approve_request" xml:space="preserve">
+    <value>موافقة إدارة الأمن السيبراني</value>
+  </data>
+  <data name="aud_action_cyber_reject_request" xml:space="preserve">
+    <value>رفض إدارة الأمن السيبراني</value>
+  </data>
+  <data name="aud_action_delete_student" xml:space="preserve">
+    <value>حذف طالب</value>
+  </data>
+  <data name="aud_action_housing_approve_request" xml:space="preserve">
+    <value>موافقة إدارة الإسكان</value>
+  </data>
+  <data name="aud_action_housing_reject_request" xml:space="preserve">
+    <value>رفض إسكان</value>
+  </data>
+  <data name="aud_action_login" xml:space="preserve">
+    <value>تسجيل الدخول</value>
+  </data>
+  <data name="aud_action_login_admin_fallback" xml:space="preserve">
+    <value>دخول المسؤول المحلي</value>
+  </data>
+  <data name="aud_action_login_admin_fallback_failed" xml:space="preserve">
+    <value>فشل دخول المسؤول المحلي</value>
+  </data>
+  <data name="aud_action_login_failed" xml:space="preserve">
+    <value>فشل تسجيل الدخول</value>
+  </data>
+  <data name="aud_action_login_local_fallback" xml:space="preserve">
+    <value>تسجيل دخول (محلي)</value>
+  </data>
+  <data name="aud_action_login_local_fallback_failed" xml:space="preserve">
+    <value>فشل تسجيل دخول (محلي)</value>
+  </data>
+  <data name="aud_action_logout" xml:space="preserve">
+    <value>تسجيل الخروج</value>
+  </data>
+  <data name="aud_action_ready_for_provisioning_request" xml:space="preserve">
+    <value>تجهيز لإنشاء حساب شبكة السكن</value>
+  </data>
+  <data name="aud_action_reject_request" xml:space="preserve">
+    <value>رفض طلب</value>
+  </data>
+  <data name="aud_action_set_password" xml:space="preserve">
+    <value>تغيير كلمة المرور</value>
+  </data>
+  <data name="aud_action_submit_cyber_review" xml:space="preserve">
+    <value>إحالة للأمن السيبراني</value>
+  </data>
+  <data name="aud_action_update_student" xml:space="preserve">
+    <value>تعديل بيانات طالب</value>
+  </data>
+  <data name="aud_action_user_created_ad" xml:space="preserve">
+    <value>إنشاء مستخدم من Active Directory</value>
+  </data>
+  <data name="aud_action_user_updated_ad" xml:space="preserve">
+    <value>تحديث مستخدم من Active Directory</value>
+  </data>
+  <data name="aud_changeField" xml:space="preserve">
+    <value>الحقل</value>
+  </data>
+  <data name="aud_changeNewValue" xml:space="preserve">
+    <value>القيمة الجديدة</value>
+  </data>
+  <data name="aud_changeOldValue" xml:space="preserve">
+    <value>القيمة القديمة</value>
+  </data>
+  <data name="aud_col_action" xml:space="preserve">
+    <value>الإجراء</value>
+  </data>
+  <data name="aud_col_date" xml:space="preserve">
+    <value>التاريخ</value>
+  </data>
+  <data name="aud_col_table" xml:space="preserve">
+    <value>الجدول</value>
+  </data>
+  <data name="aud_col_targetId" xml:space="preserve">
+    <value>المعرف</value>
+  </data>
+  <data name="aud_col_user" xml:space="preserve">
+    <value>المستخدم</value>
+  </data>
+  <data name="aud_entries" xml:space="preserve">
+    <value>سجل</value>
+  </data>
+  <data name="aud_exportBtn" xml:space="preserve">
+    <value>تصدير XLSX</value>
+  </data>
+  <data name="aud_filterAd" xml:space="preserve">
+    <value>مزامنة Active Directory</value>
+  </data>
+  <data name="aud_filterAll" xml:space="preserve">
+    <value>الكل</value>
+  </data>
+  <data name="aud_filterLogin" xml:space="preserve">
+    <value>تسجيل الدخول</value>
+  </data>
+  <data name="aud_filterLogout" xml:space="preserve">
+    <value>تسجيل الخروج</value>
+  </data>
+  <data name="aud_filterPassword" xml:space="preserve">
+    <value>تغيير كلمة المرور</value>
+  </data>
+  <data name="aud_filterRequest" xml:space="preserve">
+    <value>عمليات الطلبات</value>
+  </data>
+  <data name="aud_filterStudent" xml:space="preserve">
+    <value>عمليات الطلاب</value>
+  </data>
+  <data name="aud_lblAction" xml:space="preserve">
+    <value>العملية</value>
+  </data>
+  <data name="aud_lblFromDate" xml:space="preserve">
+    <value>من تاريخ</value>
+  </data>
+  <data name="aud_lblSearch" xml:space="preserve">
+    <value>بحث</value>
+  </data>
+  <data name="aud_lblToDate" xml:space="preserve">
+    <value>إلى تاريخ</value>
+  </data>
+  <data name="aud_lblUser" xml:space="preserve">
+    <value>المستخدم</value>
+  </data>
+  <data name="aud_modalAction" xml:space="preserve">
+    <value>العملية</value>
+  </data>
+  <data name="aud_modalChanges" xml:space="preserve">
+    <value>التغييرات</value>
+  </data>
+  <data name="aud_modalDate" xml:space="preserve">
+    <value>التاريخ</value>
+  </data>
+  <data name="aud_modalTable" xml:space="preserve">
+    <value>الجدول</value>
+  </data>
+  <data name="aud_modalTargetId" xml:space="preserve">
+    <value>المعرف</value>
+  </data>
+  <data name="aud_modalTitle" xml:space="preserve">
+    <value>تفاصيل السجل</value>
+  </data>
+  <data name="aud_modalUser" xml:space="preserve">
+    <value>المستخدم</value>
+  </data>
+  <data name="aud_next" xml:space="preserve">
+    <value>التالي</value>
+  </data>
+  <data name="aud_noRecords" xml:space="preserve">
+    <value>لا توجد سجلات</value>
+  </data>
+  <data name="aud_optAll" xml:space="preserve">
+    <value>الكل</value>
+  </data>
+  <data name="aud_pageSubtitle" xml:space="preserve">
+    <value>سجل تدقيق كامل بكل عملية وتوقيتها ومن نفّذها</value>
+  </data>
+  <data name="aud_pageTitle" xml:space="preserve">
+    <value>جميع العمليات التي تمت في النظام</value>
+  </data>
+  <data name="aud_prev" xml:space="preserve">
+    <value>السابق</value>
+  </data>
+  <data name="aud_serverError" xml:space="preserve">
+    <value>تعذر الاتصال بالخادم.</value>
+  </data>
+  <data name="aud_show" xml:space="preserve">
+    <value>عرض</value>
+  </data>
+  <data name="aud_statRequestOps" xml:space="preserve">
+    <value>عمليات الطلبات</value>
+  </data>
+  <data name="aud_statStudentOps" xml:space="preserve">
+    <value>عمليات الطلاب</value>
+  </data>
+  <data name="aud_statTotalRecords" xml:space="preserve">
+    <value>إجمالي السجلات</value>
+  </data>
+  <data name="aud_statUsers" xml:space="preserve">
+    <value>المستخدمون</value>
+  </data>
+  <data name="aud_totalRecordsFmt" xml:space="preserve">
+    <value>إجمالي السجلات: {0}</value>
+  </data>
+  <data name="auditLog" xml:space="preserve">
+    <value>سجل العمليات</value>
+  </data>
+  <data name="bachelor" xml:space="preserve">
+    <value>بكالوريوس</value>
+  </data>
+  <data name="backToHome" xml:space="preserve">
+    <value>العودة للرئيسية</value>
+  </data>
+  <data name="backToQueue" xml:space="preserve">
+    <value>العودة للقائمة</value>
+  </data>
+  <data name="buildDate" xml:space="preserve">
+    <value>تاريخ البناء</value>
+  </data>
+  <data name="buildingA" xml:space="preserve">
+    <value>مبنى A</value>
+  </data>
+  <data name="buildingB" xml:space="preserve">
+    <value>مبنى B</value>
+  </data>
+  <data name="buildingC" xml:space="preserve">
+    <value>مبنى C</value>
+  </data>
+  <data name="buildingD" xml:space="preserve">
+    <value>مبنى D</value>
+  </data>
+  <data name="buildingE" xml:space="preserve">
+    <value>مبنى E</value>
+  </data>
+  <data name="buildingNumber" xml:space="preserve">
+    <value>رقم المبنى الجديد</value>
+  </data>
+  <data name="buildingNumberPlaceholder" xml:space="preserve">
+    <value>مثال: 10</value>
+  </data>
+  <data name="buildingPlaceholder" xml:space="preserve">
+    <value>اختر المبنى</value>
+  </data>
+  <data name="bulkRegistration" xml:space="preserve">
+    <value>تسجيل جماعي (Excel)</value>
+  </data>
+  <data name="bulk_allValid" xml:space="preserve">
+    <value>جميع السجلات صحيحة!</value>
+  </data>
+  <data name="bulk_back" xml:space="preserve">
+    <value>السابق</value>
+  </data>
+  <data name="bulk_breadcrumbCurrent" xml:space="preserve">
+    <value>تسجيل جماعي (Excel)</value>
+  </data>
+  <data name="bulk_breadcrumbHome" xml:space="preserve">
+    <value>الرئيسية</value>
+  </data>
+  <data name="bulk_col_apartment" xml:space="preserve">
+    <value>الشقة</value>
+  </data>
+  <data name="bulk_col_building" xml:space="preserve">
+    <value>المبنى</value>
+  </data>
+  <data name="bulk_col_college" xml:space="preserve">
+    <value>الكلية</value>
+  </data>
+  <data name="bulk_col_column" xml:space="preserve">
+    <value>العمود</value>
+  </data>
+  <data name="bulk_col_errorDesc" xml:space="preserve">
+    <value>وصف الخطأ</value>
+  </data>
+  <data name="bulk_col_gender" xml:space="preserve">
+    <value>الجنس</value>
+  </data>
+  <data name="bulk_col_level" xml:space="preserve">
+    <value>المستوى</value>
+  </data>
+  <data name="bulk_col_mobile" xml:space="preserve">
+    <value>الجوال</value>
+  </data>
+  <data name="bulk_col_nameAr" xml:space="preserve">
+    <value>الاسم بالعربية</value>
+  </data>
+  <data name="bulk_col_nameEn" xml:space="preserve">
+    <value>الاسم بالإنجليزية</value>
+  </data>
+  <data name="bulk_col_room" xml:space="preserve">
+    <value>الغرفة</value>
+  </data>
+  <data name="bulk_col_row" xml:space="preserve">
+    <value>الصف</value>
+  </data>
+  <data name="bulk_col_studentId" xml:space="preserve">
+    <value>رقم الطالب</value>
+  </data>
+  <data name="bulk_creating" xml:space="preserve">
+    <value>جاري الإنشاء...</value>
+  </data>
+  <data name="bulk_currentlyShown" xml:space="preserve">
+    <value>المعروض حالياً</value>
+  </data>
+  <data name="bulk_downloadFailed" xml:space="preserve">
+    <value>فشل التحميل</value>
+  </data>
+  <data name="bulk_downloading" xml:space="preserve">
+    <value>جاري التحميل...</value>
+  </data>
+  <data name="bulk_errFileSize" xml:space="preserve">
+    <value>حجم الملف يتجاوز 10 MB</value>
+  </data>
+  <data name="bulk_errXlsxOnly" xml:space="preserve">
+    <value>الرجاء اختيار ملف .xlsx فقط</value>
+  </data>
+  <data name="bulk_error" xml:space="preserve">
+    <value>خطأ</value>
+  </data>
+  <data name="bulk_errorPrefixFmt" xml:space="preserve">
+    <value>خطأ: {0}</value>
+  </data>
+  <data name="bulk_errorRecords" xml:space="preserve">
+    <value>الخاطئة</value>
+  </data>
+  <data name="bulk_errorsFoundFmt" xml:space="preserve">
+    <value>يوجد {0} أخطاء في الملف. يرجى مراجعة الجدول أدناه.</value>
+  </data>
+  <data name="bulk_firstNRecordsFmt" xml:space="preserve">
+    <value>أول {0} سجل</value>
+  </data>
+  <data name="bulk_noValidData" xml:space="preserve">
+    <value>لا توجد بيانات صحيحة للمعاينة</value>
+  </data>
+  <data name="bulk_noValidationResult" xml:space="preserve">
+    <value>لا توجد نتيجة تحقق</value>
+  </data>
+  <data name="bulk_pageDesc" xml:space="preserve">
+    <value>قم بتحميل نموذج بيانات الطلاب، تعبئة البيانات، رفع الملف، التحقق من الصحة، ثم إنشاء الطلب</value>
+  </data>
+  <data name="bulk_pageTitle" xml:space="preserve">
+    <value>رفع ملف Excel للتسجيل الجماعي</value>
+  </data>
+  <data name="bulk_s1_downloadBtn" xml:space="preserve">
+    <value>تحميل نموذج بيانات الطلاب</value>
+  </data>
+  <data name="bulk_s1_fields" xml:space="preserve">
+    <value>النموذج يحتوي على الحقول التالية: الرقم الجامعي (9-10 أرقام)، الهوية الوطنية (10 أرقام)، الاسم الكامل بالعربية، الاسم الكامل بالإنجليزية، الجوال (9665xxxxxxxx)، الكلية، القسم، المستوى الدراسي (1-5)، الجنس (ذكر/أنثى)، رقم المبنى، رقم الشقة، رقم الغرفة</value>
+  </data>
+  <data name="bulk_s1_next" xml:space="preserve">
+    <value>التالي - رفع الملف</value>
+  </data>
+  <data name="bulk_s1_title" xml:space="preserve">
+    <value>تحميل نموذج بيانات الطلاب</value>
+  </data>
+  <data name="bulk_s2_remove" xml:space="preserve">
+    <value>إزالة</value>
+  </data>
+  <data name="bulk_s2_title" xml:space="preserve">
+    <value>رفع ملف Excel</value>
+  </data>
+  <data name="bulk_s2_uploadBtn" xml:space="preserve">
+    <value>تحميل والتحقق</value>
+  </data>
+  <data name="bulk_s2_uploadHint" xml:space="preserve">
+    <value>الحد الأقصى 10 MB، صيغة .xlsx فقط</value>
+  </data>
+  <data name="bulk_s2_uploadText" xml:space="preserve">
+    <value>اختر ملف Excel أو اسحبه وأفلته هنا</value>
+  </data>
+  <data name="bulk_s3_errorsTitle" xml:space="preserve">
+    <value>الأخطاء</value>
+  </data>
+  <data name="bulk_s3_next" xml:space="preserve">
+    <value>التالي - معاينة</value>
+  </data>
+  <data name="bulk_s3_title" xml:space="preserve">
+    <value>نتيجة التحقق</value>
+  </data>
+  <data name="bulk_s4_createBtn" xml:space="preserve">
+    <value>إنشاء طلب التسجيل الجماعي</value>
+  </data>
+  <data name="bulk_s4_title" xml:space="preserve">
+    <value>معاينة البيانات الصحيحة</value>
+  </data>
+  <data name="bulk_s4_totalValid" xml:space="preserve">
+    <value>العدد الإجمالي للطلاب الصحيحين:</value>
+  </data>
+  <data name="bulk_s5_heading" xml:space="preserve">
+    <value>تم إنشاء طلب التسجيل الجماعي</value>
+  </data>
+  <data name="bulk_s5_newFile" xml:space="preserve">
+    <value>رفع ملف جديد</value>
+  </data>
+  <data name="bulk_s5_requestNumber" xml:space="preserve">
+    <value>رقم الطلب:</value>
+  </data>
+  <data name="bulk_s5_title" xml:space="preserve">
+    <value>تم الإنشاء بنجاح</value>
+  </data>
+  <data name="bulk_s5_viewRequest" xml:space="preserve">
+    <value>عرض الطلب</value>
+  </data>
+  <data name="bulk_s5_viewRequests" xml:space="preserve">
+    <value>عرض الطلبات</value>
+  </data>
+  <data name="bulk_step1" xml:space="preserve">
+    <value>تحميل النموذج</value>
+  </data>
+  <data name="bulk_step2" xml:space="preserve">
+    <value>رفع الملف</value>
+  </data>
+  <data name="bulk_step3" xml:space="preserve">
+    <value>التحقق</value>
+  </data>
+  <data name="bulk_step4" xml:space="preserve">
+    <value>معاينة</value>
+  </data>
+  <data name="bulk_step5" xml:space="preserve">
+    <value>إنشاء</value>
+  </data>
+  <data name="bulk_studentsAddedFmt" xml:space="preserve">
+    <value>تم إضافة {0} طالب</value>
+  </data>
+  <data name="bulk_totalRecords" xml:space="preserve">
+    <value>إجمالي السجلات</value>
+  </data>
+  <data name="bulk_validRecords" xml:space="preserve">
+    <value>الصحيحة</value>
+  </data>
+  <data name="bulk_validRecordsLabel" xml:space="preserve">
+    <value>السجلات الصحيحة</value>
+  </data>
+  <data name="bulk_validating" xml:space="preserve">
+    <value>جاري التحقق...</value>
+  </data>
+  <data name="bulk_validationErrorFmt" xml:space="preserve">
+    <value>خطأ في التحقق: {0}</value>
+  </data>
+  <data name="by" xml:space="preserve">
+    <value>بواسطة</value>
+  </data>
+  <data name="cancel" xml:space="preserve">
+    <value>إلغاء</value>
+  </data>
+  <data name="cannotEditRequest" xml:space="preserve">
+    <value>لا يمكن تعديل هذا الطلب في الوقت الحالي</value>
+  </data>
+  <data name="cannotReview" xml:space="preserve">
+    <value>لا يمكن مراجعة هذا الطلب في المرحلة الحالية</value>
+  </data>
+  <data name="chooseFile" xml:space="preserve">
+    <value>اختيار ملف</value>
+  </data>
+  <data name="clear" xml:space="preserve">
+    <value>مسح</value>
+  </data>
+  <data name="close" xml:space="preserve">
+    <value>إغلاق</value>
+  </data>
+  <data name="college" xml:space="preserve">
+    <value>الكلية</value>
+  </data>
+  <data name="collegeArts" xml:space="preserve">
+    <value>الآداب والعلوم الإنسانية</value>
+  </data>
+  <data name="collegeBusiness" xml:space="preserve">
+    <value>إدارة الأعمال</value>
+  </data>
+  <data name="collegeCS" xml:space="preserve">
+    <value>علوم الحاسب والمعلومات</value>
+  </data>
+  <data name="collegeEducation" xml:space="preserve">
+    <value>التربية</value>
+  </data>
+  <data name="collegeEngineering" xml:space="preserve">
+    <value>الهندسة</value>
+  </data>
+  <data name="collegeMedicine" xml:space="preserve">
+    <value>الطب</value>
+  </data>
+  <data name="collegePharmacy" xml:space="preserve">
+    <value>الصيدلة</value>
+  </data>
+  <data name="collegePlaceholder" xml:space="preserve">
+    <value>اختر الكلية</value>
+  </data>
+  <data name="collegeScience" xml:space="preserve">
+    <value>العلوم</value>
+  </data>
+  <data name="completed" xml:space="preserve">
+    <value>مكتمل</value>
+  </data>
+  <data name="configKey" xml:space="preserve">
+    <value>المفتاح</value>
+  </data>
+  <data name="configValue" xml:space="preserve">
+    <value>القيمة</value>
+  </data>
+  <data name="confirm" xml:space="preserve">
+    <value>تأكيد</value>
+  </data>
+  <data name="confirmAction" xml:space="preserve">
+    <value>تأكيد الإجراء</value>
+  </data>
+  <data name="confirmDisable" xml:space="preserve">
+    <value>هل أنت متأكد من تعطيل الحساب؟</value>
+  </data>
+  <data name="confirmDisableIntro" xml:space="preserve">
+    <value>سيتم تعطيل حساب الطالب في شبكة الإسكان.</value>
+  </data>
+  <data name="confirmDisableQuestion" xml:space="preserve">
+    <value>هل تريد المتابعة؟</value>
+  </data>
+  <data name="confirmDisableTitle" xml:space="preserve">
+    <value>تحذير</value>
+  </data>
+  <data name="confirmDisableYes" xml:space="preserve">
+    <value>نعم، تعطيل الحساب</value>
+  </data>
+  <data name="confirmEnable" xml:space="preserve">
+    <value>هل أنت متأكد من تفعيل الحساب؟</value>
+  </data>
+  <data name="confirmPasswordReset" xml:space="preserve">
+    <value>تأكيد إعادة تعيين كلمة المرور</value>
+  </data>
+  <data name="confirmReProvision" xml:space="preserve">
+    <value>هل أنت متأكد من إعادة التزويد؟</value>
+  </data>
+  <data name="confirmRestore" xml:space="preserve">
+    <value>هل أنت متأكد من استعادة الطالب؟</value>
+  </data>
+  <data name="confirmSync" xml:space="preserve">
+    <value>هل أنت متأكد من مزامنة الخصائص؟</value>
+  </data>
+  <data name="connectionError" xml:space="preserve">
+    <value>تعذر الاتصال بالخادم، يرجى المحاولة لاحقاً</value>
+  </data>
+  <data name="count" xml:space="preserve">
+    <value>عدد مرات التكرار</value>
+  </data>
+  <data name="currentApartment" xml:space="preserve">
+    <value>رقم الشقة الحالية</value>
+  </data>
+  <data name="currentBuilding" xml:space="preserve">
+    <value>رقم المبنى الحالي</value>
+  </data>
+  <data name="currentHousing" xml:space="preserve">
+    <value>بيانات السكن الحالية</value>
+  </data>
+  <data name="currentRoom" xml:space="preserve">
+    <value>رقم الغرفة الحالية</value>
+  </data>
+  <data name="currentStatus" xml:space="preserve">
+    <value>الحالة الحالية</value>
+  </data>
+  <data name="customReasonDescription" xml:space="preserve">
+    <value>وصف السبب</value>
+  </data>
+  <data name="customReasonPlaceholder" xml:space="preserve">
+    <value>اكتب وصف السبب</value>
+  </data>
+  <data name="customReasonRequired" xml:space="preserve">
+    <value>يرجى كتابة وصف السبب</value>
+  </data>
+  <data name="cyberApprove" xml:space="preserve">
+    <value>موافقة إدارة الأمن السيبراني</value>
+  </data>
+  <data name="cyberReject" xml:space="preserve">
+    <value>رفض إدارة الأمن السيبراني</value>
+  </data>
+  <data name="dashboard" xml:space="preserve">
+    <value>لوحة التحكم</value>
+  </data>
+  <data name="date" xml:space="preserve">
+    <value>التاريخ</value>
+  </data>
+  <data name="declarationText" xml:space="preserve">
+    <value>أتعهد بأن جميع البيانات التي قمت بتقديمها صحيحة وكاملة</value>
+  </data>
+  <data name="declarations" xml:space="preserve">
+    <value>الإقرار والتعهد</value>
+  </data>
+  <data name="delete" xml:space="preserve">
+    <value>حذف</value>
+  </data>
+  <data name="deleteConfirm" xml:space="preserve">
+    <value>هل أنت متأكد من حذف الطالب</value>
+  </data>
+  <data name="deleteWarning" xml:space="preserve">
+    <value>لا يمكن التراجع عن هذا الإجراء</value>
+  </data>
+  <data name="deleted" xml:space="preserve">
+    <value>محذوف</value>
+  </data>
+  <data name="department" xml:space="preserve">
+    <value>القسم</value>
+  </data>
+  <data name="departmentLabel" xml:space="preserve">
+    <value>القسم</value>
+  </data>
+  <data name="departmentPlaceholder" xml:space="preserve">
+    <value>اختر القسم</value>
+  </data>
+  <data name="details" xml:space="preserve">
+    <value>تفاصيل</value>
+  </data>
+  <data name="diploma" xml:space="preserve">
+    <value>دبلوم</value>
+  </data>
+  <data name="disableAccount" xml:space="preserve">
+    <value>تعطيل الحساب</value>
+  </data>
+  <data name="doctorate" xml:space="preserve">
+    <value>دكتوراه</value>
+  </data>
+  <data name="duplicateMobile" xml:space="preserve">
+    <value>رقم الجوال مستخدم بالفعل في طلب تسجيل آخر</value>
+  </data>
+  <data name="edit" xml:space="preserve">
+    <value>تعديل</value>
+  </data>
+  <data name="editRequest" xml:space="preserve">
+    <value>تعديل وإعادة تقديم</value>
+  </data>
+  <data name="enableAccount" xml:space="preserve">
+    <value>تفعيل الحساب</value>
+  </data>
+  <data name="englishNameValidation" xml:space="preserve">
+    <value>يجب إدخال الاسم باللغة الإنجليزية فقط</value>
+  </data>
+  <data name="enterMobile" xml:space="preserve">
+    <value>أدخل رقم جوالك لاستلام رمز التحقق</value>
+  </data>
+  <data name="enterRequestNumber" xml:space="preserve">
+    <value>أدخل رقم الطلب لمعرفة حالته</value>
+  </data>
+  <data name="entries" xml:space="preserve">
+    <value>سجل</value>
+  </data>
+  <data name="error" xml:space="preserve">
+    <value>خطأ</value>
+  </data>
+  <data name="errorOccurred" xml:space="preserve">
+    <value>حدث خطأ غير متوقع</value>
+  </data>
+  <data name="existingRequest" xml:space="preserve">
+    <value>لديك طلب تسجيل قيد المراجعة بالفعل</value>
+  </data>
+  <data name="export" xml:space="preserve">
+    <value>تصدير</value>
+  </data>
+  <data name="female" xml:space="preserve">
+    <value>أنثى</value>
+  </data>
+  <data name="field" xml:space="preserve">
+    <value>الحقل</value>
+  </data>
+  <data name="fieldRequired" xml:space="preserve">
+    <value>حقل مطلوب</value>
+  </data>
+  <data name="filter" xml:space="preserve">
+    <value>تصفية</value>
+  </data>
+  <data name="footer" xml:space="preserve">
+    <value>عمادة التحول الرقمي ومصادر المعرفة - تقنية المعلومات - جامعة نجران 2026</value>
+  </data>
+  <data name="forgotPassword" xml:space="preserve">
+    <value>نسيت كلمة المرور؟</value>
+  </data>
+  <data name="fullName" xml:space="preserve">
+    <value>الاسم كاملاً باللغة العربية</value>
+  </data>
+  <data name="fullNameAr" xml:space="preserve">
+    <value>الاسم الثلاثي (عربي)</value>
+  </data>
+  <data name="fullNameEn" xml:space="preserve">
+    <value>الاسم بالإنجليزية</value>
+  </data>
+  <data name="fullNameEnglish" xml:space="preserve">
+    <value>الاسم كاملاً باللغة الإنجليزية</value>
+  </data>
+  <data name="fullNameEnglishPlaceholder" xml:space="preserve">
+    <value>أدخل الاسم كاملاً باللغة الإنجليزية</value>
+  </data>
+  <data name="fullNamePlaceholder" xml:space="preserve">
+    <value>أدخل الاسم كاملاً باللغة العربية</value>
+  </data>
+  <data name="gender" xml:space="preserve">
+    <value>الجنس</value>
+  </data>
+  <data name="groupDn" xml:space="preserve">
+    <value>DN المجموعة</value>
+  </data>
+  <data name="history" xml:space="preserve">
+    <value>مسار الطلب</value>
+  </data>
+  <data name="home" xml:space="preserve">
+    <value>الرئيسية</value>
+  </data>
+  <data name="home_act_approve_request" xml:space="preserve">
+    <value>قبول الطلب</value>
+  </data>
+  <data name="home_act_checkout_student" xml:space="preserve">
+    <value>مغادرة طالب</value>
+  </data>
+  <data name="home_act_complete_request" xml:space="preserve">
+    <value>إكمال الطلب</value>
+  </data>
+  <data name="home_act_create_request" xml:space="preserve">
+    <value>إنشاء طلب</value>
+  </data>
+  <data name="home_act_create_student" xml:space="preserve">
+    <value>إضافة طالب</value>
+  </data>
+  <data name="home_act_cyber_approve_request" xml:space="preserve">
+    <value>موافقة الأمن السيبراني</value>
+  </data>
+  <data name="home_act_cyber_reject_request" xml:space="preserve">
+    <value>رفض الأمن السيبراني</value>
+  </data>
+  <data name="home_act_delete_student" xml:space="preserve">
+    <value>حذف طالب</value>
+  </data>
+  <data name="home_act_housing_approve_request" xml:space="preserve">
+    <value>موافقة إدارة الإسكان</value>
+  </data>
+  <data name="home_act_housing_reject_request" xml:space="preserve">
+    <value>رفض إسكان</value>
+  </data>
+  <data name="home_act_login" xml:space="preserve">
+    <value>تسجيل دخول</value>
+  </data>
+  <data name="home_act_login_failed" xml:space="preserve">
+    <value>فشل تسجيل دخول</value>
+  </data>
+  <data name="home_act_login_local_fallback" xml:space="preserve">
+    <value>تسجيل دخول (محلي)</value>
+  </data>
+  <data name="home_act_login_local_fallback_failed" xml:space="preserve">
+    <value>فشل تسجيل دخول (محلي)</value>
+  </data>
+  <data name="home_act_logout" xml:space="preserve">
+    <value>تسجيل خروج</value>
+  </data>
+  <data name="home_act_ready_for_provisioning_request" xml:space="preserve">
+    <value>تجهيز لإنشاء حساب شبكة السكن</value>
+  </data>
+  <data name="home_act_reject_request" xml:space="preserve">
+    <value>رفض الطلب</value>
+  </data>
+  <data name="home_act_set_password" xml:space="preserve">
+    <value>تغيير كلمة المرور</value>
+  </data>
+  <data name="home_act_submit_cyber_review" xml:space="preserve">
+    <value>إحالة للأمن السيبراني</value>
+  </data>
+  <data name="home_act_update_student" xml:space="preserve">
+    <value>تحديث طالب</value>
+  </data>
+  <data name="home_act_user_created_ad" xml:space="preserve">
+    <value>إنشاء مستخدم من Active Directory</value>
+  </data>
+  <data name="home_act_user_updated_ad" xml:space="preserve">
+    <value>تحديث مستخدم من Active Directory</value>
+  </data>
+  <data name="home_action_allRequests" xml:space="preserve">
+    <value>كل الطلبات</value>
+  </data>
+  <data name="home_action_auditLog" xml:space="preserve">
+    <value>سجل العمليات</value>
+  </data>
+  <data name="home_action_exportReport" xml:space="preserve">
+    <value>تصدير تقرير</value>
+  </data>
+  <data name="home_action_register" xml:space="preserve">
+    <value>تسجيل طالب</value>
+  </data>
+  <data name="home_action_reports" xml:space="preserve">
+    <value>التقارير</value>
+  </data>
+  <data name="home_action_viewStudents" xml:space="preserve">
+    <value>عرض الطلاب</value>
+  </data>
+  <data name="home_activeStudents" xml:space="preserve">
+    <value>الطلاب النشطون</value>
+  </data>
+  <data name="home_approvedRequests" xml:space="preserve">
+    <value>طلبات معتمدة</value>
+  </data>
+  <data name="home_badge_active" xml:space="preserve">
+    <value>نشط</value>
+  </data>
+  <data name="home_badge_approved" xml:space="preserve">
+    <value>معتمد</value>
+  </data>
+  <data name="home_badge_completed" xml:space="preserve">
+    <value>مكتمل</value>
+  </data>
+  <data name="home_badge_cyberReview" xml:space="preserve">
+    <value>مراجعة سيبراني</value>
+  </data>
+  <data name="home_badge_dismissed" xml:space="preserve">
+    <value>مفصول</value>
+  </data>
+  <data name="home_badge_graduated" xml:space="preserve">
+    <value>متخرج</value>
+  </data>
+  <data name="home_badge_housingApproved" xml:space="preserve">
+    <value>موافقة الإسكان</value>
+  </data>
+  <data name="home_badge_housingReview" xml:space="preserve">
+    <value>مراجعة إسكان</value>
+  </data>
+  <data name="home_badge_left" xml:space="preserve">
+    <value>مغادرة</value>
+  </data>
+  <data name="home_badge_readyProvision" xml:space="preserve">
+    <value>جاهز للإنشاء</value>
+  </data>
+  <data name="home_badge_statusLeft" xml:space="preserve">
+    <value>غادر</value>
+  </data>
+  <data name="home_badge_today" xml:space="preserve">
+    <value>اليوم</value>
+  </data>
+  <data name="home_badge_total" xml:space="preserve">
+    <value>الإجمالي</value>
+  </data>
+  <data name="home_badge_transferred" xml:space="preserve">
+    <value>منقول</value>
+  </data>
+  <data name="home_chartLogins30Title" xml:space="preserve">
+    <value>نشاط تسجيل الدخول آخر 30 يوم</value>
+  </data>
+  <data name="home_chartOps7Title" xml:space="preserve">
+    <value>العمليات آخر 7 أيام</value>
+  </data>
+  <data name="home_chartRequestsTitle" xml:space="preserve">
+    <value>عمليات الطلبات</value>
+  </data>
+  <data name="home_chartStudentsTitle" xml:space="preserve">
+    <value>عمليات الطلاب</value>
+  </data>
+  <data name="home_col_action" xml:space="preserve">
+    <value>الإجراء</value>
+  </data>
+  <data name="home_col_building" xml:space="preserve">
+    <value>المبنى</value>
+  </data>
+  <data name="home_col_college" xml:space="preserve">
+    <value>الكلية</value>
+  </data>
+  <data name="home_col_date" xml:space="preserve">
+    <value>التاريخ</value>
+  </data>
+  <data name="home_col_name" xml:space="preserve">
+    <value>الاسم</value>
+  </data>
+  <data name="home_col_reqType" xml:space="preserve">
+    <value>نوع الطلب</value>
+  </data>
+  <data name="home_col_status" xml:space="preserve">
+    <value>الحالة</value>
+  </data>
+  <data name="home_col_time" xml:space="preserve">
+    <value>الوقت</value>
+  </data>
+  <data name="home_col_user" xml:space="preserve">
+    <value>المستخدم</value>
+  </data>
+  <data name="home_completedRequests" xml:space="preserve">
+    <value>طلبات مكتملة</value>
+  </data>
+  <data name="home_countFmt" xml:space="preserve">
+    <value>العدد: {0}</value>
+  </data>
+  <data name="home_disabled" xml:space="preserve">
+    <value>معطل</value>
+  </data>
+  <data name="home_dismissedStudents" xml:space="preserve">
+    <value>الطلاب المفصولون</value>
+  </data>
+  <data name="home_enabled" xml:space="preserve">
+    <value>مفعل</value>
+  </data>
+  <data name="home_graduatedStudents" xml:space="preserve">
+    <value>الطلاب المتخرجون</value>
+  </data>
+  <data name="home_housingAccountStats" xml:space="preserve">
+    <value>إحصائيات حسابات السكن</value>
+  </data>
+  <data name="home_latestNotifications" xml:space="preserve">
+    <value>آخر الإشعارات</value>
+  </data>
+  <data name="home_latestOperations" xml:space="preserve">
+    <value>آخر العمليات</value>
+  </data>
+  <data name="home_latestRequests" xml:space="preserve">
+    <value>آخر الطلبات</value>
+  </data>
+  <data name="home_latestStudents" xml:space="preserve">
+    <value>آخر الطلاب المسجلين</value>
+  </data>
+  <data name="home_loadFailed" xml:space="preserve">
+    <value>تعذر تحميل البيانات</value>
+  </data>
+  <data name="home_loading" xml:space="preserve">
+    <value>جاري التحميل...</value>
+  </data>
+  <data name="home_noAlerts" xml:space="preserve">
+    <value>لا توجد تنبيهات</value>
+  </data>
+  <data name="home_noData" xml:space="preserve">
+    <value>لا توجد بيانات</value>
+  </data>
+  <data name="home_noNotifications" xml:space="preserve">
+    <value>لا توجد إشعارات</value>
+  </data>
+  <data name="home_noOperations" xml:space="preserve">
+    <value>لا توجد عمليات</value>
+  </data>
+  <data name="home_noRequests" xml:space="preserve">
+    <value>لا توجد طلبات</value>
+  </data>
+  <data name="home_noSecurityAlerts" xml:space="preserve">
+    <value>✓ لا توجد تنبيهات أمان</value>
+  </data>
+  <data name="home_notifLoadFailed" xml:space="preserve">
+    <value>تعذر تحميل الإشعارات</value>
+  </data>
+  <data name="home_pendingCyberReview" xml:space="preserve">
+    <value>بانتظار مراجعة الأمن السيبراني</value>
+  </data>
+  <data name="home_pendingHousingReview" xml:space="preserve">
+    <value>بانتظار مراجعة الإسكان</value>
+  </data>
+  <data name="home_quickActions" xml:space="preserve">
+    <value>إجراءات سريعة</value>
+  </data>
+  <data name="home_readyForProvisioning" xml:space="preserve">
+    <value>جاهزة لإنشاء حساب شبكة السكن</value>
+  </data>
+  <data name="home_refresh" xml:space="preserve">
+    <value>تحديث</value>
+  </data>
+  <data name="home_reqStatus_completed" xml:space="preserve">
+    <value>مكتمل</value>
+  </data>
+  <data name="home_reqStatus_cyber_approved" xml:space="preserve">
+    <value>معتمد</value>
+  </data>
+  <data name="home_reqStatus_cyber_rejected" xml:space="preserve">
+    <value>مرفوض من الأمن السيبراني</value>
+  </data>
+  <data name="home_reqStatus_cyber_review" xml:space="preserve">
+    <value>مراجعة الأمن السيبراني</value>
+  </data>
+  <data name="home_reqStatus_housing_approved" xml:space="preserve">
+    <value>موافقة الإسكان</value>
+  </data>
+  <data name="home_reqStatus_housing_rejected" xml:space="preserve">
+    <value>مرفوض من الإسكان</value>
+  </data>
+  <data name="home_reqStatus_ready_for_provisioning" xml:space="preserve">
+    <value>جاهز لإنشاء الحساب</value>
+  </data>
+  <data name="home_reqStatus_submitted" xml:space="preserve">
+    <value>قيد الانتظار</value>
+  </data>
+  <data name="home_reqType_bulk_registration" xml:space="preserve">
+    <value>تسجيل جماعي</value>
+  </data>
+  <data name="home_reqType_registration" xml:space="preserve">
+    <value>تسجيل سكن</value>
+  </data>
+  <data name="home_reqType_self_registration" xml:space="preserve">
+    <value>تسجيل ذاتي</value>
+  </data>
+  <data name="home_resident" xml:space="preserve">
+    <value>مقيم</value>
+  </data>
+  <data name="home_securityAlerts" xml:space="preserve">
+    <value>تنبيهات الأمان</value>
+  </data>
+  <data name="home_studentStats" xml:space="preserve">
+    <value>إحصائيات الطلاب</value>
+  </data>
+  <data name="home_studentsLeft" xml:space="preserve">
+    <value>طلاب غادروا</value>
+  </data>
+  <data name="home_summaryToday" xml:space="preserve">
+    <value>إليك ملخص النظام لليوم</value>
+  </data>
+  <data name="home_syncedToday" xml:space="preserve">
+    <value>تمت مزامنته اليوم</value>
+  </data>
+  <data name="home_todayActiveUsers" xml:space="preserve">
+    <value>المستخدمين النشطين اليوم</value>
+  </data>
+  <data name="home_todayActivity" xml:space="preserve">
+    <value>نشاط اليوم</value>
+  </data>
+  <data name="home_todayDeletes" xml:space="preserve">
+    <value>عمليات الحذف اليوم</value>
+  </data>
+  <data name="home_todayFailedLogins" xml:space="preserve">
+    <value>محاولات الدخول الفاشلة اليوم</value>
+  </data>
+  <data name="home_todayLogins" xml:space="preserve">
+    <value>تسجيلات الدخول اليوم</value>
+  </data>
+  <data name="home_todayRequestOps" xml:space="preserve">
+    <value>عمليات الطلبات اليوم</value>
+  </data>
+  <data name="home_todayStudentOps" xml:space="preserve">
+    <value>عمليات الطلاب اليوم</value>
+  </data>
+  <data name="home_todayTotalOps" xml:space="preserve">
+    <value>إجمالي عمليات اليوم</value>
+  </data>
+  <data name="home_totalAccounts" xml:space="preserve">
+    <value>إجمالي الحسابات</value>
+  </data>
+  <data name="home_totalStudents" xml:space="preserve">
+    <value>إجمالي الطلاب</value>
+  </data>
+  <data name="home_transferredStudents" xml:space="preserve">
+    <value>الطلاب المنقولون</value>
+  </data>
+  <data name="home_underCyberReview" xml:space="preserve">
+    <value>تحت مراجعة الأمن السيبراني</value>
+  </data>
+  <data name="home_viewAll" xml:space="preserve">
+    <value>عرض الكل</value>
+  </data>
+  <data name="home_welcome" xml:space="preserve">
+    <value>مرحباً،</value>
+  </data>
+  <data name="home_withoutAccounts" xml:space="preserve">
+    <value>بدون حسابات</value>
+  </data>
+  <data name="housingAccounts" xml:space="preserve">
+    <value>حسابات السكن</value>
+  </data>
+  <data name="housingApprove" xml:space="preserve">
+    <value>موافقة إدارة الإسكان</value>
+  </data>
+  <data name="housingBuilding" xml:space="preserve">
+    <value>رقم المبنى السكني</value>
+  </data>
+  <data name="housingInfo" xml:space="preserve">
+    <value>معلومات السكن</value>
+  </data>
+  <data name="housingManagement" xml:space="preserve">
+    <value>إدارة حسابات السكن</value>
+  </data>
+  <data name="housingReject" xml:space="preserve">
+    <value>رفض إسكان</value>
+  </data>
+  <data name="housingStats" xml:space="preserve">
+    <value>إحصائيات السكن</value>
+  </data>
+  <data name="housingTransfer" xml:space="preserve">
+    <value>تحديث بيانات السكن الجامعي</value>
+  </data>
+  <data name="housingTransferDesc" xml:space="preserve">
+    <value>نقل الطالب إلى سكن جامعي جديد وتحديث بيانات السكن</value>
+  </data>
+  <data name="hs_accountsTitle" xml:space="preserve">
+    <value>حسابات السكن</value>
+  </data>
+  <data name="hs_adSearchTitle" xml:space="preserve">
+    <value>بحث في Active Directory</value>
+  </data>
+  <data name="hs_close" xml:space="preserve">
+    <value>إغلاق</value>
+  </data>
+  <data name="hs_colActions" xml:space="preserve">
+    <value>إجراءات</value>
+  </data>
+  <data name="hs_colCollege" xml:space="preserve">
+    <value>الكلية</value>
+  </data>
+  <data name="hs_colLastSync" xml:space="preserve">
+    <value>آخر مزامنة</value>
+  </data>
+  <data name="hs_colNameEn" xml:space="preserve">
+    <value>الاسم بالإنجليزية</value>
+  </data>
+  <data name="hs_colStatus" xml:space="preserve">
+    <value>حالة الحساب</value>
+  </data>
+  <data name="hs_colStudentId" xml:space="preserve">
+    <value>الرقم الجامعي</value>
+  </data>
+  <data name="hs_colUsername" xml:space="preserve">
+    <value>اسم المستخدم</value>
+  </data>
+  <data name="hs_filterAll" xml:space="preserve">
+    <value>الكل</value>
+  </data>
+  <data name="hs_filterDisabled" xml:space="preserve">
+    <value>معطل</value>
+  </data>
+  <data name="hs_filterEnabled" xml:space="preserve">
+    <value>مفعل</value>
+  </data>
+  <data name="hs_filterUnknown" xml:space="preserve">
+    <value>غير معروف</value>
+  </data>
+  <data name="hs_lifecycleLog" xml:space="preserve">
+    <value>سجل دورة الحياة</value>
+  </data>
+  <data name="hs_manageAccount" xml:space="preserve">
+    <value>إدارة الحساب</value>
+  </data>
+  <data name="hs_noStudents" xml:space="preserve">
+    <value>لا يوجد طلاب</value>
+  </data>
+  <data name="hs_refresh" xml:space="preserve">
+    <value>تحديث</value>
+  </data>
+  <data name="hs_search" xml:space="preserve">
+    <value>بحث</value>
+  </data>
+  <data name="hs_searchPlaceholder" xml:space="preserve">
+    <value>ابحث بالاسم أو الرقم الجامعي</value>
+  </data>
+  <data name="inactive" xml:space="preserve">
+    <value>غير نشط</value>
+  </data>
+  <data name="individualRegistration" xml:space="preserve">
+    <value>تسجيل طالب فردي</value>
+  </data>
+  <data name="info" xml:space="preserve">
+    <value>معلومات</value>
+  </data>
+  <data name="infoRequested" xml:space="preserve">
+    <value>تم طلب معلومات إضافية</value>
+  </data>
+  <data name="lifecycleHistory" xml:space="preserve">
+    <value>سجل دورة الحياة</value>
+  </data>
+  <data name="lifecycleLog" xml:space="preserve">
+    <value>سجل دورة الحياة</value>
+  </data>
+  <data name="loading" xml:space="preserve">
+    <value>جاري التحميل...</value>
+  </data>
+  <data name="loginError" xml:space="preserve">
+    <value>اسم المستخدم أو كلمة المرور غير صحيحة</value>
+  </data>
+  <data name="loginRequired" xml:space="preserve">
+    <value>يرجى إدخال اسم المستخدم وكلمة المرور</value>
+  </data>
+  <data name="login_back" xml:space="preserve">
+    <value>الرجوع لبوابة السكن الجامعي</value>
+  </data>
+  <data name="login_brandTitle" xml:space="preserve">
+    <value>نظام إسكان الطلاب والطالبات</value>
+  </data>
+  <data name="login_footer" xml:space="preserve">
+    <value>عمادة التحول الرقمي ومصادر المعرفة - تقنية المعلومات – جامعة نجران 2026</value>
+  </data>
+  <data name="login_loading" xml:space="preserve">
+    <value>جاري تسجيل الدخول…</value>
+  </data>
+  <data name="login_logoAlt" xml:space="preserve">
+    <value>جامعة نجران</value>
+  </data>
+  <data name="login_password" xml:space="preserve">
+    <value>كلمة المرور</value>
+  </data>
+  <data name="login_submit" xml:space="preserve">
+    <value>تسجيل الدخول للنظام</value>
+  </data>
+  <data name="login_username" xml:space="preserve">
+    <value>اسم المستخدم</value>
+  </data>
+  <data name="login_usernamePlaceholder" xml:space="preserve">
+    <value>أدخل اسم المستخدم</value>
+  </data>
+  <data name="logout" xml:space="preserve">
+    <value>تسجيل الخروج</value>
+  </data>
+  <data name="male" xml:space="preserve">
+    <value>ذكر</value>
+  </data>
+  <data name="markAllRead" xml:space="preserve">
+    <value>تحديد الكل مقروء</value>
+  </data>
+  <data name="markCompleted" xml:space="preserve">
+    <value>إكمال</value>
+  </data>
+  <data name="markReadyForProvisioning" xml:space="preserve">
+    <value>تجهيز للتزويد</value>
+  </data>
+  <data name="master" xml:space="preserve">
+    <value>ماجستير</value>
+  </data>
+  <data name="mobileNumber" xml:space="preserve">
+    <value>رقم الجوال</value>
+  </data>
+  <data name="myRequests" xml:space="preserve">
+    <value>طلباتي</value>
+  </data>
+  <data name="nationalId" xml:space="preserve">
+    <value>رقم الهوية الوطنية</value>
+  </data>
+  <data name="nationalIdPlaceholder" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="nationalIdValidation" xml:space="preserve">
+    <value>يجب أن تتكون الهوية الوطنية من 10 أرقام</value>
+  </data>
+  <data name="navMain" xml:space="preserve">
+    <value>الرئيسية</value>
+  </data>
+  <data name="navRequests" xml:space="preserve">
+    <value>الطلبات</value>
+  </data>
+  <data name="navStudents" xml:space="preserve">
+    <value>الطلاب</value>
+  </data>
+  <data name="navSystem" xml:space="preserve">
+    <value>النظام</value>
+  </data>
+  <data name="needMoreInfo" xml:space="preserve">
+    <value>بحاجة لمعلومات إضافية</value>
+  </data>
+  <data name="newHousing" xml:space="preserve">
+    <value>بيانات السكن الجديدة</value>
+  </data>
+  <data name="newPassword" xml:space="preserve">
+    <value>كلمة المرور الجديدة</value>
+  </data>
+  <data name="newPasswordPlaceholder" xml:space="preserve">
+    <value>أدخل كلمة المرور الجديدة</value>
+  </data>
+  <data name="newRegistration" xml:space="preserve">
+    <value>تسجيل جديد</value>
+  </data>
+  <data name="newValue" xml:space="preserve">
+    <value>القيمة الجديدة</value>
+  </data>
+  <data name="next" xml:space="preserve">
+    <value>التالي</value>
+  </data>
+  <data name="no" xml:space="preserve">
+    <value>لا</value>
+  </data>
+  <data name="noAudit" xml:space="preserve">
+    <value>لا توجد سجلات</value>
+  </data>
+  <data name="noData" xml:space="preserve">
+    <value>لا توجد بيانات</value>
+  </data>
+  <data name="noNotifications" xml:space="preserve">
+    <value>لا توجد إشعارات</value>
+  </data>
+  <data name="noRequests" xml:space="preserve">
+    <value>لا توجد طلبات</value>
+  </data>
+  <data name="noResults" xml:space="preserve">
+    <value>لا توجد نتائج</value>
+  </data>
+  <data name="noSecurityAlerts" xml:space="preserve">
+    <value>✓ لا توجد تنبيهات أمان</value>
+  </data>
+  <data name="noStudents" xml:space="preserve">
+    <value>لا يوجد طلاب</value>
+  </data>
+  <data name="notSynced" xml:space="preserve">
+    <value>غير متزامنة</value>
+  </data>
+  <data name="notes" xml:space="preserve">
+    <value>ملاحظات</value>
+  </data>
+  <data name="notifications" xml:space="preserve">
+    <value>الإشعارات</value>
+  </data>
+  <data name="oldValue" xml:space="preserve">
+    <value>القيمة القديمة</value>
+  </data>
+  <data name="optional" xml:space="preserve">
+    <value>اختياري</value>
+  </data>
+  <data name="otpCode" xml:space="preserve">
+    <value>رمز التحقق</value>
+  </data>
+  <data name="otpInvalid" xml:space="preserve">
+    <value>رمز التحقق غير صحيح أو منتهي الصلاحية</value>
+  </data>
+  <data name="otpRateLimit" xml:space="preserve">
+    <value>يرجى الانتظار دقيقة قبل طلب رمز تحقق جديد</value>
+  </data>
+  <data name="otpSent" xml:space="preserve">
+    <value>تم إرسال رمز التحقق</value>
+  </data>
+  <data name="otpVerified" xml:space="preserve">
+    <value>تم التحقق بنجاح</value>
+  </data>
+  <data name="ouPath" xml:space="preserve">
+    <value>مسار OU</value>
+  </data>
+  <data name="password" xml:space="preserve">
+    <value>كلمة المرور</value>
+  </data>
+  <data name="passwordMinLength" xml:space="preserve">
+    <value>كلمة المرور يجب أن تكون 8 أحرف على الأقل</value>
+  </data>
+  <data name="passwordPlaceholder" xml:space="preserve">
+    <value>••••••••</value>
+  </data>
+  <data name="pendingAdmin" xml:space="preserve">
+    <value>بانتظار الإدارة</value>
+  </data>
+  <data name="pendingCyber" xml:space="preserve">
+    <value>بانتظار الأمن السيبراني</value>
+  </data>
+  <data name="pendingRequests" xml:space="preserve">
+    <value>طلبات معلقة</value>
+  </data>
+  <data name="pendingSupervisor" xml:space="preserve">
+    <value>بانتظار المشرف</value>
+  </data>
+  <data name="personalInfo" xml:space="preserve">
+    <value>المعلومات الشخصية</value>
+  </data>
+  <data name="phone" xml:space="preserve">
+    <value>رقم الجوال</value>
+  </data>
+  <data name="phonePlaceholder" xml:space="preserve">
+    <value>9665</value>
+  </data>
+  <data name="phoneValidation" xml:space="preserve">
+    <value>يجب أن يبدأ رقم الجوال بـ 9665 وأن يتكون من 12 رقماً</value>
+  </data>
+  <data name="phoneVerification" xml:space="preserve">
+    <value>التحقق برقم الجوال</value>
+  </data>
+  <data name="policyText" xml:space="preserve">
+    <value>أقر باطلاعي على سياسة الإسكان الجامعي والتزامي بها</value>
+  </data>
+  <data name="previous" xml:space="preserve">
+    <value>السابق</value>
+  </data>
+  <data name="queueEmpty" xml:space="preserve">
+    <value>لا توجد طلبات في قائمة المهام</value>
+  </data>
+  <data name="quickActions" xml:space="preserve">
+    <value>إجراءات سريعة</value>
+  </data>
+  <data name="rd_loadingDetails" xml:space="preserve">
+    <value>جاري تحميل تفاصيل الطلب...</value>
+  </data>
+  <data name="rd_retry" xml:space="preserve">
+    <value>إعادة المحاولة</value>
+  </data>
+  <data name="reProvision" xml:space="preserve">
+    <value>إعادة تزويد</value>
+  </data>
+  <data name="readyForProvisioning" xml:space="preserve">
+    <value>جاهز لإنشاء حساب شبكة السكن</value>
+  </data>
+  <data name="recentActions" xml:space="preserve">
+    <value>آخر الإجراءات</value>
+  </data>
+  <data name="recentActivity" xml:space="preserve">
+    <value>آخر النشاطات</value>
+  </data>
+  <data name="recentlyUpdated" xml:space="preserve">
+    <value>آخر التحديثات</value>
+  </data>
+  <data name="refresh" xml:space="preserve">
+    <value>تحديث</value>
+  </data>
+  <data name="reg_breadcrumbCurrent" xml:space="preserve">
+    <value>تسجيل طالب جديد</value>
+  </data>
+  <data name="reg_breadcrumbHome" xml:space="preserve">
+    <value>الرئيسية</value>
+  </data>
+  <data name="reg_btnRegister" xml:space="preserve">
+    <value>تسجيل طالب جديد</value>
+  </data>
+  <data name="reg_btnReset" xml:space="preserve">
+    <value>مسح</value>
+  </data>
+  <data name="reg_collegeArts" xml:space="preserve">
+    <value>الآداب والعلوم الإنسانية</value>
+  </data>
+  <data name="reg_collegeBusiness" xml:space="preserve">
+    <value>إدارة الأعمال</value>
+  </data>
+  <data name="reg_collegeCS" xml:space="preserve">
+    <value>علوم الحاسب والمعلومات</value>
+  </data>
+  <data name="reg_collegeEducation" xml:space="preserve">
+    <value>التربية</value>
+  </data>
+  <data name="reg_collegeEngineering" xml:space="preserve">
+    <value>الهندسة</value>
+  </data>
+  <data name="reg_collegeMedicine" xml:space="preserve">
+    <value>الطب</value>
+  </data>
+  <data name="reg_collegePharmacy" xml:space="preserve">
+    <value>الصيدلة</value>
+  </data>
+  <data name="reg_collegeScience" xml:space="preserve">
+    <value>العلوم</value>
+  </data>
+  <data name="reg_deptAccounting" xml:space="preserve">
+    <value>المحاسبة</value>
+  </data>
+  <data name="reg_deptArabic" xml:space="preserve">
+    <value>اللغة العربية</value>
+  </data>
+  <data name="reg_deptBiology" xml:space="preserve">
+    <value>الأحياء</value>
+  </data>
+  <data name="reg_deptBusiness" xml:space="preserve">
+    <value>إدارة الأعمال</value>
+  </data>
+  <data name="reg_deptCS" xml:space="preserve">
+    <value>علوم الحاسب والمعلومات</value>
+  </data>
+  <data name="reg_deptChemistry" xml:space="preserve">
+    <value>الكيمياء</value>
+  </data>
+  <data name="reg_deptCivil" xml:space="preserve">
+    <value>الهندسة المدنية</value>
+  </data>
+  <data name="reg_deptComputer" xml:space="preserve">
+    <value>هندسة الحاسب</value>
+  </data>
+  <data name="reg_deptElectrical" xml:space="preserve">
+    <value>الهندسة الكهربائية</value>
+  </data>
+  <data name="reg_deptEnglish" xml:space="preserve">
+    <value>اللغة الإنجليزية</value>
+  </data>
+  <data name="reg_deptIslamic" xml:space="preserve">
+    <value>الدراسات الإسلامية</value>
+  </data>
+  <data name="reg_deptMath" xml:space="preserve">
+    <value>الرياضيات</value>
+  </data>
+  <data name="reg_deptMechanical" xml:space="preserve">
+    <value>الهندسة الميكانيكية</value>
+  </data>
+  <data name="reg_deptPhysics" xml:space="preserve">
+    <value>الفيزياء</value>
+  </data>
+  <data name="reg_errGeneric" xml:space="preserve">
+    <value>حدث خطأ</value>
+  </data>
+  <data name="reg_errRequired" xml:space="preserve">
+    <value>حقل مطلوب</value>
+  </data>
+  <data name="reg_lblAcademicLevel" xml:space="preserve">
+    <value>المستوى الدراسي</value>
+  </data>
+  <data name="reg_lblApartment" xml:space="preserve">
+    <value>رقم الشقة</value>
+  </data>
+  <data name="reg_lblBuilding" xml:space="preserve">
+    <value>المبنى السكني</value>
+  </data>
+  <data name="reg_lblCollege" xml:space="preserve">
+    <value>الكلية</value>
+  </data>
+  <data name="reg_lblDepartment" xml:space="preserve">
+    <value>القسم</value>
+  </data>
+  <data name="reg_lblFullName" xml:space="preserve">
+    <value>الاسم الكامل</value>
+  </data>
+  <data name="reg_lblFullNameEn" xml:space="preserve">
+    <value>الاسم بالإنجليزية</value>
+  </data>
+  <data name="reg_lblGender" xml:space="preserve">
+    <value>الجنس</value>
+  </data>
+  <data name="reg_lblNationalId" xml:space="preserve">
+    <value>رقم الهوية</value>
+  </data>
+  <data name="reg_lblPhone" xml:space="preserve">
+    <value>رقم الجوال</value>
+  </data>
+  <data name="reg_lblRoom" xml:space="preserve">
+    <value>رقم الغرفة</value>
+  </data>
+  <data name="reg_lblStatus" xml:space="preserve">
+    <value>الحالة</value>
+  </data>
+  <data name="reg_lblStudentId" xml:space="preserve">
+    <value>الرقم الجامعي</value>
+  </data>
+  <data name="reg_lblUsername" xml:space="preserve">
+    <value>اسم المستخدم</value>
+  </data>
+  <data name="reg_optFemale" xml:space="preserve">
+    <value>أنثى</value>
+  </data>
+  <data name="reg_optMale" xml:space="preserve">
+    <value>ذكر</value>
+  </data>
+  <data name="reg_optSelectBuilding" xml:space="preserve">
+    <value>اختر المبنى</value>
+  </data>
+  <data name="reg_optSelectCollege" xml:space="preserve">
+    <value>اختر الكلية</value>
+  </data>
+  <data name="reg_optSelectDepartment" xml:space="preserve">
+    <value>اختر القسم</value>
+  </data>
+  <data name="reg_optSelectGender" xml:space="preserve">
+    <value>اختر الجنس</value>
+  </data>
+  <data name="reg_optSelectLevel" xml:space="preserve">
+    <value>اختر المستوى</value>
+  </data>
+  <data name="reg_pageSubtitle" xml:space="preserve">
+    <value>أدخل بيانات الطالب للتسجيل في نظام السكن</value>
+  </data>
+  <data name="reg_pageTitle" xml:space="preserve">
+    <value>تسجيل طالب جديد</value>
+  </data>
+  <data name="reg_phApartment" xml:space="preserve">
+    <value>أدخل رقم الشقة</value>
+  </data>
+  <data name="reg_phFullName" xml:space="preserve">
+    <value>أدخل الاسم الكامل</value>
+  </data>
+  <data name="reg_phFullNameEn" xml:space="preserve">
+    <value>أدخل الاسم بالإنجليزية</value>
+  </data>
+  <data name="reg_phPhone" xml:space="preserve">
+    <value>9665</value>
+  </data>
+  <data name="reg_phRoom" xml:space="preserve">
+    <value>مثال: 101</value>
+  </data>
+  <data name="reg_sectionAcademic" xml:space="preserve">
+    <value>المعلومات الأكاديمية</value>
+  </data>
+  <data name="reg_sectionHousing" xml:space="preserve">
+    <value>معلومات السكن</value>
+  </data>
+  <data name="reg_sectionPersonal" xml:space="preserve">
+    <value>المعلومات الشخصية</value>
+  </data>
+  <data name="reg_statusActive" xml:space="preserve">
+    <value>نشط</value>
+  </data>
+  <data name="reg_statusInactive" xml:space="preserve">
+    <value>غير نشط</value>
+  </data>
+  <data name="reg_toastConnError" xml:space="preserve">
+    <value>تعذر الاتصال بالخادم</value>
+  </data>
+  <data name="reg_toastErrorFmt" xml:space="preserve">
+    <value>خطأ: {0}</value>
+  </data>
+  <data name="reg_toastSuccess" xml:space="preserve">
+    <value>تم تسجيل الطالب بنجاح!</value>
+  </data>
+  <data name="reg_valArabicName" xml:space="preserve">
+    <value>يرجى إدخال الاسم باللغة العربية فقط</value>
+  </data>
+  <data name="reg_valEnglishName" xml:space="preserve">
+    <value>يرجى إدخال الاسم باللغة الإنجليزية فقط</value>
+  </data>
+  <data name="reg_valNationalId" xml:space="preserve">
+    <value>يجب أن يتكون رقم الهوية من 10 أرقام</value>
+  </data>
+  <data name="reg_valPhone" xml:space="preserve">
+    <value>يجب أن يبدأ الرقم بـ 9665 ويتكون من 12 رقمًا</value>
+  </data>
+  <data name="reg_valStudentId" xml:space="preserve">
+    <value>يجب أن يتكون الرقم الجامعي من 10 أرقام</value>
+  </data>
+  <data name="registerBulk" xml:space="preserve">
+    <value>تسجيل جماعي (Excel)</value>
+  </data>
+  <data name="registerNewStatus" xml:space="preserve">
+    <value>تحديث الحالة الأكاديمية للطالب</value>
+  </data>
+  <data name="registerStudent" xml:space="preserve">
+    <value>تسجيل طالب جديد</value>
+  </data>
+  <data name="registrationForm" xml:space="preserve">
+    <value>نموذج التسجيل</value>
+  </data>
+  <data name="registrationManagement" xml:space="preserve">
+    <value>إدارة التسجيل</value>
+  </data>
+  <data name="reject" xml:space="preserve">
+    <value>رفض</value>
+  </data>
+  <data name="rejected" xml:space="preserve">
+    <value>مرفوض</value>
+  </data>
+  <data name="reports" xml:space="preserve">
+    <value>التقارير</value>
+  </data>
+  <data name="req_act_completed" xml:space="preserve">
+    <value>إكمال الطلب</value>
+  </data>
+  <data name="req_act_cyber_approved" xml:space="preserve">
+    <value>موافقة الأمن السيبراني</value>
+  </data>
+  <data name="req_act_cyber_rejected" xml:space="preserve">
+    <value>رفض الأمن السيبراني</value>
+  </data>
+  <data name="req_act_cyber_review" xml:space="preserve">
+    <value>إحالة للأمن السيبراني</value>
+  </data>
+  <data name="req_act_housing_approved" xml:space="preserve">
+    <value>موافقة الإسكان</value>
+  </data>
+  <data name="req_act_housing_rejected" xml:space="preserve">
+    <value>رفض الإسكان</value>
+  </data>
+  <data name="req_act_ready_for_provisioning" xml:space="preserve">
+    <value>جاهز لإنشاء الحساب</value>
+  </data>
+  <data name="req_badge_completed" xml:space="preserve">
+    <value>مكتمل</value>
+  </data>
+  <data name="req_badge_cyber_approved" xml:space="preserve">
+    <value>معتمد</value>
+  </data>
+  <data name="req_badge_cyber_rejected" xml:space="preserve">
+    <value>مرفوض</value>
+  </data>
+  <data name="req_badge_cyber_review" xml:space="preserve">
+    <value>مراجعة</value>
+  </data>
+  <data name="req_badge_housing_approved" xml:space="preserve">
+    <value>موافقة الإسكان</value>
+  </data>
+  <data name="req_badge_housing_rejected" xml:space="preserve">
+    <value>مرفوض</value>
+  </data>
+  <data name="req_badge_ready_for_provisioning" xml:space="preserve">
+    <value>جاهز للإنشاء</value>
+  </data>
+  <data name="req_badge_submitted" xml:space="preserve">
+    <value>مقدم</value>
+  </data>
+  <data name="req_col_action" xml:space="preserve">
+    <value>الإجراء</value>
+  </data>
+  <data name="req_col_date" xml:space="preserve">
+    <value>التاريخ</value>
+  </data>
+  <data name="req_col_stage" xml:space="preserve">
+    <value>المرحلة الحالية</value>
+  </data>
+  <data name="req_col_status" xml:space="preserve">
+    <value>الحالة</value>
+  </data>
+  <data name="req_col_student" xml:space="preserve">
+    <value>الطالب</value>
+  </data>
+  <data name="req_col_type" xml:space="preserve">
+    <value>نوع الطلب</value>
+  </data>
+  <data name="req_confirmChangeFmt" xml:space="preserve">
+    <value>هل تريد تغيير حالة الطلب إلى "{0}"؟</value>
+  </data>
+  <data name="req_lbl_all" xml:space="preserve">
+    <value>الكل</value>
+  </data>
+  <data name="req_lbl_completed" xml:space="preserve">
+    <value>مكتمل</value>
+  </data>
+  <data name="req_lbl_cyberApproved" xml:space="preserve">
+    <value>معتمد</value>
+  </data>
+  <data name="req_lbl_cyberReview" xml:space="preserve">
+    <value>مراجعة الأمن السيبراني</value>
+  </data>
+  <data name="req_lbl_housingApproved" xml:space="preserve">
+    <value>موافقة إدارة الإسكان</value>
+  </data>
+  <data name="req_lbl_readyForProvisioning" xml:space="preserve">
+    <value>جاهز لإنشاء الحساب</value>
+  </data>
+  <data name="req_lbl_rejected" xml:space="preserve">
+    <value>مرفوض</value>
+  </data>
+  <data name="req_lbl_submitted" xml:space="preserve">
+    <value>مقدم</value>
+  </data>
+  <data name="req_next" xml:space="preserve">
+    <value>التالي</value>
+  </data>
+  <data name="req_noRequests" xml:space="preserve">
+    <value>لا توجد طلبات</value>
+  </data>
+  <data name="req_pageInfoFmt" xml:space="preserve">
+    <value>صفحة {0} من {1} — إجمالي {2} طلب</value>
+  </data>
+  <data name="req_pageSubtitle" xml:space="preserve">
+    <value>مراجعة وإدارة جميع طلبات السكن</value>
+  </data>
+  <data name="req_pageTitle" xml:space="preserve">
+    <value>إدارة الطلبات</value>
+  </data>
+  <data name="req_prev" xml:space="preserve">
+    <value>السابق</value>
+  </data>
+  <data name="req_stage_completed" xml:space="preserve">
+    <value>مكتمل</value>
+  </data>
+  <data name="req_stage_cyber_approved" xml:space="preserve">
+    <value>موافقة الأمن السيبراني</value>
+  </data>
+  <data name="req_stage_cyber_rejected" xml:space="preserve">
+    <value>رفض الأمن السيبراني</value>
+  </data>
+  <data name="req_stage_cyber_review" xml:space="preserve">
+    <value>مراجعة الأمن السيبراني</value>
+  </data>
+  <data name="req_stage_housing_approved" xml:space="preserve">
+    <value>موافقة إدارة الإسكان</value>
+  </data>
+  <data name="req_stage_housing_rejected" xml:space="preserve">
+    <value>رفض إسكان</value>
+  </data>
+  <data name="req_stage_ready_for_provisioning" xml:space="preserve">
+    <value>جاهز لإنشاء حساب شبكة السكن</value>
+  </data>
+  <data name="req_stage_submitted" xml:space="preserve">
+    <value>مقدم</value>
+  </data>
+  <data name="req_type_bulk_registration" xml:space="preserve">
+    <value>تسجيل جماعي</value>
+  </data>
+  <data name="req_type_bulk_req" xml:space="preserve">
+    <value>تسجيل جماعي</value>
+  </data>
+  <data name="req_type_registration" xml:space="preserve">
+    <value>تسجيل فردي</value>
+  </data>
+  <data name="req_type_self_registration" xml:space="preserve">
+    <value>تسجيل ذاتي</value>
+  </data>
+  <data name="req_updateFailed" xml:space="preserve">
+    <value>فشل تحديث الطلب</value>
+  </data>
+  <data name="requestApproved" xml:space="preserve">
+    <value>تمت الموافقة على الطلب</value>
+  </data>
+  <data name="requestDetails" xml:space="preserve">
+    <value>تفاصيل الطلب</value>
+  </data>
+  <data name="requestInfo" xml:space="preserve">
+    <value>طلب معلومات إضافية</value>
+  </data>
+  <data name="requestNotFound" xml:space="preserve">
+    <value>الطلب غير موجود</value>
+  </data>
+  <data name="requestNotFoundReview" xml:space="preserve">
+    <value>الطلب غير موجود</value>
+  </data>
+  <data name="requestNumber" xml:space="preserve">
+    <value>رقم الطلب</value>
+  </data>
+  <data name="requestRejected" xml:space="preserve">
+    <value>تم رفض الطلب</value>
+  </data>
+  <data name="requestReview" xml:space="preserve">
+    <value>مراجعة الطلب</value>
+  </data>
+  <data name="requestSent" xml:space="preserve">
+    <value>تم إرسال الطلب</value>
+  </data>
+  <data name="requestSubmitted" xml:space="preserve">
+    <value>تم تقديم الطلب بنجاح</value>
+  </data>
+  <data name="requestTracking" xml:space="preserve">
+    <value>تتبع الطلب</value>
+  </data>
+  <data name="resendOtp" xml:space="preserve">
+    <value>إعادة إرسال الرمز</value>
+  </data>
+  <data name="reset" xml:space="preserve">
+    <value>إعادة تعيين</value>
+  </data>
+  <data name="resetPassword" xml:space="preserve">
+    <value>إعادة تعيين كلمة المرور</value>
+  </data>
+  <data name="restore" xml:space="preserve">
+    <value>استعادة</value>
+  </data>
+  <data name="resubmitRequest" xml:space="preserve">
+    <value>إعادة تقديم الطلب</value>
+  </data>
+  <data name="resubmitSuccess" xml:space="preserve">
+    <value>تم إعادة تقديم الطلب بنجاح</value>
+  </data>
+  <data name="review" xml:space="preserve">
+    <value>مراجعة</value>
+  </data>
+  <data name="roomNumber" xml:space="preserve">
+    <value>رقم الغرفة الجديدة</value>
+  </data>
+  <data name="roomNumberPlaceholder" xml:space="preserve">
+    <value>مثال: 3</value>
+  </data>
+  <data name="roomPlaceholder" xml:space="preserve">
+    <value>مثال: 101</value>
+  </data>
+  <data name="save" xml:space="preserve">
+    <value>حفظ</value>
+  </data>
+  <data name="saveAndResubmit" xml:space="preserve">
+    <value>حفظ وإعادة تقديم</value>
+  </data>
+  <data name="saveStatus" xml:space="preserve">
+    <value>حفظ الحالة</value>
+  </data>
+  <data name="search" xml:space="preserve">
+    <value>بحث</value>
+  </data>
+  <data name="searchADPlaceholder" xml:space="preserve">
+    <value>بحث باسم المستخدم أو الاسم...</value>
+  </data>
+  <data name="searchStudents" xml:space="preserve">
+    <value>بحث عن طالب بالاسم أو الرقم الجامعي...</value>
+  </data>
+  <data name="selectAcademicLevel" xml:space="preserve">
+    <value>اختر المستوى</value>
+  </data>
+  <data name="selectAll" xml:space="preserve">
+    <value>تحديد الكل</value>
+  </data>
+  <data name="selectBuilding" xml:space="preserve">
+    <value>اختر المبنى</value>
+  </data>
+  <data name="selectCollege" xml:space="preserve">
+    <value>اختر الكلية</value>
+  </data>
+  <data name="selectDefault" xml:space="preserve">
+    <value>-- اختر --</value>
+  </data>
+  <data name="selectGender" xml:space="preserve">
+    <value>اختر الجنس</value>
+  </data>
+  <data name="selfRegistration" xml:space="preserve">
+    <value>التسجيل الذاتي</value>
+  </data>
+  <data name="sendOtp" xml:space="preserve">
+    <value>إرسال رمز التحقق</value>
+  </data>
+  <data name="sendToCyber" xml:space="preserve">
+    <value>إحالة لسيبر</value>
+  </data>
+  <data name="serverError" xml:space="preserve">
+    <value>تعذر الاتصال بالخادم</value>
+  </data>
+  <data name="show" xml:space="preserve">
+    <value>عرض</value>
+  </data>
+  <data name="signIn" xml:space="preserve">
+    <value>تسجيل الدخول للنظام</value>
+  </data>
+  <data name="ss_actionReason" xml:space="preserve">
+    <value>سبب الإجراء</value>
+  </data>
+  <data name="ss_actionReasonPlaceholder" xml:space="preserve">
+    <value>أدخل سبب الإجراء (إلزامي، 5 أحرف على الأقل)</value>
+  </data>
+  <data name="ss_activeBadge" xml:space="preserve">
+    <value>نشط</value>
+  </data>
+  <data name="ss_activeLabel" xml:space="preserve">
+    <value>عدد النشطين</value>
+  </data>
+  <data name="ss_attachDocument" xml:space="preserve">
+    <value>إرفاق مستند داعم (اختياري)</value>
+  </data>
+  <data name="ss_by" xml:space="preserve">
+    <value>بواسطة</value>
+  </data>
+  <data name="ss_cancel" xml:space="preserve">
+    <value>إلغاء</value>
+  </data>
+  <data name="ss_chooseFile" xml:space="preserve">
+    <value>اختيار ملف</value>
+  </data>
+  <data name="ss_clear" xml:space="preserve">
+    <value>مسح</value>
+  </data>
+  <data name="ss_completeNewHousing" xml:space="preserve">
+    <value>أكمل بيانات السكن الجديدة</value>
+  </data>
+  <data name="ss_confirmAction" xml:space="preserve">
+    <value>تأكيد الإجراء</value>
+  </data>
+  <data name="ss_confirmDisableYes" xml:space="preserve">
+    <value>نعم، تعطيل الحساب</value>
+  </data>
+  <data name="ss_currentApartment" xml:space="preserve">
+    <value>رقم الشقة الحالية</value>
+  </data>
+  <data name="ss_currentBuilding" xml:space="preserve">
+    <value>رقم المبنى الحالي</value>
+  </data>
+  <data name="ss_currentHousing" xml:space="preserve">
+    <value>بيانات السكن الحالية</value>
+  </data>
+  <data name="ss_currentHousingColonLabel" xml:space="preserve">
+    <value>السكن الحالي:</value>
+  </data>
+  <data name="ss_currentHousingShort" xml:space="preserve">
+    <value>السكن الحالي</value>
+  </data>
+  <data name="ss_currentRoom" xml:space="preserve">
+    <value>رقم الغرفة الحالية</value>
+  </data>
+  <data name="ss_customReason" xml:space="preserve">
+    <value>وصف السبب</value>
+  </data>
+  <data name="ss_customReasonPlaceholder" xml:space="preserve">
+    <value>اكتب وصف السبب</value>
+  </data>
+  <data name="ss_date" xml:space="preserve">
+    <value>التاريخ</value>
+  </data>
+  <data name="ss_disableIntro" xml:space="preserve">
+    <value>سيتم تعطيل حساب الطالب في Active Directory.</value>
+  </data>
+  <data name="ss_dismissedBadge" xml:space="preserve">
+    <value>مفصولون</value>
+  </data>
+  <data name="ss_dismissedDesc" xml:space="preserve">
+    <value>صدر قرار فصل أكاديمي بحق الطالب</value>
+  </data>
+  <data name="ss_dismissedLabel" xml:space="preserve">
+    <value>عدد المفصولين</value>
+  </data>
+  <data name="ss_errorOccurred" xml:space="preserve">
+    <value>حدث خطأ</value>
+  </data>
+  <data name="ss_forbidden" xml:space="preserve">
+    <value>غير مصرح لك بهذا الإجراء</value>
+  </data>
+  <data name="ss_graduatedBadge" xml:space="preserve">
+    <value>خريجون</value>
+  </data>
+  <data name="ss_graduatedDesc" xml:space="preserve">
+    <value>الطالب أكمل متطلبات التخرج بنجاح</value>
+  </data>
+  <data name="ss_graduatedLabel" xml:space="preserve">
+    <value>عدد الخريجين</value>
+  </data>
+  <data name="ss_housingTransferBadge" xml:space="preserve">
+    <value>نقل سكن</value>
+  </data>
+  <data name="ss_infoCurrentStatus" xml:space="preserve">
+    <value>الحالة الحالية</value>
+  </data>
+  <data name="ss_infoStudentId" xml:space="preserve">
+    <value>الرقم الجامعي للطالب</value>
+  </data>
+  <data name="ss_infoStudentName" xml:space="preserve">
+    <value>اسم الطالب</value>
+  </data>
+  <data name="ss_leftHousingBadge" xml:space="preserve">
+    <value>غادر السكن</value>
+  </data>
+  <data name="ss_leftHousingDesc" xml:space="preserve">
+    <value>الطالب غادر السكن الجامعي نهائياً</value>
+  </data>
+  <data name="ss_leftHousingLabel" xml:space="preserve">
+    <value>عدد من غادروا السكن</value>
+  </data>
+  <data name="ss_newApartment" xml:space="preserve">
+    <value>رقم الشقة الجديدة</value>
+  </data>
+  <data name="ss_newApartmentPlaceholder" xml:space="preserve">
+    <value>مثال: 5</value>
+  </data>
+  <data name="ss_newBuilding" xml:space="preserve">
+    <value>رقم المبنى الجديد</value>
+  </data>
+  <data name="ss_newBuildingPlaceholder" xml:space="preserve">
+    <value>مثال: 10</value>
+  </data>
+  <data name="ss_newHousing" xml:space="preserve">
+    <value>بيانات السكن الجديدة</value>
+  </data>
+  <data name="ss_newHousingColonLabel" xml:space="preserve">
+    <value>السكن الجديد:</value>
+  </data>
+  <data name="ss_newHousingShort" xml:space="preserve">
+    <value>السكن الجديد</value>
+  </data>
+  <data name="ss_newRoom" xml:space="preserve">
+    <value>رقم الغرفة الجديدة</value>
+  </data>
+  <data name="ss_newRoomPlaceholder" xml:space="preserve">
+    <value>مثال: 3</value>
+  </data>
+  <data name="ss_noTransfers" xml:space="preserve">
+    <value>لا توجد حالات</value>
+  </data>
+  <data name="ss_noUpdates" xml:space="preserve">
+    <value>لا توجد تحديثات</value>
+  </data>
+  <data name="ss_notes" xml:space="preserve">
+    <value>الملاحظات</value>
+  </data>
+  <data name="ss_notesError" xml:space="preserve">
+    <value>الرجاء إدخال سبب الإجراء (5 أحرف على الأقل)</value>
+  </data>
+  <data name="ss_pageDesc" xml:space="preserve">
+    <value>تسجيل وتحديث الحالة الأكاديمية وبيانات السكن الجامعي للطالب</value>
+  </data>
+  <data name="ss_pageTitle" xml:space="preserve">
+    <value>تحديث حالة الطالب</value>
+  </data>
+  <data name="ss_proceedQuestion" xml:space="preserve">
+    <value>هل تريد المتابعة؟</value>
+  </data>
+  <data name="ss_reasonColonLabel" xml:space="preserve">
+    <value>سبب الإجراء:</value>
+  </data>
+  <data name="ss_reasonShortColonLabel" xml:space="preserve">
+    <value>السبب:</value>
+  </data>
+  <data name="ss_reason_admin_decision" xml:space="preserve">
+    <value>قرار الإدارة</value>
+  </data>
+  <data name="ss_reason_housing_issue" xml:space="preserve">
+    <value>مشكلة سكنية</value>
+  </data>
+  <data name="ss_reason_major_change" xml:space="preserve">
+    <value>تغيير تخصص</value>
+  </data>
+  <data name="ss_reason_other" xml:space="preserve">
+    <value>أخرى</value>
+  </data>
+  <data name="ss_reason_room_maintenance" xml:space="preserve">
+    <value>صيانة غرفة</value>
+  </data>
+  <data name="ss_reason_student_request" xml:space="preserve">
+    <value>طلب الطالب</value>
+  </data>
+  <data name="ss_recentUpdates" xml:space="preserve">
+    <value>آخر التحديثات</value>
+  </data>
+  <data name="ss_selectDefault" xml:space="preserve">
+    <value>-- اختر --</value>
+  </data>
+  <data name="ss_selectTransferReason" xml:space="preserve">
+    <value>اختر سبب النقل</value>
+  </data>
+  <data name="ss_serverError" xml:space="preserve">
+    <value>تعذر الاتصال بالخادم</value>
+  </data>
+  <data name="ss_statusFormTitle" xml:space="preserve">
+    <value>تحديث الحالة الأكاديمية للطالب في السكن الجامعي</value>
+  </data>
+  <data name="ss_statusSaved" xml:space="preserve">
+    <value>تم حفظ الحالة بنجاح</value>
+  </data>
+  <data name="ss_statusType" xml:space="preserve">
+    <value>نوع الحالة</value>
+  </data>
+  <data name="ss_statusTypeError" xml:space="preserve">
+    <value>الرجاء اختيار نوع الحالة</value>
+  </data>
+  <data name="ss_status_active" xml:space="preserve">
+    <value>نشط</value>
+  </data>
+  <data name="ss_status_dismissed" xml:space="preserve">
+    <value>فصل من الكلية</value>
+  </data>
+  <data name="ss_status_graduated" xml:space="preserve">
+    <value>تخرج من الكلية</value>
+  </data>
+  <data name="ss_status_left_housing" xml:space="preserve">
+    <value>ترك الإسكان الجامعي</value>
+  </data>
+  <data name="ss_status_transferred" xml:space="preserve">
+    <value>تحويل إلى جامعة أخرى</value>
+  </data>
+  <data name="ss_studentColonLabel" xml:space="preserve">
+    <value>الطالب:</value>
+  </data>
+  <data name="ss_studentNotFound" xml:space="preserve">
+    <value>الطالب غير موجود</value>
+  </data>
+  <data name="ss_studentNumber" xml:space="preserve">
+    <value>الرقم الجامعي</value>
+  </data>
+  <data name="ss_studentNumberError" xml:space="preserve">
+    <value>الرجاء إدخال رقم جامعي صحيح</value>
+  </data>
+  <data name="ss_studentNumberPlaceholder" xml:space="preserve">
+    <value>مثال: 123456789</value>
+  </data>
+  <data name="ss_totalLabel" xml:space="preserve">
+    <value>إجمالي الطلاب</value>
+  </data>
+  <data name="ss_transferConfirmIntro" xml:space="preserve">
+    <value>سيتم نقل الطالب إلى السكن الجديد:</value>
+  </data>
+  <data name="ss_transferConfirmTitle" xml:space="preserve">
+    <value>تأكيد نقل الطالب</value>
+  </data>
+  <data name="ss_transferConfirmYes" xml:space="preserve">
+    <value>نعم، نقل الطالب</value>
+  </data>
+  <data name="ss_transferFormTitle" xml:space="preserve">
+    <value>تحديث بيانات السكن الجامعي</value>
+  </data>
+  <data name="ss_transferHistory" xml:space="preserve">
+    <value>سجل التنقلات</value>
+  </data>
+  <data name="ss_transferReason" xml:space="preserve">
+    <value>سبب النقل</value>
+  </data>
+  <data name="ss_transferStudent" xml:space="preserve">
+    <value>نقل الطالب</value>
+  </data>
+  <data name="ss_transferSuccess" xml:space="preserve">
+    <value>تم نقل الطالب بنجاح</value>
+  </data>
+  <data name="ss_transferredBadge" xml:space="preserve">
+    <value>محولون</value>
+  </data>
+  <data name="ss_transferredDesc" xml:space="preserve">
+    <value>تم تحويل الطالب إلى جامعة أخرى</value>
+  </data>
+  <data name="ss_transferredLabel" xml:space="preserve">
+    <value>عدد المحولين</value>
+  </data>
+  <data name="ss_unknown" xml:space="preserve">
+    <value>غير معروف</value>
+  </data>
+  <data name="ss_usernameColonLabel" xml:space="preserve">
+    <value>اسم المستخدم:</value>
+  </data>
+  <data name="ss_warningTitle" xml:space="preserve">
+    <value>تحذير</value>
+  </data>
+  <data name="status" xml:space="preserve">
+    <value>الحالة</value>
+  </data>
+  <data name="statusActive" xml:space="preserve">
+    <value>مقيم</value>
+  </data>
+  <data name="statusApproved" xml:space="preserve">
+    <value>مقبول</value>
+  </data>
+  <data name="statusCompleted" xml:space="preserve">
+    <value>مكتمل</value>
+  </data>
+  <data name="statusInactive" xml:space="preserve">
+    <value>غير نشط</value>
+  </data>
+  <data name="statusLeft" xml:space="preserve">
+    <value>غادر</value>
+  </data>
+  <data name="statusPending" xml:space="preserve">
+    <value>معلق</value>
+  </data>
+  <data name="statusReadyForProvisioning" xml:space="preserve">
+    <value>جاهز لإنشاء حساب شبكة السكن</value>
+  </data>
+  <data name="statusRejected" xml:space="preserve">
+    <value>مرفوض</value>
+  </data>
+  <data name="statusSaved" xml:space="preserve">
+    <value>تم تسجيل الحالة بنجاح</value>
+  </data>
+  <data name="statusType" xml:space="preserve">
+    <value>نوع الحالة</value>
+  </data>
+  <data name="statusTypeError" xml:space="preserve">
+    <value>الرجاء اختيار نوع الحالة</value>
+  </data>
+  <data name="stu_active" xml:space="preserve">
+    <value>نشط</value>
+  </data>
+  <data name="stu_addNew" xml:space="preserve">
+    <value>+ تسجيل طالب جديد</value>
+  </data>
+  <data name="stu_badge_left" xml:space="preserve">
+    <value>غادر</value>
+  </data>
+  <data name="stu_col_academic" xml:space="preserve">
+    <value>الوضع الأكاديمي</value>
+  </data>
+  <data name="stu_col_building" xml:space="preserve">
+    <value>المبنى</value>
+  </data>
+  <data name="stu_col_college" xml:space="preserve">
+    <value>الكلية</value>
+  </data>
+  <data name="stu_col_delete" xml:space="preserve">
+    <value>حذف</value>
+  </data>
+  <data name="stu_col_level" xml:space="preserve">
+    <value>المستوى الدراسي</value>
+  </data>
+  <data name="stu_col_name" xml:space="preserve">
+    <value>الاسم</value>
+  </data>
+  <data name="stu_col_nameEn" xml:space="preserve">
+    <value>الاسم بالإنجليزية</value>
+  </data>
+  <data name="stu_col_nationalId" xml:space="preserve">
+    <value>رقم الهوية</value>
+  </data>
+  <data name="stu_col_phone" xml:space="preserve">
+    <value>الجوال</value>
+  </data>
+  <data name="stu_col_room" xml:space="preserve">
+    <value>الغرفة</value>
+  </data>
+  <data name="stu_col_status" xml:space="preserve">
+    <value>الحالة</value>
+  </data>
+  <data name="stu_col_studentId" xml:space="preserve">
+    <value>رقم الطالب</value>
+  </data>
+  <data name="stu_confirmDelete" xml:space="preserve">
+    <value>متأكد من حذف الطالب؟</value>
+  </data>
+  <data name="stu_delete" xml:space="preserve">
+    <value>حذف</value>
+  </data>
+  <data name="stu_deleteFailed" xml:space="preserve">
+    <value>تعذر حذف الطالب</value>
+  </data>
+  <data name="stu_leftLabel" xml:space="preserve">
+    <value>مغادر</value>
+  </data>
+  <data name="stu_next" xml:space="preserve">
+    <value>التالي</value>
+  </data>
+  <data name="stu_noResults" xml:space="preserve">
+    <value>لا توجد نتائج</value>
+  </data>
+  <data name="stu_pageInfoFmt" xml:space="preserve">
+    <value>صفحة {0} من {1} — إجمالي {2} طالب</value>
+  </data>
+  <data name="stu_pending" xml:space="preserve">
+    <value>قيد الانتظار</value>
+  </data>
+  <data name="stu_prev" xml:space="preserve">
+    <value>السابق</value>
+  </data>
+  <data name="stu_registered" xml:space="preserve">
+    <value>الطلاب المسجلون</value>
+  </data>
+  <data name="stu_resident" xml:space="preserve">
+    <value>مقيم</value>
+  </data>
+  <data name="stu_searchPlaceholder" xml:space="preserve">
+    <value>بحث بالاسم / الرقم الجامعي / الهوية / الجوال...</value>
+  </data>
+  <data name="stu_status_active" xml:space="preserve">
+    <value>نشط</value>
+  </data>
+  <data name="stu_status_dismissed" xml:space="preserve">
+    <value>فصل من الكلية</value>
+  </data>
+  <data name="stu_status_graduated" xml:space="preserve">
+    <value>تخرج من الكلية</value>
+  </data>
+  <data name="stu_status_left_housing" xml:space="preserve">
+    <value>ترك السكن</value>
+  </data>
+  <data name="stu_status_transferred" xml:space="preserve">
+    <value>تحويل لجامعة أخرى</value>
+  </data>
+  <data name="stu_total" xml:space="preserve">
+    <value>إجمالي الطلاب</value>
+  </data>
+  <data name="studentDeleted" xml:space="preserve">
+    <value>تم حذف الطالب بنجاح!</value>
+  </data>
+  <data name="studentId" xml:space="preserve">
+    <value>الرقم الجامعي</value>
+  </data>
+  <data name="studentIdLengthValidation" xml:space="preserve">
+    <value>يجب أن يتكون الرقم الجامعي من 9 أرقام</value>
+  </data>
+  <data name="studentIdPlaceholder" xml:space="preserve">
+    <value></value>
+  </data>
+  <data name="studentIdStartValidation" xml:space="preserve">
+    <value>يجب أن يبدأ الرقم الجامعي بالرقم 4</value>
+  </data>
+  <data name="studentIdValidation" xml:space="preserve">
+    <value>يجب أن يتكون الرقم الجامعي من 9 أو 10 أرقام</value>
+  </data>
+  <data name="studentName" xml:space="preserve">
+    <value>الطالب</value>
+  </data>
+  <data name="studentNotFound" xml:space="preserve">
+    <value>الطالب غير موجود</value>
+  </data>
+  <data name="studentNumber" xml:space="preserve">
+    <value>رقم الطالب</value>
+  </data>
+  <data name="studentNumberError" xml:space="preserve">
+    <value>الرجاء إدخال رقم جامعي صحيح</value>
+  </data>
+  <data name="studentNumberPlaceholder" xml:space="preserve">
+    <value>مثال: 123456789</value>
+  </data>
+  <data name="studentRegistered" xml:space="preserve">
+    <value>تم تسجيل الطالب بنجاح!</value>
+  </data>
+  <data name="studentStatus" xml:space="preserve">
+    <value>حالة الطالب</value>
+  </data>
+  <data name="studentStatusActive" xml:space="preserve">
+    <value>نشط</value>
+  </data>
+  <data name="studentStatusDesc" xml:space="preserve">
+    <value>تسجيل وتحديث الحالة الأكاديمية للطلاب (تخرج، فصل، تحويل)</value>
+  </data>
+  <data name="studentStatusDismissed" xml:space="preserve">
+    <value>فصل من الكلية</value>
+  </data>
+  <data name="studentStatusDismissedDesc" xml:space="preserve">
+    <value>صدر قرار فصل أكاديمي بحق الطالب</value>
+  </data>
+  <data name="studentStatusGraduated" xml:space="preserve">
+    <value>تخرج من الكلية</value>
+  </data>
+  <data name="studentStatusGraduatedDesc" xml:space="preserve">
+    <value>الطالب أكمل متطلبات التخرج بنجاح</value>
+  </data>
+  <data name="studentStatusLeftHousing" xml:space="preserve">
+    <value>غادر الإسكان الجامعي</value>
+  </data>
+  <data name="studentStatusLeftHousingDesc" xml:space="preserve">
+    <value>الطالب غادر السكن الجامعي نهائياً</value>
+  </data>
+  <data name="studentStatusTransferred" xml:space="preserve">
+    <value>تحويل إلى جامعة أخرى</value>
+  </data>
+  <data name="studentStatusTransferredDesc" xml:space="preserve">
+    <value>تم تحويل الطالب إلى جامعة أخرى</value>
+  </data>
+  <data name="studentUpdated" xml:space="preserve">
+    <value>تم تحديث الطالب بنجاح!</value>
+  </data>
+  <data name="studentsList" xml:space="preserve">
+    <value>قائمة الطلاب</value>
+  </data>
+  <data name="studentsWithAccounts" xml:space="preserve">
+    <value>طلاب لديهم حسابات</value>
+  </data>
+  <data name="studentsWithoutAccounts" xml:space="preserve">
+    <value>طلاب بدون حسابات</value>
+  </data>
+  <data name="submissionDate" xml:space="preserve">
+    <value>تاريخ التقديم</value>
+  </data>
+  <data name="submitRequest" xml:space="preserve">
+    <value>تقديم الطلب</value>
+  </data>
+  <data name="success" xml:space="preserve">
+    <value>نجاح</value>
+  </data>
+  <data name="supportingDocument" xml:space="preserve">
+    <value>إرفاق مستند داعم (اختياري)</value>
+  </data>
+  <data name="syncAttributes" xml:space="preserve">
+    <value>مزامنة الخصائص</value>
+  </data>
+  <data name="syncedToday" xml:space="preserve">
+    <value>المزامنة اليوم</value>
+  </data>
+  <data name="time" xml:space="preserve">
+    <value>الوقت</value>
+  </data>
+  <data name="total" xml:space="preserve">
+    <value>المجموع</value>
+  </data>
+  <data name="totalAccounts" xml:space="preserve">
+    <value>إجمالي الحسابات</value>
+  </data>
+  <data name="totalRecords" xml:space="preserve">
+    <value>إجمالي السجلات</value>
+  </data>
+  <data name="totalStudents" xml:space="preserve">
+    <value>إجمالي الطلاب</value>
+  </data>
+  <data name="transferConfirmIntro" xml:space="preserve">
+    <value>سيتم نقل الطالب إلى السكن الجديد:</value>
+  </data>
+  <data name="transferConfirmQuestion" xml:space="preserve">
+    <value>هل تريد المتابعة؟</value>
+  </data>
+  <data name="transferConfirmTitle" xml:space="preserve">
+    <value>تأكيد نقل الطالب</value>
+  </data>
+  <data name="transferConfirmYes" xml:space="preserve">
+    <value>نعم، نقل الطالب</value>
+  </data>
+  <data name="transferNoHousingData" xml:space="preserve">
+    <value>الطالب لا يمتلك بيانات سكن حالية</value>
+  </data>
+  <data name="transferReason" xml:space="preserve">
+    <value>سبب النقل</value>
+  </data>
+  <data name="transferReasonAdminDecision" xml:space="preserve">
+    <value>قرار الإدارة</value>
+  </data>
+  <data name="transferReasonHousingIssue" xml:space="preserve">
+    <value>مشكلة سكنية</value>
+  </data>
+  <data name="transferReasonMaintenance" xml:space="preserve">
+    <value>صيانة غرفة</value>
+  </data>
+  <data name="transferReasonMajorChange" xml:space="preserve">
+    <value>تغيير تخصص</value>
+  </data>
+  <data name="transferReasonOther" xml:space="preserve">
+    <value>أخرى</value>
+  </data>
+  <data name="transferReasonRequired" xml:space="preserve">
+    <value>الرجاء اختيار سبب النقل</value>
+  </data>
+  <data name="transferReasonStudentRequest" xml:space="preserve">
+    <value>طلب الطالب</value>
+  </data>
+  <data name="transferStudent" xml:space="preserve">
+    <value>نقل الطالب</value>
+  </data>
+  <data name="transferSuccess" xml:space="preserve">
+    <value>تم نقل الطالب بنجاح</value>
+  </data>
+  <data name="university" xml:space="preserve">
+    <value>جامعة نجران</value>
+  </data>
+  <data name="unknown" xml:space="preserve">
+    <value>غير معروف</value>
+  </data>
+  <data name="updateStudentStatus" xml:space="preserve">
+    <value>تحديث حالة الطالب</value>
+  </data>
+  <data name="updateStudentStatusDesc" xml:space="preserve">
+    <value>تسجيل وتحديث الحالة الأكاديمية وبيانات السكن الجامعي للطالب</value>
+  </data>
+  <data name="username" xml:space="preserve">
+    <value>اسم المستخدم</value>
+  </data>
+  <data name="usernameLabel" xml:space="preserve">
+    <value>اسم المستخدم (الرقم الجامعي)</value>
+  </data>
+  <data name="usernamePlaceholder" xml:space="preserve">
+    <value>أدخل اسم المستخدم</value>
+  </data>
+  <data name="verify" xml:space="preserve">
+    <value>تحقق</value>
+  </data>
+  <data name="version" xml:space="preserve">
+    <value>الإصدار</value>
+  </data>
+  <data name="warning" xml:space="preserve">
+    <value>تحذير</value>
+  </data>
+  <data name="workflowQueue" xml:space="preserve">
+    <value>قائمة المهام</value>
+  </data>
+  <data name="yes" xml:space="preserve">
+    <value>نعم</value>
+  </data>
+  <data name="rep_1" xml:space="preserve">
+    <value>مركز التقارير</value>
+  </data>
+  <data name="rep_2" xml:space="preserve">
+    <value>تقارير تحليلية وأمنية للنظام</value>
+  </data>
+  <data name="rep_3" xml:space="preserve">
+    <value>الكل</value>
+  </data>
+  <data name="rep_4" xml:space="preserve">
+    <value>تسجيل الدخول</value>
+  </data>
+  <data name="rep_5" xml:space="preserve">
+    <value>عمليات الطلاب</value>
+  </data>
+  <data name="rep_6" xml:space="preserve">
+    <value>عمليات الطلبات</value>
+  </data>
+  <data name="rep_7" xml:space="preserve">
+    <value>التقارير الأمنية</value>
+  </data>
+  <data name="rep_8" xml:space="preserve">
+    <value>آخر 24 ساعة</value>
+  </data>
+  <data name="rep_9" xml:space="preserve">
+    <value>آخر 7 أيام</value>
+  </data>
+  <data name="rep_10" xml:space="preserve">
+    <value>آخر 30 يوم</value>
+  </data>
+  <data name="rep_11" xml:space="preserve">
+    <value>هذا الشهر</value>
+  </data>
+  <data name="rep_12" xml:space="preserve">
+    <value>الشهر الماضي</value>
+  </data>
+  <data name="rep_13" xml:space="preserve">
+    <value>هذه السنة</value>
+  </data>
+  <data name="rep_14" xml:space="preserve">
+    <value>إجمالي العمليات</value>
+  </data>
+  <data name="rep_15" xml:space="preserve">
+    <value>مستخدمون نشطون</value>
+  </data>
+  <data name="rep_16" xml:space="preserve">
+    <value>عمليات طلاب</value>
+  </data>
+  <data name="rep_17" xml:space="preserve">
+    <value>عمليات طلبات</value>
+  </data>
+  <data name="rep_18" xml:space="preserve">
+    <value>فاشلة اليوم</value>
+  </data>
+  <data name="rep_19" xml:space="preserve">
+    <value>حذف اليوم</value>
+  </data>
+  <data name="rep_20" xml:space="preserve">
+    <value>من تاريخ</value>
+  </data>
+  <data name="rep_21" xml:space="preserve">
+    <value>إلى تاريخ</value>
+  </data>
+  <data name="rep_22" xml:space="preserve">
+    <value>المستخدم</value>
+  </data>
+  <data name="rep_23" xml:space="preserve">
+    <value>العملية</value>
+  </data>
+  <data name="rep_24" xml:space="preserve">
+    <value>بحث</value>
+  </data>
+  <data name="rep_25" xml:space="preserve">
+    <value>تطبيق</value>
+  </data>
+  <data name="rep_26" xml:space="preserve">
+    <value>العمليات آخر 7 أيام</value>
+  </data>
+  <data name="rep_27" xml:space="preserve">
+    <value>تسجيل الدخول 30 يوم</value>
+  </data>
+  <data name="rep_28" xml:space="preserve">
+    <value>إجمالي</value>
+  </data>
+  <data name="rep_29" xml:space="preserve">
+    <value>طلاب</value>
+  </data>
+  <data name="rep_30" xml:space="preserve">
+    <value>طلبات</value>
+  </data>
+  <data name="rep_31" xml:space="preserve">
+    <value>تنبيهات الأمان</value>
+  </data>
+  <data name="rep_32" xml:space="preserve">
+    <value>تحديث</value>
+  </data>
+  <data name="rep_33" xml:space="preserve">
+    <value>جاري التحميل...</value>
+  </data>
+  <data name="rep_34" xml:space="preserve">
+    <value>ملخص تنفيذي</value>
+  </data>
+  <data name="rep_35" xml:space="preserve">
+    <value>مؤشرات الأداء</value>
+  </data>
+  <data name="rep_36" xml:space="preserve">
+    <value>متوسط العمليات/يوم</value>
+  </data>
+  <data name="rep_37" xml:space="preserve">
+    <value>أكثر يوم نشاطاً</value>
+  </data>
+  <data name="rep_38" xml:space="preserve">
+    <value>آخر نشاط</value>
+  </data>
+  <data name="rep_39" xml:space="preserve">
+    <value>مستخدمون فريدون</value>
+  </data>
+  <data name="rep_40" xml:space="preserve">
+    <value>أكثر المستخدمين نشاطاً</value>
+  </data>
+  <data name="rep_41" xml:space="preserve">
+    <value>أكثر الإجراءات شيوعاً</value>
+  </data>
+  <data name="rep_42" xml:space="preserve">
+    <value>الإجراء</value>
+  </data>
+  <data name="rep_43" xml:space="preserve">
+    <value>الجدول</value>
+  </data>
+  <data name="rep_44" xml:space="preserve">
+    <value>المعرف</value>
+  </data>
+  <data name="rep_45" xml:space="preserve">
+    <value>التاريخ</value>
+  </data>
+  <data name="rep_46" xml:space="preserve">
+    <value>Excel</value>
+  </data>
+  <data name="rep_47" xml:space="preserve">
+    <value>PDF</value>
+  </data>
+  <data name="rep_48" xml:space="preserve">
+    <value>طباعة</value>
+  </data>
+  <data name="rep_49" xml:space="preserve">
+    <value>عرض</value>
+  </data>
+  <data name="rep_50" xml:space="preserve">
+    <value>سجل</value>
+  </data>
+  <data name="rep_51" xml:space="preserve">
+    <value>السابق</value>
+  </data>
+  <data name="rep_52" xml:space="preserve">
+    <value>التالي</value>
+  </data>
+  <data name="rep_53" xml:space="preserve">
+    <value>تفاصيل</value>
+  </data>
+  <data name="rep_54" xml:space="preserve">
+    <value>المعرف</value>
+  </data>
+</root>

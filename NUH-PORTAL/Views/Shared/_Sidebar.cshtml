@@ -1,56 +1,56 @@
-@* السايدبار الموحد — نفس ماركب الصفحات الحالية بالظبط وبيتنسق من site.css *@
+@* السايدبار الموحد — النصوص من SharedResource (.resx) فبتتبع لغة الواجهة تلقائيًا *@
 <aside class="sidebar">
   <div class="sidebar-logo">
     <div class="sidebar-logo-image-container">
-      <img src="/nu-logo.png" alt="جامعة نجران">
+      <img src="/nu-logo.png" alt="@SharedLocalizer["Brand_Sub"]">
     </div>
-    <div class="sidebar-logo-title">نظام إسكان الطلاب والطالبات</div>
-    <div class="sidebar-logo-sub">جامعة نجران</div>
+    <div class="sidebar-logo-title">@SharedLocalizer["Brand_Title"]</div>
+    <div class="sidebar-logo-sub">@SharedLocalizer["Brand_Sub"]</div>
   </div>
 
   <nav class="sidebar-nav">
-    <div class="nav-section">الرئيسية</div>
+    <div class="nav-section">@SharedLocalizer["Nav_Section_Main"]</div>
     <a class="nav-item" href="/Home">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-      <span>لوحة التحكم</span>
+      <span>@SharedLocalizer["Nav_Dashboard"]</span>
     </a>
 
-    <div class="nav-section">الطلاب</div>
+    <div class="nav-section">@SharedLocalizer["Nav_Section_Students"]</div>
     <a class="nav-item" href="/Students">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-      <span>قائمة الطلاب</span>
+      <span>@SharedLocalizer["Nav_StudentsList"]</span>
     </a>
     <a class="nav-item" href="/Register">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
-      <span>تسجيل فردي</span>
+      <span>@SharedLocalizer["Nav_RegisterSingle"]</span>
     </a>
     <a class="nav-item" href="/Bulk">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 11 9 11 11 13 11 13 12 10 12 10 9"/></svg>
-      <span>تسجيل جماعي (Excel)</span>
+      <span>@SharedLocalizer["Nav_BulkExcel"]</span>
     </a>
     <a class="nav-item" href="/StudentStatus">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-      <span>تحديث حالة الطالب</span>
+      <span>@SharedLocalizer["Nav_UpdateStatus"]</span>
     </a>
 
-    <div class="nav-section">الطلبات</div>
+    <div class="nav-section">@SharedLocalizer["Nav_Section_Requests"]</div>
     <a class="nav-item" href="/Requests">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-      <span>كل الطلبات</span>
+      <span>@SharedLocalizer["Nav_AllRequests"]</span>
     </a>
     <a class="nav-item" href="/Housing">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-      <span>إدارة السكن</span>
+      <span>@SharedLocalizer["Nav_Housing"]</span>
     </a>
 
-    <div class="nav-section">النظام</div>
+    <div class="nav-section">@SharedLocalizer["Nav_Section_System"]</div>
     <a class="nav-item" href="/Reports">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-      <span>التقارير</span>
+      <span>@SharedLocalizer["Nav_Reports"]</span>
     </a>
     <a class="nav-item" href="/AuditLog">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      <span>سجل العمليات</span>
+      <span>@SharedLocalizer["Nav_AuditLog"]</span>
     </a>
   </nav>
 
@@ -66,7 +66,7 @@
       @Html.AntiForgeryToken()
       <button class="logout-btn" type="submit">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        <span>تسجيل الخروج</span>
+        <span>@SharedLocalizer["Logout"]</span>
       </button>
     </form>
   </div>

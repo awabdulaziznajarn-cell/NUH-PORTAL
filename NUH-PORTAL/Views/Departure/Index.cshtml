@@ -1,5 +1,5 @@
 @{
-    ViewData["Title"] = "تحديث حالة الطالب (المشرف)";
+    ViewData["Title"] = SharedLocalizer["Page_Departure"].Value;
 }
 
 <style>
@@ -53,8 +53,8 @@
 </style>
 
     <div class="page-header">
-      <h2 data-i18n="updateStudentStatus">تحديث حالة الطالب</h2>
-      <p data-i18n="updateStudentStatusDesc">تسجيل وتحديث الحالة الأكاديمية وبيانات السكن الجامعي للطالب</p>
+      <h2 >@SharedLocalizer["updateStudentStatus"]</h2>
+      <p >@SharedLocalizer["updateStudentStatusDesc"]</p>
     </div>
 
     <div class="form-card">
@@ -62,16 +62,16 @@
         <div class="form-card-header-icon">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         </div>
-        <div class="form-card-title" data-i18n="registerNewStatus">تحديث الحالة الأكاديمية للطالب</div>
+        <div class="form-card-title" >@SharedLocalizer["registerNewStatus"]</div>
       </div>
       <div class="form-card-body">
         <div class="form-grid">
           <div class="field full">
-            <label data-i18n="studentNumber">الرقم الجامعي <span style="color:#EF4444">*</span></label>
+            <label >@SharedLocalizer["studentNumber"]<span style="color:#EF4444">*</span></label>
             <div class="input-wrap">
-              <input type="text" id="studentNumber" data-i18n-placeholder="studentNumberPlaceholder" placeholder="مثال: 123456789" autocomplete="off">
+              <input type="text" id="studentNumber" placeholder='@(SharedLocalizer["studentNumberPlaceholder"].Value)' autocomplete="off">
             </div>
-            <div class="field-error" id="studentNumberError" data-i18n="studentNumberError">الرجاء إدخال رقم جامعي صحيح</div>
+            <div class="field-error" id="studentNumberError" >@SharedLocalizer["studentNumberError"]</div>
           </div>
 
           <div id="studentInfo" style="display:none;grid-column:1/-1;padding:12px 16px;border-radius:10px;background:var(--gray-50)">
@@ -79,55 +79,55 @@
           </div>
 
           <div class="field full">
-            <label data-i18n="statusType">نوع الحالة <span style="color:#EF4444">*</span></label>
+            <label >@SharedLocalizer["statusType"]<span style="color:#EF4444">*</span></label>
             <div id="statusOptions">
               <div class="status-option" data-value="graduated" onclick="selectStatus(this)">
                 <input type="radio" name="statusType" value="graduated">
                 <div>
-                  <div class="status-option-text" data-i18n="studentStatusGraduated">تخرج من الكلية</div>
-                  <div class="status-option-desc" data-i18n="studentStatusGraduatedDesc">الطالب أكمل متطلبات التخرج بنجاح</div>
+                  <div class="status-option-text" >@SharedLocalizer["studentStatusGraduated"]</div>
+                  <div class="status-option-desc" >@SharedLocalizer["studentStatusGraduatedDesc"]</div>
                 </div>
               </div>
               <div class="status-option" data-value="dismissed" onclick="selectStatus(this)">
                 <input type="radio" name="statusType" value="dismissed">
                 <div>
-                  <div class="status-option-text" data-i18n="studentStatusDismissed">فصل من الكلية</div>
-                  <div class="status-option-desc" data-i18n="studentStatusDismissedDesc">صدر قرار فصل أكاديمي بحق الطالب</div>
+                  <div class="status-option-text" >@SharedLocalizer["studentStatusDismissed"]</div>
+                  <div class="status-option-desc" >@SharedLocalizer["studentStatusDismissedDesc"]</div>
                 </div>
               </div>
               <div class="status-option" data-value="transferred" onclick="selectStatus(this)">
                 <input type="radio" name="statusType" value="transferred">
                 <div>
-                  <div class="status-option-text" data-i18n="studentStatusTransferred">تحويل إلى جامعة أخرى</div>
-                  <div class="status-option-desc" data-i18n="studentStatusTransferredDesc">تم تحويل الطالب إلى جامعة أخرى</div>
+                  <div class="status-option-text" >@SharedLocalizer["studentStatusTransferred"]</div>
+                  <div class="status-option-desc" >@SharedLocalizer["studentStatusTransferredDesc"]</div>
                 </div>
               </div>
               <div class="status-option" data-value="left_housing" onclick="selectStatus(this)">
                 <input type="radio" name="statusType" value="left_housing">
                 <div>
-                  <div class="status-option-text" data-i18n="studentStatusLeftHousing">غادر الإسكان الجامعي</div>
-                  <div class="status-option-desc" data-i18n="studentStatusLeftHousingDesc">الطالب غادر السكن الجامعي نهائياً</div>
+                  <div class="status-option-text" >@SharedLocalizer["studentStatusLeftHousing"]</div>
+                  <div class="status-option-desc" >@SharedLocalizer["studentStatusLeftHousingDesc"]</div>
                 </div>
               </div>
             </div>
-            <div class="field-error" id="statusTypeError" data-i18n="statusTypeError">الرجاء اختيار نوع الحالة</div>
+            <div class="field-error" id="statusTypeError" >@SharedLocalizer["statusTypeError"]</div>
           </div>
 
           <div class="field full">
-            <label data-i18n="actionReason">سبب الإجراء <span style="color:#EF4444">*</span></label>
+            <label >@SharedLocalizer["actionReason"]<span style="color:#EF4444">*</span></label>
             <div class="input-wrap">
-              <textarea id="notes" data-i18n-placeholder="actionReasonPlaceholder" style="width:100%;height:100px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:10px;padding:12px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;color:var(--navy-dark);direction:inherit;outline:none;resize:vertical;transition:all .2s" placeholder="أدخل سبب الإجراء (إلزامي، 5 أحرف على الأقل)"></textarea>
+              <textarea id="notes" style="width:100%;height:100px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:10px;padding:12px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;color:var(--navy-dark);direction:inherit;outline:none;resize:vertical;transition:all .2s"  placeholder='@(SharedLocalizer["actionReasonPlaceholder"].Value)'></textarea>
             </div>
-            <div class="field-error" id="notesError" data-i18n="actionReasonError">الرجاء إدخال سبب الإجراء (5 أحرف على الأقل)</div>
+            <div class="field-error" id="notesError" >@SharedLocalizer["actionReasonError"]</div>
           </div>
 
           <div class="field full">
-            <label data-i18n="supportingDocument">إرفاق مستند داعم (اختياري)</label>
+            <label >@SharedLocalizer["supportingDocument"]</label>
             <div class="file-upload-wrap">
               <input type="file" id="attachmentFile" accept=".pdf,.jpg,.jpeg,.png,.docx" onchange="updateFileName(this)">
               <div class="file-upload-btn">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                <span data-i18n="chooseFile">اختيار ملف</span>
+                <span >@SharedLocalizer["chooseFile"]</span>
               </div>
             </div>
             <div class="file-name" id="fileName"></div>
@@ -136,10 +136,10 @@
 
         <div style="margin-top:24px;display:flex;gap:12px">
           <button class="btn btn-primary" id="submitBtn" onclick="handleSubmit()" disabled>
-            <span data-i18n="confirmAction">تأكيد الإجراء</span>
+            <span >@SharedLocalizer["confirmAction"]</span>
           </button>
           <button class="btn" style="background:var(--gray-100);color:var(--gray-700)" onclick="resetForm()">
-            <span data-i18n="clear">مسح</span>
+            <span >@SharedLocalizer["clear"]</span>
           </button>
         </div>
       </div>
@@ -147,10 +147,10 @@
 
     <div class="card">
       <div class="card-header">
-        <div class="card-title" data-i18n="recentActions">آخر الإجراءات</div>
+        <div class="card-title" >@SharedLocalizer["recentActions"]</div>
       </div>
       <div class="history-list" id="historyList">
-        <div style="text-align:center;padding:30px;color:var(--gray-500)" data-i18n="noData">لا توجد حالات</div>
+        <div style="text-align:center;padding:30px;color:var(--gray-500)" >@SharedLocalizer["noData"]</div>
       </div>
     </div>
 
@@ -162,18 +162,18 @@
     <div class="modal-icon">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
     </div>
-    <div class="modal-title" data-i18n="confirmDisableTitle">تحذير</div>
+    <div class="modal-title" >@SharedLocalizer["confirmDisableTitle"]</div>
     <div class="modal-body" id="confirmBody">
-      <p data-i18n="confirmDisableIntro">سيتم تعطيل حساب الطالب في شبكة الإسكان.</p>
+      <p >@SharedLocalizer["confirmDisableIntro"]</p>
       <hr class="modal-divider">
-      <p><strong data-i18n="adUsernameLabel">اسم المستخدم:</strong> <span id="confirmUsername">--</span></p>
-      <p><strong data-i18n="actionReasonLabel">سبب الإجراء:</strong> <span id="confirmStatus">--</span></p>
+      <p><strong >@SharedLocalizer["adUsernameLabel"]</strong> <span id="confirmUsername">--</span></p>
+      <p><strong >@SharedLocalizer["actionReasonLabel"]</strong> <span id="confirmStatus">--</span></p>
       <hr class="modal-divider">
-      <p data-i18n="confirmDisableQuestion">هل تريد المتابعة؟</p>
+      <p >@SharedLocalizer["confirmDisableQuestion"]</p>
     </div>
     <div class="modal-actions">
-      <button class="btn" style="background:var(--gray-100);color:var(--gray-700)" onclick="closeConfirmDialog()" data-i18n="cancel">إلغاء</button>
-      <button class="btn btn-primary" id="confirmYesBtn" onclick="executeSubmit()" style="background:#991B1B;color:#fff" data-i18n="confirmDisableYes">نعم، تعطيل الحساب</button>
+      <button class="btn" style="background:var(--gray-100);color:var(--gray-700)" onclick="closeConfirmDialog()" >@SharedLocalizer["cancel"]</button>
+      <button class="btn btn-primary" id="confirmYesBtn" onclick="executeSubmit()" style="background:#991B1B;color:#fff" >@SharedLocalizer["confirmDisableYes"]</button>
     </div>
   </div>
 </div>

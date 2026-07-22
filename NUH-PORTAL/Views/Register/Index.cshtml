@@ -1,5 +1,5 @@
 @{
-    ViewData["Title"] = "تسجيل طالب جديد";
+    ViewData["Title"] = SharedLocalizer["Page_Register"].Value;
     var role = (User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "").ToLowerInvariant();
     var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0";
     var canRegister = role != "user" && role != "cyber";
@@ -40,13 +40,13 @@
 </style>
 
 <div class="breadcrumb">
-  <a href="/Home">الرئيسية</a>
+  <a href="/Home" >@SharedLocalizer["reg_breadcrumbHome"]</a>
   <span>›</span>
-  <span>تسجيل طالب جديد</span>
+  <span >@SharedLocalizer["reg_breadcrumbCurrent"]</span>
 </div>
 <div class="page-header">
-  <h2>تسجيل طالب جديد</h2>
-  <p>أدخل بيانات الطالب للتسجيل في نظام السكن</p>
+  <h2 >@SharedLocalizer["reg_pageTitle"]</h2>
+  <p >@SharedLocalizer["reg_pageSubtitle"]</p>
 </div>
 
 <div class="form-card">
@@ -54,65 +54,65 @@
     <div class="form-card-header-icon">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
     </div>
-    <div class="form-card-title">المعلومات الشخصية</div>
+    <div class="form-card-title" >@SharedLocalizer["reg_sectionPersonal"]</div>
   </div>
   <div class="form-card-body">
     <div class="form-grid">
       <div class="field">
-        <label>الاسم الكامل <span>*</span></label>
+        <label >@SharedLocalizer["reg_lblFullName"]<span>*</span></label>
         <div class="input-wrap">
-          <input type="text" id="full_name" placeholder="أدخل الاسم الكامل">
+          <input type="text" id="full_name" placeholder='@(SharedLocalizer["reg_phFullName"].Value)'>
           <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         </div>
-        <span class="field-error" id="err-full_name">حقل مطلوب</span>
-        <span class="field-error" id="val-full_name">يرجى إدخال الاسم باللغة العربية فقط</span>
+        <span class="field-error" id="err-full_name" >@SharedLocalizer["reg_errRequired"]</span>
+        <span class="field-error" id="val-full_name" >@SharedLocalizer["reg_valArabicName"]</span>
       </div>
       <div class="field">
-        <label>الرقم الجامعي <span>*</span></label>
+        <label >@SharedLocalizer["reg_lblStudentId"]<span>*</span></label>
         <div class="input-wrap">
           <input type="text" id="student_id" maxlength="10" placeholder="">
           <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8a2 2 0 0 0-2 2v2h12V5a2 2 0 0 0-2-2z"/></svg>
         </div>
-        <span class="field-error" id="err-student_id">حقل مطلوب</span>
-        <span class="field-error" id="val-student_id">يجب أن يتكون الرقم الجامعي من 10 أرقام</span>
+        <span class="field-error" id="err-student_id" >@SharedLocalizer["reg_errRequired"]</span>
+        <span class="field-error" id="val-student_id" >@SharedLocalizer["reg_valStudentId"]</span>
       </div>
       <div class="field">
-        <label>الاسم بالإنجليزية <span>*</span></label>
+        <label >@SharedLocalizer["reg_lblFullNameEn"]<span>*</span></label>
         <div class="input-wrap">
-          <input type="text" id="full_name_english" placeholder="أدخل الاسم بالإنجليزية">
+          <input type="text" id="full_name_english" placeholder='@(SharedLocalizer["reg_phFullNameEn"].Value)'>
           <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         </div>
-        <span class="field-error" id="err-full_name_english">حقل مطلوب</span>
-        <span class="field-error" id="val-full_name_english">يرجى إدخال الاسم باللغة الإنجليزية فقط</span>
+        <span class="field-error" id="err-full_name_english" >@SharedLocalizer["reg_errRequired"]</span>
+        <span class="field-error" id="val-full_name_english" >@SharedLocalizer["reg_valEnglishName"]</span>
       </div>
       <div class="field">
-        <label>رقم الهوية <span>*</span></label>
+        <label >@SharedLocalizer["reg_lblNationalId"]<span>*</span></label>
         <div class="input-wrap">
           <input type="text" id="national_id" placeholder="" maxlength="10">
           <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
         </div>
-        <span class="field-error" id="err-national_id">حقل مطلوب</span>
-        <span class="field-error" id="val-national_id">يجب أن يتكون رقم الهوية من 10 أرقام</span>
+        <span class="field-error" id="err-national_id" >@SharedLocalizer["reg_errRequired"]</span>
+        <span class="field-error" id="val-national_id" >@SharedLocalizer["reg_valNationalId"]</span>
       </div>
       <div class="field">
-        <label>رقم الجوال</label>
+        <label >@SharedLocalizer["reg_lblPhone"]</label>
         <div class="input-wrap">
-          <input type="tel" id="phone" placeholder="9665" maxlength="12">
+          <input type="tel" id="phone" placeholder='@(SharedLocalizer["reg_phPhone"].Value)' maxlength="12">
           <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.41 2 2 0 0 1 3.6 1.24h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16.92z"/></svg>
         </div>
-        <span class="field-error" id="val-phone">يجب أن يبدأ الرقم بـ 9665 ويتكون من 12 رقمًا</span>
+        <span class="field-error" id="val-phone" >@SharedLocalizer["reg_valPhone"]</span>
       </div>
       <div class="field">
-        <label>الجنس <span>*</span></label>
+        <label >@SharedLocalizer["reg_lblGender"]<span>*</span></label>
         <div class="input-wrap">
           <select id="gender">
-            <option value="">اختر الجنس</option>
-            <option value="male">ذكر</option>
-            <option value="female">أنثى</option>
+            <option value="" >@SharedLocalizer["reg_optSelectGender"]</option>
+            <option value="male" >@SharedLocalizer["reg_optMale"]</option>
+            <option value="female" >@SharedLocalizer["reg_optFemale"]</option>
           </select>
           <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/></svg>
         </div>
-        <span class="field-error" id="err-gender">اختر الجنس</span>
+        <span class="field-error" id="err-gender" >@SharedLocalizer["reg_optSelectGender"]</span>
       </div>
     </div>
   </div>
@@ -123,57 +123,57 @@
     <div class="form-card-header-icon">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
     </div>
-    <div class="form-card-title">المعلومات الأكاديمية</div>
+    <div class="form-card-title" >@SharedLocalizer["reg_sectionAcademic"]</div>
   </div>
   <div class="form-card-body">
     <div class="form-grid">
       <div class="field">
-        <label>الكلية <span>*</span></label>
+        <label >@SharedLocalizer["reg_lblCollege"]<span>*</span></label>
         <div class="input-wrap">
           <select id="college">
-            <option value="">اختر الكلية</option>
-            <option value="engineering">الهندسة</option>
-            <option value="medicine">الطب</option>
-            <option value="cs">علوم الحاسب والمعلومات</option>
-            <option value="science">العلوم</option>
-            <option value="business">إدارة الأعمال</option>
-            <option value="arts">الآداب والعلوم الإنسانية</option>
-            <option value="education">التربية</option>
-            <option value="pharmacy">الصيدلة</option>
+            <option value="" >@SharedLocalizer["reg_optSelectCollege"]</option>
+            <option value="engineering" >@SharedLocalizer["reg_collegeEngineering"]</option>
+            <option value="medicine" >@SharedLocalizer["reg_collegeMedicine"]</option>
+            <option value="cs" >@SharedLocalizer["reg_collegeCS"]</option>
+            <option value="science" >@SharedLocalizer["reg_collegeScience"]</option>
+            <option value="business" >@SharedLocalizer["reg_collegeBusiness"]</option>
+            <option value="arts" >@SharedLocalizer["reg_collegeArts"]</option>
+            <option value="education" >@SharedLocalizer["reg_collegeEducation"]</option>
+            <option value="pharmacy" >@SharedLocalizer["reg_collegePharmacy"]</option>
           </select>
           <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/></svg>
         </div>
-        <span class="field-error" id="err-college">اختر الكلية</span>
+        <span class="field-error" id="err-college" >@SharedLocalizer["reg_optSelectCollege"]</span>
       </div>
       <div class="field">
-        <label>القسم <span>*</span></label>
+        <label >@SharedLocalizer["reg_lblDepartment"]<span>*</span></label>
         <div class="input-wrap">
           <select id="department">
-            <option value="">اختر القسم</option>
-            <option value="cs">علوم الحاسب والمعلومات</option>
-            <option value="computer">هندسة الحاسب</option>
-            <option value="electrical">الهندسة الكهربائية</option>
-            <option value="mechanical">الهندسة الميكانيكية</option>
-            <option value="civil">الهندسة المدنية</option>
-            <option value="math">الرياضيات</option>
-            <option value="physics">الفيزياء</option>
-            <option value="chemistry">الكيمياء</option>
-            <option value="biology">الأحياء</option>
-            <option value="business">إدارة الأعمال</option>
-            <option value="accounting">المحاسبة</option>
-            <option value="islamic">الدراسات الإسلامية</option>
-            <option value="arabic">اللغة العربية</option>
-            <option value="english">اللغة الإنجليزية</option>
+            <option value="" >@SharedLocalizer["reg_optSelectDepartment"]</option>
+            <option value="cs" >@SharedLocalizer["reg_deptCS"]</option>
+            <option value="computer" >@SharedLocalizer["reg_deptComputer"]</option>
+            <option value="electrical" >@SharedLocalizer["reg_deptElectrical"]</option>
+            <option value="mechanical" >@SharedLocalizer["reg_deptMechanical"]</option>
+            <option value="civil" >@SharedLocalizer["reg_deptCivil"]</option>
+            <option value="math" >@SharedLocalizer["reg_deptMath"]</option>
+            <option value="physics" >@SharedLocalizer["reg_deptPhysics"]</option>
+            <option value="chemistry" >@SharedLocalizer["reg_deptChemistry"]</option>
+            <option value="biology" >@SharedLocalizer["reg_deptBiology"]</option>
+            <option value="business" >@SharedLocalizer["reg_deptBusiness"]</option>
+            <option value="accounting" >@SharedLocalizer["reg_deptAccounting"]</option>
+            <option value="islamic" >@SharedLocalizer["reg_deptIslamic"]</option>
+            <option value="arabic" >@SharedLocalizer["reg_deptArabic"]</option>
+            <option value="english" >@SharedLocalizer["reg_deptEnglish"]</option>
           </select>
           <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/></svg>
         </div>
-        <span class="field-error" id="err-department">اختر القسم</span>
+        <span class="field-error" id="err-department" >@SharedLocalizer["reg_optSelectDepartment"]</span>
       </div>
       <div class="field">
-        <label>المستوى الدراسي <span>*</span></label>
+        <label >@SharedLocalizer["reg_lblAcademicLevel"]<span>*</span></label>
         <div class="input-wrap">
           <select id="academic_level">
-            <option value="">اختر المستوى</option>
+            <option value="" >@SharedLocalizer["reg_optSelectLevel"]</option>
             <option value="1">1</option>
             <option value="2">2</option>
             <option value="3">3</option>
@@ -182,10 +182,10 @@
           </select>
           <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/></svg>
         </div>
-        <span class="field-error" id="err-academic_level">اختر المستوى</span>
+        <span class="field-error" id="err-academic_level" >@SharedLocalizer["reg_optSelectLevel"]</span>
       </div>
       <div class="field">
-        <label>اسم المستخدم</label>
+        <label >@SharedLocalizer["reg_lblUsername"]</label>
         <div class="input-wrap">
           <input type="text" id="ad_username">
           <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/></svg>
@@ -200,15 +200,15 @@
     <div class="form-card-header-icon">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
     </div>
-    <div class="form-card-title">معلومات السكن</div>
+    <div class="form-card-title" >@SharedLocalizer["reg_sectionHousing"]</div>
   </div>
   <div class="form-card-body">
     <div class="form-grid-3">
       <div class="field">
-        <label>المبنى السكني <span>*</span></label>
+        <label >@SharedLocalizer["reg_lblBuilding"]<span>*</span></label>
         <div class="input-wrap">
           <select id="housing_building">
-            <option value="">اختر المبنى</option>
+            <option value="" >@SharedLocalizer["reg_optSelectBuilding"]</option>
             <option value="65">65</option>
             <option value="66">66</option>
             <option value="67">67</option>
@@ -218,30 +218,30 @@
           </select>
           <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
         </div>
-        <span class="field-error" id="err-housing_building">اختر المبنى</span>
+        <span class="field-error" id="err-housing_building" >@SharedLocalizer["reg_optSelectBuilding"]</span>
       </div>
       <div class="field">
-        <label>رقم الغرفة <span>*</span></label>
+        <label >@SharedLocalizer["reg_lblRoom"]<span>*</span></label>
         <div class="input-wrap">
-          <input type="text" id="room_number" placeholder="مثال: 101">
+          <input type="text" id="room_number" placeholder='@(SharedLocalizer["reg_phRoom"].Value)'>
           <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
         </div>
-        <span class="field-error" id="err-room_number">حقل مطلوب</span>
+        <span class="field-error" id="err-room_number" >@SharedLocalizer["reg_errRequired"]</span>
       </div>
       <div class="field">
-        <label>رقم الشقة <span>*</span></label>
+        <label >@SharedLocalizer["reg_lblApartment"]<span>*</span></label>
         <div class="input-wrap">
-          <input type="text" id="apartment_number" placeholder="أدخل رقم الشقة">
+          <input type="text" id="apartment_number" placeholder='@(SharedLocalizer["reg_phApartment"].Value)'>
           <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
         </div>
-        <span class="field-error" id="err-apartment_number">حقل مطلوب</span>
+        <span class="field-error" id="err-apartment_number" >@SharedLocalizer["reg_errRequired"]</span>
       </div>
       <div class="field">
-        <label>الحالة</label>
+        <label >@SharedLocalizer["reg_lblStatus"]</label>
         <div class="input-wrap">
           <select id="status">
-            <option value="active">نشط</option>
-            <option value="inactive">غير نشط</option>
+            <option value="active" >@SharedLocalizer["reg_statusActive"]</option>
+            <option value="inactive" >@SharedLocalizer["reg_statusInactive"]</option>
           </select>
           <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
@@ -253,22 +253,23 @@
     {
       <button class="btn btn-primary" id="registerStudentButton" onclick="submitForm()">
         <svg class="btn-text" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
-        <span class="btn-text">تسجيل طالب جديد</span>
+        <span class="btn-text" >@SharedLocalizer["reg_btnRegister"]</span>
         <div class="spinner"></div>
       </button>
     }
     <button class="btn btn-secondary" onclick="resetForm()">
-      <span>مسح</span>
+      <span >@SharedLocalizer["reg_btnReset"]</span>
     </button>
   </div>
 </div>
 
 <div class="toast" id="toast">
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-  <span id="toast-msg">تم تسجيل الطالب بنجاح!</span>
+  <span id="toast-msg" >@SharedLocalizer["reg_toastSuccess"]</span>
 </div>
 
 @section Scripts {
+<script src="/i18n.js"></script>
 <script>
   var USER_ID = @userId;
 
@@ -345,14 +346,14 @@
           headers: Object.assign({ 'Content-Type': 'application/json' }, NUH.headers()),
           body: JSON.stringify({ requestType: 'housing', studentId: createdStudent.id, submittedBy: USER_ID })
         });
-        showToast('تم تسجيل الطالب بنجاح!');
+        showToast(t('reg_toastSuccess'));
         resetForm();
       } else {
         var err = await res.json().catch(function () { return {}; });
-        showToast('خطأ: ' + (err.message || 'حدث خطأ'), true);
+        showToast(t('reg_toastErrorFmt').replace('{0}', (err.message || t('reg_errGeneric'))), true);
       }
     } catch (e) {
-      showToast('تعذر الاتصال بالخادم', true);
+      showToast(t('reg_toastConnError'), true);
     } finally {
       btn.classList.remove('loading');
     }
@@ -408,5 +409,8 @@
   document.getElementById('phone').addEventListener('input', function () {
     validateField('phone', 'val-phone', /^9665\d{8}$/);
   });
+
+  window.onLanguageChange = function () { /* لا نص ديناميكي دائم يحتاج إعادة تطبيق */ };
+  setLang(localStorage.getItem('uiLanguage') || 'ar');
 </script>
 }

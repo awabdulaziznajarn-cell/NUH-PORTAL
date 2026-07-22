@@ -1,13 +1,20 @@
 @{
-    ViewData["Title"] = "تسجيل الدخول";
     Layout = null;
+    var __lang = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "en" ? "en" : "ar";
+    var __isAr = __lang == "ar";
+    var __dir = __isAr ? "rtl" : "ltr";
+    var __self = Uri.EscapeDataString(Context.Request.Path.ToString() + Context.Request.QueryString.ToString());
+    // قيم السمات (attributes) نحسبها هنا لتفادي تعارض علامات الاقتباس داخل Razor
+    var __logoAlt = SharedLocalizer["login_logoAlt"].Value;
+    var __usernamePh = SharedLocalizer["login_usernamePlaceholder"].Value;
+    ViewData["Title"] = SharedLocalizer["login_submit"].Value;
 }
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="@__lang" dir="@__dir">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>تسجيل الدخول — نظام إسكان الطلاب والطالبات</title>
+  <title>@SharedLocalizer["login_submit"] — @SharedLocalizer["login_brandTitle"]</title>
   <link rel="stylesheet" href="/css/site.css" />
   <style>
     /* خاص بصفحة الدخول — نفس هوية login.html */
@@ -26,6 +33,7 @@
       border-top:6px solid var(--navy-dark);
     }
     .login-inner{padding:30px 34px 26px;text-align:center}
+    .login-toprow{display:flex;justify-content:flex-end;margin-bottom:8px}
     .login-logo{
       background:#fff;border:1px solid rgba(201,168,76,.25);border-radius:18px;
       box-shadow:0 6px 20px rgba(0,0,0,.08);
@@ -34,12 +42,14 @@
     .login-logo img{width:120px;height:84px;object-fit:contain;display:block}
     .login-title{font-size:21px;font-weight:800;color:var(--navy-dark);position:relative;padding-bottom:14px;margin-bottom:22px}
     .login-title::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:46px;height:3px;border-radius:2px;background:linear-gradient(90deg,var(--gold),var(--gold-light));}
-    .field{margin-bottom:16px;text-align:right}
+    .field{margin-bottom:16px}
+    html[dir=rtl] .field{text-align:right}
+    html[dir=ltr] .field{text-align:left}
     .field label{display:block;font-size:13px;font-weight:700;color:var(--navy-dark);margin-bottom:8px}
     .input-wrap{position:relative}
-    .input-wrap svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--gray-300)}
+    .input-wrap svg{position:absolute;inset-inline-start:14px;top:50%;transform:translateY(-50%);color:var(--gray-300)}
     .input-wrap input{
-      width:100%;padding:12px 16px;padding-left:40px;
+      width:100%;padding:12px 16px;padding-inline-start:40px;
       border:1px solid var(--gray-200);border-radius:24px;
       font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;
       background:var(--gray-50);color:var(--navy-dark);
@@ -54,7 +64,7 @@
     }
     .login-btn:hover{background:var(--navy)}
     .login-btn:active{transform:scale(.99)}
-    .login-error{background:var(--red-light);color:var(--red);font-size:12.5px;font-weight:600;padding:10px 12px;border-radius:12px;margin-bottom:14px;text-align:right}
+    .login-error{background:var(--red-light);color:var(--red);font-size:12.5px;font-weight:600;padding:10px 12px;border-radius:12px;margin-bottom:14px}
     .login-footer{margin-top:20px;font-size:11px;color:var(--gray-500)}
     .login-back{display:inline-block;margin-top:10px;font-size:12px;color:var(--gray-500);text-decoration:none}
     .login-back:hover{color:var(--navy)}
@@ -64,8 +74,14 @@
 <body>
   <div class="login-card">
     <div class="login-inner">
-      <div class="login-logo"><img src="/nu-logo.png" alt="جامعة نجران"></div>
-      <div class="login-title">نظام إسكان الطلاب والطالبات</div>
+      <div class="login-toprow">
+        <div class="lang-toggle" role="group" aria-label="Language">
+          <a class="lang-btn @(__isAr ? "active" : "")" href="/Culture/Set?culture=ar&amp;returnUrl=@__self">ع</a>
+          <a class="lang-btn @(!__isAr ? "active" : "")" href="/Culture/Set?culture=en&amp;returnUrl=@__self">EN</a>
+        </div>
+      </div>
+      <div class="login-logo"><img src="/nu-logo.png" alt="@__logoAlt"></div>
+      <div class="login-title">@SharedLocalizer["login_brandTitle"]</div>
 
       @if (ViewData["Error"] is string err && !string.IsNullOrEmpty(err))
       {
@@ -76,24 +92,24 @@
         @Html.AntiForgeryToken()
         <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
         <div class="field">
-          <label for="username">اسم المستخدم</label>
+          <label for="username">@SharedLocalizer["login_username"]</label>
           <div class="input-wrap">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            <input id="username" name="username" type="text" placeholder="أدخل اسم المستخدم" autocomplete="username" required autofocus />
+            <input id="username" name="username" type="text" placeholder="@__usernamePh" autocomplete="username" required autofocus />
           </div>
         </div>
         <div class="field">
-          <label for="password">كلمة المرور</label>
+          <label for="password">@SharedLocalizer["login_password"]</label>
           <div class="input-wrap">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
             <input id="password" name="password" type="password" placeholder="••••••••" autocomplete="current-password" required />
           </div>
         </div>
-        <button class="login-btn" type="submit">تسجيل الدخول للنظام</button>
+        <button class="login-btn" type="submit">@SharedLocalizer["login_submit"]</button>
       </form>
 
-      <a class="login-back" href="/">→ الرجوع لبوابة السكن الجامعي</a>
-      <div class="login-footer">عمادة التحول الرقمي ومصادر المعرفة - تقنية المعلومات - جامعة نجران 2026</div>
+      <a class="login-back" href="/">→ @SharedLocalizer["login_back"]</a>
+      <div class="login-footer">@SharedLocalizer["login_footer"]</div>
     </div>
   </div>
 </body>

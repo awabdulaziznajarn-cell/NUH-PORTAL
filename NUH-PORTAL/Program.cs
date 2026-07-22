@@ -1,6 +1,9 @@
 ﻿using AspNetCoreRateLimit;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
@@ -12,6 +15,7 @@ using NUH_PORTAL.Repositories;
 using NUH_PORTAL.Repositories.Interfaces;
 using NUH_PORTAL.Data.Interfaces;
 using NUH_PORTAL.Core.Middleware;
+using System.Globalization;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
@@ -31,12 +35,27 @@ if (connStr.Contains("#{DB_PASSWORD}#"))
     Console.WriteLine("WARNING: Database connection string still contains the default password placeholder. Replace #{DB_PASSWORD}# with the actual password in production.");
 }
 
-// ✅ Controllers with JSON options
+// ✅ Localization (.resx) — العربية هي اللغة المحايدة/الافتراضية + الإنجليزية
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+
+// ✅ Controllers with JSON options + توطين الـ Views و DataAnnotations
 builder.Services.AddControllersWithViews()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.Converters.Add(new UtcDateTimeConverter());
-    });
+    })
+    .AddViewLocalization()
+    .AddDataAnnotationsLocalization();
+
+// ✅ الثقافات المدعومة — العربية افتراضيًا، واختيار المستخدم (كوكي) يتغلّب على لغة المتصفح
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    var supportedCultures = new[] { new CultureInfo("ar"), new CultureInfo("en") };
+    options.DefaultRequestCulture = new RequestCulture("ar");
+    options.SupportedCultures = supportedCultures;
+    options.SupportedUICultures = supportedCultures;
+    // الترتيب الافتراضي للمزوّدات: QueryString ثم Cookie ثم Accept-Language — الكوكي بيتغلّب على المتصفح، وده المطلوب.
+});
 
 // ✅ Swagger
 builder.Services.AddEndpointsApiExplorer();
@@ -89,8 +108,21 @@ if (jwtKey == "#{JWT_SECRET}#")
 }
 
 
-// ✅ JWT Authentication
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+// ✅ Authentication — سكيم ذكي بيختار تلقائيًا: كوكي MVC (NUH.Auth) لو موجود، وإلا JWT (للـ API/الأدوات).
+// بكده كل الـ [Authorize] — العادية واللي عليها Roles — بتتوثّق بالكوكي من صفحات الـ MVC حتى لو توكن الـ JWT
+// (staffToken) قديم/منتهي. (الإصلاح القديم بالـ DefaultPolicy كان بيمسك [Authorize] العادية بس، مش اللي عليها Roles.)
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = "NUH_Smart";
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme; // تحدّي 401 نظيف (مش redirect) لو الاتنين مش صالحين
+})
+    .AddPolicyScheme("NUH_Smart", "Cookie or Bearer", options =>
+    {
+        options.ForwardDefaultSelector = context =>
+            context.Request.Cookies.ContainsKey("NUH.Auth")
+                ? Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme
+                : JwtBearerDefaults.AuthenticationScheme;
+    })
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
@@ -116,6 +148,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.Cookie.HttpOnly = true;
         options.Cookie.SameSite = SameSiteMode.Lax;
     });
+
+// ملاحظة: مبقناش محتاجين DefaultPolicy مخصّصة — السكيم الذكي "NUH_Smart" فوق بيوثّق
+// كل الـ [Authorize] (العادية واللي عليها Roles) بالكوكي أو الـ JWT حسب الطلب.
 
 // ✅ CORS
 var allowedOrigin = builder.Configuration.GetValue<string>("AllowedOrigin") ?? "*";
@@ -284,6 +319,9 @@ app.UseIpRateLimiting();
 
 app.UseCors("AllowFrontend");
 
+// ✅ توطين الطلب — يحدد ثقافة الطلب من الكوكي قبل ترندرة أي صفحة MVC (لازم قبل الـ endpoints)
+app.UseRequestLocalization();
+
 // ✅ الترتيب مهم
 app.UseAuthentication();
 
@@ -303,6 +341,9 @@ app.Use(async (context, next) =>
             if (cache.TryGetValue(cacheKey, out DateTime lastActivity) &&
                 (DateTime.UtcNow - lastActivity).TotalMinutes > 15)
             {
+                // انتهت الجلسة بعدم النشاط — نسجّل خروج كوكي الـ MVC كمان عشان صفحة الدخول
+                // متردّش المستخدم على الصفحة تاني (كسر لوب التحويل)، ونرجّع 401 للنداء الحالي.
+                await context.SignOutAsync(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme);
                 context.Response.StatusCode = 401;
                 return;
             }

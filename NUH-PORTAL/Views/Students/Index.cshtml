@@ -1,38 +1,38 @@
 @model NUH_PORTAL.ViewModels.StudentsIndexViewModel
 @{
-    ViewData["Title"] = "قائمة الطلاب";
+    ViewData["Title"] = SharedLocalizer["Page_Students"].Value;
 }
 
 <div class="stats-row">
   <div class="stat-pill">
     <div class="stat-pill-num" id="cnt-total">@Model.Stats.total</div>
-    <div class="stat-pill-label">إجمالي الطلاب</div>
+    <div class="stat-pill-label" >@SharedLocalizer["stu_total"]</div>
   </div>
   <div class="stat-pill">
     <div class="stat-pill-num" style="color:#0F6E56" id="cnt-active">@Model.Stats.active</div>
-    <div class="stat-pill-label">نشط</div>
+    <div class="stat-pill-label" >@SharedLocalizer["stu_active"]</div>
   </div>
   <div class="stat-pill">
     <div class="stat-pill-num" style="color:#92400E" id="cnt-pending">@Model.Stats.submitted</div>
-    <div class="stat-pill-label">قيد الانتظار</div>
+    <div class="stat-pill-label" >@SharedLocalizer["stu_pending"]</div>
   </div>
   <div class="stat-pill">
     <div class="stat-pill-num" style="color:#8891A8" id="cnt-left">@Model.Stats.left</div>
-    <div class="stat-pill-label">مغادر</div>
+    <div class="stat-pill-label" >@SharedLocalizer["stu_leftLabel"]</div>
   </div>
 </div>
 
 <div class="card">
   <div class="card-header">
-    <div>الطلاب المسجلون</div>
+    <div >@SharedLocalizer["stu_registered"]</div>
     <div style="display:flex;align-items:center;gap:10px">
       <div class="search-wrap">
-        <input id="searchBox" type="text" placeholder="بحث بالاسم / الرقم الجامعي / الهوية / الجوال..." />
+        <input id="searchBox" type="text" placeholder='@(SharedLocalizer["stu_searchPlaceholder"].Value)' />
         <span class="search-icon">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         </span>
       </div>
-      <a class="btn btn-primary" href="/Register">+ تسجيل طالب جديد</a>
+      <a class="btn btn-primary" href="/Register" >@SharedLocalizer["stu_addNew"]</a>
     </div>
   </div>
 
@@ -41,18 +41,18 @@
       <thead>
         <tr>
           <th>#</th>
-          <th>الاسم</th>
-          <th>رقم الطالب</th>
-          <th>رقم الهوية</th>
-          <th>الجوال</th>
-          <th>الكلية</th>
-          <th>المستوى الدراسي</th>
-          <th>الاسم بالإنجليزية</th>
-          <th>المبنى</th>
-          <th>الغرفة</th>
-          <th>الوضع الأكاديمي</th>
-          <th>الحالة</th>
-          <th>حذف</th>
+          <th >@SharedLocalizer["stu_col_name"]</th>
+          <th >@SharedLocalizer["stu_col_studentId"]</th>
+          <th >@SharedLocalizer["stu_col_nationalId"]</th>
+          <th >@SharedLocalizer["stu_col_phone"]</th>
+          <th >@SharedLocalizer["stu_col_college"]</th>
+          <th >@SharedLocalizer["stu_col_level"]</th>
+          <th >@SharedLocalizer["stu_col_nameEn"]</th>
+          <th >@SharedLocalizer["stu_col_building"]</th>
+          <th >@SharedLocalizer["stu_col_room"]</th>
+          <th >@SharedLocalizer["stu_col_academic"]</th>
+          <th >@SharedLocalizer["stu_col_status"]</th>
+          <th >@SharedLocalizer["stu_col_delete"]</th>
         </tr>
       </thead>
       <tbody id="studentsBody">
@@ -71,22 +71,18 @@
             <td>@s.full_name_english</td>
             <td>@s.housing_building</td>
             <td>@s.room_number</td>
-            <td>@(s.student_status == "active" ? "نشط" :
-                 s.student_status == "graduated" ? "تخرج من الكلية" :
-                 s.student_status == "dismissed" ? "فصل من الكلية" :
-                 s.student_status == "transferred" ? "تحويل لجامعة أخرى" :
-                 s.student_status == "left_housing" ? "ترك السكن" : s.student_status)</td>
+            <td><span>@SharedLocalizer["stu_status_" + s.student_status]</span></td>
             <td>
               @if (s.status == "left")
               {
-                <span class="badge badge-left">غادر</span>
+                <span class="badge badge-left" >@SharedLocalizer["stu_badge_left"]</span>
               }
               else
               {
-                <span class="badge badge-active">مقيم</span>
+                <span class="badge badge-active" >@SharedLocalizer["stu_resident"]</span>
               }
             </td>
-            <td><button class="action-btn action-delete" onclick="deleteStudent(@s.Id, this)">حذف</button></td>
+            <td><button class="action-btn action-delete" onclick="deleteStudent(@s.Id, this)" >@SharedLocalizer["stu_delete"]</button></td>
           </tr>
         }
       </tbody>
@@ -94,12 +90,10 @@
   </div>
 
   <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-top:1px solid var(--gray-100)">
-    <div style="font-size:12px;color:var(--gray-500)" id="pageInfo">
-      صفحة @Model.Page.Page من @Model.Page.TotalPages — إجمالي @Model.Page.TotalCount طالب
-    </div>
+    <div style="font-size:12px;color:var(--gray-500)" id="pageInfo"></div>
     <div style="display:flex;gap:8px">
-      <button class="btn btn-cancel" id="prevBtn" onclick="changePage(-1)">السابق</button>
-      <button class="btn btn-cancel" id="nextBtn" onclick="changePage(1)">التالي</button>
+      <button class="btn btn-cancel" id="prevBtn" onclick="changePage(-1)" >@SharedLocalizer["stu_prev"]</button>
+      <button class="btn btn-cancel" id="nextBtn" onclick="changePage(1)" >@SharedLocalizer["stu_next"]</button>
     </div>
   </div>
 </div>
@@ -110,18 +104,20 @@
   .action-delete{background:var(--red-light);color:var(--red)}
   .action-delete:hover{background:#fee2e2}
 </style>
+<script src="/i18n.js"></script>
 <script>
   // حالة الصفحة (أول تحميل جاي جاهز من السيرفر)
   var state = {
     page: @Model.Page.Page,
     pageSize: @Model.Page.PageSize,
     totalPages: @Model.Page.TotalPages,
+    total: @Model.Page.TotalCount,
     filter: ''
   };
 
   function authHeaders() {
-    var t = localStorage.getItem('staffToken');
-    return t ? { 'Authorization': 'Bearer ' + t } : {};
+    var t2 = localStorage.getItem('staffToken');
+    return t2 ? { 'Authorization': 'Bearer ' + t2 } : {};
   }
 
   var esc = function (v) {
@@ -130,15 +126,19 @@
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   };
 
-  function studentStatusAr(st) {
-    switch (st) {
-      case 'active': return 'نشط';
-      case 'graduated': return 'تخرج من الكلية';
-      case 'dismissed': return 'فصل من الكلية';
-      case 'transferred': return 'تحويل لجامعة أخرى';
-      case 'left_housing': return 'ترك السكن';
-      default: return st || '';
-    }
+  // نص الحالة من القاموس (fallback للقيمة الخام لو مفيش مفتاح)
+  function studentStatusText(st) {
+    var k = 'stu_status_' + st;
+    var v = t(k);
+    return v === k ? (st || '') : v;
+  }
+
+  // سطر معلومات الصفحة بصيغة مترجمة مع أرقام
+  function renderPageInfo() {
+    var el = document.getElementById('pageInfo');
+    if (!el) return;
+    el.textContent = t('stu_pageInfoFmt')
+      .replace('{0}', state.page).replace('{1}', state.totalPages || 1).replace('{2}', state.total);
   }
 
   async function loadPage() {
@@ -148,6 +148,7 @@
     if (!res.ok) return;
     var data = await res.json();
     state.totalPages = data.totalPages;
+    state.total = data.totalCount;
 
     var rows = '';
     var i = (data.page - 1) * data.pageSize;
@@ -164,17 +165,16 @@
         '<td>' + esc(s.full_name_english) + '</td>' +
         '<td>' + esc(s.housing_building) + '</td>' +
         '<td>' + esc(s.room_number) + '</td>' +
-        '<td>' + esc(studentStatusAr(s.student_status)) + '</td>' +
+        '<td>' + esc(studentStatusText(s.student_status)) + '</td>' +
         '<td>' + (s.status === 'left'
-            ? '<span class="badge badge-left">غادر</span>'
-            : '<span class="badge badge-active">مقيم</span>') + '</td>' +
-        '<td><button class="action-btn action-delete" onclick="deleteStudent(' + s.id + ', this)">حذف</button></td>' +
+            ? '<span class="badge badge-left">' + t('stu_badge_left') + '</span>'
+            : '<span class="badge badge-active">' + t('stu_resident') + '</span>') + '</td>' +
+        '<td><button class="action-btn action-delete" onclick="deleteStudent(' + s.id + ', this)">' + t('stu_delete') + '</button></td>' +
       '</tr>';
     });
     document.getElementById('studentsBody').innerHTML = rows ||
-      '<tr><td colspan="13" style="text-align:center;color:var(--gray-500);padding:28px">لا توجد نتائج</td></tr>';
-    document.getElementById('pageInfo').textContent =
-      'صفحة ' + data.page + ' من ' + data.totalPages + ' — إجمالي ' + data.totalCount + ' طالب';
+      '<tr><td colspan="13" style="text-align:center;color:var(--gray-500);padding:28px">' + t('stu_noResults') + '</td></tr>';
+    renderPageInfo();
     updatePagerButtons();
   }
 
@@ -201,13 +201,16 @@
   });
 
   async function deleteStudent(id, btn) {
-    if (!confirm('متأكد من حذف الطالب؟')) return;
+    if (!confirm(t('stu_confirmDelete'))) return;
     var res = await fetch('/api/Students/' + id, { method: 'DELETE', headers: authHeaders() });
     var data = await res.json().catch(function () { return {}; });
     if (res.ok) { loadPage(); }
-    else { alert(data.message || 'تعذر حذف الطالب'); }
+    else { alert(data.message || t('stu_deleteFailed')); }
   }
 
+  // اللغة تتبع ثقافة السيرفر — setLang بيترجم كل عناصر الترجمة وبيستدعي onLanguageChange
+  window.onLanguageChange = function () { renderPageInfo(); };
+  setLang(localStorage.getItem('uiLanguage') || 'ar');
   updatePagerButtons();
 </script>
 }

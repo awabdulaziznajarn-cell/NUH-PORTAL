@@ -1,9 +1,29 @@
+@{
+    // ثقافة الطلب الحالية (من كوكي .AspNetCore.Culture عبر UseRequestLocalization)
+    var __lang = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "en" ? "en" : "ar";
+    var __isAr = __lang == "ar";
+    var __dir = __isAr ? "rtl" : "ltr";
+    // نرجّع المستخدم لنفس الصفحة بعد تبديل اللغة
+    var __returnUrl = Uri.EscapeDataString(Context.Request.Path.ToString() + Context.Request.QueryString.ToString());
+    // قاموس الترجمة كامل للثقافة الحالية — مصدره ملفات .resx — بنصدّره للـ JS عشان المحتوى الديناميكي (t()) يقرأ منه.
+    // الـ encoder الافتراضي بيهرب < > & فآمن نحطّه جوه <script>. وبنلفّه في try عشان أي مشكلة موارد متبوّظش الصفحة.
+    System.Collections.Generic.Dictionary<string, string> __i18nDict;
+    try
+    {
+        __i18nDict = SharedLocalizer.GetAllStrings(true).ToDictionary(s => s.Name, s => s.Value);
+    }
+    catch
+    {
+        __i18nDict = new System.Collections.Generic.Dictionary<string, string>();
+    }
+    var __i18nJson = System.Text.Json.JsonSerializer.Serialize(__i18nDict);
+}
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" id="html-root">
+<html lang="@__lang" dir="@__dir" id="html-root">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>@ViewData["Title"] — نظام إسكان الطلاب والطالبات</title>
+  <title>@ViewData["Title"] — @SharedLocalizer["AppTitleSuffix"]</title>
   <link rel="stylesheet" href="/css/site.css" />
 </head>
 <body class="app-shell">
@@ -13,6 +33,10 @@
     <div class="topbar">
       <div class="topbar-title">@ViewData["Title"]</div>
       <div class="topbar-right">
+        <div class="lang-toggle" role="group" aria-label="Language">
+          <a class="lang-btn @(__isAr ? "active" : "")" href="/Culture/Set?culture=ar&amp;returnUrl=@__returnUrl">ع</a>
+          <a class="lang-btn @(!__isAr ? "active" : "")" href="/Culture/Set?culture=en&amp;returnUrl=@__returnUrl">EN</a>
+        </div>
         <div class="topbar-date" id="dateNow"></div>
         <div class="notif-wrapper">
           <button class="notif-btn" type="button" onclick="toggleNotifDropdown(event)">
@@ -22,8 +46,8 @@
           </button>
           <div class="notif-dropdown" id="notif-dropdown">
             <div class="notif-header">
-              <span>الإشعارات</span>
-              <button type="button" onclick="markAllNotifRead()">تحديد الكل مقروء</button>
+              <span>@SharedLocalizer["Notifications"]</span>
+              <button type="button" onclick="markAllNotifRead()">@SharedLocalizer["MarkAllRead"]</button>
             </div>
             <div class="notif-list" id="notif-dropdown-list"></div>
           </div>
@@ -37,6 +61,9 @@
   </div>
 
   <script>
+    // قاموس الترجمة كامل (مصدره ملفات .resx) — المصدر الوحيد لنصوص الـ JS الديناميكية عبر t()
+    window.__I18N = @Html.Raw(__i18nJson);
+
     // حاجات مشتركة لكل صفحات الـ MVC — الدور من كليم السيرفر، والتوكن من نفس مفاتيح الصفحات القديمة
     var NUH = {
       role: '@(User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "")',
@@ -47,8 +74,18 @@
       }
     };
 
+    // مزامنة لغة الواجهة مع ثقافة السيرفر — عشان صفحات i18n.js (تقارير/تفاصيل الطلب/المغادرة) تتبع نفس الاختيار
+    try { localStorage.setItem('uiLanguage', '@__lang'); } catch (e) { }
+
+    // نصوص الإشعارات المترجمة (الجرس موحّد في كل الصفحات ويُبنى بالـ JS)
+    var NUH_I18N = {
+      notifEmpty: '@(SharedLocalizer["Notif_Empty"].Value)',
+      notifError: '@(SharedLocalizer["Notif_LoadError"].Value)'
+    };
+
+    var __dateLocale = '@__lang' === 'ar' ? 'ar-EG' : 'en-US';
     document.getElementById('dateNow').textContent =
-      new Date().toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      new Date().toLocaleDateString(__dateLocale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
     function escHtml(v) {
       return String(v == null ? '' : v)
@@ -79,7 +116,7 @@
       var list = document.getElementById('notif-dropdown-list');
       try {
         var res = await fetch('/api/notifications?role=' + encodeURIComponent(NUH.role), { headers: NUH.headers() });
-        if (!res.ok) { list.innerHTML = '<div class="notif-empty">تعذر تحميل الإشعارات</div>'; return; }
+        if (!res.ok) { list.innerHTML = '<div class="notif-empty">' + NUH_I18N.notifError + '</div>'; return; }
         var data = await res.json();
         list.innerHTML = (data && data.length) ? data.map(function (n) {
           return '<div class="notif-item" onclick="markNotifRead(' + n.id + ', this)" data-id="' + n.id + '">' +
@@ -89,9 +126,9 @@
               '<div class="notif-item-time">' + new Date(n.sent_at || Date.now()).toLocaleDateString('ar-EG') + '</div>' +
             '</div>' +
           '</div>';
-        }).join('') : '<div class="notif-empty">لا توجد إشعارات</div>';
+        }).join('') : '<div class="notif-empty">' + NUH_I18N.notifEmpty + '</div>';
       } catch (e) {
-        list.innerHTML = '<div class="notif-empty">تعذر تحميل الإشعارات</div>';
+        list.innerHTML = '<div class="notif-empty">' + NUH_I18N.notifError + '</div>';
       }
     }
 

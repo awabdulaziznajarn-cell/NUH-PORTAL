@@ -57,7 +57,7 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);col
 .topbar-date{font-size:12px;color:var(--gray-500)}
 .topbar-right{display:flex;align-items:center;gap:12px}
 .lang-toggle{display:flex;align-items:center;background:var(--gray-100);border-radius:20px;padding:3px;gap:2px}
-.lang-btn{padding:4px 12px;border-radius:16px;border:none;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;background:transparent;color:var(--gray-500)}
+.lang-btn{padding:4px 12px;border-radius:16px;border:none;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;background:transparent;color:var(--gray-500);text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
 .lang-btn.active{background:var(--navy);color:#fff;box-shadow:0 2px 8px rgba(27,42,94,.2)}
 
 /* ---------- الإشعارات ---------- */
@@ -168,8 +168,14 @@ tbody tr:hover{background:var(--gray-50)}
    وبنخليها ltr علشان المتصفح يحط شريط السكرول على يمينها (جنب السايدبار) بدل طرف الشاشة،
    والمحتوى جواها بيرجع rtl طبيعي. */
 body.app-shell{overflow:hidden;height:100vh}
-.app-shell .main{height:100vh;overflow-y:auto;direction:ltr;scrollbar-width:thin;scrollbar-color:var(--gray-300) transparent}
-.app-shell .main>.topbar,.app-shell .main>.content{direction:rtl}
+.app-shell .main{height:100vh;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--gray-300) transparent}
+/* السكرول يقع على الحافة الداخلية جنب السايدبار في الاتجاهين */
+/* RTL: السايدبار يمين → سكرول .main يمين عبر direction:ltr، والأبناء يرجعوا rtl */
+html[dir=rtl] .app-shell .main{direction:ltr}
+html[dir=rtl] .app-shell .main>.topbar,html[dir=rtl] .app-shell .main>.content{direction:rtl}
+/* LTR: السايدبار شمال → سكرول .main شمال عبر direction:rtl، والأبناء يرجعوا ltr */
+html[dir=ltr] .app-shell .main{direction:rtl}
+html[dir=ltr] .app-shell .main>.topbar,html[dir=ltr] .app-shell .main>.content{direction:ltr}
 .app-shell .main::-webkit-scrollbar{width:10px}
 .app-shell .main::-webkit-scrollbar-track{background:transparent}
 .app-shell .main::-webkit-scrollbar-thumb{background:var(--gray-300);border-radius:8px;border:2px solid var(--gray-50)}
