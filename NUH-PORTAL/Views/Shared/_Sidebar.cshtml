@@ -1,4 +1,16 @@
-@* السايدبار الموحد — النصوص من SharedResource (.resx) فبتتبع لغة الواجهة تلقائيًا *@
+@* السايدبار الموحد — قوائم parent/child بتتفتح وتتقفل (accordion). النصوص من SharedResource (.resx). *@
+<style>
+  .nav-group{display:flex;flex-direction:column;gap:2px}
+  .nav-group-header{display:flex;align-items:center;gap:10px;width:100%;padding:11px 12px;background:none;border:none;cursor:pointer;font-family:inherit;font-size:11px;font-weight:700;letter-spacing:.5px;color:rgba(255,255,255,.45);border-radius:10px;transition:all .2s;text-align:start}
+  .nav-group-header:hover{background:rgba(255,255,255,.05);color:rgba(255,255,255,.85)}
+  .nav-group-header .ng-icon{width:15px;height:15px;flex-shrink:0;opacity:.85}
+  .nav-group-header .ng-title{flex:1;text-align:start}
+  .nav-group-header .ng-chevron{width:13px;height:13px;flex-shrink:0;transition:transform .22s ease;opacity:.7}
+  .nav-group.collapsed .ng-chevron{transform:rotate(-90deg)}
+  .nav-group-body{overflow:hidden;max-height:700px;transition:max-height .26s ease;display:flex;flex-direction:column;gap:4px;padding-top:2px}
+  .nav-group.collapsed .nav-group-body{max-height:0;padding-top:0}
+  .nav-group-body .nav-item{padding-inline-start:22px}
+</style>
 <aside class="sidebar">
   <div class="sidebar-logo">
     <div class="sidebar-logo-image-container">
@@ -9,56 +21,140 @@
   </div>
 
   <nav class="sidebar-nav">
-    <div class="nav-section">@SharedLocalizer["Nav_Section_Main"]</div>
     <a class="nav-item" href="/Home">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
       <span>@SharedLocalizer["Nav_Dashboard"]</span>
     </a>
 
-    <div class="nav-section">@SharedLocalizer["Nav_Section_Students"]</div>
-    <a class="nav-item" href="/Students">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-      <span>@SharedLocalizer["Nav_StudentsList"]</span>
-    </a>
-    <a class="nav-item" href="/Register">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
-      <span>@SharedLocalizer["Nav_RegisterSingle"]</span>
-    </a>
-    <a class="nav-item" href="/Bulk">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 11 9 11 11 13 11 13 12 10 12 10 9"/></svg>
-      <span>@SharedLocalizer["Nav_BulkExcel"]</span>
-    </a>
-    <a class="nav-item" href="/StudentStatus">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-      <span>@SharedLocalizer["Nav_UpdateStatus"]</span>
-    </a>
+    <div class="nav-group" data-group="students">
+      <button class="nav-group-header" type="button" onclick="toggleNavGroup(this)">
+        <svg class="ng-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        <span class="ng-title">@SharedLocalizer["Nav_Section_Students"]</span>
+        <svg class="ng-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="nav-group-body">
+        <a class="nav-item" href="/Students">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          <span>@SharedLocalizer["Nav_StudentsList"]</span>
+        </a>
+        <a class="nav-item" href="/Register">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+          <span>@SharedLocalizer["Nav_RegisterSingle"]</span>
+        </a>
+        <a class="nav-item" href="/Bulk">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 11 9 11 11 13 11 13 12 10 12 10 9"/></svg>
+          <span>@SharedLocalizer["Nav_BulkExcel"]</span>
+        </a>
+        <a class="nav-item" href="/StudentStatus">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span>@SharedLocalizer["Nav_UpdateStatus"]</span>
+        </a>
+        <a class="nav-item" href="/Departure">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          <span>@SharedLocalizer["Nav_Departure"]</span>
+        </a>
+      </div>
+    </div>
 
-    <div class="nav-section">@SharedLocalizer["Nav_Section_Requests"]</div>
-    <a class="nav-item" href="/Requests">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-      <span>@SharedLocalizer["Nav_AllRequests"]</span>
-    </a>
-    <a class="nav-item" href="/Housing">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-      <span>@SharedLocalizer["Nav_Housing"]</span>
-    </a>
+    <div class="nav-group" data-group="requests">
+      <button class="nav-group-header" type="button" onclick="toggleNavGroup(this)">
+        <svg class="ng-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span class="ng-title">@SharedLocalizer["Nav_Section_Requests"]</span>
+        <svg class="ng-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="nav-group-body">
+        <a class="nav-item" href="/Requests">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <span>@SharedLocalizer["Nav_AllRequests"]</span>
+        </a>
+        <a class="nav-item" href="/Housing">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          <span>@SharedLocalizer["Nav_Housing"]</span>
+        </a>
+      </div>
+    </div>
 
-    <div class="nav-section">@SharedLocalizer["Nav_Section_System"]</div>
-    <a class="nav-item" href="/Reports">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-      <span>@SharedLocalizer["Nav_Reports"]</span>
-    </a>
-    <a class="nav-item" href="/AuditLog">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-      <span>@SharedLocalizer["Nav_AuditLog"]</span>
-    </a>
-    @if (User.IsInRole("admin"))
+    @if (User.HasClaim("permission", "lookups.manage"))
     {
-      <a class="nav-item" href="/Lookups">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-        <span>@SharedLocalizer["Nav_Lookups"]</span>
-      </a>
+      <div class="nav-group" data-group="lookups">
+        <button class="nav-group-header" type="button" onclick="toggleNavGroup(this)">
+          <svg class="ng-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          <span class="ng-title">@SharedLocalizer["Nav_Section_Lookups"]</span>
+          <svg class="ng-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+        <div class="nav-group-body">
+          <a class="nav-item" href="/Colleges">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+            <span>@SharedLocalizer["Nav_Colleges"]</span>
+          </a>
+          <a class="nav-item" href="/Departments">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="6" height="6" rx="1"/><rect x="15" y="15" width="6" height="6" rx="1"/><path d="M6 9v6a2 2 0 0 0 2 2h7"/></svg>
+            <span>@SharedLocalizer["Nav_Departments"]</span>
+          </a>
+          <a class="nav-item" href="/Buildings">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="1"/><path d="M9 22v-4h6v4M9 6h.01M15 6h.01M9 10h.01M15 10h.01M9 14h.01M15 14h.01"/></svg>
+            <span>@SharedLocalizer["Nav_Buildings"]</span>
+          </a>
+          <a class="nav-item" href="/AcademicLevels">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+            <span>@SharedLocalizer["Nav_AcademicLevels"]</span>
+          </a>
+          <a class="nav-item" href="/Terms">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/><line x1="9" y1="11" x2="12" y2="11"/></svg>
+            <span>@SharedLocalizer["Nav_Terms"]</span>
+          </a>
+        </div>
+      </div>
     }
+
+    <div class="nav-group" data-group="system">
+      <button class="nav-group-header" type="button" onclick="toggleNavGroup(this)">
+        <svg class="ng-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        <span class="ng-title">@SharedLocalizer["Nav_Section_System"]</span>
+        <svg class="ng-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="nav-group-body">
+        <a class="nav-item" href="/Reports">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <span>@SharedLocalizer["Nav_Reports"]</span>
+        </a>
+        @if (User.HasClaim("permission", "auditLogs.view"))
+        {
+          <a class="nav-item" href="/AuditLog">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>@SharedLocalizer["Nav_AuditLog"]</span>
+          </a>
+        }
+        @if (User.HasClaim("permission", "errorLogs.view"))
+        {
+          <a class="nav-item" href="/ErrorLog">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <span>@SharedLocalizer["Nav_ErrorLog"]</span>
+          </a>
+        }
+        @if (User.HasClaim("permission", "signInLog.view"))
+        {
+          <a class="nav-item" href="/SignInLog">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+            <span>@SharedLocalizer["Nav_SignInLog"]</span>
+          </a>
+        }
+        @if (User.HasClaim("permission", "users.view"))
+        {
+          <a class="nav-item" href="/Users">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>@SharedLocalizer["Nav_Users"]</span>
+          </a>
+        }
+        @if (User.HasClaim("permission", "roles.view"))
+        {
+          <a class="nav-item" href="/Roles">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+            <span>@SharedLocalizer["Nav_Roles"]</span>
+          </a>
+        }
+      </div>
+    </div>
   </nav>
 
   <div class="sidebar-footer">
@@ -78,3 +174,40 @@
     </form>
   </div>
 </aside>
+
+<script>
+  // فتح/قفل مجموعات السايدبار (accordion) — مع حفظ الحالة وتفعيل المجموعة اللي فيها الصفحة الحالية
+  (function () {
+    function persist() {
+      try {
+        var st = {};
+        document.querySelectorAll('.sidebar-nav .nav-group').forEach(function (g) {
+          var k = g.getAttribute('data-group'); if (k) st[k] = g.classList.contains('collapsed');
+        });
+        localStorage.setItem('navGroups', JSON.stringify(st));
+      } catch (e) { }
+    }
+    window.toggleNavGroup = function (btn) {
+      var g = btn.closest('.nav-group'); if (!g) return;
+      g.classList.toggle('collapsed'); persist();
+    };
+    function init() {
+      var saved = {};
+      try { saved = JSON.parse(localStorage.getItem('navGroups') || '{}'); } catch (e) { }
+      document.querySelectorAll('.sidebar-nav .nav-group').forEach(function (g) {
+        var k = g.getAttribute('data-group');
+        if (k && saved[k] === true) g.classList.add('collapsed');
+      });
+      var path = (location.pathname || '').replace(/\/+$/, '').toLowerCase(); if (path === '') path = '/home';
+      document.querySelectorAll('.sidebar-nav a.nav-item').forEach(function (a) {
+        var href = (a.getAttribute('href') || '').replace(/\/+$/, '').toLowerCase();
+        if (!href) return;
+        if (path === href || path.indexOf(href + '/') === 0) {
+          a.classList.add('active');
+          var g = a.closest('.nav-group'); if (g) g.classList.remove('collapsed');
+        }
+      });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+  })();
+</script>

@@ -123,7 +123,7 @@ namespace NUH_PORTAL.Services
                     DocumentType = a.DocumentType,
                     Notes = a.Notes,
                     UploadedAt = a.UploadedAt,
-                    UploadedByName = a.UploadedByUser != null ? a.UploadedByUser.full_name ?? a.UploadedByUser.username : null
+                    UploadedByName = a.UploadedByUser != null ? a.UploadedByUser.full_name ?? a.UploadedByUser.UserName : null
                 })
                 .ToListAsync();
         }

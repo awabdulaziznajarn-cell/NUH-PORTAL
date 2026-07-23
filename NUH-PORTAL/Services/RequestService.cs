@@ -139,7 +139,7 @@ namespace NUH_PORTAL.Services
             var userNames = userIds.Count > 0
                 ? await _users.Query().AsNoTracking()
                     .Where(u => userIds.Contains(u.Id))
-                    .ToDictionaryAsync(u => u.Id, u => u.full_name ?? u.username ?? "Unknown")
+                    .ToDictionaryAsync(u => u.Id, u => u.full_name ?? u.UserName ?? "Unknown")
                 : new Dictionary<int, string>();
 
             string? NameOf(int? userId) =>
@@ -415,7 +415,7 @@ namespace NUH_PORTAL.Services
                     channel = "in_app",
                     recipient_role = r,
                     message = message,
-                    status = "pending",
+                    status = NotificationStatus.pending,
                     sent_at = DateTime.UtcNow
                 });
             }

@@ -16,6 +16,7 @@ namespace NUH_PORTAL.Controllers
         public AuditLogsController(IAuditLogQueryService service) => _service = service;
 
         // GET api/AuditLogs
+        [Authorize(Policy = "auditLogs.view")]
         [HttpGet]
         public async Task<IActionResult> GetLogs(
             [FromQuery] int page = 1,
@@ -41,6 +42,7 @@ namespace NUH_PORTAL.Controllers
             }));
 
         // GET api/AuditLogs/export
+        [Authorize(Policy = "auditLogs.view")]
         [HttpGet("export")]
         public async Task<IActionResult> ExportLogs(
             [FromQuery] int? userId = null,
@@ -73,6 +75,7 @@ namespace NUH_PORTAL.Controllers
             => Ok(await _service.GetAlertsAsync());
 
         // GET api/AuditLogs/report-html
+        [Authorize(Policy = "auditLogs.view")]
         [HttpGet("report-html")]
         public async Task<IActionResult> GetReportHtml(
             [FromQuery] string? type = "activity",
@@ -91,6 +94,7 @@ namespace NUH_PORTAL.Controllers
             => Ok(await _service.GetTodayStatsAsync());
 
         // GET api/AuditLogs/users
+        [Authorize(Policy = "auditLogs.view")]
         [HttpGet("users")]
         public async Task<IActionResult> GetUsers()
             => Ok(await _service.GetUsersAsync());

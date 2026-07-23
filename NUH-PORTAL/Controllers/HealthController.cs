@@ -41,7 +41,7 @@ namespace NUH_PORTAL.Controllers
                 checks = new
                 {
                     sqlServer = new { status = sqlResult ? "Healthy" : "Unhealthy" },
-                    activeDirectory = new { status = adResult.IsReachable ? "Healthy" : "Unhealthy", error = adResult.Error },
+                    activeDirectory = new { status = adResult.IsReachable ? "Healthy" : "Unhealthy" },
                     jwtConfiguration = new { status = jwtResult ? "Healthy" : "Unhealthy" }
                 }
             });

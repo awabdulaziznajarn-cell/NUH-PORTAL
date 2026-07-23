@@ -1,0 +1,26 @@
+@{
+    ViewData["Title"] = SharedLocalizer["lk_tab_building"].Value;
+}
+
+<div class="page-header">
+  <h2>@SharedLocalizer["lk_tab_building"]</h2>
+  <p>@SharedLocalizer["lk_pageSubtitle"]</p>
+</div>
+
+<partial name="_LookupAdminShell" />
+
+@section Scripts {
+<script src="/i18n.js"></script>
+<script src="/lookup-admin.js"></script>
+<script>
+  setLang(localStorage.getItem('uiLanguage') || 'ar');
+  LookupAdmin.init({
+    apiBase: '/api/admin/buildings',
+    fields: ['code', 'arName', 'enName', 'gender', 'displayOrder', 'isActive'],
+    cols: ['code', 'arName', 'enName', 'gender', 'order', 'active'],
+    isTerm: false,
+    needsColleges: false,
+    titleKey: 'lk_tab_building'
+  });
+</script>
+}

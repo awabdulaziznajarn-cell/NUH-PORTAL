@@ -7,7 +7,8 @@ using NUH_PORTAL.Services.Interfaces;
 namespace NUH_PORTAL.Controllers
 {
     // كنترولر رفيع — كل منطق دورة حياة الطلب في IRequestService
-    [Authorize]
+    // القراءة requests.view، والإنشاء/التعديل requests.process — عشان توكن OTP (دور user) ميقراش/يعدّلش كل الطلبات.
+    [Authorize(Policy = "requests.view")]
     [Route("api/[controller]")]
     [ApiController]
     public class RequestsController : ControllerBase
@@ -42,6 +43,7 @@ namespace NUH_PORTAL.Controllers
             => Ok(await _service.GetStatsAsync());
 
         // POST api/Requests
+        [Authorize(Policy = "requests.process")]
         [HttpPost]
         public async Task<IActionResult> CreateRequest([FromBody] RequestCreateDto dto)
             => Ok(await _service.CreateAsync(dto));
@@ -53,6 +55,7 @@ namespace NUH_PORTAL.Controllers
             => Ok(await _service.ReviewAsync(id, dto));
 
         // PATCH api/Requests/{id}
+        [Authorize(Policy = "requests.process")]
         [HttpPatch("{id}")]
         public async Task<IActionResult> UpdateRequest(int id, [FromBody] UpdateRequestDto dto)
             => Ok(await _service.UpdateBulkIdAsync(id, dto));

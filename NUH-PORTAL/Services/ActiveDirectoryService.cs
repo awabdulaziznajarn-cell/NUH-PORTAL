@@ -93,9 +93,12 @@ namespace NUH_PORTAL.Services
                     _logger.LogWarning(ex, "Transient AD error on attempt {Attempt} for {Username}, retrying...",
                         attempt + 1, username);
                 }
-                catch (Exception ex) when (attempt < MaxRetries)
+                catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "AD connection failure on attempt {Attempt} for {Username}, retrying...",
+                    // فشل اتصال بالـ AD (مثلاً DC مش متاح → Win32 "wait operation timed out").
+                    // منرميش الاستثناء لفوق — نسجّله ونكمّل؛ ولو دي آخر محاولة نخرج من اللوب
+                    // ونروح للـ local fallback بدل ما الدخول يقع بـ 500.
+                    _logger.LogWarning(ex, "AD connection failure on attempt {Attempt} for {Username} — falling back to local",
                         attempt + 1, username);
                 }
             }

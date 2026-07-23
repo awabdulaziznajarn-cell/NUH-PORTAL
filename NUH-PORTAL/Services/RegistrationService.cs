@@ -143,7 +143,7 @@ namespace NUH_PORTAL.Services
                 channel = "in_app",
                 recipient_role = "supervisor",
                 message = $"تم تقديم طلب تسجيل جديد ({requestNumber})",
-                status = "pending",
+                status = NotificationStatus.pending,
                 sent_at = DateTime.UtcNow
             });
 
@@ -173,7 +173,7 @@ namespace NUH_PORTAL.Services
                 channel = "in_app",
                 recipient_role = "cyber",
                 message = $"تمت الموافقة على طلب التسجيل ({reqNum}) من قبل إدارة الإسكان",
-                status = "pending",
+                status = NotificationStatus.pending,
                 sent_at = DateTime.UtcNow
             });
             await _context.SaveChangesAsync();
@@ -202,7 +202,7 @@ namespace NUH_PORTAL.Services
                 channel = "in_app",
                 recipient_role = "admin",
                 message = $"تم رفض طلب التسجيل ({reqNum}) من قبل إدارة الإسكان",
-                status = "pending",
+                status = NotificationStatus.pending,
                 sent_at = DateTime.UtcNow
             });
             await _context.SaveChangesAsync();
@@ -231,7 +231,7 @@ namespace NUH_PORTAL.Services
                 channel = "in_app",
                 recipient_role = "admin",
                 message = $"تمت الموافقة على طلب التسجيل ({reqNum}) من قبل إدارة الأمن السيبراني",
-                status = "pending",
+                status = NotificationStatus.pending,
                 sent_at = DateTime.UtcNow
             });
             await _context.SaveChangesAsync();
@@ -260,7 +260,7 @@ namespace NUH_PORTAL.Services
                 channel = "in_app",
                 recipient_role = "admin",
                 message = $"تم رفض طلب التسجيل ({reqNum}) من قبل إدارة الأمن السيبراني",
-                status = "pending",
+                status = NotificationStatus.pending,
                 sent_at = DateTime.UtcNow
             });
             await _context.SaveChangesAsync();
@@ -317,7 +317,7 @@ namespace NUH_PORTAL.Services
                 channel = "in_app",
                 recipient_role = "admin",
                 message = $"تم إكمال طلب التسجيل ({reqNum}) وتم إنشاء حساب الشبكة",
-                status = "pending",
+                status = NotificationStatus.pending,
                 sent_at = DateTime.UtcNow
             });
             await _context.SaveChangesAsync();
@@ -346,7 +346,7 @@ namespace NUH_PORTAL.Services
                 channel = "in_app",
                 recipient_role = "admin",
                 message = $"تم رفض طلب التسجيل ({reqNum}) من قبل الإدارة",
-                status = "pending",
+                status = NotificationStatus.pending,
                 sent_at = DateTime.UtcNow
             });
             await _context.SaveChangesAsync();

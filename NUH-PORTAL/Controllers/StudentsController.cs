@@ -8,7 +8,8 @@ namespace NUH_PORTAL.Controllers
 {
     // كنترولر رفيع: بيوجّه للـ IStudentService بس. كل المنطق + التحقق + الصلاحيات + الـ audit جوه الـ service.
     // الأخطاء بترمى كـ UserFriendlyException وبيترجمها ExceptionHandlingMiddleware لـ JSON { message } بالـ status الصح.
-    [Authorize]
+    // الصلاحيات: القراءة students.view، والتعديلات students.manage — عشان توكن OTP (دور user) ميوصلش لبيانات/عمليات الطلاب.
+    [Authorize(Policy = "students.view")]
     [Route("api/[controller]")]
     [ApiController]
     public class StudentsController : ControllerBase
@@ -38,6 +39,7 @@ namespace NUH_PORTAL.Controllers
             => Ok(await _service.GetByIdAsync(id));
 
         // POST api/Students
+        [Authorize(Policy = "students.manage")]
         [HttpPost]
         public async Task<IActionResult> CreateStudent([FromBody] StudentCreateDto dto)
         {
@@ -46,11 +48,13 @@ namespace NUH_PORTAL.Controllers
         }
 
         // PUT api/Students/{id}
+        [Authorize(Policy = "students.manage")]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateStudent(int id, [FromBody] StudentUpdateDto dto)
             => Ok(await _service.UpdateAsync(id, dto));
 
         // DELETE api/Students/{id}
+        [Authorize(Policy = "students.manage")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> SoftDeleteStudent(int id)
         {
@@ -64,6 +68,7 @@ namespace NUH_PORTAL.Controllers
             => Ok(new { logs = await _service.GetLifecycleAsync(id) });
 
         // POST api/Students/{id}/restore
+        [Authorize(Policy = "students.manage")]
         [HttpPost("{id}/restore")]
         public async Task<IActionResult> RestoreStudent(int id)
         {

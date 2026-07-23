@@ -5,6 +5,6 @@ namespace NUH_PORTAL.Services.Interfaces
     // توليد JWT موحّد (بيستخدمه OTP و Auth)
     public interface ITokenService
     {
-        string GenerateToken(User user);
+        string GenerateToken(User user, IEnumerable<string> roles, IEnumerable<string> permissions);
     }
 }

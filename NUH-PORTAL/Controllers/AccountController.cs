@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using NUH_PORTAL.Core;
 using NUH_PORTAL.Core.Exceptions;
+using NUH_PORTAL.Models;
 using NUH_PORTAL.Services.Interfaces;
 using System.Security.Claims;
 
@@ -19,11 +22,15 @@ namespace NUH_PORTAL.Controllers
 
         private readonly IAuthService _auth;
         private readonly ITokenService _tokens;
+        private readonly UserManager<User> _userManager;
+        private readonly IPermissionService _permissions;
 
-        public AccountController(IAuthService auth, ITokenService tokens)
+        public AccountController(IAuthService auth, ITokenService tokens, UserManager<User> userManager, IPermissionService permissions)
         {
             _auth = auth;
             _tokens = tokens;
+            _userManager = userManager;
+            _permissions = permissions;
         }
 
         // GET /Account/Login
@@ -49,13 +56,20 @@ namespace NUH_PORTAL.Controllers
             {
                 var user = await _auth.AuthenticateAsync(username, password);
 
+                var roles = await _userManager.GetRolesAsync(user);
+                if (roles.Count == 0) roles = new List<string> { "user" };
+                var perms = await _permissions.GetPermissionsForRolesAsync(roles);
+
                 var claims = new List<Claim>
                 {
                     new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                    new(ClaimTypes.Name, user.username ?? string.Empty),
-                    new(ClaimTypes.Role, (user.role ?? "user").ToLowerInvariant()),
-                    new("FullName", user.full_name ?? user.username ?? string.Empty)
+                    new(ClaimTypes.Name, user.UserName ?? string.Empty),
+                    new("FullName", user.full_name ?? user.UserName ?? string.Empty)
                 };
+                foreach (var r in roles)
+                    claims.Add(new Claim(ClaimTypes.Role, (r ?? "").ToLowerInvariant()));
+                foreach (var p in perms)
+                    claims.Add(new Claim(ClaimConstants.Permission, p));
 
                 var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
                 await HttpContext.SignInAsync(
@@ -68,16 +82,16 @@ namespace NUH_PORTAL.Controllers
                     });
 
                 // توكن للصفحات القديمة (نفس شكل رد الـ API القديم بالحرف)
-                var token = _tokens.GenerateToken(user);
+                var token = _tokens.GenerateToken(user, roles, perms);
                 var bridge = new
                 {
                     token,
                     user = new
                     {
                         id = user.Id,
-                        username = user.username,
+                        username = user.UserName,
                         full_name = user.full_name,
-                        role = user.role
+                        role = roles.FirstOrDefault() ?? "user"
                     },
                     redirect = string.IsNullOrEmpty(returnUrl) ? DefaultRedirect : returnUrl
                 };
@@ -97,8 +111,10 @@ namespace NUH_PORTAL.Controllers
         [Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme)]
         public async Task<IActionResult> Logout()
         {
-            await _auth.LogoutAsync();
+            // اخرج (امسح كوكي الجلسة) الأول — ده الأهم. سجل الإجراء best-effort:
+            // أي بطء/تايم-أوت في الداتابيز مايمنعش الخروج نفسه.
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            try { await _auth.LogoutAsync(); } catch { /* سجل الخروج مش لازم يوقف الخروج */ }
             return Redirect("/Account/Login");
         }
     }

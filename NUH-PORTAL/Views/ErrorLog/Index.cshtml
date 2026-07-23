@@ -1,0 +1,178 @@
+@{
+    ViewData["Title"] = SharedLocalizer["err_pageTitle"].Value;
+}
+
+<style>
+  .filters-bar{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px;align-items:end}
+  .filter-group{display:flex;flex-direction:column;gap:4px}
+  .filter-group label{font-size:11px;font-weight:600;color:var(--gray-500)}
+  .filter-group select,.filter-group input{padding:8px 10px;border:1px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:13px;background:var(--white);color:var(--navy-dark);min-width:150px}
+  .spinner{width:32px;height:32px;border:3px solid var(--gray-200);border-top-color:var(--navy);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto}
+  @@keyframes spin{to{transform:rotate(360deg)}}
+  .badge-500{background:var(--red-light);color:var(--red)}
+  .mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+  .clip{max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  tbody tr{cursor:pointer}
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center}
+  .modal-overlay.open{display:flex}
+  .modal{background:var(--white);border-radius:16px;padding:28px;min-width:420px;max-width:720px;width:92%;max-height:88vh;overflow:auto;box-shadow:0 8px 40px rgba(0,0,0,.15)}
+  .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+  .modal-title{font-size:16px;font-weight:700;color:var(--navy-dark)}
+  .modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--gray-500)}
+  .modal-row{display:flex;flex-direction:column;gap:2px;margin-bottom:12px}
+  .modal-row-label{font-size:11px;font-weight:600;color:var(--gray-500)}
+  .modal-row-value{font-size:14px;font-weight:500;color:var(--navy-dark);word-break:break-word}
+  .stack{background:#0f172a;color:#e2e8f0;border-radius:10px;padding:14px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;white-space:pre-wrap;word-break:break-word;max-height:320px;overflow:auto}
+</style>
+
+<div class="page-header">
+  <h2>@SharedLocalizer["err_pageTitle"]</h2>
+  <p>@SharedLocalizer["err_pageSubtitle"]</p>
+</div>
+
+<div class="filters-bar">
+  <div class="filter-group">
+    <label>@SharedLocalizer["err_search"]</label>
+    <input type="text" id="searchBox" placeholder="">
+  </div>
+  <div class="filter-group">
+    <label>@SharedLocalizer["err_fromDate"]</label>
+    <input type="date" id="fromDate">
+  </div>
+  <div class="filter-group">
+    <label>@SharedLocalizer["err_toDate"]</label>
+    <input type="date" id="toDate">
+  </div>
+</div>
+
+<div class="card">
+  <div style="overflow-x:auto">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>@SharedLocalizer["err_col_time"]</th>
+          <th>@SharedLocalizer["err_col_path"]</th>
+          <th>@SharedLocalizer["err_col_type"]</th>
+          <th>@SharedLocalizer["err_col_message"]</th>
+          <th>@SharedLocalizer["err_col_status"]</th>
+          <th>@SharedLocalizer["err_col_user"]</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <tr><td colspan="7" style="text-align:center;padding:60px 20px"><div class="spinner"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:16px;padding:0 4px">
+  <span id="totalLabel" style="font-size:13px;color:var(--gray-500)"></span>
+  <button id="prevBtn" class="btn btn-cancel" disabled>@SharedLocalizer["aud_prev"]</button>
+  <span id="pageInd" style="font-size:13px;font-weight:600;color:var(--navy-dark);min-width:60px;text-align:center">1 / 1</span>
+  <button id="nextBtn" class="btn btn-cancel" disabled>@SharedLocalizer["aud_next"]</button>
+</div>
+
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">@SharedLocalizer["err_modalTitle"]</div>
+      <button class="modal-close" id="modalClose">&times;</button>
+    </div>
+    <div class="modal-row"><span class="modal-row-label">@SharedLocalizer["err_col_time"]</span><span class="modal-row-value" id="d_time"></span></div>
+    <div class="modal-row"><span class="modal-row-label">@SharedLocalizer["err_col_type"]</span><span class="modal-row-value mono" id="d_type"></span></div>
+    <div class="modal-row"><span class="modal-row-label">@SharedLocalizer["err_col_message"]</span><span class="modal-row-value" id="d_message"></span></div>
+    <div class="modal-row"><span class="modal-row-label">@SharedLocalizer["err_col_path"]</span><span class="modal-row-value mono" id="d_path"></span></div>
+    <div class="modal-row"><span class="modal-row-label">@SharedLocalizer["err_modal_user"]</span><span class="modal-row-value" id="d_user"></span></div>
+    <div class="modal-row"><span class="modal-row-label">@SharedLocalizer["err_modal_ua"]</span><span class="modal-row-value" id="d_ua"></span></div>
+    <div class="modal-row"><span class="modal-row-label">@SharedLocalizer["err_modal_stack"]</span><div class="stack" id="d_stack"></div></div>
+  </div>
+</div>
+
+@section Scripts {
+<script src="/i18n.js"></script>
+<script>
+  var page = 1, pageSize = 50, totalPages = 1, cache = [];
+  var esc = function (v) { return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
+  function authHeaders() { var tk = localStorage.getItem('staffToken'); return tk ? { 'Authorization': 'Bearer ' + tk } : {}; }
+
+  function fmt(d) {
+    if (!d) return '';
+    var x = new Date(d); if (isNaN(x.getTime())) return '';
+    var p = function (n) { return String(n).padStart(2, '0'); };
+    return p(x.getDate()) + '/' + p(x.getMonth() + 1) + '/' + x.getFullYear() + ' ' + p(x.getHours()) + ':' + p(x.getMinutes());
+  }
+
+  function buildUrl() {
+    var u = '/api/logs/errors?page=' + page + '&pageSize=' + pageSize;
+    var s = document.getElementById('searchBox').value.trim();
+    var f = document.getElementById('fromDate').value;
+    var tt = document.getElementById('toDate').value;
+    if (s) u += '&search=' + encodeURIComponent(s);
+    if (f) u += '&fromDate=' + encodeURIComponent(f);
+    if (tt) u += '&toDate=' + encodeURIComponent(tt);
+    return u;
+  }
+
+  function render() {
+    var tb = document.getElementById('tbody');
+    if (!cache.length) { tb.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--gray-500);padding:40px">' + t('err_noItems') + '</td></tr>'; return; }
+    tb.innerHTML = cache.map(function (e, i) {
+      var n = (page - 1) * pageSize + i + 1;
+      return '<tr onclick="openDetail(' + e.id + ')">' +
+        '<td style="color:var(--gray-500)">' + n + '</td>' +
+        '<td>' + fmt(e.occurredAt) + '</td>' +
+        '<td class="mono"><span class="badge badge-gray">' + esc(e.requestMethod) + '</span> <span class="clip" title="' + esc(e.requestPath) + '">' + esc(e.requestPath) + '</span></td>' +
+        '<td class="mono">' + esc(e.exceptionType) + '</td>' +
+        '<td><div class="clip" title="' + esc(e.message) + '">' + esc(e.message) + '</div></td>' +
+        '<td><span class="badge badge-500">' + esc(e.statusCode) + '</span></td>' +
+        '<td>' + esc(e.username || '—') + '</td></tr>';
+    }).join('');
+  }
+
+  async function load() {
+    try {
+      var res = await fetch(buildUrl(), { headers: authHeaders() });
+      if (res.status === 401) { window.location.replace('/Account/Login'); return; }
+      if (!res.ok) { document.getElementById('tbody').innerHTML = '<tr><td colspan="7" style="text-align:center;color:#991B1B;padding:40px">' + t('err_loadError') + '</td></tr>'; return; }
+      var body = await res.json();
+      cache = body.data || [];
+      totalPages = body.totalPages || 1;
+      render();
+      document.getElementById('pageInd').textContent = page + ' / ' + totalPages;
+      document.getElementById('prevBtn').disabled = page <= 1;
+      document.getElementById('nextBtn').disabled = page >= totalPages;
+      document.getElementById('totalLabel').textContent = t('err_totalFmt').replace('{0}', body.totalRecords || 0);
+    } catch (e) { document.getElementById('tbody').innerHTML = '<tr><td colspan="7" style="text-align:center;color:#991B1B;padding:40px">' + t('err_loadError') + '</td></tr>'; }
+  }
+
+  async function openDetail(id) {
+    try {
+      var res = await fetch('/api/logs/errors/' + id, { headers: authHeaders() });
+      if (!res.ok) return;
+      var d = await res.json();
+      document.getElementById('d_time').textContent = fmt(d.occurredAt);
+      document.getElementById('d_type').textContent = d.exceptionType || '';
+      document.getElementById('d_message').textContent = d.message || '';
+      document.getElementById('d_path').textContent = (d.requestMethod || '') + ' ' + (d.requestPath || '');
+      document.getElementById('d_user').textContent = (d.username || '—') + (d.ipAddress ? ' · ' + d.ipAddress : '');
+      document.getElementById('d_ua').textContent = d.userAgent || '—';
+      document.getElementById('d_stack').textContent = d.stackTrace || '—';
+      document.getElementById('detailModal').classList.add('open');
+    } catch (e) { }
+  }
+
+  function onFilter() { page = 1; load(); }
+  document.getElementById('prevBtn').addEventListener('click', function () { if (page > 1) { page--; load(); } });
+  document.getElementById('nextBtn').addEventListener('click', function () { if (page < totalPages) { page++; load(); } });
+  document.getElementById('searchBox').addEventListener('keyup', function (e) { if (e.key === 'Enter') onFilter(); });
+  document.getElementById('fromDate').addEventListener('change', onFilter);
+  document.getElementById('toDate').addEventListener('change', onFilter);
+  document.getElementById('modalClose').addEventListener('click', function () { document.getElementById('detailModal').classList.remove('open'); });
+  document.getElementById('detailModal').addEventListener('click', function (e) { if (e.target === this) this.classList.remove('open'); });
+
+  window.onLanguageChange = function () { render(); };
+  setLang(localStorage.getItem('uiLanguage') || 'ar');
+  load();
+</script>
+}

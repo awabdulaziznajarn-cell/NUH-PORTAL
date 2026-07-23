@@ -1,0 +1,26 @@
+@{
+    ViewData["Title"] = SharedLocalizer["lk_tab_term"].Value;
+}
+
+<div class="page-header">
+  <h2>@SharedLocalizer["lk_tab_term"]</h2>
+  <p>@SharedLocalizer["lk_pageSubtitle"]</p>
+</div>
+
+<partial name="_LookupAdminShell" />
+
+@section Scripts {
+<script src="/i18n.js"></script>
+<script src="/lookup-admin.js"></script>
+<script>
+  setLang(localStorage.getItem('uiLanguage') || 'ar');
+  LookupAdmin.init({
+    apiBase: '/api/admin/pledge-terms',
+    fields: ['arText', 'enText', 'displayOrder', 'isActive'],
+    cols: ['arText', 'enText', 'order', 'active'],
+    isTerm: true,
+    needsColleges: false,
+    titleKey: 'lk_tab_term'
+  });
+</script>
+}

@@ -4,13 +4,13 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace NUH_PORTAL.Controllers.Mvc
 {
-    // صفحة إدارة القوائم المرجعية (MVC) — للأدمن فقط.
-    // الصفحة بترندر القشرة فقط؛ البيانات بتتحمّل بالـ JS من /api/admin (كوكي MVC بيوثّق تلقائيًا).
-    [Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme, Roles = "admin")]
+    // الشاشة القديمة الموحّدة (تابات) اتفصلت لشاشات مستقلة: /Colleges /Departments /Buildings
+    // /AcademicLevels /Terms. بنحوّل الرابط القديم للكليات عشان أي bookmark/redirect قديم يفضل شغّال.
+    [Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme, Policy = "lookups.manage")]
     [Route("Lookups")]
     public class LookupsController : Controller
     {
         [HttpGet("")]
-        public IActionResult Index() => View();
+        public IActionResult Index() => Redirect("/Colleges");
     }
 }

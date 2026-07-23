@@ -85,9 +85,9 @@ namespace NUH_PORTAL.Services
                     action_at = a.action_at,
                     ip_address = a.ip_address,
                     user_agent = a.user_agent,
-                    user_name = a.User != null ? (a.User.full_name ?? a.User.username) : null,
+                    user_name = a.User != null ? (a.User.full_name ?? a.User.UserName) : null,
                     user = a.User != null
-                        ? new AuditLogUserDto { full_name = a.User.full_name, username = a.User.username }
+                        ? new AuditLogUserDto { full_name = a.User.full_name, username = a.User.UserName }
                         : null,
                     changes = a.AuditChangeLogs != null
                         ? a.AuditChangeLogs.Select(c => new AuditChangeDto { FieldName = c.FieldName, OldValue = c.OldValue, NewValue = c.NewValue }).ToList()
@@ -121,7 +121,7 @@ namespace NUH_PORTAL.Services
                 .Select(a => new
                 {
                     a.Id,
-                    user_name = a.User != null ? (a.User.full_name ?? a.User.username) : null,
+                    user_name = a.User != null ? (a.User.full_name ?? a.User.UserName) : null,
                     a.action,
                     a.target_table,
                     a.target_id,
@@ -262,7 +262,7 @@ namespace NUH_PORTAL.Services
                 .Take(500)
                 .Select(a => new
                 {
-                    user_name = a.User != null ? (a.User.full_name ?? a.User.username) : null,
+                    user_name = a.User != null ? (a.User.full_name ?? a.User.UserName) : null,
                     a.action,
                     a.target_table,
                     a.target_id,
@@ -346,7 +346,7 @@ tr:nth-child(even){{background:#F4F6FB}}
                 .Select(u => new AuditUserOptionDto
                 {
                     Id = u.Id,
-                    Name = u.full_name ?? u.username
+                    Name = u.full_name ?? u.UserName
                 })
                 .OrderBy(u => u.Name)
                 .ToListAsync();
@@ -390,7 +390,7 @@ tr:nth-child(even){{background:#F4F6FB}}
                 query = query.Where(a =>
                     (a.User != null && (
                         a.User.full_name != null && a.User.full_name.ToLower().Contains(s) ||
-                        a.User.username != null && a.User.username.ToLower().Contains(s))) ||
+                        a.User.UserName != null && a.User.UserName.ToLower().Contains(s))) ||
                     (a.action != null && a.action.ToLower().Contains(s)) ||
                     (a.target_table != null && a.target_table.ToLower().Contains(s)) ||
                     a.target_id.ToString().Contains(s) ||

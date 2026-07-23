@@ -110,7 +110,7 @@
     <value>الطلاب</value>
   </data>
   <data name="Nav_Section_System" xml:space="preserve">
-    <value>النظام</value>
+    <value>إعدادات النظام</value>
   </data>
   <data name="Nav_StudentsList" xml:space="preserve">
     <value>قائمة الطلاب</value>
@@ -3747,5 +3747,395 @@
   </data>
   <data name="lk_confirmDelete" xml:space="preserve">
     <value>متأكد من حذف هذا العنصر؟</value>
+  </data>
+  <data name="Nav_Users" xml:space="preserve">
+    <value>المستخدمون</value>
+  </data>
+  <data name="usr_pageTitle" xml:space="preserve">
+    <value>إدارة المستخدمين</value>
+  </data>
+  <data name="usr_pageSubtitle" xml:space="preserve">
+    <value>إضافة وتعديل المستخدمين وإسناد الأدوار</value>
+  </data>
+  <data name="usr_search" xml:space="preserve">
+    <value>بحث بالاسم أو البريد أو الدور…</value>
+  </data>
+  <data name="usr_addUser" xml:space="preserve">
+    <value>+ مستخدم جديد</value>
+  </data>
+  <data name="usr_addFromDir" xml:space="preserve">
+    <value>إضافة من الدليل</value>
+  </data>
+  <data name="usr_col_username" xml:space="preserve">
+    <value>اسم المستخدم</value>
+  </data>
+  <data name="usr_col_fullName" xml:space="preserve">
+    <value>الاسم الكامل</value>
+  </data>
+  <data name="usr_col_email" xml:space="preserve">
+    <value>البريد الإلكتروني</value>
+  </data>
+  <data name="usr_col_role" xml:space="preserve">
+    <value>الدور</value>
+  </data>
+  <data name="usr_col_status" xml:space="preserve">
+    <value>الحالة</value>
+  </data>
+  <data name="usr_col_actions" xml:space="preserve">
+    <value>إجراءات</value>
+  </data>
+  <data name="usr_status_active" xml:space="preserve">
+    <value>نشط</value>
+  </data>
+  <data name="usr_status_inactive" xml:space="preserve">
+    <value>معطّل</value>
+  </data>
+  <data name="usr_edit" xml:space="preserve">
+    <value>تعديل</value>
+  </data>
+  <data name="usr_activate" xml:space="preserve">
+    <value>تفعيل</value>
+  </data>
+  <data name="usr_deactivate" xml:space="preserve">
+    <value>تعطيل</value>
+  </data>
+  <data name="usr_noItems" xml:space="preserve">
+    <value>لا يوجد مستخدمون</value>
+  </data>
+  <data name="usr_loadError" xml:space="preserve">
+    <value>تعذّر تحميل المستخدمين</value>
+  </data>
+  <data name="usr_saved" xml:space="preserve">
+    <value>تم الحفظ بنجاح</value>
+  </data>
+  <data name="usr_saveError" xml:space="preserve">
+    <value>تعذّر الحفظ</value>
+  </data>
+  <data name="usr_addTitle" xml:space="preserve">
+    <value>إضافة مستخدم</value>
+  </data>
+  <data name="usr_editTitle" xml:space="preserve">
+    <value>تعديل مستخدم</value>
+  </data>
+  <data name="usr_modalSub" xml:space="preserve">
+    <value>بيانات المستخدم والدور المُسند إليه</value>
+  </data>
+  <data name="usr_lbl_username" xml:space="preserve">
+    <value>اسم المستخدم</value>
+  </data>
+  <data name="usr_lbl_fullName" xml:space="preserve">
+    <value>الاسم الكامل</value>
+  </data>
+  <data name="usr_lbl_email" xml:space="preserve">
+    <value>البريد الإلكتروني</value>
+  </data>
+  <data name="usr_lbl_mobile" xml:space="preserve">
+    <value>الجوال</value>
+  </data>
+  <data name="usr_lbl_department" xml:space="preserve">
+    <value>القسم</value>
+  </data>
+  <data name="usr_lbl_jobTitle" xml:space="preserve">
+    <value>المسمى الوظيفي</value>
+  </data>
+  <data name="usr_lbl_role" xml:space="preserve">
+    <value>الدور</value>
+  </data>
+  <data name="usr_lbl_password" xml:space="preserve">
+    <value>كلمة المرور</value>
+  </data>
+  <data name="usr_lbl_passwordEdit" xml:space="preserve">
+    <value>كلمة مرور جديدة (اختياري)</value>
+  </data>
+  <data name="usr_lbl_active" xml:space="preserve">
+    <value>الحالة</value>
+  </data>
+  <data name="usr_required" xml:space="preserve">
+    <value>هذا الحقل مطلوب</value>
+  </data>
+  <data name="usr_save" xml:space="preserve">
+    <value>حفظ</value>
+  </data>
+  <data name="usr_cancel" xml:space="preserve">
+    <value>إلغاء</value>
+  </data>
+  <data name="usr_active_yes" xml:space="preserve">
+    <value>نشط</value>
+  </data>
+  <data name="usr_active_no" xml:space="preserve">
+    <value>معطّل</value>
+  </data>
+  <data name="usr_ldapTitle" xml:space="preserve">
+    <value>إضافة من الدليل (Active Directory)</value>
+  </data>
+  <data name="usr_ldapSub" xml:space="preserve">
+    <value>ابحث عن المستخدم في الدليل ثم أضفه بالدور المناسب</value>
+  </data>
+  <data name="usr_ldapSearchPh" xml:space="preserve">
+    <value>اكتب اسم المستخدم أو الاسم…</value>
+  </data>
+  <data name="usr_ldapSearchBtn" xml:space="preserve">
+    <value>بحث</value>
+  </data>
+  <data name="usr_ldapPickRole" xml:space="preserve">
+    <value>الدور المُسند:</value>
+  </data>
+  <data name="usr_ldapCol_name" xml:space="preserve">
+    <value>الاسم</value>
+  </data>
+  <data name="usr_ldapCol_account" xml:space="preserve">
+    <value>اسم الحساب</value>
+  </data>
+  <data name="usr_ldapCol_dept" xml:space="preserve">
+    <value>القسم</value>
+  </data>
+  <data name="usr_ldapAdd" xml:space="preserve">
+    <value>إضافة</value>
+  </data>
+  <data name="usr_ldapHint" xml:space="preserve">
+    <value>اكتب كلمة البحث ثم اضغط بحث</value>
+  </data>
+  <data name="usr_ldapNoResults" xml:space="preserve">
+    <value>لا توجد نتائج</value>
+  </data>
+  <data name="usr_ldapError" xml:space="preserve">
+    <value>تعذّر الاتصال بالدليل</value>
+  </data>
+  <data name="usr_ldapAdded" xml:space="preserve">
+    <value>تمت إضافة المستخدم بنجاح</value>
+  </data>
+  <data name="usr_ldapMinChars" xml:space="preserve">
+    <value>اكتب حرفين على الأقل</value>
+  </data>
+  <data name="Nav_Roles" xml:space="preserve">
+    <value>الأدوار والصلاحيات</value>
+  </data>
+  <data name="rol_pageTitle" xml:space="preserve">
+    <value>الأدوار والصلاحيات</value>
+  </data>
+  <data name="rol_pageSubtitle" xml:space="preserve">
+    <value>إدارة الأدوار والصلاحيات المُسندة لكل دور</value>
+  </data>
+  <data name="rol_addRole" xml:space="preserve">
+    <value>+ دور جديد</value>
+  </data>
+  <data name="rol_col_name" xml:space="preserve">
+    <value>الدور</value>
+  </data>
+  <data name="rol_col_desc" xml:space="preserve">
+    <value>الوصف</value>
+  </data>
+  <data name="rol_col_users" xml:space="preserve">
+    <value>المستخدمون</value>
+  </data>
+  <data name="rol_col_perms" xml:space="preserve">
+    <value>الصلاحيات</value>
+  </data>
+  <data name="rol_col_actions" xml:space="preserve">
+    <value>إجراءات</value>
+  </data>
+  <data name="rol_edit" xml:space="preserve">
+    <value>تعديل</value>
+  </data>
+  <data name="rol_delete" xml:space="preserve">
+    <value>حذف</value>
+  </data>
+  <data name="rol_noItems" xml:space="preserve">
+    <value>لا توجد أدوار</value>
+  </data>
+  <data name="rol_loadError" xml:space="preserve">
+    <value>تعذّر تحميل الأدوار</value>
+  </data>
+  <data name="rol_saved" xml:space="preserve">
+    <value>تم الحفظ بنجاح</value>
+  </data>
+  <data name="rol_saveError" xml:space="preserve">
+    <value>تعذّر الحفظ</value>
+  </data>
+  <data name="rol_deleted" xml:space="preserve">
+    <value>تم الحذف بنجاح</value>
+  </data>
+  <data name="rol_confirmDelete" xml:space="preserve">
+    <value>متأكد من حذف دور "{0}"؟</value>
+  </data>
+  <data name="rol_addTitle" xml:space="preserve">
+    <value>إضافة دور</value>
+  </data>
+  <data name="rol_editTitle" xml:space="preserve">
+    <value>تعديل دور</value>
+  </data>
+  <data name="rol_modalSub" xml:space="preserve">
+    <value>اسم الدور ووصفه والصلاحيات المُسندة إليه</value>
+  </data>
+  <data name="rol_lbl_name" xml:space="preserve">
+    <value>اسم الدور</value>
+  </data>
+  <data name="rol_lbl_desc" xml:space="preserve">
+    <value>الوصف</value>
+  </data>
+  <data name="rol_lbl_perms" xml:space="preserve">
+    <value>الصلاحيات</value>
+  </data>
+  <data name="rol_permsHint" xml:space="preserve">
+    <value>اختر الصلاحيات التي يتمتّع بها هذا الدور</value>
+  </data>
+  <data name="rol_required" xml:space="preserve">
+    <value>هذا الحقل مطلوب</value>
+  </data>
+  <data name="rol_save" xml:space="preserve">
+    <value>حفظ</value>
+  </data>
+  <data name="rol_cancel" xml:space="preserve">
+    <value>إلغاء</value>
+  </data>
+  <data name="rol_groupToggle" xml:space="preserve">
+    <value>تحديد الكل</value>
+  </data>
+  <data name="Nav_ErrorLog" xml:space="preserve">
+    <value>سجل الأخطاء</value>
+  </data>
+  <data name="Nav_SignInLog" xml:space="preserve">
+    <value>سجل الدخول والخروج</value>
+  </data>
+  <data name="err_pageTitle" xml:space="preserve">
+    <value>سجل الأخطاء</value>
+  </data>
+  <data name="err_pageSubtitle" xml:space="preserve">
+    <value>الأخطاء غير المتوقعة المرصودة في النظام</value>
+  </data>
+  <data name="err_search" xml:space="preserve">
+    <value>بحث في الرسالة أو المسار…</value>
+  </data>
+  <data name="err_fromDate" xml:space="preserve">
+    <value>من تاريخ</value>
+  </data>
+  <data name="err_toDate" xml:space="preserve">
+    <value>إلى تاريخ</value>
+  </data>
+  <data name="err_col_time" xml:space="preserve">
+    <value>التوقيت</value>
+  </data>
+  <data name="err_col_path" xml:space="preserve">
+    <value>المسار</value>
+  </data>
+  <data name="err_col_type" xml:space="preserve">
+    <value>نوع الخطأ</value>
+  </data>
+  <data name="err_col_message" xml:space="preserve">
+    <value>الرسالة</value>
+  </data>
+  <data name="err_col_status" xml:space="preserve">
+    <value>الحالة</value>
+  </data>
+  <data name="err_col_user" xml:space="preserve">
+    <value>المستخدم</value>
+  </data>
+  <data name="err_noItems" xml:space="preserve">
+    <value>لا توجد أخطاء مسجّلة</value>
+  </data>
+  <data name="err_loadError" xml:space="preserve">
+    <value>تعذّر تحميل السجل</value>
+  </data>
+  <data name="err_modalTitle" xml:space="preserve">
+    <value>تفاصيل الخطأ</value>
+  </data>
+  <data name="err_modal_user" xml:space="preserve">
+    <value>المستخدم</value>
+  </data>
+  <data name="err_modal_ua" xml:space="preserve">
+    <value>المتصفح/العميل</value>
+  </data>
+  <data name="err_modal_stack" xml:space="preserve">
+    <value>تتبّع الاستثناء</value>
+  </data>
+  <data name="err_totalFmt" xml:space="preserve">
+    <value>الإجمالي: {0}</value>
+  </data>
+  <data name="sil_pageTitle" xml:space="preserve">
+    <value>سجل الدخول والخروج</value>
+  </data>
+  <data name="sil_pageSubtitle" xml:space="preserve">
+    <value>محاولات تسجيل الدخول والخروج (نجاح/فشل)</value>
+  </data>
+  <data name="sil_search" xml:space="preserve">
+    <value>بحث بالاسم أو عنوان الـ IP…</value>
+  </data>
+  <data name="sil_fromDate" xml:space="preserve">
+    <value>من تاريخ</value>
+  </data>
+  <data name="sil_toDate" xml:space="preserve">
+    <value>إلى تاريخ</value>
+  </data>
+  <data name="sil_lblEvent" xml:space="preserve">
+    <value>الحدث</value>
+  </data>
+  <data name="sil_evt_all" xml:space="preserve">
+    <value>الكل</value>
+  </data>
+  <data name="sil_evt_login_success" xml:space="preserve">
+    <value>دخول ناجح</value>
+  </data>
+  <data name="sil_evt_login_failed" xml:space="preserve">
+    <value>دخول فاشل</value>
+  </data>
+  <data name="sil_evt_logout" xml:space="preserve">
+    <value>خروج</value>
+  </data>
+  <data name="sil_col_time" xml:space="preserve">
+    <value>التوقيت</value>
+  </data>
+  <data name="sil_col_user" xml:space="preserve">
+    <value>اسم المستخدم</value>
+  </data>
+  <data name="sil_col_fullName" xml:space="preserve">
+    <value>الاسم</value>
+  </data>
+  <data name="sil_col_event" xml:space="preserve">
+    <value>الحدث</value>
+  </data>
+  <data name="sil_col_method" xml:space="preserve">
+    <value>الطريقة</value>
+  </data>
+  <data name="sil_col_result" xml:space="preserve">
+    <value>النتيجة</value>
+  </data>
+  <data name="sil_col_ip" xml:space="preserve">
+    <value>عنوان IP</value>
+  </data>
+  <data name="sil_result_success" xml:space="preserve">
+    <value>نجاح</value>
+  </data>
+  <data name="sil_result_fail" xml:space="preserve">
+    <value>فشل</value>
+  </data>
+  <data name="sil_noItems" xml:space="preserve">
+    <value>لا توجد سجلات</value>
+  </data>
+  <data name="sil_loadError" xml:space="preserve">
+    <value>تعذّر تحميل السجل</value>
+  </data>
+  <data name="sil_totalFmt" xml:space="preserve">
+    <value>الإجمالي: {0}</value>
+  </data>
+  <data name="Nav_Section_Lookups" xml:space="preserve">
+    <value>القوائم المرجعية</value>
+  </data>
+  <data name="Nav_Colleges" xml:space="preserve">
+    <value>الكليات</value>
+  </data>
+  <data name="Nav_Departments" xml:space="preserve">
+    <value>الأقسام</value>
+  </data>
+  <data name="Nav_Buildings" xml:space="preserve">
+    <value>المباني</value>
+  </data>
+  <data name="Nav_AcademicLevels" xml:space="preserve">
+    <value>المستويات الدراسية</value>
+  </data>
+  <data name="Nav_Terms" xml:space="preserve">
+    <value>بنود التعهّد</value>
+  </data>
+  <data name="Nav_Departure" xml:space="preserve">
+    <value>المغادرة والإخلاء</value>
   </data>
 </root>

@@ -4,6 +4,7 @@ using NUH_PORTAL.Core.Exceptions;
 using NUH_PORTAL.Data.Interfaces;
 using NUH_PORTAL.DTOs.Notifications;
 using NUH_PORTAL.Models;
+using NUH_PORTAL.Models.Enums;
 using NUH_PORTAL.Repositories.Interfaces;
 using NUH_PORTAL.Services.Interfaces;
 
@@ -39,7 +40,7 @@ namespace NUH_PORTAL.Services
             if (!string.IsNullOrEmpty(role))
                 query = query.Where(n => n.recipient_role == role);
 
-            return await query.CountAsync(n => n.status == "pending");
+            return await query.CountAsync(n => n.status == NotificationStatus.pending);
         }
 
         public async Task MarkAsReadAsync(List<int> ids)
@@ -49,7 +50,7 @@ namespace NUH_PORTAL.Services
 
             var notifications = await _notifications.FindAllAsync(n => ids.Contains(n.Id));
             foreach (var n in notifications)
-                n.status = "read";
+                n.status = NotificationStatus.read;
 
             await UnitOfWork.SaveAsync();
         }

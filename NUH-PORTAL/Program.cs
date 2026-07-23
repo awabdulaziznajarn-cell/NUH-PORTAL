@@ -8,6 +8,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
 using NUH_PORTAL.Data;
+using Microsoft.AspNetCore.Identity;
+using NUH_PORTAL.Core;
 using NUH_PORTAL.Models;
 using NUH_PORTAL.Services;
 using NUH_PORTAL.Services.Interfaces;
@@ -115,6 +117,20 @@ if (jwtKey == "#{JWT_SECRET}#")
 // ✅ Authentication — سكيم ذكي بيختار تلقائيًا: كوكي MVC (NUH.Auth) لو موجود، وإلا JWT (للـ API/الأدوات).
 // بكده كل الـ [Authorize] — العادية واللي عليها Roles — بتتوثّق بالكوكي من صفحات الـ MVC حتى لو توكن الـ JWT
 // (staffToken) قديم/منتهي. (الإصلاح القديم بالـ DefaultPolicy كان بيمسك [Authorize] العادية بس، مش اللي عليها Roles.)
+// ✅ ASP.NET Identity (Core) — مخزن المستخدمين/الأدوار/الصلاحيات (زي الـ permit).
+// المصادقة نفسها فاضلة على JWT/Cookie تحت؛ Identity بيوفّر UserManager/RoleManager + الهاشر.
+builder.Services.AddIdentityCore<User>(opt =>
+{
+    opt.Password.RequireDigit = false;
+    opt.Password.RequireNonAlphanumeric = false;
+    opt.Password.RequireUppercase = false;
+    opt.Password.RequiredLength = 6;
+    opt.User.RequireUniqueEmail = false;
+})
+    .AddRoles<Role>()
+    .AddEntityFrameworkStores<AppDbContext>()
+    .AddDefaultTokenProviders();
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = "NUH_Smart";
@@ -155,6 +171,13 @@ builder.Services.AddAuthentication(options =>
 
 // ملاحظة: مبقناش محتاجين DefaultPolicy مخصّصة — السكيم الذكي "NUH_Smart" فوق بيوثّق
 // كل الـ [Authorize] (العادية واللي عليها Roles) بالكوكي أو الـ JWT حسب الطلب.
+
+// ✅ Authorization — policy لكل صلاحية (permission)، الكنترولر بيستخدم [Authorize(Policy = "users.manage")]
+builder.Services.AddAuthorization(options =>
+{
+    foreach (var permission in ApplicationPermissions.All)
+        options.AddPolicy(permission.Value, policy => policy.RequireClaim(ClaimConstants.Permission, permission.Value));
+});
 
 // ✅ CORS
 var allowedOrigin = builder.Configuration.GetValue<string>("AllowedOrigin") ?? "*";
@@ -245,10 +268,13 @@ builder.Services.AddScoped<IWorkflowActionService, WorkflowActionService>();
 builder.Services.AddScoped<ILookupService, LookupService>();
 builder.Services.AddScoped<ILookupAdminService, LookupAdminService>();
 builder.Services.AddScoped<ILookupResolver, LookupResolver>();
+builder.Services.AddScoped<IPermissionService, PermissionService>();
+builder.Services.AddScoped<IRoleAdminService, RoleAdminService>();
 builder.Services.AddScoped<IHousingAccountService, HousingAccountService>();
 builder.Services.AddScoped<ISupervisorHousingTransferService, SupervisorHousingTransferService>();
 builder.Services.AddScoped<IAttachmentService, AttachmentService>();
 builder.Services.AddScoped<IAuditLogQueryService, AuditLogQueryService>();
+builder.Services.AddScoped<ILogQueryService, LogQueryService>();
 builder.Services.AddScoped<IRegistrationFlowService, RegistrationFlowService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IOtpFlowService, OtpFlowService>();
@@ -287,7 +313,9 @@ if (app.Environment.IsDevelopment())
 {
     using var seedScope = app.Services.CreateScope();
     var seedDb = seedScope.ServiceProvider.GetRequiredService<AppDbContext>();
-    DbSeeder.SeedDevUsers(seedDb);
+    var seedUserManager = seedScope.ServiceProvider.GetRequiredService<UserManager<User>>();
+    var seedRoleManager = seedScope.ServiceProvider.GetRequiredService<RoleManager<Role>>();
+    await DbSeeder.SeedDevUsersAsync(seedUserManager, seedRoleManager);
     DbSeeder.SeedDevData(seedDb);
 }
 

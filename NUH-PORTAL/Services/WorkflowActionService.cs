@@ -144,7 +144,7 @@ namespace NUH_PORTAL.Services
                 Notes = h.Notes,
                 // لو المنفّذ طالب (دور user) بنعرض اسم الطالب صاحب الطلب — نفس منطق الكود القديم
                 ActorName = h.Actor != null
-                    ? (h.Actor.role == "user" && studentName != null ? studentName : h.Actor.full_name ?? h.Actor.username)
+                    ? (h.Actor.UserRoles.Any(ur => ur.Role.Name == "user") && studentName != null ? studentName : h.Actor.full_name ?? h.Actor.UserName)
                     : null
             }).ToList();
         }

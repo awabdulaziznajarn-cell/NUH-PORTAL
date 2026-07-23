@@ -5,7 +5,8 @@ using NUH_PORTAL.Services.Interfaces;
 namespace NUH_PORTAL.Controllers
 {
     // كنترولر رفيع — منطق حالات المغادرة في IStudentStatusService
-    [Authorize]
+    // القراءة students.view، وإجراء المغادرة students.manage — مش لتوكن الطالب (OTP).
+    [Authorize(Policy = "students.view")]
     [Route("api/student-status")]
     [ApiController]
     public class StudentStatusController : ControllerBase
@@ -15,6 +16,7 @@ namespace NUH_PORTAL.Controllers
         public StudentStatusController(IStudentStatusService service) => _service = service;
 
         // POST api/student-status  (multipart: studentNumber, statusType, notes, file?)
+        [Authorize(Policy = "students.manage")]
         [HttpPost]
         [RequestSizeLimit(Services.StudentStatusService.MaxFileSize)]
         public async Task<IActionResult> CreateStatusAction(

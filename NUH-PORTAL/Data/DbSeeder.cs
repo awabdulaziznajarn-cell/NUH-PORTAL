@@ -1,5 +1,8 @@
+using Microsoft.AspNetCore.Identity;
+using NUH_PORTAL.Core;
 using NUH_PORTAL.Models;
 using NUH_PORTAL.Models.Enums;
+using System.Security.Claims;
 
 namespace NUH_PORTAL.Data
 {
@@ -9,7 +12,7 @@ namespace NUH_PORTAL.Data
     {
         public const string DevPassword = "Test@123";
 
-        public static void SeedDevUsers(AppDbContext db)
+        public static async Task SeedDevUsersAsync(UserManager<User> userManager, RoleManager<Role> roleManager)
         {
             var seed = new (string Username, string Role, string FullName)[]
             {
@@ -19,27 +22,77 @@ namespace NUH_PORTAL.Data
                 ("user",       "user",       "Housing User"),
             };
 
-            var added = false;
+            // الأدوار الأساسية
+            foreach (var role in new[] { "admin", "cyber", "supervisor", "user" })
+                if (!await roleManager.RoleExistsAsync(role))
+                    await roleManager.CreateAsync(new Role(role) { Description = role });
+
+            // صلاحيات الأدوار (كـ role claims): admin = الكل، والباقي مجموعات منطقية
+            await AssignRolePermissionsAsync(roleManager, "admin", ApplicationPermissions.All.Select(p => p.Value).ToArray());
+            await AssignRolePermissionsAsync(roleManager, "supervisor", new[]
+            {
+                "students.view", "students.manage", "requests.view", "requests.process",
+                "housing.view", "housing.manage", "lookups.manage", "auditLogs.view"
+            });
+            await AssignRolePermissionsAsync(roleManager, "cyber", new[]
+            {
+                "requests.view", "requests.process", "housing.view", "auditLogs.view", "errorLogs.view"
+            });
+            // دور الطالب (OTP) — بدون صلاحيات موظفين. كان requests.view وده كان بيخلّي توكن الطالب
+            // يوصل endpoints المفروض للموظفين؛ الطالب بيتابع طلبه عبر /api/Registration و /api/RequestTracking.
+            await AssignRolePermissionsAsync(roleManager, "user", Array.Empty<string>());
+
+            // المستخدمون (بهاشر Identity — الباسورد للكل DevPassword)
             foreach (var (username, role, fullName) in seed)
             {
-                if (db.Users.Any(u => u.username == username))
+                if (await userManager.FindByNameAsync(username) != null)
                     continue;
 
-                db.Users.Add(new User
+                var user = new User
                 {
-                    username = username,
+                    UserName = username,
                     full_name = fullName,
-                    email = username + "@nu.edu.sa",
-                    role = role,
+                    Email = username + "@nu.edu.sa",
                     is_active = true,
-                    password_hash = BCrypt.Net.BCrypt.HashPassword(DevPassword),
                     created_at = DateTime.UtcNow
-                });
-                added = true;
+                };
+                var res = await userManager.CreateAsync(user, DevPassword);
+                if (res.Succeeded)
+                    await userManager.AddToRoleAsync(user, role);
             }
 
-            if (added)
-                db.SaveChanges();
+            // مستخدم dev — سوبر يوزر بكل الأدوار وبالتالي كل الصلاحيات (dev / Test@123).
+            // بياخد الأدوار الأربعة؛ دور admin فيه كل الـ permissions فالكوكي بيتحمّل بكل الصلاحيات عند الدخول.
+            if (await userManager.FindByNameAsync("dev") == null)
+            {
+                var dev = new User
+                {
+                    UserName = "dev",
+                    full_name = "Developer (Super User)",
+                    Email = "dev@nu.edu.sa",
+                    is_active = true,
+                    created_at = DateTime.UtcNow
+                };
+                var devRes = await userManager.CreateAsync(dev, DevPassword);
+                if (devRes.Succeeded)
+                    await userManager.AddToRolesAsync(dev, new[] { "admin", "supervisor", "cyber", "user" });
+            }
+        }
+
+        // إسناد صلاحيات لدور (idempotent — مبيكررش claim موجود)
+        private static async Task AssignRolePermissionsAsync(RoleManager<Role> roleManager, string roleName, string[] permissions)
+        {
+            var role = await roleManager.FindByNameAsync(roleName);
+            if (role == null) return;
+
+            var existing = (await roleManager.GetClaimsAsync(role))
+                .Where(c => c.Type == ClaimConstants.Permission)
+                .Select(c => c.Value)
+                .ToHashSet();
+
+            foreach (var p in permissions)
+                if (!existing.Contains(p))
+                    await roleManager.AddClaimAsync(role, new Claim(ClaimConstants.Permission, p));
         }
 
         // عينة بيانات للتطوير بس — بتتزرع مرة واحدة لو جدول الطلاب فاضي تمامًا.
@@ -49,7 +102,7 @@ namespace NUH_PORTAL.Data
             if (db.Students.Any())
                 return;
 
-            var adminId = db.Users.FirstOrDefault(u => u.username == "admin")?.Id ?? 1;
+            var adminId = db.Users.FirstOrDefault(u => u.UserName == "admin")?.Id ?? 1;
             var now = DateTime.UtcNow;
 
             var students = new[]
@@ -86,9 +139,9 @@ namespace NUH_PORTAL.Data
 
             // إشعارات معلقة للأدوار
             db.Notifications.AddRange(
-                new Notification { request_id = requests[0].Id, channel = "in_app", recipient_role = "admin", message = "تم تقديم طلب جديد (REQ-2026-000001)", status = "pending", sent_at = now.AddDays(-10) },
-                new Notification { request_id = requests[1].Id, channel = "in_app", recipient_role = "cyber", message = "تم إحالة الطلب (REQ-2026-000002) إلى المراجعة الإلكترونية", status = "pending", sent_at = now.AddDays(-7) },
-                new Notification { request_id = requests[4].Id, channel = "in_app", recipient_role = "supervisor", message = "تم رفض الطلب (REQ-2026-000005) من قبل لجنة الإسكان", status = "pending", sent_at = now.AddDays(-2) }
+                new Notification { request_id = requests[0].Id, channel = "in_app", recipient_role = "admin", message = "تم تقديم طلب جديد (REQ-2026-000001)", status = NotificationStatus.pending, sent_at = now.AddDays(-10) },
+                new Notification { request_id = requests[1].Id, channel = "in_app", recipient_role = "cyber", message = "تم إحالة الطلب (REQ-2026-000002) إلى المراجعة الإلكترونية", status = NotificationStatus.pending, sent_at = now.AddDays(-7) },
+                new Notification { request_id = requests[4].Id, channel = "in_app", recipient_role = "supervisor", message = "تم رفض الطلب (REQ-2026-000005) من قبل لجنة الإسكان", status = NotificationStatus.pending, sent_at = now.AddDays(-2) }
             );
 
             // إجراء مغادرة + سجل دورة حياة للطالب المتخرج

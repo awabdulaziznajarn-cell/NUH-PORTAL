@@ -1,4 +1,5 @@
 using MapsterMapper;
+using Microsoft.AspNetCore.Identity;
 using NUH_PORTAL.Core.Exceptions;
 using NUH_PORTAL.Data.Interfaces;
 using NUH_PORTAL.DTOs.Otp;
@@ -19,6 +20,9 @@ namespace NUH_PORTAL.Services
         private readonly ITokenService _tokens;
         private readonly IConfiguration _config;
         private readonly IHttpContextAccessor _http;
+        private readonly UserManager<User> _userManager;
+        private readonly RoleManager<Role> _roleManager;
+        private readonly IPermissionService _permissions;
 
         public OtpFlowService(
             IRepository<Student> students,
@@ -29,6 +33,9 @@ namespace NUH_PORTAL.Services
             ITokenService tokens,
             IConfiguration config,
             IHttpContextAccessor http,
+            UserManager<User> userManager,
+            RoleManager<Role> roleManager,
+            IPermissionService permissions,
             IUnitOfWork unitOfWork,
             IMapper mapper) : base(unitOfWork, mapper)
         {
@@ -40,6 +47,19 @@ namespace NUH_PORTAL.Services
             _tokens = tokens;
             _config = config;
             _http = http;
+            _userManager = userManager;
+            _roleManager = roleManager;
+            _permissions = permissions;
+        }
+
+        // ضمان وجود دور "user" وإسناده للمستخدم
+        private async Task EnsureUserRoleAsync(User user)
+        {
+            if (!await _roleManager.RoleExistsAsync("user"))
+                await _roleManager.CreateAsync(new Role("user"));
+            var roles = await _userManager.GetRolesAsync(user);
+            if (!roles.Contains("user"))
+                await _userManager.AddToRoleAsync(user, "user");
         }
 
         private (string? ip, string ua) ClientInfo()
@@ -102,24 +122,23 @@ namespace NUH_PORTAL.Services
             {
                 user = new User
                 {
-                    username = "student_" + (student?.student_id ?? request.Mobile.Replace("+", "").Replace(" ", "")),
+                    UserName = "student_" + (student?.student_id ?? request.Mobile.Replace("+", "").Replace(" ", "")),
                     full_name = student?.full_name ?? "طالب",
-                    email = request.Mobile + "@student.nu.edu.sa",
-                    role = "user",
+                    Email = request.Mobile + "@student.nu.edu.sa",
                     mobile = request.Mobile,
                     is_active = true,
                     created_at = DateTime.UtcNow
                 };
-                await _users.AddAsync(user);
-                await UnitOfWork.SaveAsync();
+                await _userManager.CreateAsync(user);
+                await EnsureUserRoleAsync(user);
             }
-            else if (user.role != "user")
+            else
             {
-                user.role = "user";
-                await UnitOfWork.SaveAsync();
+                await EnsureUserRoleAsync(user);
             }
 
-            var token = _tokens.GenerateToken(user);
+            var perms = await _permissions.GetPermissionsForRolesAsync(new[] { "user" });
+            var token = _tokens.GenerateToken(user, new[] { "user" }, perms);
 
             var (ip, ua) = ClientInfo();
             await _workflow.LogAuditAsync(user.Id, "otp_verified", "OTPVerifications", 0, ip, ua);
@@ -131,7 +150,7 @@ namespace NUH_PORTAL.Services
                 User = new OtpUserDto
                 {
                     id = user.Id,
-                    username = user.username,
+                    username = user.UserName,
                     full_name = user.full_name,
                     role = "user",
                     student_id = student?.student_id,

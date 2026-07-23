@@ -1,0 +1,297 @@
+@{
+    ViewData["Title"] = SharedLocalizer["rol_pageTitle"].Value;
+    var canManage = User.HasClaim("permission", "roles.manage");
+}
+
+<div class="page-header">
+  <h2>@SharedLocalizer["rol_pageTitle"]</h2>
+  <p>@SharedLocalizer["rol_pageSubtitle"]</p>
+</div>
+
+<div class="card">
+  <div class="lk-toolbar">
+    <div class="lk-toolbar-title">@SharedLocalizer["rol_pageTitle"]</div>
+    @if (canManage)
+    {
+      <button class="btn btn-primary" type="button" onclick="openCreate()">@SharedLocalizer["rol_addRole"]</button>
+    }
+  </div>
+
+  <div style="overflow-x:auto">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>@SharedLocalizer["rol_col_name"]</th>
+          <th>@SharedLocalizer["rol_col_desc"]</th>
+          <th>@SharedLocalizer["rol_col_users"]</th>
+          <th>@SharedLocalizer["rol_col_perms"]</th>
+          <th>@SharedLocalizer["rol_col_actions"]</th>
+        </tr>
+      </thead>
+      <tbody id="rolBody">
+        <tr><td colspan="6" style="text-align:center;padding:40px"><div class="spinner"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="edit-overlay" id="rolOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="edit-modal" role="dialog" aria-modal="true" style="max-width:720px">
+    <div class="edit-modal-header">
+      <div>
+        <div class="edit-modal-title" id="rolModalTitle">@SharedLocalizer["rol_addTitle"]</div>
+        <div class="edit-modal-sub">@SharedLocalizer["rol_modalSub"]</div>
+      </div>
+      <button class="edit-close" type="button" onclick="closeModal()" aria-label='@(SharedLocalizer["rol_cancel"].Value)'>✕</button>
+    </div>
+    <div class="edit-modal-body">
+      <input type="hidden" id="m_id">
+      <div class="e-grid">
+        <div class="e-field">
+          <label>@SharedLocalizer["rol_lbl_name"]<span>*</span></label>
+          <input type="text" id="m_name">
+          <span class="field-error" id="m-err-name">@SharedLocalizer["rol_required"]</span>
+        </div>
+        <div class="e-field">
+          <label>@SharedLocalizer["rol_lbl_desc"]</label>
+          <input type="text" id="m_description">
+        </div>
+      </div>
+
+      <div style="margin-top:20px">
+        <div style="font-size:13px;font-weight:700;color:var(--navy-dark);margin-bottom:6px">@SharedLocalizer["rol_lbl_perms"]</div>
+        <div style="font-size:12px;color:var(--gray-500);margin-bottom:12px">@SharedLocalizer["rol_permsHint"]</div>
+        <div id="permGroups"></div>
+      </div>
+    </div>
+    <div class="edit-modal-actions">
+      <button class="btn btn-primary" id="rolSaveBtn" type="button" onclick="saveRole()">
+        <span class="btn-text">@SharedLocalizer["rol_save"]</span>
+        <div class="spinner2"></div>
+      </button>
+      <button class="btn btn-cancel" type="button" onclick="closeModal()">@SharedLocalizer["rol_cancel"]</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span id="toast-msg"></span></div>
+
+@section Scripts {
+<style>
+  .lk-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;border-bottom:1px solid var(--gray-100)}
+  .lk-toolbar-title{font-weight:700;color:var(--navy-dark);font-size:14px}
+  .spinner{width:32px;height:32px;border:3px solid var(--gray-200);border-top-color:var(--navy);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto}
+  @@keyframes spin{to{transform:rotate(360deg)}}
+  .action-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:8px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;cursor:pointer;border:none;transition:all .2s}
+  .action-edit{background:#eef1f8;color:var(--navy)}
+  .action-edit:hover{background:#e0e6f5}
+  .action-delete{background:var(--red-light);color:var(--red)}
+  .action-delete:hover{background:#fee2e2}
+  .row-actions{display:flex;gap:6px;align-items:center}
+  .rol-name{display:inline-block;padding:2px 10px;border-radius:6px;font-size:12px;font-weight:700;background:#EEF2FF;color:#3730A3}
+  .rol-count{display:inline-block;min-width:26px;text-align:center;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;background:var(--gray-100);color:var(--gray-700)}
+  .edit-overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;z-index:1000;padding:20px}
+  .edit-overlay.show{display:flex}
+  .edit-modal{background:#fff;border-radius:16px;width:100%;max-width:720px;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden}
+  .edit-modal-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 24px;border-bottom:1px solid var(--gray-100)}
+  .edit-modal-title{font-size:16px;font-weight:700;color:var(--navy-dark)}
+  .edit-modal-sub{font-size:12px;color:var(--gray-500);margin-top:4px}
+  .edit-close{background:var(--gray-100);border:none;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--gray-700);flex-shrink:0}
+  .edit-close:hover{background:#e5e7eb}
+  .edit-modal-body{padding:24px;overflow-y:auto}
+  .e-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .e-field{display:flex;flex-direction:column;gap:6px}
+  .e-field label{font-size:13px;font-weight:600;color:var(--gray-700)}
+  .e-field label span{color:#EF4444;margin-right:2px}
+  .e-field input{width:100%;height:44px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:10px;padding:0 14px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;color:var(--navy-dark);outline:none}
+  .e-field input:focus{border-color:var(--navy);background:#fff;box-shadow:0 0 0 3px rgba(27,42,94,.08)}
+  .e-field input.error{border-color:#EF4444}
+  .e-field .field-error{font-size:11px;color:#EF4444;font-weight:500;display:none}
+  .e-field .field-error.show{display:block}
+  .perm-group{border:1px solid var(--gray-200);border-radius:12px;margin-bottom:12px;overflow:hidden}
+  .perm-group-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;background:var(--gray-50);cursor:pointer}
+  .perm-group-title{font-size:13px;font-weight:700;color:var(--navy-dark)}
+  .perm-group-all{font-size:11px;color:var(--navy);cursor:pointer;font-weight:600}
+  .perm-list{padding:8px 14px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .perm-item{display:flex;align-items:flex-start;gap:8px;padding:6px;border-radius:8px}
+  .perm-item:hover{background:var(--gray-50)}
+  .perm-item input{margin-top:3px;width:16px;height:16px;cursor:pointer}
+  .perm-item label{cursor:pointer;font-size:13px;color:var(--navy-dark)}
+  .perm-item .perm-desc{display:block;font-size:11px;color:var(--gray-500);margin-top:2px}
+  .edit-modal-actions{display:flex;gap:12px;justify-content:flex-end;padding:18px 24px;border-top:1px solid var(--gray-100)}
+  .edit-modal-actions .btn{padding:0 24px;height:44px;border-radius:10px;font-family:'IBM Plex Sans Arabic',sans-serif;font-weight:700;font-size:14px;cursor:pointer;border:none;display:flex;align-items:center;gap:8px}
+  .edit-modal-actions .btn.loading{opacity:.75;pointer-events:none}
+  .spinner2{width:16px;height:16px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin2 .6s linear infinite;display:none}
+  .btn.loading .spinner2{display:block}
+  .btn.loading .btn-text{display:none}
+  @@keyframes spin2{to{transform:rotate(360deg)}}
+  .toast{position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-90px);background:#0F6E56;color:#fff;padding:14px 24px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:0 8px 32px rgba(0,0,0,.2);z-index:1100;transition:transform .4s cubic-bezier(.16,1,.3,1)}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+  @@media(max-width:640px){.e-grid{grid-template-columns:1fr}.perm-list{grid-template-columns:1fr}}
+</style>
+<script src="/i18n.js"></script>
+<script>
+  var PERM_MANAGE = @(canManage ? "true" : "false");
+  var state = { roles: [], catalog: [] };
+
+  function authHeaders() { var tk = localStorage.getItem('staffToken'); return tk ? { 'Authorization': 'Bearer ' + tk } : {}; }
+  var esc = function (v) { return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
+
+  function showToast(msg, isError) {
+    var el = document.getElementById('toast'); if (!el) return;
+    document.getElementById('toast-msg').textContent = msg;
+    el.style.background = isError ? '#991B1B' : '#0F6E56';
+    el.classList.add('show');
+    setTimeout(function () { el.classList.remove('show'); }, 3500);
+  }
+
+  function renderTable() {
+    var body = '';
+    state.roles.forEach(function (r, idx) {
+      var actions = '';
+      if (PERM_MANAGE) {
+        actions += '<button class="action-btn action-edit" onclick="openEdit(' + r.id + ')">' + t('rol_edit') + '</button>';
+        actions += '<button class="action-btn action-delete" onclick="delRole(' + r.id + ',\'' + esc(r.name) + '\')">' + t('rol_delete') + '</button>';
+      }
+      body += '<tr>' +
+        '<td>' + (idx + 1) + '</td>' +
+        '<td><span class="rol-name">' + esc(r.name) + '</span></td>' +
+        '<td>' + esc(r.description) + '</td>' +
+        '<td><span class="rol-count">' + r.userCount + '</span></td>' +
+        '<td><span class="rol-count">' + r.permissionCount + '</span></td>' +
+        '<td><div class="row-actions">' + (actions || '—') + '</div></td></tr>';
+    });
+    document.getElementById('rolBody').innerHTML = body ||
+      '<tr><td colspan="6" style="text-align:center;color:var(--gray-500);padding:28px">' + t('rol_noItems') + '</td></tr>';
+  }
+
+  async function loadRoles() {
+    try {
+      var res = await fetch('/api/Roles', { headers: authHeaders() });
+      if (res.status === 401) { window.location.replace('/Account/Login'); return; }
+      if (!res.ok) { showToast(t('rol_loadError'), true); return; }
+      state.roles = await res.json();
+      renderTable();
+    } catch (e) { showToast(t('rol_loadError'), true); }
+  }
+
+  async function ensureCatalog() {
+    if (state.catalog.length) return;
+    try {
+      var res = await fetch('/api/Roles/permissions', { headers: authHeaders() });
+      if (res.ok) state.catalog = await res.json();
+    } catch (e) { /* صامت */ }
+  }
+
+  function renderPermGroups(selected) {
+    var sel = {};
+    (selected || []).forEach(function (v) { sel[v] = true; });
+    var html = '';
+    state.catalog.forEach(function (g, gi) {
+      html += '<div class="perm-group">' +
+        '<div class="perm-group-head">' +
+          '<span class="perm-group-title">' + esc(g.groupName) + '</span>' +
+          '<span class="perm-group-all" onclick="toggleGroup(' + gi + ')">' + t('rol_groupToggle') + '</span>' +
+        '</div>' +
+        '<div class="perm-list" data-group="' + gi + '">' +
+          g.permissions.map(function (p) {
+            var id = 'perm_' + p.value.replace(/[^a-zA-Z0-9]/g, '_');
+            return '<div class="perm-item">' +
+              '<input type="checkbox" id="' + id + '" value="' + esc(p.value) + '"' + (sel[p.value] ? ' checked' : '') + '>' +
+              '<label for="' + id + '">' + esc(p.name) +
+                '<span class="perm-desc">' + esc(p.description) + '</span>' +
+              '</label></div>';
+          }).join('') +
+        '</div></div>';
+    });
+    document.getElementById('permGroups').innerHTML = html;
+  }
+
+  function toggleGroup(gi) {
+    var boxes = document.querySelectorAll('.perm-list[data-group="' + gi + '"] input[type=checkbox]');
+    var anyUnchecked = Array.prototype.some.call(boxes, function (b) { return !b.checked; });
+    boxes.forEach(function (b) { b.checked = anyUnchecked; });
+  }
+
+  function collectPerms() {
+    var boxes = document.querySelectorAll('#permGroups input[type=checkbox]:checked');
+    return Array.prototype.map.call(boxes, function (b) { return b.value; });
+  }
+
+  function mGet(id) { return document.getElementById('m_' + id); }
+
+  async function openCreate() {
+    await ensureCatalog();
+    document.getElementById('rolModalTitle').textContent = t('rol_addTitle');
+    mGet('id').value = '';
+    mGet('name').value = '';
+    mGet('name').removeAttribute('readonly');
+    mGet('description').value = '';
+    document.getElementById('m-err-name').classList.remove('show');
+    mGet('name').classList.remove('error');
+    renderPermGroups([]);
+    document.getElementById('rolOverlay').classList.add('show');
+  }
+
+  async function openEdit(id) {
+    await ensureCatalog();
+    document.getElementById('rolModalTitle').textContent = t('rol_editTitle');
+    mGet('id').value = id;
+    document.getElementById('m-err-name').classList.remove('show');
+    mGet('name').classList.remove('error');
+    try {
+      var res = await fetch('/api/Roles/' + id, { headers: authHeaders() });
+      if (!res.ok) { showToast(t('rol_loadError'), true); return; }
+      var d = await res.json();
+      mGet('name').value = d.name || '';
+      mGet('name').setAttribute('readonly', 'readonly');
+      mGet('description').value = d.description || '';
+      renderPermGroups(d.permissions || []);
+      document.getElementById('rolOverlay').classList.add('show');
+    } catch (e) { showToast(t('rol_loadError'), true); }
+  }
+
+  function closeModal() { document.getElementById('rolOverlay').classList.remove('show'); }
+
+  async function saveRole() {
+    var id = mGet('id').value;
+    var isEdit = !!id;
+    var name = mGet('name').value.trim();
+    if (!isEdit && !name) {
+      mGet('name').classList.add('error');
+      document.getElementById('m-err-name').classList.add('show');
+      return;
+    }
+    var btn = document.getElementById('rolSaveBtn');
+    btn.classList.add('loading');
+    var payload = { name: name, description: mGet('description').value.trim(), permissions: collectPerms() };
+    try {
+      var res = await fetch(isEdit ? '/api/Roles/' + id : '/api/Roles', {
+        method: isEdit ? 'PUT' : 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify(payload)
+      });
+      if (res.status === 401) { window.location.replace('/Account/Login'); return; }
+      if (res.ok) { closeModal(); loadRoles(); showToast(t('rol_saved')); }
+      else { var err = await res.json().catch(function () { return {}; }); showToast(err.message || t('rol_saveError'), true); }
+    } catch (e) { showToast(t('rol_saveError'), true); }
+    finally { btn.classList.remove('loading'); }
+  }
+
+  async function delRole(id, name) {
+    if (!confirm(t('rol_confirmDelete').replace('{0}', name))) return;
+    try {
+      var res = await fetch('/api/Roles/' + id, { method: 'DELETE', headers: authHeaders() });
+      if (res.status === 401) { window.location.replace('/Account/Login'); return; }
+      if (res.ok) { loadRoles(); showToast(t('rol_deleted')); }
+      else { var err = await res.json().catch(function () { return {}; }); showToast(err.message || t('rol_saveError'), true); }
+    } catch (e) { showToast(t('rol_saveError'), true); }
+  }
+
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
+  window.onLanguageChange = function () { renderTable(); };
+  setLang(localStorage.getItem('uiLanguage') || 'ar');
+  loadRoles();
+</script>
+}

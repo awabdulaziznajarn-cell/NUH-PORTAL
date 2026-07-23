@@ -219,7 +219,7 @@ namespace NUH_PORTAL.Services
                     ActionDate = h.ActionDate,
                     Notes = h.Notes,
                     ActorName = h.Actor != null
-                        ? (h.Actor.role == "user" && request.Student?.full_name != null ? request.Student.full_name : h.Actor.full_name ?? h.Actor.username)
+                        ? (h.Actor.UserRoles.Any(ur => ur.Role.Name == "user") && request.Student?.full_name != null ? request.Student.full_name : h.Actor.full_name ?? h.Actor.UserName)
                         : null
                 }).ToList()
             };

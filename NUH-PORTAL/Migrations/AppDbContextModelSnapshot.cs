@@ -22,6 +22,94 @@ namespace NUH_PORTAL.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("RoleId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AspNetRoleClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<int>", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ClaimType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ClaimValue")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserClaims", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<int>", b =>
+                {
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ProviderKey")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("ProviderDisplayName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("LoginProvider", "ProviderKey");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AspNetUserLogins", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<int>", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("LoginProvider")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Value")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("UserId", "LoginProvider", "Name");
+
+                    b.ToTable("AspNetUserTokens", (string)null);
+                });
+
             modelBuilder.Entity("NUH_PORTAL.Models.ADConfiguration", b =>
                 {
                     b.Property<int>("Id")
@@ -438,6 +526,64 @@ namespace NUH_PORTAL.Migrations
                     b.ToTable("Departments", (string)null);
                 });
 
+            modelBuilder.Entity("NUH_PORTAL.Models.ErrorLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("exception_type")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("ip_address")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("message")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("occurred_at")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("request_method")
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
+                    b.Property<string>("request_path")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<string>("source")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("stack_trace")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("status_code")
+                        .HasColumnType("int");
+
+                    b.Property<string>("user_agent")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("user_id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("username")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("occurred_at")
+                        .HasDatabaseName("IX_ErrorLogs_occurred_at");
+
+                    b.HasIndex("user_id");
+
+                    b.ToTable("ErrorLogs", (string)null);
+                });
+
             modelBuilder.Entity("NUH_PORTAL.Models.HousingTransfer", b =>
                 {
                     b.Property<int>("Id")
@@ -538,6 +684,8 @@ namespace NUH_PORTAL.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("request_id");
 
                     b.HasIndex("recipient_role", "status")
                         .HasDatabaseName("IX_Notifications_role_status");
@@ -770,6 +918,39 @@ namespace NUH_PORTAL.Migrations
                     b.ToTable("RequestAttachments", (string)null);
                 });
 
+            modelBuilder.Entity("NUH_PORTAL.Models.Role", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("NormalizedName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("RoleNameIndex")
+                        .HasFilter("[NormalizedName] IS NOT NULL");
+
+                    b.ToTable("AspNetRoles", (string)null);
+                });
+
             modelBuilder.Entity("NUH_PORTAL.Models.SMSLog", b =>
                 {
                     b.Property<int>("Id")
@@ -808,6 +989,58 @@ namespace NUH_PORTAL.Migrations
                         .HasDatabaseName("IX_SMSLogs_status");
 
                     b.ToTable("SMSLogs", (string)null);
+                });
+
+            modelBuilder.Entity("NUH_PORTAL.Models.SignInLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("detail")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("event_type")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("ip_address")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("method")
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<DateTime>("occurred_at")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("success")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("user_agent")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("user_id")
+                        .HasColumnType("int");
+
+                    b.Property<string>("username")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("event_type")
+                        .HasDatabaseName("IX_SignInLogs_event_type");
+
+                    b.HasIndex("occurred_at")
+                        .HasDatabaseName("IX_SignInLogs_occurred_at");
+
+                    b.HasIndex("user_id");
+
+                    b.ToTable("SignInLogs", (string)null);
                 });
 
             modelBuilder.Entity("NUH_PORTAL.Models.Student", b =>
@@ -873,7 +1106,8 @@ namespace NUH_PORTAL.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("ad_status")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("ad_username")
                         .HasColumnType("nvarchar(max)");
@@ -916,13 +1150,15 @@ namespace NUH_PORTAL.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("status")
-                        .HasColumnType("nvarchar(450)");
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("student_id")
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("student_status")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
 
                     b.HasKey("Id");
 
@@ -1124,13 +1360,57 @@ namespace NUH_PORTAL.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("AccessFailedCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("LockoutEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset?>("LockoutEnd")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("NormalizedEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("NormalizedUserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("PhoneNumberConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("SecurityStamp")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("TwoFactorEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("UserName")
+                        .HasMaxLength(256)
+                        .HasColumnType("nvarchar(256)");
+
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("department")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("email")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("full_name")
@@ -1145,28 +1425,37 @@ namespace NUH_PORTAL.Migrations
                     b.Property<string>("mobile")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<string>("password_hash")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("role")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("username")
-                        .HasColumnType("nvarchar(450)");
-
                     b.HasKey("Id");
+
+                    b.HasIndex("NormalizedEmail")
+                        .HasDatabaseName("EmailIndex");
+
+                    b.HasIndex("NormalizedUserName")
+                        .IsUnique()
+                        .HasDatabaseName("UserNameIndex")
+                        .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.HasIndex("mobile")
                         .IsUnique()
                         .HasDatabaseName("IX_Users_mobile")
                         .HasFilter("[mobile] IS NOT NULL");
 
-                    b.HasIndex("username")
-                        .IsUnique()
-                        .HasDatabaseName("IX_Users_username")
-                        .HasFilter("[username] IS NOT NULL");
-
                     b.ToTable("Users", (string)null);
+                });
+
+            modelBuilder.Entity("NUH_PORTAL.Models.UserRole", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("RoleId")
+                        .HasColumnType("int");
+
+                    b.HasKey("UserId", "RoleId");
+
+                    b.HasIndex("RoleId");
+
+                    b.ToTable("AspNetUserRoles", (string)null);
                 });
 
             modelBuilder.Entity("NUH_PORTAL.Models.WorkflowHistory", b =>
@@ -1210,6 +1499,42 @@ namespace NUH_PORTAL.Migrations
                         .HasDatabaseName("IX_WorkflowHistory_request_date");
 
                     b.ToTable("WorkflowHistory", (string)null);
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
+                {
+                    b.HasOne("NUH_PORTAL.Models.Role", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<int>", b =>
+                {
+                    b.HasOne("NUH_PORTAL.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<int>", b =>
+                {
+                    b.HasOne("NUH_PORTAL.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<int>", b =>
+                {
+                    b.HasOne("NUH_PORTAL.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("NUH_PORTAL.Models.ADConfiguration", b =>
@@ -1283,6 +1608,16 @@ namespace NUH_PORTAL.Migrations
                     b.Navigation("College");
                 });
 
+            modelBuilder.Entity("NUH_PORTAL.Models.ErrorLog", b =>
+                {
+                    b.HasOne("NUH_PORTAL.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("user_id")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("NUH_PORTAL.Models.HousingTransfer", b =>
                 {
                     b.HasOne("NUH_PORTAL.Models.User", "CreatedByUser")
@@ -1300,6 +1635,17 @@ namespace NUH_PORTAL.Migrations
                     b.Navigation("CreatedByUser");
 
                     b.Navigation("Student");
+                });
+
+            modelBuilder.Entity("NUH_PORTAL.Models.Notification", b =>
+                {
+                    b.HasOne("NUH_PORTAL.Models.Request", "Request")
+                        .WithMany()
+                        .HasForeignKey("request_id")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Request");
                 });
 
             modelBuilder.Entity("NUH_PORTAL.Models.Request", b =>
@@ -1330,6 +1676,16 @@ namespace NUH_PORTAL.Migrations
                     b.Navigation("Request");
 
                     b.Navigation("UploadedByUser");
+                });
+
+            modelBuilder.Entity("NUH_PORTAL.Models.SignInLog", b =>
+                {
+                    b.HasOne("NUH_PORTAL.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("user_id")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("NUH_PORTAL.Models.Student", b =>
@@ -1412,6 +1768,25 @@ namespace NUH_PORTAL.Migrations
                     b.Navigation("UploadedByUser");
                 });
 
+            modelBuilder.Entity("NUH_PORTAL.Models.UserRole", b =>
+                {
+                    b.HasOne("NUH_PORTAL.Models.Role", "Role")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("NUH_PORTAL.Models.User", "User")
+                        .WithMany("UserRoles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Role");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("NUH_PORTAL.Models.WorkflowHistory", b =>
                 {
                     b.HasOne("NUH_PORTAL.Models.User", "Actor")
@@ -1444,6 +1819,16 @@ namespace NUH_PORTAL.Migrations
             modelBuilder.Entity("NUH_PORTAL.Models.College", b =>
                 {
                     b.Navigation("Departments");
+                });
+
+            modelBuilder.Entity("NUH_PORTAL.Models.Role", b =>
+                {
+                    b.Navigation("UserRoles");
+                });
+
+            modelBuilder.Entity("NUH_PORTAL.Models.User", b =>
+                {
+                    b.Navigation("UserRoles");
                 });
 #pragma warning restore 612, 618
         }

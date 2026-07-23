@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using NUH_PORTAL.Data.Converters;
 using NUH_PORTAL.Models;
 
 namespace NUH_PORTAL.Data.Configurations
@@ -10,6 +11,9 @@ namespace NUH_PORTAL.Data.Configurations
         {
             builder.ToTable("Notifications");
             builder.HasKey(n => n.Id);
+
+            // status بقى enum (NotificationStatus) — بيتخزّن نص زي ما هو (بدون تغيير عمود)
+            builder.Property(n => n.status).HasConversion(new NotificationStatusConverter());
 
             // جرس الإشعارات بيسأل بالدور + الحالة في كل صفحة
             builder.HasIndex(n => new { n.recipient_role, n.status })

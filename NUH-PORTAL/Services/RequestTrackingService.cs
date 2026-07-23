@@ -82,7 +82,7 @@ namespace NUH_PORTAL.Services
                     ToStage = h.ToStage,
                     ActionDate = h.ActionDate,
                     Notes = h.Notes,
-                    ActorName = h.Actor?.full_name ?? h.Actor?.username
+                    ActorName = h.Actor?.full_name ?? h.Actor?.UserName
                 }).ToList()
             };
         }

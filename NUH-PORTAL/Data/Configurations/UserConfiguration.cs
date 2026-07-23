@@ -8,14 +8,9 @@ namespace NUH_PORTAL.Data.Configurations
     {
         public void Configure(EntityTypeBuilder<User> builder)
         {
+            // نخلّي جدول Identity اسمه Users (بدل AspNetUsers) — أقل اختلاف عن السكيمة الحالية.
+            // تفرّد اسم المستخدم بيتولّى من Identity (فهرس على NormalizedUserName) فمش محتاجينه هنا.
             builder.ToTable("Users");
-            builder.HasKey(u => u.Id);
-
-            // اسم المستخدم لازم يكون فريد — اللوجين بيدور بيه
-            builder.HasIndex(u => u.username)
-                .IsUnique()
-                .HasDatabaseName("IX_Users_username")
-                .HasFilter("[username] IS NOT NULL");
 
             // الجوال فريد لما يكون موجود (مسار OTP بيدور بيه وبينشئ مستخدم لو مش لاقيه)
             builder.HasIndex(u => u.mobile)

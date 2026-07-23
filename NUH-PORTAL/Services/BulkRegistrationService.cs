@@ -366,7 +366,7 @@ namespace NUH_PORTAL.Services
                             channel = "in_app",
                             recipient_role = nr,
                             message = notifMsg,
-                            status = "pending",
+                            status = NotificationStatus.pending,
                             sent_at = DateTime.UtcNow
                         });
                     }

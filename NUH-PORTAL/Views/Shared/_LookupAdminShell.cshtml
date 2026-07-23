@@ -1,0 +1,91 @@
+@* قشرة مشتركة لشاشات القوائم المرجعية المنفصلة — الجدول + المودال. المنطق في /lookup-admin.js *@
+<link rel="stylesheet" href="/lookup-admin.css">
+
+<div class="card">
+  <div class="lk-toolbar">
+    <div class="lk-toolbar-title" id="lkListTitle"></div>
+    <button class="btn btn-primary" type="button" onclick="LookupAdmin.openModal(null)">@SharedLocalizer["lk_add"]</button>
+  </div>
+  <div style="overflow-x:auto">
+    <table>
+      <thead id="lkHead"></thead>
+      <tbody id="lkBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="edit-overlay" id="lkOverlay" onclick="if(event.target===this)LookupAdmin.closeModal()">
+  <div class="edit-modal" role="dialog" aria-modal="true" style="max-width:560px">
+    <div class="edit-modal-header">
+      <div>
+        <div class="edit-modal-title" id="lkModalTitle">@SharedLocalizer["lk_addTitle"]</div>
+        <div class="edit-modal-sub">@SharedLocalizer["lk_modalSub"]</div>
+      </div>
+      <button class="edit-close" type="button" onclick="LookupAdmin.closeModal()" aria-label='@(SharedLocalizer["lk_cancel"].Value)'>✕</button>
+    </div>
+    <div class="edit-modal-body">
+      <input type="hidden" id="m_id">
+      <div class="e-grid">
+        <div class="e-field" data-fld="code">
+          <label>@SharedLocalizer["lk_lbl_code"]<span>*</span></label>
+          <input type="text" id="m_code">
+          <span class="field-error" id="m-err-code">@SharedLocalizer["lk_required"]</span>
+        </div>
+        <div class="e-field" data-fld="arName">
+          <label>@SharedLocalizer["lk_lbl_arName"]<span>*</span></label>
+          <input type="text" id="m_arName">
+          <span class="field-error" id="m-err-arName">@SharedLocalizer["lk_required"]</span>
+        </div>
+        <div class="e-field" data-fld="enName">
+          <label>@SharedLocalizer["lk_lbl_enName"]<span>*</span></label>
+          <input type="text" id="m_enName">
+          <span class="field-error" id="m-err-enName">@SharedLocalizer["lk_required"]</span>
+        </div>
+        <div class="e-field" data-fld="arText">
+          <label>@SharedLocalizer["lk_lbl_arText"]<span>*</span></label>
+          <input type="text" id="m_arText">
+          <span class="field-error" id="m-err-arText">@SharedLocalizer["lk_required"]</span>
+        </div>
+        <div class="e-field" data-fld="enText">
+          <label>@SharedLocalizer["lk_lbl_enText"]<span>*</span></label>
+          <input type="text" id="m_enText">
+          <span class="field-error" id="m-err-enText">@SharedLocalizer["lk_required"]</span>
+        </div>
+        <div class="e-field" data-fld="gender">
+          <label>@SharedLocalizer["lk_lbl_gender"]</label>
+          <select id="m_gender">
+            <option value="">@SharedLocalizer["lk_gender_none"]</option>
+            <option value="male">@SharedLocalizer["reg_optMale"]</option>
+            <option value="female">@SharedLocalizer["reg_optFemale"]</option>
+          </select>
+        </div>
+        <div class="e-field" data-fld="collegeId">
+          <label>@SharedLocalizer["lk_lbl_college"]</label>
+          <select id="m_collegeId">
+            <option value="">@SharedLocalizer["lk_selectCollege"]</option>
+          </select>
+        </div>
+        <div class="e-field" data-fld="displayOrder">
+          <label>@SharedLocalizer["lk_lbl_order"]</label>
+          <input type="number" id="m_displayOrder" value="0">
+        </div>
+        <div class="e-field" data-fld="isActive">
+          <label>@SharedLocalizer["lk_lbl_active"]</label>
+          <select id="m_isActive">
+            <option value="true">@SharedLocalizer["lk_active_yes"]</option>
+            <option value="false">@SharedLocalizer["lk_active_no"]</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="edit-modal-actions">
+      <button class="btn btn-primary" id="lkSaveBtn" type="button" onclick="LookupAdmin.saveItem()">
+        <span class="btn-text">@SharedLocalizer["lk_save"]</span>
+        <div class="spinner2"></div>
+      </button>
+      <button class="btn btn-cancel" type="button" onclick="LookupAdmin.closeModal()">@SharedLocalizer["lk_cancel"]</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span id="toast-msg"></span></div>

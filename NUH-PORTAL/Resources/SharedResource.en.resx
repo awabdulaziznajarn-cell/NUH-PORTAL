@@ -110,7 +110,7 @@
     <value>Students</value>
   </data>
   <data name="Nav_Section_System" xml:space="preserve">
-    <value>System</value>
+    <value>System Settings</value>
   </data>
   <data name="Nav_StudentsList" xml:space="preserve">
     <value>Students List</value>
@@ -3747,5 +3747,395 @@
   </data>
   <data name="lk_confirmDelete" xml:space="preserve">
     <value>Delete this item?</value>
+  </data>
+  <data name="Nav_Users" xml:space="preserve">
+    <value>Users</value>
+  </data>
+  <data name="usr_pageTitle" xml:space="preserve">
+    <value>User Management</value>
+  </data>
+  <data name="usr_pageSubtitle" xml:space="preserve">
+    <value>Add and edit users and assign roles</value>
+  </data>
+  <data name="usr_search" xml:space="preserve">
+    <value>Search by name, email, or role…</value>
+  </data>
+  <data name="usr_addUser" xml:space="preserve">
+    <value>+ New User</value>
+  </data>
+  <data name="usr_addFromDir" xml:space="preserve">
+    <value>Add from Directory</value>
+  </data>
+  <data name="usr_col_username" xml:space="preserve">
+    <value>Username</value>
+  </data>
+  <data name="usr_col_fullName" xml:space="preserve">
+    <value>Full Name</value>
+  </data>
+  <data name="usr_col_email" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="usr_col_role" xml:space="preserve">
+    <value>Role</value>
+  </data>
+  <data name="usr_col_status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="usr_col_actions" xml:space="preserve">
+    <value>Actions</value>
+  </data>
+  <data name="usr_status_active" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="usr_status_inactive" xml:space="preserve">
+    <value>Disabled</value>
+  </data>
+  <data name="usr_edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="usr_activate" xml:space="preserve">
+    <value>Activate</value>
+  </data>
+  <data name="usr_deactivate" xml:space="preserve">
+    <value>Deactivate</value>
+  </data>
+  <data name="usr_noItems" xml:space="preserve">
+    <value>No users found</value>
+  </data>
+  <data name="usr_loadError" xml:space="preserve">
+    <value>Failed to load users</value>
+  </data>
+  <data name="usr_saved" xml:space="preserve">
+    <value>Saved successfully</value>
+  </data>
+  <data name="usr_saveError" xml:space="preserve">
+    <value>Save failed</value>
+  </data>
+  <data name="usr_addTitle" xml:space="preserve">
+    <value>Add User</value>
+  </data>
+  <data name="usr_editTitle" xml:space="preserve">
+    <value>Edit User</value>
+  </data>
+  <data name="usr_modalSub" xml:space="preserve">
+    <value>User details and assigned role</value>
+  </data>
+  <data name="usr_lbl_username" xml:space="preserve">
+    <value>Username</value>
+  </data>
+  <data name="usr_lbl_fullName" xml:space="preserve">
+    <value>Full Name</value>
+  </data>
+  <data name="usr_lbl_email" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="usr_lbl_mobile" xml:space="preserve">
+    <value>Mobile</value>
+  </data>
+  <data name="usr_lbl_department" xml:space="preserve">
+    <value>Department</value>
+  </data>
+  <data name="usr_lbl_jobTitle" xml:space="preserve">
+    <value>Job Title</value>
+  </data>
+  <data name="usr_lbl_role" xml:space="preserve">
+    <value>Role</value>
+  </data>
+  <data name="usr_lbl_password" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="usr_lbl_passwordEdit" xml:space="preserve">
+    <value>New password (optional)</value>
+  </data>
+  <data name="usr_lbl_active" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="usr_required" xml:space="preserve">
+    <value>This field is required</value>
+  </data>
+  <data name="usr_save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="usr_cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="usr_active_yes" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="usr_active_no" xml:space="preserve">
+    <value>Disabled</value>
+  </data>
+  <data name="usr_ldapTitle" xml:space="preserve">
+    <value>Add from Directory (Active Directory)</value>
+  </data>
+  <data name="usr_ldapSub" xml:space="preserve">
+    <value>Search for the user in the directory then add with a role</value>
+  </data>
+  <data name="usr_ldapSearchPh" xml:space="preserve">
+    <value>Type username or name…</value>
+  </data>
+  <data name="usr_ldapSearchBtn" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="usr_ldapPickRole" xml:space="preserve">
+    <value>Assigned role:</value>
+  </data>
+  <data name="usr_ldapCol_name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="usr_ldapCol_account" xml:space="preserve">
+    <value>Account</value>
+  </data>
+  <data name="usr_ldapCol_dept" xml:space="preserve">
+    <value>Department</value>
+  </data>
+  <data name="usr_ldapAdd" xml:space="preserve">
+    <value>Add</value>
+  </data>
+  <data name="usr_ldapHint" xml:space="preserve">
+    <value>Type a search term then press Search</value>
+  </data>
+  <data name="usr_ldapNoResults" xml:space="preserve">
+    <value>No results</value>
+  </data>
+  <data name="usr_ldapError" xml:space="preserve">
+    <value>Failed to connect to the directory</value>
+  </data>
+  <data name="usr_ldapAdded" xml:space="preserve">
+    <value>User added successfully</value>
+  </data>
+  <data name="usr_ldapMinChars" xml:space="preserve">
+    <value>Type at least 2 characters</value>
+  </data>
+  <data name="Nav_Roles" xml:space="preserve">
+    <value>Roles &amp; Permissions</value>
+  </data>
+  <data name="rol_pageTitle" xml:space="preserve">
+    <value>Roles &amp; Permissions</value>
+  </data>
+  <data name="rol_pageSubtitle" xml:space="preserve">
+    <value>Manage roles and the permissions assigned to each</value>
+  </data>
+  <data name="rol_addRole" xml:space="preserve">
+    <value>+ New Role</value>
+  </data>
+  <data name="rol_col_name" xml:space="preserve">
+    <value>Role</value>
+  </data>
+  <data name="rol_col_desc" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="rol_col_users" xml:space="preserve">
+    <value>Users</value>
+  </data>
+  <data name="rol_col_perms" xml:space="preserve">
+    <value>Permissions</value>
+  </data>
+  <data name="rol_col_actions" xml:space="preserve">
+    <value>Actions</value>
+  </data>
+  <data name="rol_edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="rol_delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="rol_noItems" xml:space="preserve">
+    <value>No roles found</value>
+  </data>
+  <data name="rol_loadError" xml:space="preserve">
+    <value>Failed to load roles</value>
+  </data>
+  <data name="rol_saved" xml:space="preserve">
+    <value>Saved successfully</value>
+  </data>
+  <data name="rol_saveError" xml:space="preserve">
+    <value>Save failed</value>
+  </data>
+  <data name="rol_deleted" xml:space="preserve">
+    <value>Deleted successfully</value>
+  </data>
+  <data name="rol_confirmDelete" xml:space="preserve">
+    <value>Delete role "{0}"?</value>
+  </data>
+  <data name="rol_addTitle" xml:space="preserve">
+    <value>Add Role</value>
+  </data>
+  <data name="rol_editTitle" xml:space="preserve">
+    <value>Edit Role</value>
+  </data>
+  <data name="rol_modalSub" xml:space="preserve">
+    <value>Role name, description, and assigned permissions</value>
+  </data>
+  <data name="rol_lbl_name" xml:space="preserve">
+    <value>Role name</value>
+  </data>
+  <data name="rol_lbl_desc" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="rol_lbl_perms" xml:space="preserve">
+    <value>Permissions</value>
+  </data>
+  <data name="rol_permsHint" xml:space="preserve">
+    <value>Select the permissions this role should have</value>
+  </data>
+  <data name="rol_required" xml:space="preserve">
+    <value>This field is required</value>
+  </data>
+  <data name="rol_save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="rol_cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="rol_groupToggle" xml:space="preserve">
+    <value>Toggle all</value>
+  </data>
+  <data name="Nav_ErrorLog" xml:space="preserve">
+    <value>Error Log</value>
+  </data>
+  <data name="Nav_SignInLog" xml:space="preserve">
+    <value>Sign-in Log</value>
+  </data>
+  <data name="err_pageTitle" xml:space="preserve">
+    <value>Error Log</value>
+  </data>
+  <data name="err_pageSubtitle" xml:space="preserve">
+    <value>Unexpected errors captured by the system</value>
+  </data>
+  <data name="err_search" xml:space="preserve">
+    <value>Search message or path…</value>
+  </data>
+  <data name="err_fromDate" xml:space="preserve">
+    <value>From date</value>
+  </data>
+  <data name="err_toDate" xml:space="preserve">
+    <value>To date</value>
+  </data>
+  <data name="err_col_time" xml:space="preserve">
+    <value>Time</value>
+  </data>
+  <data name="err_col_path" xml:space="preserve">
+    <value>Path</value>
+  </data>
+  <data name="err_col_type" xml:space="preserve">
+    <value>Exception type</value>
+  </data>
+  <data name="err_col_message" xml:space="preserve">
+    <value>Message</value>
+  </data>
+  <data name="err_col_status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="err_col_user" xml:space="preserve">
+    <value>User</value>
+  </data>
+  <data name="err_noItems" xml:space="preserve">
+    <value>No errors logged</value>
+  </data>
+  <data name="err_loadError" xml:space="preserve">
+    <value>Failed to load the log</value>
+  </data>
+  <data name="err_modalTitle" xml:space="preserve">
+    <value>Error details</value>
+  </data>
+  <data name="err_modal_user" xml:space="preserve">
+    <value>User</value>
+  </data>
+  <data name="err_modal_ua" xml:space="preserve">
+    <value>Browser/client</value>
+  </data>
+  <data name="err_modal_stack" xml:space="preserve">
+    <value>Stack trace</value>
+  </data>
+  <data name="err_totalFmt" xml:space="preserve">
+    <value>Total: {0}</value>
+  </data>
+  <data name="sil_pageTitle" xml:space="preserve">
+    <value>Sign-in Log</value>
+  </data>
+  <data name="sil_pageSubtitle" xml:space="preserve">
+    <value>Sign-in and sign-out attempts (success/failure)</value>
+  </data>
+  <data name="sil_search" xml:space="preserve">
+    <value>Search by name or IP…</value>
+  </data>
+  <data name="sil_fromDate" xml:space="preserve">
+    <value>From date</value>
+  </data>
+  <data name="sil_toDate" xml:space="preserve">
+    <value>To date</value>
+  </data>
+  <data name="sil_lblEvent" xml:space="preserve">
+    <value>Event</value>
+  </data>
+  <data name="sil_evt_all" xml:space="preserve">
+    <value>All</value>
+  </data>
+  <data name="sil_evt_login_success" xml:space="preserve">
+    <value>Sign-in success</value>
+  </data>
+  <data name="sil_evt_login_failed" xml:space="preserve">
+    <value>Sign-in failed</value>
+  </data>
+  <data name="sil_evt_logout" xml:space="preserve">
+    <value>Sign-out</value>
+  </data>
+  <data name="sil_col_time" xml:space="preserve">
+    <value>Time</value>
+  </data>
+  <data name="sil_col_user" xml:space="preserve">
+    <value>Username</value>
+  </data>
+  <data name="sil_col_fullName" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="sil_col_event" xml:space="preserve">
+    <value>Event</value>
+  </data>
+  <data name="sil_col_method" xml:space="preserve">
+    <value>Method</value>
+  </data>
+  <data name="sil_col_result" xml:space="preserve">
+    <value>Result</value>
+  </data>
+  <data name="sil_col_ip" xml:space="preserve">
+    <value>IP address</value>
+  </data>
+  <data name="sil_result_success" xml:space="preserve">
+    <value>Success</value>
+  </data>
+  <data name="sil_result_fail" xml:space="preserve">
+    <value>Failed</value>
+  </data>
+  <data name="sil_noItems" xml:space="preserve">
+    <value>No records</value>
+  </data>
+  <data name="sil_loadError" xml:space="preserve">
+    <value>Failed to load the log</value>
+  </data>
+  <data name="sil_totalFmt" xml:space="preserve">
+    <value>Total: {0}</value>
+  </data>
+  <data name="Nav_Section_Lookups" xml:space="preserve">
+    <value>Reference Lists</value>
+  </data>
+  <data name="Nav_Colleges" xml:space="preserve">
+    <value>Colleges</value>
+  </data>
+  <data name="Nav_Departments" xml:space="preserve">
+    <value>Departments</value>
+  </data>
+  <data name="Nav_Buildings" xml:space="preserve">
+    <value>Buildings</value>
+  </data>
+  <data name="Nav_AcademicLevels" xml:space="preserve">
+    <value>Academic Levels</value>
+  </data>
+  <data name="Nav_Terms" xml:space="preserve">
+    <value>Pledge Terms</value>
+  </data>
+  <data name="Nav_Departure" xml:space="preserve">
+    <value>Departure</value>
   </data>
 </root>

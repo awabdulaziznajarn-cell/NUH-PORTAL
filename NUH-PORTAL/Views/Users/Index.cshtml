@@ -1,0 +1,466 @@
+@{
+    ViewData["Title"] = SharedLocalizer["usr_pageTitle"].Value;
+    var canManage = User.HasClaim("permission", "users.manage");
+    var canAssign = User.HasClaim("permission", "roles.assign");
+    var canLdap = User.HasClaim("permission", "users.addFromLdap");
+}
+
+<div class="page-header">
+  <h2>@SharedLocalizer["usr_pageTitle"]</h2>
+  <p>@SharedLocalizer["usr_pageSubtitle"]</p>
+</div>
+
+<div class="card">
+  <div class="lk-toolbar">
+    <input type="text" id="usrSearch" class="usr-search" placeholder="@SharedLocalizer["usr_search"]" oninput="filterUsers()">
+    <div style="display:flex;gap:8px">
+      @if (canLdap)
+      {
+        <button class="btn btn-cancel" type="button" onclick="openLdap()">@SharedLocalizer["usr_addFromDir"]</button>
+      }
+      @if (canManage)
+      {
+        <button class="btn btn-primary" type="button" onclick="openCreate()">@SharedLocalizer["usr_addUser"]</button>
+      }
+    </div>
+  </div>
+
+  <div style="overflow-x:auto">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>@SharedLocalizer["usr_col_username"]</th>
+          <th>@SharedLocalizer["usr_col_fullName"]</th>
+          <th>@SharedLocalizer["usr_col_email"]</th>
+          <th>@SharedLocalizer["usr_col_role"]</th>
+          <th>@SharedLocalizer["usr_col_status"]</th>
+          <th>@SharedLocalizer["usr_col_actions"]</th>
+        </tr>
+      </thead>
+      <tbody id="usrBody">
+        <tr><td colspan="7" style="text-align:center;padding:40px"><div class="spinner"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- مودال إنشاء/تعديل مستخدم -->
+<div class="edit-overlay" id="usrOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="edit-modal" role="dialog" aria-modal="true" style="max-width:640px">
+    <div class="edit-modal-header">
+      <div>
+        <div class="edit-modal-title" id="usrModalTitle">@SharedLocalizer["usr_addTitle"]</div>
+        <div class="edit-modal-sub">@SharedLocalizer["usr_modalSub"]</div>
+      </div>
+      <button class="edit-close" type="button" onclick="closeModal()" aria-label='@(SharedLocalizer["usr_cancel"].Value)'>✕</button>
+    </div>
+    <div class="edit-modal-body">
+      <input type="hidden" id="m_id">
+      <div class="e-grid">
+        <div class="e-field">
+          <label>@SharedLocalizer["usr_lbl_username"]<span>*</span></label>
+          <input type="text" id="m_username">
+          <span class="field-error" id="m-err-username">@SharedLocalizer["usr_required"]</span>
+        </div>
+        <div class="e-field">
+          <label>@SharedLocalizer["usr_lbl_fullName"]</label>
+          <input type="text" id="m_full_name">
+        </div>
+        <div class="e-field">
+          <label>@SharedLocalizer["usr_lbl_email"]</label>
+          <input type="text" id="m_email">
+        </div>
+        <div class="e-field">
+          <label>@SharedLocalizer["usr_lbl_mobile"]</label>
+          <input type="text" id="m_mobile">
+        </div>
+        <div class="e-field">
+          <label>@SharedLocalizer["usr_lbl_department"]</label>
+          <input type="text" id="m_department">
+        </div>
+        <div class="e-field">
+          <label>@SharedLocalizer["usr_lbl_jobTitle"]</label>
+          <input type="text" id="m_job_title">
+        </div>
+        <div class="e-field">
+          <label>@SharedLocalizer["usr_lbl_role"]</label>
+          <select id="m_role"></select>
+        </div>
+        <div class="e-field">
+          <label id="m_pwd_label">@SharedLocalizer["usr_lbl_password"]<span id="m_pwd_req">*</span></label>
+          <input type="password" id="m_password" autocomplete="new-password">
+          <span class="field-error" id="m-err-password">@SharedLocalizer["usr_required"]</span>
+        </div>
+        <div class="e-field">
+          <label>@SharedLocalizer["usr_lbl_active"]</label>
+          <select id="m_is_active">
+            <option value="true">@SharedLocalizer["usr_active_yes"]</option>
+            <option value="false">@SharedLocalizer["usr_active_no"]</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="edit-modal-actions">
+      <button class="btn btn-primary" id="usrSaveBtn" type="button" onclick="saveUser()">
+        <span class="btn-text">@SharedLocalizer["usr_save"]</span>
+        <div class="spinner2"></div>
+      </button>
+      <button class="btn btn-cancel" type="button" onclick="closeModal()">@SharedLocalizer["usr_cancel"]</button>
+    </div>
+  </div>
+</div>
+
+<!-- مودال الإضافة من الدليل (AD) -->
+<div class="edit-overlay" id="ldapOverlay" onclick="if(event.target===this)closeLdap()">
+  <div class="edit-modal" role="dialog" aria-modal="true" style="max-width:720px">
+    <div class="edit-modal-header">
+      <div>
+        <div class="edit-modal-title">@SharedLocalizer["usr_ldapTitle"]</div>
+        <div class="edit-modal-sub">@SharedLocalizer["usr_ldapSub"]</div>
+      </div>
+      <button class="edit-close" type="button" onclick="closeLdap()" aria-label='@(SharedLocalizer["usr_cancel"].Value)'>✕</button>
+    </div>
+    <div class="edit-modal-body">
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <input type="text" id="ldapQuery" style="flex:1" placeholder="@SharedLocalizer["usr_ldapSearchPh"]" onkeyup="if(event.key==='Enter')ldapSearch()">
+        <button class="btn btn-primary" type="button" onclick="ldapSearch()">@SharedLocalizer["usr_ldapSearchBtn"]</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <label style="font-size:13px;font-weight:600;color:var(--gray-700)">@SharedLocalizer["usr_ldapPickRole"]</label>
+        <select id="ldapRole" style="max-width:220px"></select>
+      </div>
+      <div style="overflow-x:auto;max-height:340px;overflow-y:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>@SharedLocalizer["usr_ldapCol_name"]</th>
+              <th>@SharedLocalizer["usr_ldapCol_account"]</th>
+              <th>@SharedLocalizer["usr_ldapCol_dept"]</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="ldapBody">
+            <tr><td colspan="4" style="text-align:center;color:var(--gray-500);padding:24px">@SharedLocalizer["usr_ldapHint"]</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span id="toast-msg"></span></div>
+
+@section Scripts {
+<style>
+  .lk-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;border-bottom:1px solid var(--gray-100);flex-wrap:wrap}
+  .usr-search{flex:1;min-width:220px;max-width:360px;height:40px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:10px;padding:0 14px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;color:var(--navy-dark);outline:none}
+  .usr-search:focus{border-color:var(--navy);background:#fff}
+  .spinner{width:32px;height:32px;border:3px solid var(--gray-200);border-top-color:var(--navy);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto}
+  @@keyframes spin{to{transform:rotate(360deg)}}
+  .action-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:8px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;cursor:pointer;border:none;transition:all .2s}
+  .action-edit{background:#eef1f8;color:var(--navy)}
+  .action-edit:hover{background:#e0e6f5}
+  .action-toggle{background:var(--red-light);color:var(--red)}
+  .action-toggle:hover{background:#fee2e2}
+  .action-on{background:#DCFCE7;color:#0F6E56}
+  .action-on:hover{background:#bbf7d0}
+  .row-actions{display:flex;gap:6px;align-items:center}
+  .usr-pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:600}
+  .usr-pill-on{background:#DCFCE7;color:#0F6E56}
+  .usr-pill-off{background:#F1F5F9;color:#64748B}
+  .usr-role{display:inline-block;padding:2px 10px;border-radius:6px;font-size:11px;font-weight:600;background:#EEF2FF;color:#3730A3}
+  .usr-inactive{opacity:.55}
+  .edit-overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;z-index:1000;padding:20px}
+  .edit-overlay.show{display:flex}
+  .edit-modal{background:#fff;border-radius:16px;width:100%;max-width:640px;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden}
+  .edit-modal-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 24px;border-bottom:1px solid var(--gray-100)}
+  .edit-modal-title{font-size:16px;font-weight:700;color:var(--navy-dark)}
+  .edit-modal-sub{font-size:12px;color:var(--gray-500);margin-top:4px}
+  .edit-close{background:var(--gray-100);border:none;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--gray-700);flex-shrink:0}
+  .edit-close:hover{background:#e5e7eb}
+  .edit-modal-body{padding:24px;overflow-y:auto}
+  .e-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .e-field{display:flex;flex-direction:column;gap:6px}
+  .e-field label{font-size:13px;font-weight:600;color:var(--gray-700)}
+  .e-field label span{color:#EF4444;margin-right:2px}
+  .e-field input,.e-field select{width:100%;height:44px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:10px;padding:0 14px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;color:var(--navy-dark);outline:none;appearance:none}
+  .e-field input:focus,.e-field select:focus{border-color:var(--navy);background:#fff;box-shadow:0 0 0 3px rgba(27,42,94,.08)}
+  .e-field input.error,.e-field select.error{border-color:#EF4444}
+  .e-field .field-error{font-size:11px;color:#EF4444;font-weight:500;display:none}
+  .e-field .field-error.show{display:block}
+  .edit-modal-actions{display:flex;gap:12px;justify-content:flex-end;padding:18px 24px;border-top:1px solid var(--gray-100)}
+  .edit-modal-actions .btn{padding:0 24px;height:44px;border-radius:10px;font-family:'IBM Plex Sans Arabic',sans-serif;font-weight:700;font-size:14px;cursor:pointer;border:none;display:flex;align-items:center;gap:8px}
+  .edit-modal-actions .btn.loading{opacity:.75;pointer-events:none}
+  .spinner2{width:16px;height:16px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin2 .6s linear infinite;display:none}
+  .btn.loading .spinner2{display:block}
+  .btn.loading .btn-text{display:none}
+  @@keyframes spin2{to{transform:rotate(360deg)}}
+  .toast{position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-90px);background:#0F6E56;color:#fff;padding:14px 24px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:0 8px 32px rgba(0,0,0,.2);z-index:1100;transition:transform .4s cubic-bezier(.16,1,.3,1)}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+  @@media(max-width:640px){.e-grid{grid-template-columns:1fr}}
+</style>
+<script src="/i18n.js"></script>
+<script>
+  var PERM = { manage: @(canManage ? "true" : "false"), assign: @(canAssign ? "true" : "false"), ldap: @(canLdap ? "true" : "false") };
+  var state = { users: [], roles: [] };
+
+  function authHeaders() { var tk = localStorage.getItem('staffToken'); return tk ? { 'Authorization': 'Bearer ' + tk } : {}; }
+  var esc = function (v) { return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
+
+  function showToast(msg, isError) {
+    var el = document.getElementById('toast'); if (!el) return;
+    document.getElementById('toast-msg').textContent = msg;
+    el.style.background = isError ? '#991B1B' : '#0F6E56';
+    el.classList.add('show');
+    setTimeout(function () { el.classList.remove('show'); }, 3500);
+  }
+
+  function roleText(r) { return r ? r : '—'; }
+
+  function renderTable() {
+    var q = (document.getElementById('usrSearch').value || '').trim().toLowerCase();
+    var rows = state.users.filter(function (u) {
+      if (!q) return true;
+      return (u.username || '').toLowerCase().indexOf(q) !== -1 ||
+             (u.full_name || '').toLowerCase().indexOf(q) !== -1 ||
+             (u.email || '').toLowerCase().indexOf(q) !== -1 ||
+             (u.role || '').toLowerCase().indexOf(q) !== -1;
+    });
+    var body = '';
+    rows.forEach(function (u, idx) {
+      var actions = '';
+      if (PERM.manage) {
+        actions += '<button class="action-btn action-edit" onclick="openEdit(' + u.id + ')">' + t('usr_edit') + '</button>';
+        if (u.is_active)
+          actions += '<button class="action-btn action-toggle" onclick="toggleActive(' + u.id + ',false)">' + t('usr_deactivate') + '</button>';
+        else
+          actions += '<button class="action-btn action-on" onclick="toggleActive(' + u.id + ',true)">' + t('usr_activate') + '</button>';
+      }
+      body += '<tr class="' + (u.is_active ? '' : 'usr-inactive') + '">' +
+        '<td>' + (idx + 1) + '</td>' +
+        '<td>' + esc(u.username) + '</td>' +
+        '<td>' + esc(u.full_name) + '</td>' +
+        '<td>' + esc(u.email) + '</td>' +
+        '<td><span class="usr-role">' + esc(roleText(u.role)) + '</span></td>' +
+        '<td>' + (u.is_active
+            ? '<span class="usr-pill usr-pill-on">' + t('usr_status_active') + '</span>'
+            : '<span class="usr-pill usr-pill-off">' + t('usr_status_inactive') + '</span>') +
+        '</td>' +
+        '<td><div class="row-actions">' + (actions || '—') + '</div></td></tr>';
+    });
+    document.getElementById('usrBody').innerHTML = body ||
+      '<tr><td colspan="7" style="text-align:center;color:var(--gray-500);padding:28px">' + t('usr_noItems') + '</td></tr>';
+  }
+
+  function filterUsers() { renderTable(); }
+
+  async function loadUsers() {
+    try {
+      var res = await fetch('/api/Users', { headers: authHeaders() });
+      if (res.status === 401) { window.location.replace('/Account/Login'); return; }
+      if (!res.ok) { showToast(t('usr_loadError'), true); return; }
+      state.users = await res.json();
+      renderTable();
+    } catch (e) { showToast(t('usr_loadError'), true); }
+  }
+
+  async function loadRoles() {
+    try {
+      var res = await fetch('/api/Users/roles', { headers: authHeaders() });
+      if (res.ok) state.roles = await res.json();
+    } catch (e) { /* صامت */ }
+    fillRoleSelect('m_role');
+    fillRoleSelect('ldapRole');
+  }
+
+  function fillRoleSelect(id) {
+    var sel = document.getElementById(id); if (!sel) return;
+    var cur = sel.value;
+    sel.innerHTML = state.roles.map(function (r) {
+      var label = r.description ? (r.name + ' — ' + r.description) : r.name;
+      return '<option value="' + esc(r.name) + '">' + esc(label) + '</option>';
+    }).join('');
+    if (cur) sel.value = cur;
+  }
+
+  function mGet(id) { return document.getElementById('m_' + id); }
+  function clearErrors() {
+    document.querySelectorAll('#usrOverlay .field-error').forEach(function (e) { e.classList.remove('show'); });
+    document.querySelectorAll('#usrOverlay input, #usrOverlay select').forEach(function (e) { e.classList.remove('error'); });
+  }
+
+  function openCreate() {
+    clearErrors();
+    document.getElementById('usrModalTitle').textContent = t('usr_addTitle');
+    mGet('id').value = '';
+    ['username','full_name','email','mobile','department','job_title','password'].forEach(function (f) { mGet(f).value = ''; });
+    mGet('username').removeAttribute('readonly');
+    mGet('is_active').value = 'true';
+    if (state.roles.length) mGet('role').value = (state.roles.find(function (r) { return r.name === 'user'; }) ? 'user' : state.roles[0].name);
+    document.getElementById('m_pwd_req').style.display = '';
+    document.getElementById('m_pwd_label').firstChild.textContent = t('usr_lbl_password');
+    document.getElementById('usrOverlay').classList.add('show');
+  }
+
+  function openEdit(id) {
+    clearErrors();
+    var u = state.users.filter(function (x) { return x.id === id; })[0];
+    if (!u) return;
+    document.getElementById('usrModalTitle').textContent = t('usr_editTitle');
+    mGet('id').value = id;
+    mGet('username').value = u.username || '';
+    mGet('username').setAttribute('readonly', 'readonly');
+    mGet('full_name').value = u.full_name || '';
+    mGet('email').value = u.email || '';
+    mGet('mobile').value = u.mobile || '';
+    mGet('department').value = u.department || '';
+    mGet('job_title').value = u.job_title || '';
+    mGet('password').value = '';
+    mGet('is_active').value = u.is_active ? 'true' : 'false';
+    if (u.role) mGet('role').value = u.role;
+    document.getElementById('m_pwd_req').style.display = 'none';
+    document.getElementById('m_pwd_label').firstChild.textContent = t('usr_lbl_passwordEdit');
+    // على التعديل بنحمّل التفاصيل الكاملة (mobile/department/job_title) من السيرفر
+    fetch('/api/Users/' + id, { headers: authHeaders() }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+      if (!d) return;
+      mGet('full_name').value = d.full_name || '';
+      mGet('email').value = d.email || '';
+      mGet('mobile').value = d.mobile || '';
+      mGet('department').value = d.department || '';
+      mGet('job_title').value = d.job_title || '';
+      if (d.role) mGet('role').value = d.role;
+    });
+    document.getElementById('usrOverlay').classList.add('show');
+  }
+
+  function closeModal() { document.getElementById('usrOverlay').classList.remove('show'); }
+
+  function validate(isEdit) {
+    var ok = true;
+    var req = isEdit ? [] : ['username','password'];
+    req.forEach(function (f) {
+      var el = mGet(f), err = document.getElementById('m-err-' + f);
+      if (!el.value.trim()) { el.classList.add('error'); if (err) err.classList.add('show'); ok = false; }
+      else { el.classList.remove('error'); if (err) err.classList.remove('show'); }
+    });
+    return ok;
+  }
+
+  async function saveUser() {
+    var id = mGet('id').value;
+    var isEdit = !!id;
+    if (!validate(isEdit)) return;
+    var btn = document.getElementById('usrSaveBtn');
+    btn.classList.add('loading');
+
+    var payload = {
+      full_name: mGet('full_name').value.trim(),
+      email: mGet('email').value.trim(),
+      mobile: mGet('mobile').value.trim(),
+      department: mGet('department').value.trim(),
+      job_title: mGet('job_title').value.trim(),
+      role: mGet('role').value,
+      is_active: mGet('is_active').value === 'true'
+    };
+    var pwd = mGet('password').value;
+    if (pwd) payload.password = pwd;
+    if (!isEdit) payload.username = mGet('username').value.trim();
+
+    try {
+      var res = await fetch(isEdit ? '/api/Users/' + id : '/api/Users', {
+        method: isEdit ? 'PUT' : 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify(payload)
+      });
+      if (res.status === 401) { window.location.replace('/Account/Login'); return; }
+      if (res.ok) {
+        closeModal();
+        loadUsers();
+        showToast(t('usr_saved'));
+      } else {
+        var err = await res.json().catch(function () { return {}; });
+        showToast(err.message || t('usr_saveError'), true);
+      }
+    } catch (e) { showToast(t('usr_saveError'), true); }
+    finally { btn.classList.remove('loading'); }
+  }
+
+  async function toggleActive(id, activate) {
+    try {
+      var res = await fetch('/api/Users/' + id + (activate ? '/activate' : '/deactivate'), {
+        method: 'POST',
+        headers: authHeaders()
+      });
+      if (res.status === 401) { window.location.replace('/Account/Login'); return; }
+      if (res.ok) { loadUsers(); showToast(t('usr_saved')); }
+      else { var err = await res.json().catch(function () { return {}; }); showToast(err.message || t('usr_saveError'), true); }
+    } catch (e) { showToast(t('usr_saveError'), true); }
+  }
+
+  // ---------- الإضافة من الدليل ----------
+  function openLdap() {
+    document.getElementById('ldapQuery').value = '';
+    document.getElementById('ldapBody').innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--gray-500);padding:24px">' + t('usr_ldapHint') + '</td></tr>';
+    document.getElementById('ldapOverlay').classList.add('show');
+  }
+  function closeLdap() { document.getElementById('ldapOverlay').classList.remove('show'); }
+
+  async function ldapSearch() {
+    var q = document.getElementById('ldapQuery').value.trim();
+    if (q.length < 2) { showToast(t('usr_ldapMinChars'), true); return; }
+    document.getElementById('ldapBody').innerHTML = '<tr><td colspan="4" style="text-align:center;padding:24px"><div class="spinner"></div></td></tr>';
+    try {
+      var res = await fetch('/api/Users/ldap-search?q=' + encodeURIComponent(q), { headers: authHeaders() });
+      if (res.status === 401) { window.location.replace('/Account/Login'); return; }
+      if (!res.ok) {
+        var err = await res.json().catch(function () { return {}; });
+        document.getElementById('ldapBody').innerHTML = '<tr><td colspan="4" style="text-align:center;color:#991B1B;padding:24px">' + esc(err.message || t('usr_ldapError')) + '</td></tr>';
+        return;
+      }
+      var list = await res.json();
+      if (!list.length) {
+        document.getElementById('ldapBody').innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--gray-500);padding:24px">' + t('usr_ldapNoResults') + '</td></tr>';
+        return;
+      }
+      document.getElementById('ldapBody').innerHTML = list.map(function (u) {
+        return '<tr>' +
+          '<td>' + esc(u.displayName) + '</td>' +
+          '<td>' + esc(u.samAccountName) + '</td>' +
+          '<td>' + esc(u.department) + '</td>' +
+          '<td><button class="action-btn action-edit" onclick="addFromLdap(\'' + esc(u.samAccountName) + '\')">' + t('usr_ldapAdd') + '</button></td>' +
+          '</tr>';
+      }).join('');
+    } catch (e) {
+      document.getElementById('ldapBody').innerHTML = '<tr><td colspan="4" style="text-align:center;color:#991B1B;padding:24px">' + t('usr_ldapError') + '</td></tr>';
+    }
+  }
+
+  async function addFromLdap(sam) {
+    var role = document.getElementById('ldapRole').value || 'user';
+    try {
+      var res = await fetch('/api/Users/from-ldap', {
+        method: 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify({ username: sam, role: role })
+      });
+      if (res.status === 401) { window.location.replace('/Account/Login'); return; }
+      if (res.ok) {
+        closeLdap();
+        loadUsers();
+        showToast(t('usr_ldapAdded'));
+      } else {
+        var err = await res.json().catch(function () { return {}; });
+        showToast(err.message || t('usr_ldapError'), true);
+      }
+    } catch (e) { showToast(t('usr_ldapError'), true); }
+  }
+
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closeModal(); closeLdap(); } });
+
+  window.onLanguageChange = function () { renderTable(); };
+  setLang(localStorage.getItem('uiLanguage') || 'ar');
+  loadRoles();
+  loadUsers();
+</script>
+}

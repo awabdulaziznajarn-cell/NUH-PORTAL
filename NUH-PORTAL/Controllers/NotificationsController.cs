@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NUH_PORTAL.Services.Interfaces;
+using System.Security.Claims;
 
 namespace NUH_PORTAL.Controllers
 {
     // كنترولر رفيع — المنطق في INotificationService
+    // الدور بيتاخد من هوية المستخدم (claims) مش من الـ query — عشان محدش يقرا إشعارات دور تاني.
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
@@ -14,15 +16,17 @@ namespace NUH_PORTAL.Controllers
 
         public NotificationsController(INotificationService service) => _service = service;
 
-        // GET api/Notifications?role=
-        [HttpGet]
-        public async Task<IActionResult> GetNotifications([FromQuery] string? role)
-            => Ok(await _service.GetNotificationsAsync(role));
+        private string? CurrentRole() => User.FindFirst(ClaimTypes.Role)?.Value;
 
-        // GET api/Notifications/unread-count?role=
+        // GET api/Notifications
+        [HttpGet]
+        public async Task<IActionResult> GetNotifications()
+            => Ok(await _service.GetNotificationsAsync(CurrentRole()));
+
+        // GET api/Notifications/unread-count
         [HttpGet("unread-count")]
-        public async Task<IActionResult> GetUnreadCount([FromQuery] string? role)
-            => Ok(new { count = await _service.GetUnreadCountAsync(role) });
+        public async Task<IActionResult> GetUnreadCount()
+            => Ok(new { count = await _service.GetUnreadCountAsync(CurrentRole()) });
 
         // PATCH api/Notifications/read
         [HttpPatch("read")]
