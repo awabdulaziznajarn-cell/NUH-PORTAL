@@ -56,8 +56,23 @@ namespace NUH_PORTAL.Services
 
             var totalPages = (int)Math.Ceiling(totalRecords / (double)pageSize);
 
-            var logs = await filteredQuery
-                .OrderByDescending(a => a.action_at)
+            // الترتيب حسب العمود المختار (الافتراضي: التاريخ تنازليًا — الأحدث أولًا)
+            var sortBy = (filter.SortBy ?? "").ToLowerInvariant();
+            var orderedQuery = (sortBy, filter.SortAsc) switch
+            {
+                ("user", true) => filteredQuery.OrderBy(a => a.User!.full_name),
+                ("user", false) => filteredQuery.OrderByDescending(a => a.User!.full_name),
+                ("action", true) => filteredQuery.OrderBy(a => a.action),
+                ("action", false) => filteredQuery.OrderByDescending(a => a.action),
+                ("table", true) => filteredQuery.OrderBy(a => a.target_table),
+                ("table", false) => filteredQuery.OrderByDescending(a => a.target_table),
+                ("targetid", true) => filteredQuery.OrderBy(a => a.target_id),
+                ("targetid", false) => filteredQuery.OrderByDescending(a => a.target_id),
+                ("date", true) => filteredQuery.OrderBy(a => a.action_at),
+                _ => filteredQuery.OrderByDescending(a => a.action_at)
+            };
+
+            var logs = await orderedQuery
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .Select(a => new AuditLogItemDto

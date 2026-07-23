@@ -8,6 +8,9 @@
 <style>
   /* خاص بصفحة الطلبات فقط — الباقي من site.css */
   .tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+  th.sortable{cursor:pointer;user-select:none;white-space:nowrap;transition:color .15s}
+  th.sortable:hover{color:var(--navy)}
+  .sort-ind{font-size:10px;color:var(--navy);font-weight:700}
   .tab-btn{padding:8px 20px;border-radius:10px;border:1.5px solid var(--gray-200);background:var(--white);font-family:'IBM Plex Sans Arabic',sans-serif;font-size:13px;font-weight:600;cursor:pointer;color:var(--gray-500);transition:all .2s}
   .tab-btn.active{background:var(--navy);color:var(--white);border-color:var(--navy)}
   .tab-btn:hover{border-color:var(--navy)}
@@ -21,6 +24,11 @@
   .badge-cyber_rejected{background:var(--red-light);color:var(--red)}
   .badge-ready_for_provisioning{background:#FFF7ED;color:#92400E}
   .badge-completed{background:var(--green-light);color:var(--green)}
+  .badge-pending_supervisor{background:#FFF8E1;color:#B8860B}
+  .badge-pending_cyber{background:#E3F2FD;color:#1565C0}
+  .badge-need_more_info{background:#FFF3E0;color:#E65100}
+  .badge-approved{background:var(--green-light);color:var(--green)}
+  .badge-rejected{background:var(--red-light);color:var(--red)}
   .action-btn{padding:4px 12px;border-radius:8px;border:none;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;font-weight:600;cursor:pointer;margin:0 2px;transition:opacity .2s}
   .action-btn:hover{opacity:.8}
   .btn-approve{background:var(--green-light);color:var(--green)}
@@ -65,8 +73,8 @@
           <th>#</th>
           <th >@SharedLocalizer["req_col_type"]</th>
           <th >@SharedLocalizer["req_col_student"]</th>
-          <th >@SharedLocalizer["req_col_date"]</th>
-          <th >@SharedLocalizer["req_col_status"]</th>
+          <th class="sortable" onclick="sortByColumn('submittedat')">@SharedLocalizer["req_col_date"]<span class="sort-ind" id="sort-submittedat"></span></th>
+          <th class="sortable" onclick="sortByColumn('status')">@SharedLocalizer["req_col_status"]<span class="sort-ind" id="sort-status"></span></th>
           <th >@SharedLocalizer["req_col_stage"]</th>
           <th >@SharedLocalizer["req_col_action"]</th>
         </tr>
@@ -145,7 +153,9 @@
     pageSize: @Model.Page.PageSize,
     totalPages: @Model.Page.TotalPages,
     total: @Model.Page.TotalCount,
-    status: 'all'
+    status: 'all',
+    sortBy: '',
+    sortAsc: false
   };
 
   document.querySelectorAll('[data-dt]').forEach(function (el) {
@@ -197,6 +207,7 @@
   async function loadPage() {
     var url = '/api/Requests/paged?page=' + state.page + '&pageSize=' + state.pageSize;
     if (state.status !== 'all') url += '&status=' + encodeURIComponent(state.status);
+    if (state.sortBy) url += '&sortBy=' + encodeURIComponent(state.sortBy) + '&sortAsc=' + state.sortAsc;
     var res = await fetch(url, { headers: NUH.headers() });
     if (res.status === 401) { window.location.replace('/Account/Login'); return; }
     if (!res.ok) return;
@@ -226,6 +237,22 @@
   function updatePagerButtons() {
     document.getElementById('prevBtn').disabled = state.page <= 1;
     document.getElementById('nextBtn').disabled = state.page >= state.totalPages;
+  }
+
+  // ترتيب الأعمدة: أول ضغطة تصاعدي، وتكرار الضغط يعكس الاتجاه
+  function sortByColumn(field) {
+    if (state.sortBy === field) { state.sortAsc = !state.sortAsc; }
+    else { state.sortBy = field; state.sortAsc = true; }
+    state.page = 1;
+    updateSortIndicators();
+    loadPage();
+  }
+
+  function updateSortIndicators() {
+    ['submittedat', 'status'].forEach(function (f) {
+      var el = document.getElementById('sort-' + f);
+      if (el) el.textContent = (state.sortBy === f) ? (state.sortAsc ? ' ▲' : ' ▼') : '';
+    });
   }
 
   function changePage(delta) {
@@ -266,5 +293,6 @@
   window.onLanguageChange = function () { renderPageInfo(); };
   setLang(localStorage.getItem('uiLanguage') || 'ar');
   updatePagerButtons();
+  updateSortIndicators();
 </script>
 }

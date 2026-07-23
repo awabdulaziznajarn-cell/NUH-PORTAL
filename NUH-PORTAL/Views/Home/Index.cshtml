@@ -302,7 +302,7 @@
         {
           <tr>
             <td>@s.full_name</td>
-            <td>@s.college</td>
+            <td>@CollegeName(s.college)</td>
             <td>@s.housing_building</td>
             <td>
               @if (s.status == "left")
@@ -415,6 +415,24 @@
         "housing_rejected" or "cyber_rejected" => "badge-rejected",
         _ => "badge-pending"
     };
+
+    // كود الكلية (زي ما بيتخزّن من فورم التسجيل) → اسم مترجم؛ وأي نص عربي جاهز يرجع زي ما هو
+    private string CollegeName(string? c)
+    {
+        var key = (c ?? "").Trim().ToLowerInvariant() switch
+        {
+            "engineering" => "reg_collegeEngineering",
+            "medicine" => "reg_collegeMedicine",
+            "cs" => "reg_collegeCS",
+            "science" => "reg_collegeScience",
+            "business" => "reg_collegeBusiness",
+            "arts" => "reg_collegeArts",
+            "education" => "reg_collegeEducation",
+            "pharmacy" => "reg_collegePharmacy",
+            _ => null
+        };
+        return key != null ? SharedLocalizer[key].Value : (c ?? "");
+    }
 }
 
 @section Scripts {

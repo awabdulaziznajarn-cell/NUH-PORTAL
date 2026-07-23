@@ -19,6 +19,13 @@ function t(key) {
   return (d[key] != null) ? d[key] : key;
 }
 
+// أكواد الكليات/الأقسام (زي ما بيتخزّنوا من فورم التسجيل) → مفاتيح reg_*.
+// لو القيمة كود معروف بنترجمه، وأي حاجة تانية (نص عربي جاهز) بترجع زي ما هي.
+var COLLEGE_KEYS = { engineering: 'reg_collegeEngineering', medicine: 'reg_collegeMedicine', cs: 'reg_collegeCS', science: 'reg_collegeScience', business: 'reg_collegeBusiness', arts: 'reg_collegeArts', education: 'reg_collegeEducation', pharmacy: 'reg_collegePharmacy' };
+var DEPT_KEYS = { cs: 'reg_deptCS', computer: 'reg_deptComputer', electrical: 'reg_deptElectrical', mechanical: 'reg_deptMechanical', civil: 'reg_deptCivil', math: 'reg_deptMath', physics: 'reg_deptPhysics', chemistry: 'reg_deptChemistry', biology: 'reg_deptBiology', business: 'reg_deptBusiness', accounting: 'reg_deptAccounting', islamic: 'reg_deptIslamic', arabic: 'reg_deptArabic', english: 'reg_deptEnglish' };
+function collegeName(c) { var raw = (c == null ? '' : String(c)); var k = COLLEGE_KEYS[raw.trim().toLowerCase()]; if (!k) return raw; var v = t(k); return v === k ? raw : v; }
+function deptName(d) { var raw = (d == null ? '' : String(d)); var k = DEPT_KEYS[raw.trim().toLowerCase()]; if (!k) return raw; var v = t(k); return v === k ? raw : v; }
+
 // تطبيق النصوص على عناصر الصفحة (للصفحات اللي لسه بتستخدم data-* — الصفحات المحوّلة بتترندر من السيرفر)
 function __baseSetLang(l) {
   currentLang = (l === 'en') ? 'en' : 'ar';

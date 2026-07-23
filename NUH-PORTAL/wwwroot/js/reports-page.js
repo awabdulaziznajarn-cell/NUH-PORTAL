@@ -29,7 +29,11 @@ const actionTranslations = {
 };
 
 function translateAction(action) {
-  return actionTranslations[action] ? t(actionTranslations[action]) : action;
+  if (actionTranslations[action]) return t(actionTranslations[action]);
+  // fallback: أي إجراء مش في الخريطة المحلية نجيبه من مفاتيح aud_action_ الشاملة
+  var k = 'aud_action_' + action;
+  var v = t(k);
+  return v === k ? action : v;
 }
 
 function escHtml(str) {

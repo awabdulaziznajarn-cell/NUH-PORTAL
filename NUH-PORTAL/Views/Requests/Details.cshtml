@@ -6,6 +6,8 @@
 <style>
   /* خاص بصفحة تفاصيل الطلب — الباقي من site.css */
 .card:hover { box-shadow:0 4px 20px rgba(27,42,94,0.09); }
+/* عنوان القسم (أيقونة + نص) يبدأ من جهة البداية (يمين في العربية) بدل ما النص يتزاح للطرف */
+.card-header { justify-content:flex-start; gap:10px; }
 .card-header svg { flex-shrink:0; }
 .card-body { padding:20px; }
 .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:0; }

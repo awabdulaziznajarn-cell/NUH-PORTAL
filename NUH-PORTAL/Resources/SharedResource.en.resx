@@ -3442,4 +3442,172 @@
   <data name="stu_col_actions" xml:space="preserve">
     <value>Actions</value>
   </data>
+  <data name="req_stage_pending_supervisor" xml:space="preserve">
+    <value>Housing Approval</value>
+  </data>
+  <data name="req_stage_pending_cyber" xml:space="preserve">
+    <value>Cyber Review</value>
+  </data>
+  <data name="req_stage_need_more_info" xml:space="preserve">
+    <value>Need More Info</value>
+  </data>
+  <data name="req_stage_approved" xml:space="preserve">
+    <value>Completed</value>
+  </data>
+  <data name="req_stage_rejected" xml:space="preserve">
+    <value>Rejected</value>
+  </data>
+  <data name="req_badge_pending_supervisor" xml:space="preserve">
+    <value>Pending Housing</value>
+  </data>
+  <data name="req_badge_pending_cyber" xml:space="preserve">
+    <value>Pending Cyber</value>
+  </data>
+  <data name="req_badge_need_more_info" xml:space="preserve">
+    <value>More Info</value>
+  </data>
+  <data name="req_badge_approved" xml:space="preserve">
+    <value>Approved</value>
+  </data>
+  <data name="req_badge_rejected" xml:space="preserve">
+    <value>Rejected</value>
+  </data>
+  <data name="req_type_housing" xml:space="preserve">
+    <value>Housing Request</value>
+  </data>
+  <data name="home_reqStatus_pending_supervisor" xml:space="preserve">
+    <value>Pending Housing</value>
+  </data>
+  <data name="home_reqStatus_pending_cyber" xml:space="preserve">
+    <value>Pending Cyber</value>
+  </data>
+  <data name="home_reqStatus_need_more_info" xml:space="preserve">
+    <value>More Info</value>
+  </data>
+  <data name="home_reqStatus_approved" xml:space="preserve">
+    <value>Approved</value>
+  </data>
+  <data name="home_reqStatus_rejected" xml:space="preserve">
+    <value>Rejected</value>
+  </data>
+  <data name="home_reqType_housing" xml:space="preserve">
+    <value>Housing Request</value>
+  </data>
+  <data name="home_reqType_bulk_req" xml:space="preserve">
+    <value>Bulk Registration</value>
+  </data>
+  <data name="home_act_ad_account_created" xml:space="preserve">
+    <value>Network Account Created</value>
+  </data>
+  <data name="aud_action_ad_account_created" xml:space="preserve">
+    <value>Network Account Created</value>
+  </data>
+  <data name="home_act_attachment_uploaded" xml:space="preserve">
+    <value>Attachment Uploaded</value>
+  </data>
+  <data name="aud_action_attachment_uploaded" xml:space="preserve">
+    <value>Attachment Uploaded</value>
+  </data>
+  <data name="home_act_attachment_deleted" xml:space="preserve">
+    <value>Attachment Deleted</value>
+  </data>
+  <data name="aud_action_attachment_deleted" xml:space="preserve">
+    <value>Attachment Deleted</value>
+  </data>
+  <data name="home_act_bulk_registration_created" xml:space="preserve">
+    <value>Bulk Registration Created</value>
+  </data>
+  <data name="aud_action_bulk_registration_created" xml:space="preserve">
+    <value>Bulk Registration Created</value>
+  </data>
+  <data name="home_act_disabled" xml:space="preserve">
+    <value>Account Disabled</value>
+  </data>
+  <data name="aud_action_disabled" xml:space="preserve">
+    <value>Account Disabled</value>
+  </data>
+  <data name="home_act_disable_failed" xml:space="preserve">
+    <value>Account Disable Failed</value>
+  </data>
+  <data name="aud_action_disable_failed" xml:space="preserve">
+    <value>Account Disable Failed</value>
+  </data>
+  <data name="home_act_enabled" xml:space="preserve">
+    <value>Account Enabled</value>
+  </data>
+  <data name="aud_action_enabled" xml:space="preserve">
+    <value>Account Enabled</value>
+  </data>
+  <data name="home_act_housing_transfer" xml:space="preserve">
+    <value>Housing Transfer</value>
+  </data>
+  <data name="aud_action_housing_transfer" xml:space="preserve">
+    <value>Housing Transfer</value>
+  </data>
+  <data name="home_act_info_requested" xml:space="preserve">
+    <value>Additional Info Requested</value>
+  </data>
+  <data name="aud_action_info_requested" xml:space="preserve">
+    <value>Additional Info Requested</value>
+  </data>
+  <data name="home_act_restore_student" xml:space="preserve">
+    <value>Restore Student</value>
+  </data>
+  <data name="aud_action_restore_student" xml:space="preserve">
+    <value>Restore Student</value>
+  </data>
+  <data name="home_act_soft_delete_student" xml:space="preserve">
+    <value>Delete Student</value>
+  </data>
+  <data name="aud_action_soft_delete_student" xml:space="preserve">
+    <value>Delete Student</value>
+  </data>
+  <data name="home_act_student_departure_status" xml:space="preserve">
+    <value>Departure Status Update</value>
+  </data>
+  <data name="aud_action_student_departure_status" xml:space="preserve">
+    <value>Departure Status Update</value>
+  </data>
+  <data name="home_act_workflow_approved" xml:space="preserve">
+    <value>Request Approved</value>
+  </data>
+  <data name="aud_action_workflow_approved" xml:space="preserve">
+    <value>Request Approved</value>
+  </data>
+  <data name="home_act_workflow_rejected" xml:space="preserve">
+    <value>Request Rejected</value>
+  </data>
+  <data name="aud_action_workflow_rejected" xml:space="preserve">
+    <value>Request Rejected</value>
+  </data>
+  <data name="home_act_registration_created" xml:space="preserve">
+    <value>Registration Created</value>
+  </data>
+  <data name="aud_action_registration_created" xml:space="preserve">
+    <value>Registration Created</value>
+  </data>
+  <data name="home_act_otp_sent" xml:space="preserve">
+    <value>OTP Sent</value>
+  </data>
+  <data name="aud_action_otp_sent" xml:space="preserve">
+    <value>OTP Sent</value>
+  </data>
+  <data name="home_act_otp_verified" xml:space="preserve">
+    <value>OTP Verified</value>
+  </data>
+  <data name="aud_action_otp_verified" xml:space="preserve">
+    <value>OTP Verified</value>
+  </data>
+  <data name="home_act_password_reset" xml:space="preserve">
+    <value>Password Reset</value>
+  </data>
+  <data name="aud_action_password_reset" xml:space="preserve">
+    <value>Password Reset</value>
+  </data>
+  <data name="home_act_login_admin_fallback" xml:space="preserve">
+    <value>Admin Local Login</value>
+  </data>
+  <data name="home_act_login_admin_fallback_failed" xml:space="preserve">
+    <value>Admin Local Login Failed</value>
+  </data>
 </root>

@@ -3442,4 +3442,172 @@
   <data name="stu_col_actions" xml:space="preserve">
     <value>إجراءات</value>
   </data>
+  <data name="req_stage_pending_supervisor" xml:space="preserve">
+    <value>موافقة إدارة الإسكان</value>
+  </data>
+  <data name="req_stage_pending_cyber" xml:space="preserve">
+    <value>مراجعة إدارة الأمن السيبراني</value>
+  </data>
+  <data name="req_stage_need_more_info" xml:space="preserve">
+    <value>بحاجة معلومات إضافية</value>
+  </data>
+  <data name="req_stage_approved" xml:space="preserve">
+    <value>مكتمل</value>
+  </data>
+  <data name="req_stage_rejected" xml:space="preserve">
+    <value>مرفوض</value>
+  </data>
+  <data name="req_badge_pending_supervisor" xml:space="preserve">
+    <value>بانتظار الإسكان</value>
+  </data>
+  <data name="req_badge_pending_cyber" xml:space="preserve">
+    <value>بانتظار الأمن السيبراني</value>
+  </data>
+  <data name="req_badge_need_more_info" xml:space="preserve">
+    <value>معلومات إضافية</value>
+  </data>
+  <data name="req_badge_approved" xml:space="preserve">
+    <value>معتمد</value>
+  </data>
+  <data name="req_badge_rejected" xml:space="preserve">
+    <value>مرفوض</value>
+  </data>
+  <data name="req_type_housing" xml:space="preserve">
+    <value>طلب سكن</value>
+  </data>
+  <data name="home_reqStatus_pending_supervisor" xml:space="preserve">
+    <value>بانتظار الإسكان</value>
+  </data>
+  <data name="home_reqStatus_pending_cyber" xml:space="preserve">
+    <value>بانتظار الأمن السيبراني</value>
+  </data>
+  <data name="home_reqStatus_need_more_info" xml:space="preserve">
+    <value>معلومات إضافية</value>
+  </data>
+  <data name="home_reqStatus_approved" xml:space="preserve">
+    <value>معتمد</value>
+  </data>
+  <data name="home_reqStatus_rejected" xml:space="preserve">
+    <value>مرفوض</value>
+  </data>
+  <data name="home_reqType_housing" xml:space="preserve">
+    <value>طلب سكن</value>
+  </data>
+  <data name="home_reqType_bulk_req" xml:space="preserve">
+    <value>تسجيل جماعي</value>
+  </data>
+  <data name="home_act_ad_account_created" xml:space="preserve">
+    <value>إنشاء حساب الشبكة</value>
+  </data>
+  <data name="aud_action_ad_account_created" xml:space="preserve">
+    <value>إنشاء حساب الشبكة</value>
+  </data>
+  <data name="home_act_attachment_uploaded" xml:space="preserve">
+    <value>رفع مرفق</value>
+  </data>
+  <data name="aud_action_attachment_uploaded" xml:space="preserve">
+    <value>رفع مرفق</value>
+  </data>
+  <data name="home_act_attachment_deleted" xml:space="preserve">
+    <value>حذف مرفق</value>
+  </data>
+  <data name="aud_action_attachment_deleted" xml:space="preserve">
+    <value>حذف مرفق</value>
+  </data>
+  <data name="home_act_bulk_registration_created" xml:space="preserve">
+    <value>إنشاء تسجيل جماعي</value>
+  </data>
+  <data name="aud_action_bulk_registration_created" xml:space="preserve">
+    <value>إنشاء تسجيل جماعي</value>
+  </data>
+  <data name="home_act_disabled" xml:space="preserve">
+    <value>تعطيل الحساب</value>
+  </data>
+  <data name="aud_action_disabled" xml:space="preserve">
+    <value>تعطيل الحساب</value>
+  </data>
+  <data name="home_act_disable_failed" xml:space="preserve">
+    <value>فشل تعطيل الحساب</value>
+  </data>
+  <data name="aud_action_disable_failed" xml:space="preserve">
+    <value>فشل تعطيل الحساب</value>
+  </data>
+  <data name="home_act_enabled" xml:space="preserve">
+    <value>تفعيل الحساب</value>
+  </data>
+  <data name="aud_action_enabled" xml:space="preserve">
+    <value>تفعيل الحساب</value>
+  </data>
+  <data name="home_act_housing_transfer" xml:space="preserve">
+    <value>نقل سكني</value>
+  </data>
+  <data name="aud_action_housing_transfer" xml:space="preserve">
+    <value>نقل سكني</value>
+  </data>
+  <data name="home_act_info_requested" xml:space="preserve">
+    <value>طلب معلومات إضافية</value>
+  </data>
+  <data name="aud_action_info_requested" xml:space="preserve">
+    <value>طلب معلومات إضافية</value>
+  </data>
+  <data name="home_act_restore_student" xml:space="preserve">
+    <value>استعادة طالب</value>
+  </data>
+  <data name="aud_action_restore_student" xml:space="preserve">
+    <value>استعادة طالب</value>
+  </data>
+  <data name="home_act_soft_delete_student" xml:space="preserve">
+    <value>حذف طالب</value>
+  </data>
+  <data name="aud_action_soft_delete_student" xml:space="preserve">
+    <value>حذف طالب</value>
+  </data>
+  <data name="home_act_student_departure_status" xml:space="preserve">
+    <value>تحديث حالة المغادرة</value>
+  </data>
+  <data name="aud_action_student_departure_status" xml:space="preserve">
+    <value>تحديث حالة المغادرة</value>
+  </data>
+  <data name="home_act_workflow_approved" xml:space="preserve">
+    <value>اعتماد الطلب</value>
+  </data>
+  <data name="aud_action_workflow_approved" xml:space="preserve">
+    <value>اعتماد الطلب</value>
+  </data>
+  <data name="home_act_workflow_rejected" xml:space="preserve">
+    <value>رفض الطلب</value>
+  </data>
+  <data name="aud_action_workflow_rejected" xml:space="preserve">
+    <value>رفض الطلب</value>
+  </data>
+  <data name="home_act_registration_created" xml:space="preserve">
+    <value>إنشاء تسجيل</value>
+  </data>
+  <data name="aud_action_registration_created" xml:space="preserve">
+    <value>إنشاء تسجيل</value>
+  </data>
+  <data name="home_act_otp_sent" xml:space="preserve">
+    <value>إرسال رمز التحقق</value>
+  </data>
+  <data name="aud_action_otp_sent" xml:space="preserve">
+    <value>إرسال رمز التحقق</value>
+  </data>
+  <data name="home_act_otp_verified" xml:space="preserve">
+    <value>تأكيد رمز التحقق</value>
+  </data>
+  <data name="aud_action_otp_verified" xml:space="preserve">
+    <value>تأكيد رمز التحقق</value>
+  </data>
+  <data name="home_act_password_reset" xml:space="preserve">
+    <value>إعادة تعيين كلمة المرور</value>
+  </data>
+  <data name="aud_action_password_reset" xml:space="preserve">
+    <value>إعادة تعيين كلمة المرور</value>
+  </data>
+  <data name="home_act_login_admin_fallback" xml:space="preserve">
+    <value>دخول المسؤول المحلي</value>
+  </data>
+  <data name="home_act_login_admin_fallback_failed" xml:space="preserve">
+    <value>فشل دخول المسؤول المحلي</value>
+  </data>
 </root>

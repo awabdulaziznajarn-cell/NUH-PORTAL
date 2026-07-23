@@ -76,6 +76,10 @@ async function loadStats() {
   }
 }
 
+// نخزّن الصفوف المحمّلة علشان الترتيب يتم على الجهة (client-side) — الشاشة بتحمّل الكل مرة واحدة
+var housingAccounts = [];
+var housingSort = { by: '', asc: false };
+
 async function loadAccounts() {
   var tbody = document.getElementById('accountsTableBody');
   var loading = document.getElementById('loadingIndicator');
@@ -94,33 +98,71 @@ async function loadAccounts() {
 
     var accounts = await res.json();
     loading.style.display = 'none';
+    housingAccounts = accounts || [];
 
-    if (!accounts || accounts.length === 0) {
+    if (housingAccounts.length === 0) {
       empty.style.display = 'block';
       return;
     }
 
-    accounts.forEach(function(a) {
-      var lastSync = a.ad_last_sync_at ? formatDate(a.ad_last_sync_at) : '-';
-      var statusBadge = '<span class="badge ' + getBadgeClass(a.ad_status) + '">' + getStatusText(a.ad_status) + '</span>';
-      tbody.innerHTML += '<tr>' +
-        '<td>' + (a.student_id || '-') + '</td>' +
-        '<td>' + (a.full_name_english || a.full_name || '-') + '</td>' +
-        '<td>' + (a.college || '-') + '</td>' +
-        '<td>' + statusBadge + '</td>' +
-        '<td style="direction:ltr;text-align:' + (document.documentElement.dir === 'ltr' ? 'left' : 'right') + '">' + (a.ad_username || '-') + '</td>' +
-        '<td>' + lastSync + '</td>' +
-        '<td><div class="ad-actions">' +
-          '<button class="btn btn-primary btn-sm" onclick="openDetails(' + a.id + ')">' + t('details') + '</button>' +
-          '<button class="btn btn-outline btn-sm" onclick="openLifecycle(' + a.id + ')">' + t('lifecycleLog') + '</button>' +
-        '</div></td>' +
-      '</tr>';
-    });
+    renderHousingRows();
   } catch (e) {
     loading.style.display = 'none';
     empty.style.display = 'block';
     empty.innerHTML = '<p>' + t('apiError') + ': ' + e.message + '</p>';
   }
+}
+
+// مقارنة للترتيب: التاريخ رقميًا، والباقي نصيًا مع دعم الأرقام والعربي
+function housingCmp(a, b) {
+  var f = housingSort.by, asc = housingSort.asc;
+  if (f === 'ad_last_sync_at') {
+    var da = a[f] ? new Date(a[f]).getTime() : 0;
+    var db = b[f] ? new Date(b[f]).getTime() : 0;
+    return asc ? da - db : db - da;
+  }
+  var va = (a[f] == null ? '' : String(a[f]));
+  var vb = (b[f] == null ? '' : String(b[f]));
+  var r = va.localeCompare(vb, undefined, { numeric: true, sensitivity: 'base' });
+  return asc ? r : -r;
+}
+
+function renderHousingRows() {
+  var tbody = document.getElementById('accountsTableBody');
+  var rows = housingAccounts.slice();
+  if (housingSort.by) rows.sort(housingCmp);
+  var html = '';
+  rows.forEach(function(a) {
+    var lastSync = a.ad_last_sync_at ? formatDate(a.ad_last_sync_at) : '-';
+    var statusBadge = '<span class="badge ' + getBadgeClass(a.ad_status) + '">' + getStatusText(a.ad_status) + '</span>';
+    html += '<tr>' +
+      '<td>' + (a.student_id || '-') + '</td>' +
+      '<td>' + (a.full_name_english || a.full_name || '-') + '</td>' +
+      '<td>' + (collegeName(a.college) || '-') + '</td>' +
+      '<td>' + statusBadge + '</td>' +
+      '<td style="direction:ltr;text-align:' + (document.documentElement.dir === 'ltr' ? 'left' : 'right') + '">' + (a.ad_username || '-') + '</td>' +
+      '<td>' + lastSync + '</td>' +
+      '<td><div class="ad-actions">' +
+        '<button class="btn btn-primary btn-sm" onclick="openDetails(' + a.id + ')">' + t('details') + '</button>' +
+        '<button class="btn btn-outline btn-sm" onclick="openLifecycle(' + a.id + ')">' + t('lifecycleLog') + '</button>' +
+      '</div></td>' +
+    '</tr>';
+  });
+  tbody.innerHTML = html;
+  updateHousingSortIndicators();
+}
+
+function sortHousing(field) {
+  if (housingSort.by === field) { housingSort.asc = !housingSort.asc; }
+  else { housingSort.by = field; housingSort.asc = true; }
+  renderHousingRows();
+}
+
+function updateHousingSortIndicators() {
+  ['student_id', 'full_name_english', 'college', 'ad_status', 'ad_username', 'ad_last_sync_at'].forEach(function (f) {
+    var el = document.getElementById('hsort-' + f);
+    if (el) el.textContent = (housingSort.by === f) ? (housingSort.asc ? ' ▲' : ' ▼') : '';
+  });
 }
 
 async function openDetails(studentId) {
@@ -175,7 +217,7 @@ async function openDetails(studentId) {
       '<div class="detail-item"><label>' + t('studentId') + '</label><span>' + (s.student_id || '-') + '</span></div>' +
       '<div class="detail-item"><label>' + t('fullNameEnglish') + '</label><span>' + (s.full_name_english || '-') + '</span></div>' +
       '<div class="detail-item"><label>' + t('fullName') + '</label><span>' + (s.full_name || '-') + '</span></div>' +
-      '<div class="detail-item"><label>' + t('college') + '</label><span>' + (s.college || '-') + '</span></div>' +
+      '<div class="detail-item"><label>' + t('college') + '</label><span>' + (collegeName(s.college) || '-') + '</span></div>' +
       '<div class="detail-item"><label>' + t('gender') + '</label><span>' + (s.gender || '-') + '</span></div>' +
       '<div class="detail-item"><label>' + t('academicLevel') + '</label><span>' + (s.academic_level || '-') + '</span></div>' +
       '<div class="detail-item"><label>' + t('housingBuilding') + '</label><span>' + (s.housing_building || '-') + '</span></div>' +

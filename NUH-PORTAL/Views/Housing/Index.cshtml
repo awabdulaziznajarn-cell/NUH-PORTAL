@@ -4,6 +4,9 @@
 
 <style>
   /* خاص بصفحة إدارة حسابات السكن — نفس ستايلات الصفحة القديمة عشان housing-management.js يشتغل زي ما هو */
+  th.sortable{cursor:pointer;user-select:none;white-space:nowrap;transition:color .15s}
+  th.sortable:hover{color:var(--navy)}
+  .sort-ind{font-size:10px;color:var(--navy);font-weight:700}
   .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-bottom:24px}
   .stat-card{background:var(--white);border-radius:12px;padding:16px 20px;border:1px solid var(--gray-100);box-shadow:0 2px 8px rgba(0,0,0,.04)}
   .stat-card .stat-label{font-size:13px;color:var(--gray-500);margin-bottom:4px}
@@ -62,12 +65,12 @@
       <table>
         <thead>
           <tr>
-            <th >@SharedLocalizer["hs_colStudentId"]</th>
-            <th >@SharedLocalizer["hs_colNameEn"]</th>
-            <th >@SharedLocalizer["hs_colCollege"]</th>
-            <th >@SharedLocalizer["hs_colStatus"]</th>
-            <th >@SharedLocalizer["hs_colUsername"]</th>
-            <th >@SharedLocalizer["hs_colLastSync"]</th>
+            <th class="sortable" onclick="sortHousing('student_id')">@SharedLocalizer["hs_colStudentId"]<span class="sort-ind" id="hsort-student_id"></span></th>
+            <th class="sortable" onclick="sortHousing('full_name_english')">@SharedLocalizer["hs_colNameEn"]<span class="sort-ind" id="hsort-full_name_english"></span></th>
+            <th class="sortable" onclick="sortHousing('college')">@SharedLocalizer["hs_colCollege"]<span class="sort-ind" id="hsort-college"></span></th>
+            <th class="sortable" onclick="sortHousing('ad_status')">@SharedLocalizer["hs_colStatus"]<span class="sort-ind" id="hsort-ad_status"></span></th>
+            <th class="sortable" onclick="sortHousing('ad_username')">@SharedLocalizer["hs_colUsername"]<span class="sort-ind" id="hsort-ad_username"></span></th>
+            <th class="sortable" onclick="sortHousing('ad_last_sync_at')">@SharedLocalizer["hs_colLastSync"]<span class="sort-ind" id="hsort-ad_last_sync_at"></span></th>
             <th >@SharedLocalizer["hs_colActions"]</th>
           </tr>
         </thead>

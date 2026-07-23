@@ -25,7 +25,9 @@ namespace NUH_PORTAL.Controllers
             [FromQuery] string? action = null,
             [FromQuery] string? fromDate = null,
             [FromQuery] string? toDate = null,
-            [FromQuery] string? search = null)
+            [FromQuery] string? search = null,
+            [FromQuery] string? sortBy = null,
+            [FromQuery] bool sortAsc = false)
             => Ok(await _service.GetLogsAsync(page, pageSize, new AuditLogFilter
             {
                 UserId = userId,
@@ -33,7 +35,9 @@ namespace NUH_PORTAL.Controllers
                 Action = action,
                 FromDate = fromDate,
                 ToDate = toDate,
-                Search = search
+                Search = search,
+                SortBy = sortBy,
+                SortAsc = sortAsc
             }));
 
         // GET api/AuditLogs/export

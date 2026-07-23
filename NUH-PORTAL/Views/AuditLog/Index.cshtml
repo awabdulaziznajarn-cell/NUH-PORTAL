@@ -37,6 +37,9 @@
   .modal-row-label{font-size:11px;font-weight:600;color:var(--gray-500)}
   .modal-row-value{font-size:14px;font-weight:500;color:var(--navy-dark)}
   tbody tr{cursor:pointer}
+  th.sortable{cursor:pointer;user-select:none;white-space:nowrap;transition:color .15s}
+  th.sortable:hover{color:var(--navy)}
+  .sort-ind{font-size:10px;color:var(--navy);font-weight:700}
 </style>
 
 <div class="page-header">
@@ -81,11 +84,11 @@
       <thead>
         <tr>
           <th>#</th>
-          <th >@SharedLocalizer["aud_col_user"]</th>
-          <th >@SharedLocalizer["aud_col_action"]</th>
-          <th >@SharedLocalizer["aud_col_table"]</th>
-          <th >@SharedLocalizer["aud_col_targetId"]</th>
-          <th >@SharedLocalizer["aud_col_date"]</th>
+          <th class="sortable" onclick="sortByColumn('user')">@SharedLocalizer["aud_col_user"]<span class="sort-ind" id="sort-user"></span></th>
+          <th class="sortable" onclick="sortByColumn('action')">@SharedLocalizer["aud_col_action"]<span class="sort-ind" id="sort-action"></span></th>
+          <th class="sortable" onclick="sortByColumn('table')">@SharedLocalizer["aud_col_table"]<span class="sort-ind" id="sort-table"></span></th>
+          <th class="sortable" onclick="sortByColumn('targetid')">@SharedLocalizer["aud_col_targetId"]<span class="sort-ind" id="sort-targetid"></span></th>
+          <th class="sortable" onclick="sortByColumn('date')">@SharedLocalizer["aud_col_date"]<span class="sort-ind" id="sort-date"></span></th>
         </tr>
       </thead>
       <tbody id="log-tbody">
@@ -201,6 +204,8 @@
   var totalRecords = 0;
   var cachedData = null;
   var dataLoaded = false;
+  var currentSortBy = '';
+  var currentSortAsc = false;
 
   function getFilters() {
     return {
@@ -241,7 +246,23 @@
     if (f.fromDate) url += '&fromDate=' + encodeURIComponent(f.fromDate);
     if (f.toDate) url += '&toDate=' + encodeURIComponent(f.toDate);
     if (f.search) url += '&search=' + encodeURIComponent(f.search);
+    if (currentSortBy) url += '&sortBy=' + encodeURIComponent(currentSortBy) + '&sortAsc=' + currentSortAsc;
     return url;
+  }
+
+  // ترتيب الأعمدة: أول ضغطة تصاعدي، وتكرار الضغط يعكس الاتجاه (السيرفر بيرتّب على كل السجلات مش الصفحة بس)
+  function sortByColumn(field) {
+    if (currentSortBy === field) { currentSortAsc = !currentSortAsc; }
+    else { currentSortBy = field; currentSortAsc = true; }
+    updateSortIndicators();
+    loadLogs(1, currentPageSize);
+  }
+
+  function updateSortIndicators() {
+    ['user', 'action', 'table', 'targetid', 'date'].forEach(function (f) {
+      var el = document.getElementById('sort-' + f);
+      if (el) el.textContent = (currentSortBy === f) ? (currentSortAsc ? ' ▲' : ' ▼') : '';
+    });
   }
 
   function rebuildActionFilter() {
@@ -422,6 +443,7 @@
   rebuildActionFilter();
   restoreFilters();
   setLang(localStorage.getItem('uiLanguage') || 'ar');
+  updateSortIndicators();
   loadLogs(1, currentPageSize);
   loadAuditUsers();
 </script>

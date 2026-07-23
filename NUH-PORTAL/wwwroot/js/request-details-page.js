@@ -292,7 +292,7 @@ function renderRequest(r) {
       var femaleCnt = bStudents.filter(function(x){ return (x.gender||'').toLowerCase() === 'female'; }).length;
       var bulkStatusMap = { pending: t('rdp_bulkStatus_pending'), processing: t('rdp_bulkStatus_processing'), completed: t('rdp_stage_completed') };
       var previewHtml = bStudents.slice(0, 50).map(function(bs, i){
-        return '<tr><td>'+(i+1)+'</td><td>'+escHtml(bs.studentID||'')+'</td><td>'+escHtml(bs.fullNameArabic||'')+'</td><td>'+escHtml(bs.fullNameEnglish||'')+'</td><td>'+escHtml(bs.college||'')+'</td><td>'+escHtml(bs.academicLevel||'')+'</td></tr>';
+        return '<tr><td>'+(i+1)+'</td><td>'+escHtml(bs.studentID||'')+'</td><td>'+escHtml(bs.fullNameArabic||'')+'</td><td>'+escHtml(bs.fullNameEnglish||'')+'</td><td>'+escHtml(collegeName(bs.college))+'</td><td>'+escHtml(bs.academicLevel||'')+'</td></tr>';
       }).join('');
 
       var bulkCards =
@@ -348,8 +348,8 @@ function renderRequest(r) {
     '<div class="card"><div class="card-header">'+
       '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>'+
       t('rdp_card_academicInfo')+'</div><div class="card-body"><div class="info-grid">'+
-      '<div class="info-field"><span class="info-label">'+t('rdp_field_college')+'</span><span class="info-value">'+escHtml(s.college||'')+'</span></div>'+
-      '<div class="info-field"><span class="info-label">'+t('rdp_field_department')+'</span><span class="info-value">'+escHtml(s.department||'')+'</span></div>'+
+      '<div class="info-field"><span class="info-label">'+t('rdp_field_college')+'</span><span class="info-value">'+escHtml(collegeName(s.college))+'</span></div>'+
+      '<div class="info-field"><span class="info-label">'+t('rdp_field_department')+'</span><span class="info-value">'+escHtml(deptName(s.department))+'</span></div>'+
       '<div class="info-field"><span class="info-label">'+t('rdp_field_level')+'</span><span class="info-value">'+escHtml(s.academic_level||'')+'</span></div>'+
       '<div class="info-field"><span class="info-label">'+t('rdp_field_gender')+'</span><span class="info-value">'+escHtml((genderMap[s.gender]&&t(genderMap[s.gender]))||s.gender||'')+'</span></div>'+
     '</div></div></div>'+
@@ -421,7 +421,7 @@ async function loadHousingAccount(studentId) {
       '<div class="housing-info-item"><label>' + t('adUsername') + '</label><span dir="ltr" style="display:inline-block">' + (s.ad_username || '-') + '</span></div>' +
       '<div class="housing-info-item"><label>' + t('adAccountStatus') + '</label><span>' + statusBadge + '</span></div>' +
       '<div class="housing-info-item"><label>' + t('adLastSync') + '</label><span>' + (s.ad_last_sync_at ? formatDate(s.ad_last_sync_at) : '-') + '</span></div>' +
-      '<div class="housing-info-item"><label>' + t('college') + '</label><span>' + (s.college || '-') + '</span></div>' +
+      '<div class="housing-info-item"><label>' + t('college') + '</label><span>' + (collegeName(s.college) || '-') + '</span></div>' +
     '</div>' +
     '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">' +
       (_userRole === 'admin' ? (enabled ? '<button class="btn btn-danger btn-sm" onclick="housingAction(' + studentId + ',\'disable\')">' + t('disableAccount') + '</button>'

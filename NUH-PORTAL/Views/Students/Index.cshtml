@@ -4,6 +4,25 @@
     var role = (User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "").ToLowerInvariant();
     var canEdit = role != "user" && role != "cyber";
 }
+@functions {
+    // كود الكلية (زي ما بيتخزّن من فورم التسجيل) → اسم مترجم؛ وأي نص عربي جاهز يرجع زي ما هو
+    private string CollegeName(string? c)
+    {
+        var key = (c ?? "").Trim().ToLowerInvariant() switch
+        {
+            "engineering" => "reg_collegeEngineering",
+            "medicine" => "reg_collegeMedicine",
+            "cs" => "reg_collegeCS",
+            "science" => "reg_collegeScience",
+            "business" => "reg_collegeBusiness",
+            "arts" => "reg_collegeArts",
+            "education" => "reg_collegeEducation",
+            "pharmacy" => "reg_collegePharmacy",
+            _ => null
+        };
+        return key != null ? SharedLocalizer[key].Value : (c ?? "");
+    }
+}
 
 <div class="stats-row">
   <div class="stat-pill">
@@ -43,17 +62,17 @@
       <thead>
         <tr>
           <th>#</th>
-          <th >@SharedLocalizer["stu_col_name"]</th>
-          <th >@SharedLocalizer["stu_col_studentId"]</th>
+          <th class="sortable" onclick="sortByColumn('full_name')">@SharedLocalizer["stu_col_name"]<span class="sort-ind" id="sort-full_name"></span></th>
+          <th class="sortable" onclick="sortByColumn('student_id')">@SharedLocalizer["stu_col_studentId"]<span class="sort-ind" id="sort-student_id"></span></th>
           <th >@SharedLocalizer["stu_col_nationalId"]</th>
           <th >@SharedLocalizer["stu_col_phone"]</th>
-          <th >@SharedLocalizer["stu_col_college"]</th>
+          <th class="sortable" onclick="sortByColumn('college')">@SharedLocalizer["stu_col_college"]<span class="sort-ind" id="sort-college"></span></th>
           <th >@SharedLocalizer["stu_col_level"]</th>
           <th >@SharedLocalizer["stu_col_nameEn"]</th>
           <th >@SharedLocalizer["stu_col_building"]</th>
           <th >@SharedLocalizer["stu_col_room"]</th>
           <th >@SharedLocalizer["stu_col_academic"]</th>
-          <th >@SharedLocalizer["stu_col_status"]</th>
+          <th class="sortable" onclick="sortByColumn('status')">@SharedLocalizer["stu_col_status"]<span class="sort-ind" id="sort-status"></span></th>
           <th >@SharedLocalizer["stu_col_actions"]</th>
         </tr>
       </thead>
@@ -68,7 +87,7 @@
             <td>@s.student_id</td>
             <td>@s.national_id</td>
             <td>@s.phone</td>
-            <td>@s.college</td>
+            <td>@CollegeName(s.college)</td>
             <td>@s.academic_level</td>
             <td>@s.full_name_english</td>
             <td>@s.housing_building</td>
@@ -261,6 +280,9 @@
   .action-edit{background:#eef1f8;color:var(--navy)}
   .action-edit:hover{background:#e0e6f5}
   .row-actions{display:flex;gap:6px;align-items:center}
+  th.sortable{cursor:pointer;user-select:none;white-space:nowrap;transition:color .15s}
+  th.sortable:hover{color:var(--navy)}
+  .sort-ind{font-size:10px;color:var(--navy);font-weight:700}
   /* مودال تعديل بيانات الطالب */
   .edit-overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;z-index:1000;padding:20px}
   .edit-overlay.show{display:flex}
@@ -301,7 +323,9 @@
     pageSize: @Model.Page.PageSize,
     totalPages: @Model.Page.TotalPages,
     total: @Model.Page.TotalCount,
-    filter: ''
+    filter: '',
+    sortBy: '',
+    sortAsc: false
   };
 
   function authHeaders() {
@@ -332,7 +356,8 @@
 
   async function loadPage() {
     var url = '/api/Students/paged?page=' + state.page + '&pageSize=' + state.pageSize +
-              '&filterText=' + encodeURIComponent(state.filter);
+              '&filterText=' + encodeURIComponent(state.filter) +
+              (state.sortBy ? '&sortBy=' + encodeURIComponent(state.sortBy) + '&sortAsc=' + state.sortAsc : '');
     var res = await fetch(url, { headers: authHeaders() });
     if (!res.ok) return;
     var data = await res.json();
@@ -349,7 +374,7 @@
         '<td>' + esc(s.student_id) + '</td>' +
         '<td>' + esc(s.national_id) + '</td>' +
         '<td>' + esc(s.phone) + '</td>' +
-        '<td>' + esc(s.college) + '</td>' +
+        '<td>' + esc(collegeName(s.college)) + '</td>' +
         '<td>' + esc(s.academic_level) + '</td>' +
         '<td>' + esc(s.full_name_english) + '</td>' +
         '<td>' + esc(s.housing_building) + '</td>' +
@@ -373,6 +398,22 @@
   function updatePagerButtons() {
     document.getElementById('prevBtn').disabled = state.page <= 1;
     document.getElementById('nextBtn').disabled = state.page >= state.totalPages;
+  }
+
+  // ترتيب الأعمدة: أول ضغطة تصاعدي، وتكرار الضغط على نفس العمود يعكس الاتجاه
+  function sortByColumn(field) {
+    if (state.sortBy === field) { state.sortAsc = !state.sortAsc; }
+    else { state.sortBy = field; state.sortAsc = true; }
+    state.page = 1;
+    updateSortIndicators();
+    loadPage();
+  }
+
+  function updateSortIndicators() {
+    ['full_name', 'student_id', 'college', 'status'].forEach(function (f) {
+      var el = document.getElementById('sort-' + f);
+      if (el) el.textContent = (state.sortBy === f) ? (state.sortAsc ? ' ▲' : ' ▼') : '';
+    });
   }
 
   function changePage(delta) {
@@ -539,5 +580,6 @@
   window.onLanguageChange = function () { renderPageInfo(); };
   setLang(localStorage.getItem('uiLanguage') || 'ar');
   updatePagerButtons();
+  updateSortIndicators();
 </script>
 }

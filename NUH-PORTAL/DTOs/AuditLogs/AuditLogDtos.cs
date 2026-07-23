@@ -9,6 +9,8 @@ namespace NUH_PORTAL.DTOs.AuditLogs
         public string? FromDate { get; set; }
         public string? ToDate { get; set; }
         public string? Search { get; set; }
+        public string? SortBy { get; set; }
+        public bool SortAsc { get; set; } = false;
     }
 
     public class AuditChangeDto
