@@ -87,14 +87,14 @@
             <td>@s.student_id</td>
             <td>@s.national_id</td>
             <td>@s.phone</td>
-            <td>@CollegeName(s.college)</td>
-            <td>@s.academic_level</td>
+            <td data-lk="college:@s.college">@CollegeName(s.college)</td>
+            <td data-lk="level:@s.academic_level">@s.academic_level</td>
             <td>@s.full_name_english</td>
-            <td>@s.housing_building</td>
+            <td data-lk="building:@s.housing_building">@s.housing_building</td>
             <td>@s.room_number</td>
             <td><span>@SharedLocalizer["stu_status_" + s.student_status]</span></td>
             <td>
-              @if (s.status == "left")
+              @if (s.status == StudentState.left)
               {
                 <span class="badge badge-left" >@SharedLocalizer["stu_badge_left"]</span>
               }
@@ -315,6 +315,7 @@
   @@media(max-width:640px){.e-grid{grid-template-columns:1fr}}
 </style>
 <script src="/i18n.js"></script>
+<script src="/lookups.js"></script>
 <script>
   var CAN_EDIT = @(canEdit ? "true" : "false");
   // حالة الصفحة (أول تحميل جاي جاهز من السيرفر)
@@ -375,9 +376,9 @@
         '<td>' + esc(s.national_id) + '</td>' +
         '<td>' + esc(s.phone) + '</td>' +
         '<td>' + esc(collegeName(s.college)) + '</td>' +
-        '<td>' + esc(s.academic_level) + '</td>' +
+        '<td>' + esc(levelName(s.academic_level)) + '</td>' +
         '<td>' + esc(s.full_name_english) + '</td>' +
-        '<td>' + esc(s.housing_building) + '</td>' +
+        '<td>' + esc(buildingName(s.housing_building)) + '</td>' +
         '<td>' + esc(s.room_number) + '</td>' +
         '<td>' + esc(studentStatusText(s.student_status)) + '</td>' +
         '<td>' + (s.status === 'left'
@@ -489,10 +490,10 @@
       eGet(f).value = (data[f] == null ? '' : data[f]);
     });
     setEditSelect('gender', normalizeGender(data.gender));
-    ['college', 'department', 'academic_level', 'housing_building', 'status'].forEach(function (f) {
-      setEditSelect(f, data[f]);
-    });
+    setEditSelect('status', data.status);
     if (!eGet('status').value) eGet('status').value = 'active';
+    // college/department/academic_level/housing_building من قاعدة البيانات (مع fallback للخيارات الثابتة لو مش متهاجرة)
+    await lkLoadEditAll(data);
     document.getElementById('editOverlay').classList.add('show');
   }
 
@@ -565,6 +566,27 @@
     }
   }
 
+  // ===== قوائم منسدلة من قاعدة البيانات داخل مودال التعديل =====
+  // لو الـ API رجّع بيانات نستبدل الخيارات الثابتة؛ وإلا نستخدم الثابتة كما هي (fallback آمن).
+  function lkFillOrFallback(sel, items, code) {
+    if (items && items.length) { Lookups.fill(sel, items, { keep: code }); }
+    else { sel.value = (code == null ? '' : String(code)); if (sel.selectedIndex < 0) sel.selectedIndex = 0; }
+  }
+  async function lkLoadEditAll(data) {
+    var colleges = await Lookups.fetchList('/api/lookups/colleges');
+    lkFillOrFallback(eGet('college'), colleges, data.college);
+    var cid = Lookups.selectedId(eGet('college'));
+    var depUrl = '/api/lookups/departments' + (cid ? ('?collegeId=' + cid) : '');
+    var deps = await Lookups.fetchList(depUrl);
+    if (cid && !deps.length) deps = await Lookups.fetchList('/api/lookups/departments');
+    lkFillOrFallback(eGet('department'), deps, data.department);
+    var levels = await Lookups.fetchList('/api/lookups/academic-levels');
+    lkFillOrFallback(eGet('academic_level'), levels, data.academic_level);
+    var g = normalizeGender(data.gender);
+    var blds = g ? await Lookups.fetchList('/api/lookups/buildings?gender=' + encodeURIComponent(g)) : [];
+    lkFillOrFallback(eGet('housing_building'), blds, data.housing_building);
+  }
+
   // أرقام فقط + تحقق لحظي داخل المودال
   if (CAN_EDIT) {
     ['national_id', 'phone'].forEach(function (id) {
@@ -573,6 +595,19 @@
     });
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') closeEditModal();
+    });
+    // الأقسام تتفلتر حسب الكلية، والمباني حسب النوع
+    eGet('college').addEventListener('change', async function () {
+      var cid = Lookups.selectedId(this);
+      var url = '/api/lookups/departments' + (cid ? ('?collegeId=' + cid) : '');
+      var deps = await Lookups.fetchList(url);
+      if (cid && !deps.length) deps = await Lookups.fetchList('/api/lookups/departments');
+      if (deps.length) Lookups.fill(eGet('department'), deps, { keep: '' });
+    });
+    eGet('gender').addEventListener('change', async function () {
+      if (!this.value) return;
+      var blds = await Lookups.fetchList('/api/lookups/buildings?gender=' + encodeURIComponent(this.value));
+      if (blds.length) Lookups.fill(eGet('housing_building'), blds, { keep: '' });
     });
   }
 

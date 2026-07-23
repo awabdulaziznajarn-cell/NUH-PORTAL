@@ -7,6 +7,7 @@ using NUH_PORTAL.Core.Exceptions;
 using NUH_PORTAL.Data.Interfaces;
 using NUH_PORTAL.DTOs.Requests;
 using NUH_PORTAL.Models;
+using NUH_PORTAL.Models.Enums;
 using NUH_PORTAL.Repositories.Interfaces;
 using NUH_PORTAL.Services.Interfaces;
 
@@ -69,8 +70,8 @@ namespace NUH_PORTAL.Services
                 else
                     query = query.Where(r => r.Status == status);
             }
-            if (!string.IsNullOrEmpty(requestType))
-                query = query.Where(r => r.RequestType == requestType);
+            if (!string.IsNullOrEmpty(requestType) && Enum.TryParse<RequestType>(requestType, out var rt))
+                query = query.Where(r => r.RequestType == rt);
 
             var f = queryParams.FilterText?.Trim();
             if (!string.IsNullOrEmpty(f))
@@ -310,8 +311,8 @@ namespace NUH_PORTAL.Services
 
                 req.CompletedBy = dto.ReviewedBy > 0 ? dto.ReviewedBy : actorId;
                 req.CompletedAt = DateTime.UtcNow;
-                if (student != null && student.status != "left")
-                    student.status = "active";
+                if (student != null && student.status != StudentState.left)
+                    student.status = StudentState.active;
             }
 
             req.ReviewedAt = DateTime.UtcNow;

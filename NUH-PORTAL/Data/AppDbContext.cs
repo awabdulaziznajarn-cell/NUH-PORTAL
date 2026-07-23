@@ -27,6 +27,13 @@ namespace NUH_PORTAL.Data
         public DbSet<StudentStatusAttachment> StudentStatusAttachments { get; set; }
         public DbSet<HousingTransfer> HousingTransfers { get; set; }
 
+        // قوائم مرجعية (lookups) + بنود التعهّد
+        public DbSet<College> Colleges { get; set; }
+        public DbSet<Department> Departments { get; set; }
+        public DbSet<Building> Buildings { get; set; }
+        public DbSet<AcademicLevel> AcademicLevels { get; set; }
+        public DbSet<Term> Terms { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // كل إعدادات الـ Fluent API لكل entity في ملف منفصل تحت Data/Configurations

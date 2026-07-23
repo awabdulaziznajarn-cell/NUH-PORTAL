@@ -43,6 +43,10 @@ builder.Services.AddControllersWithViews()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.Converters.Add(new UtcDateTimeConverter());
+        // gender يفضل "male"/"female" في الـ JSON رغم إنه بقى enum
+        options.JsonSerializerOptions.Converters.Add(new NUH_PORTAL.Common.Json.GenderJsonConverter());
+        // باقي الـ enums (أسماؤها snake_case مطابقة للنص) تتسلسل بالاسم — فالـ JSON يفضل زي ما هو
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
     })
     .AddViewLocalization()
     .AddDataAnnotationsLocalization();
@@ -238,6 +242,9 @@ builder.Services.AddScoped<IRequestTrackingService, RequestTrackingService>();
 builder.Services.AddScoped<IRequestService, RequestService>();
 builder.Services.AddScoped<IStudentStatusService, StudentStatusService>();
 builder.Services.AddScoped<IWorkflowActionService, WorkflowActionService>();
+builder.Services.AddScoped<ILookupService, LookupService>();
+builder.Services.AddScoped<ILookupAdminService, LookupAdminService>();
+builder.Services.AddScoped<ILookupResolver, LookupResolver>();
 builder.Services.AddScoped<IHousingAccountService, HousingAccountService>();
 builder.Services.AddScoped<ISupervisorHousingTransferService, SupervisorHousingTransferService>();
 builder.Services.AddScoped<IAttachmentService, AttachmentService>();
@@ -282,6 +289,20 @@ if (app.Environment.IsDevelopment())
     var seedDb = seedScope.ServiceProvider.GetRequiredService<AppDbContext>();
     DbSeeder.SeedDevUsers(seedDb);
     DbSeeder.SeedDevData(seedDb);
+}
+
+// ✅ زرع القوائم المرجعية (lookups) — في كل البيئات لأنها بيانات أساسية.
+// try/catch عشان لو الـ migration الخاصة بالقوائم لسه ماتطبّقتش مايكسرش الإقلاع.
+try
+{
+    using var lookupScope = app.Services.CreateScope();
+    var lookupDb = lookupScope.ServiceProvider.GetRequiredService<AppDbContext>();
+    DbSeeder.SeedLookups(lookupDb);
+    DbSeeder.BackfillStudentLookups(lookupDb);
+}
+catch (Exception ex)
+{
+    app.Logger.LogWarning(ex, "Lookup seeding skipped — run 'dotnet ef database update' first (lookup tables may not exist yet).");
 }
 
 // ✅ Security headers — حماية أساسية على مستوى كل الردود

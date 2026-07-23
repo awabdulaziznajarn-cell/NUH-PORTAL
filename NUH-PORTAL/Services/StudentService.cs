@@ -6,6 +6,7 @@ using NUH_PORTAL.Core.Exceptions;
 using NUH_PORTAL.Data.Interfaces;
 using NUH_PORTAL.DTOs.Students;
 using NUH_PORTAL.Models;
+using NUH_PORTAL.Models.Enums;
 using NUH_PORTAL.Repositories.Interfaces;
 using NUH_PORTAL.Services.Interfaces;
 using System.Text.RegularExpressions;
@@ -19,6 +20,7 @@ namespace NUH_PORTAL.Services
         private readonly IRepository<Request> _requests;
         private readonly IRepository<AccountLifecycleLog> _lifecycle;
         private readonly IAuditService _audit;
+        private readonly ILookupResolver _lookups;
 
         private static readonly HashSet<string> ValidBuildings =
             new() { "40", "41", "42", "43", "65", "66", "67", "68", "69", "70" };
@@ -28,6 +30,7 @@ namespace NUH_PORTAL.Services
             IRepository<Request> requests,
             IRepository<AccountLifecycleLog> lifecycle,
             IAuditService audit,
+            ILookupResolver lookups,
             IUnitOfWork unitOfWork,
             IMapper mapper) : base(unitOfWork, mapper)
         {
@@ -35,6 +38,7 @@ namespace NUH_PORTAL.Services
             _requests = requests;
             _lifecycle = lifecycle;
             _audit = audit;
+            _lookups = lookups;
         }
 
         public async Task<List<StudentDto>> GetStudentsAsync(bool showDeleted, string? adStatus)
@@ -91,10 +95,10 @@ namespace NUH_PORTAL.Services
             {
                 query = adStatus.ToLower() switch
                 {
-                    "enabled" => query.Where(s => s.ad_status == "enabled"),
-                    "disabled" => query.Where(s => s.ad_status == "disabled"),
-                    "none" => query.Where(s => s.ad_status == null || s.ad_status == ""),
-                    "any" => query.Where(s => s.ad_status != null && s.ad_status != ""),
+                    "enabled" => query.Where(s => s.ad_status == AdStatus.enabled),
+                    "disabled" => query.Where(s => s.ad_status == AdStatus.disabled),
+                    "none" => query.Where(s => s.ad_status == null),
+                    "any" => query.Where(s => s.ad_status != null),
                     _ => query
                 };
             }
@@ -106,8 +110,8 @@ namespace NUH_PORTAL.Services
         {
             // عدّادات الطلاب (شروط مركّبة) — استعلامات منفصلة
             var total = await _students.Query().AsNoTracking().CountAsync(s => !s.IsDeleted);
-            var active = await _students.Query().AsNoTracking().CountAsync(s => (s.status == "active" || s.status == "Active") && !s.IsDeleted);
-            var left = await _students.Query().AsNoTracking().CountAsync(s => (s.status == "left" || s.status == "Left") && !s.IsDeleted);
+            var active = await _students.Query().AsNoTracking().CountAsync(s => s.status == StudentState.active && !s.IsDeleted);
+            var left = await _students.Query().AsNoTracking().CountAsync(s => s.status == StudentState.left && !s.IsDeleted);
 
             // كل حالات الطلبات في استعلام GroupBy واحد بدل 8 استعلامات منفصلة
             var reqCounts = (await _requests.Query().AsNoTracking()
@@ -156,11 +160,11 @@ namespace NUH_PORTAL.Services
 
             var student = Mapper.Map<Student>(dto);
             student.created_at = DateTime.UtcNow;
-            student.status = string.IsNullOrEmpty(student.status) ? "active" : student.status;
-            student.student_status = string.IsNullOrEmpty(student.student_status) ? "active" : student.student_status;
+            student.status ??= StudentState.active;
+            student.student_status ??= StudentStatus.active;
             student.created_by = UnitOfWork.GetCurrentUserId();
-            if (!string.IsNullOrEmpty(student.gender))
-                student.gender = GenderHelper.NormalizeSafely(student.gender);
+            // gender اتحوّل لـ enum وبيتطبّع في الـ JsonConverter وقت الاستقبال — مفيش تطبيع يدوي محتاج هنا
+            await _lookups.ApplyAsync(student); // FK ids من الأكواد (dual-write)
 
             try
             {
@@ -188,6 +192,12 @@ namespace NUH_PORTAL.Services
             if (errors.Count > 0)
                 throw new UserFriendlyException(string.Join(" | ", errors), 400);
 
+            // تفرّد رقم الهوية عند التعديل — مع استثناء الطالب نفسه.
+            // (كان ناقص: التعديل ماكانش بيتأكد إن رقم الهوية مش مستخدم لطالب تاني — بق بيسمح بالتكرار.)
+            if (!string.IsNullOrEmpty(dto.national_id) && dto.national_id != student.national_id
+                && await _students.ExistsAsync(s => s.national_id == dto.national_id && s.Id != id && !s.IsDeleted))
+                throw new UserFriendlyException("رقم الهوية موجود بالفعل لطالب آخر", 409);
+
             var changes = new List<AuditChangeLog>();
             var fields = new (string field, string? oldVal, string? newVal)[]
             {
@@ -195,14 +205,14 @@ namespace NUH_PORTAL.Services
                 ("full_name_english", student.full_name_english, dto.full_name_english),
                 ("national_id", student.national_id, dto.national_id),
                 ("phone", student.phone, dto.phone),
-                ("gender", student.gender, dto.gender),
+                ("gender", GenderHelper.ToStr(student.gender), GenderHelper.ToStr(dto.gender)),
                 ("college", student.college, dto.college),
                 ("department", student.department, dto.department),
                 ("academic_level", student.academic_level, dto.academic_level),
                 ("housing_building", student.housing_building, dto.housing_building),
                 ("room_number", student.room_number, dto.room_number),
                 ("apartment_number", student.apartment_number, dto.apartment_number),
-                ("status", student.status, dto.status),
+                ("status", student.status?.ToString(), dto.status?.ToString()),
             };
 
             bool modified = false;
@@ -214,14 +224,14 @@ namespace NUH_PORTAL.Services
                     else if (field == "full_name_english") student.full_name_english = dto.full_name_english;
                     else if (field == "national_id" && !string.IsNullOrEmpty(dto.national_id)) student.national_id = dto.national_id;
                     else if (field == "phone" && !string.IsNullOrEmpty(dto.phone)) student.phone = dto.phone;
-                    else if (field == "gender" && !string.IsNullOrEmpty(dto.gender)) student.gender = GenderHelper.NormalizeSafely(dto.gender);
+                    else if (field == "gender" && dto.gender != null) student.gender = dto.gender;
                     else if (field == "college" && !string.IsNullOrEmpty(dto.college)) student.college = dto.college;
                     else if (field == "department") student.department = dto.department;
                     else if (field == "academic_level") student.academic_level = dto.academic_level;
                     else if (field == "housing_building" && !string.IsNullOrEmpty(dto.housing_building)) student.housing_building = dto.housing_building;
                     else if (field == "room_number" && !string.IsNullOrEmpty(dto.room_number)) student.room_number = dto.room_number;
                     else if (field == "apartment_number") student.apartment_number = dto.apartment_number;
-                    else if (field == "status" && !string.IsNullOrEmpty(dto.status)) student.status = dto.status;
+                    else if (field == "status" && dto.status != null) student.status = dto.status;
 
                     changes.Add(new AuditChangeLog { FieldName = field, OldValue = oldVal, NewValue = newVal });
                     modified = true;
@@ -231,7 +241,17 @@ namespace NUH_PORTAL.Services
             if (!modified)
                 return Mapper.Map<StudentDto>(student);
 
-            await UnitOfWork.SaveAsync();
+            await _lookups.ApplyAsync(student); // إعادة حساب الـ FK ids بعد تغيّر الأكواد
+
+            try
+            {
+                await UnitOfWork.SaveAsync();
+            }
+            catch (DbUpdateException ex) when (ex.InnerException is SqlException sqlEx && sqlEx.Number == 2627)
+            {
+                // خط دفاع تاني لو فيه unique index على رقم الهوية على مستوى الداتابيز
+                throw new UserFriendlyException("بيانات مكررة: رقم الهوية موجود بالفعل", 409);
+            }
             await _audit.LogAsync("update_student", "Students", student.Id, changes);
 
             return Mapper.Map<StudentDto>(student);

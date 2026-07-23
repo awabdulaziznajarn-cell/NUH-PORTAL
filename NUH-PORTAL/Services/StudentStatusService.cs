@@ -6,6 +6,7 @@ using NUH_PORTAL.Core.Exceptions;
 using NUH_PORTAL.Data.Interfaces;
 using NUH_PORTAL.DTOs.StudentStatus;
 using NUH_PORTAL.Models;
+using NUH_PORTAL.Models.Enums;
 using NUH_PORTAL.Repositories.Interfaces;
 using NUH_PORTAL.Services.Interfaces;
 
@@ -125,8 +126,15 @@ namespace NUH_PORTAL.Services
                 CreatedDate = DateTime.UtcNow
             };
 
-            student.student_status = st;
-            student.status = "left";
+            student.student_status = st switch
+            {
+                "graduated" => StudentStatus.graduated,
+                "dismissed" => StudentStatus.dismissed,
+                "transferred" => StudentStatus.transferred,
+                "left_housing" => StudentStatus.left_housing,
+                _ => student.student_status
+            };
+            student.status = StudentState.left;
             if (st == "left_housing")
             {
                 student.housing_building = null;
@@ -149,7 +157,7 @@ namespace NUH_PORTAL.Services
                         var disableResult = await _adService.DisableUserAsync(adUser.DistinguishedName);
                         if (disableResult.Success)
                         {
-                            student.ad_status = "disabled";
+                            student.ad_status = AdStatus.disabled;
                             student.ad_last_sync_at = DateTime.UtcNow;
                             (adSuccess, adMessage) = (true, "تم تعطيل حساب الشبكة بنجاح");
                         }
@@ -242,7 +250,7 @@ namespace NUH_PORTAL.Services
             return new StudentStatusStatsDto
             {
                 Total = await _students.Query().AsNoTracking().CountAsync(s => !s.IsDeleted),
-                Active = await _students.Query().AsNoTracking().CountAsync(s => s.student_status == "active" && !s.IsDeleted),
+                Active = await _students.Query().AsNoTracking().CountAsync(s => s.student_status == StudentStatus.active && !s.IsDeleted),
                 Graduated = await _actions.Query().AsNoTracking().CountAsync(a => a.StatusType == "graduated"),
                 Dismissed = await _actions.Query().AsNoTracking().CountAsync(a => a.StatusType == "dismissed"),
                 Transferred = await _actions.Query().AsNoTracking().CountAsync(a => a.StatusType == "transferred"),

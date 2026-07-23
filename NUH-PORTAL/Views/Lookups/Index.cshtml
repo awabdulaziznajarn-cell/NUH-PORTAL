@@ -1,0 +1,363 @@
+@{
+    ViewData["Title"] = SharedLocalizer["lk_pageTitle"].Value;
+}
+
+<div class="card">
+  <div class="card-header">
+    <div>@SharedLocalizer["lk_pageSubtitle"]</div>
+  </div>
+
+  <div class="lk-tabs" id="lkTabs">
+    <button class="lk-tab active" data-cat="college"       type="button" onclick="switchTab('college', this)">@SharedLocalizer["lk_tab_college"]</button>
+    <button class="lk-tab"        data-cat="department"    type="button" onclick="switchTab('department', this)">@SharedLocalizer["lk_tab_department"]</button>
+    <button class="lk-tab"        data-cat="building"      type="button" onclick="switchTab('building', this)">@SharedLocalizer["lk_tab_building"]</button>
+    <button class="lk-tab"        data-cat="academiclevel" type="button" onclick="switchTab('academiclevel', this)">@SharedLocalizer["lk_tab_academiclevel"]</button>
+    <button class="lk-tab"        data-cat="term"          type="button" onclick="switchTab('term', this)">@SharedLocalizer["lk_tab_term"]</button>
+  </div>
+
+  <div class="lk-toolbar">
+    <div class="lk-toolbar-title" id="lkListTitle"></div>
+    <button class="btn btn-primary" type="button" onclick="openModal(null)">@SharedLocalizer["lk_add"]</button>
+  </div>
+
+  <div style="overflow-x:auto">
+    <table>
+      <thead id="lkHead"></thead>
+      <tbody id="lkBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="edit-overlay" id="lkOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="edit-modal" role="dialog" aria-modal="true" style="max-width:560px">
+    <div class="edit-modal-header">
+      <div>
+        <div class="edit-modal-title" id="lkModalTitle">@SharedLocalizer["lk_addTitle"]</div>
+        <div class="edit-modal-sub">@SharedLocalizer["lk_modalSub"]</div>
+      </div>
+      <button class="edit-close" type="button" onclick="closeModal()" aria-label='@(SharedLocalizer["lk_cancel"].Value)'>✕</button>
+    </div>
+    <div class="edit-modal-body">
+      <input type="hidden" id="m_id">
+      <div class="e-grid">
+        <div class="e-field" data-fld="code">
+          <label>@SharedLocalizer["lk_lbl_code"]<span>*</span></label>
+          <input type="text" id="m_code">
+          <span class="field-error" id="m-err-code">@SharedLocalizer["lk_required"]</span>
+        </div>
+        <div class="e-field" data-fld="arName">
+          <label>@SharedLocalizer["lk_lbl_arName"]<span>*</span></label>
+          <input type="text" id="m_arName">
+          <span class="field-error" id="m-err-arName">@SharedLocalizer["lk_required"]</span>
+        </div>
+        <div class="e-field" data-fld="enName">
+          <label>@SharedLocalizer["lk_lbl_enName"]<span>*</span></label>
+          <input type="text" id="m_enName">
+          <span class="field-error" id="m-err-enName">@SharedLocalizer["lk_required"]</span>
+        </div>
+        <div class="e-field" data-fld="arText">
+          <label>@SharedLocalizer["lk_lbl_arText"]<span>*</span></label>
+          <input type="text" id="m_arText">
+          <span class="field-error" id="m-err-arText">@SharedLocalizer["lk_required"]</span>
+        </div>
+        <div class="e-field" data-fld="enText">
+          <label>@SharedLocalizer["lk_lbl_enText"]<span>*</span></label>
+          <input type="text" id="m_enText">
+          <span class="field-error" id="m-err-enText">@SharedLocalizer["lk_required"]</span>
+        </div>
+        <div class="e-field" data-fld="gender">
+          <label>@SharedLocalizer["lk_lbl_gender"]</label>
+          <select id="m_gender">
+            <option value="">@SharedLocalizer["lk_gender_none"]</option>
+            <option value="male">@SharedLocalizer["reg_optMale"]</option>
+            <option value="female">@SharedLocalizer["reg_optFemale"]</option>
+          </select>
+        </div>
+        <div class="e-field" data-fld="collegeId">
+          <label>@SharedLocalizer["lk_lbl_college"]</label>
+          <select id="m_collegeId">
+            <option value="">@SharedLocalizer["lk_selectCollege"]</option>
+          </select>
+        </div>
+        <div class="e-field" data-fld="displayOrder">
+          <label>@SharedLocalizer["lk_lbl_order"]</label>
+          <input type="number" id="m_displayOrder" value="0">
+        </div>
+        <div class="e-field" data-fld="isActive">
+          <label>@SharedLocalizer["lk_lbl_active"]</label>
+          <select id="m_isActive">
+            <option value="true">@SharedLocalizer["lk_active_yes"]</option>
+            <option value="false">@SharedLocalizer["lk_active_no"]</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="edit-modal-actions">
+      <button class="btn btn-primary" id="lkSaveBtn" type="button" onclick="saveItem()">
+        <span class="btn-text">@SharedLocalizer["lk_save"]</span>
+        <div class="spinner2"></div>
+      </button>
+      <button class="btn btn-cancel" type="button" onclick="closeModal()">@SharedLocalizer["lk_cancel"]</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span id="toast-msg"></span></div>
+
+@section Scripts {
+<style>
+  .lk-tabs{display:flex;gap:6px;flex-wrap:wrap;padding:14px 20px 0}
+  .lk-tab{padding:9px 16px;border-radius:9px 9px 0 0;border:1px solid transparent;border-bottom:none;background:transparent;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:13px;font-weight:600;color:var(--gray-500);cursor:pointer;transition:all .15s}
+  .lk-tab:hover{color:var(--navy)}
+  .lk-tab.active{background:#eef1f8;color:var(--navy);border-color:var(--gray-200)}
+  .lk-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;border-bottom:1px solid var(--gray-100)}
+  .lk-toolbar-title{font-weight:700;color:var(--navy-dark);font-size:14px}
+  .action-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:8px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;cursor:pointer;border:none;transition:all .2s}
+  .action-delete{background:var(--red-light);color:var(--red)}
+  .action-delete:hover{background:#fee2e2}
+  .action-edit{background:#eef1f8;color:var(--navy)}
+  .action-edit:hover{background:#e0e6f5}
+  .row-actions{display:flex;gap:6px;align-items:center}
+  .lk-inactive{opacity:.55}
+  .lk-pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:600}
+  .lk-pill-on{background:#DCFCE7;color:#0F6E56}
+  .lk-pill-off{background:#F1F5F9;color:#64748B}
+  .edit-overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;z-index:1000;padding:20px}
+  .edit-overlay.show{display:flex}
+  .edit-modal{background:#fff;border-radius:16px;width:100%;max-width:560px;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden}
+  .edit-modal-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 24px;border-bottom:1px solid var(--gray-100)}
+  .edit-modal-title{font-size:16px;font-weight:700;color:var(--navy-dark)}
+  .edit-modal-sub{font-size:12px;color:var(--gray-500);margin-top:4px}
+  .edit-close{background:var(--gray-100);border:none;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--gray-700);flex-shrink:0}
+  .edit-close:hover{background:#e5e7eb}
+  .edit-modal-body{padding:24px;overflow-y:auto}
+  .e-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .e-field{display:flex;flex-direction:column;gap:6px}
+  .e-field label{font-size:13px;font-weight:600;color:var(--gray-700)}
+  .e-field label span{color:#EF4444;margin-right:2px}
+  .e-field input,.e-field select{width:100%;height:44px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:10px;padding:0 14px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;color:var(--navy-dark);outline:none;appearance:none}
+  .e-field input:focus,.e-field select:focus{border-color:var(--navy);background:#fff;box-shadow:0 0 0 3px rgba(27,42,94,.08)}
+  .e-field input.error,.e-field select.error{border-color:#EF4444}
+  .e-field .field-error{font-size:11px;color:#EF4444;font-weight:500;display:none}
+  .e-field .field-error.show{display:block}
+  .e-field[hidden]{display:none}
+  .edit-modal-actions{display:flex;gap:12px;justify-content:flex-end;padding:18px 24px;border-top:1px solid var(--gray-100)}
+  .edit-modal-actions .btn{padding:0 24px;height:44px;border-radius:10px;font-family:'IBM Plex Sans Arabic',sans-serif;font-weight:700;font-size:14px;cursor:pointer;border:none;display:flex;align-items:center;gap:8px}
+  .edit-modal-actions .btn.loading{opacity:.75;pointer-events:none}
+  .spinner2{width:16px;height:16px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin2 .6s linear infinite;display:none}
+  .btn.loading .spinner2{display:block}
+  .btn.loading .btn-text{display:none}
+  @@keyframes spin2{to{transform:rotate(360deg)}}
+  .toast{position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-90px);background:#0F6E56;color:#fff;padding:14px 24px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:0 8px 32px rgba(0,0,0,.2);z-index:1100;transition:transform .4s cubic-bezier(.16,1,.3,1)}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+  @@media(max-width:640px){.e-grid{grid-template-columns:1fr}}
+</style>
+<script src="/i18n.js"></script>
+<script>
+  var LANG = ((document.getElementById('html-root') || document.documentElement).getAttribute('lang') === 'en') ? 'en' : 'ar';
+  var state = { cat: 'college', items: [], colleges: [] };
+
+  // تعريف الحقول والأعمدة لكل نوع قائمة
+  var CFG = {
+    college:       { fields: ['code','arName','enName','displayOrder','isActive'], cols: ['code','arName','enName','order','active'] },
+    academiclevel: { fields: ['code','arName','enName','displayOrder','isActive'], cols: ['code','arName','enName','order','active'] },
+    building:      { fields: ['code','arName','enName','gender','displayOrder','isActive'], cols: ['code','arName','enName','gender','order','active'] },
+    department:    { fields: ['code','arName','enName','collegeId','displayOrder','isActive'], cols: ['code','arName','enName','college','order','active'] },
+    term:          { fields: ['arText','enText','displayOrder','isActive'], cols: ['arText','enText','order','active'] }
+  };
+  var COL_LABEL = { code:'lk_col_code', arName:'lk_col_arName', enName:'lk_col_enName', gender:'lk_col_gender', college:'lk_col_college', order:'lk_col_order', active:'lk_col_active', arText:'lk_col_arText', enText:'lk_col_enText' };
+
+  function authHeaders() { var tk = localStorage.getItem('staffToken'); return tk ? { 'Authorization': 'Bearer ' + tk } : {}; }
+  var esc = function (v) { return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
+  function isTerm() { return state.cat === 'term'; }
+  function apiList() { return isTerm() ? '/api/admin/terms' : '/api/admin/lookups/' + state.cat; }
+  function apiItem(id) { return isTerm() ? '/api/admin/terms/' + id : '/api/admin/lookups/' + state.cat + '/' + id; }
+
+  function showToast(msg, isError) {
+    var el = document.getElementById('toast'); if (!el) return;
+    document.getElementById('toast-msg').textContent = msg;
+    el.style.background = isError ? '#991B1B' : '#0F6E56';
+    el.classList.add('show');
+    setTimeout(function () { el.classList.remove('show'); }, 3500);
+  }
+
+  function genderText(g) { if (g === 'male') return t('reg_optMale'); if (g === 'female') return t('reg_optFemale'); return '—'; }
+  function collegeNameById(id) {
+    if (id == null) return '—';
+    for (var i = 0; i < state.colleges.length; i++) { if (state.colleges[i].id === id) return LANG === 'en' ? state.colleges[i].enName : state.colleges[i].arName; }
+    return '—';
+  }
+
+  function cellValue(it, col) {
+    switch (col) {
+      case 'code': return esc(it.code);
+      case 'arName': return esc(it.arName);
+      case 'enName': return esc(it.enName);
+      case 'arText': return esc(it.arText);
+      case 'enText': return esc(it.enText);
+      case 'gender': return genderText(it.gender);
+      case 'college': return esc(collegeNameById(it.collegeId));
+      case 'order': return esc(it.displayOrder);
+      case 'active': return it.isActive ? '<span class="lk-pill lk-pill-on">' + t('lk_active_yes') + '</span>' : '<span class="lk-pill lk-pill-off">' + t('lk_active_no') + '</span>';
+      default: return '';
+    }
+  }
+
+  function renderTable() {
+    var cols = CFG[state.cat].cols;
+    var head = '<tr><th>#</th>' + cols.map(function (c) { return '<th>' + t(COL_LABEL[c]) + '</th>'; }).join('') + '<th>' + t('lk_col_actions') + '</th></tr>';
+    document.getElementById('lkHead').innerHTML = head;
+
+    var body = '';
+    state.items.forEach(function (it, idx) {
+      body += '<tr class="' + (it.isActive ? '' : 'lk-inactive') + '">' +
+        '<td>' + (idx + 1) + '</td>' +
+        cols.map(function (c) { return '<td>' + cellValue(it, c) + '</td>'; }).join('') +
+        '<td><div class="row-actions">' +
+          '<button class="action-btn action-edit" onclick="openModal(' + it.id + ')">' + t('lk_edit') + '</button>' +
+          '<button class="action-btn action-delete" onclick="delItem(' + it.id + ')">' + t('lk_delete') + '</button>' +
+        '</div></td></tr>';
+    });
+    document.getElementById('lkBody').innerHTML = body ||
+      '<tr><td colspan="' + (cols.length + 2) + '" style="text-align:center;color:var(--gray-500);padding:28px">' + t('lk_noItems') + '</td></tr>';
+  }
+
+  async function loadList() {
+    document.getElementById('lkListTitle').textContent = t('lk_tab_' + state.cat);
+    try {
+      var res = await fetch(apiList(), { headers: authHeaders() });
+      if (res.status === 401) { localStorage.removeItem('staffToken'); window.location.replace('/Account/Login'); return; }
+      if (!res.ok) { showToast(t('lk_loadError'), true); return; }
+      state.items = await res.json();
+      renderTable();
+    } catch (e) { showToast(t('lk_loadError'), true); }
+  }
+
+  async function ensureColleges() {
+    if (state.colleges.length) return;
+    try {
+      var res = await fetch('/api/admin/lookups/college', { headers: authHeaders() });
+      if (res.ok) state.colleges = await res.json();
+    } catch (e) { /* صامت */ }
+  }
+
+  function switchTab(cat, btn) {
+    state.cat = cat;
+    document.querySelectorAll('.lk-tab').forEach(function (b) { b.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+    loadList();
+  }
+
+  // إظهار/إخفاء حقول المودال حسب النوع
+  function applyModalFields() {
+    var fields = CFG[state.cat].fields;
+    document.querySelectorAll('#lkOverlay .e-field[data-fld]').forEach(function (el) {
+      el.hidden = fields.indexOf(el.getAttribute('data-fld')) === -1;
+    });
+  }
+
+  function mGet(id) { return document.getElementById('m_' + id); }
+  function clearErrors() {
+    document.querySelectorAll('#lkOverlay .field-error').forEach(function (e) { e.classList.remove('show'); });
+    document.querySelectorAll('#lkOverlay input, #lkOverlay select').forEach(function (e) { e.classList.remove('error'); });
+  }
+
+  async function openModal(id) {
+    clearErrors();
+    applyModalFields();
+    if (state.cat === 'department') { await ensureColleges(); fillCollegeSelect(); }
+
+    var isEdit = id != null;
+    document.getElementById('lkModalTitle').textContent = isEdit ? t('lk_editTitle') : t('lk_addTitle');
+    mGet('id').value = isEdit ? id : '';
+
+    var it = isEdit ? state.items.filter(function (x) { return x.id === id; })[0] : null;
+    ['code','arName','enName','arText','enText','displayOrder'].forEach(function (f) {
+      var el = mGet(f); if (el) el.value = it ? (it[f] == null ? '' : it[f]) : (f === 'displayOrder' ? 0 : '');
+    });
+    mGet('gender').value = it && it.gender ? it.gender : '';
+    mGet('collegeId').value = it && it.collegeId != null ? String(it.collegeId) : '';
+    mGet('isActive').value = it ? (it.isActive ? 'true' : 'false') : 'true';
+
+    document.getElementById('lkOverlay').classList.add('show');
+  }
+
+  function fillCollegeSelect() {
+    var sel = mGet('collegeId');
+    var cur = sel.value;
+    sel.innerHTML = '<option value="">' + t('lk_selectCollege') + '</option>' +
+      state.colleges.map(function (c) { return '<option value="' + c.id + '">' + esc(LANG === 'en' ? c.enName : c.arName) + '</option>'; }).join('');
+    sel.value = cur;
+  }
+
+  function closeModal() { document.getElementById('lkOverlay').classList.remove('show'); }
+
+  function validate() {
+    var ok = true;
+    var required = isTerm() ? ['arText','enText'] : ['code','arName','enName'];
+    required.forEach(function (f) {
+      var el = mGet(f), err = document.getElementById('m-err-' + f);
+      if (!el.value.trim()) { el.classList.add('error'); if (err) err.classList.add('show'); ok = false; }
+      else { el.classList.remove('error'); if (err) err.classList.remove('show'); }
+    });
+    return ok;
+  }
+
+  function buildPayload() {
+    var order = parseInt(mGet('displayOrder').value, 10); if (isNaN(order)) order = 0;
+    var active = mGet('isActive').value === 'true';
+    if (isTerm()) {
+      return { arText: mGet('arText').value.trim(), enText: mGet('enText').value.trim(), displayOrder: order, isActive: active };
+    }
+    var p = { code: mGet('code').value.trim(), arName: mGet('arName').value.trim(), enName: mGet('enName').value.trim(), displayOrder: order, isActive: active };
+    if (state.cat === 'building') p.gender = mGet('gender').value || null;
+    if (state.cat === 'department') p.collegeId = mGet('collegeId').value ? parseInt(mGet('collegeId').value, 10) : null;
+    return p;
+  }
+
+  async function saveItem() {
+    if (!validate()) return;
+    var btn = document.getElementById('lkSaveBtn');
+    btn.classList.add('loading');
+    var id = mGet('id').value;
+    var isEdit = !!id;
+    try {
+      var res = await fetch(isEdit ? apiItem(id) : apiList(), {
+        method: isEdit ? 'PUT' : 'POST',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        body: JSON.stringify(buildPayload())
+      });
+      if (res.status === 401) { localStorage.removeItem('staffToken'); window.location.replace('/Account/Login'); return; }
+      if (res.ok) {
+        closeModal();
+        if (state.cat === 'college') state.colleges = [];
+        loadList();
+        showToast(t('lk_saved'));
+      } else {
+        var err = await res.json().catch(function () { return {}; });
+        showToast(err.message || t('lk_saveError'), true);
+      }
+    } catch (e) { showToast(t('lk_loadError'), true); }
+    finally { btn.classList.remove('loading'); }
+  }
+
+  async function delItem(id) {
+    if (!confirm(t('lk_confirmDelete'))) return;
+    try {
+      var res = await fetch(apiItem(id), { method: 'DELETE', headers: authHeaders() });
+      if (res.status === 401) { localStorage.removeItem('staffToken'); window.location.replace('/Account/Login'); return; }
+      if (res.ok) {
+        if (state.cat === 'college') state.colleges = [];
+        loadList();
+        showToast(t('lk_deleted'));
+      } else {
+        var err = await res.json().catch(function () { return {}; });
+        showToast(err.message || t('lk_saveError'), true);
+      }
+    } catch (e) { showToast(t('lk_loadError'), true); }
+  }
+
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
+  loadList();
+</script>
+}

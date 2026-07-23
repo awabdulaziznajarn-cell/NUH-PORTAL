@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using NUH_PORTAL.Data;
 using NUH_PORTAL.Models;
+using NUH_PORTAL.Models.Enums;
 using NUH_PORTAL.Services.Interfaces;
 using System.Text.Json;
 
@@ -68,7 +69,7 @@ namespace NUH_PORTAL.Services
 
             var requests = await _context.Requests
                 .Include(r => r.Student)
-                .Where(r => r.RequestType == "self_registration" && activeStatuses.Contains(r.Status))
+                .Where(r => r.RequestType == RequestType.self_registration && activeStatuses.Contains(r.Status))
                 .ToListAsync();
 
             foreach (var req in requests)
@@ -110,7 +111,7 @@ namespace NUH_PORTAL.Services
                 return false;
 
             var query = _context.Requests
-                .Where(r => r.StudentId == student.Id && r.RequestType == "self_registration" && activeStatuses.Contains(r.Status));
+                .Where(r => r.StudentId == student.Id && r.RequestType == RequestType.self_registration && activeStatuses.Contains(r.Status));
 
             if (excludeRequestId.HasValue)
                 query = query.Where(r => r.Id != excludeRequestId.Value);
@@ -122,7 +123,7 @@ namespace NUH_PORTAL.Services
         {
             var request = new Request
             {
-                RequestType = "self_registration",
+                RequestType = RequestType.self_registration,
                 StudentId = studentId,
                 SubmittedBy = submittedBy,
                 Status = "pending_supervisor",
@@ -298,8 +299,8 @@ namespace NUH_PORTAL.Services
                 if (!syncResult.Success)
                     _logger.LogWarning("Extension attribute sync failed for student {Id}: {Error}", student.student_id, syncResult.Error);
 
-                if (student.status != "left")
-                    student.status = "active";
+                if (student.status != StudentState.left)
+                    student.status = StudentState.active;
             }
 
             request.Status = "completed";
@@ -372,7 +373,7 @@ namespace NUH_PORTAL.Services
         public async Task<string?> ResubmitRequestAsync(int requestId, int userId, string? registrationData = null)
         {
             var req = await _context.Requests.FindAsync(requestId);
-            if (req == null || req.RequestType != "self_registration" || req.Status != "need_more_info")
+            if (req == null || req.RequestType != RequestType.self_registration || req.Status != "need_more_info")
                 return null;
 
             var previousStage = await _workflowService.GetPreviousStageAsync(requestId);

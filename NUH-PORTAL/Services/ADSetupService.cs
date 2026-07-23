@@ -3,6 +3,7 @@ using NUH_PORTAL.Core.Exceptions;
 using NUH_PORTAL.Data.Interfaces;
 using NUH_PORTAL.DTOs.ADSetup;
 using NUH_PORTAL.Models;
+using NUH_PORTAL.Models.Enums;
 using NUH_PORTAL.Repositories.Interfaces;
 using NUH_PORTAL.Services.Interfaces;
 
@@ -63,10 +64,10 @@ namespace NUH_PORTAL.Services
             var student = await _students.FindAsync(s => s.student_id == studentId && !s.IsDeleted)
                 ?? throw UserFriendlyException.NotFound("Student not found");
 
-            if (string.IsNullOrEmpty(student.gender))
+            if (student.gender == null)
                 throw new UserFriendlyException("Student has no gender set. Cannot determine target OU.", 400);
 
-            var isMale = student.gender.ToLower() == "male";
+            var isMale = student.gender == Gender.Male;
             var sAMAccountName = "h" + student.student_id;
 
             var nameParts = (student.full_name_english ?? "").Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);

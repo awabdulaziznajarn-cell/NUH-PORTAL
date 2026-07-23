@@ -7,6 +7,7 @@ using NUH_PORTAL.Data.Interfaces;
 using NUH_PORTAL.DTOs.Bulk;
 using NUH_PORTAL.DTOs.Common;
 using NUH_PORTAL.Models;
+using NUH_PORTAL.Models.Enums;
 using NUH_PORTAL.Repositories.Interfaces;
 using NUH_PORTAL.Services.Interfaces;
 using System.Data;
@@ -25,6 +26,7 @@ namespace NUH_PORTAL.Services
         private readonly IRepository<AuditLog> _auditLogs;
         private readonly IHttpContextAccessor _http;
         private readonly ILogger<BulkRegistrationService> _logger;
+        private readonly ILookupResolver _lookups;
 
         public BulkRegistrationService(
             IRepository<Student> students,
@@ -35,6 +37,7 @@ namespace NUH_PORTAL.Services
             IRepository<AuditLog> auditLogs,
             IHttpContextAccessor http,
             ILogger<BulkRegistrationService> logger,
+            ILookupResolver lookups,
             IUnitOfWork unitOfWork,
             IMapper mapper) : base(unitOfWork, mapper)
         {
@@ -46,6 +49,7 @@ namespace NUH_PORTAL.Services
             _auditLogs = auditLogs;
             _http = http;
             _logger = logger;
+            _lookups = lookups;
         }
 
         public FileResultDto GetTemplate()
@@ -312,16 +316,17 @@ namespace NUH_PORTAL.Services
                     college = s.College,
                     department = s.Department,
                     academic_level = s.AcademicLevel,
-                    gender = GenderHelper.NormalizeSafely(s.Gender),
+                    gender = GenderHelper.Parse(s.Gender),
                     housing_building = s.BuildingNumber,
                     apartment_number = s.ApartmentNumber,
                     room_number = s.RoomNumber,
                     created_at = DateTime.UtcNow,
                     created_by = actorId,
-                    status = "active",
-                    student_status = "active"
+                    status = StudentState.active,
+                    student_status = StudentStatus.active
                 }).ToList();
 
+                await _lookups.ApplyAsync(students); // FK ids من الأكواد (dual-write)
                 await _students.AddRangeAsync(students);
                 await UnitOfWork.SaveAsync();
 
@@ -329,7 +334,7 @@ namespace NUH_PORTAL.Services
                 var defaultStatus = isHousingCreator ? "cyber_review" : "submitted";
                 var requests = students.Select(st => new Request
                 {
-                    RequestType = "bulk_req",
+                    RequestType = RequestType.bulk_req,
                     StudentId = st.Id,
                     SubmittedBy = actorId,
                     SubmittedAt = DateTime.UtcNow,

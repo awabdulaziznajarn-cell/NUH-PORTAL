@@ -4,6 +4,7 @@ using NUH_PORTAL.Core.Exceptions;
 using NUH_PORTAL.Data.Interfaces;
 using NUH_PORTAL.DTOs.Workflow;
 using NUH_PORTAL.Models;
+using NUH_PORTAL.Models.Enums;
 using NUH_PORTAL.Repositories.Interfaces;
 using NUH_PORTAL.Services.Interfaces;
 
@@ -52,7 +53,7 @@ namespace NUH_PORTAL.Services
 
             return await _requests.Query().AsNoTracking()
                 .Include(r => r.Student)
-                .Where(r => r.RequestType == "self_registration" && r.Status == targetStage)
+                .Where(r => r.RequestType == RequestType.self_registration && r.Status == targetStage)
                 .OrderBy(r => r.SubmittedAt)
                 .Select(r => new QueueItemDto
                 {
@@ -70,7 +71,7 @@ namespace NUH_PORTAL.Services
         public async Task<List<StatusCountDto>> GetQueueCountsAsync()
         {
             return await _requests.Query().AsNoTracking()
-                .Where(r => r.RequestType == "self_registration")
+                .Where(r => r.RequestType == RequestType.self_registration)
                 .GroupBy(r => r.Status)
                 .Select(g => new StatusCountDto { Status = g.Key, Count = g.Count() })
                 .ToListAsync();

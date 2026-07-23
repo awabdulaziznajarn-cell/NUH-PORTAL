@@ -3610,4 +3610,142 @@
   <data name="home_act_login_admin_fallback_failed" xml:space="preserve">
     <value>Admin Local Login Failed</value>
   </data>
+  <data name="Nav_Lookups" xml:space="preserve">
+    <value>Lookups</value>
+  </data>
+  <data name="lk_pageTitle" xml:space="preserve">
+    <value>Lookups Management</value>
+  </data>
+  <data name="lk_pageSubtitle" xml:space="preserve">
+    <value>Add and edit colleges, departments, buildings, levels and pledge terms</value>
+  </data>
+  <data name="lk_tab_college" xml:space="preserve">
+    <value>Colleges</value>
+  </data>
+  <data name="lk_tab_department" xml:space="preserve">
+    <value>Departments</value>
+  </data>
+  <data name="lk_tab_building" xml:space="preserve">
+    <value>Buildings</value>
+  </data>
+  <data name="lk_tab_academiclevel" xml:space="preserve">
+    <value>Academic Levels</value>
+  </data>
+  <data name="lk_tab_term" xml:space="preserve">
+    <value>Pledge Terms</value>
+  </data>
+  <data name="lk_add" xml:space="preserve">
+    <value>Add New</value>
+  </data>
+  <data name="lk_col_code" xml:space="preserve">
+    <value>Code</value>
+  </data>
+  <data name="lk_col_arName" xml:space="preserve">
+    <value>Name (AR)</value>
+  </data>
+  <data name="lk_col_enName" xml:space="preserve">
+    <value>Name (EN)</value>
+  </data>
+  <data name="lk_col_gender" xml:space="preserve">
+    <value>Gender</value>
+  </data>
+  <data name="lk_col_college" xml:space="preserve">
+    <value>College</value>
+  </data>
+  <data name="lk_col_order" xml:space="preserve">
+    <value>Order</value>
+  </data>
+  <data name="lk_col_active" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="lk_col_arText" xml:space="preserve">
+    <value>Text (AR)</value>
+  </data>
+  <data name="lk_col_enText" xml:space="preserve">
+    <value>Text (EN)</value>
+  </data>
+  <data name="lk_col_actions" xml:space="preserve">
+    <value>Actions</value>
+  </data>
+  <data name="lk_edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="lk_delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="lk_noItems" xml:space="preserve">
+    <value>No items</value>
+  </data>
+  <data name="lk_loadError" xml:space="preserve">
+    <value>Failed to load data</value>
+  </data>
+  <data name="lk_addTitle" xml:space="preserve">
+    <value>Add Item</value>
+  </data>
+  <data name="lk_editTitle" xml:space="preserve">
+    <value>Edit Item</value>
+  </data>
+  <data name="lk_modalSub" xml:space="preserve">
+    <value>Fill the required fields then save</value>
+  </data>
+  <data name="lk_lbl_code" xml:space="preserve">
+    <value>Code</value>
+  </data>
+  <data name="lk_lbl_arName" xml:space="preserve">
+    <value>Arabic Name</value>
+  </data>
+  <data name="lk_lbl_enName" xml:space="preserve">
+    <value>English Name</value>
+  </data>
+  <data name="lk_lbl_arText" xml:space="preserve">
+    <value>Arabic Text</value>
+  </data>
+  <data name="lk_lbl_enText" xml:space="preserve">
+    <value>English Text</value>
+  </data>
+  <data name="lk_lbl_gender" xml:space="preserve">
+    <value>Gender (building)</value>
+  </data>
+  <data name="lk_lbl_college" xml:space="preserve">
+    <value>College</value>
+  </data>
+  <data name="lk_lbl_order" xml:space="preserve">
+    <value>Order</value>
+  </data>
+  <data name="lk_lbl_active" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="lk_required" xml:space="preserve">
+    <value>This field is required</value>
+  </data>
+  <data name="lk_gender_none" xml:space="preserve">
+    <value>Unspecified</value>
+  </data>
+  <data name="lk_selectCollege" xml:space="preserve">
+    <value>Select college</value>
+  </data>
+  <data name="lk_active_yes" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="lk_active_no" xml:space="preserve">
+    <value>Inactive</value>
+  </data>
+  <data name="lk_save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="lk_cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="lk_saved" xml:space="preserve">
+    <value>Saved successfully</value>
+  </data>
+  <data name="lk_deleted" xml:space="preserve">
+    <value>Deleted successfully</value>
+  </data>
+  <data name="lk_saveError" xml:space="preserve">
+    <value>Save failed</value>
+  </data>
+  <data name="lk_confirmDelete" xml:space="preserve">
+    <value>Delete this item?</value>
+  </data>
 </root>

@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using NUH_PORTAL.Data;
 using NUH_PORTAL.Models;
+using NUH_PORTAL.Models.Enums;
 using System.Security.Cryptography;
 
 namespace NUH_PORTAL.Services
@@ -105,7 +106,7 @@ namespace NUH_PORTAL.Services
             await SetExtensionAttributesAsync(userDn, student);
 
             student.ad_username = samAccountName;
-            student.ad_status = "enabled";
+            student.ad_status = AdStatus.enabled;
             student.ad_last_sync_at = DateTime.UtcNow;
 
             var statusAction = await _db.StudentStatusActions
@@ -202,7 +203,7 @@ namespace NUH_PORTAL.Services
 
             await SetExtensionAttributesAsync(userDn, student);
 
-            student.ad_status = "enabled";
+            student.ad_status = AdStatus.enabled;
             student.ad_last_sync_at = DateTime.UtcNow;
 
             LogLifecycleEvent(student.Id, "reprovisioned", actorId, $"AD account re-provisioned: {samAccountName}", ipAddress);
@@ -293,7 +294,7 @@ namespace NUH_PORTAL.Services
             var config = await _db.ADConfigurations.FirstOrDefaultAsync(c => c.ConfigKey == ADConfigurationKeys.StudentOuPath);
             var baseOu = config?.ConfigValue ?? "OU=New,OU=Students,DC=globalgroups,DC=com";
 
-            var isMale = string.Equals(student.gender, "male", StringComparison.OrdinalIgnoreCase);
+            var isMale = student.gender == Gender.Male;
             var genderOu = isMale ? "Male" : "Female";
 
             if (baseOu.Contains("OU=New"))
@@ -311,13 +312,13 @@ namespace NUH_PORTAL.Services
 
             if (configMale != null && configFemale != null)
             {
-                var isMale = string.Equals(student.gender, "male", StringComparison.OrdinalIgnoreCase);
+                var isMale = student.gender == Gender.Male;
                 return isMale
                     ? (configMale.ConfigValue ?? "CN=NUH-Student-B,OU=Groups,DC=globalgroups,DC=com")
                     : (configFemale.ConfigValue ?? "CN=NUH-Student-G,OU=Groups,DC=globalgroups,DC=com");
             }
 
-            var isMaleFallback = string.Equals(student.gender, "male", StringComparison.OrdinalIgnoreCase);
+            var isMaleFallback = student.gender == Gender.Male;
             return isMaleFallback
                 ? "CN=NUH-Student-B,OU=Groups,DC=globalgroups,DC=com"
                 : "CN=NUH-Student-G,OU=Groups,DC=globalgroups,DC=com";

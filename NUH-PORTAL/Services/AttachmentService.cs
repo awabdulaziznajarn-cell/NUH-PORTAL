@@ -6,6 +6,7 @@ using NUH_PORTAL.Core.Exceptions;
 using NUH_PORTAL.Data.Interfaces;
 using NUH_PORTAL.DTOs.Attachments;
 using NUH_PORTAL.Models;
+using NUH_PORTAL.Models.Enums;
 using NUH_PORTAL.Repositories.Interfaces;
 using NUH_PORTAL.Services.Interfaces;
 
@@ -47,7 +48,7 @@ namespace NUH_PORTAL.Services
                 throw new UserFriendlyException("غير مصرح", 401);
 
             var request = await _requests.GetByIdAsync(requestId);
-            if (request == null || request.RequestType != "self_registration")
+            if (request == null || request.RequestType != RequestType.self_registration)
                 throw UserFriendlyException.NotFound("الطلب غير موجود");
 
             if (files == null || files.Count == 0)

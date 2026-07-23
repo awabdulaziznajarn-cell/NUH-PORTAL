@@ -1,3 +1,4 @@
+@inject NUH_PORTAL.Services.Interfaces.ILookupService LookupSvc
 @{
     // ثقافة الطلب الحالية (من كوكي .AspNetCore.Culture عبر UseRequestLocalization)
     var __lang = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "en" ? "en" : "ar";
@@ -17,6 +18,42 @@
         __i18nDict = new System.Collections.Generic.Dictionary<string, string>();
     }
     var __i18nJson = System.Text.Json.JsonSerializer.Serialize(__i18nDict);
+
+    // خريطة القوائم المرجعية (كود → اسم مترجم) للعرض الديناميكي — نفس فكرة __I18N.
+    // بنلفّها في try عشان لو جداول الـ lookups لسه ماتهاجرتش الصفحة ما تتكسرش (بترجع {}).
+    string __lkMapJson = "{}";
+    try
+    {
+        var __lkCol = new System.Collections.Generic.Dictionary<string, string>();
+        foreach (var it in await LookupSvc.GetCollegesAsync())
+        {
+            var kc = (it.Code ?? "").Trim().ToLowerInvariant();
+            if (kc.Length > 0) __lkCol[kc] = it.Name;
+        }
+        var __lkDep = new System.Collections.Generic.Dictionary<string, string>();
+        foreach (var it in await LookupSvc.GetDepartmentsAsync(null))
+        {
+            var kd = (it.Code ?? "").Trim().ToLowerInvariant();
+            if (kd.Length > 0) __lkDep[kd] = it.Name;
+        }
+        var __lkBld = new System.Collections.Generic.Dictionary<string, string>();
+        foreach (var it in await LookupSvc.GetBuildingsAsync(null))
+        {
+            var kb = (it.Code ?? "").Trim().ToLowerInvariant();
+            if (kb.Length > 0) __lkBld[kb] = it.Name;
+        }
+        var __lkLvl = new System.Collections.Generic.Dictionary<string, string>();
+        foreach (var it in await LookupSvc.GetAcademicLevelsAsync())
+        {
+            var kl = (it.Code ?? "").Trim().ToLowerInvariant();
+            if (kl.Length > 0) __lkLvl[kl] = it.Name;
+        }
+        __lkMapJson = System.Text.Json.JsonSerializer.Serialize(new { college = __lkCol, department = __lkDep, building = __lkBld, level = __lkLvl });
+    }
+    catch
+    {
+        __lkMapJson = "{}";
+    }
 }
 <!DOCTYPE html>
 <html lang="@__lang" dir="@__dir" id="html-root">
@@ -63,6 +100,8 @@
   <script>
     // قاموس الترجمة كامل (مصدره ملفات .resx) — المصدر الوحيد لنصوص الـ JS الديناميكية عبر t()
     window.__I18N = @Html.Raw(__i18nJson);
+    // خريطة القوائم (كود → اسم) — i18n.js بيقرأ منها في collegeName()/deptName()
+    window.__LKMAP = @Html.Raw(__lkMapJson);
 
     // حاجات مشتركة لكل صفحات الـ MVC — الدور من كليم السيرفر، والتوكن من نفس مفاتيح الصفحات القديمة
     var NUH = {

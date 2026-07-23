@@ -1,4 +1,5 @@
 using NUH_PORTAL.DTOs.Students;
+using NUH_PORTAL.Models.Enums;
 
 namespace NUH_PORTAL.DTOs.Requests
 {
@@ -7,7 +8,7 @@ namespace NUH_PORTAL.DTOs.Requests
     {
         public int Id { get; set; }
         public string? RequestNumber { get; set; }
-        public string? RequestType { get; set; }
+        public RequestType? RequestType { get; set; }
         public int StudentId { get; set; }
         public string? Status { get; set; }
         public string? Notes { get; set; }

@@ -9,5 +9,8 @@
         public string? message { get; set; }
         public string? status { get; set; }
         public DateTime? sent_at { get; set; }
+
+        // علاقة الطلب (FK) — كانت ناقصة: request_id كان مجرد int من غير قيد مرجعي
+        public Request? Request { get; set; }
     }
 }

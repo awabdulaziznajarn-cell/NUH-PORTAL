@@ -63,10 +63,12 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);col
 <div class="step">3</div>
 <div class="step">4</div>
 </div>
-<h2 style="font-size:18px;font-weight:800;margin-bottom:4px">الإقرار والتعهد</h2>
-<p style="font-size:13px;color:var(--gray-500);margin-bottom:20px">يرجى قراءة الإقرار والتعهد وقبولهما للمتابعة</p>
+<h2 style="font-size:18px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;gap:8px">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+التعهدات والإقرار</h2>
+<p style="font-size:13px;color:var(--gray-500);margin-bottom:20px">يرجى قراءة التعهدات التالية بعناية. لن تتمكّن من إرسال الطلب إلا بعد الموافقة عليها.</p>
 <div id="alertMessage" class="alert"></div>
-<div class="declaration-box">
+<div class="declaration-box" id="declBox">
 <h3 style="font-size:14px;font-weight:700;margin-bottom:8px">الإقرار</h3>
 <p>أتعهد بأن جميع البيانات التي قمت بتقديمها في طلب التسجيل صحيحة وكاملة، وأتحمل المسؤولية القانونية في حال تبين عدم صحة أي من هذه البيانات. وأقر بأن إدارة الإسكان الجامعي يحق لها رفض الطلب أو إلغاء التسجيل في حال ثبوت مخالفة للشروط واللوائح.</p>
 <h3 style="font-size:14px;font-weight:700;margin:16px 0 8px">سياسة الإسكان الجامعي</h3>
@@ -74,12 +76,8 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);col
 </div>
 <a href="../policy.pdf" target="_blank" class="aup-link">📄 عرض سياسة الاستخدام المقبول (AUP)</a>
 <div class="checkbox-group">
-<input type="checkbox" id="declarationCheck">
-<label for="declarationCheck">أقر بأن جميع البيانات المقدمة صحيحة وأتحمل المسؤولية القانونية</label>
-</div>
-<div class="checkbox-group">
-<input type="checkbox" id="policyCheck">
-<label for="policyCheck">أقر باطلاعي على سياسة الإسكان الجامعي والتزامي بها</label>
+<input type="checkbox" id="agreeCheck">
+<label for="agreeCheck">أقرّ بأني قرأت التعهدات أعلاه وأوافق عليها.</label>
 </div>
 <button id="acceptBtn" class="btn btn-primary" onclick="acceptDeclarations()">قبول والمتابعة</button>
 </div>
@@ -97,12 +95,31 @@ function showAlert(msg, type) {
 }
 
 async function acceptDeclarations() {
-  var decl = document.getElementById('declarationCheck').checked;
-  var policy = document.getElementById('policyCheck').checked;
-  if (!decl || !policy) { showAlert('يرجى قبول الإقرار والتعهد', 'error'); return; }
+  var agree = document.getElementById('agreeCheck').checked;
+  if (!agree) { showAlert('يرجى الموافقة على التعهدات للمتابعة', 'error'); return; }
   localStorage.setItem('declAccepted', 'true');
+  localStorage.setItem('policyAccepted', 'true');
   window.location.href = 'register-form.html';
 }
+
+// بنود التعهّد من قاعدة البيانات (المدير بيديرها من شاشة /Lookups) — بديل النص الثابت.
+// لو الـ API رجّع بنود بنعرضها؛ وإلا بيفضل النص الثابت زي ما هو (fallback آمن قبل الميجريشن).
+function escDecl(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+async function loadPledgeTerms() {
+  try {
+    var res = await fetch('/api/lookups/terms');
+    if (!res.ok) return;
+    var terms = await res.json();
+    if (!terms || !terms.length) return;
+    var box = document.getElementById('declBox');
+    if (!box) return;
+    var html = '<ol style="padding-inline-start:20px;margin:0;line-height:1.9">';
+    terms.forEach(function (tm) { html += '<li style="margin-bottom:8px">' + escDecl(tm.text) + '</li>'; });
+    html += '</ol>';
+    box.innerHTML = html;
+  } catch (e) { /* سيب النص الثابت */ }
+}
+loadPledgeTerms();
 </script>
 </body>
 </html>

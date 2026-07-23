@@ -7,6 +7,7 @@ using NUH_PORTAL.Data.Interfaces;
 using NUH_PORTAL.DTOs.Housing;
 using NUH_PORTAL.DTOs.Students;
 using NUH_PORTAL.Models;
+using NUH_PORTAL.Models.Enums;
 using NUH_PORTAL.Repositories.Interfaces;
 using NUH_PORTAL.Services.Interfaces;
 
@@ -127,9 +128,9 @@ namespace NUH_PORTAL.Services
             {
                 query = status.ToLower() switch
                 {
-                    "enabled" => query.Where(s => s.ad_status == "enabled"),
-                    "disabled" => query.Where(s => s.ad_status == "disabled"),
-                    "unknown" => query.Where(s => s.ad_status == null || s.ad_status == ""),
+                    "enabled" => query.Where(s => s.ad_status == AdStatus.enabled),
+                    "disabled" => query.Where(s => s.ad_status == AdStatus.disabled),
+                    "unknown" => query.Where(s => s.ad_status == null),
                     _ => query
                 };
             }
@@ -201,14 +202,14 @@ namespace NUH_PORTAL.Services
             if (!result.Success)
                 throw new UserFriendlyException($"Failed to enable AD account: {result.Error}", 500);
 
-            student.ad_status = "enabled";
+            student.ad_status = AdStatus.enabled;
             student.ad_last_sync_at = DateTime.UtcNow;
 
             await AddLifecycleLogAsync(studentId, "enabled", $"AD account enabled by {UnitOfWork.GetCurrentUserRole()?.ToLower()}");
             await UnitOfWork.SaveAsync();
 
             _logger.LogInformation("AD account enabled for student {Id}: {Sam}", studentId, student.ad_username);
-            return new ToggleAccountResultDto { Message = "Account enabled", ad_status = "enabled" };
+            return new ToggleAccountResultDto { Message = "Account enabled", ad_status = AdStatus.enabled };
         }
 
         public async Task<ToggleAccountResultDto> DisableAccountAsync(int studentId)
@@ -219,14 +220,14 @@ namespace NUH_PORTAL.Services
             if (!result.Success)
                 throw new UserFriendlyException($"Failed to disable AD account: {result.Error}", 500);
 
-            student.ad_status = "disabled";
+            student.ad_status = AdStatus.disabled;
             student.ad_last_sync_at = DateTime.UtcNow;
 
             await AddLifecycleLogAsync(studentId, "disabled", $"AD account disabled by {UnitOfWork.GetCurrentUserRole()?.ToLower()}");
             await UnitOfWork.SaveAsync();
 
             _logger.LogInformation("AD account disabled for student {Id}: {Sam}", studentId, student.ad_username);
-            return new ToggleAccountResultDto { Message = "Account disabled", ad_status = "disabled" };
+            return new ToggleAccountResultDto { Message = "Account disabled", ad_status = AdStatus.disabled };
         }
 
         public async Task ResetPasswordAsync(int studentId, ResetPasswordDto dto)
@@ -372,9 +373,9 @@ namespace NUH_PORTAL.Services
             return new HousingStatsDto
             {
                 with_accounts = await baseQuery.CountAsync(),
-                enabled = await baseQuery.CountAsync(s => s.ad_status == "enabled"),
-                disabled = await baseQuery.CountAsync(s => s.ad_status == "disabled"),
-                unknown_status = await baseQuery.CountAsync(s => s.ad_status == null || s.ad_status == ""),
+                enabled = await baseQuery.CountAsync(s => s.ad_status == AdStatus.enabled),
+                disabled = await baseQuery.CountAsync(s => s.ad_status == AdStatus.disabled),
+                unknown_status = await baseQuery.CountAsync(s => s.ad_status == null),
                 synced_last_24h = await baseQuery.CountAsync(s => s.ad_last_sync_at != null && s.ad_last_sync_at >= DateTime.UtcNow.AddHours(-24)),
                 not_synced = await baseQuery.CountAsync(s => s.ad_last_sync_at == null),
                 total_students = await _students.Query().AsNoTracking().CountAsync(s => !s.IsDeleted),

@@ -23,8 +23,42 @@ function t(key) {
 // لو القيمة كود معروف بنترجمه، وأي حاجة تانية (نص عربي جاهز) بترجع زي ما هي.
 var COLLEGE_KEYS = { engineering: 'reg_collegeEngineering', medicine: 'reg_collegeMedicine', cs: 'reg_collegeCS', science: 'reg_collegeScience', business: 'reg_collegeBusiness', arts: 'reg_collegeArts', education: 'reg_collegeEducation', pharmacy: 'reg_collegePharmacy' };
 var DEPT_KEYS = { cs: 'reg_deptCS', computer: 'reg_deptComputer', electrical: 'reg_deptElectrical', mechanical: 'reg_deptMechanical', civil: 'reg_deptCivil', math: 'reg_deptMath', physics: 'reg_deptPhysics', chemistry: 'reg_deptChemistry', biology: 'reg_deptBiology', business: 'reg_deptBusiness', accounting: 'reg_deptAccounting', islamic: 'reg_deptIslamic', arabic: 'reg_deptArabic', english: 'reg_deptEnglish' };
-function collegeName(c) { var raw = (c == null ? '' : String(c)); var k = COLLEGE_KEYS[raw.trim().toLowerCase()]; if (!k) return raw; var v = t(k); return v === k ? raw : v; }
-function deptName(d) { var raw = (d == null ? '' : String(d)); var k = DEPT_KEYS[raw.trim().toLowerCase()]; if (!k) return raw; var v = t(k); return v === k ? raw : v; }
+// خريطة القوائم من قاعدة البيانات — بتتصدّر من اللياوت في window.__LKMAP حسب لغة الطلب.
+// الأولوية ليها؛ لو مش موجودة (لسه ماتهاجرتش) بنرجع لمفاتيح الـ .resx زي الأول.
+function lkName(cat, code) {
+  try {
+    var m = (typeof window !== 'undefined' && window.__LKMAP && window.__LKMAP[cat]) ? window.__LKMAP[cat] : null;
+    if (m) { var key = (code == null ? '' : String(code)).trim().toLowerCase(); if (m[key] != null && m[key] !== '') return m[key]; }
+  } catch (e) { }
+  return null;
+}
+function collegeName(c) { var raw = (c == null ? '' : String(c)); var db = lkName('college', raw); if (db) return db; var k = COLLEGE_KEYS[raw.trim().toLowerCase()]; if (!k) return raw; var v = t(k); return v === k ? raw : v; }
+function deptName(d) { var raw = (d == null ? '' : String(d)); var db = lkName('department', raw); if (db) return db; var k = DEPT_KEYS[raw.trim().toLowerCase()]; if (!k) return raw; var v = t(k); return v === k ? raw : v; }
+// المباني والمستويات: الاسم من قاعدة البيانات لو موجود، وإلا الكود الخام زي ما هو
+function buildingName(b) { var raw = (b == null ? '' : String(b)); var db = lkName('building', raw); return db ? db : raw; }
+function levelName(l) { var raw = (l == null ? '' : String(l)); var db = lkName('level', raw); return db ? db : raw; }
+
+// ترقية الخلايا المرندرة من السيرفر (data-lk="college:CODE") لاسم القائمة من قاعدة البيانات لو معروف.
+// بتخلّي الكليات اللي الأدمن ضافها تظهر باسمها المترجم بدل الكود، من غير ما نلمس رندر السيرفر.
+function upgradeLookupCells(root) {
+  try {
+    (root || document).querySelectorAll('[data-lk]').forEach(function (el) {
+      var spec = el.getAttribute('data-lk'); if (!spec) return;
+      var i = spec.indexOf(':'); if (i < 0) return;
+      var cat = spec.slice(0, i), code = spec.slice(i + 1);
+      var name = cat === 'college' ? collegeName(code)
+               : cat === 'department' ? deptName(code)
+               : cat === 'building' ? buildingName(code)
+               : cat === 'level' ? levelName(code)
+               : null;
+      if (name != null && name !== '') el.textContent = name;
+    });
+  } catch (e) { }
+}
+if (typeof document !== 'undefined') {
+  if (document.readyState !== 'loading') upgradeLookupCells();
+  else document.addEventListener('DOMContentLoaded', function () { upgradeLookupCells(); });
+}
 
 // تطبيق النصوص على عناصر الصفحة (للصفحات اللي لسه بتستخدم data-* — الصفحات المحوّلة بتترندر من السيرفر)
 function __baseSetLang(l) {

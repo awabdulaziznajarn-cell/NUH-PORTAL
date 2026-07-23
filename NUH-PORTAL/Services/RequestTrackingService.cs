@@ -4,6 +4,7 @@ using NUH_PORTAL.Core.Exceptions;
 using NUH_PORTAL.Data.Interfaces;
 using NUH_PORTAL.DTOs.Tracking;
 using NUH_PORTAL.Models;
+using NUH_PORTAL.Models.Enums;
 using NUH_PORTAL.Repositories.Interfaces;
 using NUH_PORTAL.Services.Interfaces;
 
@@ -44,7 +45,7 @@ namespace NUH_PORTAL.Services
 
             return await _requests.Query().AsNoTracking()
                 .Include(r => r.Student)
-                .Where(r => r.RequestType == "self_registration" && studentIds.Contains(r.StudentId))
+                .Where(r => r.RequestType == RequestType.self_registration && studentIds.Contains(r.StudentId))
                 .OrderByDescending(r => r.SubmittedAt)
                 .Select(r => new TrackedRequestDto
                 {
@@ -63,7 +64,7 @@ namespace NUH_PORTAL.Services
 
             var request = await _requests.Query().AsNoTracking()
                 .Include(r => r.Student)
-                .FirstOrDefaultAsync(r => r.RequestNumber == requestNumber && r.RequestType == "self_registration")
+                .FirstOrDefaultAsync(r => r.RequestNumber == requestNumber && r.RequestType == RequestType.self_registration)
                 ?? throw UserFriendlyException.NotFound("الطلب غير موجود");
 
             var history = await _workflow.GetHistoryAsync(request.Id);

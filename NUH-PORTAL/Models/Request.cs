@@ -1,9 +1,11 @@
+using NUH_PORTAL.Models.Enums;
+
 namespace NUH_PORTAL.Models
 {
     public class Request
     {
         public int Id { get; set; }
-        public string? RequestType { get; set; }
+        public RequestType? RequestType { get; set; }
         public int StudentId { get; set; }
         public int? SubmittedBy { get; set; }
         public string? Status { get; set; }

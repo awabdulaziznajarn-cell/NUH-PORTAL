@@ -5,6 +5,7 @@ using NUH_PORTAL.Data.Interfaces;
 using NUH_PORTAL.DTOs.Registration;
 using NUH_PORTAL.DTOs.Workflow;
 using NUH_PORTAL.Models;
+using NUH_PORTAL.Models.Enums;
 using NUH_PORTAL.Repositories.Interfaces;
 using NUH_PORTAL.Services.Interfaces;
 
@@ -19,6 +20,7 @@ namespace NUH_PORTAL.Services
         private readonly IRegistrationService _registration;
         private readonly IWorkflowService _workflow;
         private readonly IHttpContextAccessor _http;
+        private readonly ILookupResolver _lookups;
 
         public RegistrationFlowService(
             IRepository<Student> students,
@@ -27,6 +29,7 @@ namespace NUH_PORTAL.Services
             IRegistrationService registration,
             IWorkflowService workflow,
             IHttpContextAccessor http,
+            ILookupResolver lookups,
             IUnitOfWork unitOfWork,
             IMapper mapper) : base(unitOfWork, mapper)
         {
@@ -36,6 +39,7 @@ namespace NUH_PORTAL.Services
             _registration = registration;
             _workflow = workflow;
             _http = http;
+            _lookups = lookups;
         }
 
         private (string? ip, string ua) ClientInfo()
@@ -66,17 +70,23 @@ namespace NUH_PORTAL.Services
                     full_name_english = ExtractRegField(request.RegistrationData, "full_name_english"),
                     national_id = ExtractRegField(request.RegistrationData, "national_id"),
                     phone = ExtractRegField(request.RegistrationData, "phone") ?? ExtractRegField(request.RegistrationData, "mobile"),
-                    gender = ExtractRegField(request.RegistrationData, "gender"),
+                    gender = GenderHelper.Parse(ExtractRegField(request.RegistrationData, "gender")),
                     college = ExtractRegField(request.RegistrationData, "college"),
                     department = ExtractRegField(request.RegistrationData, "department"),
                     academic_level = ExtractRegField(request.RegistrationData, "academic_level"),
                     housing_building = ExtractRegField(request.RegistrationData, "housing_building"),
                     room_number = ExtractRegField(request.RegistrationData, "room_number"),
                     apartment_number = ExtractRegField(request.RegistrationData, "apartment_number"),
-                    status = ExtractRegField(request.RegistrationData, "status") ?? "active",
+                    status = (ExtractRegField(request.RegistrationData, "status") ?? "active").Trim().ToLowerInvariant() switch
+                    {
+                        "left" => StudentState.left,
+                        "inactive" => StudentState.inactive,
+                        _ => StudentState.active
+                    },
                     created_at = DateTime.UtcNow,
                     created_by = actorId
                 };
+                await _lookups.ApplyAsync(student); // FK ids من الأكواد (dual-write)
                 await _students.AddAsync(student);
                 await UnitOfWork.SaveAsync();
             }
@@ -140,7 +150,7 @@ namespace NUH_PORTAL.Services
 
             IQueryable<Request> query = _requests.Query().AsNoTracking()
                 .Include(r => r.Student)
-                .Where(r => r.RequestType == "self_registration");
+                .Where(r => r.RequestType == RequestType.self_registration);
 
             if (userRole == "user" || userRole == "student")
             {
@@ -178,7 +188,7 @@ namespace NUH_PORTAL.Services
         {
             var request = await _requests.Query().AsNoTracking()
                 .Include(r => r.Student)
-                .FirstOrDefaultAsync(r => r.Id == requestId && r.RequestType == "self_registration")
+                .FirstOrDefaultAsync(r => r.Id == requestId && r.RequestType == RequestType.self_registration)
                 ?? throw UserFriendlyException.NotFound("الطلب غير موجود");
 
             var history = await _workflow.GetHistoryAsync(requestId);

@@ -302,10 +302,10 @@
         {
           <tr>
             <td>@s.full_name</td>
-            <td>@CollegeName(s.college)</td>
-            <td>@s.housing_building</td>
+            <td data-lk="college:@s.college">@CollegeName(s.college)</td>
+            <td data-lk="building:@s.housing_building">@s.housing_building</td>
             <td>
-              @if (s.status == "left")
+              @if (s.status == StudentState.left)
               {
                 <span class="badge badge-left" >@SharedLocalizer["home_badge_statusLeft"]</span>
               }
@@ -337,7 +337,7 @@
         @foreach (var r in Model.LatestRequests)
         {
           <tr>
-            <td><span>@SharedLocalizer["home_reqType_" + (r.RequestType?.ToLowerInvariant() ?? "")]</span></td>
+            <td><span>@SharedLocalizer["home_reqType_" + (r.RequestType?.ToString() ?? "")]</span></td>
             <td><span data-dt="@DateTime.SpecifyKind(r.SubmittedAt, DateTimeKind.Utc).ToString("o")">@r.SubmittedAt.ToString("yyyy/MM/dd")</span></td>
             <td><span class="badge @ReqBadge(r.Status)">@SharedLocalizer["home_reqStatus_" + (r.Status?.ToLowerInvariant() ?? "")]</span></td>
           </tr>

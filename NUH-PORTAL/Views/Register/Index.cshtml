@@ -270,6 +270,7 @@
 
 @section Scripts {
 <script src="/i18n.js"></script>
+<script src="/lookups.js"></script>
 <script>
   var USER_ID = @userId;
 
@@ -409,6 +410,41 @@
   document.getElementById('phone').addEventListener('input', function () {
     validateField('phone', 'val-phone', /^9665\d{8}$/);
   });
+
+  // ===== القوائم المنسدلة من قاعدة البيانات (lookups) =====
+  // بنستبدل الخيارات الثابتة فقط لو الـ API رجّع بيانات؛ لو القوائم لسه ماتهاجرتش
+  // بتفضل الخيارات الثابتة كما هي فالتسجيل ما بيقفش أبدًا.
+  var lkCollege = document.getElementById('college');
+  var lkDept = document.getElementById('department');
+  var lkLevel = document.getElementById('academic_level');
+  var lkBuilding = document.getElementById('housing_building');
+  var lkGender = document.getElementById('gender');
+
+  async function lkLoadColleges() {
+    var i = await Lookups.fetchList('/api/lookups/colleges');
+    if (i.length) Lookups.fill(lkCollege, i, { keep: lkCollege.value });
+  }
+  async function lkLoadDepartments(collegeId) {
+    var url = '/api/lookups/departments' + (collegeId ? ('?collegeId=' + collegeId) : '');
+    var i = await Lookups.fetchList(url);
+    if (collegeId && !i.length) i = await Lookups.fetchList('/api/lookups/departments'); // متسبناش القائمة فاضية بسبب الفلترة
+    if (i.length) Lookups.fill(lkDept, i, { keep: lkDept.value });
+  }
+  async function lkLoadLevels() {
+    var i = await Lookups.fetchList('/api/lookups/academic-levels');
+    if (i.length) Lookups.fill(lkLevel, i, { keep: lkLevel.value });
+  }
+  async function lkLoadBuildings(gender) {
+    if (!gender) return; // قبل اختيار النوع سيب المباني زي ما هي
+    var i = await Lookups.fetchList('/api/lookups/buildings?gender=' + encodeURIComponent(gender));
+    if (i.length) Lookups.fill(lkBuilding, i, { keep: lkBuilding.value });
+  }
+
+  // الأقسام تتفلتر حسب الكلية، والمباني حسب النوع
+  lkCollege.addEventListener('change', function () { lkLoadDepartments(Lookups.selectedId(lkCollege)); });
+  lkGender.addEventListener('change', function () { lkLoadBuildings(lkGender.value); });
+
+  lkLoadColleges(); lkLoadDepartments(null); lkLoadLevels();
 
   window.onLanguageChange = function () { /* لا نص ديناميكي دائم يحتاج إعادة تطبيق */ };
   setLang(localStorage.getItem('uiLanguage') || 'ar');

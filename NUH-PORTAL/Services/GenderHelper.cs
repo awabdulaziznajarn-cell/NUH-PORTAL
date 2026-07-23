@@ -1,9 +1,30 @@
 using System.Text.RegularExpressions;
+using NUH_PORTAL.Models.Enums;
 
 namespace NUH_PORTAL.Services
 {
     public static class GenderHelper
     {
+        // يحوّل أي مدخل نصّي (ذكر/male/m/أنثى/female/f) إلى enum؛ null لو غير صالح
+        public static Gender? Parse(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return null;
+            return value.Trim().ToLowerInvariant() switch
+            {
+                "ذكر" or "male" or "m" => Gender.Male,
+                "أنثى" or "انثى" or "female" or "f" => Gender.Female,
+                _ => null
+            };
+        }
+
+        // يحوّل الـ enum لنص التخزين/العرض "male"/"female"
+        public static string? ToStr(Gender? g) => g switch
+        {
+            Gender.Male => "male",
+            Gender.Female => "female",
+            _ => null
+        };
+
         private static readonly HashSet<string> ValidInputs = new(StringComparer.OrdinalIgnoreCase)
         {
             "ذكر", "male", "m",

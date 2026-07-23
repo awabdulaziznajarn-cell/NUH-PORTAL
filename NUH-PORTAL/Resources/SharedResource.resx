@@ -3610,4 +3610,142 @@
   <data name="home_act_login_admin_fallback_failed" xml:space="preserve">
     <value>فشل دخول المسؤول المحلي</value>
   </data>
+  <data name="Nav_Lookups" xml:space="preserve">
+    <value>القوائم المرجعية</value>
+  </data>
+  <data name="lk_pageTitle" xml:space="preserve">
+    <value>إدارة القوائم المرجعية</value>
+  </data>
+  <data name="lk_pageSubtitle" xml:space="preserve">
+    <value>إضافة وتعديل الكليات والأقسام والمباني والمستويات وبنود التعهّد</value>
+  </data>
+  <data name="lk_tab_college" xml:space="preserve">
+    <value>الكليات</value>
+  </data>
+  <data name="lk_tab_department" xml:space="preserve">
+    <value>الأقسام</value>
+  </data>
+  <data name="lk_tab_building" xml:space="preserve">
+    <value>المباني</value>
+  </data>
+  <data name="lk_tab_academiclevel" xml:space="preserve">
+    <value>المستويات الدراسية</value>
+  </data>
+  <data name="lk_tab_term" xml:space="preserve">
+    <value>بنود التعهّد</value>
+  </data>
+  <data name="lk_add" xml:space="preserve">
+    <value>إضافة جديد</value>
+  </data>
+  <data name="lk_col_code" xml:space="preserve">
+    <value>الكود</value>
+  </data>
+  <data name="lk_col_arName" xml:space="preserve">
+    <value>الاسم (عربي)</value>
+  </data>
+  <data name="lk_col_enName" xml:space="preserve">
+    <value>الاسم (إنجليزي)</value>
+  </data>
+  <data name="lk_col_gender" xml:space="preserve">
+    <value>النوع</value>
+  </data>
+  <data name="lk_col_college" xml:space="preserve">
+    <value>الكلية</value>
+  </data>
+  <data name="lk_col_order" xml:space="preserve">
+    <value>الترتيب</value>
+  </data>
+  <data name="lk_col_active" xml:space="preserve">
+    <value>مُفعّل</value>
+  </data>
+  <data name="lk_col_arText" xml:space="preserve">
+    <value>النص (عربي)</value>
+  </data>
+  <data name="lk_col_enText" xml:space="preserve">
+    <value>النص (إنجليزي)</value>
+  </data>
+  <data name="lk_col_actions" xml:space="preserve">
+    <value>إجراءات</value>
+  </data>
+  <data name="lk_edit" xml:space="preserve">
+    <value>تعديل</value>
+  </data>
+  <data name="lk_delete" xml:space="preserve">
+    <value>حذف</value>
+  </data>
+  <data name="lk_noItems" xml:space="preserve">
+    <value>لا توجد عناصر</value>
+  </data>
+  <data name="lk_loadError" xml:space="preserve">
+    <value>تعذّر تحميل البيانات</value>
+  </data>
+  <data name="lk_addTitle" xml:space="preserve">
+    <value>إضافة عنصر</value>
+  </data>
+  <data name="lk_editTitle" xml:space="preserve">
+    <value>تعديل عنصر</value>
+  </data>
+  <data name="lk_modalSub" xml:space="preserve">
+    <value>املأ الحقول المطلوبة ثم احفظ</value>
+  </data>
+  <data name="lk_lbl_code" xml:space="preserve">
+    <value>الكود</value>
+  </data>
+  <data name="lk_lbl_arName" xml:space="preserve">
+    <value>الاسم بالعربي</value>
+  </data>
+  <data name="lk_lbl_enName" xml:space="preserve">
+    <value>الاسم بالإنجليزي</value>
+  </data>
+  <data name="lk_lbl_arText" xml:space="preserve">
+    <value>النص بالعربي</value>
+  </data>
+  <data name="lk_lbl_enText" xml:space="preserve">
+    <value>النص بالإنجليزي</value>
+  </data>
+  <data name="lk_lbl_gender" xml:space="preserve">
+    <value>النوع (للمبنى)</value>
+  </data>
+  <data name="lk_lbl_college" xml:space="preserve">
+    <value>الكلية</value>
+  </data>
+  <data name="lk_lbl_order" xml:space="preserve">
+    <value>الترتيب</value>
+  </data>
+  <data name="lk_lbl_active" xml:space="preserve">
+    <value>الحالة</value>
+  </data>
+  <data name="lk_required" xml:space="preserve">
+    <value>هذا الحقل مطلوب</value>
+  </data>
+  <data name="lk_gender_none" xml:space="preserve">
+    <value>غير محدد</value>
+  </data>
+  <data name="lk_selectCollege" xml:space="preserve">
+    <value>اختر الكلية</value>
+  </data>
+  <data name="lk_active_yes" xml:space="preserve">
+    <value>مُفعّل</value>
+  </data>
+  <data name="lk_active_no" xml:space="preserve">
+    <value>غير مُفعّل</value>
+  </data>
+  <data name="lk_save" xml:space="preserve">
+    <value>حفظ</value>
+  </data>
+  <data name="lk_cancel" xml:space="preserve">
+    <value>إلغاء</value>
+  </data>
+  <data name="lk_saved" xml:space="preserve">
+    <value>تم الحفظ بنجاح</value>
+  </data>
+  <data name="lk_deleted" xml:space="preserve">
+    <value>تم الحذف بنجاح</value>
+  </data>
+  <data name="lk_saveError" xml:space="preserve">
+    <value>تعذّر الحفظ</value>
+  </data>
+  <data name="lk_confirmDelete" xml:space="preserve">
+    <value>متأكد من حذف هذا العنصر؟</value>
+  </data>
 </root>

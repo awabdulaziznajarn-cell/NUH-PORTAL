@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using NUH_PORTAL.Data.Converters;
 using NUH_PORTAL.Models;
 
 namespace NUH_PORTAL.Data.Configurations
@@ -11,7 +12,7 @@ namespace NUH_PORTAL.Data.Configurations
             builder.ToTable("Requests");
             builder.HasKey(r => r.Id);
 
-            builder.Property(r => r.RequestType).HasColumnName("request_type");
+            builder.Property(r => r.RequestType).HasColumnName("request_type").HasConversion(new RequestTypeConverter());
             builder.Property(r => r.StudentId).HasColumnName("student_id");
             builder.Property(r => r.SubmittedBy).HasColumnName("submitted_by");
             builder.Property(r => r.Status).HasColumnName("status");
