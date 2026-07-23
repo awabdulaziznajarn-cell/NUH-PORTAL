@@ -38,7 +38,7 @@
       case 'gender': return genderText(it.gender);
       case 'college': return esc(collegeNameById(it.collegeId));
       case 'order': return esc(it.displayOrder);
-      case 'active': return it.isActive ? '<span class="lk-pill lk-pill-on">' + t('lk_active_yes') + '</span>' : '<span class="lk-pill lk-pill-off">' + t('lk_active_no') + '</span>';
+      case 'active': return '<label class="lk-switch" title="' + (it.isActive ? t('lk_active_yes') : t('lk_active_no')) + '"><input type="checkbox"' + (it.isActive ? ' checked' : '') + ' onchange="LookupAdmin.toggleActive(' + it.id + ')"><span class="lk-slider"></span></label>';
       default: return '';
     }
   }
@@ -162,6 +162,41 @@
       .then(function () { btn.classList.remove('loading'); });
   }
 
+  // بناء payload كامل من عنصر مخزّن (للتوجيل — بنبعت نفس بيانات العنصر وبنقلب isActive بس)
+  function buildPayloadFrom(it) {
+    if (CFG.isTerm) {
+      return { arText: it.arText, enText: it.enText, displayOrder: it.displayOrder, isActive: it.isActive };
+    }
+    var p = { code: it.code, arName: it.arName, enName: it.enName, displayOrder: it.displayOrder, isActive: it.isActive };
+    if (CFG.fields.indexOf('gender') !== -1) p.gender = it.gender || null;
+    if (CFG.fields.indexOf('collegeId') !== -1) p.collegeId = (it.collegeId != null) ? it.collegeId : null;
+    return p;
+  }
+
+  // تفعيل/إلغاء تفعيل بضغطة على التوجيل + إشعار
+  function toggleActive(id) {
+    var it = state.items.filter(function (x) { return x.id === id; })[0];
+    if (!it) return;
+    var newVal = !it.isActive;
+    var payload = buildPayloadFrom(it);
+    payload.isActive = newVal;
+    fetch(apiItem(id), {
+      method: 'PUT',
+      headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+      body: JSON.stringify(payload)
+    }).then(function (res) {
+      if (res.status === 401) { localStorage.removeItem('staffToken'); window.location.replace('/Account/Login'); return; }
+      if (res.ok) {
+        it.isActive = newVal;
+        renderTable();
+        showToast(newVal ? t('lk_activated') : t('lk_deactivated'));
+      } else {
+        renderTable(); // رجّع التوجيل لحالته
+        return res.json().catch(function () { return {}; }).then(function (err) { showToast(err.message || t('lk_saveError'), true); });
+      }
+    }).catch(function () { renderTable(); showToast(t('lk_loadError'), true); });
+  }
+
   function delItem(id) {
     if (!confirm(t('lk_confirmDelete'))) return;
     fetch(apiItem(id), { method: 'DELETE', headers: authHeaders() }).then(function (res) {
@@ -179,5 +214,5 @@
     ensureColleges().then(loadList);
   }
 
-  window.LookupAdmin = { init: init, openModal: openModal, closeModal: closeModal, saveItem: saveItem, delItem: delItem };
+  window.LookupAdmin = { init: init, openModal: openModal, closeModal: closeModal, saveItem: saveItem, delItem: delItem, toggleActive: toggleActive };
 })();

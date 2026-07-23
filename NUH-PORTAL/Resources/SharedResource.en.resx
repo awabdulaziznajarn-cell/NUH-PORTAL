@@ -4138,4 +4138,10 @@
   <data name="Nav_Departure" xml:space="preserve">
     <value>Departure</value>
   </data>
+  <data name="lk_activated" xml:space="preserve">
+    <value>Activated</value>
+  </data>
+  <data name="lk_deactivated" xml:space="preserve">
+    <value>Deactivated</value>
+  </data>
 </root>

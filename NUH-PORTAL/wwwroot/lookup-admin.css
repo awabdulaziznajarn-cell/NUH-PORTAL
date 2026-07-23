@@ -11,6 +11,14 @@
 .lk-pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:600}
 .lk-pill-on{background:#DCFCE7;color:#0F6E56}
 .lk-pill-off{background:#F1F5F9;color:#64748B}
+/* توجيل التفعيل/إلغاء التفعيل (زي الـ permit) */
+.lk-switch{position:relative;display:inline-block;width:42px;height:22px;cursor:pointer;vertical-align:middle}
+.lk-switch input{opacity:0;width:0;height:0;position:absolute;margin:0}
+.lk-slider{position:absolute;inset:0;background:#cbd5e1;border-radius:999px;transition:background .25s}
+.lk-slider::before{content:'';position:absolute;height:16px;width:16px;top:3px;inset-inline-start:3px;background:#fff;border-radius:50%;transition:transform .25s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.lk-switch input:checked + .lk-slider{background:#0F6E56}
+.lk-switch input:checked + .lk-slider::before{transform:translateX(20px)}
+[dir=rtl] .lk-switch input:checked + .lk-slider::before{transform:translateX(-20px)}
 .edit-overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;z-index:1000;padding:20px}
 .edit-overlay.show{display:flex}
 .edit-modal{background:#fff;border-radius:16px;width:100%;max-width:560px;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden}

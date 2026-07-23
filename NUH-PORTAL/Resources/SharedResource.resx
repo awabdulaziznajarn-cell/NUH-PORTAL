@@ -4138,4 +4138,10 @@
   <data name="Nav_Departure" xml:space="preserve">
     <value>المغادرة والإخلاء</value>
   </data>
+  <data name="lk_activated" xml:space="preserve">
+    <value>تم التفعيل</value>
+  </data>
+  <data name="lk_deactivated" xml:space="preserve">
+    <value>تم إلغاء التفعيل</value>
+  </data>
 </root>
