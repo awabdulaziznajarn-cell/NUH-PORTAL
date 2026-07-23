@@ -1,5 +1,12 @@
 @* السايدبار الموحد — قوائم parent/child بتتفتح وتتقفل (accordion). النصوص من SharedResource (.resx). *@
 <style>
+  /* السايدبار بطول الشاشة، والقائمة بتعمل scroll جوّاها عشان توصل لكل الشاشات (إعدادات النظام تحت) */
+  .sidebar{height:100vh}
+  .sidebar-nav{overflow-y:auto;min-height:0}
+  .sidebar-nav::-webkit-scrollbar{width:6px}
+  .sidebar-nav::-webkit-scrollbar-track{background:transparent}
+  .sidebar-nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:3px}
+  .sidebar-nav:hover::-webkit-scrollbar-thumb{background:rgba(255,255,255,.3)}
   .nav-group{display:flex;flex-direction:column;gap:2px}
   .nav-group-header{display:flex;align-items:center;gap:10px;width:100%;padding:11px 12px;background:none;border:none;cursor:pointer;font-family:inherit;font-size:11px;font-weight:700;letter-spacing:.5px;color:rgba(255,255,255,.45);border-radius:10px;transition:all .2s;text-align:start}
   .nav-group-header:hover{background:rgba(255,255,255,.05);color:rgba(255,255,255,.85)}
