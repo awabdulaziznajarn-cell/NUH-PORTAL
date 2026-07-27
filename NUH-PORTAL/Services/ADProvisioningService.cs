@@ -39,24 +39,33 @@ namespace NUH_PORTAL.Services
                 return result;
             }
 
-            var nameParts = (student.full_name_english ?? "").Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            var givenName = nameParts.Length > 0 ? nameParts[0] : samAccountName;
-            var sn = nameParts.Length > 1 ? string.Join(" ", nameParts.Skip(1)) : givenName;
+            var (givenName, initials, sn) = SplitEnglishName(student.full_name_english, samAccountName);
 
             var targetOu = await GetOuForStudentAsync(student);
             var targetGroup = await GetGroupForStudentAsync(student);
+            var (companyAr, departmentAr) = await GetOrgNamesAsync(student);
 
             var userDn = $"CN={samAccountName},{targetOu}";
 
+            // معيار جامعة نجران لحسابات الطلاب:
+            //   CN / sAMAccountName = h{الرقم الجامعي}   ·  UPN = h{الرقم}@nuh.edu.sa
+            //   displayName = الاسم الإنجليزي            ·  description = الاسم العربي
+            //   employeeID  = رقم الهوية                 ·  mobile      = الجوال
+            //   company     = الكلية بالعربي             ·  department  = القسم بالعربي
             var createRequest = new ADCreateUserRequest
             {
                 SamAccountName = samAccountName,
                 UserPrincipalName = upn,
                 DisplayName = student.full_name_english ?? samAccountName,
                 GivenName = givenName,
+                Initials = initials,
                 Surname = sn,
                 TargetOu = targetOu,
-                Description = $"Housing Student - {student.college ?? "N/A"} - Level {student.academic_level ?? "N/A"}",
+                Description = student.full_name,
+                EmployeeId = student.national_id,
+                Mobile = student.phone,
+                Company = companyAr,
+                Department = departmentAr,
                 UserAccountControl = 544
             };
 
@@ -254,39 +263,80 @@ namespace NUH_PORTAL.Services
             return result;
         }
 
+        // مزامنة بيانات الطالب على خصائص AD القياسية حسب معيار الجامعة.
+        //
+        // ملاحظة: كان هذا التابع يكتب في extensionAttribute1-7، وهي خصائص
+        // غير موجودة في schema دومين nuh.edu.sa (تأتي مع امتداد Exchange)،
+        // فكانت كل عملية إنشاء تفشل في هذه الخطوة وتُسجَّل كتحذير.
         private async Task SetExtensionAttributesAsync(string userDn, Student student)
         {
+            var (companyAr, departmentAr) = await GetOrgNamesAsync(student);
+            var (givenName, initials, sn) = SplitEnglishName(student.full_name_english, student.ad_username ?? "");
+
             var attrMapping = new Dictionary<string, string?>
             {
-                { await GetExtAttrKeyAsync("extensionAttribute1", "extensionAttribute1"), student.phone },
-                { await GetExtAttrKeyAsync("extensionAttribute2", "extensionAttribute2"), student.housing_building },
-                { await GetExtAttrKeyAsync("extensionAttribute3", "extensionAttribute3"), student.room_number },
-                { await GetExtAttrKeyAsync("extensionAttribute4", "extensionAttribute4"), student.apartment_number },
-                { await GetExtAttrKeyAsync("extensionAttribute5", "extensionAttribute5"), student.college },
-                { await GetExtAttrKeyAsync("extensionAttribute6", "extensionAttribute6"), student.department },
-                { await GetExtAttrKeyAsync("extensionAttribute7", "extensionAttribute7"), student.academic_level }
+                ["description"] = student.full_name,            // الاسم العربي الكامل
+                ["displayName"] = student.full_name_english,    // الاسم الإنجليزي الكامل
+                ["givenName"]   = givenName,
+                ["initials"]    = initials,
+                ["sn"]          = sn,
+                ["employeeID"]  = student.national_id,
+                ["mobile"]      = student.phone,
+                ["company"]     = companyAr,
+                ["department"]  = departmentAr
             };
 
-            var attrsToSet = new Dictionary<string, string>();
-            foreach (var kvp in attrMapping)
-            {
-                if (!string.IsNullOrEmpty(kvp.Value))
-                    attrsToSet[kvp.Key] = kvp.Value;
-            }
+            var attrsToSet = attrMapping
+                .Where(kv => !string.IsNullOrWhiteSpace(kv.Value))
+                .ToDictionary(kv => kv.Key, kv => kv.Value!);
 
-            if (attrsToSet.Count > 0)
-            {
-                var extResult = await _adService.SetUserExtensionAttributesAsync(userDn, attrsToSet);
-                if (!extResult.Success)
-                    _logger.LogWarning("Failed to set extension attributes for {Dn}: {Error}", userDn, extResult.Error);
-            }
+            if (attrsToSet.Count == 0) return;
+
+            var extResult = await _adService.SetUserExtensionAttributesAsync(userDn, attrsToSet);
+            if (!extResult.Success)
+                _logger.LogWarning("Failed to sync AD attributes for {Dn}: {Error}", userDn, extResult.Error);
         }
 
-        private async Task<string> GetExtAttrKeyAsync(string configKey, string defaultValue)
+        // تفكيك الاسم الإنجليزي حسب معيار الجامعة:
+        //   "MOHAMMED SALEM ALSAIARI"          → (MOHAMMED, "S",  ALSAIARI)
+        //   "MOHAMMED SALEM MOHAMMED ALSAIARI" → (MOHAMMED, "SM", ALSAIARI)
+        //   "AHMED ALI"                        → (AHMED,    null, ALI)
+        private static (string given, string? initials, string sn) SplitEnglishName(string? fullNameEn, string fallback)
         {
-            var config = await _db.ADConfigurations
-                .FirstOrDefaultAsync(c => c.ConfigKey == configKey);
-            return config?.ConfigValue ?? defaultValue;
+            var parts = (fullNameEn ?? "").Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+            if (parts.Length == 0) return (fallback, null, fallback);
+            if (parts.Length == 1) return (parts[0], null, parts[0]);
+            if (parts.Length == 2) return (parts[0], null, parts[1]);
+
+            // الأحرف الأولى للأسماء الوسطى — خاصية initials في AD محدودة بـ 6 أحرف
+            var middle = string.Concat(parts[1..^1].Select(p => char.ToUpperInvariant(p[0])));
+            if (middle.Length > 6) middle = middle[..6];
+
+            return (parts[0], middle, parts[^1]);
+        }
+
+        // الكلية والقسم بالعربي من جداول القوائم المرجعية.
+        // أعمدة student.college / student.department النصية تخزّن أكوادًا
+        // (engineering, cs ...) وليس أسماء، فنقرأ الاسم من الـ FK.
+        private async Task<(string? company, string? department)> GetOrgNamesAsync(Student student)
+        {
+            string? company = null;
+            string? department = null;
+
+            if (student.CollegeId.HasValue)
+                company = await _db.Colleges.AsNoTracking()
+                    .Where(c => c.Id == student.CollegeId.Value)
+                    .Select(c => c.ArName).FirstOrDefaultAsync();
+
+            if (student.DepartmentId.HasValue)
+                department = await _db.Departments.AsNoTracking()
+                    .Where(d => d.Id == student.DepartmentId.Value)
+                    .Select(d => d.ArName).FirstOrDefaultAsync();
+
+            // احتياطي: لو الربط بالقوائم لم يُطبَّق بعد، نستخدم النص الخام
+            return (string.IsNullOrWhiteSpace(company) ? student.college : company,
+                    string.IsNullOrWhiteSpace(department) ? student.department : department);
         }
 
         private async Task<string> GetOuForStudentAsync(Student student)

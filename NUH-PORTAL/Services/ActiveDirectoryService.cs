@@ -387,6 +387,25 @@ try
             return ex.ErrorCode is 0 or 80 or 85 or 91 or 64 or 100;
         }
 
+        // الخصائص الوحيدة المسموح للتطبيق كتابتها على حساب الطالب عبر
+        // SetUserExtensionAttributesAsync — قائمة بيضاء بالاسم الكامل.
+        // مبنية على معيار جامعة نجران لحسابات الطلاب في nuh.edu.sa.
+        // ملاحظة: extensionAttribute1-15 غير موجودة في schema هذا الدومين
+        // (تحتاج امتداد schema الخاص بـ Exchange) فلم تُدرَج.
+        private static readonly HashSet<string> AllowedSyncAttributes =
+            new(StringComparer.OrdinalIgnoreCase)
+            {
+                "description",   // الاسم العربي الكامل
+                "displayName",   // الاسم الإنجليزي الكامل
+                "givenName",     // الاسم الأول
+                "initials",      // الأحرف الأولى للأسماء الوسطى
+                "sn",            // اسم العائلة
+                "employeeID",    // رقم الهوية الوطنية
+                "mobile",        // رقم الجوال
+                "company",       // الكلية
+                "department"     // القسم
+            };
+
         private static string EscapeLdapSearchFilter(string input)
         {
             return input
@@ -630,13 +649,25 @@ try
 
                     if (!string.IsNullOrEmpty(request.GivenName))
                         attrList.Add(new DirectoryAttribute("givenName", request.GivenName));
+                    if (!string.IsNullOrEmpty(request.Initials))
+                        attrList.Add(new DirectoryAttribute("initials", request.Initials));
                     if (!string.IsNullOrEmpty(request.Surname))
                         attrList.Add(new DirectoryAttribute("sn", request.Surname));
 
                     attrList.Add(new DirectoryAttribute("userAccountControl", request.UserAccountControl.ToString()));
 
+                    // description يحمل الاسم العربي الكامل حسب معيار الجامعة
                     if (!string.IsNullOrEmpty(request.Description))
                         attrList.Add(new DirectoryAttribute("description", request.Description));
+
+                    if (!string.IsNullOrEmpty(request.EmployeeId))
+                        attrList.Add(new DirectoryAttribute("employeeID", request.EmployeeId));
+                    if (!string.IsNullOrEmpty(request.Mobile))
+                        attrList.Add(new DirectoryAttribute("mobile", request.Mobile));
+                    if (!string.IsNullOrEmpty(request.Company))
+                        attrList.Add(new DirectoryAttribute("company", request.Company));
+                    if (!string.IsNullOrEmpty(request.Department))
+                        attrList.Add(new DirectoryAttribute("department", request.Department));
 
                     var addRequest = new AddRequest(newDn, attrList.ToArray());
                     connection.SendRequest(addRequest);
@@ -1163,22 +1194,15 @@ try
                         return result;
                     }
 
-                    var allowedPrefixes = new[] { "extensionAttribute", "description", "department", "title" };
-
                     foreach (var kvp in extensionAttributes)
                     {
                         var key = kvp.Key;
-                        if (!allowedPrefixes.Any(p => key.StartsWith(p, StringComparison.OrdinalIgnoreCase)))
+
+                        // مطابقة بالاسم الكامل — كانت مطابقة بالبادئة، وده كان بيسمح
+                        // بأي خاصية تبدأ بـ "department" مثلًا زي "departmentNumber".
+                        if (!AllowedSyncAttributes.Contains(key))
                         {
                             _logger.LogWarning("Blocked attempt to set disallowed attribute '{Attr}' on {Dn}", key, distinguishedName);
-                            continue;
-                        }
-
-                        if (key.StartsWith("unicodePwd", StringComparison.OrdinalIgnoreCase) ||
-                            key.Equals("userAccountControl", StringComparison.OrdinalIgnoreCase) ||
-                            key.Equals("memberOf", StringComparison.OrdinalIgnoreCase))
-                        {
-                            _logger.LogWarning("Blocked attempt to set sensitive attribute '{Attr}' on {Dn}", key, distinguishedName);
                             continue;
                         }
 
@@ -1329,10 +1353,17 @@ try
         public string UserPrincipalName { get; set; } = string.Empty;
         public string DisplayName { get; set; } = string.Empty;
         public string? GivenName { get; set; }
+        public string? Initials { get; set; }
         public string? Surname { get; set; }
         public string TargetOu { get; set; } = string.Empty;
         public int UserAccountControl { get; set; } = 512;
         public string? Description { get; set; }
+
+        // خصائص معيار جامعة نجران لحسابات الطلاب
+        public string? EmployeeId { get; set; }   // employeeID ← رقم الهوية
+        public string? Mobile { get; set; }       // mobile     ← رقم الجوال
+        public string? Company { get; set; }      // company    ← الكلية بالعربي
+        public string? Department { get; set; }   // department ← القسم بالعربي
     }
 
     public class ADOperationResult
