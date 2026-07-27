@@ -17,16 +17,28 @@ obj/
 packages/
 *.nupkg
 
-# Deployment artifacts (these have placeholders but production overrides are local)
+# Dev tooling
+dotnet-tools.json
+.config/dotnet-tools.json
+
+# EF migration bundle
+efbundle.exe
+efbundle
+migrate.sql
+
+# Deployment artifacts (placeholders here; production overrides stay local)
 deployment/build/
 deployment/migrations/*.sql
 deployment/rollback/*.sql
 
-# Production config (contains real secrets - NEVER commit)
-appsettings.Production.json
+# Publish output
+publish/
+Publish/
+*.publish.zip
 
 # Logs
 *.log
+logs/
 server-log.txt
 stderr.txt
 stdout.txt
@@ -34,8 +46,8 @@ stderr_diag.txt
 stdout_diag.txt
 dbdiag.log
 
-# Runtime
-publish/
+# User-uploaded files (attachments, ID scans) - never commit
+wwwroot/uploads/
 
 # Scratch
 scratch/

@@ -12,6 +12,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- ملفات الإعدادات البيئية لا تُنسَخ مع مخرجات النشر:
+         • appsettings.Production.json يوضع يدويًا على السيرفر مرة واحدة،
+           فلا تدهسه أي إعادة نشر لاحقة (وهو يحمل الأسرار).
+         • appsettings.Development.json لا مكان له على السيرفر إطلاقًا.
+         • dotnet-tools.json ملف أدوات تطوير، ليس جزءًا من التطبيق. -->
+    <Content Update="appsettings.Production.json" CopyToPublishDirectory="Never" />
+    <Content Update="appsettings.Development.json" CopyToPublishDirectory="Never" />
+    <Content Update="dotnet-tools.json" CopyToPublishDirectory="Never" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="AspNetCoreRateLimit" Version="4.0.2" />
     <PackageReference Include="Mapster" Version="10.0.10" />
     <PackageReference Include="Mapster.DependencyInjection" Version="10.0.7" />
