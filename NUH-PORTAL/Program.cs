@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
@@ -193,6 +194,20 @@ builder.Services.AddCors(options =>
               .AllowAnyHeader();
     });
 });
+
+// ✅ Data Protection — تشفير كوكي الجلسة ورموز مكافحة التزوير (AntiForgery)
+// من غير الإعداد ده، الـ IIS بيحاول يخزّن المفاتيح في سجل ويندوز تحت ملف تعريف
+// حساب الـ Application Pool. النتيجة:
+//   • لو Load User Profile مقفول → استثناء عند توليد رمز AntiForgery
+//     (صفحة /Account/Login بترمي "حدث خطأ غير متوقع")
+//   • لو شغّال → المفاتيح مؤقتة، وكل recycle للـ pool بيسجّل خروج كل المستخدمين
+// الحل: نحفظ المفاتيح في مجلد ثابت جنب التطبيق.
+var keysPath = Path.Combine(builder.Environment.ContentRootPath, "keys");
+Directory.CreateDirectory(keysPath);
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(keysPath))
+    // اسم ثابت — عشان المفاتيح تفضل صالحة حتى لو اتغيّر مسار التطبيق
+    .SetApplicationName("NUH-PORTAL");
 
 // ✅ Rate Limiting
 builder.Services.AddMemoryCache();
