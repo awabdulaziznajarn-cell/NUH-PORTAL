@@ -158,7 +158,7 @@
         if (!res.ok) { list.innerHTML = '<div class="notif-empty">' + NUH_I18N.notifError + '</div>'; return; }
         var data = await res.json();
         list.innerHTML = (data && data.length) ? data.map(function (n) {
-          return '<div class="notif-item" onclick="markNotifRead(' + n.id + ', this)" data-id="' + n.id + '">' +
+          return '<div class="notif-item" onclick="openNotif(' + n.id + ', ' + (n.request_id || 0) + ', this)" data-id="' + n.id + '" style="cursor:pointer">' +
             '<div class="notif-item-dot" style="background:' + (n.status === 'pending' ? '#1B2A5E' : '#CBD5E1') + '"></div>' +
             '<div>' +
               '<div class="notif-item-text">' + escHtml(n.message) + '</div>' +
@@ -180,6 +180,13 @@
         dd.classList.add('open');
         if (!dd.dataset.loaded) { loadNotifDropdown(); dd.dataset.loaded = '1'; }
       }
+    }
+
+    // الضغط على الإشعار بيفتح الطلب اللي اتبعت بسببه. قبل كده كان بيعلّمه مقروء وبس،
+    // فالمستخدم بيدوس ومفيش أي استجابة ظاهرة غير إن النقطة بتبهت.
+    async function openNotif(id, requestId, el) {
+      await markNotifRead(id, el);
+      if (requestId) window.location.href = '/Requests/Details/' + requestId;
     }
 
     async function markNotifRead(id, el) {

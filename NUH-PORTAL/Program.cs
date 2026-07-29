@@ -1,4 +1,4 @@
-﻿using AspNetCoreRateLimit;
+using AspNetCoreRateLimit;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -321,6 +321,22 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 // ملاحظة: مخطط قاعدة البيانات يُدار عبر EF Migrations (مجلد Migrations + سكربتات deployment/migrations).
 // التعديلات اللي كانت بتتنفّذ هنا وقت التشغيل (drop CHECK / add bulk_request_id / varchar→nvarchar)
 // أصبحت متضمّنة في الـ migrations واتشالت. لتهيئة قاعدة بيانات جديدة استخدم: dotnet ef database update
+
+// ✅ الأدوار وصلاحياتها — في كل البيئات، لأنها بيانات أساسية مش بيانات تطوير.
+// من غيرها جدول AspNetRoleClaims بيفضل فاضي، فكل [Authorize(Policy = "...")] بيفشل،
+// وبما إن AccessDeniedPath تحت هو نفسه صفحة الدخول، المستخدم بيبان كأنه بيتسجّل
+// خروج فور ما يدخل — وهو في الحقيقة داخل بس بصفر صلاحيات.
+// try/catch عشان لو الـ migration لسه ماتطبّقتش مايكسرش الإقلاع.
+try
+{
+    using var roleScope = app.Services.CreateScope();
+    var roleMgr = roleScope.ServiceProvider.GetRequiredService<RoleManager<Role>>();
+    await DbSeeder.SeedRolesAndPermissionsAsync(roleMgr);
+}
+catch (Exception ex)
+{
+    app.Logger.LogWarning(ex, "Role/permission seeding skipped — run 'dotnet ef database update' first.");
+}
 
 // ✅ Seed dev users (Development فقط) — للدخول عبر local fallback من غير AD
 // بينشئ: admin / cyber / supervisor / user — كلهم بالباسورد Test@123

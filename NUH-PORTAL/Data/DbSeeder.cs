@@ -12,16 +12,17 @@ namespace NUH_PORTAL.Data
     {
         public const string DevPassword = "Test@123";
 
-        public static async Task SeedDevUsersAsync(UserManager<User> userManager, RoleManager<Role> roleManager)
+        // الأدوار وصلاحياتها — دي بيانات أساسية للنظام، مش بيانات تطوير.
+        // بتتنادى من Program.cs في كل البيئات (زي SeedLookups بالظبط) وليس في Development وحدها.
+        //
+        // كانت جوه SeedDevUsersAsync اللي بتشتغل في Development بس، والنتيجة على السيرفر:
+        // جدول AspNetRoleClaims فاضي → PermissionService بيرجّع قائمة صلاحيات فاضية →
+        // كل [Authorize(Policy = "...")] بيفشل. وبما إن AccessDeniedPath في Program.cs
+        // هو نفسه صفحة الدخول، المستخدم كان بيبان كأنه اتسجّل خروج فور ما يدخل.
+        //
+        // idempotent بالكامل — تقدر تنادّيها كل إقلاع بأمان.
+        public static async Task SeedRolesAndPermissionsAsync(RoleManager<Role> roleManager)
         {
-            var seed = new (string Username, string Role, string FullName)[]
-            {
-                ("admin",      "admin",      "System Admin"),
-                ("cyber",      "cyber",      "Cyber Security"),
-                ("supervisor", "supervisor", "Housing Supervisor"),
-                ("user",       "user",       "Housing User"),
-            };
-
             // الأدوار الأساسية
             foreach (var role in new[] { "admin", "cyber", "supervisor", "user" })
                 if (!await roleManager.RoleExistsAsync(role))
@@ -41,23 +42,42 @@ namespace NUH_PORTAL.Data
             // دور الطالب (OTP) — بدون صلاحيات موظفين. كان requests.view وده كان بيخلّي توكن الطالب
             // يوصل endpoints المفروض للموظفين؛ الطالب بيتابع طلبه عبر /api/Registration و /api/RequestTracking.
             await AssignRolePermissionsAsync(roleManager, "user", Array.Empty<string>());
+        }
+
+        public static async Task SeedDevUsersAsync(UserManager<User> userManager, RoleManager<Role> roleManager)
+        {
+            var seed = new (string Username, string Role, string FullName)[]
+            {
+                ("admin",      "admin",      "System Admin"),
+                ("cyber",      "cyber",      "Cyber Security"),
+                ("supervisor", "supervisor", "Housing Supervisor"),
+                ("user",       "user",       "Housing User"),
+            };
+
+            await SeedRolesAndPermissionsAsync(roleManager);
 
             // المستخدمون (بهاشر Identity — الباسورد للكل DevPassword)
             foreach (var (username, role, fullName) in seed)
             {
-                if (await userManager.FindByNameAsync(username) != null)
-                    continue;
+                var user = await userManager.FindByNameAsync(username);
 
-                var user = new User
+                if (user == null)
                 {
-                    UserName = username,
-                    full_name = fullName,
-                    Email = username + "@nu.edu.sa",
-                    is_active = true,
-                    created_at = DateTime.UtcNow
-                };
-                var res = await userManager.CreateAsync(user, DevPassword);
-                if (res.Succeeded)
+                    user = new User
+                    {
+                        UserName = username,
+                        full_name = fullName,
+                        Email = username + "@nu.edu.sa",
+                        is_active = true,
+                        created_at = DateTime.UtcNow
+                    };
+                    var res = await userManager.CreateAsync(user, DevPassword);
+                    if (!res.Succeeded) continue;
+                }
+
+                // المستخدم موجود من قبل؟ نتأكد إن له دوره برضه — قبل كده كان بيتخطّى بالكامل،
+                // فمستخدم زي admin اتعمل من نظام سابق كان بيفضل بلا أي دور وبالتالي بصفر صلاحيات.
+                if (!await userManager.IsInRoleAsync(user, role))
                     await userManager.AddToRoleAsync(user, role);
             }
 

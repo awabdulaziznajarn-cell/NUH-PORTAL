@@ -298,20 +298,28 @@ namespace NUH_PORTAL.Services
         }
 
         // تفكيك الاسم الإنجليزي حسب معيار الجامعة:
-        //   "MOHAMMED SALEM ALSAIARI"          → (MOHAMMED, "S",  ALSAIARI)
-        //   "MOHAMMED SALEM MOHAMMED ALSAIARI" → (MOHAMMED, "SM", ALSAIARI)
-        //   "AHMED ALI"                        → (AHMED,    null, ALI)
+        //   initials = أول حرف من اسم الأب فقط (الاسم الثاني) — مش كل الأسماء الوسطى.
+        //   "MOHAMMED SALEM ALSAIARI"              → (MOHAMMED, "S", ALSAIARI)
+        //   "MOHAMMED SALEM MOHAMMED ALSAIARI"     → (MOHAMMED, "S", ALSAIARI)
+        //   "MOHAMMED SALEM MOHAMMED ALI ALSAIARI" → (MOHAMMED, "S", ALSAIARI)   ← خماسي
+        //   "AHMED ALI"                            → (AHMED,    null, ALI)
+        //
+        // فورم التسجيل بياخد الاسم في تلات خانات (الأول / الأب والجد / العائلة) وبيلزّقهم
+        // بمسافة واحدة، فالمدخل هنا نضيف دايمًا للطلبات الجديدة. الفحوص تحت للطلبات القديمة
+        // اللي اتسجّلت بالفورم القديم (خانة واحدة) — ممكن تكون باسم واحد أو اتنين.
         private static (string given, string? initials, string sn) SplitEnglishName(string? fullNameEn, string fallback)
         {
-            var parts = (fullNameEn ?? "").Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            // فاصل null = أي مسافة بيضاء (Tab، NBSP، سطر جديد) مش المسافة العادية بس.
+            // بيانات قديمة اتلصقت من Word ممكن يكون فيها NBSP بين الأسماء، وبالفاصل
+            // الصريح ' ' كان اسمين بيتحسبوا اسم واحد.
+            var parts = (fullNameEn ?? "").Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
 
             if (parts.Length == 0) return (fallback, null, fallback);
             if (parts.Length == 1) return (parts[0], null, parts[0]);
             if (parts.Length == 2) return (parts[0], null, parts[1]);
 
-            // الأحرف الأولى للأسماء الوسطى — خاصية initials في AD محدودة بـ 6 أحرف
-            var middle = string.Concat(parts[1..^1].Select(p => char.ToUpperInvariant(p[0])));
-            if (middle.Length > 6) middle = middle[..6];
+            // اسم الأب فقط — حرف واحد، وخاصية initials في AD محدودة بـ 6 أحرف أصلاً
+            var middle = char.ToUpperInvariant(parts[1][0]).ToString();
 
             return (parts[0], middle, parts[^1]);
         }

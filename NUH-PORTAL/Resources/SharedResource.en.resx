@@ -4144,4 +4144,10 @@
   <data name="lk_deactivated" xml:space="preserve">
     <value>Deactivated</value>
   </data>
+  <data name="rdp_lbl_submitter" xml:space="preserve">
+    <value>Submitted by:</value>
+  </data>
+  <data name="rdp_lbl_actionBy" xml:space="preserve">
+    <value>By:</value>
+  </data>
 </root>

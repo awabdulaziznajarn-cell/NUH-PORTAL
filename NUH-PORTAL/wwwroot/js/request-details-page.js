@@ -142,7 +142,10 @@ function renderRequest(r) {
     });
   } else {
     if (r.submittedAt) {
-      historyEntries.push({ label: t('rdp_tl_requestCreated'), cls:'approved', time:r.submittedAt, notes:null, username: r.submittedByName });
+      // مقدّم الطلب = اسم الطالب نفسه. r.submittedByName هو اسم حساب الدخول، واللي في
+      // التسجيل الذاتي بيتخلق من مسار الـ OTP باسم "طالب" لو الطالب لسه مش مسجّل في
+      // جدول الطلاب — فالسجل كان بيعرض "طالب" بدل اسم صاحب الطلب.
+      historyEntries.push({ label: t('rdp_tl_requestCreated'), cls:'approved', time:r.submittedAt, notes:null, username: (s.fullNameArabic || s.full_name || r.submittedByName), isSubmitter:true });
     }
     if (r.housingReviewedAt) {
       var housingLabel = st === 'housing_rejected'
@@ -172,9 +175,11 @@ function renderRequest(r) {
     var dotCls = e.cls;
     var dateStr = fmtDate(e.time);
     var timeStr = fmtTime(e.time);
-    var userHtml = e.username ? '<div class="tl-row"><span class="tl-label">'+t('rdp_lbl_user')+'</span><span class="tl-value username">'+escHtml(e.username)+'</span></div>' : '';
+    // "مقدّم الطلب" لخطوة التقديم، و"بواسطة" لباقي المراحل — دي إجراءات موظفين مش تقديم.
+    var userLabel = e.isSubmitter ? t('rdp_lbl_submitter') : t('rdp_lbl_actionBy');
+    var userHtml = e.username ? '<div class="tl-row"><span class="tl-label">'+userLabel+'</span><span class="tl-value username">'+escHtml(e.username)+'</span></div>' : '';
     var notesHtml = '<div class="tl-notes">'+t('rdp_lbl_notes')+' '+(e.notes && e.cls==='rejected'?escHtml(e.notes):t('rdp_msg_noNotes'))+'</div>';
-    return '<div class="tl-item"><div class="tl-dot '+dotCls+'"></div><div class="tl-content"><div class="tl-title">'+title+'</div>'+userHtml+'<div class="tl-row"><span class="tl-label">'+t('rdp_lbl_date')+'</span><span class="tl-value">'+dateStr+'</span></div><div class="tl-row"><span class="tl-label">'+t('rdp_lbl_time')+'</span><span class="tl-value">'+timeStr+'</span></div>'+notesHtml+'</div></div>';
+    return '<div class="tl-item"><div class="tl-dot '+dotCls+'"></div><div class="tl-content"><div class="tl-title">'+title+'</div>'+userHtml+'<div class="tl-row"><span class="tl-label">'+t('rdp_lbl_date')+'</span><span class="tl-value">'+dateStr+' - '+timeStr+'</span></div>'+notesHtml+'</div></div>';
   }).join('');
   if (!historyHtml) {
     historyHtml = '<div class="history-empty">'+t('rdp_msg_noReviews')+'</div>';
@@ -606,12 +611,11 @@ async function submitReview(currentStatus) {
       document.getElementById('submitReviewBtn').textContent = t('rdp_btn_submitReview');
       return;
     }
-    if (isSelfRegAction) {
-      setTimeout(function() { window.location.href = '/Requests'; }, 1500);
-    } else {
-      loadRequest();
-      loadUnreadCount();
-    }
+    // نفضل على صفحة الطلب في كل الحالات ونحدّثها مكانها. قبل كده التسجيل الذاتي كان
+    // بيرمي المراجع على قائمة الطلبات، فيفقد سياق اللي عمله للتو ومايشوفش المرحلة
+    // الجديدة ولا سطر سجل المراجعات اللي اتضاف باسمه.
+    // التأخير عشان رسالة النجاح تبان قبل التحديث.
+    setTimeout(function () { loadRequest(); loadUnreadCount(); }, 1200);
   } catch(e) {
     alert(t('rdp_msg_connectionError'));
     document.getElementById('submitReviewBtn').disabled = false;

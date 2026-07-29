@@ -4144,4 +4144,10 @@
   <data name="lk_deactivated" xml:space="preserve">
     <value>تم إلغاء التفعيل</value>
   </data>
+  <data name="rdp_lbl_submitter" xml:space="preserve">
+    <value>مقدّم الطلب:</value>
+  </data>
+  <data name="rdp_lbl_actionBy" xml:space="preserve">
+    <value>بواسطة:</value>
+  </data>
 </root>

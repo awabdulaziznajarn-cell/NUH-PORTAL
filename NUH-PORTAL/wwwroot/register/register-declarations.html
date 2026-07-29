@@ -33,6 +33,7 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);col
 .btn-primary{background:var(--navy);color:var(--white)}
 .btn-primary:hover{background:var(--navy-light);transform:translateY(-1px)}
 .btn-primary:disabled{opacity:0.5;cursor:not-allowed}
+.btn-primary:disabled:hover{background:var(--navy);transform:none}
 .aup-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--navy);text-decoration:none;padding:8px 16px;border-radius:8px;border:1.5px solid var(--navy);margin-bottom:16px;transition:all 0.2s}
 .aup-link:hover{background:var(--navy);color:var(--white)}
 .alert{padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:16px;display:none}
@@ -79,7 +80,7 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);col
 <input type="checkbox" id="agreeCheck">
 <label for="agreeCheck">أقرّ بأني قرأت التعهدات أعلاه وأوافق عليها.</label>
 </div>
-<button id="acceptBtn" class="btn btn-primary" onclick="acceptDeclarations()">قبول والمتابعة</button>
+<button id="acceptBtn" class="btn btn-primary" onclick="acceptDeclarations()" disabled>قبول والمتابعة</button>
 </div>
 </div>
 <script>
@@ -101,6 +102,27 @@ async function acceptDeclarations() {
   localStorage.setItem('policyAccepted', 'true');
   window.location.href = 'register-form.html';
 }
+
+// زرار "قبول والمتابعة" يفضل مقفول لحد ما الطالب يعلّم على مربع الإقرار.
+// التحقق جوه acceptDeclarations() سايبينه زي ما هو كشبكة أمان — القفل ده
+// في الواجهة بس، وأي حد يقدر يشيله من أدوات المطوّر.
+(function () {
+  var chk = document.getElementById('agreeCheck');
+  var btn = document.getElementById('acceptBtn');
+  if (!chk || !btn) return;
+  function syncAcceptBtn() {
+    btn.disabled = !chk.checked;
+    // لو كان ظهر تنبيه "يرجى الموافقة" قبل كده، يختفي أول ما يوافق
+    if (chk.checked) {
+      var el = document.getElementById('alertMessage');
+      if (el) el.className = 'alert';
+    }
+  }
+  chk.addEventListener('change', syncAcceptBtn);
+  // الحالة الابتدائية — مهمة كمان لأن المتصفح بيفتكر آخر قيمة للـ checkbox
+  // لما ترجع بزرار Back، فالزرار لازم يتزامن معاها مش يفضل مقفول غلط.
+  syncAcceptBtn();
+})();
 
 // بنود التعهّد من قاعدة البيانات (المدير بيديرها من شاشة /Lookups) — بديل النص الثابت.
 // لو الـ API رجّع بنود بنعرضها؛ وإلا بيفضل النص الثابت زي ما هو (fallback آمن قبل الميجريشن).
