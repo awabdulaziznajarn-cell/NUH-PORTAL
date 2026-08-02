@@ -62,6 +62,21 @@ namespace NUH_PORTAL.Services
                 await _userManager.AddToRoleAsync(user, "user");
         }
 
+        // Students.phone متخزّن 9665XXXXXXXX، لكن الطالب بيكتب 05XXXXXXXX في شاشة
+        // التحقق. من غير تطبيع، البحث عن الطالب برقمه بيفشل دايمًا، فبيتعمل حساب
+        // اسمه "طالب" ومربوط بصيغة رقم مختلفة — وده كان بيظهر في مسار الطلب
+        // وبيكسر أي مقارنة لاحقة بين الحسابين.
+        // نفس منطق NormalizeMobile في RegistrationFlowService و normalizeSaudiMobile في الواجهة.
+        private static string? NormalizeMobile(string? mobile)
+        {
+            if (string.IsNullOrWhiteSpace(mobile)) return null;
+            var d = new string(mobile.Where(char.IsDigit).ToArray());
+            if (d.StartsWith("00966")) d = d[2..];
+            if (d.StartsWith("966")) d = d[3..];
+            if (d.StartsWith("0")) d = d[1..];
+            return d.Length == 9 && d[0] == '5' ? "966" + d : null;
+        }
+
         private (string? ip, string ua) ClientInfo()
         {
             var ctx = _http.HttpContext;
@@ -73,6 +88,10 @@ namespace NUH_PORTAL.Services
             if (string.IsNullOrWhiteSpace(request.Mobile))
                 throw new UserFriendlyException("رقم الجوال مطلوب", 400);
 
+            // الرمز بيتخزّن ويتحقق منه على الصيغة الموحّدة، عشان لو الطالب كتب
+            // 05... وقت الإرسال و966... وقت التحقق (أو العكس) يفضل نفس السجل.
+            var mobile = NormalizeMobile(request.Mobile) ?? request.Mobile.Trim();
+
             var (ip, ua) = ClientInfo();
             var otpMode = _config["Otp:Mode"] ?? "Sms";
             string code;
@@ -83,12 +102,12 @@ namespace NUH_PORTAL.Services
                 if (otpMode == "Static")
                 {
                     var staticCode = _config["Otp:StaticCode"] ?? "123456";
-                    (code, expiresAt) = await _otpService.GenerateOtpAsync(request.Mobile, ip, staticCode);
+                    (code, expiresAt) = await _otpService.GenerateOtpAsync(mobile, ip, staticCode);
                 }
                 else
                 {
-                    (code, expiresAt) = await _otpService.GenerateOtpAsync(request.Mobile, ip);
-                    await _smsService.SendOtpAsync(request.Mobile, code);
+                    (code, expiresAt) = await _otpService.GenerateOtpAsync(mobile, ip);
+                    await _smsService.SendOtpAsync(mobile, code);
                 }
             }
             catch (InvalidOperationException ex)
@@ -111,21 +130,30 @@ namespace NUH_PORTAL.Services
             if (string.IsNullOrWhiteSpace(request.Mobile) || string.IsNullOrWhiteSpace(request.Code))
                 throw new UserFriendlyException("رقم الجوال ورمز التحقق مطلوبان", 400);
 
-            var valid = await _otpService.VerifyOtpAsync(request.Mobile, request.Code);
+            var raw = request.Mobile.Trim();
+            var mobile = NormalizeMobile(raw) ?? raw;
+
+            // بنجرّب الصيغة الموحّدة الأول وبعدين اللي اتكتب — عشان أي رمز اتبعت
+            // قبل التعديل ده (متخزّن بالصيغة الخام) يفضل يتحقق عادي.
+            var valid = await _otpService.VerifyOtpAsync(mobile, request.Code)
+                     || (mobile != raw && await _otpService.VerifyOtpAsync(raw, request.Code));
             if (!valid)
                 throw new UserFriendlyException("رمز التحقق غير صحيح أو منتهي الصلاحية", 400);
 
-            var student = await _students.FindAsync(s => s.phone == request.Mobile);
-            var user = await _users.FindAsync(u => u.mobile == request.Mobile);
+            // ⚠️ البحث بالصيغتين. قبل كده كان بالصيغة اللي اتكتبت بس، فالطالب
+            //    المسجّل بـ 9665... مكانش بيتلاقى لما يكتب 05...، وكان بيتعمل
+            //    حساب جديد اسمه "طالب" بدل ما يترتبط ببياناته.
+            var student = await _students.FindAsync(s => s.phone == mobile || s.phone == raw);
+            var user = await _users.FindAsync(u => u.mobile == mobile || u.mobile == raw);
 
             if (user == null)
             {
                 user = new User
                 {
-                    UserName = "student_" + (student?.student_id ?? request.Mobile.Replace("+", "").Replace(" ", "")),
+                    UserName = "student_" + (student?.student_id ?? mobile),
                     full_name = student?.full_name ?? "طالب",
-                    Email = request.Mobile + "@student.nu.edu.sa",
-                    mobile = request.Mobile,
+                    Email = mobile + "@student.nu.edu.sa",
+                    mobile = mobile,
                     is_active = true,
                     created_at = DateTime.UtcNow
                 };
@@ -134,6 +162,18 @@ namespace NUH_PORTAL.Services
             }
             else
             {
+                // إصلاح ذاتي للحسابات القديمة: توحيد صيغة الرقم، وتعويض الاسم
+                // اللي اتخزّن "طالب" لما البحث كان بيفشل. بيتصلح من أول دخول.
+                var needsUpdate = false;
+                if (user.mobile != mobile) { user.mobile = mobile; needsUpdate = true; }
+                if (student?.full_name != null &&
+                    (string.IsNullOrWhiteSpace(user.full_name) || user.full_name == "طالب"))
+                {
+                    user.full_name = student.full_name;
+                    needsUpdate = true;
+                }
+                if (needsUpdate) await _userManager.UpdateAsync(user);
+
                 await EnsureUserRoleAsync(user);
             }
 

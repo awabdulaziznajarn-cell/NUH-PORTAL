@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>نموذج التسجيل</title>
 <script src="../i18n.js"></script>
+<script src="../js/housing-fields.js"></script>
 <style>
 @font-face { font-family:'IBM Plex Sans Arabic'; font-style:normal; font-weight:400; src:url('../fonts/IBMPlexSansArabic-Regular.woff2') format('woff2'); }
 @font-face { font-family:'IBM Plex Sans Arabic'; font-style:normal; font-weight:600; src:url('../fonts/IBMPlexSansArabic-SemiBold.woff2') format('woff2'); }
@@ -225,15 +226,33 @@ select.form-control{appearance:auto}
 </select>
 <span class="field-error" id="err-housing_building">اختر المبنى</span>
 </div>
+<div class="field">
+<label>رقم الدور <span>*</span></label>
+<select id="floor_number" class="form-control" required>
+<option value="">اختر الدور</option>
+<option value="0">الأرضي</option>
+<option value="1">1</option>
+<option value="2">2</option>
+<option value="3">3</option>
+<option value="4">4</option>
+</select>
+<span class="field-error" id="err-floor_number">اختر الدور</span>
+</div>
 </div>
 <div class="form-row">
 <div class="field">
-<label>رقم الشقة</label>
-<input type="text" id="apartment_number" class="form-control">
+<label>رقم الشقة <span>*</span></label>
+<select id="apartment_number" class="form-control" required disabled>
+<option value="">اختر الدور أولاً</option>
+</select>
+<span class="field-error" id="err-apartment_number">اختر رقم الشقة</span>
 </div>
 <div class="field">
-<label>رقم الغرفة</label>
-<input type="text" id="room_number" class="form-control">
+<label>رقم الغرفة <span>*</span></label>
+<select id="room_number" class="form-control" required>
+<option value="">اختر رقم الغرفة</option>
+</select>
+<span class="field-error" id="err-room_number">اختر رقم الغرفة</span>
 </div>
 </div>
 </div>
@@ -442,7 +461,13 @@ document.getElementById('ad_username').addEventListener('input', function() {
   this._manuallyEdited = true;
 });
 
-['college','department','academic_level','gender','housing_building'].forEach(function(id) {
+// الشقة بتتولد من الدور، والغرفة 1-4 — المنطق كله في js/housing-fields.js
+var housingRefresh = NuhHousing.attach({
+  floor: 'floor_number', apartment: 'apartment_number', room: 'room_number',
+  labels: { floorFirst: 'اختر الدور أولاً', selectApartment: 'اختر رقم الشقة', selectRoom: 'اختر رقم الغرفة' }
+});
+
+['college','department','academic_level','gender','housing_building','floor_number','apartment_number','room_number'].forEach(function(id) {
   document.getElementById(id).addEventListener('change', function() {
     var err = document.getElementById('err-' + id); if (this.value) err.classList.remove('show');
   });
@@ -462,7 +487,7 @@ function validate() {
   document.getElementById('err-name_en').classList.toggle('show', missing.en);
   if (!checkNameMatch()) ok = false;
 
-  var required = ['student_id','national_id','phone','college','department','academic_level','gender','housing_building'];
+  var required = ['student_id','national_id','phone','college','department','academic_level','gender','housing_building','floor_number','apartment_number','room_number'];
   required.forEach(function(id) {
     var el = document.getElementById(id);
     var err = document.getElementById('err-' + id);
@@ -494,7 +519,7 @@ function fillForm(data) {
     student_id: 'student_id', national_id: 'national_id',
     phone: 'phone', gender: 'gender', college: 'college',
     department: 'department', academic_level: 'academic_level',
-    housing_building: 'housing_building',
+    housing_building: 'housing_building', floor_number: 'floor_number',
     room_number: 'room_number', apartment_number: 'apartment_number',
     ad_username: 'ad_username'
   };
@@ -503,6 +528,7 @@ function fillForm(data) {
     if (el && data[key] !== undefined && data[key] !== null) el.value = data[key];
   }
   if (data.gender) updateBuildings();
+  housingRefresh(); // الشقة بتعتمد على الدور المحمَّل
 }
 
 async function loadEditData() {
@@ -538,6 +564,7 @@ async function submitForm(e) {
     academic_level: document.getElementById('academic_level').value,
     ad_username: document.getElementById('ad_username').value.trim(),
     housing_building: document.getElementById('housing_building').value,
+    floor_number: document.getElementById('floor_number').value,
     room_number: document.getElementById('room_number').value.trim(),
     apartment_number: document.getElementById('apartment_number').value.trim(),
     // خانة "الحالة" اتشالت من الفورم — الطالب مالوش دعوة يحدد حالة سكنه.

@@ -21,6 +21,9 @@ namespace NUH_PORTAL.Data.Configurations
             // status: enum متخزّن كنص (active/inactive/left)
             builder.Property(s => s.status).HasConversion(new StudentStateConverter()).HasMaxLength(20);
 
+            // الدور: كود قصير ("0" للأرضي، "1".."4") — nvarchar(20) بدل nvarchar(max)
+            builder.Property(s => s.floor_number).HasMaxLength(20);
+
             builder.HasIndex(s => s.student_id).IsUnique();
             builder.HasIndex(s => s.national_id).IsUnique();
 

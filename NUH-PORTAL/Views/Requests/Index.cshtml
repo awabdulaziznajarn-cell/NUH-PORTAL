@@ -134,10 +134,14 @@
 </div>
 
 @functions {
+    // ⚠️ ماتخترعش رقم طلب. الرقم المصنوع هنا (REQ-000009) كان بيتعرض للمستخدم
+    //    وهو *مش متخزّن* في قاعدة البيانات، فالطالب يكتبه في صفحة التتبع ومايتلاقاش.
+    //    وكان الأسوأ إن صفحة التفاصيل بتخترع صيغة تانية لنفس الطلب (2026-000009)،
+    //    فنفس الطلب ليه رقمين مختلفين على الشاشة ومفيش واحد فيهم حقيقي.
+    //    الرقم بقى بيتولّد ويتخزّن وقت إنشاء الطلب (RequestService.CreateAsync)،
+    //    والصفوف القديمة اتعبّت بـ BackfillRequestNumbers.sql. لو فاضل NULL نعرض شرطة.
     private static string ReqNum(string? requestNumber, string? type, int id)
-        => !string.IsNullOrEmpty(requestNumber)
-            ? requestNumber
-            : (type == "bulk_req" ? "BRQ-" : "REQ-") + id.ToString("D6");
+        => string.IsNullOrEmpty(requestNumber) ? "—" : requestNumber;
 
 }
 
@@ -176,10 +180,9 @@
       .replace('{0}', state.page).replace('{1}', state.totalPages || 1).replace('{2}', state.total);
   }
 
+  // ماتخترعش رقم — راجع التعليق على ReqNum فوق
   function reqNum(r) {
-    if (r.requestNumber) return r.requestNumber;
-    var prefix = r.requestType === 'bulk_req' ? 'BRQ-' : 'REQ-';
-    return prefix + String(r.id).padStart(6, '0');
+    return r.requestNumber || '—';
   }
 
   function actionsFor(s, id) {

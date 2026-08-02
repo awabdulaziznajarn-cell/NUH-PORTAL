@@ -6,6 +6,9 @@ namespace NUH_PORTAL.Services.Interfaces
     public interface IRequestTrackingService
     {
         Task<List<TrackedRequestDto>> TrackByMobileAsync(string mobile);
-        Task<TrackingDetailsDto> TrackByNumberAsync(string requestNumber);
+        // last4 = آخر ٤ أرقام من جوال الطالب. مطلوبة عشان رقم الطلب لوحده متسلسل
+        // (2026-000001, 000002, ...) فكان ممكن حد يعدّي عليه بالترتيب. المعلومتين
+        // مع بعض بتخلّي التخمين غير عملي، وبتكلفة صفر (من غير رسائل ولا تسجيل دخول).
+        Task<TrackingDetailsDto> TrackByNumberAsync(string requestNumber, string? last4);
     }
 }

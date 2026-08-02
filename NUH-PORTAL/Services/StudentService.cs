@@ -210,6 +210,7 @@ namespace NUH_PORTAL.Services
                 ("department", student.department, dto.department),
                 ("academic_level", student.academic_level, dto.academic_level),
                 ("housing_building", student.housing_building, dto.housing_building),
+                ("floor_number", student.floor_number, dto.floor_number),
                 ("room_number", student.room_number, dto.room_number),
                 ("apartment_number", student.apartment_number, dto.apartment_number),
                 ("status", student.status?.ToString(), dto.status?.ToString()),
@@ -229,6 +230,7 @@ namespace NUH_PORTAL.Services
                     else if (field == "department") student.department = dto.department;
                     else if (field == "academic_level") student.academic_level = dto.academic_level;
                     else if (field == "housing_building" && !string.IsNullOrEmpty(dto.housing_building)) student.housing_building = dto.housing_building;
+                    else if (field == "floor_number") student.floor_number = dto.floor_number;
                     else if (field == "room_number" && !string.IsNullOrEmpty(dto.room_number)) student.room_number = dto.room_number;
                     else if (field == "apartment_number") student.apartment_number = dto.apartment_number;
                     else if (field == "status" && dto.status != null) student.status = dto.status;
@@ -338,8 +340,10 @@ namespace NUH_PORTAL.Services
                 errors.Add("الاسم بالعربية: يرجى إدخال الاسم باللغة العربية فقط");
             if (string.IsNullOrEmpty(fullNameEn) || !Regex.IsMatch(fullNameEn, @"^[a-zA-Z\s]+$"))
                 errors.Add("الاسم بالإنجليزية: يرجى إدخال الاسم باللغة الإنجليزية فقط");
-            if (string.IsNullOrEmpty(studentId) || !Regex.IsMatch(studentId, @"^\d{9,10}$"))
-                errors.Add("الرقم الجامعي: يجب أن يتكون الرقم الجامعي من 9 أو 10 أرقام");
+            // الرقم الجامعي في جامعة نجران: ٩ أرقام بالظبط وبيبدأ بـ 4.
+            // كان ^\d{9,10}$ — بيقبل ١٠ أرقام وبيقبل أي بداية.
+            if (string.IsNullOrEmpty(studentId) || !Regex.IsMatch(studentId, @"^4\d{8}$"))
+                errors.Add("الرقم الجامعي: يجب أن يبدأ بالرقم 4 ويتكون من 9 أرقام");
             if (string.IsNullOrEmpty(nationalId) || !Regex.IsMatch(nationalId, @"^\d{10}$"))
                 errors.Add("رقم الهوية: يجب أن يتكون رقم الهوية من 10 أرقام");
             if (!string.IsNullOrEmpty(phone) && !Regex.IsMatch(phone, @"^9665\d{8}$"))

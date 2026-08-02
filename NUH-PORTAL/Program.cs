@@ -139,10 +139,25 @@ builder.Services.AddAuthentication(options =>
 })
     .AddPolicyScheme("NUH_Smart", "Cookie or Bearer", options =>
     {
+        // ⚠️ الترتيب هنا مهم جدًا: هيدر Authorization: Bearer له الأولوية على الكوكي.
+        //
+        //    قبل كده كان الكوكي بيكسب دايمًا. النتيجة: موظف داخل بحسابه في نفس
+        //    المتصفح (كوكي NUH.Auth موجود) يفتح صفحة تتبع الطالب — الصفحة بتبعت
+        //    توكن الطالب في الهيدر، لكن السيرفر كان بيتجاهله ويتعامل معاه كأدمن.
+        //    فبيرجّعله كل طلبات النظام بدل طلبات صاحب الجوال اللي اتحقق منه.
+        //
+        //    الطلب اللي فيه Bearer صريح لازم يتقيّم بالتوكن ده هو، مهما كان في
+        //    المتصفح كوكيز تانية.
         options.ForwardDefaultSelector = context =>
-            context.Request.Cookies.ContainsKey("NUH.Auth")
+        {
+            var authHeader = context.Request.Headers.Authorization.ToString();
+            if (authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                return JwtBearerDefaults.AuthenticationScheme;
+
+            return context.Request.Cookies.ContainsKey("NUH.Auth")
                 ? Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme
                 : JwtBearerDefaults.AuthenticationScheme;
+        };
     })
     .AddJwtBearer(options =>
     {

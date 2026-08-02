@@ -15,6 +15,7 @@ namespace NUH_PORTAL.Services
     public class RegistrationFlowService : AppServiceBase, IRegistrationFlowService
     {
         private readonly IRepository<Student> _students;
+        private readonly IRepository<User> _users;
         private readonly IRepository<Request> _requests;
         private readonly IRepository<StudentDeclaration> _declarations;
         private readonly IRegistrationService _registration;
@@ -24,6 +25,7 @@ namespace NUH_PORTAL.Services
 
         public RegistrationFlowService(
             IRepository<Student> students,
+            IRepository<User> users,
             IRepository<Request> requests,
             IRepository<StudentDeclaration> declarations,
             IRegistrationService registration,
@@ -34,6 +36,7 @@ namespace NUH_PORTAL.Services
             IMapper mapper) : base(unitOfWork, mapper)
         {
             _students = students;
+            _users = users;
             _requests = requests;
             _declarations = declarations;
             _registration = registration;
@@ -46,6 +49,27 @@ namespace NUH_PORTAL.Services
         {
             var ctx = _http.HttpContext;
             return (ctx?.Connection.RemoteIpAddress?.ToString(), ctx?.Request.Headers.UserAgent.ToString() ?? "");
+        }
+
+        // الأدوار الوظيفية اللي ليها حق يشوفوا طلب أي طالب. أي دور تاني (بما فيه
+        // دور فاضي أو غير معروف) بيتعامل كطالب — منع افتراضي مش سماح افتراضي.
+        private static bool IsStaffRole(string? role) =>
+            string.Equals(role, "admin", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(role, "supervisor", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(role, "cyber", StringComparison.OrdinalIgnoreCase);
+
+        // Students.phone متخزّن 9665XXXXXXXX، لكن الطالب بيكتب 05XXXXXXXX في شاشة
+        // الـ OTP وده اللي بيتخزّن في Users.mobile. من غير التطبيع ده أي مقارنة بين
+        // الاتنين بتفشل، وتحقق الملكية تحت كان هيرفض صاحب الطلب نفسه.
+        // نفس منطق normalizeSaudiMobile في register-form.html بالحرف.
+        private static string? NormalizeMobile(string? mobile)
+        {
+            if (string.IsNullOrWhiteSpace(mobile)) return null;
+            var d = new string(mobile.Where(char.IsDigit).ToArray());
+            if (d.StartsWith("00966")) d = d[2..];
+            if (d.StartsWith("966")) d = d[3..];
+            if (d.StartsWith("0")) d = d[1..];
+            return d.Length == 9 && d[0] == '5' ? "966" + d : null;
         }
 
         private int RequireActor()
@@ -75,6 +99,7 @@ namespace NUH_PORTAL.Services
                     department = ExtractRegField(request.RegistrationData, "department"),
                     academic_level = ExtractRegField(request.RegistrationData, "academic_level"),
                     housing_building = ExtractRegField(request.RegistrationData, "housing_building"),
+                    floor_number = ExtractRegField(request.RegistrationData, "floor_number"),
                     room_number = ExtractRegField(request.RegistrationData, "room_number"),
                     apartment_number = ExtractRegField(request.RegistrationData, "apartment_number"),
                     status = (ExtractRegField(request.RegistrationData, "status") ?? "active").Trim().ToLowerInvariant() switch
@@ -152,20 +177,37 @@ namespace NUH_PORTAL.Services
                 .Include(r => r.Student)
                 .Where(r => r.RequestType == RequestType.self_registration);
 
-            if (userRole == "user" || userRole == "student")
+            // منع افتراضي: بنسمح بالعرض الكامل للأدوار الوظيفية المعروفة بس.
+            // الشرط القديم كان "لو الدور طالب فلتر" — يعني توكن بدور فاضي أو دور
+            // مش معروف كان بياخد كل الطلبات. دلوقتي أي دور مش في القائمة دي
+            // بيتعامل كطالب ومابيشوفش غير طلباته.
+            if (!IsStaffRole(userRole))
             {
-                if (!string.IsNullOrEmpty(mobile))
-                {
-                    var studentIds = await _students.Query().AsNoTracking()
-                        .Where(s => s.phone == mobile)
+                // ⚠️ رقم الجوال بيتاخد من التوكن، مش من الـ query string.
+                //    قبل كده أي طالب كان يقدر يبعت ?mobile=رقم-حد-تاني ويقرا طلباته.
+                //    البارامتر mobile اللي جاي من العميل بيتجاهل للطالب تمامًا.
+                var myMobile = await _users.Query().AsNoTracking()
+                    .Where(u => u.Id == actorId)
+                    .Select(u => u.mobile)
+                    .FirstOrDefaultAsync();
+
+                // بنقارن بالشكلين (اللي اتكتب واللي بعد التطبيع) — قائمة ثابتة عشان
+                // الترجمة لـ SQL تبقى مضمونة بدل شرط فيه فحص null على متغيّر ملتقط.
+                var myPhones = new List<string>();
+                if (!string.IsNullOrWhiteSpace(myMobile)) myPhones.Add(myMobile);
+                var myMobileNorm = NormalizeMobile(myMobile);
+                if (myMobileNorm != null && !myPhones.Contains(myMobileNorm)) myPhones.Add(myMobileNorm);
+
+                var myStudentIds = myPhones.Count == 0
+                    ? new List<int>()
+                    : await _students.Query().AsNoTracking()
+                        .Where(s => s.phone != null && myPhones.Contains(s.phone))
                         .Select(s => s.Id)
                         .ToListAsync();
-                    query = query.Where(r => studentIds.Contains(r.StudentId));
-                }
-                else
-                {
-                    query = query.Where(r => r.SubmittedBy == actorId);
-                }
+
+                // الطلب ممكن يكون قدّمه الطالب بنفسه (SubmittedBy) أو موظف نيابة عنه،
+                // فبنجمع الحالتين بدل ما نعتمد على واحدة.
+                query = query.Where(r => r.SubmittedBy == actorId || myStudentIds.Contains(r.StudentId));
             }
 
             return await query
@@ -190,6 +232,30 @@ namespace NUH_PORTAL.Services
                 .Include(r => r.Student)
                 .FirstOrDefaultAsync(r => r.Id == requestId && r.RequestType == RequestType.self_registration)
                 ?? throw UserFriendlyException.NotFound("الطلب غير موجود");
+
+            // ⚠️ الميثود دي كانت بتدّي أي رقم طلب لأي طالب مسجّل دخول — يعني تغيير
+            //    الـ id في الرابط كان بيرجّع بيانات طالب تاني كاملة (رقم الهوية والجوال).
+            //    الموظفين بيوصلوا عادي؛ الطالب لازم يكون صاحب الطلب.
+            //    بنرجّع "غير موجود" مش "ممنوع" عشان مانأكّدش وجود الطلب أصلاً.
+            var actorId = RequireActor();
+            if (!IsStaffRole(UnitOfWork.GetCurrentUserRole()))
+            {
+                var owns = request.SubmittedBy == actorId;
+                if (!owns)
+                {
+                    var myMobile = await _users.Query().AsNoTracking()
+                        .Where(u => u.Id == actorId)
+                        .Select(u => u.mobile)
+                        .FirstOrDefaultAsync();
+                    var myMobileNorm = NormalizeMobile(myMobile);
+                    var studentPhone = request.Student?.phone;
+                    owns = studentPhone != null &&
+                           ((!string.IsNullOrWhiteSpace(myMobile) && studentPhone == myMobile) ||
+                            (myMobileNorm != null && studentPhone == myMobileNorm));
+                }
+                if (!owns)
+                    throw UserFriendlyException.NotFound("الطلب غير موجود");
+            }
 
             var history = await _workflow.GetHistoryAsync(requestId);
 

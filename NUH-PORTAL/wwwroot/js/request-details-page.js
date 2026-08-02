@@ -1,5 +1,23 @@
+/* التوكن هنا *اختياري* عن قصد.
+   الجلسة الحقيقية لصفحات MVC هي كوكي NUH.Auth، والمتصفح بيبعتها تلقائيًا مع كل
+   نداء لنفس الدومين. الـ staffToken في localStorage بقايا من الواجهة القديمة.
+
+   قبل كده كان: لو مفيش توكن -> تحويل على /Account/Login. وصفحة الدخول لما بتلاقي
+   الكوكي صالح بتحوّل على /Home. النتيجة: المستخدم يضغط على طلب فيلاقي نفسه في
+   لوحة التحكم من غير أي رسالة.
+
+   وده كان بيحصل فعلًا: register-phone.html بيمسح staffToken لما طالب يتحقق بالـ OTP
+   (عشان ماتختلطش جلسة الموظف بجلسة الطالب)، فأي موظف يجرّب شاشة تسجيل الطالب في
+   نفس المتصفح كان بيفقد قدرته يفتح تفاصيل الطلبات — والكوكي بتاعته سليمة طول الوقت. */
 const token = localStorage.getItem('staffToken');
-if (!token) window.location.replace('/Account/Login');
+
+// بنضيف الترويسة لو التوكن موجود (توافق مع الواجهة القديمة)، وغير كده الكوكي بتتكفّل.
+function authHeaders(extra) {
+  var h = {};
+  for (var k in (extra || {})) h[k] = extra[k];
+  if (token) h['Authorization'] = 'Bearer ' + token;
+  return h;
+}
 const currentUser = JSON.parse(localStorage.getItem('staffUser') || '{}');
 const _userRole = (currentUser.role || '').toLowerCase();
 const urlParams = new URLSearchParams(window.location.search);
@@ -88,20 +106,20 @@ const genderMap = { male: 'rdp_gender_male', female: 'rdp_gender_female' };
 async function loadRequest() {
   var lang = document.getElementById('html-root').getAttribute('lang') || 'ar';
   try {
-    var res = await fetch('/api/requests/' + requestId, { headers:{'Authorization':'Bearer '+token} });
+    var res = await fetch('/api/requests/' + requestId, { headers: authHeaders() });
     if (res.status === 401) { localStorage.removeItem('staffToken'); localStorage.removeItem('staffUser'); window.location.replace('/Account/Login'); return; }
     if (res.status === 404) { document.getElementById('loading-state').style.display='none'; document.getElementById('error-state').style.display='block'; document.getElementById('error-message').textContent=t('rdp_msg_requestNotAvailable'); return; }
     if (!res.ok) { throw new Error('HTTP '+res.status); }
     var r = await res.json();
     if (r.requestType === 'bulk_req' && r.bulkRequestId) {
       try {
-        var bulkRes = await fetch('/api/bulkregistration/' + r.bulkRequestId, { headers:{'Authorization':'Bearer '+token} });
+        var bulkRes = await fetch('/api/bulkregistration/' + r.bulkRequestId, { headers: authHeaders() });
         if (bulkRes.ok) r.bulkDetails = await bulkRes.json();
       } catch(e) { console.error('Failed to load bulk details:', e); }
     }
     if (r.requestType === 'self_registration') {
       try {
-        var regRes = await fetch('/api/Registration/my-requests/' + requestId, { headers:{'Authorization':'Bearer '+token} });
+        var regRes = await fetch('/api/Registration/my-requests/' + requestId, { headers: authHeaders() });
         if (regRes.ok) { var regData = await regRes.json(); r._regHistory = regData.history || []; }
       } catch(e) { r._regHistory = []; }
     }
@@ -117,7 +135,9 @@ function renderRequest(r) {
   var lang = document.getElementById('html-root').getAttribute('lang') || 'ar';
   document.getElementById('loading-state').style.display = 'none';
   document.getElementById('detail-content').style.display = 'block';
-  var reqNum = r.requestNumber || new Date().getFullYear()+'-'+String(r.id).padStart(6,'0');
+  // ماتخترعش رقم طلب — الرقم المصنوع هنا مكانش متخزّن، والطالب كان بيكتبه في
+  // صفحة التتبع فمايتلاقاش. الرقم بقى بيتولّد ويتخزّن وقت إنشاء الطلب.
+  var reqNum = r.requestNumber || '—';
   var __pt = document.getElementById('pageTitle'); if (__pt) __pt.textContent = t('rdp_pageTitle')+' - '+reqNum;
 
   var s = r.student || {};
@@ -315,8 +335,13 @@ function renderRequest(r) {
 
   /* --- Housing assignment info (for completed/approved requests) --- */
   var housingHtml = '';
-  if (s.housing_building || s.room_number || s.apartment_number) {
+  if (s.housing_building || s.floor_number || s.room_number || s.apartment_number) {
     var housingParts = [escHtml(s.housing_building||'')];
+    // الدور متخزّن كود ("0" = الأرضي) عشان الترتيب يفضل رقمي — بيتترجم هنا بس
+    if (s.floor_number !== null && s.floor_number !== undefined && s.floor_number !== '') {
+      var __fl = String(s.floor_number) === '0' ? tf('reg_optFloorGround', 'الأرضي', 'Ground') : escHtml(s.floor_number);
+      housingParts.push(tf('rdp_lbl_floor', 'الدور ', 'Floor ') + __fl);
+    }
     if (s.room_number) housingParts.push(escHtml(s.room_number));
     if (s.apartment_number) housingParts.push(t('rdp_lbl_apt')+escHtml(s.apartment_number));
     housingHtml = '<div class="info-field"><span class="info-label">'+t('rdp_field_housing')+'</span><span class="info-value">'+
@@ -458,7 +483,7 @@ async function loadHousingAccount(studentId) {
   if (!studentId) { card.style.display = 'none'; return; }
   if (_userRole !== 'admin') { card.style.display = 'none'; return; }
   try {
-    var res = await fetch('/api/HousingAccountManagement/' + studentId, { headers: { 'Authorization': 'Bearer ' + token } });
+    var res = await fetch('/api/HousingAccountManagement/' + studentId, { headers: authHeaders() });
     if (!res.ok) { card.style.display = 'none'; return; }
     var data = await res.json();
     var s = data.student || {};
@@ -492,7 +517,7 @@ async function housingAction(studentId, action) {
   if (_userRole !== 'admin') { alert(t('apiError')); return; }
   try {
     var res = await fetch('/api/HousingAccountManagement/' + studentId + '/' + action, {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }
+      method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' })
     });
     if (res.ok) {
       alert(t('success'));
@@ -511,7 +536,7 @@ function housingResetPassword(studentId) {
   (async function() {
     try {
       var res = await fetch('/api/HousingAccountManagement/' + studentId + '/reset-password', {
-        method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
         body: JSON.stringify({ newPassword: pwd })
       });
       if (res.ok) { alert(t('success')); } else { var d = await res.json(); alert(d.message || t('errorOccurred')); }
@@ -525,7 +550,7 @@ async function showHousingLifecycle(studentId, name) {
   document.getElementById('housingLifecycleModal').classList.add('open');
   if (_userRole !== 'admin') { body.innerHTML = '<p style="text-align:center;color:var(--red);padding:20px">' + t('apiError') + '</p>'; return; }
   try {
-    var res = await fetch('/api/students/' + studentId + '/lifecycle', { headers: { 'Authorization': 'Bearer ' + token } });
+    var res = await fetch('/api/students/' + studentId + '/lifecycle', { headers: authHeaders() });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     var data = await res.json();
     var logs = data.logs || [];
@@ -684,13 +709,13 @@ async function submitReview(currentStatus) {
       var action = selectedDecision === 'approve' ? 'approve' : (selectedDecision === 'reject' ? 'reject' : 'request-info');
       res = await fetch('/api/Workflow/' + requestId + '/' + action, {
         method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
         body:JSON.stringify({notes:reason})
       });
     } else {
       res = await fetch('/api/requests/' + requestId + '/review', {
         method:'PUT',
-        headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+        headers: authHeaders({ 'Content-Type': 'application/json' }),
         body:JSON.stringify({status:newStatus, reviewedBy:currentUser.id||1, notes:reason})
       });
     }

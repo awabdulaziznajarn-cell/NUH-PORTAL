@@ -15,6 +15,9 @@ namespace NUH_PORTAL.DTOs.Students
         public string? department { get; set; }
         public string? academic_level { get; set; }
         public string? housing_building { get; set; }
+        // الدور: "0" = الأرضي، و"1".."4". بيتخزّن كود مش نص معروض عشان الترتيب
+        // والفرز يفضلوا رقميين، والعرض بيترجمه (floorName في request-details-page.js).
+        public string? floor_number { get; set; }
         public string? room_number { get; set; }
         public string? apartment_number { get; set; }
         public StudentState? status { get; set; }

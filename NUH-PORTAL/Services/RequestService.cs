@@ -22,6 +22,7 @@ namespace NUH_PORTAL.Services
         private readonly IRepository<Notification> _notifications;
         private readonly ADProvisioningService _adProvisioning;
         private readonly IAuditService _audit;
+        private readonly IRegistrationService _registration;   // لتوليد رقم الطلب بنفس تسلسل مسار الطالب
         private readonly IHttpContextAccessor _http;
         private readonly ILogger<RequestService> _logger;
 
@@ -32,6 +33,7 @@ namespace NUH_PORTAL.Services
             IRepository<Notification> notifications,
             ADProvisioningService adProvisioning,
             IAuditService audit,
+            IRegistrationService registration,
             IHttpContextAccessor http,
             ILogger<RequestService> logger,
             IUnitOfWork unitOfWork,
@@ -43,6 +45,7 @@ namespace NUH_PORTAL.Services
             _notifications = notifications;
             _adProvisioning = adProvisioning;
             _audit = audit;
+            _registration = registration;
             _http = http;
             _logger = logger;
         }
@@ -229,6 +232,13 @@ namespace NUH_PORTAL.Services
 
             // مشرف/أدمن بينشئ الطلب → موافقة الإسكان تلقائيًا والتحويل مباشرة للمراجعة الإلكترونية
             var isHousingCreator = role == "supervisor" || role == "admin";
+            // ⚠️ الطلبات اللي بيعملها الموظف كانت بتتخزّن بـ request_number = NULL،
+            //    بينما مسار تسجيل الطالب بيولّد رقم. النتيجة: الشاشة كانت بتعرض رقم
+            //    محسوب من رقم الصف وقت العرض، والطالب يكتبه في التتبع فمايتلاقاش —
+            //    لأنه ماكانش متخزّن أصلاً. بنولّده هنا بنفس التسلسل المشترك.
+            if (string.IsNullOrWhiteSpace(request.RequestNumber))
+                request.RequestNumber = await _registration.GenerateRequestNumberAsync();
+
             request.Status = isHousingCreator ? "cyber_review" : "submitted";
             request.SubmittedBy = actorId > 0 ? actorId : null;
             request.SubmittedAt = DateTime.UtcNow;

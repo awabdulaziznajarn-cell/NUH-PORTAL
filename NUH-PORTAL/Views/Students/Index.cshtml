@@ -3,6 +3,15 @@
     ViewData["Title"] = SharedLocalizer["Page_Students"].Value;
     var role = (User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "").ToLowerInvariant();
     var canEdit = role != "user" && role != "cyber";
+
+    // النصوص بتتسلسل JSON عشان Razor بيهرّب أي نص بيطبعه ترميز HTML حتى جوه script،
+    // فلو اتحطت في textContent المستخدم بيشوف رموز بدل الحروف العربية.
+    var __housingPh = System.Text.Json.JsonSerializer.Serialize(new
+    {
+        floorFirst = SharedLocalizer["reg_optSelectFloorFirst"].Value,
+        selectApartment = SharedLocalizer["reg_optSelectApartment"].Value,
+        selectRoom = SharedLocalizer["reg_optSelectRoom"].Value
+    });
 }
 @functions {
     // كود الكلية (زي ما بيتخزّن من فورم التسجيل) → اسم مترجم؛ وأي نص عربي جاهز يرجع زي ما هو
@@ -264,14 +273,31 @@
           <span class="field-error" id="e-err-housing_building" >@SharedLocalizer["reg_optSelectBuilding"]</span>
         </div>
         <div class="e-field">
-          <label >@SharedLocalizer["reg_lblRoom"]<span>*</span></label>
-          <input type="text" id="e_room_number" placeholder='@(SharedLocalizer["reg_phRoom"].Value)'>
-          <span class="field-error" id="e-err-room_number" >@SharedLocalizer["reg_errRequired"]</span>
+          <label >@SharedLocalizer["reg_lblFloor"]<span>*</span></label>
+          <select id="e_floor_number">
+            <option value="" >@SharedLocalizer["reg_optSelectFloor"]</option>
+            <option value="0" >@SharedLocalizer["reg_optFloorGround"]</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+          </select>
+          <span class="field-error" id="e-err-floor_number" >@SharedLocalizer["reg_optSelectFloor"]</span>
         </div>
         <div class="e-field">
           <label >@SharedLocalizer["reg_lblApartment"]<span>*</span></label>
-          <input type="text" id="e_apartment_number" placeholder='@(SharedLocalizer["reg_phApartment"].Value)'>
+          @* الشقة بتتولّد من الدور — مقفولة لحد ما يتحدد الدور *@
+          <select id="e_apartment_number" disabled>
+            <option value="" >@SharedLocalizer["reg_optSelectFloorFirst"]</option>
+          </select>
           <span class="field-error" id="e-err-apartment_number" >@SharedLocalizer["reg_errRequired"]</span>
+        </div>
+        <div class="e-field">
+          <label >@SharedLocalizer["reg_lblRoom"]<span>*</span></label>
+          <select id="e_room_number">
+            <option value="" >@SharedLocalizer["reg_optSelectRoom"]</option>
+          </select>
+          <span class="field-error" id="e-err-room_number" >@SharedLocalizer["reg_errRequired"]</span>
         </div>
         <div class="e-field">
           <label >@SharedLocalizer["reg_lblStatus"]</label>
@@ -347,6 +373,7 @@
 <script src="/i18n.js"></script>
 <script src="/lookups.js"></script>
 <script src="/js/name-fields.js"></script>
+<script src="/js/housing-fields.js"></script>
 <script>
   var CAN_EDIT = @(canEdit ? "true" : "false");
   // حالة الصفحة (أول تحميل جاي جاهز من السيرفر)
@@ -492,6 +519,13 @@
     return '';
   }
 
+  var HOUSING_PH = @Html.Raw(__housingPh);
+  // الشقة بتتولد من الدور، والغرفة 1-4 — نفس منطق شاشات التسجيل (js/housing-fields.js)
+  var housingRefresh = NuhHousing.attach({
+    floor: 'e_floor_number', apartment: 'e_apartment_number', room: 'e_room_number',
+    labels: { floorFirst: HOUSING_PH.floorFirst, selectApartment: HOUSING_PH.selectApartment, selectRoom: HOUSING_PH.selectRoom }
+  });
+
   function setEditSelect(id, val) {
     var el = eGet(id);
     if (!el) return;
@@ -519,10 +553,17 @@
     eGet('id').value = data.id;
     NuhName.fill('e_', 'ar', data.full_name);
     NuhName.fill('e_', 'en', data.full_name_english);
-    ['student_id', 'national_id', 'phone', 'room_number', 'apartment_number'].forEach(function (f) {
+    ['student_id', 'national_id', 'phone'].forEach(function (f) {
       eGet(f).value = (data[f] == null ? '' : data[f]);
     });
     setEditSelect('gender', normalizeGender(data.gender));
+    // الدور متخزّن كود ("0" = الأرضي) — القيمة الفاضية بتخلّي "اختر الدور" ظاهرة
+    setEditSelect('floor_number', data.floor_number == null ? '' : String(data.floor_number));
+    housingRefresh(); // بيولّد شقق الدور ده وغرف 1-4
+    // القيم القديمة الخارجة عن الترقيم (زي 101 و201) مالهاش خيار مطابق فبتفضل فاضية
+    // والموظف لازم يختار من جديد — ده اللي اتفقنا عليه بدل ما نحفظ رقم مش موجود.
+    setEditSelect('apartment_number', data.apartment_number == null ? '' : String(data.apartment_number));
+    setEditSelect('room_number', data.room_number == null ? '' : String(data.room_number));
     setEditSelect('status', data.status);
     if (!eGet('status').value) eGet('status').value = 'active';
     // college/department/academic_level/housing_building من قاعدة البيانات (مع fallback للخيارات الثابتة لو مش متهاجرة)
@@ -539,7 +580,7 @@
     var ok = true;
     // خانات الاسم الستة بتتحقق في NuhName — نفس القواعد بالظبط اللي في شاشة التسجيل
     if (!NuhName.validate('e_')) ok = false;
-    var required = ['national_id', 'college', 'department', 'academic_level', 'housing_building', 'room_number', 'apartment_number'];
+    var required = ['national_id', 'college', 'department', 'academic_level', 'housing_building', 'floor_number', 'room_number', 'apartment_number'];
     required.forEach(function (id) {
       var el = eGet(id);
       var err = document.getElementById('e-err-' + id);
@@ -576,6 +617,7 @@
       department: eGet('department').value,
       academic_level: eGet('academic_level').value,
       housing_building: eGet('housing_building').value,
+      floor_number: eGet('floor_number').value,
       room_number: eGet('room_number').value.trim(),
       apartment_number: eGet('apartment_number').value.trim(),
       status: eGet('status').value

@@ -3,6 +3,19 @@
     var role = (User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "").ToLowerInvariant();
     var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0";
     var canRegister = role != "user" && role != "cyber";
+
+    // تنبيه: Razor بيهرّب أي نص بيطبعه ترميز HTML، حتى لو كان جوه وسم script.
+    // يعني لو طبعنا نص الترجمة مباشرة وحطيناه في textContent، المستخدم بيشوف
+    // رموز زي 0627x& بدل الحروف العربية. الحل: نسلسله JSON ونطبعه بـ Html.Raw،
+    // والـ serializer بيهرّب الاقتباسات والأقواس الزاوية صح فيفضل آمن جوه script.
+    var __bldPlaceholders = System.Text.Json.JsonSerializer.Serialize(new
+    {
+        genderFirst = SharedLocalizer["reg_optSelectGenderFirst"].Value,
+        selectBuilding = SharedLocalizer["reg_optSelectBuilding"].Value,
+        floorFirst = SharedLocalizer["reg_optSelectFloorFirst"].Value,
+        selectApartment = SharedLocalizer["reg_optSelectApartment"].Value,
+        selectRoom = SharedLocalizer["reg_optSelectRoom"].Value
+    });
 }
 
 <style>
@@ -118,10 +131,11 @@
       <div class="field">
         <label >@SharedLocalizer["reg_lblStudentId"]<span>*</span></label>
         <div class="input-wrap">
-          <input type="text" id="student_id" maxlength="10" placeholder="">
+          <input type="text" id="student_id" maxlength="9" placeholder="">
           <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8a2 2 0 0 0-2 2v2h12V5a2 2 0 0 0-2-2z"/></svg>
         </div>
         <span class="field-error" id="err-student_id" >@SharedLocalizer["reg_errRequired"]</span>
+        <span class="field-error" id="val-student_id_start" >@SharedLocalizer["reg_valStudentIdStart"]</span>
         <span class="field-error" id="val-student_id" >@SharedLocalizer["reg_valStudentId"]</span>
       </div>
             <div class="field">
@@ -246,34 +260,50 @@
       <div class="field">
         <label >@SharedLocalizer["reg_lblBuilding"]<span>*</span></label>
         <div class="input-wrap">
-          <select id="housing_building">
-            <option value="" >@SharedLocalizer["reg_optSelectBuilding"]</option>
-            <option value="65">65</option>
-            <option value="66">66</option>
-            <option value="67">67</option>
-            <option value="68">68</option>
-            <option value="69">69</option>
-            <option value="70">70</option>
+          @* القائمة بتفضل فاضية ومقفولة لحد ما يتحدد النوع — نفس سلوك شاشة تسجيل
+             الطالب لنفسه. الخيارات الثابتة اتشالت من هنا عشان ماتظهرش قبل الاختيار. *@
+          <select id="housing_building" disabled>
+            <option value="" >@SharedLocalizer["reg_optSelectGenderFirst"]</option>
           </select>
           <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
         </div>
         <span class="field-error" id="err-housing_building" >@SharedLocalizer["reg_optSelectBuilding"]</span>
       </div>
       <div class="field">
-        <label >@SharedLocalizer["reg_lblRoom"]<span>*</span></label>
+        <label >@SharedLocalizer["reg_lblFloor"]<span>*</span></label>
         <div class="input-wrap">
-          <input type="text" id="room_number" placeholder='@(SharedLocalizer["reg_phRoom"].Value)'>
-          <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+          <select id="floor_number">
+            <option value="" >@SharedLocalizer["reg_optSelectFloor"]</option>
+            <option value="0" >@SharedLocalizer["reg_optFloorGround"]</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+          </select>
+          <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-4h6v4"/></svg>
         </div>
-        <span class="field-error" id="err-room_number" >@SharedLocalizer["reg_errRequired"]</span>
+        <span class="field-error" id="err-floor_number" >@SharedLocalizer["reg_errRequired"]</span>
       </div>
       <div class="field">
         <label >@SharedLocalizer["reg_lblApartment"]<span>*</span></label>
         <div class="input-wrap">
-          <input type="text" id="apartment_number" placeholder='@(SharedLocalizer["reg_phApartment"].Value)'>
+          @* الشقة بتتولّد من الدور (الدور×4+1 .. +4) — القائمة مقفولة لحد ما يتحدد الدور *@
+          <select id="apartment_number" disabled>
+            <option value="" >@SharedLocalizer["reg_optSelectFloorFirst"]</option>
+          </select>
           <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
         </div>
         <span class="field-error" id="err-apartment_number" >@SharedLocalizer["reg_errRequired"]</span>
+      </div>
+      <div class="field">
+        <label >@SharedLocalizer["reg_lblRoom"]<span>*</span></label>
+        <div class="input-wrap">
+          <select id="room_number">
+            <option value="" >@SharedLocalizer["reg_optSelectRoom"]</option>
+          </select>
+          <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+        </div>
+        <span class="field-error" id="err-room_number" >@SharedLocalizer["reg_errRequired"]</span>
       </div>
       <div class="field">
         <label >@SharedLocalizer["reg_lblStatus"]</label>
@@ -311,6 +341,7 @@
 <script src="/i18n.js"></script>
 <script src="/lookups.js"></script>
 <script src="/js/name-fields.js"></script>
+<script src="/js/housing-fields.js"></script>
 <script>
   var USER_ID = @userId;
 
@@ -318,7 +349,10 @@
     var ok = true;
     // خانات الاسم الستة بتتحقق في NuhName — قواعدها مشتركة مع باقي الشاشات
     if (!NuhName.validate('')) ok = false;
-    var required = ['student_id', 'national_id', 'college', 'department', 'academic_level', 'housing_building', 'room_number', 'apartment_number'];
+    // ⚠️ الجوال بقى مطلوب: من غيره الطالب مايقدرش يتابع طلبه (التحقق بآخر ٤ أرقام
+    //    بيقارن بجوال الطالب)، ولا يستقبل أي رسالة لاحقًا. كان اختياري وده كان
+    //    بيخلّي المشرف يسجّل طالب مالوش أي طريقة يعرف بيها حالة طلبه.
+    var required = ['student_id', 'national_id', 'phone', 'college', 'department', 'academic_level', 'housing_building', 'floor_number', 'room_number', 'apartment_number'];
     required.forEach(function (id) {
       var el = document.getElementById(id);
       var err = document.getElementById('err-' + id);
@@ -343,7 +377,10 @@
         if (val) val.classList.remove('show');
       }
     }
-    showValError('student_id', 'val-student_id', /^\d{9,10}$/.test(document.getElementById('student_id').value.trim()));
+    // ٩ أرقام بالظبط وبيبدأ بـ 4 — نفس قاعدة شاشة تسجيل الطالب لنفسه
+    var __sid = document.getElementById('student_id').value.trim();
+    showValError('student_id', 'val-student_id_start', /^4/.test(__sid));
+    showValError('student_id', 'val-student_id', /^\d{9}$/.test(__sid));
     showValError('national_id', 'val-national_id', /^\d{10}$/.test(document.getElementById('national_id').value.trim()));
     showValError('phone', 'val-phone', /^9665\d{8}$/.test(document.getElementById('phone').value.trim()));
     var gender = document.getElementById('gender');
@@ -369,6 +406,7 @@
       academic_level: document.getElementById('academic_level').value,
       ad_username: document.getElementById('ad_username').value.trim(),
       housing_building: document.getElementById('housing_building').value,
+      floor_number: document.getElementById('floor_number').value,
       room_number: document.getElementById('room_number').value.trim(),
       apartment_number: document.getElementById('apartment_number').value.trim(),
       status: document.getElementById('status').value
@@ -402,11 +440,11 @@
 
   function resetForm() {
     NuhName.clear('');
-    ['student_id', 'national_id', 'phone', 'ad_username', 'room_number', 'apartment_number'].forEach(function (id) {
+    ['student_id', 'national_id', 'phone', 'ad_username'].forEach(function (id) {
       document.getElementById(id).value = '';
       document.getElementById(id).classList.remove('error');
     });
-    ['college', 'department', 'academic_level', 'gender', 'housing_building', 'status'].forEach(function (id) {
+    ['college', 'department', 'academic_level', 'gender', 'housing_building', 'floor_number', 'apartment_number', 'room_number', 'status'].forEach(function (id) {
       document.getElementById(id).selectedIndex = 0;
       document.getElementById(id).classList.remove('error');
     });
@@ -434,7 +472,8 @@
   NuhName.attach('');
   document.getElementById('student_id').addEventListener('input', function () {
     document.getElementById('ad_username').value = this.value;
-    validateField('student_id', 'val-student_id', /^\d{9,10}$/);
+    validateField('student_id', 'val-student_id_start', /^4/);
+    validateField('student_id', 'val-student_id', /^\d{9}$/);
     var err = document.getElementById('err-student_id'); if (this.value.trim()) err.classList.remove('show');
   });
   document.getElementById('national_id').addEventListener('input', function () {
@@ -468,10 +507,44 @@
     var i = await Lookups.fetchList('/api/lookups/academic-levels');
     if (i.length) Lookups.fill(lkLevel, i, { keep: lkLevel.value });
   }
+  // احتياطي لو جداول القوائم لسه ماتهاجرتش — نفس التوزيع المعتمد
+  var FALLBACK_BUILDINGS = { male: ['65','66','67','68','69','70'], female: ['40','41','42','43'] };
+  var BLD_PH = @Html.Raw(__bldPlaceholders);
+
+  // الشقة بتتولد من الدور، والغرفة 1-4 — نفس منطق شاشة تسجيل الطالب بالحرف
+  NuhHousing.attach({
+    floor: 'floor_number', apartment: 'apartment_number', room: 'room_number',
+    labels: { floorFirst: BLD_PH.floorFirst, selectApartment: BLD_PH.selectApartment, selectRoom: BLD_PH.selectRoom }
+  });
+
   async function lkLoadBuildings(gender) {
-    if (!gender) return; // قبل اختيار النوع سيب المباني زي ما هي
+    // ⚠️ من غير نوع: القائمة تتفضّى وتتقفل. الكود القديم كان بيعمل return
+    //    ويسيب الخيارات اللي في الصفحة، فكانت كل المباني بتبان قبل اختيار النوع
+    //    وممكن المشرف يسكّن طالب في مبنى مش بتاع نوعه.
+    lkBuilding.innerHTML = '';
+    var ph = document.createElement('option');
+    ph.value = '';
+    lkBuilding.appendChild(ph);
+
+    if (!gender) {
+      ph.textContent = BLD_PH.genderFirst;
+      lkBuilding.disabled = true;
+      lkBuilding.value = '';
+      return;
+    }
+
+    ph.textContent = BLD_PH.selectBuilding;
+    lkBuilding.disabled = false;
+
     var i = await Lookups.fetchList('/api/lookups/buildings?gender=' + encodeURIComponent(gender));
-    if (i.length) Lookups.fill(lkBuilding, i, { keep: lkBuilding.value });
+    if (i.length) { Lookups.fill(lkBuilding, i, { keep: '' }); return; }
+
+    // القوائم مش متاحة — نرجع للتوزيع الثابت بدل ما القائمة تفضل فاضية
+    (FALLBACK_BUILDINGS[gender] || []).forEach(function (code) {
+      var o = document.createElement('option');
+      o.value = code; o.textContent = code;
+      lkBuilding.appendChild(o);
+    });
   }
 
   // الأقسام تتفلتر حسب الكلية، والمباني حسب النوع
@@ -479,6 +552,7 @@
   lkGender.addEventListener('change', function () { lkLoadBuildings(lkGender.value); });
 
   lkLoadColleges(); lkLoadDepartments(null); lkLoadLevels();
+  lkLoadBuildings(lkGender.value); // الحالة الابتدائية: مقفولة لحد ما يتحدد النوع
 
   window.onLanguageChange = function () { /* لا نص ديناميكي دائم يحتاج إعادة تطبيق */ };
   setLang(localStorage.getItem('uiLanguage') || 'ar');
