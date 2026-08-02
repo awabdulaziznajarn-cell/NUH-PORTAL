@@ -141,21 +141,46 @@
     <div class="edit-modal-body">
       <input type="hidden" id="e_id">
       <div class="e-grid">
-        <div class="e-field">
-          <label >@SharedLocalizer["reg_lblFullName"]<span>*</span></label>
-          <input type="text" id="e_full_name" placeholder='@(SharedLocalizer["reg_phFullName"].Value)'>
-          <span class="field-error" id="e-err-full_name" >@SharedLocalizer["reg_errRequired"]</span>
-          <span class="field-error" id="e-val-full_name" >@SharedLocalizer["reg_valArabicName"]</span>
-        </div>
+        <div class="e-field name-group">
+          <label >@SharedLocalizer["reg_lblFullName"]<span>*</span></label>
+          <div class="name-row">
+            <div>
+              <label >@SharedLocalizer["reg_lblNameFirst"]</label>
+              <input type="text" id="e_ar_first" autocomplete="off">
+            </div>
+            <div>
+              <label >@SharedLocalizer["reg_lblNameMiddle"]</label>
+              <input type="text" id="e_ar_middle" autocomplete="off">
+            </div>
+            <div>
+              <label >@SharedLocalizer["reg_lblNameFamily"]</label>
+              <input type="text" id="e_ar_family" autocomplete="off">
+            </div>
+          </div>
+          <span class="field-error" id="e_err-name_ar" >@SharedLocalizer["reg_errNameParts"]</span>
+        </div>
+        <div class="e-field name-group">
+          <label >@SharedLocalizer["reg_lblFullNameEn"]<span>*</span></label>
+          <div class="name-row">
+            <div>
+              <label >@SharedLocalizer["reg_lblNameFirst"]</label>
+              <input type="text" id="e_en_first" dir="ltr" autocomplete="off">
+            </div>
+            <div>
+              <label >@SharedLocalizer["reg_lblNameMiddle"]</label>
+              <input type="text" id="e_en_middle" dir="ltr" autocomplete="off">
+            </div>
+            <div>
+              <label >@SharedLocalizer["reg_lblNameFamily"]</label>
+              <input type="text" id="e_en_family" dir="ltr" autocomplete="off">
+            </div>
+          </div>
+          <span class="field-error" id="e_err-name_en" >@SharedLocalizer["reg_errNameParts"]</span>
+        </div>
+        <span class="field-error name-group" id="e_err-name_match" >@SharedLocalizer["reg_valNameMismatch"]</span>
         <div class="e-field">
           <label >@SharedLocalizer["reg_lblStudentId"]</label>
           <input type="text" id="e_student_id" maxlength="10" readonly>
-        </div>
-        <div class="e-field">
-          <label >@SharedLocalizer["reg_lblFullNameEn"]<span>*</span></label>
-          <input type="text" id="e_full_name_english" placeholder='@(SharedLocalizer["reg_phFullNameEn"].Value)'>
-          <span class="field-error" id="e-err-full_name_english" >@SharedLocalizer["reg_errRequired"]</span>
-          <span class="field-error" id="e-val-full_name_english" >@SharedLocalizer["reg_valEnglishName"]</span>
         </div>
         <div class="e-field">
           <label >@SharedLocalizer["reg_lblNationalId"]<span>*</span></label>
@@ -295,6 +320,11 @@
   .edit-modal-body{padding:24px;overflow-y:auto}
   .e-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
   .e-field{display:flex;flex-direction:column;gap:6px}
+  .name-group{grid-column:1/-1}
+  .name-row{display:grid;grid-template-columns:1fr 1.6fr 1fr;gap:12px}
+  .name-row>div{display:flex;flex-direction:column;gap:4px}
+  .name-row label{font-size:11px;font-weight:500;color:var(--gray-500)}
+  @@media(max-width:700px){.name-row{grid-template-columns:1fr}}
   .e-field label{font-size:13px;font-weight:600;color:var(--gray-700)}
   .e-field label span{color:#EF4444;margin-right:2px}
   .e-field input,.e-field select{width:100%;height:44px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:10px;padding:0 14px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;color:var(--navy-dark);outline:none;appearance:none}
@@ -315,7 +345,8 @@
   @@media(max-width:640px){.e-grid{grid-template-columns:1fr}}
 </style>
 <script src="/i18n.js"></script>
-<script src="/lookups.js"></script>
+<script src="/lookups.js"></script>
+<script src="/js/name-fields.js"></script>
 <script>
   var CAN_EDIT = @(canEdit ? "true" : "false");
   // حالة الصفحة (أول تحميل جاي جاهز من السيرفر)
@@ -486,7 +517,9 @@
     } catch (e) { showToast(t('reg_toastConnError'), true); return; }
 
     eGet('id').value = data.id;
-    ['full_name', 'full_name_english', 'student_id', 'national_id', 'phone', 'room_number', 'apartment_number'].forEach(function (f) {
+    NuhName.fill('e_', 'ar', data.full_name);
+    NuhName.fill('e_', 'en', data.full_name_english);
+    ['student_id', 'national_id', 'phone', 'room_number', 'apartment_number'].forEach(function (f) {
       eGet(f).value = (data[f] == null ? '' : data[f]);
     });
     setEditSelect('gender', normalizeGender(data.gender));
@@ -504,7 +537,9 @@
 
   function validateEdit() {
     var ok = true;
-    var required = ['full_name', 'full_name_english', 'national_id', 'college', 'department', 'academic_level', 'housing_building', 'room_number', 'apartment_number'];
+    // خانات الاسم الستة بتتحقق في NuhName — نفس القواعد بالظبط اللي في شاشة التسجيل
+    if (!NuhName.validate('e_')) ok = false;
+    var required = ['national_id', 'college', 'department', 'academic_level', 'housing_building', 'room_number', 'apartment_number'];
     required.forEach(function (id) {
       var el = eGet(id);
       var err = document.getElementById('e-err-' + id);
@@ -517,8 +552,6 @@
       if (el.value.trim() && !cond) { el.classList.add('error'); if (val) val.classList.add('show'); ok = false; }
       else if (el.value.trim()) { el.classList.remove('error'); if (val) val.classList.remove('show'); }
     }
-    valErr('full_name', 'e-val-full_name', /^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\s]+$/.test(eGet('full_name').value.trim()));
-    valErr('full_name_english', 'e-val-full_name_english', /^[a-zA-Z\s]+$/.test(eGet('full_name_english').value.trim()));
     valErr('national_id', 'e-val-national_id', /^\d{10}$/.test(eGet('national_id').value.trim()));
     valErr('phone', 'e-val-phone', /^9665\d{8}$/.test(eGet('phone').value.trim()));
     var g = eGet('gender'), ge = document.getElementById('e-err-gender');
@@ -533,8 +566,8 @@
     btn.classList.add('loading');
     var id = eGet('id').value;
     var payload = {
-      full_name: eGet('full_name').value.trim(),
-      full_name_english: eGet('full_name_english').value.trim(),
+      full_name: NuhName.join('e_', 'ar'),
+      full_name_english: NuhName.join('e_', 'en'),
       student_id: eGet('student_id').value.trim(),
       national_id: eGet('national_id').value.trim(),
       phone: eGet('phone').value.trim(),
@@ -616,5 +649,6 @@
   setLang(localStorage.getItem('uiLanguage') || 'ar');
   updatePagerButtons();
   updateSortIndicators();
+  NuhName.attach('e_');
 </script>
 }

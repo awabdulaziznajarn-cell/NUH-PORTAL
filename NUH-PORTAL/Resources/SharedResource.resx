@@ -1,5 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
     <xsd:element name="root" msdata:IsDataSet="true">
@@ -92,7 +151,7 @@
     <value>لوحة التحكم</value>
   </data>
   <data name="Nav_Housing" xml:space="preserve">
-    <value>إدارة السكن</value>
+    <value>إدارة حسابات السكن</value>
   </data>
   <data name="Nav_RegisterSingle" xml:space="preserve">
     <value>تسجيل فردي</value>
@@ -641,7 +700,7 @@
     <value>الصف</value>
   </data>
   <data name="bulk_col_studentId" xml:space="preserve">
-    <value>رقم الطالب</value>
+    <value>الرقم الجامعي</value>
   </data>
   <data name="bulk_creating" xml:space="preserve">
     <value>جاري الإنشاء...</value>
@@ -1528,14 +1587,8 @@
   <data name="login_usernamePlaceholder" xml:space="preserve">
     <value>أدخل اسم المستخدم</value>
   </data>
-  <data name="logout" xml:space="preserve">
-    <value>تسجيل الخروج</value>
-  </data>
   <data name="male" xml:space="preserve">
     <value>ذكر</value>
-  </data>
-  <data name="markAllRead" xml:space="preserve">
-    <value>تحديد الكل مقروء</value>
   </data>
   <data name="markCompleted" xml:space="preserve">
     <value>إكمال</value>
@@ -1556,7 +1609,7 @@
     <value>رقم الهوية الوطنية</value>
   </data>
   <data name="nationalIdPlaceholder" xml:space="preserve">
-    <value></value>
+    <value />
   </data>
   <data name="nationalIdValidation" xml:space="preserve">
     <value>يجب أن تتكون الهوية الوطنية من 10 أرقام</value>
@@ -1623,9 +1676,6 @@
   </data>
   <data name="notes" xml:space="preserve">
     <value>ملاحظات</value>
-  </data>
-  <data name="notifications" xml:space="preserve">
-    <value>الإشعارات</value>
   </data>
   <data name="oldValue" xml:space="preserve">
     <value>القيمة القديمة</value>
@@ -2369,7 +2419,7 @@
     <value>الرجاء إدخال سبب الإجراء (5 أحرف على الأقل)</value>
   </data>
   <data name="ss_pageDesc" xml:space="preserve">
-    <value>تسجيل وتحديث الحالة الأكاديمية وبيانات السكن الجامعي للطالب</value>
+    <value>تحديث الحالة الأكاديمية وبيانات السكن الجامعي</value>
   </data>
   <data name="ss_pageTitle" xml:space="preserve">
     <value>تحديث حالة الطالب</value>
@@ -2579,7 +2629,7 @@
     <value>الحالة</value>
   </data>
   <data name="stu_col_studentId" xml:space="preserve">
-    <value>رقم الطالب</value>
+    <value>الرقم الجامعي</value>
   </data>
   <data name="stu_confirmDelete" xml:space="preserve">
     <value>متأكد من حذف الطالب؟</value>
@@ -2645,7 +2695,7 @@
     <value>يجب أن يتكون الرقم الجامعي من 9 أرقام</value>
   </data>
   <data name="studentIdPlaceholder" xml:space="preserve">
-    <value></value>
+    <value />
   </data>
   <data name="studentIdStartValidation" xml:space="preserve">
     <value>يجب أن يبدأ الرقم الجامعي بالرقم 4</value>
@@ -2660,7 +2710,7 @@
     <value>الطالب غير موجود</value>
   </data>
   <data name="studentNumber" xml:space="preserve">
-    <value>رقم الطالب</value>
+    <value>الرقم الجامعي</value>
   </data>
   <data name="studentNumberError" xml:space="preserve">
     <value>الرجاء إدخال رقم جامعي صحيح</value>
@@ -2804,7 +2854,7 @@
     <value>تحديث حالة الطالب</value>
   </data>
   <data name="updateStudentStatusDesc" xml:space="preserve">
-    <value>تسجيل وتحديث الحالة الأكاديمية وبيانات السكن الجامعي للطالب</value>
+    <value>تحديث الحالة الأكاديمية وبيانات السكن الجامعي</value>
   </data>
   <data name="username" xml:space="preserve">
     <value>اسم المستخدم</value>
@@ -3176,7 +3226,7 @@
     <value>شقة </value>
   </data>
   <data name="rdp_field_housing" xml:space="preserve">
-    <value>الإسكان</value>
+    <value>معلومات السكن الجامعي للطالب</value>
   </data>
   <data name="rdp_card_requestInfo" xml:space="preserve">
     <value>معلومات الطلب</value>
@@ -4149,5 +4199,53 @@
   </data>
   <data name="rdp_lbl_actionBy" xml:space="preserve">
     <value>بواسطة:</value>
+  </data>
+  <data name="reg_lblNameFirst" xml:space="preserve">
+    <value>الاسم الأول</value>
+  </data>
+  <data name="reg_lblNameMiddle" xml:space="preserve">
+    <value>اسم الأب والجد</value>
+  </data>
+  <data name="reg_lblNameFamily" xml:space="preserve">
+    <value>اسم العائلة</value>
+  </data>
+  <data name="reg_errNameParts" xml:space="preserve">
+    <value>اكتب الاسم كاملاً في الخانات الثلاث</value>
+  </data>
+  <data name="reg_valNameMismatch" xml:space="preserve">
+    <value>عدد الأسماء في خانة "اسم الأب والجد" لازم يكون واحد في العربي والإنجليزي</value>
+  </data>
+  <data name="rdp_lbl_infoNeededRequired" xml:space="preserve">
+    <value>المعلومات المطلوبة من الطالب *</value>
+  </data>
+  <data name="rdp_ph_infoNeeded" xml:space="preserve">
+    <value>اكتب بالتحديد المعلومات أو المستندات المطلوبة</value>
+  </data>
+  <data name="rdp_err_infoNeededRequired" xml:space="preserve">
+    <value>الرجاء كتابة المعلومات المطلوبة</value>
+  </data>
+  <data name="denied_title" xml:space="preserve">
+    <value>لا تملك صلاحية الدخول</value>
+  </data>
+  <data name="denied_message" xml:space="preserve">
+    <value>حسابك مسجّل دخول بالفعل، لكن الدور المرتبط به لا يملك الصلاحية المطلوبة لفتح هذه الصفحة.</value>
+  </data>
+  <data name="denied_userLabel" xml:space="preserve">
+    <value>المستخدم</value>
+  </data>
+  <data name="denied_roleLabel" xml:space="preserve">
+    <value>الدور</value>
+  </data>
+  <data name="denied_permsLabel" xml:space="preserve">
+    <value>عدد الصلاحيات</value>
+  </data>
+  <data name="denied_noPerms" xml:space="preserve">
+    <value>الدور المرتبط بحسابك لا يحتوي على أي صلاحيات. هذه مشكلة في إعداد الأدوار وليست في هذه الصفحة — يرجى إبلاغ مسؤول النظام لتعيين صلاحيات الدور.</value>
+  </data>
+  <data name="denied_backHome" xml:space="preserve">
+    <value>العودة للرئيسية</value>
+  </data>
+  <data name="denied_logout" xml:space="preserve">
+    <value>تسجيل الخروج</value>
   </data>
 </root>

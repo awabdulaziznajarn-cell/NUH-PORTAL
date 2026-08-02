@@ -175,7 +175,38 @@ namespace NUH_PORTAL.Services
                 ReadyForProvisioningByName = NameOf(request.ReadyForProvisioningBy),
                 CompletedByName = NameOf(request.CompletedBy)
             };
+
+            RedactNotesForRole(dto, request);
             return dto;
+        }
+
+        // ====================================================================
+        //  إخفاء سبب الرفض عن الدور اللي الطلب ماوصلوش أصلاً.
+        //  الطلب اللي رفضته إدارة الإسكان ما بيعديش للأمن السيبراني، فمفيش
+        //  سبب إن مراجع الأمن السيبراني يقرأ ملاحظات مرحلة ما شافهاش.
+        //  القاعدة (متفق عليها مع الجهة):
+        //    admin       → يشوف كل حاجة
+        //    supervisor  → يشوف رفض الإسكان ورفض الأمن السيبراني
+        //    cyber       → يشوف رفضه هو بس؛ ومايشوفش رفضًا حصل قبل ما يوصله
+        //    الطالب      → بيقرا من /api/RequestTracking (مسار منفصل)
+        //  الإخفاء هنا على السيرفر مش في الواجهة — إخفاء بالـ JS مش حماية.
+        // ====================================================================
+        private void RedactNotesForRole(RequestDetailsDto dto, Request request)
+        {
+            var role = UnitOfWork.GetCurrentUserRole();
+            if (!string.Equals(role, "cyber", StringComparison.OrdinalIgnoreCase))
+                return;
+
+            var rejected = string.Equals(dto.Status, "rejected", StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(dto.Status, "housing_rejected", StringComparison.OrdinalIgnoreCase);
+
+            // CyberReviewedAt != null معناها إن الأمن السيبراني كان طرفًا في الطلب فعلاً،
+            // ساعتها بيشوف كل حاجة عادي.
+            if (rejected && request.CyberReviewedAt == null)
+            {
+                dto.Notes = null;
+                dto.HousingNotes = null;
+            }
         }
 
         public async Task<List<RequestDto>> GetPendingAsync()

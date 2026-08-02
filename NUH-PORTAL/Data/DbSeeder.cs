@@ -12,15 +12,14 @@ namespace NUH_PORTAL.Data
     {
         public const string DevPassword = "Test@123";
 
-        // الأدوار وصلاحياتها — دي بيانات أساسية للنظام، مش بيانات تطوير.
-        // بتتنادى من Program.cs في كل البيئات (زي SeedLookups بالظبط) وليس في Development وحدها.
-        //
-        // كانت جوه SeedDevUsersAsync اللي بتشتغل في Development بس، والنتيجة على السيرفر:
-        // جدول AspNetRoleClaims فاضي → PermissionService بيرجّع قائمة صلاحيات فاضية →
-        // كل [Authorize(Policy = "...")] بيفشل. وبما إن AccessDeniedPath في Program.cs
-        // هو نفسه صفحة الدخول، المستخدم كان بيبان كأنه اتسجّل خروج فور ما يدخل.
-        //
-        // idempotent بالكامل — تقدر تنادّيها كل إقلاع بأمان.
+        // ====================================================================
+        //  الأدوار وصلاحياتها — بيانات أساسية للنظام، مش بيانات تطوير.
+        //  كانت جوّه SeedDevUsersAsync اللي بتتنادى في التطوير بس، فعلى سيرفر
+        //  الإنتاج جدول AspNetRoleClaims كان بيفضل فاضي. النتيجة: كل
+        //  [Authorize(Policy = "...")] بيفشل -> 403 -> ولوب على صفحة الدخول
+        //  بيبان للمستخدم كأنه "بيدخل ويطلع على طول".
+        //  الميثود دي idempotent وبتتنادى من Program.cs في كل البيئات.
+        // ====================================================================
         public static async Task SeedRolesAndPermissionsAsync(RoleManager<Role> roleManager)
         {
             // الأدوار الأساسية
@@ -59,25 +58,27 @@ namespace NUH_PORTAL.Data
             // المستخدمون (بهاشر Identity — الباسورد للكل DevPassword)
             foreach (var (username, role, fullName) in seed)
             {
-                var user = await userManager.FindByNameAsync(username);
-
-                if (user == null)
+                // مهم: المستخدم الموجود مش بيتخطّى — بنتأكد إنه لسه في دوره.
+                // لو الدور اتشال (أو الصف اتمسح من AspNetUserRoles) المستخدم بيدخل
+                // بصفر صلاحيات وكل صفحة بترفضه، وده كان بيتفسّر غلط كمشكلة جلسة.
+                var existingUser = await userManager.FindByNameAsync(username);
+                if (existingUser != null)
                 {
-                    user = new User
-                    {
-                        UserName = username,
-                        full_name = fullName,
-                        Email = username + "@nu.edu.sa",
-                        is_active = true,
-                        created_at = DateTime.UtcNow
-                    };
-                    var res = await userManager.CreateAsync(user, DevPassword);
-                    if (!res.Succeeded) continue;
+                    if (!await userManager.IsInRoleAsync(existingUser, role))
+                        await userManager.AddToRoleAsync(existingUser, role);
+                    continue;
                 }
 
-                // المستخدم موجود من قبل؟ نتأكد إن له دوره برضه — قبل كده كان بيتخطّى بالكامل،
-                // فمستخدم زي admin اتعمل من نظام سابق كان بيفضل بلا أي دور وبالتالي بصفر صلاحيات.
-                if (!await userManager.IsInRoleAsync(user, role))
+                var user = new User
+                {
+                    UserName = username,
+                    full_name = fullName,
+                    Email = username + "@nu.edu.sa",
+                    is_active = true,
+                    created_at = DateTime.UtcNow
+                };
+                var res = await userManager.CreateAsync(user, DevPassword);
+                if (res.Succeeded)
                     await userManager.AddToRoleAsync(user, role);
             }
 
@@ -229,12 +230,16 @@ namespace NUH_PORTAL.Data
                 }
             db.SaveChanges();
 
-            // النوع مبدئي — الأدمن يقدر يعدّله من شاشة إدارة المباني
+            // توزيع المباني المعتمد: 65-70 بنين، 40-43 بنات.
+            // كان مقلوبًا (40-43 و65-67 بنين، 68-70 بنات) فكانت شاشة التسجيل
+            // بتفلتر صح والقائمة الراجعة من الداتابيز غلط.
+            // ملاحظة: SeedLookups بيتخطّى المبنى الموجود بالكود، فالصفوف القديمة
+            // بتتصحّح بسكربت FixBuildings.sql مرة واحدة — الزرع هنا للقواعد الجديدة.
             var buildings = new (string Code, Gender Gender)[]
             {
-                ("40", Gender.Male), ("41", Gender.Male), ("42", Gender.Male), ("43", Gender.Male),
                 ("65", Gender.Male), ("66", Gender.Male), ("67", Gender.Male),
-                ("68", Gender.Female), ("69", Gender.Female), ("70", Gender.Female),
+                ("68", Gender.Male), ("69", Gender.Male), ("70", Gender.Male),
+                ("40", Gender.Female), ("41", Gender.Female), ("42", Gender.Female), ("43", Gender.Female),
             };
             for (var i = 0; i < buildings.Length; i++)
                 if (!db.Buildings.Any(x => x.Code == buildings[i].Code))

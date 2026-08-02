@@ -29,6 +29,27 @@ const stageNames = {
   approved: 'rdp_stage_completed',
   rejected: 'rdp_stage_rejected'
 };
+// اسم الإجراء بيتحدد بالمرحلة اللي اتعمل فيها (fromStage) مش اللي انتقل ليها (toStage).
+// المشرف بيوافق وهو واقف على pending_supervisor فالطلب بينتقل لـ pending_cyber —
+// التسمية بالـ toStage كانت بتكتب "مراجعة الأمن السيبراني" على إجراء إدارة الإسكان،
+// يعني بتنسب الخطوة للجهة اللي لسه ماعملتش حاجة.
+const actionNames = {
+  pending_supervisor:     { ok: 'rdp_stage_housingApproved',       no: 'rdp_stage_housingRejected' },
+  pending_cyber:          { ok: 'rdp_stage_cyberApproved',         no: 'rdp_stage_cyberRejected'   },
+  pending_admin:          { ok: 'rdp_stage_readyForProvisioning',  no: 'rdp_stage_rejected'        },
+  ready_for_provisioning: { ok: 'rdp_stage_completed',             no: 'rdp_stage_rejected'        },
+  need_more_info:         { ok: 'rdp_stage_pendingSupervisor',     no: 'rdp_stage_rejected'        }
+};
+// أسماء أنواع الطلبات موجودة في الترجمة (req_type_*) لكن الصفحة كانت بتعرض
+// الكود الخام self_registration زي ما هو للمستخدم النهائي.
+function requestTypeName(code) {
+  var raw = String(code == null ? '' : code);
+  if (!raw) return '';
+  var key = 'req_type_' + raw;
+  var v = t(key);
+  return v === key ? raw : v;   // لو النوع جديد ومالوش ترجمة نعرض الكود بدل ما نخفيه
+}
+
 const statusMap = {
   submitted: 'rdp_status_pending', housing_approved: 'rdp_stage_housingApproved', housing_rejected: 'rdp_stage_rejected',
   cyber_review: 'rdp_stage_cyberReview', cyber_approved: 'rdp_status_approved', cyber_rejected: 'rdp_stage_rejected',
@@ -137,8 +158,21 @@ function renderRequest(r) {
   var historyEntries = [];
   if (r.requestType === 'self_registration' && r._regHistory) {
     r._regHistory.forEach(function(h, idx) {
-      var hlbl = idx === 0 ? t('rdp_step_submitted') : (stageNames[h.toStage] ? t(stageNames[h.toStage]) : h.toStage);
-      historyEntries.push({ label: hlbl, cls: h.toStage === 'rejected' ? 'rejected' : 'approved', time: h.actionDate, notes: h.notes || null, username: h.actorName || '' });
+      var wasRejected = String(h.toStage || '').indexOf('rejected') > -1;
+      var hlbl;
+      if (idx === 0) {
+        hlbl = t('rdp_step_submitted');
+      } else {
+        var act = actionNames[h.fromStage];
+        // احتياطي للسجلات القديمة اللي مالهاش fromStage محفوظ
+        var key = act ? (wasRejected ? act.no : act.ok) : stageNames[h.toStage];
+        hlbl = key ? t(key) : (h.toStage || '');
+      }
+      // أول سطر = تقديم الطلب، والاسم فيه لازم يكون اسم الطالب مش اسم حساب الدخول.
+      // h.actorName بيرجّع صاحب الحساب اللي قدّم (ممكن يكون موظف سجّل نيابة عنه،
+      // أو حساب OTP اسمه "طالب")، فالسجل كان بيعرض اسم غير صاحب الطلب.
+      var actor = (idx === 0 ? (s.full_name || s.fullNameArabic || h.actorName) : h.actorName) || '';
+      historyEntries.push({ label: hlbl, cls: wasRejected ? 'rejected' : 'approved', time: h.actionDate, notes: h.notes || null, username: actor, isSubmitter: idx === 0 });
     });
   } else {
     if (r.submittedAt) {
@@ -167,6 +201,7 @@ function renderRequest(r) {
     }
   }
 
+  function tf(key, arText, enText) { var v = t(key); return (v === key) ? (lang === 'en' ? enText : arText) : v; }
   function fmtDate(t) { return new Date(t).toLocaleDateString(lang==='ar'?'ar-SA':'en-US', { year:'numeric', month:'short', day:'numeric' }); }
   function fmtTime(t) { return new Date(t).toLocaleTimeString(lang==='ar'?'ar-SA':'en-US', { hour:'2-digit', minute:'2-digit' }); }
 
@@ -176,7 +211,12 @@ function renderRequest(r) {
     var dateStr = fmtDate(e.time);
     var timeStr = fmtTime(e.time);
     // "مقدّم الطلب" لخطوة التقديم، و"بواسطة" لباقي المراحل — دي إجراءات موظفين مش تقديم.
-    var userLabel = e.isSubmitter ? t('rdp_lbl_submitter') : t('rdp_lbl_actionBy');
+    // tf بترجع نص احتياطي لو المفتاح لسه مش موجود في الـ .resx: ملفات الـ resx بتتجمّع
+    // جوه الـ DLL فمابتوصلش غير مع النشر، لكن ملف الـ JS ده بيتحدّث فورًا — من غير
+    // الاحتياطي ده كان هيظهر اسم المفتاح نفسه في الواجهة لحد أول نشر.
+    var userLabel = e.isSubmitter
+      ? tf('rdp_lbl_submitter', 'مقدّم الطلب:', 'Submitted by:')
+      : tf('rdp_lbl_actionBy',  'بواسطة:',      'By:');
     var userHtml = e.username ? '<div class="tl-row"><span class="tl-label">'+userLabel+'</span><span class="tl-value username">'+escHtml(e.username)+'</span></div>' : '';
     var notesHtml = '<div class="tl-notes">'+t('rdp_lbl_notes')+' '+(e.notes && e.cls==='rejected'?escHtml(e.notes):t('rdp_msg_noNotes'))+'</div>';
     return '<div class="tl-item"><div class="tl-dot '+dotCls+'"></div><div class="tl-content"><div class="tl-title">'+title+'</div>'+userHtml+'<div class="tl-row"><span class="tl-label">'+t('rdp_lbl_date')+'</span><span class="tl-value">'+dateStr+' - '+timeStr+'</span></div>'+notesHtml+'</div></div>';
@@ -194,6 +234,13 @@ function renderRequest(r) {
       t('rdp_lbl_rejectionReason')+'</div><div class="rejection-info-text">'+
       escHtml(rejectionNotes)+'</div></div></div>'
     : '';
+
+  // "مقدّم من" في التسجيل الذاتي = الطالب نفسه، مش حساب الدخول اللي اتسجّل عليه
+  // الإجراء. أما لو موظف سجّل نيابة عن الطالب (تسجيل فردي/جماعي) فاسم الموظف هو
+  // المعلومة المفيدة فعلاً هنا.
+  var submittedByDisplay = (r.requestType === 'self_registration')
+    ? (s.full_name || s.fullNameArabic || r.submittedByName || '')
+    : (r.submittedByName || '');
 
   /* --- Review actions --- */
   var reviewHtml = '';
@@ -256,12 +303,12 @@ function renderRequest(r) {
           '<div class="review-option-desc">'+t('rdp_optionDesc_rejectReason')+'</div></div>'+
         '</label>' : '')+
         '<div class="reject-reason-field" id="rejectReasonField">'+
-          '<label style="font-size:13px;font-weight:600;color:var(--navy-dark);margin-bottom:6px;display:block">'+
+          '<label id="reasonLabel" style="font-size:13px;font-weight:600;color:var(--navy-dark);margin-bottom:6px;display:block">'+
             t('rdp_lbl_rejectionReasonRequired')+'</label>'+
-          '<textarea id="rejectReason" placeholder="'+t('rdp_ph_rejectionReason')+'"></textarea>'+
+          '<textarea id="rejectReason" placeholder="'+t('rdp_ph_rejectionReason')+'" oninput="updateReviewSubmitState()"></textarea>'+
           '<div class="error-msg" id="rejectReasonError">'+t('rdp_err_rejectionReasonRequired')+'</div>'+
         '</div>'+
-        '<button class="submit-review-btn" id="submitReviewBtn" onclick="submitReview(\''+st+'\')">'+
+        '<button class="submit-review-btn" id="submitReviewBtn" disabled onclick="submitReview(\''+st+'\')">'+
           t('rdp_btn_submitReview')+'</button>'+
       '</div></div></div>';
   }
@@ -282,9 +329,9 @@ function renderRequest(r) {
       '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'+
       t('rdp_card_requestInfo')+'</div><div class="card-body"><div class="info-grid">'+
       '<div class="info-field"><span class="info-label">'+t('rdp_field_requestNumber')+'</span><span class="info-value">'+reqNum+'</span></div>'+
-      '<div class="info-field"><span class="info-label">'+t('rdp_field_requestType')+'</span><span class="info-value">'+(r.requestType==='bulk_req'?t('rdp_val_bulkRegistration'):escHtml(r.requestType||''))+'</span></div>'+
+      '<div class="info-field"><span class="info-label">'+t('rdp_field_requestType')+'</span><span class="info-value">'+escHtml(requestTypeName(r.requestType))+'</span></div>'+
       '<div class="info-field"><span class="info-label">'+t('rdp_field_status')+'</span><span class="info-value"><span class="badge badge-'+st+'">'+(statusMap[st]?t(statusMap[st]):r.status)+'</span></span></div>'+
-      '<div class="info-field"><span class="info-label">'+t('rdp_field_submittedBy')+'</span><span class="info-value">'+escHtml(r.submittedByName||'')+'</span></div>'+
+      '<div class="info-field"><span class="info-label">'+t('rdp_field_submittedBy')+'</span><span class="info-value">'+escHtml(submittedByDisplay)+'</span></div>'+
       '<div class="info-field"><span class="info-label">'+t('rdp_field_submittedDate')+'</span><span class="info-value">'+(r.submittedAt?new Date(r.submittedAt).toLocaleDateString(lang==='ar'?'ar-SA':'en-US'):'')+'</span></div>'+
     '</div></div></div>'+
 
@@ -500,6 +547,40 @@ async function showHousingLifecycle(studentId, name) {
 }
 
 var selectedDecision = null;
+// القرارات اللي محتاجة ملاحظات مكتوبة قبل ما الزرار يشتغل.
+// الرفض بديهي، و"طلب معلومات إضافية" زيّه: بتقول للطالب محتاج إيه بالظبط،
+// وقبل كده كان بيتبعت بملاحظات فاضية فالطالب مايعرفش يعمل إيه.
+var DECISIONS_NEEDING_NOTES = ['reject', 'request-info'];
+
+function updateReviewSubmitState() {
+  var btn = document.getElementById('submitReviewBtn');
+  if (!btn) return;
+  var ok = false;
+  if (selectedDecision === 'approve') {
+    ok = true;
+  } else if (DECISIONS_NEEDING_NOTES.indexOf(selectedDecision) > -1) {
+    var ta = document.getElementById('rejectReason');
+    ok = !!(ta && ta.value.trim());
+  }
+  btn.disabled = !ok;
+}
+
+// نص خانة الملاحظات بيتغيّر حسب القرار — "سبب الرفض" مش نفس "المطلوب من الطالب"
+function setReasonTexts(kind) {
+  var lbl = document.getElementById('reasonLabel');
+  var ta  = document.getElementById('rejectReason');
+  var er  = document.getElementById('rejectReasonError');
+  if (kind === 'info') {
+    if (lbl) lbl.textContent = tf('rdp_lbl_infoNeededRequired', 'المعلومات المطلوبة من الطالب *', 'Information required from the student *');
+    if (ta)  ta.placeholder  = tf('rdp_ph_infoNeeded', 'اكتب بالتحديد المعلومات أو المستندات المطلوبة', 'Describe exactly what is missing');
+    if (er)  er.textContent  = tf('rdp_err_infoNeededRequired', 'الرجاء كتابة المعلومات المطلوبة', 'Please describe the required information');
+  } else {
+    if (lbl) lbl.textContent = t('rdp_lbl_rejectionReasonRequired');
+    if (ta)  ta.placeholder  = t('rdp_ph_rejectionReason');
+    if (er)  er.textContent  = t('rdp_err_rejectionReasonRequired');
+  }
+}
+
 function selectApprove() {
   selectedDecision = 'approve';
   var el;
@@ -509,7 +590,7 @@ function selectApprove() {
   document.getElementById('rejectReasonField').classList.remove('visible');
   document.getElementById('rejectReason').classList.remove('error');
   document.getElementById('rejectReasonError').style.display = 'none';
-  document.getElementById('submitReviewBtn').disabled = false;
+  updateReviewSubmitState();
 }
 function selectReject() {
   selectedDecision = 'reject';
@@ -517,8 +598,9 @@ function selectReject() {
   var el;
   if (el = document.getElementById('optInfo')) el.className = 'review-option';
   if (el = document.getElementById('optReject')) el.className = 'review-option selected-reject';
+  setReasonTexts('reject');
   document.getElementById('rejectReasonField').classList.add('visible');
-  document.getElementById('submitReviewBtn').disabled = false;
+  updateReviewSubmitState();
 }
 function selectInfo() {
   selectedDecision = 'request-info';
@@ -526,10 +608,12 @@ function selectInfo() {
   document.getElementById('optInfo').className = 'review-option selected-approve';
   var el;
   if (el = document.getElementById('optReject')) el.className = 'review-option';
-  document.getElementById('rejectReasonField').classList.remove('visible');
+  // "طلب معلومات إضافية" بيفتح نفس خانة الملاحظات بنص مختلف — لازم يكتب المطلوب
+  setReasonTexts('info');
+  document.getElementById('rejectReasonField').classList.add('visible');
   document.getElementById('rejectReason').classList.remove('error');
   document.getElementById('rejectReasonError').style.display = 'none';
-  document.getElementById('submitReviewBtn').disabled = false;
+  updateReviewSubmitState();
 }
 
 async function submitReview(currentStatus) {
@@ -557,8 +641,15 @@ async function submitReview(currentStatus) {
       return;
     }
   } else if (selectedDecision === 'request-info') {
-    if (currentStatus === 'pending_supervisor') { newStatus = 'need_more_info'; }
-    else return;
+    if (currentStatus !== 'pending_supervisor') return;
+    newStatus = 'need_more_info';
+    // الملاحظات هي جوهر الإجراء ده — من غيرها الطالب بيستلم "محتاجين معلومات" وبس
+    reason = document.getElementById('rejectReason').value.trim();
+    if (!reason) {
+      document.getElementById('rejectReason').classList.add('error');
+      document.getElementById('rejectReasonError').style.display = 'block';
+      return;
+    }
   } else if (selectedDecision === 'reject') {
     if (isSelfRegAction) {
       newStatus = 'rejected';

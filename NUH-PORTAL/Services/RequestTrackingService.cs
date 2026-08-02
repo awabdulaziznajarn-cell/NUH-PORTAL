@@ -81,7 +81,12 @@ namespace NUH_PORTAL.Services
                 {
                     ToStage = h.ToStage,
                     ActionDate = h.ActionDate,
-                    Notes = h.Notes,
+                    // الطالب بيشوف سبب الرفض بس — ده اللي بيلزمه عشان يعرف يصحّح إيه.
+                    // ملاحظات خطوات الموافقة داخلية بين المراجعين، والـ endpoint ده
+                    // مفتوح من غير مصادقة، فمابنبعتهاش أصلاً بدل ما نخبّيها في الواجهة.
+                    Notes = string.Equals(h.ToStage, "rejected", StringComparison.OrdinalIgnoreCase)
+                            ? h.Notes
+                            : null,
                     ActorName = h.Actor?.full_name ?? h.Actor?.UserName
                 }).ToList()
             };

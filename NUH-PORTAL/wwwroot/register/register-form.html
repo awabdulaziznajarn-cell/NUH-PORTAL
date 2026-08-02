@@ -585,8 +585,35 @@ async function submitForm(e) {
   }
 }
 
+// الجوال اتحقق منه بالفعل في الخطوة الأولى واتخزّن في regMobile — نعبّيه هنا
+// تلقائيًا بدل ما الطالب يكتبه تاني ويغلط فيه، ونحوّله للصيغة اللي التحقق
+// والـ AD بيتوقعوها: 05XXXXXXXX -> 9665XXXXXXXX
+function normalizeSaudiMobile(v) {
+  var d = String(v == null ? '' : v).replace(/\D/g, '');
+  if (d.indexOf('00966') === 0) d = d.slice(2);   // 00966... -> 966...
+  if (d.indexOf('966') === 0)   d = d.slice(3);   // 966...   -> الجزء المحلي
+  if (d.indexOf('0') === 0)     d = d.slice(1);   // 05...    -> 5...
+  return /^5\d{8}$/.test(d) ? '966' + d : '';
+}
+
+function prefillVerifiedMobile() {
+  var el = document.getElementById('phone');
+  var norm = normalizeSaudiMobile(localStorage.getItem('regMobile'));
+  if (!el || !norm) return;
+  el.value = norm;
+  // مقفولة عن قصد: الرقم ده هو اللي وصله رمز التحقق. لو الطالب غيّره هنا
+  // يبقى الطلب اتقدّم برقم محدش تحقق منه — والتعديل بيكون بالرجوع للخطوة الأولى.
+  el.readOnly = true;
+  el.style.background = 'var(--gray-100)';
+  el.style.cursor = 'not-allowed';
+  el.classList.remove('error');
+  var err = document.getElementById('err-phone'); if (err) err.classList.remove('show');
+  var val = document.getElementById('val-phone'); if (val) val.classList.remove('show');
+}
+
 if (!token) { window.location.href = 'register-phone.html'; }
 updateBuildings();
+prefillVerifiedMobile();
 loadEditData();
 </script>
 </body>

@@ -1,4 +1,4 @@
-using AspNetCoreRateLimit;
+﻿using AspNetCoreRateLimit;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -162,12 +162,30 @@ builder.Services.AddAuthentication(options =>
     .AddCookie(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme, options =>
     {
         options.LoginPath = "/Account/Login";
-        options.AccessDeniedPath = "/Account/Login";
+        // ⚠️ ماتخليهاش صفحة الدخول تاني. لما كانت /Account/Login كان أي فشل تصريح
+        //    بيعمل لوب: صفحة محمية -> 403 -> صفحة الدخول -> بتلاقي الكوكي صالح
+        //    فبتحوّل على /Home -> 403 -> ... والمستخدم بيشوفه كأنه بيتسجّل خروج فورًا.
+        options.AccessDeniedPath = "/Account/Denied";
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.SlidingExpiration = true;
         options.Cookie.Name = "NUH.Auth";
         options.Cookie.HttpOnly = true;
         options.Cookie.SameSite = SameSiteMode.Lax;
+
+        // نداءات /api لازم ترجع كود حالة، مش صفحة HTML. الافتراضي في مصادقة الكوكي
+        // إنها تحوّل على صفحة الدخول، فالـ JS كان بيستلم HTML بدل JSON ويفشل بصمت.
+        options.Events.OnRedirectToLogin = ctx =>
+        {
+            if (ctx.Request.Path.StartsWithSegments("/api")) { ctx.Response.StatusCode = 401; return Task.CompletedTask; }
+            ctx.Response.Redirect(ctx.RedirectUri);
+            return Task.CompletedTask;
+        };
+        options.Events.OnRedirectToAccessDenied = ctx =>
+        {
+            if (ctx.Request.Path.StartsWithSegments("/api")) { ctx.Response.StatusCode = 403; return Task.CompletedTask; }
+            ctx.Response.Redirect(ctx.RedirectUri);
+            return Task.CompletedTask;
+        };
     });
 
 // ملاحظة: مبقناش محتاجين DefaultPolicy مخصّصة — السكيم الذكي "NUH_Smart" فوق بيوثّق
@@ -211,6 +229,21 @@ builder.Services.AddDataProtection()
 
 // ✅ Rate Limiting
 builder.Services.AddMemoryCache();
+
+// ✅ ضغط الردود — الموقع كان بيبعت كل حاجة بدون ضغط.
+//    صفحة الموظف الواحدة فيها قاموس ترجمة محقون بالـ inline، وده لوحده كان
+//    ~142 كيلوبايت خام لكل تنقّل. مع Brotli بينزل لأقل من 15.
+//    EnableForHttps = true مطلوب لأن الموقع كله HTTPS — من غيرها الضغط
+//    مبيشتغلش أصلاً. (خطر BREACH نظري هنا: توكن الـ antiforgery في
+//    ASP.NET Core متعشّى عشوائيًا في كل رد، والنظام داخلي خلف جدار الجامعة.)
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.BrotliCompressionProvider>();
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.GzipCompressionProvider>();
+    options.MimeTypes = Microsoft.AspNetCore.ResponseCompression.ResponseCompressionDefaults.MimeTypes
+        .Concat(new[] { "application/json", "application/javascript", "text/javascript", "image/svg+xml" });
+});
 builder.Services.Configure<IpRateLimitOptions>(options =>
 {
     options.EnableEndpointRateLimiting = true;
@@ -281,6 +314,9 @@ builder.Services.AddScoped<IRequestService, RequestService>();
 builder.Services.AddScoped<IStudentStatusService, StudentStatusService>();
 builder.Services.AddScoped<IWorkflowActionService, WorkflowActionService>();
 builder.Services.AddScoped<ILookupService, LookupService>();
+// بيانات إقلاع الواجهة (قاموس الترجمة + خريطة القوائم) — مخزّنة في IMemoryCache
+// بدل ما تتبني من الأول في كل طلب صفحة. راجع UiBootstrapService للتفاصيل.
+builder.Services.AddScoped<IUiBootstrapService, UiBootstrapService>();
 builder.Services.AddScoped<ILookupAdminService, LookupAdminService>();
 builder.Services.AddScoped<ILookupResolver, LookupResolver>();
 builder.Services.AddScoped<IPermissionService, PermissionService>();
@@ -315,6 +351,9 @@ var app = builder.Build();
 // ✅ Forwarded Headers — لازم يكون أول Middleware
 app.UseForwardedHeaders();
 
+// ✅ الضغط — لازم يسبق أي middleware بيكتب رد (الملفات الثابتة، MVC، الـ API)
+app.UseResponseCompression();
+
 // ✅ معالجة الأخطاء المركزية (UserFriendlyException → JSON نظيف، وأي خطأ تاني → 500 من غير تسريب تفاصيل)
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
@@ -332,6 +371,19 @@ try
     using var roleScope = app.Services.CreateScope();
     var roleMgr = roleScope.ServiceProvider.GetRequiredService<RoleManager<Role>>();
     await DbSeeder.SeedRolesAndPermissionsAsync(roleMgr);
+
+    // إنذار مبكر: دور بلا صلاحيات معناه إن كل صفحاته هترفض المستخدم. ده بالظبط
+    // اللي كان بيحصل ومحدش واخد باله، فبنسجّله في السجل بدل ما نستنى شكوى.
+    foreach (var roleName in new[] { "admin", "supervisor", "cyber" })
+    {
+        var role = await roleMgr.FindByNameAsync(roleName);
+        if (role == null) { app.Logger.LogWarning("Role {Role} is missing entirely.", roleName); continue; }
+        var count = (await roleMgr.GetClaimsAsync(role)).Count(c => c.Type == ClaimConstants.Permission);
+        if (count == 0)
+            app.Logger.LogWarning("Role {Role} has ZERO permission claims - every page will deny its users.", roleName);
+        else
+            app.Logger.LogInformation("Role {Role}: {Count} permissions.", roleName, count);
+    }
 }
 catch (Exception ex)
 {
@@ -489,11 +541,27 @@ app.UseStaticFiles(new StaticFileOptions
     OnPrepareResponse = ctx =>
     {
         var path = ctx.Context.Request.Path;
+        // "no-store" كانت بتمنع المتصفح من تخزين أي ملف — يعني site.css وكل ملفات
+        // الـ JS بتتحمّل من الأول مع كل تنقّل بين الصفحات (request-details-page.js
+        // لوحده 47 كيلوبايت). ده كان السبب الظاهر لإحساس "الصفحة بتعمل load".
+        //
+        // "no-cache" لوحدها بتخلّي المتصفح يخزّن الملف *و* يسأل السيرفر كل مرة
+        // بـ If-None-Match؛ لو الملف ما اتغيّرش السيرفر بيرد 304 من غير جسم
+        // (~200 بايت بدل 47 كيلوبايت). يعني نفس أمان النشر بالظبط — مفيش نسخة
+        // قديمة بتتقدّم بعد أي publish — بس من غير إعادة التحميل.
         if (path.HasValue && (path.Value.EndsWith(".html") || path.Value.EndsWith(".js") || path.Value.EndsWith(".css")))
         {
-            ctx.Context.Response.Headers.Append("Cache-Control", "no-cache, no-store, must-revalidate");
-            ctx.Context.Response.Headers.Append("Pragma", "no-cache");
-            ctx.Context.Response.Headers.Append("Expires", "0");
+            // الـ .html فاضلة "no-store" زي ما كانت: دي كمان بتعطّل الـ bfcache، يعني
+            // زر Back بعد تسجيل الخروج ما يقدرش يرجّع صفحة محمية من ذاكرة التنقّل.
+            // مفيش مكسب أداء ضايع هنا — صفحات الموظفين MVC مش ملفات ثابتة أصلاً.
+            var isHtml = path.Value.EndsWith(".html");
+            ctx.Context.Response.Headers.Append("Cache-Control",
+                isHtml ? "no-cache, no-store, must-revalidate" : "no-cache, must-revalidate");
+            if (isHtml)
+            {
+                ctx.Context.Response.Headers.Append("Pragma", "no-cache");
+                ctx.Context.Response.Headers.Append("Expires", "0");
+            }
         }
         // Force UTF-8 charset for all static files so Arabic renders correctly in all browsers
         if (path.HasValue)

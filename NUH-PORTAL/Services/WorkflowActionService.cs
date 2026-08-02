@@ -136,12 +136,26 @@ namespace NUH_PORTAL.Services
             var studentName = request?.Student?.full_name;
 
             var history = await _workflow.GetHistoryAsync(requestId);
+
+            // نفس قاعدة RequestService.RedactNotesForRole: مراجع الأمن السيبراني
+            // مايقراش ملاحظات رفض حصل في مرحلة تانية قبل ما الطلب يوصله.
+            // بنفضّي الملاحظات بس — الخطوة نفسها بتفضل ظاهرة في السجل عشان
+            // المسار الزمني يفضل مفهوم.
+            var role = UnitOfWork.GetCurrentUserRole();
+            var hideOtherStageRejections =
+                string.Equals(role, "cyber", StringComparison.OrdinalIgnoreCase) &&
+                request?.CyberReviewedAt == null;
+
             return history.Select(h => new WorkflowHistoryItemDto
             {
                 FromStage = h.FromStage,
                 ToStage = h.ToStage,
                 ActionDate = h.ActionDate,
-                Notes = h.Notes,
+                Notes = (hideOtherStageRejections
+                         && string.Equals(h.ToStage, "rejected", StringComparison.OrdinalIgnoreCase)
+                         && !string.Equals(h.FromStage, "pending_cyber", StringComparison.OrdinalIgnoreCase))
+                        ? null
+                        : h.Notes,
                 // لو المنفّذ طالب (دور user) بنعرض اسم الطالب صاحب الطلب — نفس منطق الكود القديم
                 ActorName = h.Actor != null
                     ? (h.Actor.UserRoles.Any(ur => ur.Role.Name == "user") && studentName != null ? studentName : h.Actor.full_name ?? h.Actor.UserName)

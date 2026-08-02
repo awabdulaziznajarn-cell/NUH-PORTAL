@@ -17,6 +17,14 @@
   .form-card-body{padding:24px}
   .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
   .form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px}
+  .name-group{grid-column:1/-1}
+  .name-row{display:grid;grid-template-columns:1fr 1.6fr 1fr;gap:12px}
+  .name-row>div{display:flex;flex-direction:column;gap:4px}
+  .name-row label{font-size:11px;font-weight:500;color:var(--gray-500)}
+  /* الخانات دي من غير أيقونة، والقاعدة العامة .input-wrap input بتحجز 40px
+     على الشمال للأيقونة — من غير الإلغاء ده بيبان فراغ كبير جوه كل خانة. */
+  .name-row .input-wrap input{padding:0 14px;height:44px}
+  @@media(max-width:700px){.name-row{grid-template-columns:1fr}}
   .field{display:flex;flex-direction:column;gap:7px}
   .field label{font-size:13px;font-weight:600;color:var(--gray-700)}
   .field label span{color:#EF4444;margin-right:2px}
@@ -58,15 +66,55 @@
   </div>
   <div class="form-card-body">
     <div class="form-grid">
-      <div class="field">
+      <div class="field name-group">
         <label >@SharedLocalizer["reg_lblFullName"]<span>*</span></label>
-        <div class="input-wrap">
-          <input type="text" id="full_name" placeholder='@(SharedLocalizer["reg_phFullName"].Value)'>
-          <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <div class="name-row">
+          <div>
+            <label >@SharedLocalizer["reg_lblNameFirst"]</label>
+            <div class="input-wrap">
+              <input type="text" id="ar_first" autocomplete="off">
+            </div>
+          </div>
+          <div>
+            <label >@SharedLocalizer["reg_lblNameMiddle"]</label>
+            <div class="input-wrap">
+              <input type="text" id="ar_middle" autocomplete="off">
+            </div>
+          </div>
+          <div>
+            <label >@SharedLocalizer["reg_lblNameFamily"]</label>
+            <div class="input-wrap">
+              <input type="text" id="ar_family" autocomplete="off">
+            </div>
+          </div>
         </div>
-        <span class="field-error" id="err-full_name" >@SharedLocalizer["reg_errRequired"]</span>
-        <span class="field-error" id="val-full_name" >@SharedLocalizer["reg_valArabicName"]</span>
+        <span class="field-error" id="err-name_ar" >@SharedLocalizer["reg_errNameParts"]</span>
       </div>
+      <div class="field name-group">
+        <label >@SharedLocalizer["reg_lblFullNameEn"]<span>*</span></label>
+        <div class="name-row">
+          <div>
+            <label >@SharedLocalizer["reg_lblNameFirst"]</label>
+            <div class="input-wrap">
+              <input type="text" id="en_first" dir="ltr" autocomplete="off">
+            </div>
+          </div>
+          <div>
+            <label >@SharedLocalizer["reg_lblNameMiddle"]</label>
+            <div class="input-wrap">
+              <input type="text" id="en_middle" dir="ltr" autocomplete="off">
+            </div>
+          </div>
+          <div>
+            <label >@SharedLocalizer["reg_lblNameFamily"]</label>
+            <div class="input-wrap">
+              <input type="text" id="en_family" dir="ltr" autocomplete="off">
+            </div>
+          </div>
+        </div>
+        <span class="field-error" id="err-name_en" >@SharedLocalizer["reg_errNameParts"]</span>
+      </div>
+      <span class="field-error name-group" id="err-name_match" >@SharedLocalizer["reg_valNameMismatch"]</span>
       <div class="field">
         <label >@SharedLocalizer["reg_lblStudentId"]<span>*</span></label>
         <div class="input-wrap">
@@ -76,16 +124,7 @@
         <span class="field-error" id="err-student_id" >@SharedLocalizer["reg_errRequired"]</span>
         <span class="field-error" id="val-student_id" >@SharedLocalizer["reg_valStudentId"]</span>
       </div>
-      <div class="field">
-        <label >@SharedLocalizer["reg_lblFullNameEn"]<span>*</span></label>
-        <div class="input-wrap">
-          <input type="text" id="full_name_english" placeholder='@(SharedLocalizer["reg_phFullNameEn"].Value)'>
-          <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        </div>
-        <span class="field-error" id="err-full_name_english" >@SharedLocalizer["reg_errRequired"]</span>
-        <span class="field-error" id="val-full_name_english" >@SharedLocalizer["reg_valEnglishName"]</span>
-      </div>
-      <div class="field">
+            <div class="field">
         <label >@SharedLocalizer["reg_lblNationalId"]<span>*</span></label>
         <div class="input-wrap">
           <input type="text" id="national_id" placeholder="" maxlength="10">
@@ -271,12 +310,15 @@
 @section Scripts {
 <script src="/i18n.js"></script>
 <script src="/lookups.js"></script>
+<script src="/js/name-fields.js"></script>
 <script>
   var USER_ID = @userId;
 
   function validate() {
     var ok = true;
-    var required = ['full_name', 'full_name_english', 'student_id', 'national_id', 'college', 'department', 'academic_level', 'housing_building', 'room_number', 'apartment_number'];
+    // خانات الاسم الستة بتتحقق في NuhName — قواعدها مشتركة مع باقي الشاشات
+    if (!NuhName.validate('')) ok = false;
+    var required = ['student_id', 'national_id', 'college', 'department', 'academic_level', 'housing_building', 'room_number', 'apartment_number'];
     required.forEach(function (id) {
       var el = document.getElementById(id);
       var err = document.getElementById('err-' + id);
@@ -301,8 +343,6 @@
         if (val) val.classList.remove('show');
       }
     }
-    showValError('full_name', 'val-full_name', /^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\s]+$/.test(document.getElementById('full_name').value.trim()));
-    showValError('full_name_english', 'val-full_name_english', /^[a-zA-Z\s]+$/.test(document.getElementById('full_name_english').value.trim()));
     showValError('student_id', 'val-student_id', /^\d{9,10}$/.test(document.getElementById('student_id').value.trim()));
     showValError('national_id', 'val-national_id', /^\d{10}$/.test(document.getElementById('national_id').value.trim()));
     showValError('phone', 'val-phone', /^9665\d{8}$/.test(document.getElementById('phone').value.trim()));
@@ -318,8 +358,8 @@
     var btn = document.getElementById('registerStudentButton');
     btn.classList.add('loading');
     var data = {
-      full_name: document.getElementById('full_name').value.trim(),
-      full_name_english: document.getElementById('full_name_english').value.trim(),
+      full_name: NuhName.join('', 'ar'),
+      full_name_english: NuhName.join('', 'en'),
       student_id: document.getElementById('student_id').value.trim(),
       national_id: document.getElementById('national_id').value.trim(),
       phone: document.getElementById('phone').value.trim(),
@@ -361,7 +401,8 @@
   }
 
   function resetForm() {
-    ['full_name', 'full_name_english', 'student_id', 'national_id', 'phone', 'ad_username', 'room_number', 'apartment_number'].forEach(function (id) {
+    NuhName.clear('');
+    ['student_id', 'national_id', 'phone', 'ad_username', 'room_number', 'apartment_number'].forEach(function (id) {
       document.getElementById(id).value = '';
       document.getElementById(id).classList.remove('error');
     });
@@ -390,14 +431,7 @@
   ['student_id', 'national_id', 'phone'].forEach(function (id) {
     document.getElementById(id).addEventListener('input', function () { digitsOnly(this); });
   });
-  document.getElementById('full_name').addEventListener('input', function () {
-    validateField('full_name', 'val-full_name', /^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\s]+$/);
-    var err = document.getElementById('err-full_name'); if (this.value.trim()) err.classList.remove('show');
-  });
-  document.getElementById('full_name_english').addEventListener('input', function () {
-    validateField('full_name_english', 'val-full_name_english', /^[a-zA-Z\s]+$/);
-    var err = document.getElementById('err-full_name_english'); if (this.value.trim()) err.classList.remove('show');
-  });
+  NuhName.attach('');
   document.getElementById('student_id').addEventListener('input', function () {
     document.getElementById('ad_username').value = this.value;
     validateField('student_id', 'val-student_id', /^\d{9,10}$/);

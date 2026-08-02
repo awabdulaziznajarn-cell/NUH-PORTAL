@@ -56,6 +56,9 @@ h1{font-size:22px;font-weight:800;text-align:center;margin-bottom:4px}
 .timeline-content{flex:1}
 .timeline-stage{font-size:13px;font-weight:600;color:var(--navy-dark)}
 .timeline-date{font-size:11px;color:var(--gray-500);margin-top:2px}
+.reject-box{margin-top:16px;border:1px solid var(--red);background:var(--red-light);padding:16px;border-radius:12px}
+.reject-box-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--red);margin-bottom:6px}
+.reject-box-text{font-size:13px;line-height:1.9;color:var(--navy-dark);white-space:pre-wrap;word-break:break-word}
 .alert{padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:16px;display:none}
 .alert-error{background:var(--red-light);color:var(--red);border:1px solid var(--red);display:block}
 .footer{text-align:center;font-size:11px;color:var(--gray-500);padding:20px;border-top:1px solid var(--gray-100);margin-top:auto;width:100%}
@@ -119,6 +122,14 @@ const STATUS_MAP = {
   need_more_info: 'بانتظار موافقة إدارة الإسكان'
 };
 
+// الملاحظات نص حر كتبه المراجع وبيتحقن بـ innerHTML — لازم يتهرّب.
+// (اسم الطالب كان بيتحقن خام كمان، فبقى بيعدّي على نفس الدالة.)
+function escHtml(v) {
+  return String(v == null ? '' : v)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 function getHistoryLabel(toStage) {
   var map = {
     pending_supervisor: 'تم تقديم الطلب',
@@ -169,7 +180,7 @@ function renderRequests(requests) {
     html += '<div style="padding:12px 0;border-bottom:1px solid var(--gray-100)">';
     html += '<div class="info-row"><span class="info-label">رقم الطلب</span><span class="info-value"><strong>' + d.requestNumber + '</strong></span></div>';
     html += '<div class="info-row"><span class="info-label">الحالة</span><span class="info-value"><span class="status-badge status-' + d.status + '">' + (STATUS_MAP[d.status] || d.status) + '</span></span></div>';
-    html += '<div class="info-row"><span class="info-label">الطالب</span><span class="info-value">' + (d.studentName || '') + '</span></div>';
+    html += '<div class="info-row"><span class="info-label">الطالب</span><span class="info-value">' + escHtml(d.studentName || '') + '</span></div>';
     html += '<div class="info-row"><span class="info-label">تاريخ التقديم</span><span class="info-value">' + new Date(d.submittedAt).toLocaleDateString('ar-SA') + '</span></div>';
     html += '</div>';
   });
@@ -190,8 +201,9 @@ async function trackRequest() {
       card.style.display = 'block';
       document.getElementById('alertMessage').className = 'alert';
       document.getElementById('resultTitle').textContent = 'طلب ' + d.requestNumber;
+      var rejectionNotes = null;
       var html = '<div class="info-row"><span class="info-label">الحالة</span><span class="info-value"><span class="status-badge status-' + d.status + '">' + (STATUS_MAP[d.status] || d.status) + '</span></span></div>';
-      html += '<div class="info-row"><span class="info-label">الطالب</span><span class="info-value">' + (d.studentName || '') + '</span></div>';
+      html += '<div class="info-row"><span class="info-label">الطالب</span><span class="info-value">' + escHtml(d.studentName || '') + '</span></div>';
       html += '<div class="info-row"><span class="info-label">تاريخ التقديم</span><span class="info-value">' + new Date(d.submittedAt).toLocaleDateString('ar-SA') + '</span></div>';
       if (d.history && d.history.length > 0) {
         html += '<div class="timeline"><h4 style="font-size:13px;font-weight:700;margin:16px 0 8px">مسار الطلب</h4>';
@@ -200,9 +212,22 @@ async function trackRequest() {
           var icon = h.toStage === 'rejected' ? '❌ ' : '✅ ';
           var dt = new Date(h.actionDate);
           var dateStr = dt.toLocaleDateString('en-GB') + ' ' + dt.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
-          html += '<div class="timeline-item"><div class="timeline-dot completed"></div><div class="timeline-content"><div class="timeline-stage">' + icon + stageLabel + '</div><div class="timeline-date">' + dateStr + '</div><div style="font-size:12px;color:var(--gray-700);margin-top:2px">' + (h.actorName || '') + '</div></div></div>';
+          html += '<div class="timeline-item"><div class="timeline-dot completed"></div><div class="timeline-content"><div class="timeline-stage">' + icon + stageLabel + '</div><div class="timeline-date">' + dateStr + '</div><div style="font-size:12px;color:var(--gray-700);margin-top:2px">' + escHtml(h.actorName || '') + '</div></div></div>';
+          // سبب الرفض بيتاخد من خطوة الرفض نفسها — سواء جه من إدارة الإسكان
+          // أو من الأمن السيبراني. الطالب لازم يشوفه عشان يعرف يصحّح إيه.
+          if (h.toStage === 'rejected' && h.notes) rejectionNotes = h.notes;
         });
         html += '</div>';
+      }
+      // الحالة "مرفوض" من غير سبب كانت بتسيب الطالب من غير أي إرشاد.
+      if (d.status === 'rejected' && rejectionNotes) {
+        html += '<div class="reject-box">' +
+          '<div class="reject-box-title">' +
+            '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>' +
+            '\u0633\u0628\u0628 \u0627\u0644\u0631\u0641\u0636' +
+          '</div>' +
+          '<div class="reject-box-text">' + escHtml(rejectionNotes) + '</div>' +
+        '</div>';
       }
       if (d.status === 'completed' || d.status === 'approved') {
         var username = d.adUsername || '-';

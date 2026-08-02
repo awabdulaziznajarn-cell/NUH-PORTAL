@@ -46,6 +46,29 @@ namespace NUH_PORTAL.Controllers
             return View();
         }
 
+        // GET /Account/Denied
+        // ----------------------------------------------------------------
+        //  الصفحة دي مقصودة إنها متبقاش صفحة الدخول. لما AccessDeniedPath كان
+        //  /Account/Login كان بيحصل لوب مقفول:
+        //     صفحة محمية -> 403 -> /Account/Login -> الكوكي صالح فبيحوّل على
+        //     /Home -> 403 تاني -> /Account/Login ...
+        //  والمستخدم بيشوف ده كأنه "بيدخل ويطلع على طول"، فبيدوّر في اتجاه
+        //  الجلسات والكوكي، والمشكلة أصلاً في الصلاحيات.
+        //  هنا بنوقف اللوب ونعرض السبب الحقيقي: الدور وعدد صلاحياته.
+        [Authorize]
+        [HttpGet("Denied")]
+        public async Task<IActionResult> Denied()
+        {
+            var user = await _userManager.GetUserAsync(User);
+            var roles = user != null ? await _userManager.GetRolesAsync(user) : new List<string>();
+            var perms = await _permissions.GetPermissionsForRolesAsync(roles);
+
+            ViewData["FullName"] = user?.full_name ?? User.Identity?.Name ?? "";
+            ViewData["Roles"] = string.Join(", ", roles);
+            ViewData["PermissionCount"] = perms.Count;
+            return View();
+        }
+
         // POST /Account/Login
         [AllowAnonymous]
         [HttpPost("Login")]

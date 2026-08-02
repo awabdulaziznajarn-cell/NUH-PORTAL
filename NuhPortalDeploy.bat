@@ -43,7 +43,7 @@ set siteRoot=D:\Publish
 REM Fallback IIS application pool name, used only if auto-detection below fails.
 REM Do not rely on this being right - it was wrong once already. The script asks
 REM IIS which pool actually serves siteRoot instead of trusting this value.
-set fallbackAppPool=NUH-PORTAL
+set fallbackAppPool=Housing
 
 REM Health endpoint used for the post-deploy check
 set healthUrl=https://housing.nuh.edu.sa/api/Health

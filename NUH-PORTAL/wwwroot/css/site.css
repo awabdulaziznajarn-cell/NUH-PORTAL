@@ -180,3 +180,28 @@ html[dir=ltr] .app-shell .main>.topbar,html[dir=ltr] .app-shell .main>.content{d
 .app-shell .main::-webkit-scrollbar-track{background:transparent}
 .app-shell .main::-webkit-scrollbar-thumb{background:var(--gray-300);border-radius:8px;border:2px solid var(--gray-50)}
 .app-shell .main::-webkit-scrollbar-thumb:hover{background:var(--gray-500)}
+
+/* ============================================================================
+   الخط الزمني لسجل المراجعات (.tl-*) — كان جوه <style> في صفحة تفاصيل الطلب.
+   اتنقل هنا لأنه مكوّن مشترك، وعشان يبقى تعريفه في مكان واحد.
+
+   المسافات الأفقية كانت ناقصة تمامًا: مفيش padding على العنصر ولا موضع أفقي
+   للنقطة ولا للخط الرأسي — فالنقطة كانت بتقع فوق نص العنوان.
+   inset-inline-start مش left عشان الصفحة بتقلب بين عربي وإنجليزي.
+   ============================================================================ */
+.review-timeline { position:relative; padding:4px 0; }
+.review-timeline::before { content:''; position:absolute; inset-inline-start:15px; width:2px; background:var(--gray-200); top:12px; bottom:12px; }
+.tl-item { position:relative; padding-inline-start:44px; padding-bottom:16px; }
+.tl-item:last-child { padding-bottom:0; }
+.tl-dot { position:absolute; inset-inline-start:6px; top:24px; width:20px; height:20px; border-radius:50%; border:3px solid var(--gray-300); background:var(--white); z-index:1; box-shadow:0 0 0 4px var(--gray-50); }
+.tl-dot.approved { border-color:var(--green); background:var(--green); }
+.tl-dot.rejected { border-color:var(--red); background:var(--red); }
+.tl-content { background:var(--white); border:1px solid var(--gray-100); border-radius:12px; padding:16px 20px; transition:box-shadow 0.2s; box-shadow:0 1px 4px rgba(27,42,94,0.04); }
+.tl-content:hover { box-shadow:0 4px 16px rgba(27,42,94,0.08); }
+.tl-title { font-size:14px; font-weight:800; color:var(--navy-dark); margin-bottom:10px; }
+.tl-row { display:flex; align-items:baseline; gap:6px; font-size:12px; line-height:1.8; }
+.tl-label { color:var(--gray-500); font-weight:500; flex-shrink:0; }
+.tl-value { color:var(--gray-700); font-weight:400; }
+.tl-value.username { font-weight:600; color:var(--navy); }
+.tl-notes { font-size:12px; color:var(--gray-700); margin-top:10px; background:var(--gray-50); padding:10px 14px; border-radius:8px; }
+.history-empty { padding:24px; text-align:center; color:var(--gray-500); font-size:13px; }
