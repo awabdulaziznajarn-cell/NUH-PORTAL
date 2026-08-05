@@ -10,6 +10,9 @@ namespace NUH_PORTAL.Services.Interfaces
         Task<QueryResult<StudentDto>> GetPagedAsync(QueryParams queryParams, bool showDeleted, string? adStatus);
         Task<StudentStatsDto> GetStatsAsync();
         Task<StudentDto> GetByIdAsync(int id);
+        // بحث بالرقم الجامعي — بيرجّع null لو مش موجود بدل ما يرمي استثناء،
+        // عشان شاشات الإدخال تعرض «الطالب غير موجود» من غير ضجيج في سجل الأخطاء.
+        Task<StudentDto?> GetByStudentNumberAsync(string studentNumber);
         Task<StudentDto> CreateAsync(StudentCreateDto dto);
         Task<StudentDto> UpdateAsync(int id, StudentUpdateDto dto);
         Task DeleteAsync(int id);

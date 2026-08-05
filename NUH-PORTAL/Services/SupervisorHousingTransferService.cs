@@ -2,8 +2,10 @@ using MapsterMapper;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.StaticFiles;
 using NUH_PORTAL.Core.Exceptions;
 using NUH_PORTAL.Data.Interfaces;
+using NUH_PORTAL.DTOs.Attachments;
 using NUH_PORTAL.DTOs.Housing;
 using NUH_PORTAL.Models;
 using NUH_PORTAL.Repositories.Interfaces;
@@ -18,7 +20,7 @@ namespace NUH_PORTAL.Services
         private readonly IRepository<HousingTransfer> _transfers;
         private readonly IRepository<AccountLifecycleLog> _lifecycle;
         private readonly IAuditService _audit;
-        private readonly IWebHostEnvironment _env;
+        private readonly IAttachmentStorage _storage;
         private readonly IHttpContextAccessor _http;
 
         private static readonly HashSet<string> AllowedTypes = new(StringComparer.OrdinalIgnoreCase)
@@ -33,7 +35,7 @@ namespace NUH_PORTAL.Services
             IRepository<HousingTransfer> transfers,
             IRepository<AccountLifecycleLog> lifecycle,
             IAuditService audit,
-            IWebHostEnvironment env,
+            IAttachmentStorage storage,
             IHttpContextAccessor http,
             IUnitOfWork unitOfWork,
             IMapper mapper) : base(unitOfWork, mapper)
@@ -42,21 +44,31 @@ namespace NUH_PORTAL.Services
             _transfers = transfers;
             _lifecycle = lifecycle;
             _audit = audit;
-            _env = env;
+            _storage = storage;
             _http = http;
         }
 
-        public async Task<TransferResultDto> CreateTransferAsync(string studentNumber, string newBuilding, string newApartment, string newRoom, string reason, string? customReason, IFormFile? file)
+        public async Task<TransferResultDto> CreateTransferAsync(string studentNumber, string newBuilding, string newFloor, string newApartment, string newRoom, string reason, string? customReason, IFormFile? file)
         {
-            if (UnitOfWork.GetCurrentUserRole()?.ToLower() != "supervisor")
+            // النقل بصلاحية housing.transfer — كان مقفول على دورين بالاسم، فالأدمن
+            // كان بيلاقي الفورم بيرفض دايمًا وأي دور جديد كمان.
+            // سجل التنقلات بيسجّل مين نفّذ، فالمساءلة محفوظة.
+            if (!UnitOfWork.HasPermission("housing.transfer"))
                 throw UserFriendlyException.Forbidden();
 
             if (string.IsNullOrEmpty(studentNumber))
                 throw new UserFriendlyException("الرقم الجامعي مطلوب", 400);
             if (string.IsNullOrEmpty(newBuilding))
                 throw new UserFriendlyException("رقم المبنى الجديد مطلوب", 400);
+            if (string.IsNullOrEmpty(newFloor))
+                throw new UserFriendlyException("رقم الدور الجديد مطلوب", 400);
             if (string.IsNullOrEmpty(newApartment))
                 throw new UserFriendlyException("رقم الشقة الجديدة مطلوب", 400);
+
+            // الشقة لازم تكون ضمن شقق الدور المختار — التحقق هنا مش في الشاشة بس،
+            // عشان أي نداء مباشر للـ API مايقدرش يسكّن طالب في شقة مش في دوره.
+            if (!ApartmentBelongsToFloor(newFloor, newApartment))
+                throw new UserFriendlyException("رقم الشقة لا ينتمي للدور المختار", 400);
             if (string.IsNullOrEmpty(newRoom))
                 throw new UserFriendlyException("رقم الغرفة الجديدة مطلوب", 400);
             if (string.IsNullOrEmpty(reason))
@@ -71,6 +83,7 @@ namespace NUH_PORTAL.Services
                 throw new UserFriendlyException("الطالب لا يمتلك بيانات سكن حالية", 400);
 
             var oldBuilding = student.housing_building ?? "";
+            var oldFloor = student.floor_number ?? "";
             var oldApartment = student.apartment_number ?? "";
             var oldRoom = student.room_number ?? "";
 
@@ -94,9 +107,11 @@ namespace NUH_PORTAL.Services
                 StudentId = student.Id,
                 StudentNumber = student.student_id,
                 OldBuilding = oldBuilding,
+                OldFloor = oldFloor,
                 OldApartment = oldApartment,
                 OldRoom = oldRoom,
                 NewBuilding = newBuilding,
+                NewFloor = newFloor,
                 NewApartment = newApartment,
                 NewRoom = newRoom,
                 Reason = reason,
@@ -109,6 +124,7 @@ namespace NUH_PORTAL.Services
             await UnitOfWork.SaveAsync();
 
             student.housing_building = newBuilding;
+            student.floor_number = newFloor;
             student.apartment_number = newApartment;
             student.room_number = newRoom;
 
@@ -129,26 +145,20 @@ namespace NUH_PORTAL.Services
                 Action = "housing_transfer",
                 PerformedBy = actorId,
                 PerformedAt = DateTime.UtcNow,
-                Details = $"نقل سكن طالب: {oldBuilding}/{oldApartment}/{oldRoom} -> {newBuilding}/{newApartment}/{newRoom} - السبب: {reasonAr}",
+                Details = $"نقل سكن طالب: {Loc(oldBuilding, oldFloor, oldApartment, oldRoom)} -> {Loc(newBuilding, newFloor, newApartment, newRoom)} - السبب: {reasonAr}",
                 IpAddress = clientIp
             });
 
-            // حفظ المرفق (لو فيه)
+            // حفظ المرفق (لو فيه) — المسار بيرجع نسبيًا للجذر وبيتخزّن كامل
             if (file != null)
             {
-                var uploadDir = Path.Combine(_env.WebRootPath, "uploads", "housing-transfer", transfer.Id.ToString());
-                Directory.CreateDirectory(uploadDir);
-
-                var ext = Path.GetExtension(file.FileName);
-                var storedFileName = $"{Guid.NewGuid()}{ext}";
-                var filePath = Path.Combine(uploadDir, storedFileName);
-
-                await using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await file.CopyToAsync(stream);
-                }
-
-                transfer.AttachmentPath = storedFileName;
+                transfer.AttachmentPath = await _storage.SaveAsync(
+                    AttachmentStorage.HousingTransfer,
+                    student.student_id ?? "",
+                    "transfer",
+                    transfer.Id,
+                    _http.HttpContext?.User?.Identity?.Name,
+                    file);
                 transfer.OriginalFileName = file.FileName;
             }
 
@@ -159,21 +169,89 @@ namespace NUH_PORTAL.Services
             {
                 Message = "تم نقل الطالب بنجاح",
                 TransferId = transfer.Id,
-                OldLocation = $"{oldBuilding}/{oldApartment}/{oldRoom}",
-                NewLocation = $"{newBuilding}/{newApartment}/{newRoom}"
+                OldLocation = Loc(oldBuilding, oldFloor, oldApartment, oldRoom),
+                NewLocation = Loc(newBuilding, newFloor, newApartment, newRoom)
             };
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        //  تحميل/معاينة مرفق النقل
+        // ---------------------------------------------------------------------
+        //  الملف بيتخزّن باسم GUID (AttachmentPath) والاسم الأصلي بيتخزّن جنبه
+        //  (OriginalFileName). الواجهة كانت بتبني الرابط بالاسم الأصلي فبيطلع 404،
+        //  لأن ده مش اسم الملف على الديسك.
+        //
+        //  وكمان: الملفات دي وثائق طلاب. لما كانت بتتقدّم كملف ثابت من wwwroot
+        //  كان أي حد معاه الرابط يفتحها من غير تسجيل دخول. دلوقتي بتعدّي من هنا
+        //  فبتتحقق من الصلاحية الأول، والوصول المباشر لـ /uploads مقفول في Program.cs.
+        public async Task<DownloadFileDto> GetAttachmentAsync(int transferId)
+        {
+            var transfer = await _transfers.Query().AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Id == transferId)
+                ?? throw UserFriendlyException.NotFound("سجل النقل غير موجود");
+
+            if (string.IsNullOrWhiteSpace(transfer.AttachmentPath))
+                throw UserFriendlyException.NotFound("لا يوجد مرفق لهذا السجل");
+
+            // AttachmentPath اسم ملف مولّد بالسيرفر، بس بنتأكد إنه مايحتويش مسار
+            // عشان أي صف قديم أو معدّل يدويًا مايقدرش يخرج بره مجلد الرفع.
+            var filePath = _storage.ResolveExisting(AttachmentStorage.HousingTransfer, transfer.Id, transfer.AttachmentPath)
+                ?? throw UserFriendlyException.NotFound("الملف غير موجود على الخادم");
+
+            if (!new FileExtensionContentTypeProvider().TryGetContentType(filePath, out var contentType))
+                contentType = "application/octet-stream";
+
+            return new DownloadFileDto
+            {
+                FilePath = filePath,
+                ContentType = contentType,
+                OriginalFileName = string.IsNullOrWhiteSpace(transfer.OriginalFileName)
+                    ? Path.GetFileName(filePath)
+                    : transfer.OriginalFileName
+            };
+        }
+
+        // نفس قاعدة الشقق في js/housing-fields.js: الدور × 4 + 1 .. + 4
+        private const int ApartmentsPerFloor = 4;
+
+        private static bool ApartmentBelongsToFloor(string? floor, string? apartment)
+        {
+            if (!int.TryParse(floor, out var f) || f < 0) return false;
+            if (!int.TryParse(apartment, out var a)) return false;
+            var start = f * ApartmentsPerFloor + 1;
+            return a >= start && a < start + ApartmentsPerFloor;
+        }
+
+        // وصف موقع مقروء — «مبنى 69 · الدور 3 · شقة 15 · غرفة 3».
+        // كل جزء بليبله: "69/3/15/3" لوحدها مالهاش معنى لحد ما القارئ يحفظ الترتيب.
+        // "0" بتتعرض "الأرضي"، والأجزاء الفاضية بتتشال.
+        // ملحوظة: النص ده بيتخزّن في AuditLog وبيترجع في RecentTransferDto، يعني
+        // عربي ثابت مش متعدد اللغات — نفس سلوك باقي نصوص السجل هنا.
+        private const string LocSeparator = " · ";
+
+        private static string Loc(string? building, string? floor, string? apartment, string? room)
+        {
+            var parts = new List<string>(4);
+            if (!string.IsNullOrWhiteSpace(building)) parts.Add($"مبنى {building.Trim()}");
+            if (!string.IsNullOrWhiteSpace(floor))
+                parts.Add($"الدور {(floor.Trim() == "0" ? "الأرضي" : floor.Trim())}");
+            if (!string.IsNullOrWhiteSpace(apartment)) parts.Add($"شقة {apartment.Trim()}");
+            if (!string.IsNullOrWhiteSpace(room)) parts.Add($"غرفة {room.Trim()}");
+            return string.Join(LocSeparator, parts);
         }
 
         public async Task<List<RecentTransferDto>> GetRecentAsync()
         {
-            var actorId = UnitOfWork.GetCurrentUserId();
-            if (actorId == 0)
+            if (UnitOfWork.GetCurrentUserId() == 0)
                 throw new UserFriendlyException("غير مصرح", 401);
 
             // ملحوظة: ضفنا Include(Student) — الكود القديم كان بيرجّع StudentName = null دايمًا (باج)
+            // وشلنا الفلتر Where(CreatedBy == actorId): كان بيخلّي كل مستخدم يشوف
+            // تنقلاته هو بس، فالأدمن كان بيلاقي السجل فاضي تمامًا رغم إنه المفروض
+            // يشوف كل حاجة. عمود «بواسطة» بيوضّح مين عمل كل نقل.
             return await _transfers.Query().AsNoTracking()
                 .Include(t => t.Student)
-                .Where(t => t.CreatedBy == actorId)
+                .Include(t => t.CreatedByUser)
                 .OrderByDescending(t => t.CreatedAt)
                 .Take(50)
                 .Select(t => new RecentTransferDto
@@ -181,9 +259,11 @@ namespace NUH_PORTAL.Services
                     Id = t.Id,
                     StudentNumber = t.StudentNumber,
                     OldBuilding = t.OldBuilding,
+                    OldFloor = t.OldFloor,
                     OldApartment = t.OldApartment,
                     OldRoom = t.OldRoom,
                     NewBuilding = t.NewBuilding,
+                    NewFloor = t.NewFloor,
                     NewApartment = t.NewApartment,
                     NewRoom = t.NewRoom,
                     Reason = t.Reason,
@@ -192,7 +272,10 @@ namespace NUH_PORTAL.Services
                     CreatedBy = t.CreatedBy,
                     AttachmentPath = t.AttachmentPath,
                     OriginalFileName = t.OriginalFileName,
-                    StudentName = t.Student != null ? t.Student.full_name : null
+                    StudentName = t.Student != null ? t.Student.full_name : null,
+                    CreatedByName = t.CreatedByUser != null
+                        ? (t.CreatedByUser.full_name ?? t.CreatedByUser.UserName)
+                        : null
                 })
                 .ToListAsync();
         }

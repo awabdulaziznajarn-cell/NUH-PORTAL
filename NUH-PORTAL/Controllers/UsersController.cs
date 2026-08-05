@@ -16,11 +16,20 @@ namespace NUH_PORTAL.Controllers
 
         public UsersController(IUserService service) => _service = service;
 
-        // GET api/Users
+        // GET api/Users?studentsOnly=false
+        // الشاشة تبويبين: الموظفون (الافتراضي) وحسابات دخول الطلاب.
+        // حساب الطالب بيتولّد تلقائيًا مع كل تحقق برمز جوال، فعدده بيكبر مع كل
+        // طالب بيقدّم — وخلطه بالموظفين بيضيّع الشاشة.
         [HttpGet]
         [Authorize(Policy = "users.view")]
-        public async Task<IActionResult> GetUsers()
-            => Ok(await _service.GetUsersAsync());
+        public async Task<IActionResult> GetUsers([FromQuery] bool studentsOnly = false)
+            => Ok(await _service.GetUsersAsync(studentsOnly));
+
+        // GET api/Users/counts — أرقام التبويبات
+        [HttpGet("counts")]
+        [Authorize(Policy = "users.view")]
+        public async Task<IActionResult> GetCounts()
+            => Ok(await _service.GetCountsAsync());
 
         // GET api/Users/roles — قائمة الأدوار (dropdown)
         [HttpGet("roles")]

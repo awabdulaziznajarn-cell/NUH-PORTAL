@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" id="html-root">
+<head>
+<link rel="icon" href="../favicon.ico">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نموذج التسجيل</title>
+<script src="../i18n.js"></script>
+<script src="../js/housing-fields.js"></script>
+<style>
+@font-face { font-family:'IBM Plex Sans Arabic'; font-style:normal; font-weight:400; src:url('../fonts/IBMPlexSansArabic-Regular.woff2') format('woff2'); }
+@font-face { font-family:'IBM Plex Sans Arabic'; font-style:normal; font-weight:600; src:url('../fonts/IBMPlexSansArabic-SemiBold.woff2') format('woff2'); }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+input,select,textarea{font-size:16px;-webkit-appearance:none;appearance:none;border-radius:0}
+input[type="checkbox"]{-webkit-appearance:checkbox;appearance:checkbox}
+button{touch-action:manipulation}
+:root{--navy:#1B2A5E;--navy-dark:#111C42;--navy-light:#2B3E7E;--gold:#C9A84C;--gold-light:#E8C96A;--white:#FFFFFF;--gray-50:#F4F6FB;--gray-100:#EEF1F8;--gray-200:#DDE3F0;--gray-300:#C8CFDF;--gray-500:#8891A8;--gray-700:#4A5270;--green:#0F6E56;--green-light:#E1F5EE;--red:#991B1B;--red-light:#FEF2F2}
+body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);color:var(--navy-dark);min-height:100vh;display:flex;flex-direction:column;align-items:center}
+.portal-header{text-align:center;padding:28px 16px 0;width:100%;position:relative}
+.portal-header img{width:80px;height:auto;margin-bottom:10px}
+.portal-header h1{font-size:17px;font-weight:800;color:var(--navy-dark)}
+.lang-btn{position:absolute;top:12px;background:#fff;border:1px solid #e2e6ef;border-radius:6px;padding:6px 14px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;z-index:10}
+[dir="rtl"] .lang-btn{left:12px}
+[dir="ltr"] .lang-btn{right:12px}
+.lang-btn:hover{background:#f4f6fb}
+.content{padding:20px 16px;flex:1;max-width:640px;width:100%}
+.card{background:var(--white);border-radius:16px;border:1px solid var(--gray-100);box-shadow:0 2px 8px rgba(27,42,94,0.05);padding:28px;transition:box-shadow 0.2s}
+.card:hover{box-shadow:0 4px 20px rgba(27,42,94,0.09)}
+.step-indicator{display:flex;gap:8px;margin-bottom:24px;justify-content:center}
+.step{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;background:var(--gray-200);color:var(--gray-500);transition:all 0.2s}
+.step.active{background:var(--navy);color:var(--white);box-shadow:0 0 0 4px rgba(27,42,94,0.15)}
+.step.done{background:var(--green);color:var(--white)}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:6px}
+.field label span{color:#EF4444;margin-right:2px}
+.form-control{width:100%;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:10px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;transition:border-color 0.2s;height:48px}
+.form-control:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(27,42,94,0.1)}
+.form-control.error{border-color:#EF4444}
+.form-control:disabled{background:var(--gray-100);color:var(--gray-500);cursor:not-allowed}
+select.form-control{appearance:auto}
+.field-error{font-size:11px;color:#EF4444;font-weight:500;display:none;margin-top:4px}
+.field-error.show{display:block}
+.form-section{margin-bottom:24px}
+.form-section-title{font-size:15px;font-weight:700;color:var(--navy-dark);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--gray-100)}
+.form-row{display:flex;gap:12px}
+.form-row .field{flex:1}
+.form-row .field.wide{flex:1.7}
+.name-group{margin-bottom:18px}
+.name-group>.group-label{display:block;font-size:13px;font-weight:700;color:var(--navy-dark);margin-bottom:8px}
+.name-group>.group-label span{color:#EF4444;margin-right:2px}
+.name-group .field{margin-bottom:12px}
+.name-group .field label{font-size:12px;font-weight:500;color:var(--gray-500)}
+.form-control[dir="ltr"]{direction:ltr;text-align:left}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 24px;border-radius:10px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;border:none;width:100%}
+.btn-primary{background:var(--navy);color:var(--white)}
+.btn-primary:hover{background:var(--navy-light);transform:translateY(-1px)}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed}
+.alert{padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:16px;display:none}
+.alert-success{background:var(--green-light);color:var(--green);border:1px solid var(--green);display:block}
+.alert-error{background:var(--red-light);color:var(--red);border:1px solid var(--red);display:block}
+@media(max-width:768px){.portal-header{padding:20px 16px 0}.portal-header img{width:64px}.portal-header h1{font-size:16px}.content{padding:16px}.card{padding:20px}.form-row{flex-direction:column;gap:0}.step-indicator{gap:6px}.step{width:30px;height:30px;font-size:12px}}
+@media(max-width:414px){.card{border-radius:12px}.step{width:28px;height:28px;font-size:11px}.step-indicator{gap:4px}}
+@media(max-width:375px){.content{padding:12px}.card{padding:16px;border-radius:10px}.form-control{height:44px;font-size:16px}.btn{padding:10px 16px}.step{width:26px;height:26px;font-size:10px}.portal-header{padding:16px 12px 0}.portal-header img{width:56px}.portal-header h1{font-size:15px}}
+@media(max-width:320px){.card{padding:14px}.field label{font-size:12px}.form-control{font-size:14px;height:40px}.btn{font-size:13px;padding:8px 14px}}
+</style>
+</head>
+<body>
+<div class="portal-header">
+<img src="../nu-logo.png" alt="جامعة نجران">
+<h1 id="pageTitle">تسجيل الإسكان الجامعي</h1>
+<button class="lang-btn" id="langBtn" onclick="toggleLang()">English</button>
+</div>
+<div class="content">
+<div class="card">
+<div class="step-indicator">
+<div class="step done"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#0F6E56"/><path d="M4.5 8L7 10.5L11.5 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+<div class="step done"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#0F6E56"/><path d="M4.5 8L7 10.5L11.5 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+<div class="step active">3</div>
+<div class="step">4</div>
+</div>
+<h2 style="font-size:18px;font-weight:800;margin-bottom:4px">نموذج التسجيل</h2>
+<p style="font-size:13px;color:var(--gray-500);margin-bottom:20px">يرجى تعبئة البيانات التالية للتسجيل في الإسكان الجامعي</p>
+<div id="alertMessage" class="alert"></div>
+<form id="regForm" onsubmit="submitForm(event)">
+
+<div class="form-section">
+<div class="form-section-title">المعلومات الشخصية</div>
+<div class="name-group">
+<span class="group-label">الاسم بالعربية <span>*</span></span>
+<div class="form-row">
+<div class="field">
+<label>الاسم الأول</label>
+<input type="text" id="ar_first" class="form-control" autocomplete="off">
+</div>
+<div class="field wide">
+<label>اسم الأب والجد</label>
+<input type="text" id="ar_middle" class="form-control" autocomplete="off">
+</div>
+<div class="field">
+<label>اسم العائلة</label>
+<input type="text" id="ar_family" class="form-control" autocomplete="off">
+</div>
+</div>
+<span class="field-error" id="err-name_ar">اكتب الاسم بالعربية في الخانات الثلاث</span>
+</div>
+<div class="name-group">
+<span class="group-label">الاسم بالإنجليزية <span>*</span></span>
+<div class="form-row">
+<div class="field">
+<label>First name</label>
+<input type="text" id="en_first" class="form-control" dir="ltr" autocomplete="off">
+</div>
+<div class="field wide">
+<label>Father &amp; grandfather</label>
+<input type="text" id="en_middle" class="form-control" dir="ltr" autocomplete="off">
+</div>
+<div class="field">
+<label>Family name</label>
+<input type="text" id="en_family" class="form-control" dir="ltr" autocomplete="off">
+</div>
+</div>
+<span class="field-error" id="err-name_en">اكتب الاسم بالإنجليزية في الخانات الثلاث</span>
+<span class="field-error" id="val-name_match">عدد الأسماء في خانة "اسم الأب والجد" لازم يكون واحد في العربي والإنجليزي</span>
+</div>
+<div class="form-row">
+<div class="field">
+<label>الرقم الجامعي <span>*</span></label>
+<input type="text" id="student_id" class="form-control" maxlength="9" required>
+<span class="field-error" id="err-student_id">حقل مطلوب</span>
+<span class="field-error" id="val-student_id_start">يجب أن يبدأ الرقم الجامعي بالرقم 4</span>
+<span class="field-error" id="val-student_id_length">يجب أن يتكون الرقم الجامعي من 9 أرقام</span>
+</div>
+<div class="field">
+<label>رقم الهوية <span>*</span></label>
+<input type="text" id="national_id" class="form-control" maxlength="10" required>
+<span class="field-error" id="err-national_id">حقل مطلوب</span>
+<span class="field-error" id="val-national_id">يجب أن تتكون الهوية الوطنية من 10 أرقام</span>
+</div>
+</div>
+<div class="form-row">
+<div class="field">
+<label>رقم الجوال <span>*</span></label>
+<input type="tel" id="phone" class="form-control" maxlength="12" required>
+<span class="field-error" id="err-phone">حقل مطلوب</span>
+<span class="field-error" id="val-phone">يجب أن يبدأ رقم الجوال بـ 9665 وأن يتكون من 12 رقماً</span>
+</div>
+<div class="field">
+<label>الجنس <span>*</span></label>
+<select id="gender" class="form-control" required>
+<option value="">اختر الجنس</option>
+<option value="male">ذكر</option>
+<option value="female">أنثى</option>
+</select>
+<span class="field-error" id="err-gender">اختر الجنس</span>
+</div>
+</div>
+</div>
+
+<div class="form-section">
+<div class="form-section-title">المعلومات الأكاديمية</div>
+<div class="form-row">
+<div class="field">
+<label>الكلية <span>*</span></label>
+<select id="college" class="form-control" required>
+<option value="">اختر الكلية</option>
+<option value="engineering">الهندسة</option>
+<option value="medicine">الطب</option>
+<option value="cs">علوم الحاسب والمعلومات</option>
+<option value="science">العلوم</option>
+<option value="business">إدارة الأعمال</option>
+<option value="arts">الآداب والعلوم الإنسانية</option>
+<option value="education">التربية</option>
+<option value="pharmacy">الصيدلة</option>
+</select>
+<span class="field-error" id="err-college">اختر الكلية</span>
+</div>
+<div class="field">
+<label>القسم <span>*</span></label>
+<select id="department" class="form-control" required>
+<option value="">اختر القسم</option>
+<option value="cs">علوم الحاسب والمعلومات</option>
+<option value="computer">هندسة الحاسب</option>
+<option value="electrical">الهندسة الكهربائية</option>
+<option value="mechanical">الهندسة الميكانيكية</option>
+<option value="civil">الهندسة المدنية</option>
+<option value="math">الرياضيات</option>
+<option value="physics">الفيزياء</option>
+<option value="chemistry">الكيمياء</option>
+<option value="biology">الأحياء</option>
+<option value="business">إدارة الأعمال</option>
+<option value="accounting">المحاسبة</option>
+<option value="islamic">الدراسات الإسلامية</option>
+<option value="arabic">اللغة العربية</option>
+<option value="english">اللغة الإنجليزية</option>
+</select>
+<span class="field-error" id="err-department">اختر القسم</span>
+</div>
+</div>
+<div class="form-row">
+<div class="field">
+<label>المستوى الدراسي <span>*</span></label>
+<select id="academic_level" class="form-control" required>
+<option value="">اختر المستوى</option>
+<option value="1">1</option>
+<option value="2">2</option>
+<option value="3">3</option>
+<option value="4">4</option>
+<option value="5">5</option>
+</select>
+<span class="field-error" id="err-academic_level">اختر المستوى</span>
+</div>
+<div class="field">
+<label>اسم المستخدم</label>
+<!-- اسم مستخدم الشبكة بيتولّد تلقائيًا من الرقم الجامعي (h + الرقم) — للعرض فقط -->
+<input type="text" id="ad_username" class="form-control" readonly tabindex="-1"
+       style="background:#F1F5F9;color:#64748B;cursor:not-allowed">
+</div>
+</div>
+</div>
+
+<div class="form-section">
+<div class="form-section-title">معلومات السكن</div>
+<div class="form-row">
+<div class="field">
+<label>المبنى السكني <span>*</span></label>
+<select id="housing_building" class="form-control" required disabled>
+<option value="">اختر الجنس أولاً</option>
+</select>
+<span class="field-error" id="err-housing_building">اختر المبنى</span>
+</div>
+<div class="field">
+<label>رقم الدور <span>*</span></label>
+<select id="floor_number" class="form-control" required>
+<option value="">اختر الدور</option>
+<option value="0">الأرضي</option>
+<option value="1">1</option>
+<option value="2">2</option>
+<option value="3">3</option>
+<option value="4">4</option>
+</select>
+<span class="field-error" id="err-floor_number">اختر الدور</span>
+</div>
+</div>
+<div class="form-row">
+<div class="field">
+<label>رقم الشقة <span>*</span></label>
+<select id="apartment_number" class="form-control" required disabled>
+<option value="">اختر الدور أولاً</option>
+</select>
+<span class="field-error" id="err-apartment_number">اختر رقم الشقة</span>
+</div>
+<div class="field">
+<label>رقم الغرفة <span>*</span></label>
+<select id="room_number" class="form-control" required>
+<option value="">اختر رقم الغرفة</option>
+</select>
+<span class="field-error" id="err-room_number">اختر رقم الغرفة</span>
+</div>
+</div>
+</div>
+
+<button type="submit" id="submitBtn" class="btn btn-primary">تقديم الطلب</button>
+</form>
+</div>
+</div>
+<script>
+setLang(localStorage.getItem('uiLanguage') || 'ar');
+function toggleLang() { applyLang(window.currentLang === 'ar' ? 'en' : 'ar'); }
+
+var token = localStorage.getItem('studentToken');
+var editRequestId = new URLSearchParams(window.location.search).get('edit');
+var userData = JSON.parse(localStorage.getItem('studentUser') || '{}');
+
+var MALE_BUILDINGS = ['65','66','67','68','69','70'];
+var FEMALE_BUILDINGS = ['40','41','42','43'];
+
+// حروف الاسم. النطاق العربي بيستثني الأرقام العربية (٠-٩ = \u0660-\u0669) عمدًا:
+// التحقق القديم كان بيسمح بـ \u0600-\u06FF كامل، يعني "٣٣" كانت بتعدّي كاسم صحيح.
+//
+// خانتا الاسم الأول والعائلة: كلمة واحدة — المسافة نفسها ممنوعة فيهم.
+// السبب إن التفكيك في ADProvisioningService.SplitEnglishName بياخد parts[0] و parts[^1]،
+// فلو خانة العائلة فيها مسافة ("AL SAIARI") هيتحط SAIARI بس في sn.
+//
+// خانة الأب والجد: كلمة أو أكتر — وهي اللي بتستوعب الاسم الخماسي والسداسي.
+// مسموح فيها المسافة العادية بس (مش \s): \s كان بيسمح بـ Tab و NBSP، والـ C#
+// بيقسّم على المسافة العادية، فاللصق من Word كان بيلزّق اسمين في اسم واحد.
+var AR_ONE  = /[^\u0621-\u0652\u0670-\u06D3]/g;
+var AR_MANY = /[^\u0621-\u0652\u0670-\u06D3 ]/g;
+var EN_ONE  = /[^a-zA-Z]/g;
+var EN_MANY = /[^a-zA-Z ]/g;
+
+var NAME_FIELDS = [
+  { id:'ar_first',  re:AR_ONE,  lang:'ar' },
+  { id:'ar_middle', re:AR_MANY, lang:'ar' },
+  { id:'ar_family', re:AR_ONE,  lang:'ar' },
+  { id:'en_first',  re:EN_ONE,  lang:'en', upper:true },
+  { id:'en_middle', re:EN_MANY, lang:'en', upper:true },
+  { id:'en_family', re:EN_ONE,  lang:'en', upper:true }
+];
+
+function showAlert(msg, type) {
+  var el = document.getElementById('alertMessage');
+  el.textContent = msg;
+  el.className = 'alert alert-' + type;
+}
+
+function digitsOnly(el) { el.value = el.value.replace(/\D/g,''); }
+
+// بيشيل أي حرف ممنوع فور كتابته أو لصقه، وبيحافظ على مكان المؤشر.
+// من غير حفظ المؤشر، أي تعديل في نص الاسم بيرمي المؤشر لآخر الخانة.
+function collapseSpaces(v) { return v.replace(/ +/g, ' ').trim(); }
+function nameWords(v) { var c = collapseSpaces(v); return c ? c.split(' ') : []; }
+
+// بيلزّق الخانات التلاتة في نص واحد — ده اللي بيتبعت للسيرفر، فشكل البيانات
+// المخزّنة ما اتغيّرش: full_name و full_name_english فاضلين نص واحد زي الأول.
+function joinName(lang) {
+  return [lang + '_first', lang + '_middle', lang + '_family']
+    .map(function (id) { return collapseSpaces(document.getElementById(id).value); })
+    .filter(function (v) { return v.length; })
+    .join(' ');
+}
+
+// عدد أسماء الأب والجد لازم يتطابق بين اللغتين — بيمسك نسيان اسم في لغة واحدة،
+// وده مهم لأن description بياخد العربي و displayName بياخد الإنجليزي.
+function checkNameMatch() {
+  var arEl = document.getElementById('ar_middle');
+  var enEl = document.getElementById('en_middle');
+  var ar = nameWords(arEl.value).length;
+  var en = nameWords(enEl.value).length;
+  var bad = ar > 0 && en > 0 && ar !== en;
+  document.getElementById('val-name_match').classList.toggle('show', bad);
+  arEl.classList.toggle('error', bad);
+  enEl.classList.toggle('error', bad);
+  return !bad;
+}
+
+// الطلبات القديمة اتخزّنت كنص واحد — بنوزّعه على الخانات التلاتة عند التعديل
+function splitIntoFields(full, lang) {
+  var p = nameWords(full || '');
+  var first = '', middle = '', family = '';
+  if (p.length === 1) { first = p[0]; }
+  else if (p.length === 2) { first = p[0]; family = p[1]; }
+  else if (p.length > 2) { first = p[0]; family = p[p.length - 1]; middle = p.slice(1, -1).join(' '); }
+  document.getElementById(lang + '_first').value  = first;
+  document.getElementById(lang + '_middle').value = middle;
+  document.getElementById(lang + '_family').value = family;
+}
+
+function stripChars(el, re, upper) {
+  var before = el.value;
+  var after = before.replace(re, '');
+  if (upper) after = after.toUpperCase();
+  if (after === before) return;
+  var pos = el.selectionStart;
+  el.value = after;
+  var newPos = Math.max(0, pos - (before.length - after.length));
+  try { el.setSelectionRange(newPos, newPos); } catch (e) { /* بعض المتصفحات ماتدعمش */ }
+}
+
+function validateField(id, valId, regex) {
+  var el = document.getElementById(id);
+  var val = document.getElementById(valId);
+  if (el.value.trim() && !regex.test(el.value.trim())) { el.classList.add('error'); if (val) val.classList.add('show'); }
+  else { el.classList.remove('error'); if (val) val.classList.remove('show'); }
+}
+
+function validateFieldMulti(id, checks) {
+  var el = document.getElementById(id);
+  var hasError = false;
+  checks.forEach(function(c) {
+    var val = document.getElementById(c.valId);
+    if (el.value.trim() && !c.regex.test(el.value.trim())) { if (val) { val.classList.add('show'); hasError = true; } }
+    else { if (val) val.classList.remove('show'); }
+  });
+  if (el.value.trim()) { if (hasError) el.classList.add('error'); else el.classList.remove('error'); }
+}
+
+function updateBuildings() {
+  var gender = document.getElementById('gender').value;
+  var select = document.getElementById('housing_building');
+  var currentVal = select.value;
+  // من غير جنس مختار مفيش مباني تتعرض — قبل كده كانت بتعرض المباني كلها
+  // (65-70 و 40-43 مع بعض)، يعني الطالب يقدر يختار مبنى القسم التاني.
+  var bldgs = gender === 'male'   ? MALE_BUILDINGS
+            : gender === 'female' ? FEMALE_BUILDINGS
+            : [];
+
+  select.innerHTML = '';
+  var ph = document.createElement('option');
+  ph.value = '';
+  ph.setAttribute('data-ar', bldgs.length ? 'اختر المبنى' : 'اختر الجنس أولاً');
+  ph.setAttribute('data-en', bldgs.length ? 'Select building' : 'Select gender first');
+  ph.textContent = (window.currentLang === 'en') ? ph.getAttribute('data-en') : ph.getAttribute('data-ar');
+  select.appendChild(ph);
+
+  bldgs.forEach(function(b) {
+    var opt = document.createElement('option');
+    opt.value = b;
+    opt.textContent = b;
+    select.appendChild(opt);
+  });
+
+  select.disabled = bldgs.length === 0;
+  // لو غيّر الجنس والمبنى القديم مش في القائمة الجديدة، الاختيار بيتلغي
+  select.value = (currentVal && bldgs.indexOf(currentVal) !== -1) ? currentVal : '';
+}
+
+document.getElementById('gender').addEventListener('change', updateBuildings);
+
+['student_id','national_id','phone'].forEach(function(id) {
+  document.getElementById(id).addEventListener('input', function() { digitsOnly(this); });
+});
+
+document.getElementById('student_id').addEventListener('input', function() {
+  // معاينة اسم مستخدم الشبكة — نفس اللي ADProvisioningService بيعمله
+  var uf = document.getElementById('ad_username');
+  uf.value = this.value.trim() ? 'h' + this.value.trim() : '';
+  validateFieldMulti('student_id', [
+    { valId: 'val-student_id_start', regex: /^4/ },
+    { valId: 'val-student_id_length', regex: /^\d{9}$/ }
+  ]);
+  var err = document.getElementById('err-student_id'); if (this.value.trim()) err.classList.remove('show');
+});
+
+document.getElementById('student_id').addEventListener('blur', function() {
+  validateFieldMulti('student_id', [
+    { valId: 'val-student_id_start', regex: /^4/ },
+    { valId: 'val-student_id_length', regex: /^\d{9}$/ }
+  ]);
+});
+
+NAME_FIELDS.forEach(function (f) {
+  var el = document.getElementById(f.id);
+  el.addEventListener('input', function () {
+    stripChars(this, f.re, f.upper);
+    document.getElementById('err-name_' + f.lang).classList.remove('show');
+    checkNameMatch();
+  });
+  // دمج المسافات المتكررة عند الخروج — من غيره "وليد  محمد" بيتخزّن بمسافتين
+  // في description و displayName جوه AD
+  el.addEventListener('blur', function () {
+    this.value = collapseSpaces(this.value);
+    checkNameMatch();
+  });
+});
+
+document.getElementById('national_id').addEventListener('input', function() {
+  validateField('national_id','val-national_id',/^\d{10}$/);
+  var err = document.getElementById('err-national_id'); if (this.value.trim()) err.classList.remove('show');
+});
+document.getElementById('national_id').addEventListener('blur', function() {
+  validateField('national_id','val-national_id',/^\d{10}$/);
+});
+
+document.getElementById('phone').addEventListener('input', function() {
+  validateField('phone','val-phone',/^9665\d{8}$/);
+  var err = document.getElementById('err-phone'); if (this.value.trim()) err.classList.remove('show');
+});
+document.getElementById('phone').addEventListener('blur', function() {
+  validateField('phone','val-phone',/^9665\d{8}$/);
+});
+
+// الشقة بتتولد من الدور، والغرفة 1-4 — المنطق كله في js/housing-fields.js
+var housingRefresh = NuhHousing.attach({
+  floor: 'floor_number', apartment: 'apartment_number', room: 'room_number',
+  labels: { floorFirst: 'اختر الدور أولاً', selectApartment: 'اختر رقم الشقة', selectRoom: 'اختر رقم الغرفة' }
+});
+
+['college','department','academic_level','gender','housing_building','floor_number','apartment_number','room_number'].forEach(function(id) {
+  document.getElementById(id).addEventListener('change', function() {
+    var err = document.getElementById('err-' + id); if (this.value) err.classList.remove('show');
+  });
+});
+
+function validate() {
+  var ok = true;
+
+  // خانات الاسم الستة — كلها مطلوبة، ورسالة واحدة لكل لغة
+  var missing = { ar: false, en: false };
+  NAME_FIELDS.forEach(function (f) {
+    var el = document.getElementById(f.id);
+    if (!collapseSpaces(el.value)) { el.classList.add('error'); missing[f.lang] = true; ok = false; }
+    else el.classList.remove('error');
+  });
+  document.getElementById('err-name_ar').classList.toggle('show', missing.ar);
+  document.getElementById('err-name_en').classList.toggle('show', missing.en);
+  if (!checkNameMatch()) ok = false;
+
+  var required = ['student_id','national_id','phone','college','department','academic_level','gender','housing_building','floor_number','apartment_number','room_number'];
+  required.forEach(function(id) {
+    var el = document.getElementById(id);
+    var err = document.getElementById('err-' + id);
+    if (!el.value || !el.value.trim()) {
+      el.classList.add('error');
+      if (err) err.classList.add('show');
+      ok = false;
+    } else {
+      el.classList.remove('error');
+      if (err) err.classList.remove('show');
+    }
+  });
+  validateFieldMulti('student_id', [
+    { valId: 'val-student_id_start', regex: /^4/ },
+    { valId: 'val-student_id_length', regex: /^\d{9}$/ }
+  ]);
+  validateField('national_id','val-national_id',/^\d{10}$/);
+  validateField('phone','val-phone',/^9665\d{8}$/);
+  var gender = document.getElementById('gender');
+  if (!gender.value) { gender.classList.add('error'); document.getElementById('err-gender').classList.add('show'); ok = false; }
+  return ok;
+}
+
+function fillForm(data) {
+  if (!data) return;
+  splitIntoFields(data.full_name, 'ar');
+  splitIntoFields(data.full_name_english, 'en');
+  var map = {
+    student_id: 'student_id', national_id: 'national_id',
+    phone: 'phone', gender: 'gender', college: 'college',
+    department: 'department', academic_level: 'academic_level',
+    housing_building: 'housing_building', floor_number: 'floor_number',
+    room_number: 'room_number', apartment_number: 'apartment_number'
+  };
+  for (var key in map) {
+    var el = document.getElementById(map[key]);
+    if (el && data[key] !== undefined && data[key] !== null) el.value = data[key];
+  }
+  if (data.gender) updateBuildings();
+  housingRefresh(); // الشقة بتعتمد على الدور المحمَّل
+}
+
+async function loadEditData() {
+  if (!editRequestId) return;
+  try {
+    var r = await fetch('/api/Registration/my-requests/' + editRequestId, { headers: {'Authorization':'Bearer '+token} });
+    if (!r.ok) return;
+    var d = await r.json();
+    if (d.status !== 'need_more_info') { showAlert('لا يمكن تعديل هذا الطلب في الوقت الحالي', 'error'); return; }
+    if (d.registrationData) {
+      var regData = typeof d.registrationData === 'string' ? JSON.parse(d.registrationData) : d.registrationData;
+      fillForm(regData);
+    }
+    document.getElementById('submitBtn').textContent = 'حفظ وإعادة تقديم';
+    document.getElementById('pageTitle').textContent = 'تعديل طلب التسجيل';
+  } catch(e) {}
+}
+
+async function submitForm(e) {
+  e.preventDefault();
+  if (!validate()) return;
+  var btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = 'جاري التقديم...';
+  var formData = {
+    full_name: joinName('ar'),
+    full_name_english: joinName('en'),
+    student_id: document.getElementById('student_id').value.trim(),
+    national_id: document.getElementById('national_id').value.trim(),
+    phone: document.getElementById('phone').value.trim(),
+    gender: document.getElementById('gender').value,
+    college: document.getElementById('college').value,
+    department: document.getElementById('department').value,
+    academic_level: document.getElementById('academic_level').value,
+    housing_building: document.getElementById('housing_building').value,
+    floor_number: document.getElementById('floor_number').value,
+    room_number: document.getElementById('room_number').value.trim(),
+    apartment_number: document.getElementById('apartment_number').value.trim(),
+    // خانة "الحالة" اتشالت من الفورم — الطالب مالوش دعوة يحدد حالة سكنه.
+    // القيمة الافتراضية بتتبعت زي ما هي عشان شكل الحمولة ما يتغيّرش على السيرفر.
+    status: 'active'
+  };
+  try {
+    if (editRequestId) {
+      var r = await fetch('/api/Registration/' + editRequestId + '/resubmit', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+        body:JSON.stringify({registrationData: JSON.stringify(formData)})
+      });
+      var d = await r.json();
+      if (r.ok) {
+        showAlert('تم إعادة تقديم الطلب بنجاح', 'success');
+        btn.disabled=false; btn.textContent='حفظ وإعادة تقديم';
+        setTimeout(function() { window.location.href = 'my-requests.html'; }, 1500);
+      } else {
+        showAlert(d.message || 'فشل إعادة التقديم', 'error');
+        btn.disabled=false; btn.textContent='حفظ وإعادة تقديم';
+      }
+    } else {
+      var r = await fetch('/api/Registration/start', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+        body:JSON.stringify({
+          studentId: document.getElementById('student_id').value.trim(),
+          registrationData: formData
+        })
+      });
+      var d = await r.json();
+      if (r.ok) {
+        localStorage.setItem('lastRequestId', d.requestId);
+        localStorage.setItem('lastRequestNumber', d.requestNumber);
+        // ختم وقت التقديم — شاشة تتبع الطلب بتستخدمه عشان تفتح الطلب على طول
+        // بعد التقديم مباشرة من غير ما تطلب من الطالب يتحقق تاني.
+        localStorage.setItem('lastRequestAt', String(Date.now()));
+        window.location.href = 'register-confirmation.html';
+      } else {
+        showAlert(d.message || 'فشل التقديم', 'error');
+        btn.disabled=false; btn.textContent='تقديم الطلب';
+      }
+    }
+  } catch(e) {
+    showAlert('تعذر الاتصال بالخادم', 'error');
+    btn.disabled=false; btn.textContent=editRequestId ? 'حفظ وإعادة تقديم' : 'تقديم الطلب';
+  }
+}
+
+// الجوال اتحقق منه بالفعل في الخطوة الأولى واتخزّن في regMobile — نعبّيه هنا
+// تلقائيًا بدل ما الطالب يكتبه تاني ويغلط فيه، ونحوّله للصيغة اللي التحقق
+// والـ AD بيتوقعوها: 05XXXXXXXX -> 9665XXXXXXXX
+function normalizeSaudiMobile(v) {
+  var d = String(v == null ? '' : v).replace(/\D/g, '');
+  if (d.indexOf('00966') === 0) d = d.slice(2);   // 00966... -> 966...
+  if (d.indexOf('966') === 0)   d = d.slice(3);   // 966...   -> الجزء المحلي
+  if (d.indexOf('0') === 0)     d = d.slice(1);   // 05...    -> 5...
+  return /^5\d{8}$/.test(d) ? '966' + d : '';
+}
+
+function prefillVerifiedMobile() {
+  var el = document.getElementById('phone');
+  var norm = normalizeSaudiMobile(localStorage.getItem('regMobile'));
+  if (!el || !norm) return;
+  el.value = norm;
+  // مقفولة عن قصد: الرقم ده هو اللي وصله رمز التحقق. لو الطالب غيّره هنا
+  // يبقى الطلب اتقدّم برقم محدش تحقق منه — والتعديل بيكون بالرجوع للخطوة الأولى.
+  el.readOnly = true;
+  el.style.background = 'var(--gray-100)';
+  el.style.cursor = 'not-allowed';
+  el.classList.remove('error');
+  var err = document.getElementById('err-phone'); if (err) err.classList.remove('show');
+  var val = document.getElementById('val-phone'); if (val) val.classList.remove('show');
+}
+
+if (!token) { window.location.href = 'register-phone.html'; }
+updateBuildings();
+prefillVerifiedMobile();
+loadEditData();
+</script>
+</body>
+</html>

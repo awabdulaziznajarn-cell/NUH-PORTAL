@@ -40,9 +40,29 @@ namespace NUH_PORTAL.Services
 
         // ----------------------------- Queries -----------------------------
 
-        public async Task<List<UserListItemDto>> GetUsersAsync()
+        // اسم دور الطالب. حسابات الطلاب بتتولّد تلقائيًا في OtpFlowService عند
+        // التحقق برمز الجوال، فعددها بيكبر مع كل طالب بيقدّم طلب — وشاشة
+        // «المستخدمون» شاشة إدارة موظفين، مش سجل طلاب.
+        private const string StudentRoleName = "user";
+
+        public async Task<UserCountsDto> GetCountsAsync()
         {
-            return await _users.Query().AsNoTracking()
+            var query = _users.Query().AsNoTracking();
+            var students = await query.CountAsync(u => u.UserRoles.Any(ur => ur.Role.Name == StudentRoleName));
+            var total = await query.CountAsync();
+
+            return new UserCountsDto { Students = students, Staff = total - students };
+        }
+
+        public async Task<List<UserListItemDto>> GetUsersAsync(bool studentsOnly = false)
+        {
+            var query = _users.Query().AsNoTracking();
+
+            query = studentsOnly
+                ? query.Where(u => u.UserRoles.Any(ur => ur.Role.Name == StudentRoleName))
+                : query.Where(u => !u.UserRoles.Any(ur => ur.Role.Name == StudentRoleName));
+
+            return await query
                 .OrderByDescending(u => u.created_at)
                 .Select(u => new UserListItemDto
                 {
@@ -51,6 +71,7 @@ namespace NUH_PORTAL.Services
                     full_name = u.full_name,
                     email = u.Email,
                     role = u.UserRoles.Select(ur => ur.Role.Name).FirstOrDefault(),
+                    mobile = u.mobile,
                     created_at = u.created_at,
                     is_active = u.is_active
                 })
@@ -208,7 +229,7 @@ namespace NUH_PORTAL.Services
         public async Task<List<LdapUserSearchItemDto>> SearchLdapAsync(string query)
         {
             if (string.IsNullOrWhiteSpace(query) || query.Trim().Length < 2)
-                throw new UserFriendlyException("اكتب حرفين على الأقل للبحث", 400);
+                throw new UserFriendlyException("يرجى إدخال حرفين على الأقل للبحث", 400);
 
             var res = await _adService.SearchUsersAsync(query.Trim(), 25);
             if (!res.Success)

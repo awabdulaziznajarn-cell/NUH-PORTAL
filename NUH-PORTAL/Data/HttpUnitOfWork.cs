@@ -14,6 +14,13 @@ namespace NUH_PORTAL.Data
                 CurrentUserId = userId;
 
             CurrentUserRole = user?.FindFirst(ClaimTypes.Role)?.Value?.Trim();
+
+            // الصلاحيات بتتحمّل في الكوكي/التوكن وقت الدخول (AuthService + TokenService)،
+            // فبنقراها من نفس المكان اللي الـ policies بتقرا منه — مفيش استعلام قاعدة بيانات.
+            if (user != null)
+                foreach (var c in user.FindAll(Core.ClaimConstants.Permission))
+                    if (!string.IsNullOrWhiteSpace(c.Value))
+                        CurrentPermissions.Add(c.Value.Trim());
         }
     }
 }

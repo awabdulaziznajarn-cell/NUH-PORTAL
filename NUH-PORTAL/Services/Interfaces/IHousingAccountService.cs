@@ -20,5 +20,8 @@ namespace NUH_PORTAL.Services.Interfaces
         Task<List<AdConfigurationDto>> GetAdConfigAsync();
         Task UpdateAdConfigAsync(List<AdConfigDto> configs);
         Task<HousingStatsDto> GetHousingStatsAsync();
+        // مزامنة مع الأكتف دايركتوري — قراءة من الدومين وكتابة عندنا بس.
+        // LinkNew = ربط طلاب مالهمش حساب مسجّل، RefreshLinked = تحديث حالة المربوطين.
+        Task<AdLinkResultDto> SyncAdAccountsAsync(AdSyncMode mode, bool dryRun);
     }
 }

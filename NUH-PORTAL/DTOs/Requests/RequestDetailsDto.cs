@@ -33,5 +33,19 @@ namespace NUH_PORTAL.DTOs.Requests
         public string? CyberReviewedByName { get; set; }
         public string? ReadyForProvisioningByName { get; set; }
         public string? CompletedByName { get; set; }
+
+        // آخر تعديل أجراه الطالب بعد «بحاجة معلومات إضافية».
+        // فارغة إذا لم يُعِد الطالب التقديم — الشاشة تعلّم الحقول الواردة هنا.
+        public List<StudentEditDto> StudentEdits { get; set; } = new();
+        public DateTime? StudentEditedAt { get; set; }
+    }
+
+    // سطر واحد لكل حقل عدّله الطالب
+    public class StudentEditDto
+    {
+        public string Field { get; set; } = "";
+        public string Label { get; set; } = "";
+        public string? Old { get; set; }
+        public string? New { get; set; }
     }
 }

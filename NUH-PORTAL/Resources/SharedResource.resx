@@ -1,5 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
     <xsd:element name="root" msdata:IsDataSet="true">
@@ -641,7 +700,7 @@
     <value>الصف</value>
   </data>
   <data name="bulk_col_studentId" xml:space="preserve">
-    <value>رقم الطالب</value>
+    <value>الرقم الجامعي</value>
   </data>
   <data name="bulk_creating" xml:space="preserve">
     <value>جاري الإنشاء...</value>
@@ -1528,14 +1587,8 @@
   <data name="login_usernamePlaceholder" xml:space="preserve">
     <value>أدخل اسم المستخدم</value>
   </data>
-  <data name="logout" xml:space="preserve">
-    <value>تسجيل الخروج</value>
-  </data>
   <data name="male" xml:space="preserve">
     <value>ذكر</value>
-  </data>
-  <data name="markAllRead" xml:space="preserve">
-    <value>تحديد الكل مقروء</value>
   </data>
   <data name="markCompleted" xml:space="preserve">
     <value>إكمال</value>
@@ -1556,7 +1609,7 @@
     <value>رقم الهوية الوطنية</value>
   </data>
   <data name="nationalIdPlaceholder" xml:space="preserve">
-    <value></value>
+    <value />
   </data>
   <data name="nationalIdValidation" xml:space="preserve">
     <value>يجب أن تتكون الهوية الوطنية من 10 أرقام</value>
@@ -1623,9 +1676,6 @@
   </data>
   <data name="notes" xml:space="preserve">
     <value>ملاحظات</value>
-  </data>
-  <data name="notifications" xml:space="preserve">
-    <value>الإشعارات</value>
   </data>
   <data name="oldValue" xml:space="preserve">
     <value>القيمة القديمة</value>
@@ -1832,7 +1882,7 @@
     <value>الجنس</value>
   </data>
   <data name="reg_lblNationalId" xml:space="preserve">
-    <value>رقم الهوية</value>
+    <value>رقم الهوية الوطنية</value>
   </data>
   <data name="reg_lblPhone" xml:space="preserve">
     <value>رقم الجوال</value>
@@ -2567,7 +2617,7 @@
     <value>الاسم بالإنجليزية</value>
   </data>
   <data name="stu_col_nationalId" xml:space="preserve">
-    <value>رقم الهوية</value>
+    <value>رقم الهوية الوطنية</value>
   </data>
   <data name="stu_col_phone" xml:space="preserve">
     <value>الجوال</value>
@@ -2579,7 +2629,7 @@
     <value>الحالة</value>
   </data>
   <data name="stu_col_studentId" xml:space="preserve">
-    <value>رقم الطالب</value>
+    <value>الرقم الجامعي</value>
   </data>
   <data name="stu_confirmDelete" xml:space="preserve">
     <value>متأكد من حذف الطالب؟</value>
@@ -2645,7 +2695,7 @@
     <value>يجب أن يتكون الرقم الجامعي من 9 أرقام</value>
   </data>
   <data name="studentIdPlaceholder" xml:space="preserve">
-    <value></value>
+    <value />
   </data>
   <data name="studentIdStartValidation" xml:space="preserve">
     <value>يجب أن يبدأ الرقم الجامعي بالرقم 4</value>
@@ -2660,7 +2710,7 @@
     <value>الطالب غير موجود</value>
   </data>
   <data name="studentNumber" xml:space="preserve">
-    <value>رقم الطالب</value>
+    <value>الرقم الجامعي</value>
   </data>
   <data name="studentNumberError" xml:space="preserve">
     <value>الرجاء إدخال رقم جامعي صحيح</value>
@@ -3257,7 +3307,7 @@
     <value>معلومات الطالب</value>
   </data>
   <data name="rdp_field_nationalId" xml:space="preserve">
-    <value>رقم الهوية</value>
+    <value>رقم الهوية الوطنية</value>
   </data>
   <data name="rdp_field_mobile" xml:space="preserve">
     <value>الجوال</value>
@@ -4224,5 +4274,26 @@
   </data>
   <data name="reg_optSelectRoom" xml:space="preserve">
     <value>اختر رقم الغرفة</value>
+  </data>
+  <data name="loc_building" xml:space="preserve">
+    <value>مبنى</value>
+  </data>
+  <data name="loc_floor" xml:space="preserve">
+    <value>الدور</value>
+  </data>
+  <data name="loc_apartment" xml:space="preserve">
+    <value>شقة</value>
+  </data>
+  <data name="loc_room" xml:space="preserve">
+    <value>غرفة</value>
+  </data>
+  <data name="att_preview" xml:space="preserve">
+    <value>معاينة</value>
+  </data>
+  <data name="att_download" xml:space="preserve">
+    <value>تحميل</value>
+  </data>
+  <data name="att_close" xml:space="preserve">
+    <value>إغلاق</value>
   </data>
 </root>

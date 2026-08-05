@@ -5,10 +5,12 @@ using NUH_PORTAL.Services.Interfaces;
 
 namespace NUH_PORTAL.Controllers
 {
-    // إدارة القوائم المرجعية + بنود التعهّد — للأدمن فقط
+    // إدارة القوائم المرجعية + بنود التعهّد.
+    // ⚠️ كانت Roles="admin" بينما شاشات القوائم نفسها بـ lookups.manage — يعني
+    //    المشرف بيفتح الشاشة وكل حفظ بيرجّع 403. اتوحّدت على الصلاحية.
     [ApiController]
     [Route("api/admin")]
-    [Authorize(Roles = "admin")]
+    [Authorize(Policy = "lookups.manage")]
     public class LookupAdminController : ControllerBase
     {
         private readonly ILookupAdminService _svc;

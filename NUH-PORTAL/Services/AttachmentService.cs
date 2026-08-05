@@ -1,5 +1,4 @@
 using MapsterMapper;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using NUH_PORTAL.Core.Exceptions;
@@ -17,8 +16,10 @@ namespace NUH_PORTAL.Services
     {
         private readonly IRepository<RequestAttachment> _attachments;
         private readonly IRepository<Request> _requests;
+        private readonly IRepository<Student> _students;
         private readonly IAuditService _audit;
-        private readonly IWebHostEnvironment _env;
+        private readonly IAttachmentStorage _storage;
+        private readonly IHttpContextAccessor _http;
 
         private static readonly HashSet<string> AllowedTypes = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -30,15 +31,19 @@ namespace NUH_PORTAL.Services
         public AttachmentService(
             IRepository<RequestAttachment> attachments,
             IRepository<Request> requests,
+            IRepository<Student> students,
             IAuditService audit,
-            IWebHostEnvironment env,
+            IAttachmentStorage storage,
+            IHttpContextAccessor http,
             IUnitOfWork unitOfWork,
             IMapper mapper) : base(unitOfWork, mapper)
         {
             _attachments = attachments;
             _requests = requests;
+            _students = students;
             _audit = audit;
-            _env = env;
+            _storage = storage;
+            _http = http;
         }
 
         public async Task<List<UploadedFileDto>> UploadAsync(int requestId, string? documentType, string? notes, IFormFileCollection files)
@@ -54,6 +59,12 @@ namespace NUH_PORTAL.Services
             if (files == null || files.Count == 0)
                 throw new UserFriendlyException("يرجى اختيار ملف للرفع", 400);
 
+            // المرفقات بتتخزّن تحت مجلد الطالب، فمحتاجين رقمه الجامعي
+            var universityId = (await _students.Query().AsNoTracking()
+                .Where(st => st.Id == request.StudentId)
+                .Select(st => st.student_id)
+                .FirstOrDefaultAsync()) ?? "";
+
             var uploaded = new List<UploadedFileDto>();
 
             foreach (var file in files)
@@ -65,16 +76,14 @@ namespace NUH_PORTAL.Services
                 if (file.Length > MaxFileSize)
                     throw new UserFriendlyException("حجم الملف يتجاوز الحد المسموح به (10MB)", 400);
 
-                var uploadDir = Path.Combine(_env.WebRootPath, "uploads", "requests", requestId.ToString());
-                Directory.CreateDirectory(uploadDir);
-
-                var storedName = $"{Guid.NewGuid()}{ext}";
-                var filePath = Path.Combine(uploadDir, storedName);
-
-                await using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await file.CopyToAsync(stream);
-                }
+                // storedName بقى **مسار نسبي للجذر** مش اسم ملف بس
+                var storedName = await _storage.SaveAsync(
+                    AttachmentStorage.RequestDocuments,
+                    universityId,
+                    "request",
+                    requestId,
+                    _http.HttpContext?.User?.Identity?.Name,
+                    file);
 
                 var attachment = new RequestAttachment
                 {
@@ -133,11 +142,8 @@ namespace NUH_PORTAL.Services
             var attachment = await _attachments.FindAsync(a => a.Id == id && !a.IsDeleted)
                 ?? throw UserFriendlyException.NotFound("الملف غير موجود");
 
-            var filePath = Path.Combine(_env.WebRootPath, "uploads", "requests",
-                attachment.RequestId.ToString(), attachment.FileName);
-
-            if (!File.Exists(filePath))
-                throw UserFriendlyException.NotFound("الملف غير موجود على الخادم");
+            var filePath = _storage.ResolveExisting(AttachmentStorage.RequestDocuments, attachment.RequestId, attachment.FileName)
+                ?? throw UserFriendlyException.NotFound("الملف غير موجود على الخادم");
 
             return new DownloadFileDto
             {

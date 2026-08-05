@@ -13,7 +13,7 @@
 <div class="card">
   <div class="lk-toolbar">
     <input type="text" id="usrSearch" class="usr-search" placeholder="@SharedLocalizer["usr_search"]" oninput="filterUsers()">
-    <div style="display:flex;gap:8px">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       @if (canLdap)
       {
         <button class="btn btn-cancel" type="button" onclick="openLdap()">@SharedLocalizer["usr_addFromDir"]</button>
@@ -25,15 +25,36 @@
     </div>
   </div>
 
+  @* ⚠️ حساب الطالب بيتولّد تلقائيًا أول ما يتحقق برمز الجوال — مش موظف ومحدش
+     بيديره من هنا. خلطه بالموظفين كان بيغرق الشاشة: مع كل طالب بيقدّم صف جديد.
+     التبويبات بتفصلهم بصريًا من غير صفحة ولا صلاحية جديدة. *@
+  <div class="usr-tabs">
+    <button type="button" class="usr-tab active" id="tabStaff" onclick="switchTab(false)">
+      <span>@SharedLocalizer["usr_pageTitle"]</span>
+      <span class="usr-tab-count" id="cntStaff">—</span>
+    </button>
+    <button type="button" class="usr-tab" id="tabStudents" onclick="switchTab(true)">
+      <span>حسابات دخول الطلاب</span>
+      <span class="usr-tab-count" id="cntStudents">—</span>
+    </button>
+  </div>
+
+  <div id="usrStudentsNote" class="usr-note" style="display:none">
+    تُنشأ هذه الحسابات تلقائيًا فور تحقّق الطالب برمز جواله — لا يوجد إنشاء أو تعديل يدوي.
+    الإجراء الوحيد المتاح هنا هو تعطيل الدخول.
+  </div>
+
   <div style="overflow-x:auto">
     <table>
       <thead>
-        <tr>
+        <tr id="usrHeadRow">
           <th>#</th>
           <th>@SharedLocalizer["usr_col_username"]</th>
           <th>@SharedLocalizer["usr_col_fullName"]</th>
-          <th>@SharedLocalizer["usr_col_email"]</th>
-          <th>@SharedLocalizer["usr_col_role"]</th>
+          <th class="col-staff">@SharedLocalizer["usr_col_email"]</th>
+          <th class="col-staff">@SharedLocalizer["usr_col_role"]</th>
+          <th class="col-students" style="display:none">الجوال</th>
+          <th class="col-students" style="display:none">تاريخ الإنشاء</th>
           <th>@SharedLocalizer["usr_col_status"]</th>
           <th>@SharedLocalizer["usr_col_actions"]</th>
         </tr>
@@ -154,6 +175,16 @@
 @section Scripts {
 <style>
   .lk-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;border-bottom:1px solid var(--gray-100);flex-wrap:wrap}
+  .usr-tabs{display:flex;gap:4px;padding:12px 20px 0;border-bottom:1px solid var(--gray-100)}
+  .usr-tab{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border:none;background:none;
+           font-family:inherit;font-size:13px;font-weight:600;color:var(--gray-500);cursor:pointer;
+           border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s}
+  .usr-tab:hover{color:var(--navy)}
+  .usr-tab.active{color:var(--navy);border-bottom-color:var(--navy)}
+  .usr-tab-count{background:var(--gray-100);color:var(--gray-500);border-radius:999px;padding:1px 8px;font-size:11.5px;font-weight:700}
+  .usr-tab.active .usr-tab-count{background:var(--navy);color:#fff}
+  .usr-note{margin:14px 20px 0;padding:10px 14px;border-radius:8px;background:#EFF6FF;color:#1E40AF;
+            border:1px solid #DBEAFE;font-size:12px;line-height:1.8}
   .usr-search{flex:1;min-width:220px;max-width:360px;height:40px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:10px;padding:0 14px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;color:var(--navy-dark);outline:none}
   .usr-search:focus{border-color:var(--navy);background:#fff}
   .spinner{width:32px;height:32px;border:3px solid var(--gray-200);border-top-color:var(--navy);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto}
@@ -218,6 +249,9 @@
 
   function roleText(r) { return r ? r : '—'; }
 
+  // التبويب الحالي: false = الموظفون، true = حسابات دخول الطلاب
+  var showingStudents = false;
+
   function renderTable() {
     var q = (document.getElementById('usrSearch').value || '').trim().toLowerCase();
     var rows = state.users.filter(function (u) {
@@ -225,43 +259,85 @@
       return (u.username || '').toLowerCase().indexOf(q) !== -1 ||
              (u.full_name || '').toLowerCase().indexOf(q) !== -1 ||
              (u.email || '').toLowerCase().indexOf(q) !== -1 ||
+             (u.mobile || '').toLowerCase().indexOf(q) !== -1 ||
              (u.role || '').toLowerCase().indexOf(q) !== -1;
     });
+
+    var colCount = showingStudents ? 7 : 7;
     var body = '';
+
     rows.forEach(function (u, idx) {
+      // ⚠️ حساب الطالب مالوش «تعديل»: بياناته بتيجي من سجل الطالب نفسه، وتعديلها
+      //    من هنا هيخلّي الاتنين مختلفين. المتاح تعطيل الدخول بس.
       var actions = '';
       if (PERM.manage) {
-        actions += '<button class="action-btn action-edit" onclick="openEdit(' + u.id + ')">' + t('usr_edit') + '</button>';
+        if (!showingStudents)
+          actions += '<button class="action-btn action-edit" onclick="openEdit(' + u.id + ')">' + t('usr_edit') + '</button>';
         if (u.is_active)
           actions += '<button class="action-btn action-toggle" onclick="toggleActive(' + u.id + ',false)">' + t('usr_deactivate') + '</button>';
         else
           actions += '<button class="action-btn action-on" onclick="toggleActive(' + u.id + ',true)">' + t('usr_activate') + '</button>';
       }
+
+      var middle = showingStudents
+        ? '<td dir="ltr" style="text-align:start">' + esc(u.mobile || '—') + '</td>' +
+          '<td>' + (u.created_at ? new Date(u.created_at).toLocaleDateString('ar-EG') : '—') + '</td>'
+        : '<td>' + esc(u.email) + '</td>' +
+          '<td><span class="usr-role">' + esc(roleText(u.role)) + '</span></td>';
+
       body += '<tr class="' + (u.is_active ? '' : 'usr-inactive') + '">' +
         '<td>' + (idx + 1) + '</td>' +
         '<td>' + esc(u.username) + '</td>' +
         '<td>' + esc(u.full_name) + '</td>' +
-        '<td>' + esc(u.email) + '</td>' +
-        '<td><span class="usr-role">' + esc(roleText(u.role)) + '</span></td>' +
+        middle +
         '<td>' + (u.is_active
             ? '<span class="usr-pill usr-pill-on">' + t('usr_status_active') + '</span>'
             : '<span class="usr-pill usr-pill-off">' + t('usr_status_inactive') + '</span>') +
         '</td>' +
         '<td><div class="row-actions">' + (actions || '—') + '</div></td></tr>';
     });
+
     document.getElementById('usrBody').innerHTML = body ||
-      '<tr><td colspan="7" style="text-align:center;color:var(--gray-500);padding:28px">' + t('usr_noItems') + '</td></tr>';
+      '<tr><td colspan="' + colCount + '" style="text-align:center;color:var(--gray-500);padding:28px">' + t('usr_noItems') + '</td></tr>';
+  }
+
+  function switchTab(students) {
+    if (showingStudents === students) return;
+    showingStudents = students;
+
+    document.getElementById('tabStaff').classList.toggle('active', !students);
+    document.getElementById('tabStudents').classList.toggle('active', students);
+    document.getElementById('usrStudentsNote').style.display = students ? 'block' : 'none';
+
+    document.querySelectorAll('#usrHeadRow .col-staff').forEach(function (th) { th.style.display = students ? 'none' : ''; });
+    document.querySelectorAll('#usrHeadRow .col-students').forEach(function (th) { th.style.display = students ? '' : 'none'; });
+
+    document.getElementById('usrBody').innerHTML =
+      '<tr><td colspan="7" style="text-align:center;padding:40px"><div class="spinner"></div></td></tr>';
+    loadUsers();
+  }
+
+  async function loadCounts() {
+    try {
+      var res = await fetch('/api/Users/counts', { headers: authHeaders() });
+      if (!res.ok) return;
+      var c = await res.json();
+      document.getElementById('cntStaff').textContent = c.staff;
+      document.getElementById('cntStudents').textContent = c.students;
+    } catch (e) { /* صامت — العدّاد مش حاجة حرجة */ }
   }
 
   function filterUsers() { renderTable(); }
 
   async function loadUsers() {
     try {
-      var res = await fetch('/api/Users', { headers: authHeaders() });
+      var url = '/api/Users' + (showingStudents ? '?studentsOnly=true' : '');
+      var res = await fetch(url, { headers: authHeaders() });
       if (res.status === 401) { window.location.replace('/Account/Login'); return; }
       if (!res.ok) { showToast(t('usr_loadError'), true); return; }
       state.users = await res.json();
       renderTable();
+      loadCounts();
     } catch (e) { showToast(t('usr_loadError'), true); }
   }
 

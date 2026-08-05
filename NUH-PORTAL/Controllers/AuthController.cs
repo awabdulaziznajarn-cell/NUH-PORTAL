@@ -22,8 +22,8 @@ namespace NUH_PORTAL.Controllers
             return Ok(new { message = result.Message, token = result.Token, user = result.User });
         }
 
-        // POST api/Auth/SetPassword
-        [Authorize(Roles = "admin")]
+        // POST api/Auth/SetPassword — ضبط كلمة مرور موظف = إدارة مستخدمين
+        [Authorize(Policy = "users.manage")]
         [HttpPost("SetPassword")]
         public async Task<IActionResult> SetPassword([FromBody] SetPasswordRequest request)
         {

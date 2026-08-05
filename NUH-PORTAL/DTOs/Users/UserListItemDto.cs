@@ -8,6 +8,8 @@ namespace NUH_PORTAL.DTOs.Users
         public string? full_name { get; set; }
         public string? email { get; set; }
         public string? role { get; set; }
+        // الجوال — العمود الوحيد اللي بيهمّ في حسابات الطلاب (الدخول برمز عليه)
+        public string? mobile { get; set; }
         public DateTime created_at { get; set; }
         public bool is_active { get; set; }
     }

@@ -50,7 +50,7 @@ namespace NUH_PORTAL.Services
             return lastTwo[1].ToStage;
         }
 
-        public async Task LogTransitionAsync(int requestId, string? fromStage, string toStage, int actionBy, string? notes = null)
+        public async Task LogTransitionAsync(int requestId, string? fromStage, string toStage, int actionBy, string? notes = null, string? changesJson = null)
         {
             var history = new WorkflowHistory
             {
@@ -59,7 +59,8 @@ namespace NUH_PORTAL.Services
                 ToStage = toStage,
                 ActionBy = actionBy,
                 ActionDate = DateTime.UtcNow,
-                Notes = notes
+                Notes = notes,
+                ChangesJson = changesJson
             };
 
             _context.WorkflowHistories.Add(history);
@@ -67,6 +68,20 @@ namespace NUH_PORTAL.Services
 
             _logger.LogInformation("Workflow transition: Request {RequestId} {From} -> {To} by User {User}",
                 requestId, fromStage ?? "(start)", toStage, actionBy);
+        }
+
+        // أحدث سجل يحمل تعديلات فعلية. الخطوات التي لا يصاحبها تعديل
+        // (اعتماد، رفض، تحويل) لا تكتب changes_json فلا تظهر هنا.
+        public async Task<(string? Json, DateTime? At)> GetLastChangesAsync(int requestId)
+        {
+            var last = await _context.WorkflowHistories
+                .AsNoTracking()
+                .Where(w => w.RequestId == requestId && w.ChangesJson != null)
+                .OrderByDescending(w => w.ActionDate)
+                .Select(w => new { w.ChangesJson, w.ActionDate })
+                .FirstOrDefaultAsync();
+
+            return (last?.ChangesJson, last?.ActionDate);
         }
 
         public async Task<List<WorkflowHistory>> GetHistoryAsync(int requestId)

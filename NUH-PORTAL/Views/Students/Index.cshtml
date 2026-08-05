@@ -1,8 +1,10 @@
 @model NUH_PORTAL.ViewModels.StudentsIndexViewModel
 @{
     ViewData["Title"] = SharedLocalizer["Page_Students"].Value;
-    var role = (User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "").ToLowerInvariant();
-    var canEdit = role != "user" && role != "cyber";
+    // الأزرار بتتحكّم فيها الصلاحية مش الدور — والفحص الحقيقي على السيرفر
+    // (StudentsController + StudentService)؛ ده إخفاء واجهة بس.
+    var canEdit = User.HasClaim("permission", "students.edit");
+    var canDelete = User.HasClaim("permission", "students.delete");
 
     // النصوص بتتسلسل JSON عشان Razor بيهرّب أي نص بيطبعه ترميز HTML حتى جوه script،
     // فلو اتحطت في textContent المستخدم بيشوف رموز بدل الحروف العربية.
@@ -118,7 +120,10 @@
                 {
                   <button class="action-btn action-edit" onclick="openEditModal(@s.Id)" >@SharedLocalizer["stu_edit"]</button>
                 }
-                <button class="action-btn action-delete" onclick="deleteStudent(@s.Id, this)" >@SharedLocalizer["stu_delete"]</button>
+                @if (canDelete)
+                {
+                  <button class="action-btn action-delete" onclick="deleteStudent(@s.Id, this)" >@SharedLocalizer["stu_delete"]</button>
+                }
               </div>
             </td>
           </tr>
@@ -376,6 +381,7 @@
 <script src="/js/housing-fields.js"></script>
 <script>
   var CAN_EDIT = @(canEdit ? "true" : "false");
+  var CAN_DELETE = @(canDelete ? "true" : "false");
   // حالة الصفحة (أول تحميل جاي جاهز من السيرفر)
   var state = {
     page: @Model.Page.Page,
@@ -444,7 +450,7 @@
             : '<span class="badge badge-active">' + t('stu_resident') + '</span>') + '</td>' +
         '<td><div class="row-actions">' +
           (CAN_EDIT ? '<button class="action-btn action-edit" onclick="openEditModal(' + s.id + ')">' + t('stu_edit') + '</button>' : '') +
-          '<button class="action-btn action-delete" onclick="deleteStudent(' + s.id + ', this)">' + t('stu_delete') + '</button>' +
+          (CAN_DELETE ? '<button class="action-btn action-delete" onclick="deleteStudent(' + s.id + ', this)">' + t('stu_delete') + '</button>' : '') +
         '</div></td>' +
       '</tr>';
     });

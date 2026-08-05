@@ -181,7 +181,9 @@ builder.Services.AddAuthentication(options =>
         //    بيعمل لوب: صفحة محمية -> 403 -> صفحة الدخول -> بتلاقي الكوكي صالح
         //    فبتحوّل على /Home -> 403 -> ... والمستخدم بيشوفه كأنه بيتسجّل خروج فورًا.
         options.AccessDeniedPath = "/Account/Denied";
-        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+        // ٣٠ دقيقة خمول متجددة: كل نداء بيجدّد المدة، فالموظف اللي بيشتغل
+        // مايتسجّلش خروج، واللي سايب الشاشة مفتوحة بتتقفل لوحدها.
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
         options.SlidingExpiration = true;
         options.Cookie.Name = "NUH.Auth";
         options.Cookie.HttpOnly = true;
@@ -277,6 +279,8 @@ builder.Services.Configure<IpRateLimitOptions>(options =>
         new RateLimitRule { Endpoint = "*:/api/RequestTracking/*", Period = "1m", Limit = 20 },
         // بدء التسجيل الذاتي — مكافحة السبام
         new RateLimitRule { Endpoint = "POST:/api/Registration/start", Period = "1h", Limit = 10 },
+        // الفحص المبكر: سخيّ بما يكفي للتصحيح الطبيعي، وضيّق بما يمنع التجريب بالجملة
+        new RateLimitRule { Endpoint = "POST:/api/Registration/check-duplicate", Period = "1h", Limit = 30 },
     };
 });
 builder.Services.AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>();
@@ -338,6 +342,9 @@ builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.AddScoped<IRoleAdminService, RoleAdminService>();
 builder.Services.AddScoped<IHousingAccountService, HousingAccountService>();
 builder.Services.AddScoped<ISupervisorHousingTransferService, SupervisorHousingTransferService>();
+// مكان تخزين المرفقات — Singleton لأنه بيقرأ الإعدادات مرة واحدة وبعدها بيحسب مسارات بس.
+// المسار بيتظبط من Storage:AttachmentsRoot في appsettings.
+builder.Services.AddSingleton<IAttachmentStorage, AttachmentStorage>();
 builder.Services.AddScoped<IAttachmentService, AttachmentService>();
 builder.Services.AddScoped<IAuditLogQueryService, AuditLogQueryService>();
 builder.Services.AddScoped<ILogQueryService, LogQueryService>();
@@ -385,7 +392,7 @@ try
 {
     using var roleScope = app.Services.CreateScope();
     var roleMgr = roleScope.ServiceProvider.GetRequiredService<RoleManager<Role>>();
-    await DbSeeder.SeedRolesAndPermissionsAsync(roleMgr);
+    await DbSeeder.SeedRolesAndPermissionsAsync(roleMgr, app.Logger);
 
     // إنذار مبكر: دور بلا صلاحيات معناه إن كل صفحاته هترفض المستخدم. ده بالظبط
     // اللي كان بيحصل ومحدش واخد باله، فبنسجّله في السجل بدل ما نستنى شكوى.
@@ -472,7 +479,21 @@ app.UseRequestLocalization();
 // ✅ الترتيب مهم
 app.UseAuthentication();
 
-// ✅ Session activity middleware — blocks stale API calls after 15 min inactivity
+// ✅ Session activity middleware — bقفل نداءات الـ API بعد 15 دقيقة خمول
+//
+// ⚠️⚠️ باج أقفل النظام على كل المستخدمين (٤ أغسطس ٢٠٢٦):
+//    الكود القديم كان بيرجّع 401 ويعمل return **قبل** ما يحدّث أو يمسح القيمة
+//    المخزّنة، والقيمة دي عمرها كان ٨ ساعات. النتيجة: أول ما مستخدم يعدّي ١٥ دقيقة
+//    خمول، القيمة القديمة بتفضل مكانها وكل نداء بعد كده بيقع في نفس الشرط —
+//    حتى بعد تسجيل دخول جديد بكوكي جديد، لأن المفتاح مربوط برقم المستخدم مش
+//    بالجلسة. يعني المستخدم بيتقفل ٨ ساعات كاملة أو لحد ما التطبيق يعيد التشغيل.
+//
+//    الأعراض كانت مضلّلة: صفحات الـ MVC بتفتح 200 عادي (الفحص ده على /api بس)
+//    وكل نداء API بيرجّع 401، والجافاسكريبت بيحوّل على صفحة الدخول — فالمستخدم
+//    بيشوف نفسه «بيدخل ويطلع» وهو في الحقيقة داخل وجلسته سليمة.
+//
+//    الإصلاح: امسح القيمة وقت انتهاء الجلسة (فتسجيل الدخول التالي يشتغل عادي)،
+//    وقلّل عمر التخزين لساعة بدل ٨ ساعات عشان أي خلل مستقبلي يتصحّح لوحده.
 app.Use(async (context, next) =>
 {
     if (context.Request.Path.StartsWithSegments("/api") &&
@@ -488,14 +509,20 @@ app.Use(async (context, next) =>
             if (cache.TryGetValue(cacheKey, out DateTime lastActivity) &&
                 (DateTime.UtcNow - lastActivity).TotalMinutes > 15)
             {
+                // امسح العدّاد الأول — من غير السطر ده المستخدم يفضل مقفول حتى بعد
+                // ما يسجّل دخول من جديد، وده بالظبط اللي كان بيحصل.
+                cache.Remove(cacheKey);
+
                 // انتهت الجلسة بعدم النشاط — نسجّل خروج كوكي الـ MVC كمان عشان صفحة الدخول
                 // متردّش المستخدم على الصفحة تاني (كسر لوب التحويل)، ونرجّع 401 للنداء الحالي.
                 await context.SignOutAsync(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme);
                 context.Response.StatusCode = 401;
                 return;
             }
-            // حدّث آخر نشاط على كل طلب مُصادَق عليه (نافذة منزلقة) — مش معتمد على /Ping بس
-            cache.Set(cacheKey, DateTime.UtcNow, TimeSpan.FromHours(8));
+            // حدّث آخر نشاط على كل طلب مُصادَق عليه (نافذة منزلقة) — مش معتمد على /Ping بس.
+            // العمر ساعة: أطول من نافذة الخمول بكتير فالفحص شغّال، وقصير كفاية إن أي
+            // قيمة عالقة تختفي لوحدها بدل ما تقفل مستخدم يوم شغل كامل.
+            cache.Set(cacheKey, DateTime.UtcNow, TimeSpan.FromHours(1));
         }
     }
     await next();
@@ -520,11 +547,19 @@ var legacyPageMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreC
     ["/housing-management.html"] = "/Housing",
     ["/reports.html"] = "/Reports",
     ["/auditlog.html"] = "/AuditLog",
-    ["/supervisor-departure.html"] = "/Departure",
+    // شاشة المغادرة اتشالت بالكامل (محتواها كان مكرّرًا حرفيًا في /StudentStatus)
+    // ومحدش كان بيستخدم روابطها، فمفيش تحويل — /Departure بترجع 404.
     ["/login.html"] = "/Account/Login",
     ["/login-v2.html"] = "/Account/Login",
     ["/login-lang.html"] = "/Account/Login",
-    ["/sidebar.html"] = "/Home"
+    ["/sidebar.html"] = "/Home",
+
+    // ⚠️ نسخ قديمة من صفحات بوابة الطالب كانت لسه متاحة على جذر الموقع
+    //    (/register-form.html) وبتقدّم كودًا أقدم من النسخة الحيّة في /register/.
+    //    الطالب اللي يفتح رابطًا قديمًا كان بيملأ نموذجًا مختلفًا عن اللي في البوابة.
+    ["/register-form.html"] = "/register/register-form.html",
+    ["/register-confirmation.html"] = "/register/register-confirmation.html",
+    ["/track-request.html"] = "/register/track-request.html"
 };
 app.Use(async (context, next) =>
 {
@@ -544,6 +579,23 @@ app.Use(async (context, next) =>
         return;
     }
 
+    await next();
+});
+
+// 🔒 مرفقات الطلاب (هويات، مستندات نقل، قرارات فصل) بتتخزّن تحت wwwroot/uploads،
+//    يعني UseStaticFiles كان بيقدّمها لأي حد معاه الرابط من غير تسجيل دخول.
+//    الوصول المشروع كله بيعدّي من كنترولرات بتتحقق من الصلاحية:
+//      /api/Attachment/download/{id}
+//      /api/supervisor/housing-transfer/{id}/attachment
+//      /api/student-status/{actionId}/attachment
+//    فالمسار المباشر مقفول هنا. 404 مش 403 — عشان ما نأكّدش وجود الملف أصلًا.
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/uploads", StringComparison.OrdinalIgnoreCase))
+    {
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        return;
+    }
     await next();
 });
 
@@ -578,6 +630,25 @@ app.UseStaticFiles(new StaticFileOptions
                 ctx.Context.Response.Headers.Append("Expires", "0");
             }
         }
+        // الخطوط والصور مابتتغيّرش — بنخلّي المتصفح يخزّنها بدل ما يسألنا عنها كل مرة.
+        // خطوط IBM Plex Arabic لوحدها ~٩٠ كيلوبايت، ولحد ما تتحمّل النص العربي بيبان
+        // بخط بديل أو مايبانش خالص — وde شكله للمستخدم "الصفحة بتعمل load".
+        // ملحوظة: Ctrl+F5 بيتخطّى الكاش دايمًا، فالقياس الصح يبقى بـ F5 عادية.
+        if (path.HasValue)
+        {
+            var p2 = path.Value;
+            var isFont = p2.EndsWith(".woff2") || p2.EndsWith(".woff") || p2.EndsWith(".ttf") || p2.EndsWith(".otf");
+            var isImage = p2.EndsWith(".png") || p2.EndsWith(".jpg") || p2.EndsWith(".jpeg")
+                       || p2.EndsWith(".gif") || p2.EndsWith(".svg") || p2.EndsWith(".ico");
+
+            // الخطوط: ٣٠ يوم + immutable (عمرها ما بتتغيّر).
+            // الصور: ٧ أيام — لو غيّرت الشعار هيتحدّث خلال أسبوع أو مع أول Ctrl+F5.
+            if (isFont)
+                ctx.Context.Response.Headers.Append("Cache-Control", "public, max-age=2592000, immutable");
+            else if (isImage)
+                ctx.Context.Response.Headers.Append("Cache-Control", "public, max-age=604800");
+        }
+
         // Force UTF-8 charset for all static files so Arabic renders correctly in all browsers
         if (path.HasValue)
         {

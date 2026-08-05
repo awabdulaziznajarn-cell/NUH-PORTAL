@@ -5,8 +5,9 @@ using NUH_PORTAL.Services.Interfaces;
 namespace NUH_PORTAL.Controllers
 {
     // كنترولر رفيع — منطق المرفقات في IAttachmentService
-    // مرفقات الطلبات (صور الهويات) = وثائق حسّاسة؛ للمُراجعين فقط (requests.process) مش لتوكن الطالب.
-    [Authorize(Policy = "requests.process")]
+    // مرفقات الطلبات (صور الهويات) = وثائق حسّاسة؛ ليها صلاحية مستقلة عشان
+    // المسؤول يقدر يدّي موظف حق مراجعة الطلب من غير ما يشوف صور الهوية.
+    [Authorize(Policy = "requests.attachments")]
     [Route("api/[controller]")]
     [ApiController]
     public class AttachmentController : ControllerBase

@@ -66,6 +66,10 @@ namespace NUH_PORTAL.Services
         // التحقق. من غير تطبيع، البحث عن الطالب برقمه بيفشل دايمًا، فبيتعمل حساب
         // اسمه "طالب" ومربوط بصيغة رقم مختلفة — وده كان بيظهر في مسار الطلب
         // وبيكسر أي مقارنة لاحقة بين الحسابين.
+        // لاحقة البريد لحسابات الطلاب. مش بريد حقيقي — الطالب بيدخل برمز الجوال،
+        // بس Identity محتاج قيمة، والصيغة الموحّدة بتخلّي القائمة مفهومة.
+        private const string StudentEmailSuffix = "@std.nuh.edu.sa";
+
         // نفس منطق NormalizeMobile في RegistrationFlowService و normalizeSaudiMobile في الواجهة.
         private static string? NormalizeMobile(string? mobile)
         {
@@ -152,7 +156,7 @@ namespace NUH_PORTAL.Services
                 {
                     UserName = "student_" + (student?.student_id ?? mobile),
                     full_name = student?.full_name ?? "طالب",
-                    Email = mobile + "@student.nu.edu.sa",
+                    Email = mobile + StudentEmailSuffix,
                     mobile = mobile,
                     is_active = true,
                     created_at = DateTime.UtcNow
@@ -172,6 +176,27 @@ namespace NUH_PORTAL.Services
                     user.full_name = student.full_name;
                     needsUpdate = true;
                 }
+
+                // ⚠️ الإصلاح الذاتي كان بيوحّد عمود الجوال بس، فاسم المستخدم والبريد
+                //    بيفضلوا بالصيغة القديمة اللي اتكتبت أول مرة. النتيجة في شاشة
+                //    المستخدمين: صفوف بـ 0523698666@... وصفوف بـ 966523698666@...
+                //    لنفس نوع الحساب. بنوحّدهم هنا كمان.
+                var expectedEmail = mobile + StudentEmailSuffix;
+                if (!string.Equals(user.Email, expectedEmail, StringComparison.OrdinalIgnoreCase))
+                {
+                    user.Email = expectedEmail;
+                    needsUpdate = true;
+                }
+
+                // اسم المستخدم المفضّل هو الرقم الجامعي؛ الجوال بديل لو الطالب لسه
+                // مش مسجّل في النظام. مابنغيّرش اسم موجود صح عشان مانكسرش أي ربط.
+                var expectedUserName = "student_" + (student?.student_id ?? mobile);
+                if (!string.Equals(user.UserName, expectedUserName, StringComparison.OrdinalIgnoreCase))
+                {
+                    user.UserName = expectedUserName;
+                    needsUpdate = true;
+                }
+
                 if (needsUpdate) await _userManager.UpdateAsync(user);
 
                 await EnsureUserRoleAsync(user);

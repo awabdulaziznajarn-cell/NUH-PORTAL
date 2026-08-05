@@ -13,6 +13,25 @@ namespace NUH_PORTAL.DTOs.Registration
         public string? PolicyVersion { get; set; }
     }
 
+    // فحص مبكر للتكرار من داخل النموذج.
+    // ⚠️ الحقلان مطلوبان معًا عن قصد: فحص رقم الهوية وحده يحوّل المسار إلى أداة
+    //    استعلام — يكتب المهاجم أرقام هوية بالتتابع فيعرف مَن المسجَّل في الإسكان.
+    //    باشتراط تطابق الرقم الجامعي ورقم الهوية لنفس السجل، مَن يملك الاثنين
+    //    صحيحين يعرف صاحبهما أصلًا فلا يكتسب معلومة جديدة.
+    //    (نفس قاعدة شاشة التتبع: رقم الطلب وحده لا يكفي، ومعه آخر ٤ أرقام.)
+    public class DuplicateCheckRequest
+    {
+        public string? StudentId { get; set; }
+        public string? NationalId { get; set; }
+    }
+
+    public class DuplicateCheckResultDto
+    {
+        public bool Found { get; set; }
+        public string? RequestNumber { get; set; }
+        public string? Message { get; set; }
+    }
+
     public class ResubmitRequest
     {
         public string? RegistrationData { get; set; }

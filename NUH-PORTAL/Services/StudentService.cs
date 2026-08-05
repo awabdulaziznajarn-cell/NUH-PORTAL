@@ -123,19 +123,29 @@ namespace NUH_PORTAL.Services
 
             int Req(string status) => reqCounts.TryGetValue(status, out var c) ? c : 0;
 
+            // ⚠️ النظام فيه مسارين بمصطلحات مختلفة لنفس المراحل:
+            //    طلبات الموظفين  : submitted / cyber_review / cyber_approved / completed
+            //    تسجيل الطالب الذاتي: pending_supervisor / pending_cyber / ready_for_provisioning / approved
+            // العدّادات كانت بتقرا مصطلحات الموظفين بس، فطلب الطالب اللي مستني
+            // المشرف مكانش بيتعدّ خالص — المشرف يشوف «مفيش طلبات مستنية إجراء منك»
+            // وفي نفس الوقت الطلب ظاهر في «آخر الطلبات» بحالة «بانتظار الإسكان».
+            // المرحلة واحدة والإجراء المطلوب واحد، فبنجمّعهم في نفس العدّاد.
+            // ملاحظة: need_more_info و rejected العامة مش مجمّعين هنا عن قصد —
+            // need_more_info الكرة فيها عند الطالب مش عند المشرف، و rejected
+            // مابتقولش الرفض جه من الإسكان ولا من السيبراني فمينفعش نحطها في واحد فيهم.
             return new StudentStatsDto
             {
                 total = total,
                 active = active,
                 left = left,
-                submitted = Req("submitted"),
+                submitted = Req("submitted") + Req("pending_supervisor"),
                 housing_approved = Req("housing_approved"),
                 housing_rejected = Req("housing_rejected"),
-                cyber_review = Req("cyber_review"),
+                cyber_review = Req("cyber_review") + Req("pending_cyber"),
                 cyber_approved = Req("cyber_approved"),
                 cyber_rejected = Req("cyber_rejected"),
                 ready_for_provisioning = Req("ready_for_provisioning"),
-                completed = Req("completed"),
+                completed = Req("completed") + Req("approved"),
             };
         }
 
@@ -144,6 +154,21 @@ namespace NUH_PORTAL.Services
             var student = await _students.GetByIdAsync(id)
                 ?? throw UserFriendlyException.NotFound("الطالب غير موجود");
             return Mapper.Map<StudentDto>(student);
+        }
+
+        // ⚠️ شاشات الإدخال كانت بتسحب *كل* الطلاب وتدوّر فيهم في المتصفح على كل
+        //    خروج من خانة الرقم الجامعي. مع 15 طالب تجريبي مبانش، ومع آلاف طالب
+        //    ده تحميل ميجابايتات على كل ضغطة. البحث بقى صف واحد من قاعدة البيانات.
+        public async Task<StudentDto?> GetByStudentNumberAsync(string studentNumber)
+        {
+            if (string.IsNullOrWhiteSpace(studentNumber))
+                return null;
+
+            var trimmed = studentNumber.Trim();
+            var student = await _students.Query().AsNoTracking()
+                .FirstOrDefaultAsync(s => s.student_id == trimmed && !s.IsDeleted);
+
+            return student == null ? null : Mapper.Map<StudentDto>(student);
         }
 
         public async Task<StudentDto> CreateAsync(StudentCreateDto dto)
@@ -261,7 +286,7 @@ namespace NUH_PORTAL.Services
 
         public async Task DeleteAsync(int id)
         {
-            EnsureAdmin("غير مسموح لك بحذف الطالب. يرجى التواصل مع مسؤول النظام.");
+            EnsureCanDelete("غير مسموح لك بحذف الطالب. يرجى التواصل مع مسؤول النظام.");
 
             var student = await _students.GetByIdAsync(id)
                 ?? throw UserFriendlyException.NotFound("الطالب غير موجود");
@@ -279,7 +304,7 @@ namespace NUH_PORTAL.Services
 
         public async Task RestoreAsync(int id)
         {
-            EnsureAdmin("غير مسموح لك باستعادة الطالب. يرجى التواصل مع مسؤول النظام.");
+            EnsureCanDelete("غير مسموح لك باستعادة الطالب. يرجى التواصل مع مسؤول النظام.");
 
             var student = await _students.GetByIdAsync(id)
                 ?? throw UserFriendlyException.NotFound("الطالب غير موجود");
@@ -317,19 +342,20 @@ namespace NUH_PORTAL.Services
 
         // ----------------------------- Helpers -----------------------------
 
-        // user (قراءة فقط) ممنوع من الإضافة/التعديل — نفس منطق الكنترولر القديم
+        // طبقة تانية تحت فحص الكنترولر: لازم يكون معاه صلاحية إضافة أو تعديل.
+        // (الكنترولر بيفرّق بين الاتنين؛ ده حاجز أخير لو حد نادى الـ service من مكان تاني.)
         private void EnsureNotReadonlyUser()
         {
-            var role = UnitOfWork.GetCurrentUserRole()?.ToLower();
-            if (role == "user")
+            if (!UnitOfWork.HasPermission("students.create")
+                && !UnitOfWork.HasPermission("students.edit"))
                 throw UserFriendlyException.Forbidden();
         }
 
-        // الحذف/الاستعادة للأدمن فقط
-        private void EnsureAdmin(string message)
+        // الحذف/الاستعادة بصلاحية students.delete — كانت مقفولة على دور admin،
+        // فأي دور جديد كان بيلاقي الزر شغّال والـ API بيرفض.
+        private void EnsureCanDelete(string message)
         {
-            var role = UnitOfWork.GetCurrentUserRole()?.ToLower();
-            if (role != "admin")
+            if (!UnitOfWork.HasPermission("students.delete"))
                 throw UserFriendlyException.Forbidden(message);
         }
 

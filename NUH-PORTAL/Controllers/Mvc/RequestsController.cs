@@ -9,7 +9,9 @@ namespace NUH_PORTAL.Controllers.Mvc
 {
     // صفحة إدارة الطلبات (MVC) — العدادات وأول صفحة بيترندروا من السيرفر،
     // والتبويبات/الترقيم/الأكشنات بتشتغل على نفس الـ API القديم بالظبط
-    [Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme)]
+    // الوصول للصفحة بالصلاحية مش بالدور — عشان أي دور جديد ياخد الصلاحية ويشتغل
+    // من غير ما نعدّل الكود. الشاشة نفسها بتختفي من القائمة الجانبية كمان.
+    [Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme, Policy = "requests.view")]
     [Route("Requests")]
     public class RequestsController : Controller
     {

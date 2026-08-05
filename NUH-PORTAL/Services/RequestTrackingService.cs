@@ -101,14 +101,8 @@ namespace NUH_PORTAL.Services
                 items = history.Select(h => new TrackingHistoryItemDto
                 {
                     ToStage = h.ToStage,
-                    Notes = string.Equals(h.ToStage, "rejected", StringComparison.OrdinalIgnoreCase) ? h.Notes : null,
-                    ActionDate = h.ActionDate,
-                    // حساب الطالب اللي بيتعمل من الـ OTP اسمه بيبقى "طالب" لو ماتلاقاش
-                    // في جدول الطلاب وقت التحقق. بنعرض اسم صاحب الطلب الحقيقي بدله
-                    // عشان المسارين يبانوا بنفس الشكل.
-                    ActorName = IsStudentAccount(h.Actor)
-                        ? (request.Student?.full_name ?? h.Actor?.full_name)
-                        : (h.Actor?.full_name ?? h.Actor?.UserName)
+                    Notes = IsStudentVisibleNote(h.ToStage) ? h.Notes : null,
+                    ActionDate = h.ActionDate
                 }).ToList();
             }
             else
@@ -130,36 +124,39 @@ namespace NUH_PORTAL.Services
 
         // مسار الطلب مبنيًا من تواريخ الطلب — نفس المراحل اللي بتظهر لموظف الإسكان.
         // الملاحظات بتتعرض للطالب في خطوات الرفض بس؛ ملاحظات الموافقة داخلية.
-        // حساب الطالب بيتعمل من مسار الـ OTP باسم مستخدم "student_..." — بنستخدمه
-        // كعلامة بدل ما نقارن بنص الاسم، لأن الاسم ممكن يتغيّر.
-        private static bool IsStudentAccount(User? actor) =>
-            actor?.UserName != null && actor.UserName.StartsWith("student_", StringComparison.OrdinalIgnoreCase);
+        // المسارين بيسمّوا نفس المرحلة باسمين: تسجيل الطالب = pending_supervisor،
+        // ومسار الموظف = submitted. الاتنين معناهم "الطلب اتقدّم".
+        private static bool IsSubmission(string? stage) =>
+            string.Equals(stage, "submitted", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(stage, "pending_supervisor", StringComparison.OrdinalIgnoreCase);
+
+        // نفس الحكاية للرفض: مسار الطالب بيكتب "rejected"، ومسار الموظف بيكتب
+        // housing_rejected / cyber_rejected. الملاحظات بتظهر للطالب في دول بس.
+        // الملاحظات اللي الطالب يشوفها: سبب الرفض، و«المطلوب استكماله».
+        // ملاحظات الموافقة داخلية بين الموظفين.
+        // ⚠️ need_more_info كانت ناقصة، فالطالب كان بيقرا «مطلوب استكمال بيانات»
+        //    من غير ما يعرف المطلوب إيه بالظبط.
+        private static bool IsStudentVisibleNote(string? stage) =>
+            IsRejection(stage)
+            || string.Equals(stage, "need_more_info", StringComparison.OrdinalIgnoreCase);
+
+        private static bool IsRejection(string? stage) =>
+            string.Equals(stage, "rejected", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(stage, "housing_rejected", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(stage, "cyber_rejected", StringComparison.OrdinalIgnoreCase);
 
         private async Task<List<TrackingHistoryItemDto>> BuildHistoryFromTimestampsAsync(Models.Request r)
         {
             var list = new List<TrackingHistoryItemDto>();
             var status = r.Status ?? "";
 
-            // كل أسماء المراجعين في استعلام واحد — عشان كل خطوة تبان باسم صاحبها
-            // زي مسار تسجيل الطالب بالظبط، مش خطوات بدون اسم.
-            var ids = new[] { r.SubmittedBy, r.HousingReviewedBy, r.ReviewedBy, r.CyberReviewedBy,
-                              r.ReadyForProvisioningBy, r.CompletedBy }
-                      .Where(x => x.HasValue).Select(x => x!.Value).Distinct().ToList();
-
-            var names = ids.Count == 0
-                ? new Dictionary<int, string>()
-                : await _users.Query().AsNoTracking()
-                    .Where(u => ids.Contains(u.Id))
-                    .ToDictionaryAsync(u => u.Id, u => u.full_name ?? u.UserName ?? "");
-
-            string? NameOf(int? id) => id.HasValue && names.TryGetValue(id.Value, out var n) && !string.IsNullOrWhiteSpace(n) ? n : null;
+            // (كان هنا استعلام بيجيب أسماء المراجعين. اتشال مع ActorName —
+            //  المسار ده عام بدون مصادقة فمينفعش يخرج منه اسم موظف.)
 
             list.Add(new TrackingHistoryItemDto
             {
                 ToStage = "submitted",
-                ActionDate = r.SubmittedAt,
-                // صاحب الطلب هو الطالب، حتى لو الموظف هو اللي سجّله نيابةً عنه
-                ActorName = r.Student?.full_name ?? NameOf(r.SubmittedBy)
+                ActionDate = r.SubmittedAt
             });
 
             var housingAt = r.HousingReviewedAt ?? r.ReviewedAt;
@@ -170,8 +167,7 @@ namespace NUH_PORTAL.Services
                 {
                     ToStage = rejected ? "housing_rejected" : "cyber_review",
                     ActionDate = housingAt.Value,
-                    Notes = rejected ? r.HousingNotes ?? r.Notes : null,
-                    ActorName = NameOf(r.HousingReviewedBy) ?? NameOf(r.ReviewedBy)
+                    Notes = rejected ? r.HousingNotes ?? r.Notes : null
                 });
             }
 
@@ -183,8 +179,7 @@ namespace NUH_PORTAL.Services
                 {
                     ToStage = rejected ? "cyber_rejected" : "cyber_approved",
                     ActionDate = r.CyberReviewedAt.Value,
-                    Notes = rejected ? r.CyberNotes : null,
-                    ActorName = NameOf(r.CyberReviewedBy)
+                    Notes = rejected ? r.CyberNotes : null
                 });
             }
 
@@ -192,16 +187,14 @@ namespace NUH_PORTAL.Services
                 list.Add(new TrackingHistoryItemDto
                 {
                     ToStage = "ready_for_provisioning",
-                    ActionDate = r.ReadyForProvisioningAt.Value,
-                    ActorName = NameOf(r.ReadyForProvisioningBy)
+                    ActionDate = r.ReadyForProvisioningAt.Value
                 });
 
             if (r.CompletedAt.HasValue)
                 list.Add(new TrackingHistoryItemDto
                 {
                     ToStage = "completed",
-                    ActionDate = r.CompletedAt.Value,
-                    ActorName = NameOf(r.CompletedBy)
+                    ActionDate = r.CompletedAt.Value
                 });
 
             return list.OrderBy(x => x.ActionDate).ToList();

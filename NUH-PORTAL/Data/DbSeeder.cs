@@ -20,27 +20,156 @@ namespace NUH_PORTAL.Data
         //  بيبان للمستخدم كأنه "بيدخل ويطلع على طول".
         //  الميثود دي idempotent وبتتنادى من Program.cs في كل البيئات.
         // ====================================================================
-        public static async Task SeedRolesAndPermissionsAsync(RoleManager<Role> roleManager)
+        public static async Task SeedRolesAndPermissionsAsync(RoleManager<Role> roleManager, ILogger? logger = null)
         {
             // الأدوار الأساسية
             foreach (var role in new[] { "admin", "cyber", "supervisor", "user" })
                 if (!await roleManager.RoleExistsAsync(role))
                     await roleManager.CreateAsync(new Role(role) { Description = role });
 
-            // صلاحيات الأدوار (كـ role claims): admin = الكل، والباقي مجموعات منطقية
+            // ترقية صلاحيات الأدوار الموجودة — قبل أي إسناد، عشان الدور اللي اتعدّل
+            // بإيد المسؤول مايتحسبش "فاضي" فيترجّع للافتراضي.
+            await UpgradeRolePermissionsAsync(roleManager, logger);
+
+            // admin بياخد كل الصلاحيات دايمًا — أي صلاحية جديدة بتتضاف للنظام لازم
+            // توصله من غير تدخل، وإلا الشاشة الجديدة تفضل مقفولة على الكل.
             await AssignRolePermissionsAsync(roleManager, "admin", ApplicationPermissions.All.Select(p => p.Value).ToArray());
-            await AssignRolePermissionsAsync(roleManager, "supervisor", new[]
+
+            // ⚠️ باقي الأدوار: الافتراضي بيتزرع أول مرة بس (لما الدور يبقى بلا أي صلاحية).
+            //    قبل كده كل إعادة تشغيل كانت بترجّع الصلاحيات اللي المسؤول شالها بإيده
+            //    من شاشة الأدوار، فالتعديل بيتلغي لوحده بعد أول deploy ومحدش واخد باله.
+            await SeedDefaultsIfEmptyAsync(roleManager, "supervisor", new[]
             {
-                "students.view", "students.manage", "requests.view", "requests.process",
-                "housing.view", "housing.manage", "lookups.manage", "auditLogs.view"
-            });
-            await AssignRolePermissionsAsync(roleManager, "cyber", new[]
+                "students.view", "students.create", "students.bulkImport", "students.edit", "students.changeStatus",
+                "requests.view", "requests.create", "requests.attachments", "requests.reviewHousing",
+                "housing.view", "housing.transfer",
+                "lookups.manage", "auditLogs.view", "reports.view"
+            }, logger);
+            await SeedDefaultsIfEmptyAsync(roleManager, "cyber", new[]
             {
-                "requests.view", "requests.process", "housing.view", "auditLogs.view", "errorLogs.view"
-            });
+                "requests.view", "requests.attachments", "requests.reviewCyber",
+                "housing.view", "auditLogs.view", "errorLogs.view"
+            }, logger);
             // دور الطالب (OTP) — بدون صلاحيات موظفين. كان requests.view وده كان بيخلّي توكن الطالب
             // يوصل endpoints المفروض للموظفين؛ الطالب بيتابع طلبه عبر /api/Registration و /api/RequestTracking.
-            await AssignRolePermissionsAsync(roleManager, "user", Array.Empty<string>());
+        }
+
+        // ====================================================================
+        //  ترحيل الصلاحيات القديمة (students.manage / requests.process / housing.manage)
+        //  للصلاحيات المفصّلة. من غير الترحيل ده الأدوار الموجودة بتفقد صلاحياتها
+        //  فجأة بعد أول deploy — الصلاحية القديمة مابقاش ليها policy، والجديدة
+        //  محدش مداهاش لحد.
+        //
+        //  ⚠️ الترحيل مشروط بالدور عن قصد: requests.process كانت الكنترولر بيفلتر
+        //     معاها بالدور كمان، فلو وسّعناها للكل هيبقى المشرف يقدر يراجع مرحلة
+        //     الأمن السيبراني والعكس — ده توسيع صلاحية مش ترحيل.
+        // ====================================================================
+        private static readonly string[] LegacyPermissions = { "students.manage", "requests.process", "housing.manage" };
+
+        // ⚠️ في الكود القديم كانت في إجراءات مقفولة بـ [Authorize(Roles = "...")] من غير
+        //    أي صلاحية تقابلها، يعني مفيش claim نرحّل منه أصلاً. أشهرها نقل السكن:
+        //    كان Roles="supervisor,admin" وخلاص. من غير الإضافة دي المشرف يصحى يلاقي
+        //    أهم إجراء عنده بيرجّع «غير مصرح» وإحنا مش عارفين ليه.
+        //    بتتنفّذ مرة واحدة بس (بعلامة النسخة تحت)، فلو المسؤول شالها بإيده مابترجعش.
+        private static readonly Dictionary<string, string[]> RoleOnlyCapabilities = new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["supervisor"] = new[] { "housing.transfer", "students.bulkImport" }
+        };
+
+        // علامة على الدور إن صلاحياته اتعملها ترقية للنسخة دي. النوع مختلف عن
+        // "permission" عن قصد: شاشة الأدوار بتمسح وتضيف claims من نوع permission بس،
+        // فالعلامة بتفضل حتى بعد ما المسؤول يعدّل صلاحيات الدور.
+        private const string SchemaClaimType = "permission_schema";
+        private const string SchemaVersion = "2";
+
+        private static string[] MapLegacy(string legacy, string roleName) => (legacy, roleName.ToLowerInvariant()) switch
+        {
+            // students.manage كانت بتغطّي الأربعة دول بالظبط في الكود القديم، فالتوسيع مش زيادة صلاحية
+            ("students.manage", "admin") => new[] { "students.create", "students.bulkImport", "students.edit", "students.delete", "students.changeStatus", "students.overrideStatus" },
+            ("students.manage", _) => new[] { "students.create", "students.bulkImport", "students.edit", "students.changeStatus" },
+
+            ("requests.process", "admin") => new[] { "requests.create", "requests.attachments", "requests.reviewHousing", "requests.reviewCyber", "requests.complete" },
+            ("requests.process", "supervisor") => new[] { "requests.create", "requests.attachments", "requests.reviewHousing" },
+            ("requests.process", "cyber") => new[] { "requests.attachments", "requests.reviewCyber" },
+            // دور مخصّص: بناخد المجموعة الآمنة بس وبنحذّر في السجل — الأفضل إن
+            // المسؤول يحدّد بنفسه مرحلة المراجعة اللي الدور ده مسؤول عنها.
+            ("requests.process", _) => new[] { "requests.create", "requests.attachments" },
+
+            ("housing.manage", "admin") => new[] { "housing.transfer", "housing.manageAccounts", "housing.syncAd" },
+            ("housing.manage", _) => new[] { "housing.transfer" },
+
+            _ => Array.Empty<string>()
+        };
+
+        private static async Task UpgradeRolePermissionsAsync(RoleManager<Role> roleManager, ILogger? logger)
+        {
+            foreach (var role in roleManager.Roles.ToList())
+            {
+                var claims = await roleManager.GetClaimsAsync(role);
+
+                // اتعملت قبل كده؟ خلاص — مانلمسش الدور تاني مهما اتعدّل بعدها.
+                if (claims.Any(c => c.Type == SchemaClaimType && c.Value == SchemaVersion))
+                    continue;
+
+                var current = claims.Where(c => c.Type == ClaimConstants.Permission)
+                                    .Select(c => c.Value)
+                                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var legacy in LegacyPermissions)
+                {
+                    if (!current.Contains(legacy)) continue;
+
+                    var replacements = MapLegacy(legacy, role.Name ?? "");
+                    foreach (var p in replacements)
+                        if (current.Add(p))
+                            await roleManager.AddClaimAsync(role, new Claim(ClaimConstants.Permission, p));
+
+                    foreach (var stale in claims.Where(c => c.Type == ClaimConstants.Permission
+                                                        && string.Equals(c.Value, legacy, StringComparison.OrdinalIgnoreCase)))
+                        await roleManager.RemoveClaimAsync(role, stale);
+
+                    current.Remove(legacy);
+
+                    logger?.LogInformation("Permission migration: role {Role}: {Legacy} -> {New}",
+                        role.Name, legacy, string.Join(", ", replacements));
+
+                    if (role.Name is not ("admin" or "supervisor" or "cyber"))
+                        logger?.LogWarning(
+                            "Role {Role} had the legacy permission {Legacy}. It was migrated to the safe subset only ({New}). Open the Roles screen and grant the review permissions this role actually needs.",
+                            role.Name, legacy, string.Join(", ", replacements));
+                }
+
+                // الإجراءات اللي كانت بالدور من غير صلاحية تقابلها
+                if (role.Name != null && RoleOnlyCapabilities.TryGetValue(role.Name, out var extras))
+                {
+                    foreach (var p in extras)
+                        if (current.Add(p))
+                        {
+                            await roleManager.AddClaimAsync(role, new Claim(ClaimConstants.Permission, p));
+                            logger?.LogInformation("Role {Role}: granted {Permission} (was role-based before, no claim to migrate from).", role.Name, p);
+                        }
+                }
+
+                await roleManager.AddClaimAsync(role, new Claim(SchemaClaimType, SchemaVersion));
+            }
+        }
+
+        // بيزرع الصلاحيات الافتراضية للدور لو الدور لسه بلا أي صلاحية خالص.
+        // لو المسؤول عدّل الدور، بنسيبه زي ما هو.
+        private static async Task SeedDefaultsIfEmptyAsync(RoleManager<Role> roleManager, string roleName, string[] permissions, ILogger? logger)
+        {
+            var role = await roleManager.FindByNameAsync(roleName);
+            if (role == null) return;
+
+            var hasAny = (await roleManager.GetClaimsAsync(role)).Any(c => c.Type == ClaimConstants.Permission);
+            if (hasAny)
+            {
+                logger?.LogInformation("Role {Role} already has permissions — defaults not re-applied.", roleName);
+                return;
+            }
+
+            await AssignRolePermissionsAsync(roleManager, roleName, permissions);
+            logger?.LogInformation("Role {Role} seeded with {Count} default permissions.", roleName, permissions.Length);
         }
 
         public static async Task SeedDevUsersAsync(UserManager<User> userManager, RoleManager<Role> roleManager)

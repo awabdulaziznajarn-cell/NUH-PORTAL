@@ -5,6 +5,21 @@
 
 <style>
   /* خاص بصفحة تفاصيل الطلب — الباقي من site.css */
+/* سجل دورة حياة حساب الشبكة — الكلاسات دي كانت مستخدمة في الـ JS من غير أي CSS،
+   فالإجراء والتاريخ والمنفّذ كانوا بيطلعوا ملزوقين في سطر واحد. */
+.log-list { display:flex; flex-direction:column; }
+.log-entry { display:flex; gap:12px; padding:14px 2px; border-bottom:1px solid var(--gray-100); }
+.log-entry:last-child { border-bottom:none; }
+.log-icon { flex-shrink:0; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; background:var(--gray-100); color:var(--gray-500); }
+.log-icon.enabled { background:var(--green-light); color:var(--green); }
+.log-icon.disabled { background:var(--red-light); color:var(--red); }
+.log-icon.password_reset { background:#FEF7E6; color:#8A6100; }
+.log-details { flex:1; min-width:0; }
+.log-action { font-size:13.5px; font-weight:700; color:var(--navy); margin-bottom:3px; }
+.log-desc { font-size:12.5px; color:var(--gray-700); line-height:1.75; margin-bottom:5px; word-break:break-word; }
+.log-meta { display:flex; flex-wrap:wrap; gap:2px 16px; font-size:11.5px; color:var(--gray-500); }
+.log-meta span { white-space:nowrap; }
+.log-meta .log-ip { direction:ltr; unicode-bidi:embed; }
 .card:hover { box-shadow:0 4px 20px rgba(27,42,94,0.09); }
 /* عنوان القسم (أيقونة + نص) يبدأ من جهة البداية (يمين في العربية) بدل ما النص يتزاح للطرف */
 .card-header { justify-content:flex-start; gap:10px; }
@@ -93,6 +108,10 @@
 
 @section Scripts {
 <script>var __REQ_ID = @reqId;</script>
+@* صلاحيات المستخدم للواجهة — الأزرار بتظهر أو تختفي على أساسها.
+   الفحص الحقيقي على السيرفر في كل نداء؛ ده تحسين شكل مش حماية. *@
+<script>window.NUH_PERMS = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+    User.FindAll("permission").Select(c => c.Value).ToArray()));</script>
 <script src="/i18n.js"></script>
 <script src="/js/request-details-page.js"></script>
 }

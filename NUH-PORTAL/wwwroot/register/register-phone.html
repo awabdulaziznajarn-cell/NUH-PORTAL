@@ -45,6 +45,23 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);col
 .alert-info{background:#E8F4FD;color:#065986;border:1px solid #065986;display:block}
 .timer-text{text-align:center;font-size:13px;color:var(--gray-500);margin-top:12px}
 .otp-input{text-align:center;font-size:28px;letter-spacing:12px;direction:ltr;height:56px;font-weight:700}
+/* خانة الجوال: مفتاح +966 ثابت مش قابل للتعديل، والطالب بيكتب ٩ أرقام تبدأ بـ 5.
+   كده مفيش لبس بين 05 و 5 و966 ومفيش رقم غلط بيتبعت للسيرفر أصلاً. */
+.phone-field{display:flex;align-items:stretch;direction:ltr;background:var(--white);
+             border:1.5px solid var(--gray-200);border-radius:10px;overflow:hidden;
+             transition:border-color .2s,box-shadow .2s}
+.phone-field:focus-within{border-color:var(--navy);box-shadow:0 0 0 3px rgba(27,42,94,.1)}
+.phone-field.ok{border-color:var(--green)}
+.phone-field.bad{border-color:#E2A9A9}
+.phone-cc{display:flex;align-items:center;flex-shrink:0;padding:0 14px;background:var(--gray-50);
+          border-right:1.5px solid var(--gray-200);font-size:14px;font-weight:700;
+          color:var(--gray-700);letter-spacing:.5px;user-select:none}
+.phone-input{flex:1;min-width:0;height:48px;padding:0 14px;border:none;outline:none;background:transparent;
+             font-family:'IBM Plex Sans Arabic',sans-serif;font-size:16px;font-weight:600;
+             letter-spacing:1.5px;color:var(--navy-dark)}
+.phone-input::placeholder{font-weight:400;letter-spacing:1px;color:var(--gray-300)}
+.phone-hint{font-size:11.5px;color:var(--gray-500);line-height:1.6}
+.phone-hint.err{color:var(--red);margin-top:6px}
 @media(max-width:768px){.portal-header{padding:20px 16px 0}.portal-header img{width:64px}.portal-header h1{font-size:16px}.content{padding:16px}.card{padding:20px}.step-indicator{gap:6px}.step{width:30px;height:30px;font-size:12px}}
 @media(max-width:414px){.card{border-radius:12px}.step{width:28px;height:28px;font-size:11px}.step-indicator{gap:4px}}
 @media(max-width:375px){.content{padding:12px}.card{padding:16px;border-radius:10px}.form-control{height:44px;font-size:16px}.btn{padding:10px 16px}.step{width:26px;height:26px;font-size:10px}.timer-text{font-size:12px}.portal-header{padding:16px 12px 0}.portal-header img{width:56px}.portal-header h1{font-size:15px}}
@@ -71,9 +88,18 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);col
 <div id="stepPhone">
 <div class="form-group">
 <label>رقم الجوال</label>
-<input type="tel" id="mobileInput" class="form-control" placeholder="05xxxxxxxx" maxlength="10">
+<div class="phone-field" id="phoneField">
+  <span class="phone-cc">+966</span>
+  <input type="tel" id="mobileInput" class="phone-input" placeholder="5XXXXXXXX"
+         maxlength="9" inputmode="numeric" autocomplete="tel-national" dir="ltr"
+         oninput="onPhoneInput()">
 </div>
-<button id="sendOtpBtn" class="btn btn-primary" onclick="sendOtp()">إرسال رمز التحقق</button>
+<div class="phone-hint" id="phoneHint"></div>
+</div>
+<button id="sendOtpBtn" class="btn btn-primary" onclick="sendOtp()" disabled>إرسال رمز التحقق</button>
+</div>
+<div id="trackLinkWrap" style="display:none;text-align:center;margin-top:8px">
+<a id="trackLink" class="btn btn-primary" href="track-request.html" style="text-decoration:none">متابعة الطلب</a>
 </div>
 <div id="stepOtp" style="display:none">
 <div id="staticOtpNote" class="alert alert-info" style="display:none">خدمة الرسائل النصية قيد التفعيل. استخدم الرمز 123456 للتجربة.</div>
@@ -101,16 +127,51 @@ function showAlert(msg, type) {
   el.className = 'alert alert-' + type;
 }
 
+// الرقم السعودي المحمول: ٩ أرقام تبدأ بـ 5. المفتاح +966 ثابت في الواجهة.
+var SA_MOBILE_RE = /^5\d{8}$/;
+
+// بنقبل أي صيغة الطالب يلزقها (0501234567 / +966 50 123 4567 / 00966...)
+// ونحوّلها للتسعة أرقام. الخانة نفسها مابتقبلش غير أرقام.
+function normalizeSaMobile(raw) {
+  var d = String(raw || '').replace(/\D/g, '');
+  if (d.indexOf('00966') === 0) d = d.slice(5);
+  else if (d.indexOf('966') === 0) d = d.slice(3);
+  while (d.charAt(0) === '0') d = d.slice(1);
+  return d.slice(0, 9);
+}
+
+function onPhoneInput() {
+  var el = document.getElementById('mobileInput');
+  var v = normalizeSaMobile(el.value);
+  if (el.value !== v) el.value = v;   // بيصحّح اللزق واللخبطة فورًا
+
+  var field = document.getElementById('phoneField');
+  var hint = document.getElementById('phoneHint');
+  var ok = SA_MOBILE_RE.test(v);
+  var bad = v.length > 0 && (v.charAt(0) !== '5' || (v.length === 9 && !ok));
+
+  field.classList.toggle('ok', ok);
+  field.classList.toggle('bad', bad);
+  document.getElementById('sendOtpBtn').disabled = !ok;
+
+  // السطر ده مابيتكلمش غير لما يبقى فيه غلط — الإطار الأخضر والزرار المفتوح
+  // بيقولوا إن الرقم تمام من غير ما نزوّد كلام على الشاشة.
+  if (bad) { hint.textContent = 'رقم الجوال يجب أن يبدأ بالرقم 5'; hint.className = 'phone-hint err'; }
+  else { hint.textContent = ''; hint.className = 'phone-hint'; }
+}
+
 async function sendOtp() {
-  mobile = document.getElementById('mobileInput').value.trim();
-  if (!mobile || mobile.length < 10) { showAlert('يرجى إدخال رقم جوال صحيح', 'error'); return; }
+  var digits = normalizeSaMobile(document.getElementById('mobileInput').value);
+  if (!SA_MOBILE_RE.test(digits)) { showAlert('يرجى إدخال رقم جوال صحيح مكوّن من ٩ أرقام يبدأ بالرقم 5', 'error'); return; }
+  // بنبعت الصيغة الموحّدة 9665XXXXXXXX زي ما هي متخزّنة في قاعدة البيانات
+  mobile = '966' + digits;
   var btn = document.getElementById('sendOtpBtn');
   btn.disabled = true; btn.textContent = 'جاري الإرسال...';
   try {
     var r = await fetch('/api/Otp/send', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({mobile:mobile}) });
     var d = await r.json();
     if (r.ok) {
-      showAlert('تم إرسال رمز التحقق إلى ' + mobile, 'success');
+      showAlert('تم إرسال رمز التحقق إلى +966 ' + digits, 'success');
       document.getElementById('stepPhone').style.display='none';
       document.getElementById('stepOtp').style.display='block';
       if (d.mode === 'static') {
@@ -139,10 +200,127 @@ async function verifyOtp() {
         localStorage.setItem('studentToken', d.token);
         localStorage.setItem('studentUser', JSON.stringify(d.user));
       }
+
+      // بنفحص وجود طلب مفتوح *هنا* بعد ما الطالب أثبت ملكية الرقم بالـ OTP،
+      // بدل ما يملأ النموذج كله وبعدين يترفض في آخر خطوة.
+      // (السيرفر بيفحص برضه عند الإرسال — ده مايستغناش عنه، لكنه بيوفّر على
+      //  الطالب مجهود ضايع.)
+      var openReq = await findOpenRequest(mobile, d.token);
+
+      // الطلب اللي المراجع طلب فيه استكمال بيانات لازم يرجع للطالب يعدّله —
+      // من غير كده الطلب بيقف في اللا مكان: خرج من طابور المراجعة والطالب
+      // مالوش أي طريقة يكمّله.
+      if (openReq && openReq.status === 'need_more_info' && openReq.id) {
+        window.location.href = 'register-form.html?edit=' + encodeURIComponent(openReq.id);
+        return;
+      }
+
+      var openNum = openReq ? (openReq.requestNumber || '') : null;
+      if (openNum) {
+        var msg;
+        if (openReq.status === 'need_more_info')
+          msg = 'لديك طلب قائم رقمه ' + openNum + ' بحاجة إلى استكمال بيانات — تابعه من صفحة تتبع الطلب.';
+        else if (DONE_STATUSES.indexOf(openReq.status) !== -1)
+          msg = 'أنت مسجَّل بالفعل في الإسكان الجامعي بموجب الطلب رقم ' + openNum + '. لا يمكن تقديم طلب جديد؛ للاستفسار يرجى مراجعة إدارة الإسكان.';
+        else
+          msg = 'لديك طلب قائم بالفعل رقمه ' + openNum + '. لا يمكن تقديم طلب جديد قبل اكتمال مراجعته أو رفضه؛ يمكنك متابعته من صفحة تتبع الطلب، وللاستفسار يرجى مراجعة إدارة الإسكان.';
+        showAlert(msg, 'error');
+        document.getElementById('stepOtp').style.display = 'none';
+        document.getElementById('trackLinkWrap').style.display = 'block';
+        document.getElementById('trackLink').textContent = 'متابعة الطلب ' + openNum;
+        // بنمرّر رقم الطلب وآخر ٤ أرقام في الرابط عشان صفحة التتبع تفتح الطلب على طول
+        // بدل ما الطالب يعيد كتابة الرقم اللي إحنا عارفينه أصلاً.
+        var l4 = String(mobile || '').replace(/\D/g, '').slice(-4);
+        document.getElementById('trackLink').href =
+          'track-request.html?req=' + encodeURIComponent(openNum) + '&last4=' + encodeURIComponent(l4);
+        return;
+      }
+
       window.location.href = 'register-declarations.html';
     } else { showAlert(d.message || 'رمز غير صحيح', 'error'); btn.disabled=false; btn.textContent='تحقق'; }
   } catch(e) { showAlert('تعذر الاتصال بالخادم', 'error'); btn.disabled=false; btn.textContent='تحقق'; }
 }
+
+// نفس قائمة الحالات المفتوحة في السيرفر (RegistrationService.OpenStatuses).
+// الحالات المنتهية (مكتمل/مرفوض) مش مفتوحة — الطالب المرفوض لازم يقدر يقدّم تاني.
+var OPEN_STATUSES = ['submitted','pending_supervisor','pending_cyber',
+                     'cyber_review','cyber_approved','ready_for_provisioning','need_more_info'];
+
+// الطلب المكتمل مش «مفتوح»، لكنه يعني إن الطالب مسجَّل بالفعل وله حساب شبكة.
+// التسجيل من جديد بيتفتح تلقائيًا لما حالته تتغيّر (مغادرة / تخرّج / تحويل)،
+// والسيرفر هو اللي بيحسم ده لأنه الوحيد اللي بيشوف حالة الطالب.
+var DONE_STATUSES = ['completed','approved'];
+
+// ⚠️ الفحص كان معتمدًا على مسار واحد فقط، وكان يُرجع null صامتًا عند أي فشل
+//    (توكن ناقص، 401، شبكة) — فالطالب يعدّي للنموذج وعنده طلب مفتوح، ويترفض
+//    في آخر خطوة بعد ما يملأ كل البيانات. بقى فيه مسارين:
+//      ١) /api/Registration/my-requests — موثّق، وبيرجّع id (لازم لشاشة التعديل)
+//      ٢) /api/RequestTracking/by-mobile — بدون توكن، احتياطي لو الأول فشل
+//    الطالب أثبت ملكية الرقم بالـ OTP قبل الفحص، فالمسار التاني مش تسريب.
+function canonicalMobile(mobileValue) {
+  var digits = String(mobileValue || '').replace(/\D/g, '');
+  if (digits.indexOf('00966') === 0) digits = digits.slice(5);
+  else if (digits.indexOf('966') === 0) digits = digits.slice(3);
+  while (digits.charAt(0) === '0') digits = digits.slice(1);
+  return /^5\d{8}$/.test(digits) ? '966' + digits : String(mobileValue || '');
+}
+
+function firstOpen(list, pick) {
+  if (!list || !list.length) return null;
+  for (var i = 0; i < list.length; i++) {
+    if (OPEN_STATUSES.indexOf(list[i].status) !== -1) return pick(list[i]);
+  }
+  return null;
+}
+
+async function findOpenRequest(mobileValue, token) {
+  var canonical = canonicalMobile(mobileValue);
+
+  // (١) المسار الموثّق
+  if (token) {
+    try {
+      var r = await fetch('/api/Registration/my-requests?mobile=' + encodeURIComponent(canonical),
+                          { headers: { 'Authorization': 'Bearer ' + token } });
+      if (r.ok) {
+        var mine = await r.json();
+        var hit = firstOpen(mine, function (x) { return x; });
+        if (hit) return hit;
+        if (mine && mine.length) {
+          for (var k = 0; k < mine.length; k++) {
+            if (DONE_STATUSES.indexOf(mine[k].status) !== -1) return mine[k];
+          }
+        }
+      }
+    } catch (e) { /* ننتقل للاحتياطي */ }
+  }
+
+  // (٢) الاحتياطي — بيرجّع رقم الطلب وحالته بدون id
+  try {
+    var r2 = await fetch('/api/RequestTracking/by-mobile/' + encodeURIComponent(canonical));
+    if (!r2.ok) return null;
+    var list2 = await r2.json();
+    var open2 = firstOpen(list2, function (x) {
+      return { id: null, requestNumber: x.requestNumber, status: x.status };
+    });
+    if (open2) return open2;
+
+    // مفيش طلب مفتوح — نبصّ على المكتمل
+    if (list2 && list2.length) {
+      for (var j = 0; j < list2.length; j++) {
+        if (DONE_STATUSES.indexOf(list2[j].status) !== -1)
+          return { id: null, requestNumber: list2[j].requestNumber, status: list2[j].status };
+      }
+    }
+    return null;
+  } catch (e) {
+    return null;   // السيرفر هو خط الدفاع الأخير عند الإرسال
+  }
+}
+
+// Enter في خانة الجوال يبعت الرمز — من غيره الطالب لازم يمسك الماوس
+document.getElementById('mobileInput').addEventListener('keydown', function (e) {
+  if (e.key === 'Enter' && !document.getElementById('sendOtpBtn').disabled) sendOtp();
+});
 
 function startTimer() {
   var sec = 300;

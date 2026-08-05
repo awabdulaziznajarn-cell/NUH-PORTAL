@@ -7,7 +7,9 @@ namespace NUH_PORTAL.Controllers.Mvc
 {
     // صفحة تحديث حالة الطالب (MVC) — الإحصائيات من السيرفر،
     // والفورمين (الحالة الأكاديمية + نقل السكن) بيشتغلوا على نفس الـ APIs القديمة
-    [Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme)]
+    // الوصول للصفحة بالصلاحية مش بالدور — عشان أي دور جديد ياخد الصلاحية ويشتغل
+    // من غير ما نعدّل الكود. الشاشة نفسها بتختفي من القائمة الجانبية كمان.
+    [Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme, Policy = "students.changeStatus")]
     [Route("StudentStatus")]
     public class StudentStatusController : Controller
     {

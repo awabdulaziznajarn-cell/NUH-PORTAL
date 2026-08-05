@@ -154,7 +154,7 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
         <span><span >@SharedLocalizer["bulk_s4_totalValid"]</span> <strong id="previewTotalCount">0</strong></span>
       </div>
-      <div class="table-wrapper"><table><thead><tr><th>#</th><th >@SharedLocalizer["bulk_col_studentId"]</th><th >@SharedLocalizer["bulk_col_nameAr"]</th><th >@SharedLocalizer["bulk_col_nameEn"]</th><th >@SharedLocalizer["bulk_col_mobile"]</th><th >@SharedLocalizer["bulk_col_college"]</th><th >@SharedLocalizer["bulk_col_level"]</th><th >@SharedLocalizer["bulk_col_gender"]</th><th >@SharedLocalizer["bulk_col_building"]</th><th >@SharedLocalizer["bulk_col_apartment"]</th><th >@SharedLocalizer["bulk_col_room"]</th></tr></thead><tbody id="previewTableBody"></tbody></table></div>
+      <div class="table-wrapper"><table><thead><tr><th>#</th><th >@SharedLocalizer["bulk_col_studentId"]</th><th >@SharedLocalizer["bulk_col_nameAr"]</th><th >@SharedLocalizer["bulk_col_nameEn"]</th><th >@SharedLocalizer["bulk_col_mobile"]</th><th >@SharedLocalizer["bulk_col_college"]</th><th >@SharedLocalizer["bulk_col_level"]</th><th >@SharedLocalizer["bulk_col_gender"]</th><th >@SharedLocalizer["bulk_col_building"]</th><th >@SharedLocalizer["loc_floor"]</th><th >@SharedLocalizer["bulk_col_apartment"]</th><th >@SharedLocalizer["bulk_col_room"]</th></tr></thead><tbody id="previewTableBody"></tbody></table></div>
       <div id="createError" class="alert alert-error hidden" style="margin-top:12px"></div>
       <div class="btn-row center" style="margin-top:16px">
         <button class="bbtn bbtn-outline" onclick="goToStep(3)" >@SharedLocalizer["bulk_back"]</button>
@@ -327,7 +327,7 @@
     var tbEl = document.getElementById('previewTableBody');
     if (displayCount > 0) {
       tbEl.innerHTML = allRecords.slice(0, displayCount).map(function (s, i) {
-        return '<tr><td>' + (i + 1) + '</td><td>' + escHtml(s.studentID) + '</td><td>' + escHtml(s.fullNameArabic) + '</td><td>' + escHtml(s.fullNameEnglish) + '</td><td>' + escHtml(s.mobile) + '</td><td>' + escHtml(s.college) + '</td><td>' + (s.academicLevel || '') + '</td><td>' + escHtml(s.gender || '') + '</td><td>' + escHtml(s.buildingNumber || '') + '</td><td>' + escHtml(s.apartmentNumber || '') + '</td><td>' + escHtml(s.roomNumber || '') + '</td></tr>';
+        return '<tr><td>' + (i + 1) + '</td><td>' + escHtml(s.studentID) + '</td><td>' + escHtml(s.fullNameArabic) + '</td><td>' + escHtml(s.fullNameEnglish) + '</td><td>' + escHtml(s.mobile) + '</td><td>' + escHtml(s.college) + '</td><td>' + (s.academicLevel || '') + '</td><td>' + escHtml(s.gender || '') + '</td><td>' + escHtml(s.buildingNumber || '') + '</td><td>' + escHtml(s.floorNumber || '') + '</td><td>' + escHtml(s.apartmentNumber || '') + '</td><td>' + escHtml(s.roomNumber || '') + '</td></tr>';
       }).join('');
     } else {
       tbEl.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--gray-500)">' + t('bulk_noValidData') + '</td></tr>';
@@ -356,6 +356,7 @@
             academicLevel: s.academicLevel || '',
             gender: s.gender || '',
             buildingNumber: s.buildingNumber || '',
+            floorNumber: s.floorNumber || '',
             apartmentNumber: s.apartmentNumber || '',
             roomNumber: s.roomNumber || ''
           };

@@ -18,6 +18,7 @@ namespace NUH_PORTAL.Data.Configurations
             builder.Property(w => w.ActionDate).HasColumnName("action_date")
                 .HasConversion(v => v, v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
             builder.Property(w => w.Notes).HasColumnName("notes");
+            builder.Property(w => w.ChangesJson).HasColumnName("changes_json");
 
             builder.HasIndex(w => new { w.RequestId, w.ActionDate })
                 .HasDatabaseName("IX_WorkflowHistory_request_date");

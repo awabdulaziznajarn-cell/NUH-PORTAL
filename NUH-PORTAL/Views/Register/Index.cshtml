@@ -240,7 +240,10 @@
       <div class="field">
         <label >@SharedLocalizer["reg_lblUsername"]</label>
         <div class="input-wrap">
-          <input type="text" id="ad_username">
+          @* اسم مستخدم الشبكة بيتولّد من الرقم الجامعي (h + الرقم) — مقفول عشان
+             ماحدش يكتب قيمة مخالفة لللي هيتعمل فعليًا في الأكتف دايركتوري *@
+          <input type="text" id="ad_username" readonly tabindex="-1"
+                 style="background:var(--gray-100);color:var(--gray-500);cursor:not-allowed">
           <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/></svg>
         </div>
       </div>
@@ -404,7 +407,6 @@
       college: document.getElementById('college').value,
       department: document.getElementById('department').value,
       academic_level: document.getElementById('academic_level').value,
-      ad_username: document.getElementById('ad_username').value.trim(),
       housing_building: document.getElementById('housing_building').value,
       floor_number: document.getElementById('floor_number').value,
       room_number: document.getElementById('room_number').value.trim(),
@@ -471,7 +473,8 @@
   });
   NuhName.attach('');
   document.getElementById('student_id').addEventListener('input', function () {
-    document.getElementById('ad_username').value = this.value;
+    // معاينة اسم مستخدم الشبكة — ADProvisioningService بيبنيه كده بالظبط
+    document.getElementById('ad_username').value = this.value.trim() ? 'h' + this.value.trim() : '';
     validateField('student_id', 'val-student_id_start', /^4/);
     validateField('student_id', 'val-student_id', /^\d{9}$/);
     var err = document.getElementById('err-student_id'); if (this.value.trim()) err.classList.remove('show');

@@ -6,10 +6,11 @@ using NUH_PORTAL.Services.Interfaces;
 namespace NUH_PORTAL.Controllers
 {
     // كنترولر رفيع — أدوات تشخيص AD في IADSetupService.
-    // ملحوظة أمنية: كان [Authorize] بس — اتقفل على admin لأنه بينشئ/يحذف مستخدمين حقيقيين في AD.
+    // ملحوظة أمنية: بينشئ/يحذف مستخدمين حقيقيين في AD — صلاحية مستقلة (system.adSetup)
+    // مش مربوطة بدور، الافتراضي إنها للأدمن بس.
     [Route("api/ad-setup")]
     [ApiController]
-    [Authorize(Roles = "admin")]
+    [Authorize(Policy = "system.adSetup")]
     public class ADSetupController : ControllerBase
     {
         private readonly IADSetupService _service;

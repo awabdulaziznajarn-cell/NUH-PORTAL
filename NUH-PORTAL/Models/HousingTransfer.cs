@@ -6,9 +6,12 @@ namespace NUH_PORTAL.Models
         public int StudentId { get; set; }
         public string? StudentNumber { get; set; }
         public string? OldBuilding { get; set; }
+        // الدور: "0" = الأرضي، و"1".."4" — نفس ترميز Student.floor_number
+        public string? OldFloor { get; set; }
         public string? OldApartment { get; set; }
         public string? OldRoom { get; set; }
         public string? NewBuilding { get; set; }
+        public string? NewFloor { get; set; }
         public string? NewApartment { get; set; }
         public string? NewRoom { get; set; }
         public string? Reason { get; set; }

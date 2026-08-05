@@ -616,6 +616,9 @@ namespace NUH_PORTAL.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("new_building");
 
+                    b.Property<string>("NewFloor")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("NewRoom")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("new_room");
@@ -627,6 +630,9 @@ namespace NUH_PORTAL.Migrations
                     b.Property<string>("OldBuilding")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("old_building");
+
+                    b.Property<string>("OldFloor")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("OldRoom")
                         .HasColumnType("nvarchar(max)")
@@ -1477,6 +1483,10 @@ namespace NUH_PORTAL.Migrations
                     b.Property<DateTime>("ActionDate")
                         .HasColumnType("datetime2")
                         .HasColumnName("action_date");
+
+                    b.Property<string>("ChangesJson")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("changes_json");
 
                     b.Property<string>("FromStage")
                         .HasColumnType("nvarchar(max)")

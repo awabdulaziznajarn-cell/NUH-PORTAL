@@ -8,7 +8,9 @@ namespace NUH_PORTAL.Controllers
 {
     // كنترولر رفيع: بيوجّه للـ IStudentService بس. كل المنطق + التحقق + الصلاحيات + الـ audit جوه الـ service.
     // الأخطاء بترمى كـ UserFriendlyException وبيترجمها ExceptionHandlingMiddleware لـ JSON { message } بالـ status الصح.
-    // الصلاحيات: القراءة students.view، والتعديلات students.manage — عشان توكن OTP (دور user) ميوصلش لبيانات/عمليات الطلاب.
+    // الصلاحيات: القراءة students.view، الإضافة students.create، التعديل students.edit،
+    // والحذف/الاستعادة students.delete — كل إجراء له صلاحيته عشان المسؤول يقدر
+    // يدّي موظف حق التعديل من غير ما يدّيه حق الحذف.
     [Authorize(Policy = "students.view")]
     [Route("api/[controller]")]
     [ApiController]
@@ -33,13 +35,23 @@ namespace NUH_PORTAL.Controllers
         public async Task<IActionResult> GetStats()
             => Ok(await _service.GetStatsAsync());
 
+        // GET api/Students/by-number/{studentNumber}
+        // بحث بالرقم الجامعي — بديل تحميل قائمة الطلاب كاملة في المتصفح.
+        // بيرجّع 404 لو مش موجود عشان الواجهة تعرض رسالة واضحة.
+        [HttpGet("by-number/{studentNumber}")]
+        public async Task<IActionResult> GetStudentByNumber(string studentNumber)
+        {
+            var student = await _service.GetByStudentNumberAsync(studentNumber);
+            return student == null ? NotFound(new { message = "الطالب غير موجود" }) : Ok(student);
+        }
+
         // GET api/Students/{id}
         [HttpGet("{id}")]
         public async Task<IActionResult> GetStudent(int id)
             => Ok(await _service.GetByIdAsync(id));
 
         // POST api/Students
-        [Authorize(Policy = "students.manage")]
+        [Authorize(Policy = "students.create")]
         [HttpPost]
         public async Task<IActionResult> CreateStudent([FromBody] StudentCreateDto dto)
         {
@@ -48,13 +60,13 @@ namespace NUH_PORTAL.Controllers
         }
 
         // PUT api/Students/{id}
-        [Authorize(Policy = "students.manage")]
+        [Authorize(Policy = "students.edit")]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateStudent(int id, [FromBody] StudentUpdateDto dto)
             => Ok(await _service.UpdateAsync(id, dto));
 
         // DELETE api/Students/{id}
-        [Authorize(Policy = "students.manage")]
+        [Authorize(Policy = "students.delete")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> SoftDeleteStudent(int id)
         {
@@ -68,7 +80,7 @@ namespace NUH_PORTAL.Controllers
             => Ok(new { logs = await _service.GetLifecycleAsync(id) });
 
         // POST api/Students/{id}/restore
-        [Authorize(Policy = "students.manage")]
+        [Authorize(Policy = "students.delete")]
         [HttpPost("{id}/restore")]
         public async Task<IActionResult> RestoreStudent(int id)
         {

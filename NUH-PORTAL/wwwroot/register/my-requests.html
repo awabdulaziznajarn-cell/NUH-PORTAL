@@ -135,7 +135,9 @@ async function loadRequests() {
     var mobile = localStorage.getItem('regMobile') || '';
     var url = '/api/Registration/my-requests' + (mobile ? '?mobile=' + encodeURIComponent(mobile) : '');
     var r = await fetch(url, { headers: {'Authorization':'Bearer '+token} });
-    if (r.status === 401) { window.location.href = '../login.html'; return; }
+    // انتهت الجلسة: الطالب يروح لشاشة تتبع الطلب (يتحقق بآخر ٤ أرقام)،
+    // مش لشاشة دخول الموظفين — دي مش بوابته أصلاً.
+    if (r.status === 401) { window.location.href = 'track-request.html'; return; }
     var data = await r.json();
     var tbody = document.getElementById('requestsBody');
     if (!data || data.length === 0) {
@@ -151,14 +153,22 @@ async function loadRequests() {
         '<td>' + renderTimeline(req.status) + '</td>' +
         '<td>' + date + '</td>' +
         '<td>' + editBtn + '</td>' +
-        '<td><a href="my-requests.html?view=' + req.id + '" class="btn btn-sm" onclick="showDetail(' + req.id + ');return false">عرض</a></td></tr>';
+        '<td><a href="track-request.html" class="btn btn-sm" onclick="showDetail(\'' + safeNum(req.requestNumber) + '\');return false">عرض</a></td></tr>';
     }).join('');
   } catch(e) { document.getElementById('requestsBody').innerHTML = '<tr><td colspan="5" class="empty-state">تعذر التحميل</td></tr>'; }
 }
 
-function showDetail(id) {
-  localStorage.setItem('viewRequestId', id);
-  window.location.href = 'request-review.html';
+// أرقام الطلبات بصيغة 2026-000004 — أي شيء خارجها ما يتحطّش في onclick
+function safeNum(v) { return String(v || '').replace(/[^0-9\-]/g, ''); }
+
+// ⚠️ كان بيوديه على request-review.html — وهي شاشة *موظفين* فيها القائمة
+//    الجانبية للنظام كله. الطالب كان بيشوف تنقّل لوحة التحكم وشاشات الإدارة.
+//    دلوقتي بيروح لشاشة تتبع الطلب، وهي الواجهة المخصّصة له.
+//    الطالب متحقَّق منه بالفعل في هذه الشاشة، فبنسلّم رقم الطلب لمرة واحدة
+//    عشان تفتح له مباشرة من غير ما نطلب التحقق تاني.
+function showDetail(number) {
+  try { localStorage.setItem('openRequestNumber', String(number || '')); } catch (e) {}
+  window.location.href = 'track-request.html';
 }
 loadRequests();
 </script>

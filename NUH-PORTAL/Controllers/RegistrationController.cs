@@ -41,6 +41,12 @@ namespace NUH_PORTAL.Controllers
         public async Task<IActionResult> GetMyRequestDetail(int requestId)
             => Ok(await _service.GetMyRequestDetailAsync(requestId));
 
+        // POST api/Registration/check-duplicate
+        // فحص مبكر للتكرار أثناء تعبئة النموذج (الرقم الجامعي + رقم الهوية معًا)
+        [HttpPost("check-duplicate")]
+        public async Task<IActionResult> CheckDuplicate([FromBody] DuplicateCheckRequest request)
+            => Ok(await _service.CheckDuplicateAsync(request));
+
         // POST api/Registration/{requestId}/resubmit
         [HttpPost("{requestId}/resubmit")]
         public async Task<IActionResult> ResubmitRequest(int requestId, [FromBody] ResubmitRequest request)

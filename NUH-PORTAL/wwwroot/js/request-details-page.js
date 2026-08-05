@@ -20,11 +20,30 @@ function authHeaders(extra) {
 }
 const currentUser = JSON.parse(localStorage.getItem('staffUser') || '{}');
 const _userRole = (currentUser.role || '').toLowerCase();
+
+// الصلاحيات بتتحقن من السيرفر مع الصفحة (Views/Requests/Details.cshtml).
+// ⚠️ localStorage.staffUser بقايا من الواجهة القديمة ومش مصدر موثوق للدور —
+//    الفحص الحقيقي بيحصل على السيرفر في كل الحالات، وده إخفاء واجهة بس.
+const _perms = Array.isArray(window.NUH_PERMS) ? window.NUH_PERMS : [];
+function can(p) { return _perms.indexOf(p) !== -1; }
 const urlParams = new URLSearchParams(window.location.search);
 var __pathIdMatch = window.location.pathname.match(/\/Requests\/Details\/(\d+)/i);
 const requestId = (urlParams.get('id') || (__pathIdMatch ? __pathIdMatch[1] : null));
 
 function escHtml(str) { return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// نص بديل لو المفتاح مش موجود في ملف الترجمة.
+// ⚠️ كانت متعرّفة *جوه* renderRequest، يعني أي كود برّاها بينادي عليها كان
+//    بيرمي ReferenceError. ده اللي كان بيمنع خانة «المعلومات المطلوبة» إنها
+//    تظهر: selectInfo() بينادي setReasonTexts('info') واللي بتستخدم tf، فبتقع
+//    قبل ما توصل للسطر اللي بيعرض الخانة. (زر الرفض كان شغال لأنه بيستخدم t.)
+function tf(key, arText, enText) {
+  var v = t(key);
+  if (v !== key) return v;
+  var root = document.getElementById('html-root');
+  var lng = root ? (root.getAttribute('lang') || 'ar') : 'ar';
+  return lng === 'en' ? enText : arText;
+}
 function goBack() { window.location.href = '/Requests'; }
 function formatDate(d) { if (!d) return '-'; return new Date(d).toLocaleString(); }
 
@@ -131,7 +150,67 @@ async function loadRequest() {
   }
 }
 
+// ============================================================================
+//  تعليم الحقول التي عدّلها الطالب بعد «بحاجة معلومات إضافية».
+//  المصدر r.studentEdits القادم من WorkflowHistory.changes_json — بيانات منظّمة
+//  مش نص، فالتعليم بيشتغل مع أي حقل يتضاف في TrackedFields من غير تعديل هنا.
+// ============================================================================
+function injectEditStyles() {
+  if (document.getElementById('rdpEditStyles')) return;
+  var st = document.createElement('style');
+  st.id = 'rdpEditStyles';
+  st.textContent =
+    '.info-field.edited{background:#FFFBF0;border-radius:8px;padding:8px 12px;margin:-8px -4px}' +
+    '[dir="rtl"] .info-field.edited{border-right:3px solid #C9A84C}' +
+    '[dir="ltr"] .info-field.edited{border-left:3px solid #C9A84C}' +
+    '.info-field.edited .info-value{font-weight:700}' +
+    '.edited-tag{display:inline-block;margin-inline-start:6px;padding:1px 7px;border-radius:20px;' +
+      'background:#C9A84C;color:#3A2E08;font-size:10px;font-weight:700;vertical-align:middle}' +
+    '.edited-old{display:block;margin-top:3px;font-size:11.5px;color:#8891A8}' +
+    '.edited-old del{color:#991B1B;text-decoration-thickness:1px}' +
+    '.edits-banner{display:flex;align-items:flex-start;gap:10px;margin:0 0 14px;padding:11px 14px;' +
+      'border-radius:10px;background:#FFFBF0;border:1px solid #EBDCA8;color:#7A5C0B;' +
+      'font-size:13px;font-weight:600;line-height:1.7}' +
+    '.edits-banner svg{flex-shrink:0;margin-top:2px}';
+  document.head.appendChild(st);
+}
+
+// خريطة field -> التغيير. mobile و phone نفس الحقل في سجل الطالب.
+var STUDENT_EDITS = {};
+function buildEditMap(list) {
+  STUDENT_EDITS = {};
+  (list || []).forEach(function (c) {
+    if (!c || !c.field) return;
+    STUDENT_EDITS[c.field] = c;
+    if (c.field === 'mobile') STUDENT_EDITS.phone = c;
+    if (c.field === 'phone') STUDENT_EDITS.mobile = c;
+  });
+}
+
+// بديل موحّد لكتابة صف البيانات — بيعلّم الصف تلقائيًا لو الحقل اتعدّل
+function infoField(fieldKeys, label, valueHtml) {
+  var keys = [].concat(fieldKeys || []);
+  var hits = keys.map(function (k) { return STUDENT_EDITS[k]; }).filter(Boolean);
+
+  if (!hits.length)
+    return '<div class="info-field"><span class="info-label">' + label +
+           '</span><span class="info-value">' + valueHtml + '</span></div>';
+
+  var olds = hits.map(function (c) {
+    var prev = (c.old === null || c.old === undefined || c.old === '')
+      ? tf('rdp_editEmpty', 'فارغ', 'empty') : c.old;
+    return (hits.length > 1 ? escHtml(c.label) + ': ' : '') + '<del>' + escHtml(prev) + '</del>';
+  }).join(' · ');
+
+  return '<div class="info-field edited"><span class="info-label">' + label +
+         '<span class="edited-tag">' + tf('rdp_editedTag', 'مُعدَّل', 'Edited') + '</span></span>' +
+         '<span class="info-value">' + valueHtml + '</span>' +
+         '<span class="edited-old">' + tf('rdp_editPrev', 'قبل التعديل', 'Before') + ': ' + olds + '</span></div>';
+}
+
 function renderRequest(r) {
+  injectEditStyles();
+  buildEditMap(r.studentEdits);
   var lang = document.getElementById('html-root').getAttribute('lang') || 'ar';
   document.getElementById('loading-state').style.display = 'none';
   document.getElementById('detail-content').style.display = 'block';
@@ -179,9 +258,15 @@ function renderRequest(r) {
   if (r.requestType === 'self_registration' && r._regHistory) {
     r._regHistory.forEach(function(h, idx) {
       var wasRejected = String(h.toStage || '').indexOf('rejected') > -1;
+      // «طلب معلومات إضافية» مش موافقة ولا رفض — كانت بتتسمّى بالخطأ
+      // «موافقة إدارة الإسكان» لأن الاسم كان بيتحدد من fromStage بفرضية إن
+      // أي خطوة مش رفض تبقى موافقة.
+      var isInfo = h.toStage === 'need_more_info';
       var hlbl;
       if (idx === 0) {
         hlbl = t('rdp_step_submitted');
+      } else if (isInfo) {
+        hlbl = t('rdp_stage_needMoreInfo');
       } else {
         var act = actionNames[h.fromStage];
         // احتياطي للسجلات القديمة اللي مالهاش fromStage محفوظ
@@ -192,7 +277,7 @@ function renderRequest(r) {
       // h.actorName بيرجّع صاحب الحساب اللي قدّم (ممكن يكون موظف سجّل نيابة عنه،
       // أو حساب OTP اسمه "طالب")، فالسجل كان بيعرض اسم غير صاحب الطلب.
       var actor = (idx === 0 ? (s.full_name || s.fullNameArabic || h.actorName) : h.actorName) || '';
-      historyEntries.push({ label: hlbl, cls: wasRejected ? 'rejected' : 'approved', time: h.actionDate, notes: h.notes || null, username: actor, isSubmitter: idx === 0 });
+      historyEntries.push({ label: hlbl, cls: isInfo ? 'info' : (wasRejected ? 'rejected' : 'approved'), time: h.actionDate, notes: h.notes || null, username: actor, isSubmitter: idx === 0 });
     });
   } else {
     if (r.submittedAt) {
@@ -221,7 +306,6 @@ function renderRequest(r) {
     }
   }
 
-  function tf(key, arText, enText) { var v = t(key); return (v === key) ? (lang === 'en' ? enText : arText) : v; }
   function fmtDate(t) { return new Date(t).toLocaleDateString(lang==='ar'?'ar-SA':'en-US', { year:'numeric', month:'short', day:'numeric' }); }
   function fmtTime(t) { return new Date(t).toLocaleTimeString(lang==='ar'?'ar-SA':'en-US', { hour:'2-digit', minute:'2-digit' }); }
 
@@ -238,8 +322,13 @@ function renderRequest(r) {
       ? tf('rdp_lbl_submitter', 'مقدّم الطلب:', 'Submitted by:')
       : tf('rdp_lbl_actionBy',  'بواسطة:',      'By:');
     var userHtml = e.username ? '<div class="tl-row"><span class="tl-label">'+userLabel+'</span><span class="tl-value username">'+escHtml(e.username)+'</span></div>' : '';
-    var notesHtml = '<div class="tl-notes">'+t('rdp_lbl_notes')+' '+(e.notes && e.cls==='rejected'?escHtml(e.notes):t('rdp_msg_noNotes'))+'</div>';
-    return '<div class="tl-item"><div class="tl-dot '+dotCls+'"></div><div class="tl-content"><div class="tl-title">'+title+'</div>'+userHtml+'<div class="tl-row"><span class="tl-label">'+t('rdp_lbl_date')+'</span><span class="tl-value">'+dateStr+' - '+timeStr+'</span></div>'+notesHtml+'</div></div>';
+    // الملاحظات بتظهر في خطوات الرفض *وطلب المعلومات* — دول الخطوتين اللي
+    // الملاحظة فيهم هي المحتوى نفسه. ملاحظات الموافقة داخلية.
+    var showNotes = e.cls === 'rejected' || e.cls === 'info';
+    var notesHtml = '<div class="tl-notes">'+t('rdp_lbl_notes')+' '+(e.notes && showNotes?escHtml(e.notes):t('rdp_msg_noNotes'))+'</div>';
+    // اللون البرتقالي للنقطة — مافيش كلاس ليه في site.css فبيتحط هنا مباشرة
+    var dotStyle = e.cls === 'info' ? ' style="border-color:#E65100;background:#E65100"' : '';
+    return '<div class="tl-item"><div class="tl-dot '+dotCls+'"'+dotStyle+'></div><div class="tl-content"><div class="tl-title">'+title+'</div>'+userHtml+'<div class="tl-row"><span class="tl-label">'+t('rdp_lbl_date')+'</span><span class="tl-value">'+dateStr+' - '+timeStr+'</span></div>'+notesHtml+'</div></div>';
   }).join('');
   if (!historyHtml) {
     historyHtml = '<div class="history-empty">'+t('rdp_msg_noReviews')+'</div>';
@@ -264,7 +353,16 @@ function renderRequest(r) {
 
   /* --- Review actions --- */
   var reviewHtml = '';
-  if ((st === 'housing_approved' && _userRole === 'admin') || (st === 'cyber_review' && (_userRole === 'cyber' || _userRole === 'admin')) || (st === 'cyber_approved' && _userRole === 'admin') || (st === 'ready_for_provisioning' && _userRole === 'admin') || (st === 'pending_supervisor' && _userRole === 'supervisor') || (st === 'pending_cyber' && _userRole === 'cyber')) {
+  // مين يقدر يتصرّف = مرحلة الطلب + صلاحية المستخدم، مش دوره. نفس الجدول
+  // بالظبط مطبّق على السيرفر في WorkflowActionService و RequestService.ReviewAsync.
+  var canActOnStage =
+    ((st === 'pending_supervisor' || st === 'submitted') && can('requests.reviewHousing')) ||
+    ((st === 'pending_cyber' || st === 'cyber_review') && can('requests.reviewCyber')) ||
+    (st === 'housing_approved' && can('requests.complete')) ||
+    (st === 'cyber_approved' && (can('requests.reviewCyber') || can('requests.complete'))) ||
+    (st === 'ready_for_provisioning' && can('requests.complete'));
+
+  if (canActOnStage) {
     var isSelfRegAction = st === 'pending_supervisor' || st === 'pending_cyber' || st === 'ready_for_provisioning';
     var actionLabel, actionDesc, nextApproved, showRequestInfo;
     if (isSelfRegAction) {
@@ -287,10 +385,13 @@ function renderRequest(r) {
       actionDesc = t('rdp_actionDesc_submitToCyber');
       nextApproved = 'cyber_review';
     } else if (st === 'cyber_review') {
-      actionLabel = _userRole === 'cyber'
+      // مراجع الأمن السيبراني بيشوف صيغة أوضح لدوره؛ الأدمن (اللي عنده إكمال
+      // الطلب كمان) بيشوف الصيغة العامة.
+      var _cyberVoice = can('requests.reviewCyber') && !can('requests.complete');
+      actionLabel = _cyberVoice
         ? t('rdp_action_approveHousingAccount')
         : t('rdp_action_agreeRequest');
-      actionDesc = _userRole === 'cyber'
+      actionDesc = _cyberVoice
         ? t('rdp_actionDesc_approveNextStage')
         : t('rdp_actionDesc_approveNextStageShort');
       nextApproved = 'cyber_approved';
@@ -312,15 +413,18 @@ function renderRequest(r) {
           '<div><div class="review-option-text">'+actionLabel+'</div>'+
           '<div class="review-option-desc">'+actionDesc+'</div></div>'+
         '</label>'+
-        (showRequestInfo ? '<label class="review-option" id="optInfo" onclick="selectInfo()">'+
-          '<input type="radio" name="reviewDecision" value="request-info" onchange="selectInfo()">'+
-          '<div><div class="review-option-text">'+t('rdp_option_needMoreInfo')+'</div>'+
-          '<div class="review-option-desc">'+t('rdp_optionDesc_needMoreInfo')+'</div></div>'+
-        '</label>' : '')+
+        // الترتيب: اعتماد ← رفض ← طلب معلومات إضافية.
+        // الرفض قرار نهائي فمكانه جنب الاعتماد؛ وطلب المعلومات تعليق مؤقت
+        // فآخر حاجة، عشان ما يتاخدش بالغلط بدل الرفض.
         (rejectNewStatus ? '<label class="review-option" id="optReject" onclick="selectReject()">'+
           '<input type="radio" name="reviewDecision" value="reject" onchange="selectReject()">'+
           '<div><div class="review-option-text">'+t('rdp_option_rejectRequest')+'</div>'+
           '<div class="review-option-desc">'+t('rdp_optionDesc_rejectReason')+'</div></div>'+
+        '</label>' : '')+
+        (showRequestInfo ? '<label class="review-option" id="optInfo" onclick="selectInfo()">'+
+          '<input type="radio" name="reviewDecision" value="request-info" onchange="selectInfo()">'+
+          '<div><div class="review-option-text">'+t('rdp_option_needMoreInfo')+'</div>'+
+          '<div class="review-option-desc">'+t('rdp_optionDesc_needMoreInfo')+'</div></div>'+
         '</label>' : '')+
         '<div class="reject-reason-field" id="rejectReasonField">'+
           '<label id="reasonLabel" style="font-size:13px;font-weight:600;color:var(--navy-dark);margin-bottom:6px;display:block">'+
@@ -333,19 +437,39 @@ function renderRequest(r) {
       '</div></div></div>';
   }
 
+  /* --- لافتة تنبيه أعلى بيانات الطالب لما يكون فيه تعديل من الطالب --- */
+  var editsBanner = '';
+  if (r.studentEdits && r.studentEdits.length) {
+    var __n = r.studentEdits.length;
+    var __when = r.studentEditedAt ? new Date(r.studentEditedAt).toLocaleString(lang === 'en' ? 'en-GB' : 'ar-SA') : '';
+    editsBanner =
+      '<div class="edits-banner" style="grid-column:1/-1">' +
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>' +
+        '<span>' + tf('rdp_editsBanner1', 'عدّل الطالب ', 'The student edited ') + __n +
+        tf('rdp_editsBanner2', ' حقلًا بعد طلب المعلومات الإضافية. الحقول المعلّمة بـ «مُعدَّل» هي التي تغيّرت.',
+                               ' field(s) after the request for more information. Fields tagged “Edited” are the ones that changed.') +
+        (__when ? '<br><span style="font-weight:500;opacity:.85">' + escHtml(__when) + '</span>' : '') +
+        '</span></div>';
+  }
+
   /* --- Housing assignment info (for completed/approved requests) --- */
   var housingHtml = '';
   if (s.housing_building || s.floor_number || s.room_number || s.apartment_number) {
-    var housingParts = [escHtml(s.housing_building||'')];
+    // كل جزء بيتكتب بليبله — «مبنى 65 · الدور 1 · شقة 36 · غرفة 12».
+    // الصيغة القديمة (65 - 12 - شقة 36) كانت بترتّب غرفة قبل شقة وبتسيب المبنى والدور
+    // بدون ليبل، فمحدش يعرف الرقم ده بتاع إيه.
+    var housingParts = [];
+    if (s.housing_building) housingParts.push(tf('loc_building','مبنى','Building')+' '+escHtml(s.housing_building));
     // الدور متخزّن كود ("0" = الأرضي) عشان الترتيب يفضل رقمي — بيتترجم هنا بس
     if (s.floor_number !== null && s.floor_number !== undefined && s.floor_number !== '') {
       var __fl = String(s.floor_number) === '0' ? tf('reg_optFloorGround', 'الأرضي', 'Ground') : escHtml(s.floor_number);
-      housingParts.push(tf('rdp_lbl_floor', 'الدور ', 'Floor ') + __fl);
+      housingParts.push(tf('loc_floor', 'الدور', 'Floor') + ' ' + __fl);
     }
-    if (s.room_number) housingParts.push(escHtml(s.room_number));
-    if (s.apartment_number) housingParts.push(t('rdp_lbl_apt')+escHtml(s.apartment_number));
-    housingHtml = '<div class="info-field"><span class="info-label">'+t('rdp_field_housing')+'</span><span class="info-value">'+
-      housingParts.join(' - ')+'</span></div>';
+    if (s.apartment_number) housingParts.push(tf('loc_apartment','شقة','Apt')+' '+escHtml(s.apartment_number));
+    if (s.room_number) housingParts.push(tf('loc_room','غرفة','Room')+' '+escHtml(s.room_number));
+    housingHtml = infoField(['housing_building','floor_number','apartment_number','room_number'],
+      t('rdp_field_housing'), housingParts.join(' · '));
   }
 
   document.getElementById('detail-content').innerHTML =
@@ -413,11 +537,12 @@ function renderRequest(r) {
     '<div class="card"><div class="card-header">'+
       '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'+
       t('rdp_card_studentInfo')+'</div><div class="card-body"><div class="info-grid">'+
-      '<div class="info-field"><span class="info-label">'+t('rdp_field_nameAr')+'</span><span class="info-value">'+escHtml(s.full_name||'')+'</span></div>'+
-      '<div class="info-field"><span class="info-label">'+t('rdp_field_nameEn')+'</span><span class="info-value">'+escHtml(s.full_name_english||'')+'</span></div>'+
-      '<div class="info-field"><span class="info-label">'+t('rdp_field_studentId')+'</span><span class="info-value">'+escHtml(s.student_id||'')+'</span></div>'+
-      '<div class="info-field"><span class="info-label">'+t('rdp_field_nationalId')+'</span><span class="info-value">'+escHtml(s.national_id||'')+'</span></div>'+
-      '<div class="info-field"><span class="info-label">'+t('rdp_field_mobile')+'</span><span class="info-value">'+escHtml(s.phone||'')+'</span></div>'+
+      editsBanner+
+      infoField('full_name',         t('rdp_field_nameAr'),     escHtml(s.full_name||''))+
+      infoField('full_name_english', t('rdp_field_nameEn'),     escHtml(s.full_name_english||''))+
+      infoField(null,                t('rdp_field_studentId'),  escHtml(s.student_id||''))+
+      infoField('national_id',       t('rdp_field_nationalId'), escHtml(s.national_id||''))+
+      infoField('phone',             t('rdp_field_mobile'),     escHtml(s.phone||''))+
       housingHtml+
     '</div></div></div>'+
 
@@ -425,10 +550,10 @@ function renderRequest(r) {
     '<div class="card"><div class="card-header">'+
       '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>'+
       t('rdp_card_academicInfo')+'</div><div class="card-body"><div class="info-grid">'+
-      '<div class="info-field"><span class="info-label">'+t('rdp_field_college')+'</span><span class="info-value">'+escHtml(collegeName(s.college))+'</span></div>'+
-      '<div class="info-field"><span class="info-label">'+t('rdp_field_department')+'</span><span class="info-value">'+escHtml(deptName(s.department))+'</span></div>'+
-      '<div class="info-field"><span class="info-label">'+t('rdp_field_level')+'</span><span class="info-value">'+escHtml(s.academic_level||'')+'</span></div>'+
-      '<div class="info-field"><span class="info-label">'+t('rdp_field_gender')+'</span><span class="info-value">'+escHtml((genderMap[s.gender]&&t(genderMap[s.gender]))||s.gender||'')+'</span></div>'+
+      infoField('college',        t('rdp_field_college'),    escHtml(collegeName(s.college)))+
+      infoField('department',     t('rdp_field_department'), escHtml(deptName(s.department)))+
+      infoField('academic_level', t('rdp_field_level'),      escHtml(s.academic_level||''))+
+      infoField('gender',         t('rdp_field_gender'),     escHtml((genderMap[s.gender]&&t(genderMap[s.gender]))||s.gender||''))+
     '</div></div></div>'+
 
     /* 3b - Housing Account Card */
@@ -481,7 +606,7 @@ async function loadHousingAccount(studentId) {
   var card = document.getElementById('housingAccountCard');
   var content = document.getElementById('housingAccountContent');
   if (!studentId) { card.style.display = 'none'; return; }
-  if (_userRole !== 'admin') { card.style.display = 'none'; return; }
+  if (!can('housing.view')) { card.style.display = 'none'; return; }
   try {
     var res = await fetch('/api/HousingAccountManagement/' + studentId, { headers: authHeaders() });
     if (!res.ok) { card.style.display = 'none'; return; }
@@ -494,17 +619,29 @@ async function loadHousingAccount(studentId) {
     var statusBadge = enabled ? '<span style="background:#E1F5EE;color:#0F6E56;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600">' + t('adEnabled') + '</span>'
       : (s.ad_status === 'disabled' ? '<span style="background:#FEF2F2;color:#991B1B;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600">' + t('adDisabled') + '</span>'
       : '<span style="background:#F4F6FB;color:#8891A8;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600">' + (s.ad_status || t('adUnknown')) + '</span>');
-    content.innerHTML = '<div class="housing-info-grid">' +
-      '<div class="housing-info-item"><label>' + t('adUsername') + '</label><span dir="ltr" style="display:inline-block">' + (s.ad_username || '-') + '</span></div>' +
-      '<div class="housing-info-item"><label>' + t('adAccountStatus') + '</label><span>' + statusBadge + '</span></div>' +
-      '<div class="housing-info-item"><label>' + t('adLastSync') + '</label><span>' + (s.ad_last_sync_at ? formatDate(s.ad_last_sync_at) : '-') + '</span></div>' +
-      '<div class="housing-info-item"><label>' + t('college') + '</label><span>' + (collegeName(s.college) || '-') + '</span></div>' +
+    // ⚠️ الكلاسات housing-info-grid / housing-info-item مالهاش أي CSS في المشروع،
+    //    فالعنوان كان بيلزق في القيمة: "اسم المستخدم في ADh456969999".
+    //    بنستخدم info-grid / info-field اللي بتستخدمها باقي بطاقات الصفحة —
+    //    عمودين مرتبين بخط فاصل، نفس شكل «معلومات الطالب» بالظبط.
+    function adField(label, valueHtml, extra) {
+      return '<div class="info-field">' +
+               '<span class="info-label">' + label + '</span>' +
+               '<span class="info-value"' + (extra || '') + '>' + valueHtml + '</span>' +
+             '</div>';
+    }
+
+    content.innerHTML = '<div class="info-grid">' +
+      adField(t('adUsername'), escHtml(s.ad_username || '-'), ' dir="ltr" style="text-align:start"') +
+      adField(t('adAccountStatus'), statusBadge) +
+      adField(t('adLastSync'), s.ad_last_sync_at ? formatDate(s.ad_last_sync_at) : '-') +
+      adField(t('college'), escHtml(collegeName(s.college) || '-')) +
     '</div>' +
     '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">' +
-      (_userRole === 'admin' ? (enabled ? '<button class="btn btn-danger btn-sm" onclick="housingAction(' + studentId + ',\'disable\')">' + t('disableAccount') + '</button>'
+      (can('housing.manageAccounts') ? (enabled ? '<button class="btn btn-danger btn-sm" onclick="housingAction(' + studentId + ',\'disable\')">' + t('disableAccount') + '</button>'
                : '<button class="btn btn-success btn-sm" onclick="housingAction(' + studentId + ',\'enable\')">' + t('enableAccount') + '</button>') : '') +
-      (_userRole === 'admin' ? '<button class="btn btn-warning btn-sm" onclick="housingResetPassword(' + studentId + ')">' + t('resetPassword') + '</button>' : '') +
-      '<button class="btn btn-outline btn-sm" onclick="showHousingLifecycle(' + (s.id || studentId) + ',\'' + (s.full_name_english || '') + '\')">📋 ' + t('lifecycleLog') + '</button>' +
+      (can('housing.manageAccounts') ? '<button class="btn btn-warning btn-sm" onclick="housingResetPassword(' + studentId + ')">' + t('resetPassword') + '</button>' : '') +
+      // سجل دورة حياة الحساب بيتقرا من /api/students/{id}/lifecycle، فمحتاج صلاحية عرض الطلاب
+      (can('students.view') ? '<button class="btn btn-outline btn-sm" onclick="showHousingLifecycle(' + (s.id || studentId) + ',\'' + (s.full_name_english || '') + '\')">📋 ' + t('lifecycleLog') + '</button>' : '') +
     '</div>';
   } catch(e) {
     card.style.display = 'none';
@@ -514,7 +651,7 @@ async function loadHousingAccount(studentId) {
 async function housingAction(studentId, action) {
   var msgs = { enable: t('confirmEnable'), disable: t('confirmDisable') };
   if (!confirm(msgs[action] || t('confirm'))) return;
-  if (_userRole !== 'admin') { alert(t('apiError')); return; }
+  if (!can('housing.manageAccounts')) { alert(t('apiError')); return; }
   try {
     var res = await fetch('/api/HousingAccountManagement/' + studentId + '/' + action, {
       method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' })
@@ -530,7 +667,7 @@ async function housingAction(studentId, action) {
 }
 
 function housingResetPassword(studentId) {
-  if (_userRole !== 'admin') { alert(t('apiError')); return; }
+  if (!can('housing.manageAccounts')) { alert(t('apiError')); return; }
   var pwd = prompt(t('newPassword'));
   if (!pwd || pwd.length < 8) { alert(t('passwordMinLength') || 'Password must be at least 8 characters'); return; }
   (async function() {
@@ -544,11 +681,28 @@ function housingResetPassword(studentId) {
   })();
 }
 
+// أسماء إجراءات سجل دورة حياة حساب الشبكة — tf بترجع نص ملف الترجمة لو موجود
+// وإلا النص المكتوب هنا حسب اللغة.
+function lifecycleActionLabel(action) {
+  switch (action) {
+    case 'provisioned':            return tf('actionProvisioned', 'تم إنشاء الحساب', 'Account created');
+    case 'reprovisioned':          return tf('actionReprovisioned', 'إعادة إنشاء الحساب', 'Account re-provisioned');
+    case 'enabled':                return tf('actionEnabled', 'تم التفعيل', 'Enabled');
+    case 'disabled':               return tf('actionDisabled', 'تم التعطيل', 'Disabled');
+    case 'disable_failed':         return tf('actionDisableFailed', 'فشل تعطيل الحساب', 'Disable failed');
+    case 'password_reset':         return tf('actionPasswordReset', 'إعادة تعيين كلمة المرور', 'Password reset');
+    case 'extension_attrs_synced': return tf('actionExtensionAttrsSynced', 'مزامنة الخصائص الإضافية', 'Extension attributes synced');
+    case 'housing_transfer':       return tf('actionHousingTransfer', 'نقل سكن', 'Housing transfer');
+    case 'left_housing':           return tf('actionLeftHousing', 'ترك الإسكان', 'Left housing');
+    default:                       return action || '';
+  }
+}
+
 async function showHousingLifecycle(studentId, name) {
   var body = document.getElementById('housingLifecycleBody');
   body.innerHTML = '<p style="text-align:center;color:var(--gray-500);padding:20px">' + t('loading') + '</p>';
   document.getElementById('housingLifecycleModal').classList.add('open');
-  if (_userRole !== 'admin') { body.innerHTML = '<p style="text-align:center;color:var(--red);padding:20px">' + t('apiError') + '</p>'; return; }
+  if (!can('students.view')) { body.innerHTML = '<p style="text-align:center;color:var(--red);padding:20px">' + t('apiError') + '</p>'; return; }
   try {
     var res = await fetch('/api/students/' + studentId + '/lifecycle', { headers: authHeaders() });
     if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -556,16 +710,31 @@ async function showHousingLifecycle(studentId, name) {
     var logs = data.logs || [];
     if (logs.length === 0) { body.innerHTML = '<p style="text-align:center;color:var(--gray-500);padding:20px">' + t('noData') + '</p>'; return; }
     var html = '';
-    if (name) html += '<div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:12px">' + name + '</div>';
+    if (name) html += '<div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:12px">' + escHtml(name) + '</div>';
+    html += '<div class="log-list">';
     logs.forEach(function(l) {
-      var iconClass = (l.action === 'disabled') ? 'disabled' : (l.action === 'password_reset') ? 'password_reset' : '';
-      var actionLabel = l.action === 'provisioned' ? t('actionProvisioned') :
-                        l.action === 'enabled' ? t('actionEnabled') :
-                        l.action === 'disabled' ? t('actionDisabled') :
-                        l.action === 'password_reset' ? t('actionPasswordReset') : l.action;
-      html += '<div class="log-entry"><div class="log-icon ' + iconClass + '">' + (l.action === 'disabled' ? '✗' : '✓') + '</div><div><div style="font-size:13px;font-weight:600">' + actionLabel + '</div><div style="font-size:11px;color:var(--gray-500)">' + (l.performerName ? t('by') + ' ' + l.performerName + ' | ' : '') + (l.performedAt ? new Date(l.performedAt).toLocaleString() : '') + (l.details ? ' | ' + l.details : '') + '</div></div></div>';
+      var iconClass = (l.action === 'disabled' || l.action === 'disable_failed') ? 'disabled'
+                    : (l.action === 'password_reset') ? 'password_reset' : 'enabled';
+      // ⚠️ الأكواد اللي مالهاش اسم (housing_transfer / left_housing / disable_failed)
+      //    كانت بتظهر للمستخدم زي ما هي مكتوبة في قاعدة البيانات.
+      var actionLabel = lifecycleActionLabel(l.action);
+      // ⚠️ كان كله في سطر واحد مفصول بـ | فالكلام بيدخل في بعضه. بقى:
+      //    الإجراء، تحته التفاصيل، وتحتهم المنفّذ والتاريخ منفصلين.
+      var meta = '';
+      if (l.performerName) meta += '<span>' + t('by') + ' ' + escHtml(l.performerName) + '</span>';
+      if (l.performedAt) meta += '<span>' + new Date(l.performedAt).toLocaleString() + '</span>';
+      if (l.ipAddress) meta += '<span class="log-ip">IP: ' + escHtml(l.ipAddress) + '</span>';
+
+      html += '<div class="log-entry">' +
+          '<div class="log-icon ' + iconClass + '">' + (l.action === 'disabled' ? '\u2715' : '\u2713') + '</div>' +
+          '<div class="log-details">' +
+            '<div class="log-action">' + escHtml(actionLabel) + '</div>' +
+            (l.details ? '<div class="log-desc">' + escHtml(l.details) + '</div>' : '') +
+            '<div class="log-meta">' + meta + '</div>' +
+          '</div>' +
+        '</div>';
     });
-    body.innerHTML = html;
+    body.innerHTML = html + '</div>';
   } catch(e) {
     body.innerHTML = '<p style="color:var(--red);text-align:center;padding:20px">' + t('apiError') + '</p>';
   }
@@ -597,7 +766,7 @@ function setReasonTexts(kind) {
   var er  = document.getElementById('rejectReasonError');
   if (kind === 'info') {
     if (lbl) lbl.textContent = tf('rdp_lbl_infoNeededRequired', 'المعلومات المطلوبة من الطالب *', 'Information required from the student *');
-    if (ta)  ta.placeholder  = tf('rdp_ph_infoNeeded', 'اكتب بالتحديد المعلومات أو المستندات المطلوبة', 'Describe exactly what is missing');
+    if (ta)  ta.placeholder  = tf('rdp_ph_infoNeeded', 'يرجى تحديد المعلومات أو المستندات المطلوبة بدقة', 'Describe exactly what is missing');
     if (er)  er.textContent  = tf('rdp_err_infoNeededRequired', 'الرجاء كتابة المعلومات المطلوبة', 'Please describe the required information');
   } else {
     if (lbl) lbl.textContent = t('rdp_lbl_rejectionReasonRequired');

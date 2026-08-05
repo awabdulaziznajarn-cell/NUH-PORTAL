@@ -5,7 +5,9 @@ using NUH_PORTAL.Services.Interfaces;
 namespace NUH_PORTAL.Controllers
 {
     // كنترولر رفيع — منطق النقل في ISupervisorHousingTransferService
-    [Authorize(Roles = "supervisor")]
+    // بقت بصلاحية housing.transfer بدل الدور — أي دور تديله الصلاحية يقدر ينقل،
+    // وسجل التنقلات بيسجّل مين نفّذ فالمساءلة محفوظة.
+    [Authorize(Policy = "housing.transfer")]
     [Route("api/supervisor/housing-transfer")]
     [ApiController]
     public class SupervisorHousingTransferController : ControllerBase
@@ -20,13 +22,14 @@ namespace NUH_PORTAL.Controllers
         public async Task<IActionResult> CreateTransfer(
             [FromForm] string studentNumber,
             [FromForm] string newBuilding,
+            [FromForm] string newFloor,
             [FromForm] string newApartment,
             [FromForm] string newRoom,
             [FromForm] string reason,
             [FromForm] string? customReason,
             IFormFile? file)
         {
-            var result = await _service.CreateTransferAsync(studentNumber, newBuilding, newApartment, newRoom, reason, customReason, file);
+            var result = await _service.CreateTransferAsync(studentNumber, newBuilding, newFloor, newApartment, newRoom, reason, customReason, file);
             return Ok(new { message = result.Message, transferId = result.TransferId, oldLocation = result.OldLocation, newLocation = result.NewLocation });
         }
 
@@ -34,5 +37,17 @@ namespace NUH_PORTAL.Controllers
         [HttpGet("recent")]
         public async Task<IActionResult> GetRecent()
             => Ok(await _service.GetRecentAsync());
+
+        // GET api/supervisor/housing-transfer/{id}/attachment[?download=true]
+        // من غير download بيرجع inline — يعني الصور و PDF بتتعرض في المتصفح
+        // بدل ما تتنزّل على طول.
+        [HttpGet("{id}/attachment")]
+        public async Task<IActionResult> GetAttachment(int id, [FromQuery] bool download = false)
+        {
+            var file = await _service.GetAttachmentAsync(id);
+            return download
+                ? PhysicalFile(file.FilePath, file.ContentType, file.OriginalFileName)
+                : PhysicalFile(file.FilePath, file.ContentType);
+        }
     }
 }

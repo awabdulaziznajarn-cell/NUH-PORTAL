@@ -23,6 +23,7 @@ namespace NUH_PORTAL.Services
         private readonly ADProvisioningService _adProvisioning;
         private readonly IAuditService _audit;
         private readonly IRegistrationService _registration;   // لتوليد رقم الطلب بنفس تسلسل مسار الطالب
+        private readonly IWorkflowService _workflow;           // سجل المراحل (WorkflowHistory)
         private readonly IHttpContextAccessor _http;
         private readonly ILogger<RequestService> _logger;
 
@@ -34,6 +35,7 @@ namespace NUH_PORTAL.Services
             ADProvisioningService adProvisioning,
             IAuditService audit,
             IRegistrationService registration,
+            IWorkflowService workflow,
             IHttpContextAccessor http,
             ILogger<RequestService> logger,
             IUnitOfWork unitOfWork,
@@ -46,14 +48,98 @@ namespace NUH_PORTAL.Services
             _adProvisioning = adProvisioning;
             _audit = audit;
             _registration = registration;
+            _workflow = workflow;
             _http = http;
             _logger = logger;
         }
 
+        // ─────────────────────────────────────────────────────────────────────
+        //  سجل المراحل (WorkflowHistory)
+        // ---------------------------------------------------------------------
+        //  مسار تسجيل الطالب بيكتب صفًا لكل انتقال (RegistrationService)، لكن مسار
+        //  الموظف هنا ماكانش بيكتب أي حاجة — فسجل طلبات الموظف كان فاضي، وصفحة
+        //  التتبع بتبنيه من تواريخ الطلب (تقريب مش مصدر حقيقة).
+        //  دلوقتي المسارين بيكتبوا في نفس الجدول. الطلبات القديمة لسه سجلها فاضي،
+        //  وde شغال لأن RequestTrackingService بيقع على البناء من التواريخ لما
+        //  السجل يبقى فاضي — يعني مفيش داتا محتاجة ترحيل.
+        //
+        //  ⚠️ ActionBy عليه FK لجدول المستخدمين بـ Restrict، فـ 0 بيرمي DbUpdateException.
+        //     التسجيل هنا ثانوي بالنسبة للعملية نفسها، فأي فشل بيتسجّل في اللوج
+        //     ومابيرميش — مش منطقي إن طلب يتلغي لأن سطر سجل مانفعش يتكتب.
+        private async Task LogStageAsync(int requestId, string? fromStage, string toStage, int actorId, string? notes)
+        {
+            if (actorId <= 0)
+            {
+                _logger.LogWarning("WorkflowHistory skipped for request {RequestId} ({From} -> {To}): no actor id",
+                    requestId, fromStage ?? "(start)", toStage);
+                return;
+            }
+
+            try
+            {
+                await _workflow.LogTransitionAsync(requestId, fromStage, toStage, actorId, notes);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "WorkflowHistory write failed for request {RequestId} ({From} -> {To})",
+                    requestId, fromStage ?? "(start)", toStage);
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        //  نطاق الطلبات حسب الدور
+        // ---------------------------------------------------------------------
+        //  قبل كده كل موظف كان بيشوف كل الطلبات في الشاشة، حتى الطلبات اللي لسه
+        //  ماوصلتش لمرحلته أصلاً. مراجع الأمن السيبراني مثلاً كان بيشوف طلبات
+        //  لسه عند إدارة الإسكان ومش بيقدر يعمل فيها حاجة.
+        //
+        //  القاعدة دلوقتي:
+        //    admin      → كل حاجة (مسؤول النظام)
+        //    supervisor → المراحل اللي بتقف عنده + أي طلب عدّى على مراجعة الإسكان
+        //    cyber      → المراحل اللي بتقف عنده + أي طلب هو نفسه راجعه
+        //
+        //  ملحوظة: الطلب مابيختفيش بعد ما الموظف يوافق عليه — بيفضل ظاهر عشان
+        //  يقدر يرجع لقراره القديم. اللي مخفي هو اللي ماوصلوش أصلاً.
+        //
+        //  ⚠️ نفس المرحلة ليها اسمين حسب المسار (تسجيل الطالب / طلب الموظف).
+        private static readonly string[] SupervisorStages = { "pending_supervisor", "submitted" };
+        private static readonly string[] CyberStages = { "pending_cyber", "cyber_review" };
+        private static readonly string[] CompletionStages = { "ready_for_provisioning", "cyber_approved", "housing_approved", "completed" };
+
+        private IQueryable<Request> ScopeToRole(IQueryable<Request> query)
+        {
+            var actorId = UnitOfWork.GetCurrentUserId();
+            var canHousing = UnitOfWork.HasPermission("requests.reviewHousing");
+            var canCyber = UnitOfWork.HasPermission("requests.reviewCyber");
+            var canComplete = UnitOfWork.HasPermission("requests.complete");
+
+            // مسؤول عن المراحل الثلاثة = مشرف عام على المسار كله، فبيشوف كل الطلبات
+            // (ده اللي كان دور admin بيعمله بالظبط).
+            if (canHousing && canCyber && canComplete)
+                return query;
+
+            // need_more_info مضافة صراحةً: لما المراجع يطلب استكمال بيانات، الطلب
+            // بيخرج من مرحلته ومحدش بيسجّل HousingReviewedAt، فكان بيختفي من شاشته
+            // تمامًا — يعني بيطلب معلومات وبعدين يفقد الطلب.
+            //
+            // ⚠️ توكن الطالب (دور user) مابيوصلش هنا أصلاً — الكنترولر بيطلب
+            //    requests.view وهي مش من صلاحياته؛ الطالب بيتابع طلبه عبر
+            //    /api/Registration و /api/RequestTracking.
+            return query.Where(r =>
+                (canHousing && ((r.Status != null && SupervisorStages.Contains(r.Status))
+                                || r.Status == "need_more_info"
+                                || r.HousingReviewedAt != null))
+                || (canCyber && ((r.Status != null && CyberStages.Contains(r.Status))
+                                || r.CyberReviewedAt != null))
+                || (canComplete && r.Status != null && CompletionStages.Contains(r.Status))
+                // اللي قدّم الطلب بيفضل شايفه مهما كانت مرحلته
+                || r.SubmittedBy == actorId);
+        }
+
         public async Task<List<RequestDto>> GetAllAsync()
         {
-            var list = await _requests.Query().AsNoTracking()
-                .Include(r => r.Student)
+            var list = await ScopeToRole(_requests.Query().AsNoTracking()
+                    .Include(r => r.Student))
                 .ToListAsync();
             return Mapper.Map<List<RequestDto>>(list);
         }
@@ -61,9 +147,9 @@ namespace NUH_PORTAL.Services
 
         public async Task<QueryResult<RequestDto>> GetPagedAsync(QueryParams queryParams, string? status, string? requestType)
         {
-            var query = _requests.Query().AsNoTracking()
+            var query = ScopeToRole(_requests.Query().AsNoTracking()
                 .Include(r => r.Student)
-                .AsQueryable();
+                .AsQueryable());
 
             if (!string.IsNullOrEmpty(status))
             {
@@ -104,7 +190,7 @@ namespace NUH_PORTAL.Services
         public async Task<RequestStatsDto> GetStatsAsync()
         {
             // عدّة واحدة على السيرفر (GroupBy) بدل تحميل كل الطلبات وعدّها في المتصفح
-            var counts = await _requests.Query().AsNoTracking()
+            var counts = await ScopeToRole(_requests.Query().AsNoTracking())
                 .GroupBy(r => r.Status)
                 .Select(g => new { Status = g.Key, Count = g.Count() })
                 .ToListAsync();
@@ -179,6 +265,19 @@ namespace NUH_PORTAL.Services
                 CompletedByName = NameOf(request.CompletedBy)
             };
 
+            // آخر إعادة تقديم من الطالب — الشاشة تعلّم الحقول التي غيّرها.
+            // المصدر: WorkflowHistory.changes_json (يُكتب في RegistrationFlowService).
+            var (changesJson, changedAt) = await _workflow.GetLastChangesAsync(id);
+            if (!string.IsNullOrWhiteSpace(changesJson))
+            {
+                dto.StudentEdits = RegistrationDataMapper.DeserializeChanges(changesJson)
+                    .Select(c => new NUH_PORTAL.DTOs.Requests.StudentEditDto
+                    {
+                        Field = c.Field, Label = c.Label, Old = c.Old, New = c.New
+                    }).ToList();
+                dto.StudentEditedAt = changedAt;
+            }
+
             RedactNotesForRole(dto, request);
             return dto;
         }
@@ -196,8 +295,9 @@ namespace NUH_PORTAL.Services
         // ====================================================================
         private void RedactNotesForRole(RequestDetailsDto dto, Request request)
         {
-            var role = UnitOfWork.GetCurrentUserRole();
-            if (!string.Equals(role, "cyber", StringComparison.OrdinalIgnoreCase))
+            // اللي بيراجع الأمن السيبراني بس — الأدمن عنده مراجعة الإسكان كمان فبيشوف الكل
+            if (!(UnitOfWork.HasPermission("requests.reviewCyber")
+                  && !UnitOfWork.HasPermission("requests.reviewHousing")))
                 return;
 
             var rejected = string.Equals(dto.Status, "rejected", StringComparison.OrdinalIgnoreCase)
@@ -223,15 +323,31 @@ namespace NUH_PORTAL.Services
         public async Task<RequestDto> CreateAsync(RequestCreateDto dto)
         {
             var role = UnitOfWork.GetCurrentUserRole()?.ToLower();
-            if (role == "user")
+            if (!UnitOfWork.HasPermission("requests.create"))
                 throw UserFriendlyException.Forbidden();
 
             var actorId = UnitOfWork.GetCurrentUserId();
 
             var request = Mapper.Map<Request>(dto);
 
-            // مشرف/أدمن بينشئ الطلب → موافقة الإسكان تلقائيًا والتحويل مباشرة للمراجعة الإلكترونية
-            var isHousingCreator = role == "supervisor" || role == "admin";
+            // ⚠️ نفس فحص التكرار اللي في مسار الطالب — مكانش موجود هنا خالص، فالموظف
+            //    كان يقدر يعمل طلب تاني لطالب عنده طلب مفتوح من غير أي تنبيه.
+            //    الفحص بيقارن بالرقم الجامعي ورقم الهوية ورقم الجوال، وبيرجّع رقم
+            //    الطلب المتعارض عشان الموظف يفتحه بدل ما يعمل نسخة تانية.
+            var dupStudent = await _students.Query().AsNoTracking()
+                .FirstOrDefaultAsync(s => s.Id == request.StudentId);
+            if (dupStudent != null)
+            {
+                var dup = await _registration.FindOpenRequestNumberAsync(
+                    dupStudent.student_id, dupStudent.national_id, dupStudent.phone);
+                if (dup != null)
+                    throw new UserFriendlyException(
+                        $"يوجد طلب قائم بالفعل لهذا الطالب رقمه {dup.RequestNumber} (تطابق في {dup.FieldLabel}) — راجعه قبل إنشاء طلب جديد.", 400);
+            }
+
+            // اللي بيراجع مرحلة الإسكان لما ينشئ الطلب بنفسه → موافقة الإسكان تلقائيًا
+            // والتحويل مباشرة للمراجعة الإلكترونية (مالوش معنى يراجع طلب كتبه بإيده).
+            var isHousingCreator = UnitOfWork.HasPermission("requests.reviewHousing");
             // ⚠️ الطلبات اللي بيعملها الموظف كانت بتتخزّن بـ request_number = NULL،
             //    بينما مسار تسجيل الطالب بيولّد رقم. النتيجة: الشاشة كانت بتعرض رقم
             //    محسوب من رقم الصف وقت العرض، والطالب يكتبه في التتبع فمايتلاقاش —
@@ -271,6 +387,12 @@ namespace NUH_PORTAL.Services
             if (isHousingCreator)
                 await _audit.LogAsync("submit_cyber_review", "Requests", request.Id);
 
+            // سجل المراحل — بنفس الخطوات اللي كانت بتتبني من التواريخ، عشان الطلبات
+            // القديمة والجديدة يبانوا بنفس الشكل بالظبط في صفحة التتبع.
+            await LogStageAsync(request.Id, null, "submitted", actorId, "تقديم الطلب");
+            if (isHousingCreator)
+                await LogStageAsync(request.Id, "submitted", "cyber_review", actorId, "موافقة إدارة الإسكان");
+
             var reqNum = request.RequestNumber ?? $"{DateTime.UtcNow.Year}-{request.Id:D6}";
             var notifRoles = isHousingCreator ? new[] { "cyber" } : new[] { "admin", "supervisor", "cyber" };
             var notifMsg = isHousingCreator
@@ -286,23 +408,28 @@ namespace NUH_PORTAL.Services
             var req = await _requests.GetByIdAsync(id)
                 ?? throw UserFriendlyException.NotFound("الطلب غير موجود");
 
-            var actorRole = UnitOfWork.GetCurrentUserRole()?.ToLower();
             var actorId = UnitOfWork.GetCurrentUserId();
             var oldStatus = req.Status;
 
-            // جدول الانتقالات المسموحة: (الدور، الحالة الحالية، الحالة الجديدة)
-            var allowed = (actorRole, req.Status, dto.Status) switch
+            var canHousing = UnitOfWork.HasPermission("requests.reviewHousing");
+            var canCyber = UnitOfWork.HasPermission("requests.reviewCyber");
+            var canComplete = UnitOfWork.HasPermission("requests.complete");
+
+            // جدول الانتقالات المسموحة: (الحالة الحالية، الحالة الجديدة) → الصلاحية المطلوبة.
+            // كان الجدول بالدور، فأي دور جديد مايقدرش يراجع مهما إدّيته صلاحيات.
+            var allowed = (req.Status, dto.Status) switch
             {
-                ("admin" or "supervisor", "submitted", "housing_approved" or "housing_rejected") => true,
-                ("admin", "housing_approved", "cyber_review") => true,
-                ("admin" or "cyber", "cyber_review", "cyber_approved" or "cyber_rejected") => true,
-                ("admin" or "cyber", "cyber_approved", "ready_for_provisioning") => true,
-                ("admin", "ready_for_provisioning", "completed") => true,
+                ("submitted", "housing_approved" or "housing_rejected") => canHousing,
+                // تحويل الطلب من "معتمد من الإسكان" للمراجعة الإلكترونية كان للأدمن بس
+                ("housing_approved", "cyber_review") => canComplete,
+                ("cyber_review", "cyber_approved" or "cyber_rejected") => canCyber,
+                ("cyber_approved", "ready_for_provisioning") => canCyber || canComplete,
+                ("ready_for_provisioning", "completed") => canComplete,
                 _ => false
             };
 
             if (!allowed)
-                throw new UserFriendlyException("Transition not allowed for this role", 400);
+                throw new UserFriendlyException("هذا الإجراء غير متاح على الطلب في مرحلته الحالية", 400);
 
             req.Status = dto.Status;
             req.Notes = dto.Notes;
@@ -382,6 +509,14 @@ namespace NUH_PORTAL.Services
                 "completed" => "complete_request",
                 _ => null
             };
+
+            // سجل المراحل لكل انتقال — نفس اللي بيعمله مسار تسجيل الطالب.
+            // ملاحظات الرفض بتتخزّن هنا عشان تظهر للطالب في التتبع؛ ملاحظات
+            // الموافقة داخلية وRequestTrackingService بيخفيها.
+            // dto.Status هنا مستحيل يكون فاضي (جدول الانتقالات فوق كان هيرمي)،
+            // بس الفحص مكتوب صراحةً عشان الكمبايلر ما يحذّرش من nullable.
+            if (!string.IsNullOrEmpty(dto.Status) && oldStatus != dto.Status)
+                await LogStageAsync(req.Id, oldStatus, dto.Status, actorId, dto.Notes);
 
             if (reviewAction != null)
             {

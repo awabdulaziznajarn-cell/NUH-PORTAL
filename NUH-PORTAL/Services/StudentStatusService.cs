@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using NUH_PORTAL.Core.Exceptions;
 using NUH_PORTAL.Data.Interfaces;
+using NUH_PORTAL.DTOs.Attachments;
 using NUH_PORTAL.DTOs.StudentStatus;
 using NUH_PORTAL.Models;
 using NUH_PORTAL.Models.Enums;
@@ -20,7 +21,7 @@ namespace NUH_PORTAL.Services
         private readonly IRepository<AccountLifecycleLog> _lifecycle;
         private readonly IRepository<StudentStatusAttachment> _attachments;
         private readonly ActiveDirectoryService _adService;
-        private readonly IWebHostEnvironment _env;
+        private readonly IAttachmentStorage _storage;
         private readonly IHttpContextAccessor _http;
         private readonly IAuditService _audit;
 
@@ -33,13 +34,31 @@ namespace NUH_PORTAL.Services
 
         private static readonly string[] ValidStatuses = { "graduated", "dismissed", "transferred", "left_housing" };
 
+        // الحالات اللي بتنهي علاقة الطالب بالجامعة — دي اللي مايتكررش.
+        // «ترك الإسكان الجامعي» مش منها: الطالب سايب السكن بس ولسه على رأس عمله.
+        private static bool IsFinalStatus(string? st) =>
+            st is "graduated" or "dismissed" or "transferred";
+
+        // student_status نوعه StudentStatus? — لازم النسخة دي تقبل null
+        private static bool IsFinalStatus(StudentStatus? st) =>
+            st is StudentStatus.graduated or StudentStatus.dismissed or StudentStatus.transferred;
+
+        private static string StatusLabel(StudentStatus? st) => st switch
+        {
+            StudentStatus.graduated => "تخرج من الكلية",
+            StudentStatus.dismissed => "فصل من الكلية",
+            StudentStatus.transferred => "تحويل إلى جامعة أخرى",
+            StudentStatus.left_housing => "ترك الإسكان الجامعي",
+            _ => st?.ToString() ?? ""
+        };
+
         public StudentStatusService(
             IRepository<Student> students,
             IRepository<StudentStatusAction> actions,
             IRepository<AccountLifecycleLog> lifecycle,
             IRepository<StudentStatusAttachment> attachments,
             ActiveDirectoryService adService,
-            IWebHostEnvironment env,
+            IAttachmentStorage storage,
             IHttpContextAccessor http,
             IAuditService audit,
             IUnitOfWork unitOfWork,
@@ -50,30 +69,19 @@ namespace NUH_PORTAL.Services
             _lifecycle = lifecycle;
             _attachments = attachments;
             _adService = adService;
-            _env = env;
+            _storage = storage;
             _http = http;
             _audit = audit;
         }
 
         public async Task<StudentStatusResultDto> CreateStatusActionAsync(string studentNumber, string statusType, string notes, IFormFile? file)
         {
-            var role = UnitOfWork.GetCurrentUserRole()?.ToLower();
-            if (role == "user" || role == "cyber")
+            if (!UnitOfWork.HasPermission("students.changeStatus"))
                 throw UserFriendlyException.Forbidden();
 
             return await CreateCoreAsync(studentNumber, statusType, notes, file,
-                detailsPrefix: "Admin status change",
+                detailsPrefix: "تحديث حالة الطالب",
                 invalidStatusMessage: "نوع الحالة غير صحيح - القيم المسموح بها: تخرج, فصل من الكلية, تحويل إلى جامعة أخرى, ترك الإسكان الجامعي");
-        }
-
-        public async Task<StudentStatusResultDto> CreateSupervisorStatusActionAsync(string studentNumber, string statusType, string notes, IFormFile? file)
-        {
-            if (UnitOfWork.GetCurrentUserRole()?.ToLower() != "supervisor")
-                throw UserFriendlyException.Forbidden();
-
-            return await CreateCoreAsync(studentNumber, statusType, notes, file,
-                detailsPrefix: "Supervisor departure",
-                invalidStatusMessage: "نوع الحالة غير صحيح");
         }
 
         private async Task<StudentStatusResultDto> CreateCoreAsync(string studentNumber, string statusType, string notes, IFormFile? file, string detailsPrefix, string invalidStatusMessage)
@@ -91,6 +99,21 @@ namespace NUH_PORTAL.Services
             var st = statusType?.Trim().ToLower();
             if (string.IsNullOrEmpty(st) || !ValidStatuses.Contains(st))
                 throw new UserFriendlyException(invalidStatusMessage, 400);
+
+            // ⚠️ الحالات النهائية مايتكررش: طالب اتخرّج مايتفصلش بعدها.
+            //    قبل كده النظام كان بيقبل أي عدد إجراءات، فالحالة الأخيرة بتكتب
+            //    فوق اللي قبلها والسجل يبقى فيه سطرين متناقضين — ومفيش إجابة
+            //    على سؤال "الطالب ده اتخرّج ولا اتفصل؟".
+            //
+            //    الأدمن مستثنى عن قصد: لازم يكون فيه مخرج لتصحيح غلط المشرف من
+            //    غير ما حد يفتح قاعدة البيانات. والتصحيح بيتسجّل باسمه في السجل.
+            if (IsFinalStatus(st) && IsFinalStatus(student.student_status)
+                && !UnitOfWork.HasPermission("students.overrideStatus"))
+            {
+                var currentAr = StatusLabel(student.student_status);
+                throw new UserFriendlyException(
+                    $"حالة الطالب مسجّلة بالفعل: {currentAr}. لا يمكن تسجيل حالة نهائية جديدة — راجع مسؤول النظام لتصحيحها.", 400);
+            }
 
             if (file != null)
             {
@@ -145,9 +168,15 @@ namespace NUH_PORTAL.Services
             await _actions.AddAsync(action);
             await UnitOfWork.SaveAsync();
 
-            // محاولة تعطيل حساب الشبكة (لو موجود)
+            // ⚠️ «ترك الإسكان الجامعي» مايتعملهاش تعطيل.
+            //    الطالب ساب السكن بس — لسه طالب في الجامعة ومحتاج حسابه للدراسة.
+            //    التعطيل للحالات اللي بتنهي علاقته بالجامعة: تخرّج / فصل / تحويل.
+            //    قبل كده كانت كل الحالات بتعطّل، يعني طالب بينتقل لسكن خارجي
+            //    كان بيفقد حسابه الجامعي.
+            var disablesNetworkAccount = st is "graduated" or "dismissed" or "transferred";
+
             var (adSuccess, adMessage) = (false, "");
-            if (!string.IsNullOrEmpty(student.ad_username))
+            if (disablesNetworkAccount && !string.IsNullOrEmpty(student.ad_username))
             {
                 try
                 {
@@ -180,37 +209,38 @@ namespace NUH_PORTAL.Services
             await _lifecycle.AddAsync(new AccountLifecycleLog
             {
                 StudentId = student.Id,
-                Action = adSuccess ? "disabled" : "disable_failed",
+                Action = !disablesNetworkAccount ? "left_housing"
+                       : adSuccess ? "disabled" : "disable_failed",
                 PerformedBy = actorId,
                 PerformedAt = DateTime.UtcNow,
                 Details = $"{detailsPrefix} - {statusAr}: {notes.Trim()}" +
-                          (string.IsNullOrEmpty(student.ad_username)
-                              ? " (لا يوجد حساب شبكة)"
-                              : adSuccess
-                                  ? " (تم تعطيل حساب الشبكة)"
-                                  : $" (فشل تعطيل الشبكة: {adMessage})"),
+                          (!disablesNetworkAccount
+                              ? " (حساب الشبكة لم يُمسّ — ترك السكن لا ينهي العلاقة بالجامعة)"
+                              : string.IsNullOrEmpty(student.ad_username)
+                                  ? " (لا يوجد حساب شبكة)"
+                                  : adSuccess
+                                      ? " (تم تعطيل حساب الشبكة)"
+                                      : $" (فشل تعطيل الشبكة: {adMessage})"),
                 IpAddress = clientIp
             });
 
             // حفظ المرفق (لو فيه)
             if (file != null)
             {
-                var uploadDir = Path.Combine(_env.WebRootPath, "uploads", "student-status", action.Id.ToString());
-                Directory.CreateDirectory(uploadDir);
-
-                var ext = Path.GetExtension(file.FileName);
-                var storedFileName = $"{Guid.NewGuid()}{ext}";
-                var filePath = Path.Combine(uploadDir, storedFileName);
-
-                await using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await file.CopyToAsync(stream);
-                }
+                // FileName بقى **مسار نسبي للجذر** مش اسم ملف بس — عشان أي إعادة
+                // تنظيم للمجلدات ما تكسرش الصفوف القديمة.
+                var storedPath = await _storage.SaveAsync(
+                    AttachmentStorage.StatusChange,
+                    student.student_id ?? "",
+                    "action",
+                    action.Id,
+                    _http.HttpContext?.User?.Identity?.Name,
+                    file);
 
                 await _attachments.AddAsync(new StudentStatusAttachment
                 {
                     StudentStatusActionId = action.Id,
-                    FileName = storedFileName,
+                    FileName = storedPath,
                     OriginalFileName = file.FileName,
                     ContentType = file.ContentType ?? "application/octet-stream",
                     FileSize = file.Length,
@@ -222,7 +252,8 @@ namespace NUH_PORTAL.Services
             await UnitOfWork.SaveAsync();
             await _audit.LogAsync("student_departure_status", "StudentStatusActions", action.Id);
 
-            if (!adSuccess && !string.IsNullOrEmpty(student.ad_username))
+            // التحذير للحالات اللي المفروض تعطّل بس — «ترك السكن» نجاح كامل من غير تعطيل
+            if (disablesNetworkAccount && !adSuccess && !string.IsNullOrEmpty(student.ad_username))
             {
                 return new StudentStatusResultDto
                 {
@@ -241,27 +272,46 @@ namespace NUH_PORTAL.Services
                 ActionId = action.Id,
                 StatusType = st,
                 AdDisabled = adSuccess,
-                AdError = adSuccess ? null : (string.IsNullOrEmpty(student.ad_username) ? null : adMessage)
+                AdError = (adSuccess || !disablesNetworkAccount || string.IsNullOrEmpty(student.ad_username))
+                    ? null
+                    : adMessage
             };
         }
 
+        // الشاشة مابتترسمش قبل ما ده يخلّص، فكل رحلة زايدة للداتابيز بتتحوّل
+        // إحساسًا بالبطء عند فتح الصفحة. كان ٦ استعلامات ورا بعض (COUNT لكل
+        // حالة)؛ بقوا اتنين: واحد للطلاب وواحد بيجمّع الإجراءات بـ GROUP BY.
         public async Task<StudentStatusStatsDto> GetStatsAsync()
         {
+            var students = await _students.Query().AsNoTracking()
+                .Where(s => !s.IsDeleted)
+                .GroupBy(s => s.student_status)
+                .Select(g => new { Status = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            var actions = await _actions.Query().AsNoTracking()
+                .GroupBy(a => a.StatusType)
+                .Select(g => new { Status = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            int ActionsOf(string s) => actions.Where(a => a.Status == s).Sum(a => a.Count);
+
             return new StudentStatusStatsDto
             {
-                Total = await _students.Query().AsNoTracking().CountAsync(s => !s.IsDeleted),
-                Active = await _students.Query().AsNoTracking().CountAsync(s => s.student_status == StudentStatus.active && !s.IsDeleted),
-                Graduated = await _actions.Query().AsNoTracking().CountAsync(a => a.StatusType == "graduated"),
-                Dismissed = await _actions.Query().AsNoTracking().CountAsync(a => a.StatusType == "dismissed"),
-                Transferred = await _actions.Query().AsNoTracking().CountAsync(a => a.StatusType == "transferred"),
-                LeftHousing = await _actions.Query().AsNoTracking().CountAsync(a => a.StatusType == "left_housing")
+                Total = students.Sum(s => s.Count),
+                Active = students.Where(s => s.Status == StudentStatus.active).Sum(s => s.Count),
+                Graduated = ActionsOf("graduated"),
+                Dismissed = ActionsOf("dismissed"),
+                Transferred = ActionsOf("transferred"),
+                LeftHousing = ActionsOf("left_housing")
             };
         }
 
         public async Task<List<RecentStatusActionDto>> GetRecentAsync()
         {
-            return await _actions.Query().AsNoTracking()
+            var list = await _actions.Query().AsNoTracking()
                 .Include(a => a.Student)
+                .Include(a => a.CreatedByUser)
                 .OrderByDescending(a => a.CreatedDate)
                 .Take(50)
                 .Select(a => new RecentStatusActionDto
@@ -272,9 +322,59 @@ namespace NUH_PORTAL.Services
                     Notes = a.Notes,
                     CreatedDate = a.CreatedDate,
                     CreatedBy = a.CreatedBy,
-                    StudentName = a.Student != null ? a.Student.full_name : null
+                    StudentName = a.Student != null ? a.Student.full_name : null,
+                    CreatedByName = a.CreatedByUser != null
+                        ? (a.CreatedByUser.full_name ?? a.CreatedByUser.UserName)
+                        : null
                 })
                 .ToListAsync();
+
+            // اسم المرفق — كان بيظهر في شاشة المغادرة بس. استعلام واحد لكل الصفوف
+            // بدل استعلام لكل صف (N+1).
+            var ids = list.Select(a => a.Id).ToList();
+            if (ids.Count > 0)
+            {
+                var attachments = await _attachments.Query().AsNoTracking()
+                    .Where(at => ids.Contains(at.StudentStatusActionId) && at.FileName != null)
+                    .Select(at => new { at.StudentStatusActionId, at.FileName })
+                    .ToListAsync();
+
+                var map = new Dictionary<int, string>();
+                foreach (var at in attachments)
+                    if (at.FileName != null && !map.ContainsKey(at.StudentStatusActionId))
+                        map[at.StudentStatusActionId] = at.FileName;
+
+                foreach (var a in list)
+                    if (map.TryGetValue(a.Id, out var fn))
+                        a.AttachmentFileName = fn;
+            }
+
+            return list;
+        }
+
+        // مرفق الإجراء — بيعدّي من هنا بدل الرابط الثابت في wwwroot، عشان الصلاحية
+        // تتفحص الأول (وثائق طلاب)، وعشان الاسم على الديسك GUID مش الاسم الأصلي.
+        public async Task<DownloadFileDto> GetActionAttachmentAsync(int actionId)
+        {
+            var attachment = await _attachments.Query().AsNoTracking()
+                .Where(a => a.StudentStatusActionId == actionId)
+                .OrderBy(a => a.Id)
+                .FirstOrDefaultAsync()
+                ?? throw UserFriendlyException.NotFound("لا يوجد مرفق لهذا الإجراء");
+
+            var filePath = _storage.ResolveExisting(AttachmentStorage.StatusChange, actionId, attachment.FileName)
+                ?? throw UserFriendlyException.NotFound("الملف غير موجود على الخادم");
+
+            return new DownloadFileDto
+            {
+                FilePath = filePath,
+                ContentType = string.IsNullOrWhiteSpace(attachment.ContentType)
+                    ? "application/octet-stream"
+                    : attachment.ContentType,
+                OriginalFileName = string.IsNullOrWhiteSpace(attachment.OriginalFileName)
+                    ? Path.GetFileName(filePath)
+                    : attachment.OriginalFileName
+            };
         }
 
         public async Task<List<StudentStatusActionDto>> GetStudentHistoryAsync(int studentId)
@@ -285,44 +385,6 @@ namespace NUH_PORTAL.Services
                 .ToListAsync();
 
             return Mapper.Map<List<StudentStatusActionDto>>(actions);
-        }
-
-        public async Task<List<SupervisorRecentActionDto>> GetRecentForSupervisorAsync()
-        {
-            var actorId = UnitOfWork.GetCurrentUserId();
-            if (actorId == 0)
-                throw new UserFriendlyException("غير مصرح", 401);
-
-            // ملحوظة: ضفنا Include(Student) — الكود القديم كان بيرجّع StudentName = null دايمًا (باج)
-            var actions = await _actions.Query().AsNoTracking()
-                .Include(a => a.Student)
-                .Where(a => a.CreatedBy == actorId)
-                .OrderByDescending(a => a.CreatedDate)
-                .Take(50)
-                .ToListAsync();
-
-            var actionIds = actions.Select(a => a.Id).ToList();
-            var attachments = await _attachments.Query().AsNoTracking()
-                .Where(at => actionIds.Contains(at.StudentStatusActionId))
-                .ToListAsync();
-
-            var attachmentMap = new Dictionary<int, string>();
-            foreach (var at in attachments)
-            {
-                if (at.FileName != null && !attachmentMap.ContainsKey(at.StudentStatusActionId))
-                    attachmentMap[at.StudentStatusActionId] = at.FileName;
-            }
-
-            return actions.Select(a => new SupervisorRecentActionDto
-            {
-                Id = a.Id,
-                StudentNumber = a.StudentNumber,
-                StatusType = a.StatusType,
-                Notes = a.Notes,
-                CreatedDate = a.CreatedDate,
-                StudentName = a.Student != null ? a.Student.full_name : null,
-                AttachmentFileName = attachmentMap.TryGetValue(a.Id, out var fn) ? fn : null
-            }).ToList();
         }
     }
 }

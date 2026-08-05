@@ -84,49 +84,48 @@ namespace NUH_PORTAL.Services
         {
             var actorId = RequireActor();
 
+            // نص واحد للـ JSON يُستخدم في التحويل وفي الأرشيف معًا
+            var registrationDataJson = RegistrationDataMapper.Serialize(request.RegistrationData);
+
             var student = await _students.FindAsync(s => s.student_id == request.StudentId);
             if (student == null)
             {
+                // التحويل كله في RegistrationDataMapper.Apply — نفس الدالة التي
+                // تستخدمها إعادة التقديم. أي حقل جديد يُضاف هناك مرة واحدة فيعمل
+                // في المسارين، بدل نسختين تتفارقان مع أول تعديل.
                 student = new Student
                 {
                     student_id = request.StudentId,
-                    full_name = ExtractRegField(request.RegistrationData, "full_name"),
-                    full_name_english = ExtractRegField(request.RegistrationData, "full_name_english"),
-                    national_id = ExtractRegField(request.RegistrationData, "national_id"),
-                    phone = ExtractRegField(request.RegistrationData, "phone") ?? ExtractRegField(request.RegistrationData, "mobile"),
-                    gender = GenderHelper.Parse(ExtractRegField(request.RegistrationData, "gender")),
-                    college = ExtractRegField(request.RegistrationData, "college"),
-                    department = ExtractRegField(request.RegistrationData, "department"),
-                    academic_level = ExtractRegField(request.RegistrationData, "academic_level"),
-                    housing_building = ExtractRegField(request.RegistrationData, "housing_building"),
-                    floor_number = ExtractRegField(request.RegistrationData, "floor_number"),
-                    room_number = ExtractRegField(request.RegistrationData, "room_number"),
-                    apartment_number = ExtractRegField(request.RegistrationData, "apartment_number"),
-                    status = (ExtractRegField(request.RegistrationData, "status") ?? "active").Trim().ToLowerInvariant() switch
-                    {
-                        "left" => StudentState.left,
-                        "inactive" => StudentState.inactive,
-                        _ => StudentState.active
-                    },
+                    status = StudentState.active,   // الطالب لا يحدّد حالة سكنه
                     created_at = DateTime.UtcNow,
                     created_by = actorId
                 };
+                RegistrationDataMapper.Apply(student, registrationDataJson);
                 await _lookups.ApplyAsync(student); // FK ids من الأكواد (dual-write)
                 await _students.AddAsync(student);
                 await UnitOfWork.SaveAsync();
             }
 
-            if (await _registration.CheckDuplicateByStudentIdAsync(request.StudentId))
-                throw new UserFriendlyException("لديك طلب تسجيل قيد المراجعة بالفعل", 400);
+            var mobile = RegistrationDataMapper.Read(registrationDataJson, "mobile")
+                         ?? RegistrationDataMapper.Read(registrationDataJson, "phone");
+            var nationalId = RegistrationDataMapper.Read(registrationDataJson, "national_id");
 
-            var mobile = ExtractRegField(request.RegistrationData, "mobile")
-                         ?? ExtractRegField(request.RegistrationData, "phone");
+            // فحص واحد يغطّي الرقم الجامعي ورقم الهوية ورقم الجوال، ويرجّع رقم الطلب
+            // المتعارض عشان الرسالة تكون مفيدة: الطالب يعرف يتابع طلبه بدل ما يحاول تاني.
+            // ⚠️ الفحص يغطّي الثلاثة معًا: الرقم الجامعي، رقم الهوية، رقم الجوال.
+            //    من غير كده كان الطالب يقدر يقدّم طلبًا ثانيًا بجوال مختلف وبنفس
+            //    رقم الهوية أو الرقم الجامعي — والنتيجة سجلّان لنفس الشخص.
+            var existing = await _registration.FindOpenRequestNumberAsync(request.StudentId, nationalId, mobile);
+            if (existing != null)
+                throw new UserFriendlyException(DuplicateMessage(existing, isOpen: true), 400);
 
-            if (!string.IsNullOrEmpty(mobile) && await _registration.CheckDuplicateByMobileAsync(mobile))
-                throw new UserFriendlyException("رقم الجوال مستخدم بالفعل في طلب تسجيل آخر", 400);
+            // الطالب المسجَّل بالفعل (طلب مكتمل وسكنه ساري) لا يقدّم طلبًا جديدًا.
+            // الحالة النهائية (مغادرة/تخرّج/تحويل) تفتح له التسجيل تلقائيًا.
+            var housed = await _registration.FindActiveHousingRequestNumberAsync(request.StudentId, nationalId, mobile);
+            if (housed != null)
+                throw new UserFriendlyException(DuplicateMessage(housed, isOpen: false), 400);
 
             var requestNumber = await _registration.GenerateRequestNumberAsync();
-            var registrationDataJson = System.Text.Json.JsonSerializer.Serialize(request.RegistrationData ?? new { });
 
             var newRequest = await _registration.CreateRegistrationRequestAsync(
                 student.Id, requestNumber, registrationDataJson, actorId);
@@ -175,7 +174,13 @@ namespace NUH_PORTAL.Services
 
             IQueryable<Request> query = _requests.Query().AsNoTracking()
                 .Include(r => r.Student)
-                .Where(r => r.RequestType == RequestType.self_registration);
+                // ⚠️ النوعين مع بعض. "طلبات الطالب" معناها كل طلبات سكنه، سواء قدّمها
+                //    بنفسه (self_registration) أو قدّمها له موظف (housing) — هو ماختارش
+                //    مين قدّمها. الاستثناء ده كان بيخلي نص طلباته غير مرئية له:
+                //    مابيشوفهاش في "طلباتي"، وفحص التكرار في شاشة الجوال مابيلاقيهاش
+                //    فيعدّي ويقدّم طلب تاني وهو عنده طلب مفتوح.
+                .Where(r => r.RequestType == RequestType.self_registration
+                         || r.RequestType == RequestType.housing);
 
             // منع افتراضي: بنسمح بالعرض الكامل للأدوار الوظيفية المعروفة بس.
             // الشرط القديم كان "لو الدور طالب فلتر" — يعني توكن بدور فاضي أو دور
@@ -230,7 +235,8 @@ namespace NUH_PORTAL.Services
         {
             var request = await _requests.Query().AsNoTracking()
                 .Include(r => r.Student)
-                .FirstOrDefaultAsync(r => r.Id == requestId && r.RequestType == RequestType.self_registration)
+                .FirstOrDefaultAsync(r => r.Id == requestId
+                    && (r.RequestType == RequestType.self_registration || r.RequestType == RequestType.housing))
                 ?? throw UserFriendlyException.NotFound("الطلب غير موجود");
 
             // ⚠️ الميثود دي كانت بتدّي أي رقم طلب لأي طالب مسجّل دخول — يعني تغيير
@@ -238,7 +244,8 @@ namespace NUH_PORTAL.Services
             //    الموظفين بيوصلوا عادي؛ الطالب لازم يكون صاحب الطلب.
             //    بنرجّع "غير موجود" مش "ممنوع" عشان مانأكّدش وجود الطلب أصلاً.
             var actorId = RequireActor();
-            if (!IsStaffRole(UnitOfWork.GetCurrentUserRole()))
+            var isStaff = IsStaffRole(UnitOfWork.GetCurrentUserRole());
+            if (!isStaff)
             {
                 var owns = request.SubmittedBy == actorId;
                 if (!owns)
@@ -264,6 +271,8 @@ namespace NUH_PORTAL.Services
                 Id = request.Id,
                 RequestNumber = request.RequestNumber,
                 Status = request.Status,
+                // القراءة الوحيدة المسموحة من الأرشيف: إعادة تعبئة نموذج الطالب
+                // عند التعديل. مطابق لسجل الطالب لأن المسارين يُكتبان معًا.
                 RegistrationData = request.RegistrationData,
                 SubmittedAt = request.SubmittedAt,
                 ReviewedAt = request.ReviewedAt,
@@ -283,40 +292,126 @@ namespace NUH_PORTAL.Services
                     FromStage = h.FromStage,
                     ToStage = h.ToStage,
                     ActionDate = h.ActionDate,
-                    Notes = h.Notes,
-                    ActorName = h.Actor != null
-                        ? (h.Actor.UserRoles.Any(ur => ur.Role.Name == "user") && request.Student?.full_name != null ? request.Student.full_name : h.Actor.full_name ?? h.Actor.UserName)
-                        : null
+                    // ⚠️ ده رد بيروح للطالب. ملاحظات الموافقة ملاحظات داخلية بين
+                    //    الموظفين — الطالب يشوف سبب الرفض والمطلوب استكماله بس.
+                    //    الموظف بيشوف كل الملاحظات: نفس الـ endpoint بتستخدمه شاشة
+                    //    تفاصيل الطلب عنده، ولو خفينا عنه ملاحظاته هو يبقى السجل ناقص.
+                    Notes = (isStaff || IsStudentVisibleNote(h.ToStage)) ? h.Notes : null,
+                    // ⚠️ اسم الموظف لا يخرج للطالب. الطالب يهمّه الجهة والتاريخ،
+                    //    ولا مصلحة في أن يعرف اسم من راجع طلبه. الموظف يرى الأسماء
+                    //    كاملة في شاشة تفاصيل الطلب (مسار مختلف ومحمي بالصلاحيات).
+                    ActorName = !isStaff ? null
+                        : (h.Actor != null
+                            ? (h.Actor.UserRoles.Any(ur => ur.Role.Name == "user") && request.Student?.full_name != null
+                                ? request.Student.full_name
+                                : h.Actor.full_name ?? h.Actor.UserName)
+                            : null)
                 }).ToList()
             };
         }
 
+        // ====================================================================
+        //  ⚠️ عيب كان بيخلي المراجع يتخذ قرار على بيانات قديمة:
+        //     إعادة التقديم كانت بتحدّث Requests.registration_data بس، وشاشة
+        //     «تفاصيل الطلب» بتقرا من جدول Students (اللي بيتعمل مرة واحدة عند
+        //     أول تقديم). فالطالب يعدّل رقم المبنى ويعيد التقديم، والمشرف يعمل
+        //     تحديث فيلاقي القيم القديمة زي ما هي.
+        //     الحل: نسحب التعديلات على سجل الطالب كمان، ونكتب ملخّص بالتغييرات
+        //     في سجل المراجعات عشان المراجع يشوف الطالب غيّر إيه بالظبط.
+        // ====================================================================
         public async Task ResubmitAsync(int requestId, ResubmitRequest request)
         {
             var actorId = RequireActor();
 
-            var result = await _registration.ResubmitRequestAsync(requestId, actorId, request.RegistrationData);
+            // البيانات القديمة لازم تتقرا قبل ما إعادة التقديم تكتب فوقها
+            var before = await _requests.Query().AsNoTracking()
+                .Where(r => r.Id == requestId)
+                .Select(r => new { r.RegistrationData, r.StudentId })
+                .FirstOrDefaultAsync();
+
+            // مقارنة واحدة تنتج النص المقروء والـ JSON المنظّم معًا
+            var changes = RegistrationDataMapper.Compare(before?.RegistrationData, request.RegistrationData);
+            var summary = RegistrationDataMapper.BuildChangeSummary(changes);
+            var changesJson = RegistrationDataMapper.SerializeChanges(changes);
+
+            var result = await _registration.ResubmitRequestAsync(
+                requestId, actorId, request.RegistrationData, summary, changesJson);
             if (result == null)
                 throw new UserFriendlyException("لا يمكن إعادة تقديم هذا الطلب", 400);
+
+            if (before != null)
+                await ApplyRegistrationDataToStudentAsync(before.StudentId, request.RegistrationData);
 
             var (ip, ua) = ClientInfo();
             await _workflow.LogAuditAsync(actorId, "request_resubmitted", "Requests", requestId, ip, ua);
         }
 
+        // التحويل من بيانات التسجيل إلى سجل الطالب — نفس دالة التقديم الأول.
+        // (المنطق كله في RegistrationDataMapper: مكان واحد لكل المسارات)
+        private async Task ApplyRegistrationDataToStudentAsync(int studentId, string? registrationJson)
+        {
+            if (string.IsNullOrWhiteSpace(registrationJson)) return;
+
+            var student = await _students.GetByIdAsync(studentId);
+            if (student == null) return;
+
+            RegistrationDataMapper.Apply(student, registrationJson);
+            await _lookups.ApplyAsync(student);   // إعادة ربط FK من الأكواد الجديدة
+            await UnitOfWork.SaveAsync();
+        }
+
+        // فحص مبكر من داخل النموذج — راحة للطالب فقط، وليس بديلًا عن فحص الإرسال.
+        // يتطلب جلسة (رمز الطالب بعد التحقق بالجوال) ومحدود بمعدل في Program.cs.
+        public async Task<DuplicateCheckResultDto> CheckDuplicateAsync(DuplicateCheckRequest request)
+        {
+            RequireActor();   // بدون جلسة متحقَّق منها لا فحص
+
+            var hit = await _registration.FindByStudentAndNationalIdAsync(
+                request.StudentId ?? string.Empty, request.NationalId ?? string.Empty);
+
+            if (hit == null)
+                return new DuplicateCheckResultDto { Found = false };
+
+            return new DuplicateCheckResultDto
+            {
+                Found = true,
+                RequestNumber = hit.RequestNumber,
+                Message = $"هذه البيانات مرتبطة بطلب مسجَّل رقمه {hit.RequestNumber}. يرجى التأكد من صحتها أو مراجعة إدارة الإسكان."
+            };
+        }
+
         // ----------------------------- Helpers -----------------------------
 
-        private static string? ExtractRegField(object? regData, string fieldName)
+        // رسالة التعارض تختلف حسب الحقل: تطابق الجوال يعني إن ده الطالب نفسه،
+        // أما تطابق الهوية أو الرقم الجامعي فقد يعني إدخالًا خاطئًا أو محاولة
+        // تسجيل ببيانات شخص آخر — والإرشاد في الحالتين مختلف تمامًا.
+        private static string DuplicateMessage(DuplicateMatch m, bool isOpen)
         {
-            if (regData == null) return null;
-            try
-            {
-                var json = System.Text.Json.JsonSerializer.Serialize(regData);
-                using var doc = System.Text.Json.JsonDocument.Parse(json);
-                if (doc.RootElement.TryGetProperty(fieldName, out var prop) && prop.ValueKind == System.Text.Json.JsonValueKind.String)
-                    return prop.GetString();
-            }
-            catch { }
-            return null;
+            if (m.IsSamePerson)
+                return isOpen
+                    ? $"لديك طلب قائم بالفعل رقمه {m.RequestNumber} — يمكنك متابعته من صفحة تتبع الطلب."
+                    : $"أنت مسجَّل بالفعل في الإسكان الجامعي بموجب الطلب رقم {m.RequestNumber}. لا يمكن تقديم طلب جديد؛ للاستفسار يرجى مراجعة إدارة الإسكان.";
+
+            return isOpen
+                ? $"{m.FieldLabel} المُدخل مرتبط بطلب قائم رقمه {m.RequestNumber}. يرجى التأكد من صحة البيانات، وإن كان الطلب يخصّك فتابعه من صفحة تتبع الطلب."
+                : $"{m.FieldLabel} المُدخل مرتبط بطالب مسجَّل بالفعل في الإسكان الجامعي (الطلب رقم {m.RequestNumber}). يرجى التأكد من صحة البيانات أو مراجعة إدارة الإسكان.";
         }
+
+
+        // مسار تسجيل الطالب بيكتب "rejected"، ومسار الموظف housing_rejected /
+        // cyber_rejected — الاتنين رفض.
+        // الملاحظات اللي الطالب يشوفها: سبب الرفض، و«المطلوب استكماله».
+        // ملاحظات الموافقة داخلية بين الموظفين.
+        // ⚠️ need_more_info كانت ناقصة، فالطالب كان بيقرا «مطلوب استكمال بيانات»
+        //    من غير ما يعرف المطلوب إيه بالظبط.
+        private static bool IsStudentVisibleNote(string? stage) =>
+            IsRejection(stage)
+            || string.Equals(stage, "need_more_info", StringComparison.OrdinalIgnoreCase);
+
+        private static bool IsRejection(string? stage) =>
+            string.Equals(stage, "rejected", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(stage, "housing_rejected", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(stage, "cyber_rejected", StringComparison.OrdinalIgnoreCase);
+
     }
 }

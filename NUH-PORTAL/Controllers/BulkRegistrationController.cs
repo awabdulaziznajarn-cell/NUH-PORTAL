@@ -6,7 +6,9 @@ using NUH_PORTAL.Services.Interfaces;
 namespace NUH_PORTAL.Controllers
 {
     // كنترولر رفيع — منطق التسجيل الجماعي في IBulkRegistrationService
-    [Authorize(Roles = "admin,supervisor")]
+    // كانت بالدور (admin,supervisor)، فأي دور جديد ياخد صلاحية الرفع الجماعي
+    // كان بيلاقي الشاشة مفتوحة والـ API بيرفض. بقت بالصلاحية.
+    [Authorize(Policy = "students.bulkImport")]
     [Route("api/[controller]")]
     [ApiController]
     public class BulkRegistrationController : ControllerBase

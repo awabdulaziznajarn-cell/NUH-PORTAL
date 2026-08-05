@@ -10,5 +10,6 @@ namespace NUH_PORTAL.Services.Interfaces
         Task<List<MyRequestListItemDto>> GetMyRequestsAsync(string? mobile);
         Task<MyRequestDetailDto> GetMyRequestDetailAsync(int requestId);
         Task ResubmitAsync(int requestId, ResubmitRequest request);
+        Task<DuplicateCheckResultDto> CheckDuplicateAsync(DuplicateCheckRequest request);
     }
 }

@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" id="html-root">
+<head>
+<link rel="icon" href="../favicon.ico">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تتبع الطلب</title>
+<script src="../i18n.js"></script>
+<style>
+@font-face { font-family:'IBM Plex Sans Arabic'; font-style:normal; font-weight:400; src:url('../fonts/IBMPlexSansArabic-Regular.woff2') format('woff2'); }
+@font-face { font-family:'IBM Plex Sans Arabic'; font-style:normal; font-weight:600; src:url('../fonts/IBMPlexSansArabic-SemiBold.woff2') format('woff2'); }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+input,select,textarea{font-size:16px;-webkit-appearance:none;appearance:none;border-radius:0}
+button{touch-action:manipulation}
+:root{--navy:#1B2A5E;--navy-dark:#111C42;--navy-light:#2B3E7E;--gold:#C9A84C;--gold-light:#E8C96A;--white:#FFFFFF;--gray-50:#F4F6FB;--gray-100:#EEF1F8;--gray-200:#DDE3F0;--gray-300:#C8CFDF;--gray-500:#8891A8;--gray-700:#4A5270;--green:#0F6E56;--green-light:#E1F5EE;--red:#991B1B;--red-light:#FEF2F2}
+body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);color:var(--navy-dark);min-height:100vh;display:flex;flex-direction:column;align-items:center}
+.portal-header{text-align:center;padding:28px 16px 0;width:100%;position:relative}
+.portal-header img{width:80px;height:auto;margin-bottom:10px}
+.portal-header h1{font-size:17px;font-weight:800;color:var(--navy-dark)}
+.lang-btn{position:absolute;top:12px;background:#fff;border:1px solid #e2e6ef;border-radius:6px;padding:6px 14px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;z-index:10}
+[dir="rtl"] .lang-btn{left:12px}
+[dir="ltr"] .lang-btn{right:12px}
+.lang-btn:hover{background:#f4f6fb}
+.container{padding:20px 16px;flex:1;max-width:560px;width:100%}
+.card{background:var(--white);border-radius:16px;border:1px solid var(--gray-100);box-shadow:0 2px 8px rgba(27,42,94,0.05);padding:28px}
+h1{font-size:22px;font-weight:800;text-align:center;margin-bottom:4px}
+.sub{font-size:13px;color:var(--gray-500);text-align:center;margin-bottom:20px}
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:6px}
+.form-control{width:100%;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:10px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;height:48px;transition:border-color 0.2s}
+.form-control:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(27,42,94,0.1)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 24px;border-radius:10px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;border:none;width:100%}
+.btn-primary{background:var(--navy);color:var(--white)}
+.btn-primary:hover{background:var(--navy-light)}
+.btn-primary:disabled{opacity:.6;cursor:default}
+.tabs{display:flex;gap:8px;margin-bottom:16px}
+.tab{flex:1;background:var(--gray-100);color:var(--gray-700)}
+.tab.active{background:var(--navy);color:var(--white)}
+.req-card{border:1px solid var(--gray-200);border-radius:12px;padding:18px;margin-top:14px}
+.req-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+.req-num{font-size:15px;font-weight:800;direction:ltr}
+.info-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--gray-100)}
+.info-row:last-of-type{border-bottom:none}
+.info-label{font-size:12px;color:var(--gray-500)}
+.info-value{font-size:13px;font-weight:600;color:var(--navy-dark)}
+.status-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.status-submitted{background:#FFF8E1;color:#B8860B}
+.status-pending_supervisor{background:#FFF8E1;color:#B8860B}
+.status-pending_cyber{background:#E3F2FD;color:#1565C0}
+.status-ready_for_provisioning{background:#F3E5F5;color:#7B1FA2}
+.status-completed{background:var(--green-light);color:var(--green)}
+.status-approved{background:var(--green-light);color:var(--green)}
+.status-rejected{background:var(--red-light);color:var(--red)}
+.status-need_more_info{background:#FFF3E0;color:#E65100}
+/* حالات مسار طلبات الموظف — من غيرها الشارة بتطلع بدون خلفية (نص سادة)
+   لأن الكلاس status-{الحالة} مالوش تعريف، فالحالة كانت بتبان مختلفة عن الحالات التانية */
+.status-cyber_review{background:#E3F2FD;color:#1565C0}
+.status-cyber_approved{background:#F3E5F5;color:#7B1FA2}
+.status-cyber_rejected{background:var(--red-light);color:var(--red)}
+.status-housing_rejected{background:var(--red-light);color:var(--red)}
+.timeline{margin-top:14px;position:relative}
+.timeline::before{content:'';position:absolute;top:8px;bottom:8px;right:12px;width:2px;background:var(--gray-200)}
+[dir="ltr"] .timeline::before{right:auto;left:12px}
+.timeline-item{display:flex;gap:12px;padding:10px 0;position:relative;padding-right:28px}
+[dir="ltr"] .timeline-item{padding-right:0;padding-left:28px}
+.timeline-dot{width:12px;height:12px;border-radius:50%;background:var(--gray-300);margin-top:5px;flex-shrink:0;position:absolute;right:0;top:10px;z-index:1}
+[dir="ltr"] .timeline-dot{right:auto;left:0}
+.timeline-dot.completed{background:var(--green);border:2px solid var(--green-light)}
+.timeline-dot.rejected{background:var(--red);border:2px solid var(--red-light)}
+.timeline-content{flex:1}
+.timeline-stage{font-size:13px;font-weight:600;color:var(--navy-dark)}
+.timeline-date{font-size:11px;color:var(--gray-500);margin-top:2px}
+.timeline-actor{font-size:12px;color:var(--gray-700);margin-top:2px}
+.reject-box{margin-top:14px;border:1px solid var(--red);background:var(--red-light);padding:16px;border-radius:12px}
+.info-box{margin-top:14px;border:1px solid #E65100;background:#FFF3E0;padding:16px;border-radius:12px}
+.info-box-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:#E65100;margin-bottom:6px}
+.info-box-text{font-size:13px;line-height:1.9;color:var(--navy-dark);white-space:pre-wrap;word-break:break-word}
+.info-box-btn{display:inline-block;margin-top:12px;background:#E65100;color:#fff;text-decoration:none;font-size:13px;font-weight:700;padding:10px 22px;border-radius:10px}
+.reject-box-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--red);margin-bottom:6px}
+.reject-box-text{font-size:13px;line-height:1.9;color:var(--navy-dark);white-space:pre-wrap;word-break:break-word}
+.done-box{margin-top:14px;border:2px solid var(--green);background:var(--green-light);padding:20px;border-radius:12px;text-align:center}
+.alert{padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:16px;display:none}
+.alert-error{background:var(--red-light);color:var(--red);border:1px solid var(--red);display:block}
+.alert-success{background:var(--green-light);color:var(--green);border:1px solid var(--green);display:block}
+.alert-info{background:#EEF3FF;color:var(--navy);border:1px solid #C7D4F5;display:block}
+.footer{text-align:center;font-size:11px;color:var(--gray-500);padding:20px;border-top:1px solid var(--gray-100);margin-top:auto;width:100%}
+.nav-link{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--gray-500);text-decoration:none;margin-bottom:16px}
+.nav-link:hover{color:var(--navy)}
+.empty{text-align:center;font-size:13px;color:var(--gray-500);padding:24px 0}
+.hint{background:var(--gray-50);border:1px solid var(--gray-100);border-radius:10px;padding:12px 14px;font-size:12.5px;line-height:1.8;color:var(--gray-700);margin-bottom:14px}
+.hint strong{color:var(--navy-dark);direction:ltr;display:inline-block}
+.last4-input{text-align:center;letter-spacing:10px;font-size:22px;font-weight:700;direction:ltr}
+.link-btn{background:none;border:none;color:var(--navy);font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;font-weight:600;cursor:pointer;text-decoration:underline;padding:0;width:auto;margin-top:12px}
+@media(max-width:768px){.portal-header{padding:20px 16px 0}.portal-header img{width:64px}.portal-header h1{font-size:16px}.container{padding:16px}.card{padding:20px}}
+@media(max-width:414px){.card{border-radius:12px}.info-row{padding:10px 0;flex-direction:column;gap:2px}.info-value{font-size:12px}}
+@media(max-width:375px){.container{padding:12px;margin:0}.card{padding:16px;border-radius:10px}.form-control{height:44px;font-size:16px}h1{font-size:18px}.sub{font-size:12px;margin-bottom:16px}.portal-header{padding:16px 12px 0}.portal-header img{width:56px}.portal-header h1{font-size:15px}}
+@media(max-width:320px){.card{padding:14px}.form-group label{font-size:12px}.form-control{font-size:14px;height:40px}.btn{font-size:13px;padding:8px 14px}h1{font-size:16px}}
+</style>
+</head>
+<body>
+<div class="portal-header">
+<img src="../nu-logo.png" alt="جامعة نجران">
+<h1>نظام إسكان الطلاب والطالبات</h1>
+<button class="lang-btn" id="langBtn" onclick="toggleLang()">English</button>
+</div>
+<div class="container">
+<div class="card">
+<a href="index.html" class="nav-link">← العودة للرئيسية</a>
+<h1>تتبع الطلب</h1>
+<p class="sub">ابحث عن طلبك باستخدام رقم الطلب أو رقم الجوال</p>
+<div id="alertMessage" class="alert"></div>
+
+<div class="tabs">
+  <button id="tabNumber" class="btn tab active" onclick="setSearchType('number')">رقم الطلب</button>
+  <button id="tabMobile" class="btn tab" onclick="setSearchType('mobile')">رقم الجوال</button>
+</div>
+
+<div id="numberSearchGroup">
+  <div id="numStep1">
+    <div class="form-group">
+      <label>رقم الطلب</label>
+      <input type="text" id="requestNumberInput" class="form-control" placeholder="مثال: 2026-000001" dir="ltr" style="text-align:center">
+    </div>
+    <button class="btn btn-primary" onclick="goToLast4()">التالي</button>
+  </div>
+  <div id="numStep2" style="display:none">
+    <div class="hint">
+      للتأكد إن الطلب طلبك، اكتب <strong>آخر ٤ أرقام</strong> من رقم الجوال المسجّل في الطلب
+      <strong id="numEcho"></strong>
+    </div>
+    <div class="form-group">
+      <label>آخر ٤ أرقام من رقم الجوال</label>
+      <input type="tel" id="last4Input" class="form-control last4-input" placeholder="----" maxlength="4" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+    </div>
+    <button id="searchBtnNum" class="btn btn-primary" onclick="trackByNumber()">بحث</button>
+    <div style="text-align:center"><button class="link-btn" onclick="backToNumber()">تغيير رقم الطلب</button></div>
+  </div>
+</div>
+
+<div id="mobileSearchGroup" style="display:none">
+  <div class="form-group">
+    <label>رقم الجوال</label>
+    <input type="tel" id="mobileInput" class="form-control" placeholder="05xxxxxxxx" dir="ltr" style="text-align:center" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+  </div>
+  <button id="searchBtnMob" class="btn btn-primary" onclick="trackByMobile()">بحث</button>
+</div>
+
+<div id="newSearchWrap" style="display:none;text-align:center">
+  <button class="link-btn" onclick="newSearch()">بحث عن طلب آخر</button>
+</div>
+
+<div id="resultsList"></div>
+
+</div>
+</div>
+<div class="footer">عمادة التحول الرقمي ومصادر المعرفة - جامعة نجران 2026</div>
+<script>
+setLang(localStorage.getItem('uiLanguage') || 'ar');
+function toggleLang() { applyLang(window.currentLang === 'ar' ? 'en' : 'ar'); }
+
+/* ============================================================================
+   تتبع الطلب — بحث برقم الطلب أو رقم الجوال، بدون تسجيل دخول.
+
+   ملاحظة للمستقبل: /api/RequestTracking مفتوح بدون مصادقة وأرقام الطلبات
+   متسلسلة (2026-000001, 000002, ...)، فنظريًا حد يقدر يعدّي عليها بالترتيب
+   ويقرا أسماء الطلاب وحالات طلباتهم. اتقرر مؤقتًا نسيبها مفتوحة لحد ما
+   الإدارة تحدد، لأن ربطها بـ OTP بيستهلك رصيد الرسائل المخصص للتسجيل.
+   لو اتقرر التشديد لاحقًا: أرخص حل بدون أي رسائل هو طلب رقم الطلب + آخر
+   ٤ أرقام من الجوال مع بعض — التخمين ساعتها بيبقى غير عملي.
+   ============================================================================ */
+
+var searchType = 'number';
+
+function showAlert(msg, type) {
+  var el = document.getElementById('alertMessage');
+  el.textContent = msg || '';
+  el.className = type ? 'alert alert-' + type : 'alert';
+}
+
+function escHtml(v) {
+  return String(v == null ? '' : v)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+// credentials:'omit' مقصودة: الصفحة دي عامة ولازم تفضل مفصولة تمامًا عن أي
+// جلسة موظف مفتوحة في نفس المتصفح. من غيرها المتصفح بيبعت كوكي NUH.Auth مع
+// كل نداء، وده كان بيخلي السيرفر يتعامل مع الزائر كموظف.
+async function apiFetch(url, opts) {
+  opts = opts || {};
+  opts.credentials = 'omit';
+  var res = await fetch(url, opts);
+  var body = null;
+  try { body = JSON.parse(await res.text()); } catch (e) { body = null; }
+  return { ok: res.ok, status: res.status, data: body };
+}
+
+// رسالة مفهومة بدل "تعذر الاتصال بالخادم" لكل حاجة — محدّد المعدل بيرد 429
+// بجسم مش JSON، وكان بيتفسّر غلط كانقطاع اتصال.
+function httpMessage(r, fallback) {
+  if (r.status === 429) return 'محاولات كتيرة في وقت قصير — انتظر دقيقة وحاول تاني';
+  if (r.data && r.data.message) return r.data.message;
+  if (r.status >= 500) return 'خطأ في الخادم، حاول بعد قليل';
+  return fallback;
+}
+
+var STATUS_MAP = {
+  submitted: 'تم تقديم الطلب',
+  pending_supervisor: 'بانتظار موافقة إدارة الإسكان',
+  pending_cyber: 'بانتظار مراجعة إدارة الأمن السيبراني',
+  ready_for_provisioning: 'جاري إنشاء حساب شبكة السكن',
+  completed: 'مكتمل',
+  approved: 'مكتمل',
+  rejected: 'مرفوض',
+  need_more_info: 'بانتظار استكمال بيانات',
+  // مصطلحات مسار طلبات المشرف — من غيرها الطالب كان هيشوف الكود الخام زي cyber_review
+  cyber_review: 'بانتظار مراجعة إدارة الأمن السيبراني',
+  cyber_approved: 'جاري إنشاء حساب شبكة السكن',
+  cyber_rejected: 'مرفوض',
+  housing_rejected: 'مرفوض'
+};
+
+function getHistoryLabel(toStage) {
+  var map = {
+    pending_supervisor: 'تم تقديم الطلب',
+    pending_cyber: 'تمت موافقة إدارة الإسكان',
+    ready_for_provisioning: 'تمت مراجعة إدارة الأمن السيبراني',
+    completed: 'مكتمل', approved: 'مكتمل', rejected: 'مرفوض',
+    need_more_info: 'مطلوب استكمال بيانات',
+    cyber_review: 'تمت موافقة إدارة الإسكان',
+    cyber_approved: 'تمت مراجعة إدارة الأمن السيبراني',
+    cyber_rejected: 'مرفوض', housing_rejected: 'مرفوض'
+  };
+  return map[toStage] || STATUS_MAP[toStage] || toStage;
+}
+
+function fmtDateTime(v) {
+  var dt = new Date(v);
+  if (isNaN(dt.getTime())) return '';
+  return dt.toLocaleDateString('en-GB') + ' ' + dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+
+function fmtDate(v) {
+  var dt = new Date(v);
+  return isNaN(dt.getTime()) ? '' : dt.toLocaleDateString('en-GB');
+}
+
+// بعد ما النتيجة تظهر، خانات البحث مالهاش لازمة — بتاخد مساحة وبتشتّت.
+// بنطويها ونسيب رابط للرجوع لبحث جديد.
+function collapseSearch(on) {
+  document.querySelector('.tabs').style.display = on ? 'none' : 'flex';
+  document.getElementById('numberSearchGroup').style.display =
+    on ? 'none' : (searchType === 'number' ? 'block' : 'none');
+  document.getElementById('mobileSearchGroup').style.display =
+    on ? 'none' : (searchType === 'mobile' ? 'block' : 'none');
+  document.getElementById('newSearchWrap').style.display = on ? 'block' : 'none';
+}
+
+function newSearch() {
+  collapseSearch(false);
+  backToNumber();
+}
+
+function setSearchType(type) {
+  searchType = type;
+  document.getElementById('tabNumber').classList.toggle('active', type === 'number');
+  document.getElementById('tabMobile').classList.toggle('active', type === 'mobile');
+  document.getElementById('numberSearchGroup').style.display = type === 'number' ? 'block' : 'none';
+  document.getElementById('mobileSearchGroup').style.display = type === 'mobile' ? 'block' : 'none';
+  document.getElementById('resultsList').innerHTML = '';
+  collapseSearch(false);
+  backToNumber();
+  showAlert('');
+}
+
+// الخطوة الأولى (رقم الطلب) مابتلمسش السيرفر عن قصد.
+// لو كانت بتتحقق من وجود الرقم قبل ما تسأل عن آخر ٤ أرقام، الرد نفسه كان
+// هيبقى أداة تأكيد للمهاجم: يعدّي على الأرقام المتسلسلة ويعرف أنهي واحد موجود
+// من غير ما يعرف الجوال. الاتنين بيتبعتوا مع بعض في نداء واحد.
+function goToLast4() {
+  var num = document.getElementById('requestNumberInput').value.trim();
+  if (!num) { showAlert('يرجى إدخال رقم الطلب', 'error'); return; }
+  showAlert('');
+  document.getElementById('numEcho').textContent = num;
+  document.getElementById('numStep1').style.display = 'none';
+  document.getElementById('numStep2').style.display = 'block';
+  var l4 = document.getElementById('last4Input');
+  l4.value = '';
+  l4.focus();
+}
+
+function backToNumber() {
+  document.getElementById('numStep1').style.display = 'block';
+  document.getElementById('numStep2').style.display = 'none';
+  document.getElementById('last4Input').value = '';
+  document.getElementById('resultsList').innerHTML = '';
+  showAlert('');
+}
+
+async function trackByNumber() {
+  var num = document.getElementById('requestNumberInput').value.trim();
+  var last4 = document.getElementById('last4Input').value.trim();
+  var btn = document.getElementById('searchBtnNum');
+  var list = document.getElementById('resultsList');
+  showAlert('');
+
+  if (!num) { backToNumber(); showAlert('يرجى إدخال رقم الطلب', 'error'); return; }
+  if (!/^\d{4}$/.test(last4)) { showAlert('اكتب آخر ٤ أرقام من رقم الجوال', 'error'); return; }
+
+  btn.disabled = true; btn.textContent = 'جاري البحث...';
+  list.innerHTML = '<div class="empty">جاري البحث...</div>';
+  try {
+    var r = await apiFetch('/api/RequestTracking/' + encodeURIComponent(num) + '?last4=' + encodeURIComponent(last4));
+    if (r.status === 404) {
+      // نفس الرسالة سواء الرقم غلط أو آخر ٤ أرقام غلط — السيرفر مابيفرّقش بينهم عن قصد
+      list.innerHTML = ''; showAlert('الطلب غير موجود أو البيانات غير متطابقة', 'error');
+    }
+    else if (!r.ok || !r.data) { list.innerHTML = ''; showAlert(httpMessage(r, 'خطأ في البحث'), 'error'); }
+    else { list.innerHTML = renderFull(r.data); collapseSearch(true); }
+  } catch (e) {
+    list.innerHTML = ''; showAlert('تعذر الاتصال بالخادم', 'error');
+  }
+  btn.disabled = false; btn.textContent = 'بحث';
+}
+
+async function trackByMobile() {
+  var mobile = document.getElementById('mobileInput').value.trim();
+  var btn = document.getElementById('searchBtnMob');
+  var list = document.getElementById('resultsList');
+  showAlert('');
+
+  if (!mobile || mobile.length < 10) { showAlert('يرجى إدخال رقم جوال صحيح (10 أرقام)', 'error'); return; }
+
+  btn.disabled = true; btn.textContent = 'جاري البحث...';
+  list.innerHTML = '<div class="empty">جاري البحث...</div>';
+  try {
+    var r2 = await apiFetch('/api/RequestTracking/by-mobile/' + encodeURIComponent(mobile));
+    if (r2.status === 404) { list.innerHTML = ''; showAlert('لا توجد طلبات مرتبطة بهذا الرقم', 'error'); }
+    else if (!r2.ok || !r2.data) { list.innerHTML = ''; showAlert(httpMessage(r2, 'خطأ في البحث'), 'error'); }
+    else if (!r2.data.length) { list.innerHTML = ''; showAlert('لا توجد طلبات مرتبطة بهذا الرقم', 'error'); }
+    else {
+      // البحث برقم الجوال بيرجّع سطر مختصر لكل طلب من غير خطوات، فبنجيب تفاصيل
+      // كل طلب لوحده عشان المسار وسبب الرفض يظهروا زي البحث برقم الطلب بالظبط.
+      // آخر ٤ أرقام بتتاخد من الجوال اللي اتكتب — اللي عارف الجوال كامل عارفها.
+      var last4 = mobile.replace(/\D/g, '').slice(-4);
+      list.innerHTML = '';
+      r2.data.forEach(function (item, i) {
+        var holder = document.createElement('div');
+        holder.id = 'trk-' + i;
+        holder.innerHTML = renderSummary(item);
+        list.appendChild(holder);
+        loadTimeline(item, holder, last4);
+      });
+      collapseSearch(true);
+    }
+  } catch (e) {
+    list.innerHTML = ''; showAlert('تعذر الاتصال بالخادم', 'error');
+  }
+  btn.disabled = false; btn.textContent = 'بحث';
+}
+
+async function loadTimeline(item, holder, last4) {
+  var slot = holder.querySelector('.detail-slot');
+  if (!slot) return;
+  if (!item.requestNumber || !last4) { slot.innerHTML = ''; return; }
+  try {
+    var r = await apiFetch('/api/RequestTracking/' + encodeURIComponent(item.requestNumber) + '?last4=' + encodeURIComponent(last4));
+    if (!r.ok || !r.data) { slot.innerHTML = ''; return; }
+    slot.innerHTML = renderDetail(r.data);
+  } catch (e) {
+    slot.innerHTML = '';
+  }
+}
+
+// بطاقة كاملة (نتيجة البحث برقم الطلب)
+function renderFull(d) {
+  return '<div class="req-card">' + headerRows(d) + renderDetail(d) + '</div>';
+}
+
+// بطاقة مختصرة + مكان للمسار (نتيجة البحث برقم الجوال)
+function renderSummary(item) {
+  return '<div class="req-card">' + headerRows(item) +
+      '<div class="detail-slot"><div class="empty">جاري تحميل مسار الطلب...</div></div>' +
+    '</div>';
+}
+
+function headerRows(d) {
+  var st = d.status || '';
+  return '<div class="req-head">' +
+      '<span class="req-num">' + escHtml(d.requestNumber || '') + '</span>' +
+      '<span class="status-badge status-' + escHtml(st) + '">' + escHtml(STATUS_MAP[st] || st) + '</span>' +
+    '</div>' +
+    '<div class="info-row"><span class="info-label">الطالب</span><span class="info-value">' + escHtml(d.studentName || '') + '</span></div>' +
+    '<div class="info-row"><span class="info-label">تاريخ التقديم</span><span class="info-value">' + fmtDate(d.submittedAt) + '</span></div>';
+}
+
+function renderDetail(d) {
+  var html = '';
+  var rejectionNotes = null;
+  var infoNotes = null;
+
+  if (d.history && d.history.length) {
+    html += '<div class="timeline"><h4 style="font-size:13px;font-weight:700;margin:14px 0 4px">مسار الطلب</h4>';
+    d.history.forEach(function (h) {
+      var isRejected = (h.toStage === 'rejected' || h.toStage === 'cyber_rejected' || h.toStage === 'housing_rejected');
+      // سبب الرفض بيتاخد من خطوة الرفض نفسها — سواء جه من إدارة الإسكان
+      // أو من الأمن السيبراني. الطالب لازم يشوفه عشان يعرف يصحّح إيه.
+      if (isRejected && h.notes) rejectionNotes = h.notes;
+      // المطلوب استكماله بيتاخد من خطوته — الطالب لازم يعرف يعدّل إيه بالظبط
+      if (h.toStage === 'need_more_info' && h.notes) infoNotes = h.notes;
+      html += '<div class="timeline-item">' +
+          '<div class="timeline-dot ' + (isRejected ? 'rejected' : 'completed') + '"></div>' +
+          '<div class="timeline-content">' +
+            '<div class="timeline-stage">' + (isRejected ? '✕ ' : '✓ ') + escHtml(getHistoryLabel(h.toStage)) + '</div>' +
+            '<div class="timeline-date">' + fmtDateTime(h.actionDate) + '</div>' +
+            '<div class="timeline-actor">' + escHtml(h.actorName || '') + '</div>' +
+          '</div>' +
+        '</div>';
+    });
+    html += '</div>';
+  }
+
+  var st = d.status || '';
+
+  // الحالة "مرفوض" من غير سبب كانت بتسيب الطالب من غير أي إرشاد
+  var isRejected = (st === 'rejected' || st === 'cyber_rejected' || st === 'housing_rejected');
+  if (isRejected && rejectionNotes) {
+    html += '<div class="reject-box">' +
+        '<div class="reject-box-title">' +
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>' +
+          'سبب الرفض' +
+        '</div>' +
+        '<div class="reject-box-text">' + escHtml(rejectionNotes) + '</div>' +
+      '</div>';
+  }
+
+  // «مطلوب استكمال بيانات» كانت بتظهر كحالة بس — من غير المطلوب إيه ولا إزاي
+  // الطالب يكمّله. الزر بيوديه على شاشة التحقق بالجوال، وبعد الـ OTP النظام
+  // بيفتحله طلبه في وضع التعديل مباشرة.
+  if (st === 'need_more_info') {
+    html += '<div class="info-box">' +
+        '<div class="info-box-title">' +
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' +
+          'المطلوب استكماله' +
+        '</div>' +
+        '<div class="info-box-text">' + (infoNotes ? escHtml(infoNotes) : 'يرجى مراجعة بيانات الطلب واستكمال الناقص.') + '</div>' +
+        '<a class="info-box-btn" href="register-phone.html">استكمال الطلب</a>' +
+      '</div>';
+  }
+
+  if (st === 'completed' || st === 'approved') {
+    html += '<div class="done-box">' +
+        '<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' +
+        '<h3 style="font-size:16px;color:#0F6E56;margin-bottom:8px">تم إنشاء حساب شبكة السكن بنجاح</h3>' +
+        '<p style="font-size:14px;margin-bottom:4px">اسم المستخدم: <strong dir="ltr" style="display:inline-block;background:#fff;padding:4px 12px;border-radius:6px;border:1px solid #DDE3F0">' + escHtml(d.adUsername || '-') + '</strong></p>' +
+        '<p style="font-size:12px;color:#8891A8">تم إرسال بيانات الدخول إلى رقم الجوال المسجل بالنظام.</p>' +
+      '</div>';
+  }
+
+  return html;
+}
+
+// نافذة الثقة بعد التقديم: الطالب اللي لسه ضاغط "تقديم الطلب" من نفس المتصفح
+// مش منطقي نطلب منه يتحقق تاني في نفس اللحظة. خلال النافذة دي بناخد آخر ٤
+// أرقام من الجوال المتحقَّق منه في الخطوة الأولى ونفتح الطلب على طول. بعد
+// انتهاء النافذة بيرجع المسار الطبيعي: يكتب آخر ٤ أرقام بنفسه.
+// التحقق نفسه لسه بيتعمل على السيرفر — إحنا بنملا الخانة مش بنتخطاها.
+var TRUST_WINDOW_MS = 30 * 60 * 1000; // ٣٠ دقيقة
+
+// فتح مباشر من رابط: ?req=2026-000005[&last4=1234] — بييجي من شاشة التحقق أو
+// من شاشة تأكيد التقديم، فمالوش لازمة يعيد كتابة بيانات إحنا عارفينها.
+(function autoOpenFromUrl() {
+  try {
+    var q = new URLSearchParams(window.location.search);
+    var req = q.get('req') || q.get('number');
+    var l4 = q.get('last4');
+    if (!req) return;
+
+    // مافيش last4 في الرابط؟ نجرّب نافذة الثقة قبل ما نطلبها من الطالب.
+    // بنتأكد إن الرقم اللي في الرابط هو نفسه آخر طلب اتقدّم من المتصفح ده،
+    // عشان الرابط ما يتبعتش لحد تاني ويفتح عنده من غير تحقق.
+    if (!/^\d{4}$/.test(l4 || '')) {
+      var savedNum = localStorage.getItem('lastRequestNumber') || '';
+      var savedAt = parseInt(localStorage.getItem('lastRequestAt') || '0', 10);
+      var savedMob = (localStorage.getItem('regMobile') || '').replace(/\D/g, '');
+      var fresh = savedAt > 0 && (Date.now() - savedAt) < TRUST_WINDOW_MS;
+      if (fresh && savedNum === req && savedMob.length >= 4) l4 = savedMob.slice(-4);
+    }
+
+    document.getElementById('requestNumberInput').value = req;
+    goToLast4();
+    if (/^\d{4}$/.test(l4 || '')) {
+      document.getElementById('last4Input').value = l4;
+      trackByNumber();
+    } else {
+      // خارج نافذة الثقة: رقم الطلب متعبّي والمؤشر واقف على خانة التحقق.
+      showAlert('للاطمئنان إن الطلب طلبك، اكتب آخر ٤ أرقام من جوالك', 'info');
+    }
+  } catch (e) { /* رابط غير صالح — الصفحة تفضل تشتغل عادي */ }
+})();
+
+document.getElementById('requestNumberInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') goToLast4(); });
+document.getElementById('last4Input').addEventListener('keydown', function (e) { if (e.key === 'Enter') trackByNumber(); });
+document.getElementById('mobileInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') trackByMobile(); });
+</script>
+</body>
+</html>

@@ -257,6 +257,21 @@ powershell -NoProfile -Command "Start-Sleep -Seconds 3"
 
 echo %ESC%[96mHealth check: %healthUrl%%ESC%[0m
 powershell -NoProfile -Command "[Net.ServicePointManager]::ServerCertificateValidationCallback={$true}; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; try{$r=Invoke-WebRequest '%healthUrl%' -UseBasicParsing -TimeoutSec 25; Write-Host ('HTTP '+$r.StatusCode+'  '+$r.Content)}catch{Write-Host ('HEALTH CHECK FAILED: '+$_.Exception.Message)}"
+
+REM ---------------------- prune old deploy folders ----------------------
+REM  Every run leaves TWO full copies behind: the publish output
+REM  (NUH-PORTAL-<stamp>-<env>) and a copy of the live site (_backup-<stamp>).
+REM  Nothing ever deleted them, so D:\Deploy reached 60 folders / several GB.
+REM  Keep the newest few of each and drop the rest.
+REM
+REM  Runs only after a SUCCESSFUL copy: a failed copy jumps to :SkipDeploy
+REM  above, so the backups stay untouched exactly when they are needed.
+REM  Sorting is by folder name, which is the yyyy-MM-dd_HH-mm-ss stamp,
+REM  so newest-first is a plain descending sort.
+set keepDeployFolders=3
+echo %ESC%[96mPruning old deploy folders in %stagingRoot% ^(keeping newest %keepDeployFolders% of each^) ...%ESC%[0m
+powershell -NoProfile -Command "$k=%keepDeployFolders%; $removed=0; foreach($pat in @('_backup-*','%projectName%-*-Production')){ $old = Get-ChildItem -Path '%stagingRoot%' -Directory -Filter $pat -ErrorAction SilentlyContinue | Sort-Object Name -Descending | Select-Object -Skip $k; foreach($d in $old){ try { Remove-Item $d.FullName -Recurse -Force -ErrorAction Stop; $removed++ } catch { Write-Host ('  could not remove ' + $d.Name) } } }; Write-Host ('  removed ' + $removed + ' old folder(s)')"
+
 :SkipDeploy
 
 echo #################################

@@ -1,7 +1,11 @@
 @model NUH_PORTAL.ViewModels.RequestsIndexViewModel
 @{
     ViewData["Title"] = SharedLocalizer["Page_Requests"].Value;
-    var role = (User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "").ToLowerInvariant();
+    // أزرار الإجراء بتظهر حسب مرحلة الطلب + صلاحية المستخدم، مش حسب دوره.
+    // نفس الجدول متطبّق على السيرفر في RequestService.ReviewAsync — ده إخفاء واجهة بس.
+    var canReviewHousing = User.HasClaim("permission", "requests.reviewHousing");
+    var canReviewCyber = User.HasClaim("permission", "requests.reviewCyber");
+    var canComplete = User.HasClaim("permission", "requests.complete");
     var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0";
 }
 
@@ -95,25 +99,25 @@
             <td><span class="badge badge-@s">@SharedLocalizer["req_badge_" + s]</span></td>
             <td><span>@SharedLocalizer["req_stage_" + s]</span></td>
             <td>
-              @if (s == "submitted" && (role == "admin" || role == "supervisor"))
+              @if (s == "submitted" && canReviewHousing)
               {
                 <button class="action-btn btn-approve" onclick="event.stopPropagation(); reviewRequest(@r.Id, 'housing_approved')" >@SharedLocalizer["req_act_housing_approved"]</button>
                 <button class="action-btn btn-reject" onclick="event.stopPropagation(); reviewRequest(@r.Id, 'housing_rejected')" >@SharedLocalizer["req_act_housing_rejected"]</button>
               }
-              else if (s == "housing_approved" && role == "admin")
+              else if (s == "housing_approved" && canComplete)
               {
                 <button class="action-btn btn-cyber" onclick="event.stopPropagation(); reviewRequest(@r.Id, 'cyber_review')" >@SharedLocalizer["req_act_cyber_review"]</button>
               }
-              else if (s == "cyber_review" && (role == "cyber" || role == "admin"))
+              else if (s == "cyber_review" && canReviewCyber)
               {
                 <button class="action-btn btn-approve" onclick="event.stopPropagation(); reviewRequest(@r.Id, 'cyber_approved')" >@SharedLocalizer["req_act_cyber_approved"]</button>
                 <button class="action-btn btn-reject" onclick="event.stopPropagation(); reviewRequest(@r.Id, 'cyber_rejected')" >@SharedLocalizer["req_act_cyber_rejected"]</button>
               }
-              else if (s == "cyber_approved" && role == "admin")
+              else if (s == "cyber_approved" && (canReviewCyber || canComplete))
               {
                 <button class="action-btn btn-cyber" onclick="event.stopPropagation(); reviewRequest(@r.Id, 'ready_for_provisioning')" >@SharedLocalizer["req_act_ready_for_provisioning"]</button>
               }
-              else if (s == "ready_for_provisioning" && role == "admin")
+              else if (s == "ready_for_provisioning" && canComplete)
               {
                 <button class="action-btn btn-approve" onclick="event.stopPropagation(); reviewRequest(@r.Id, 'completed')" >@SharedLocalizer["req_act_completed"]</button>
               }
@@ -148,7 +152,9 @@
 @section Scripts {
 <script src="/i18n.js"></script>
 <script>
-  var ROLE = '@role';
+  var CAN_REVIEW_HOUSING = @(canReviewHousing ? "true" : "false");
+  var CAN_REVIEW_CYBER = @(canReviewCyber ? "true" : "false");
+  var CAN_COMPLETE = @(canComplete ? "true" : "false");
   var USER_ID = @userId;
 
   // حالة الصفحة (أول صفحة جاهزة من السيرفر)
@@ -187,21 +193,21 @@
 
   function actionsFor(s, id) {
     var stop = 'event.stopPropagation(); ';
-    if (s === 'submitted' && (ROLE === 'admin' || ROLE === 'supervisor')) {
+    if (s === 'submitted' && CAN_REVIEW_HOUSING) {
       return '<button class="action-btn btn-approve" onclick="' + stop + 'reviewRequest(' + id + ', \'housing_approved\')">' + t('req_act_housing_approved') + '</button>' +
              '<button class="action-btn btn-reject" onclick="' + stop + 'reviewRequest(' + id + ', \'housing_rejected\')">' + t('req_act_housing_rejected') + '</button>';
     }
-    if (s === 'housing_approved' && ROLE === 'admin') {
+    if (s === 'housing_approved' && CAN_COMPLETE) {
       return '<button class="action-btn btn-cyber" onclick="' + stop + 'reviewRequest(' + id + ', \'cyber_review\')">' + t('req_act_cyber_review') + '</button>';
     }
-    if (s === 'cyber_review' && (ROLE === 'cyber' || ROLE === 'admin')) {
+    if (s === 'cyber_review' && CAN_REVIEW_CYBER) {
       return '<button class="action-btn btn-approve" onclick="' + stop + 'reviewRequest(' + id + ', \'cyber_approved\')">' + t('req_act_cyber_approved') + '</button>' +
              '<button class="action-btn btn-reject" onclick="' + stop + 'reviewRequest(' + id + ', \'cyber_rejected\')">' + t('req_act_cyber_rejected') + '</button>';
     }
-    if (s === 'cyber_approved' && ROLE === 'admin') {
+    if (s === 'cyber_approved' && (CAN_REVIEW_CYBER || CAN_COMPLETE)) {
       return '<button class="action-btn btn-cyber" onclick="' + stop + 'reviewRequest(' + id + ', \'ready_for_provisioning\')">' + t('req_act_ready_for_provisioning') + '</button>';
     }
-    if (s === 'ready_for_provisioning' && ROLE === 'admin') {
+    if (s === 'ready_for_provisioning' && CAN_COMPLETE) {
       return '<button class="action-btn btn-approve" onclick="' + stop + 'reviewRequest(' + id + ', \'completed\')">' + t('req_act_completed') + '</button>';
     }
     return '';

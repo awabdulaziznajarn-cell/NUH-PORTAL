@@ -56,7 +56,9 @@ namespace NUH_PORTAL.Services
         {
             using var workbook = new XLWorkbook();
             var ws = workbook.Worksheets.Add("Template");
-            var headers = new[] { "StudentID", "NationalID", "FullNameArabic", "FullNameEnglish", "Mobile", "College", "Department", "AcademicLevel", "Gender", "BuildingNumber", "ApartmentNumber", "RoomNumber" };
+            // ⚠️ FloorNumber كان ناقص من القالب رغم إن السكن عندنا مبنى/دور/شقة/غرفة،
+            //    فكل طالب بيترفع بالإكسل كان بيتسجّل بدور فاضي.
+            var headers = new[] { "StudentID", "NationalID", "FullNameArabic", "FullNameEnglish", "Mobile", "College", "Department", "AcademicLevel", "Gender", "BuildingNumber", "FloorNumber", "ApartmentNumber", "RoomNumber" };
             for (int i = 0; i < headers.Length; i++)
             {
                 ws.Cell(1, i + 1).Value = headers[i];
@@ -73,6 +75,17 @@ namespace NUH_PORTAL.Services
                 FileName = "BulkRegistrationTemplate.xlsx",
                 ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             };
+        }
+
+        // نفس قاعدة SupervisorHousingTransferService: 4 شقق في كل دور.
+        private const int ApartmentsPerFloor = 4;
+
+        private static bool ApartmentBelongsToFloor(string? floor, string? apartment)
+        {
+            if (!int.TryParse(floor, out var f) || f < 0) return false;
+            if (!int.TryParse(apartment, out var a)) return false;
+            var start = f * ApartmentsPerFloor + 1;
+            return a >= start && a < start + ApartmentsPerFloor;
         }
 
         public async Task<BulkValidationResultDto> ValidateFileAsync(IFormFile? file)
@@ -134,6 +147,7 @@ namespace NUH_PORTAL.Services
                 var mobile = GetCol(dt, row, "Mobile");
                 var gender = GetCol(dt, row, "Gender");
                 var buildingNumber = GetCol(dt, row, "BuildingNumber");
+                var floorNumber = GetCol(dt, row, "FloorNumber");
                 var apartmentNumber = GetCol(dt, row, "ApartmentNumber");
                 var roomNumber = GetCol(dt, row, "RoomNumber");
                 var academicLevel = GetCol(dt, row, "AcademicLevel");
@@ -187,10 +201,19 @@ namespace NUH_PORTAL.Services
                 else if (!Regex.IsMatch(buildingNumber, @"^(4[0-3]|6[5-9]|70)$"))
                     AddError("BuildingNumber", "رقم المبنى السكني غير صحيح - القيم المسموح بها: 40,41,42,43,65,66,67,68,69,70");
 
+                if (string.IsNullOrEmpty(floorNumber))
+                    AddError("FloorNumber", "رقم الدور مطلوب - القيم المسموح بها: 0 (الأرضي) حتى 4");
+                else if (!Regex.IsMatch(floorNumber, @"^[0-4]$"))
+                    AddError("FloorNumber", "رقم الدور غير صحيح - القيم المسموح بها: 0 (الأرضي), 1, 2, 3, 4");
+
                 if (string.IsNullOrEmpty(apartmentNumber))
                     AddError("ApartmentNumber", "رقم الشقة مطلوب");
                 else if (!Regex.IsMatch(apartmentNumber, @"^\d+$"))
                     AddError("ApartmentNumber", "رقم الشقة غير صحيح - يجب أن يكون رقماً فقط");
+                // نفس قاعدة شاشة النقل: كل دور فيه 4 شقق (الأرضي 1-4، الأول 5-8 ...).
+                // من غير الفحص ده الشيت ممكن يسكّن طالب في شقة مش موجودة في دوره.
+                else if (!ApartmentBelongsToFloor(floorNumber, apartmentNumber))
+                    AddError("ApartmentNumber", $"رقم الشقة {apartmentNumber} لا ينتمي للدور {floorNumber} - كل دور يحتوي على 4 شقق (الأرضي: 1-4، الأول: 5-8، الثاني: 9-12، الثالث: 13-16، الرابع: 17-20)");
 
                 if (string.IsNullOrEmpty(roomNumber))
                     AddError("RoomNumber", "رقم الغرفة مطلوب");
@@ -218,6 +241,7 @@ namespace NUH_PORTAL.Services
                         AcademicLevel = academicLevel,
                         Gender = gender,
                         BuildingNumber = buildingNumber,
+                        FloorNumber = floorNumber,
                         ApartmentNumber = apartmentNumber,
                         RoomNumber = roomNumber
                     });
@@ -244,8 +268,10 @@ namespace NUH_PORTAL.Services
             if (dto.Students == null || dto.Students.Count == 0)
                 throw new UserFriendlyException("لا يوجد طلاب صالحون للتسجيل", 400);
 
+            // اللي بيراجع مرحلة الإسكان لما يرفع الملف بنفسه → موافقة الإسكان تلقائيًا
+            var isHousingCreator = UnitOfWork.HasPermission("requests.reviewHousing");
+            // الدور بيتخزّن في الطلب كبيانات (مين قدّمه) — مش فحص صلاحية
             var role = UnitOfWork.GetCurrentUserRole()?.ToLower();
-            var isHousingCreator = role == "admin" || role == "supervisor";
 
             using var transaction = await UnitOfWork.BeginTransactionAsync();
             try
@@ -318,6 +344,7 @@ namespace NUH_PORTAL.Services
                     academic_level = s.AcademicLevel,
                     gender = GenderHelper.Parse(s.Gender),
                     housing_building = s.BuildingNumber,
+                    floor_number = s.FloorNumber,
                     apartment_number = s.ApartmentNumber,
                     room_number = s.RoomNumber,
                     created_at = DateTime.UtcNow,

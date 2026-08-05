@@ -1,305 +1,35 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" id="html-root">
+<html lang="ar" dir="rtl">
 <head>
-<link rel="icon" href="../favicon.ico">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>مراجعة الطلب</title>
-<script src="../i18n.js"></script>
-<style>
-@font-face { font-family:'IBM Plex Sans Arabic'; font-style:normal; font-weight:400; src:url('../fonts/IBMPlexSansArabic-Regular.woff2') format('woff2'); }
-@font-face { font-family:'IBM Plex Sans Arabic'; font-style:normal; font-weight:600; src:url('../fonts/IBMPlexSansArabic-SemiBold.woff2') format('woff2'); }
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--navy:#1B2A5E;--navy-dark:#111C42;--navy-light:#2B3E7E;--gold:#C9A84C;--gold-light:#E8C96A;--white:#FFFFFF;--gray-50:#F4F6FB;--gray-100:#EEF1F8;--gray-200:#DDE3F0;--gray-300:#C8CFDF;--gray-500:#8891A8;--gray-700:#4A5270;--green:#0F6E56;--green-light:#E1F5EE;--red:#991B1B;--red-light:#FEF2F2;--sidebar-w:240px}
-body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);color:var(--navy-dark);min-height:100vh;display:flex}
-#sidebar-placeholder{width:var(--sidebar-w);flex-shrink:0}
-.main{flex:1;display:flex;flex-direction:column;height:100vh;overflow-y:auto}
-.topbar{background:var(--white);border-bottom:1px solid var(--gray-200);padding:0 28px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
-.topbar-title{font-size:18px;font-weight:800;color:var(--navy-dark)}
-.content{padding:28px;flex:1;max-width:800px;margin:0 auto}
-.card{background:var(--white);border-radius:16px;border:1px solid var(--gray-100);box-shadow:0 2px 8px rgba(27,42,94,0.05);padding:24px;margin-bottom:16px}
-h2{font-size:20px;font-weight:800;margin-bottom:4px}
-h3{font-size:14px;font-weight:700;margin-bottom:12px;color:var(--gray-700)}
-.section{margin-bottom:20px}
-.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.info-item{padding:8px 0;border-bottom:1px solid var(--gray-100)}
-.info-label{font-size:11px;color:var(--gray-500);margin-bottom:2px}
-.info-value{font-size:13px;font-weight:600;color:var(--navy-dark)}
-.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 20px;border-radius:10px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;border:none;flex:1}
-.btn-approve{background:var(--green);color:var(--white)}
-.btn-approve:hover{opacity:0.9}
-.btn-reject{background:var(--red);color:var(--white)}
-.btn-reject:hover{opacity:0.9}
-.btn-info{background:var(--gold);color:var(--navy-dark)}
-.btn-info:hover{opacity:0.9}
-.btn-back{background:var(--gray-100);color:var(--gray-700)}
-.form-group{margin-bottom:12px}
-.form-group label{display:block;font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:6px}
-.form-control{width:100%;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:10px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px}
-.form-control:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(27,42,94,0.1)}
-.status-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
-.status-pending_supervisor{background:#FFF8E1;color:#B8860B}
-.status-pending_cyber{background:#E3F2FD;color:#1565C0}
-.status-pending_admin{background:#F3E5F5;color:#7B1FA2}
-.status-approved{background:var(--green-light);color:var(--green)}
-.status-rejected{background:var(--red-light);color:var(--red)}
-.status-need_more_info{background:#FFF3E0;color:#E65100}
-.timeline-item{display:flex;gap:12px;padding:8px 0}
-.timeline-dot{width:8px;height:8px;border-radius:50%;background:var(--gray-300);margin-top:5px;flex-shrink:0}
-.timeline-dot.completed{background:var(--green)}
-.timeline-stage{font-size:13px;font-weight:600}
-.timeline-date{font-size:11px;color:var(--gray-500)}
-.alert{padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:16px;display:none}
-.btn-primary{background:var(--navy);color:var(--white)}
-.btn-primary:hover{background:var(--navy-light)}
-.attachment-item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--gray-50);border-radius:8px;margin-bottom:6px;font-size:13px}
-.attachment-item a{color:var(--navy);text-decoration:none;font-weight:600}
-.attachment-item a:hover{text-decoration:underline}
-.attachment-item .del-btn{color:var(--red);cursor:pointer;font-size:12px;font-weight:600;background:none;border:none;font-family:'IBM Plex Sans Arabic',sans-serif}
-.alert-success{background:var(--green-light);color:var(--green);border:1px solid var(--green);display:block}
-.alert-error{background:var(--red-light);color:var(--red);border:1px solid var(--red);display:block}
-</style>
+<link rel="icon" href="../favicon.ico">
+<title>تتبع الطلب</title>
+<!--
+  ============================================================================
+  ⚠️ هذه الصفحة كانت شاشة مراجعة *للموظفين* موضوعة داخل مجلد بوابة الطالب،
+     وكانت تحمّل القائمة الجانبية للنظام (sidebar.html) وأزرار الاعتماد
+     والرفض. زر «عرض» في شاشة «طلباتي» كان يفتحها للطالب، فيرى تنقّل لوحة
+     التحكم وشاشات الإدارة كاملة.
+
+     الصفحة الآن مجرّد تحويل إلى شاشة تتبع الطلب — الواجهة المخصّصة للطالب.
+     الموظفون يراجعون من /Requests/Details/{id} داخل النظام، وهي محمية
+     بالصلاحيات على الخادم.
+
+     تُركت الصفحة (بدلًا من حذفها) حتى لا تنكسر أي روابط قديمة محفوظة.
+  ============================================================================
+-->
+<script>
+  // نقل رقم الطلب المحفوظ من الرابط القديم إن وُجد، ثم التحويل
+  try {
+    var q = new URLSearchParams(window.location.search);
+    var n = q.get('number') || q.get('req');
+    if (n) localStorage.setItem('openRequestNumber', n);
+  } catch (e) { /* رابط غير صالح — التحويل يتم على أي حال */ }
+  window.location.replace('track-request.html');
+</script>
 </head>
 <body>
-<div id="sidebar-placeholder"></div>
-<div class="main">
-<div class="topbar"><div class="topbar-title" id="pageTitle">مراجعة الطلب</div></div>
-<div class="content">
-<div id="alertMessage" class="alert"></div>
-<div id="loading">جاري التحميل...</div>
-<div id="contentArea" style="display:none">
-<div class="card" id="requestInfo"></div>
-<div class="card" id="studentData"></div>
-<div class="card" id="timelineCard"><h3>مسار الطلب</h3><div id="timeline"></div></div>
-        <div class="card" id="completionCard" style="display:none;border:2px solid var(--green);background:var(--green-light);padding:24px;border-radius:12px;text-align:center;margin-bottom:16px">
-          <div id="completionContent"></div>
-        </div>
-        <div class="card" id="actionCard" style="display:none">
-        <h3>الإجراء</h3>
-        <div class="form-group"><label>ملاحظات</label><textarea id="notesInput" class="form-control" rows="3"></textarea></div>
-        <div class="actions">
-        <button class="btn btn-approve" onclick="doAction('approve')">اعتماد</button>
-        <button class="btn btn-reject" onclick="doAction('reject')">رفض</button>
-        <button class="btn btn-info" onclick="doAction('request-info')">طلب معلومات إضافية</button>
-        </div>
-        </div>
-        <div class="card" id="attachmentsCard">
-        <h3>المرفقات</h3>
-        <div id="attachmentsList"><p style="font-size:13px;color:var(--gray-500)">لا توجد مرفقات</p></div>
-        <div class="form-group" style="margin-top:12px">
-        <label>رفع ملف جديد</label>
-        <input type="file" id="attachmentFile" class="form-control" style="padding:8px" multiple>
-        </div>
-        <div class="form-group">
-        <label>نوع المستند</label>
-        <select id="docType" class="form-control">
-        <option value="">اختياري</option>
-        <option value="هوية">هوية</option>
-        <option value="شهادة">شهادة</option>
-        <option value="إثبات سكن">إثبات سكن</option>
-        <option value="أخرى">أخرى</option>
-        </select>
-        </div>
-        <button class="btn btn-primary" onclick="uploadAttachment()" style="width:auto;padding:8px 20px;font-size:13px">رفع</button>
-        </div>
-        </div>
-</div>
-</div>
-<script src="../sidebar.js"></script>
-<script>
-let token = localStorage.getItem('staffToken') || localStorage.getItem('studentToken');
-const STATUS_MAP = {
-  submitted: 'تم تقديم الطلب',
-  pending_supervisor: 'بانتظار موافقة إدارة الإسكان',
-  pending_cyber: 'بانتظار مراجعة إدارة الأمن السيبراني',
-  ready_for_provisioning: 'جاري إنشاء حساب شبكة السكن',
-  completed: 'مكتمل', approved: 'مكتمل', rejected: 'مرفوض',
-  need_more_info: 'بانتظار موافقة إدارة الإسكان'
-};
-let requestId = null;
-
-function getParam(name) {
-  var url = new URLSearchParams(window.location.search);
-  return url.get(name) || localStorage.getItem('viewRequestId') || '';
-}
-
-function showAlert(msg, type) {
-  var el = document.getElementById('alertMessage');
-  el.textContent = msg; el.className = 'alert alert-' + type;
-}
-
-async function loadRequest() {
-  var id = getParam('id');
-  if (!id) { document.getElementById('loading').textContent = 'معرف الطلب غير موجود'; return; }
-  requestId = id;
-  try {
-    var r = await fetch('/api/Registration/my-requests/' + id, { headers: {'Authorization':'Bearer '+token} });
-    if (r.status === 401) { window.location.href = '../login.html'; return; }
-    if (r.status === 404) { document.getElementById('loading').textContent = 'الطلب غير موجود'; return; }
-    var d = await r.json();
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('contentArea').style.display = 'block';
-    document.getElementById('pageTitle').textContent = 'طلب ' + (d.requestNumber || '');
-    renderRequestInfo(d);
-    renderStudentData(d);
-    renderTimeline(d.history);
-    if (d.status === 'completed' || d.status === 'approved') {
-      renderCompletionCard(d);
-    }
-    var role = (JSON.parse(localStorage.getItem('staffUser') || localStorage.getItem('studentUser') || '{}').role || '').toLowerCase();
-    if (role === 'supervisor' || role === 'cyber' || role === 'admin') {
-      var canAct = (role === 'supervisor' && d.status === 'pending_supervisor') ||
-                   (role === 'cyber' && d.status === 'pending_cyber') ||
-                   (role === 'admin' && d.status === 'ready_for_provisioning');
-      document.getElementById('actionCard').style.display = canAct ? 'block' : 'none';
-    }
-  } catch(e) { document.getElementById('loading').textContent = 'تعذر التحميل'; }
-}
-
-function renderRequestInfo(d) {
-  var html = '<div class="info-grid">';
-  html += '<div class="info-item"><div class="info-label">رقم الطلب</div><div class="info-value">' + (d.requestNumber || '') + '</div></div>';
-  html += '<div class="info-item"><div class="info-label">الحالة</div><div class="info-value"><span class="status-badge status-' + d.status + '">' + (STATUS_MAP[d.status] || d.status) + '</span></div></div>';
-  html += '<div class="info-item"><div class="info-label">تاريخ التقديم</div><div class="info-value">' + new Date(d.submittedAt).toLocaleDateString('ar-SA') + '</div></div>';
-  if (d.notes) html += '<div class="info-item" style="grid-column:1/-1"><div class="info-label">ملاحظات</div><div class="info-value">' + d.notes + '</div></div>';
-  html += '</div>';
-  document.getElementById('requestInfo').innerHTML = '<h3>معلومات الطلب</h3>' + html;
-}
-
-function renderStudentData(d) {
-  if (!d.student) { document.getElementById('studentData').style.display = 'none'; return; }
-  var s = d.student;
-  var html = '<div class="info-grid">';
-  html += '<div class="info-item"><div class="info-label">الاسم</div><div class="info-value">' + (s.full_name || '') + '</div></div>';
-  html += '<div class="info-item"><div class="info-label">رقم الهوية</div><div class="info-value">' + (s.national_id || '') + '</div></div>';
-  html += '<div class="info-item"><div class="info-label">الكلية</div><div class="info-value">' + (s.college || '') + '</div></div>';
-  html += '<div class="info-item"><div class="info-label">القسم</div><div class="info-value">' + (s.department || '') + '</div></div>';
-  html += '<div class="info-item"><div class="info-label">الجوال</div><div class="info-value">' + (s.phone || '') + '</div></div>';
-  html += '</div>';
-  if (d.registrationData) {
-    try {
-      var reg = typeof d.registrationData === 'string' ? JSON.parse(d.registrationData) : d.registrationData;
-      html += '<div class="info-grid" style="margin-top:12px">';
-      if (reg.full_name) html += '<div class="info-item"><div class="info-label">الاسم (عربي)</div><div class="info-value">' + reg.full_name + '</div></div>';
-      if (reg.full_name_english) html += '<div class="info-item"><div class="info-label">الاسم (إنجليزي)</div><div class="info-value">' + reg.full_name_english + '</div></div>';
-      if (reg.academic_level) html += '<div class="info-item"><div class="info-label">المستوى</div><div class="info-value">' + reg.academic_level + '</div></div>';
-      if (reg.housing_building) html += '<div class="info-item"><div class="info-label">المبنى</div><div class="info-value">' + reg.housing_building + '</div></div>';
-      if (reg.room_number) html += '<div class="info-item"><div class="info-label">رقم الغرفة</div><div class="info-value">' + reg.room_number + '</div></div>';
-      html += '</div>';
-    } catch(e) {}
-  }
-  document.getElementById('studentData').innerHTML = html;
-}
-
-function getHistoryLabel(toStage) {
-  var map = {
-    pending_supervisor: 'تم تقديم الطلب',
-    pending_cyber: 'تمت موافقة إدارة الإسكان',
-    ready_for_provisioning: 'تمت مراجعة إدارة الأمن السيبراني',
-    completed: 'مكتمل', approved: 'مكتمل', rejected: 'مرفوض'
-  };
-  return map[toStage] || STATUS_MAP[toStage] || toStage;
-}
-
-function renderTimeline(history) {
-  if (!history || history.length === 0) {
-    document.getElementById('timeline').innerHTML = '<p style="font-size:13px;color:var(--gray-500)">لا يوجد مسار بعد</p>';
-    return;
-  }
-  var html = '';
-  history.forEach(function(h) {
-    var stageLabel = getHistoryLabel(h.toStage);
-    var icon = h.toStage === 'rejected' ? '❌ ' : '✅ ';
-    var dt = new Date(h.actionDate);
-    var dateStr = dt.toLocaleDateString('en-GB') + ' ' + dt.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
-    html += '<div class="timeline-item"><div class="timeline-dot completed"></div><div class="timeline-content"><div class="timeline-stage">' + icon + stageLabel + '</div><div class="timeline-date">' + dateStr + '</div><div style="font-size:12px;color:var(--gray-700);margin-top:2px">' + (h.actorName || '') + '</div></div></div>';
-  });
-  document.getElementById('timeline').innerHTML = html;
-}
-
-function renderCompletionCard(d) {
-  var adUsername = (d.student && d.student.ad_username) || '-';
-  var html =
-    '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px;display:block;margin:0 auto 12px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' +
-    '<h3 style="font-size:18px;color:#0F6E56;margin-bottom:8px">✅ تم إنشاء حساب شبكة السكن بنجاح</h3>' +
-    '<p style="font-size:14px;color:#111C42;margin-bottom:4px">اسم المستخدم: <strong dir="ltr" style="display:inline-block;background:#fff;padding:4px 12px;border-radius:6px;border:1px solid #DDE3F0">' + adUsername + '</strong></p>' +
-    '<p style="font-size:12px;color:#8891A8">تم إرسال بيانات الدخول إلى رقم الجوال المسجل بالنظام.</p>';
-  document.getElementById('completionContent').innerHTML = html;
-  document.getElementById('completionCard').style.display = 'block';
-}
-
-async function doAction(action) {
-  var notes = document.getElementById('notesInput').value;
-  var endpoint = '/api/Workflow/' + requestId + '/' + action;
-  try {
-    var r = await fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}, body:JSON.stringify({notes:notes}) });
-    var d = await r.json();
-    if (r.ok) {
-      showAlert(d.message || 'تم بنجاح', 'success');
-      setTimeout(function() { window.location.href = 'workflow-queue.html'; }, 1500);
-    } else { showAlert(d.message || 'فشل الإجراء', 'error'); }
-  } catch(e) { showAlert('تعذر الاتصال بالخادم', 'error'); }
-}
-
-async function loadAttachments() {
-  if (!requestId) return;
-  try {
-    var r = await fetch('/api/Attachment/' + requestId + '/list', { headers: {'Authorization':'Bearer '+token} });
-    if (!r.ok) return;
-    var data = await r.json();
-    var el = document.getElementById('attachmentsList');
-    if (!data || data.length === 0) {
-      el.innerHTML = '<p style="font-size:13px;color:var(--gray-500)">لا توجد مرفقات</p>';
-      return;
-    }
-    el.innerHTML = data.map(function(a) {
-      var size = (a.fileSize / 1024).toFixed(1) + ' KB';
-      return '<div class="attachment-item"><div><a href="/api/Attachment/download/' + a.id + '" target="_blank">' + a.originalFileName + '</a> <span style="color:var(--gray-500);font-size:11px">(' + size + ')</span></div>' +
-        '<div><button class="del-btn" onclick="deleteAttachment(' + a.id + ')">حذف</button></div></div>';
-    }).join('');
-  } catch(e) {}
-}
-
-async function uploadAttachment() {
-  var fileInput = document.getElementById('attachmentFile');
-  if (!fileInput.files || fileInput.files.length === 0) {
-    showAlert('يرجى اختيار ملف', 'error');
-    return;
-  }
-  var formData = new FormData();
-  formData.append('requestId', requestId);
-  formData.append('documentType', document.getElementById('docType').value);
-  formData.append('notes', '');
-  for (var i = 0; i < fileInput.files.length; i++) {
-    formData.append('files', fileInput.files[i]);
-  }
-  try {
-    var r = await fetch('/api/Attachment/upload', { method:'POST', headers:{'Authorization':'Bearer '+token}, body:formData });
-    var d = await r.json();
-    if (r.ok) {
-      showAlert(d.message || 'تم الرفع', 'success');
-      loadAttachments();
-      fileInput.value = '';
-    } else { showAlert(d.message || 'فشل الرفع', 'error'); }
-  } catch(e) { showAlert('تعذر الاتصال بالخادم', 'error'); }
-}
-
-async function deleteAttachment(id) {
-  if (!confirm('تأكيد حذف الملف؟')) return;
-  try {
-    var r = await fetch('/api/Attachment/' + id, { method:'DELETE', headers:{'Authorization':'Bearer '+token} });
-    var d = await r.json();
-    if (r.ok) {
-      showAlert(d.message || 'تم الحذف', 'success');
-      loadAttachments();
-    } else { showAlert(d.message || 'فشل الحذف', 'error'); }
-  } catch(e) { showAlert('تعذر الاتصال بالخادم', 'error'); }
-}
-
-loadRequest();
-loadAttachments();
-fetch('../sidebar.html').then(r=>r.text()).then(h=>{document.getElementById('sidebar-placeholder').innerHTML=h; applyRolePermissions();});
-</script>
+<noscript><a href="track-request.html">الانتقال إلى شاشة تتبع الطلب</a></noscript>
 </body>
 </html>

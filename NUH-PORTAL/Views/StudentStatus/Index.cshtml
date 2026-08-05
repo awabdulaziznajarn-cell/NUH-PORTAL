@@ -1,6 +1,19 @@
 @model NUH_PORTAL.DTOs.StudentStatus.StudentStatusStatsDto
 @{
     ViewData["Title"] = SharedLocalizer["Page_StudentStatus"].Value;
+
+    // النصوص بتتسلسل JSON عشان Razor بيهرّب أي نص بيطبعه ترميز HTML حتى جوه script
+    var __ssHousingPh = System.Text.Json.JsonSerializer.Serialize(new
+    {
+        floorFirst = SharedLocalizer["reg_optSelectFloorFirst"].Value,
+        selectApartment = SharedLocalizer["reg_optSelectApartment"].Value,
+        selectRoom = SharedLocalizer["reg_optSelectRoom"].Value,
+        selectBuilding = SharedLocalizer["reg_optSelectBuilding"].Value,
+        ground = SharedLocalizer["reg_optFloorGround"].Value,
+        preview = SharedLocalizer["att_preview"].Value,
+        download = SharedLocalizer["att_download"].Value,
+        close = SharedLocalizer["att_close"].Value
+    });
 }
 
 <style>
@@ -65,7 +78,10 @@
   .modal-actions{display:flex;gap:10px;justify-content:flex-end}
   .modal-actions .form-actions-btn{min-width:120px;justify-content:center}
   .modal-divider{border:none;border-top:1px solid var(--gray-100);margin:12px 0}
-  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:12px 28px;border-radius:12px;font-size:14px;font-weight:600;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,.15);opacity:0;transition:opacity .3s;pointer-events:none}
+  /* الرسالة فوق مش تحت: كانت بتظهر في آخر الشاشة والمستخدم شايف أول الصفحة
+     فبتروح قبل ما يلاحظها. وبقت قابلة للضغط عشان يقفلها بنفسه. */
+  .toast{position:fixed;top:24px;left:50%;transform:translateX(-50%);padding:14px 30px;border-radius:12px;font-size:14px;font-weight:600;z-index:10001;box-shadow:0 10px 30px rgba(0,0,0,.2);opacity:0;transition:opacity .3s;pointer-events:none;max-width:min(680px,92vw);text-align:center;line-height:1.7}
+  .toast.show{pointer-events:auto;cursor:pointer}
   .toast.show{opacity:1}
   .toast-success{background:#0F6E56;color:#fff}
   .toast-error{background:#991B1B;color:#fff}
@@ -255,6 +271,9 @@
 </div>
 
 @* ===== نقل السكن + سجل التنقلات ===== *@
+@* قسم نقل السكن بيظهر بصلاحية housing.transfer بس — الـ API بيتحقق منها كمان *@
+@if (User.HasClaim("permission", "housing.transfer"))
+{
 <div class="two-col">
   <div class="col-form">
     <div class="form-card">
@@ -280,8 +299,9 @@
           <div class="field full">
             <div style="background:var(--gray-50);border-radius:10px;padding:12px 16px">
               <div style="font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:8px" >@SharedLocalizer["ss_currentHousing"]</div>
-              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-size:13px">
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;font-size:13px">
                 <div><span style="color:var(--gray-500);font-size:12px" >@SharedLocalizer["ss_currentBuilding"]</span><br><strong id="transferOldBuilding">--</strong></div>
+                <div><span style="color:var(--gray-500);font-size:12px" >@SharedLocalizer["reg_lblFloor"]</span><br><strong id="transferOldFloor">--</strong></div>
                 <div><span style="color:var(--gray-500);font-size:12px" >@SharedLocalizer["ss_currentApartment"]</span><br><strong id="transferOldApartment">--</strong></div>
                 <div><span style="color:var(--gray-500);font-size:12px" >@SharedLocalizer["ss_currentRoom"]</span><br><strong id="transferOldRoom">--</strong></div>
               </div>
@@ -291,23 +311,44 @@
           <div class="field full">
             <div style="background:var(--green-light);border-radius:10px;padding:12px 16px">
               <div style="font-size:13px;font-weight:600;color:var(--green);margin-bottom:8px" >@SharedLocalizer["ss_newHousing"]</div>
-              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px">
                 <div class="field" style="gap:4px">
                   <label><span >@SharedLocalizer["ss_newBuilding"]</span> <span style="color:#EF4444">*</span></label>
                   <div class="input-wrap">
-                    <input type="text" id="transferNewBuilding" placeholder='@(SharedLocalizer["ss_newBuildingPlaceholder"].Value)' autocomplete="off">
+                    @* المباني بتتفلتر حسب جنس الطالب بعد ما يتحمّل — نفس قاعدة شاشات التسجيل *@
+                    <select id="transferNewBuilding" disabled>
+                      <option value="" >@SharedLocalizer["ss_studentNumber"]</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="field" style="gap:4px">
+                  <label><span >@SharedLocalizer["reg_lblFloor"]</span> <span style="color:#EF4444">*</span></label>
+                  <div class="input-wrap">
+                    <select id="transferNewFloor">
+                      <option value="" >@SharedLocalizer["reg_optSelectFloor"]</option>
+                      <option value="0" >@SharedLocalizer["reg_optFloorGround"]</option>
+                      <option value="1">1</option>
+                      <option value="2">2</option>
+                      <option value="3">3</option>
+                      <option value="4">4</option>
+                    </select>
                   </div>
                 </div>
                 <div class="field" style="gap:4px">
                   <label><span >@SharedLocalizer["ss_newApartment"]</span> <span style="color:#EF4444">*</span></label>
                   <div class="input-wrap">
-                    <input type="text" id="transferNewApartment" placeholder='@(SharedLocalizer["ss_newApartmentPlaceholder"].Value)' autocomplete="off">
+                    @* الشقة بتتولّد من الدور — نفس قاعدة شاشات التسجيل (js/housing-fields.js) *@
+                    <select id="transferNewApartment" disabled>
+                      <option value="" >@SharedLocalizer["reg_optSelectFloorFirst"]</option>
+                    </select>
                   </div>
                 </div>
                 <div class="field" style="gap:4px">
                   <label><span >@SharedLocalizer["ss_newRoom"]</span> <span style="color:#EF4444">*</span></label>
                   <div class="input-wrap">
-                    <input type="text" id="transferNewRoom" placeholder='@(SharedLocalizer["ss_newRoomPlaceholder"].Value)' autocomplete="off">
+                    <select id="transferNewRoom">
+                      <option value="" >@SharedLocalizer["reg_optSelectRoom"]</option>
+                    </select>
                   </div>
                 </div>
               </div>
@@ -371,6 +412,7 @@
     </div>
   </div>
 </div>
+}
 
 <div class="toast" id="toast"></div>
 
@@ -381,9 +423,11 @@
     </div>
     <div class="modal-title" >@SharedLocalizer["ss_warningTitle"]</div>
     <div class="modal-body" id="confirmBody">
-      <p >@SharedLocalizer["ss_disableIntro"]</p>
-      <hr class="modal-divider">
-      <p><strong >@SharedLocalizer["ss_usernameColonLabel"]</strong> <span id="confirmUsername">--</span></p>
+      @* تحذير التعطيل بيظهر للحالات اللي بتنهي علاقة الطالب بالجامعة بس.
+         «ترك الإسكان الجامعي» مابيعطّلش الحساب، فالتحذير كان بيكذب على المستخدم. *@
+      <p id="confirmDisableIntro" >@SharedLocalizer["ss_disableIntro"]</p>
+      <hr class="modal-divider" id="confirmDivider1">
+      <p id="confirmUsernameRow"><strong >@SharedLocalizer["ss_usernameColonLabel"]</strong> <span id="confirmUsername">--</span></p>
       <p><strong >@SharedLocalizer["ss_reasonColonLabel"]</strong> <span id="confirmStatus">--</span></p>
       <hr class="modal-divider">
       <p >@SharedLocalizer["ss_proceedQuestion"]</p>
@@ -420,12 +464,23 @@
 
 @section Scripts {
 <script src="/i18n.js"></script>
+<script src="/js/housing-fields.js"></script>
 <script>
+  var _toastTimer = null;
   function showToast(msg, type) {
     var el = document.getElementById('toast');
     el.textContent = msg;
     el.className = 'toast show toast-' + (type || 'success');
-    setTimeout(function () { el.className = 'toast'; }, 3500);
+
+    // رسائل الخطأ بتشرح سبب رفض إجراء — محتاجة وقت تتقرا. النجاح تأكيد سريع.
+    if (_toastTimer) clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(function () { el.className = 'toast'; },
+                             type === 'error' ? 12000 : 3500);
+
+    el.onclick = function () {
+      if (_toastTimer) clearTimeout(_toastTimer);
+      el.className = 'toast';
+    };
   }
 
   async function apiFetch(url) {
@@ -442,12 +497,6 @@
     var k = 'ss_status_' + v;
     var val = t(k);
     return val === k ? (v || '') : val;
-  }
-
-  var userMap = {};
-  async function loadUsers() {
-    var data = await apiFetch('/api/users');
-    if (data) data.forEach(function (u) { userMap[u.id] = u.full_name || u.username || ''; });
   }
 
   function clearErrors() {
@@ -515,8 +564,21 @@
       var student = Array.isArray(students) ? students.find(function (s) { return s.student_id === studentNumber; }) : null;
       if (!student) { showToast(t('ss_studentNotFound'), 'error'); enableSubmitBtn(); return; }
 
+      // نفس قاعدة السيرفر (StudentStatusService): التعطيل للحالات اللي بتنهي
+      // علاقة الطالب بالجامعة بس. «ترك السكن» بيسيب حساب الشبكة زي ما هو.
+      var disablesAccount = ['graduated', 'dismissed', 'transferred'].indexOf(statusEl.value) > -1;
+
       document.getElementById('confirmUsername').textContent = student.ad_username || '--';
       document.getElementById('confirmStatus').textContent = getStatusLabel(statusEl.value);
+
+      document.getElementById('confirmDisableIntro').style.display = disablesAccount ? '' : 'none';
+      document.getElementById('confirmDivider1').style.display = disablesAccount ? '' : 'none';
+      document.getElementById('confirmUsernameRow').style.display = disablesAccount ? '' : 'none';
+
+      var yesBtn = document.getElementById('confirmYesBtn');
+      yesBtn.textContent = disablesAccount ? t('ss_confirmDisableYes') : t('ss_confirmAction');
+      yesBtn.style.background = disablesAccount ? '#991B1B' : 'var(--navy)';
+
       document.getElementById('confirmDialog').classList.add('show');
 
       pendingSubmitData = { studentNumber: studentNumber, statusType: statusEl.value, notes: notes, file: file };
@@ -597,7 +659,7 @@
       var dateObj = new Date(a.createdDate);
       var dateStr = dateObj.toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' });
       var timeStr = dateObj.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-      var userName = userMap[a.createdBy] || t('ss_unknown');
+      var userName = a.createdByName || t('ss_unknown');
       return '<div class="history-item" style="display:block;padding:14px 16px;border-bottom:1px solid var(--gray-100)">' +
         '<div style="margin-bottom:8px"><span class="badge ' + badgeClass + '" style="font-size:13px;padding:4px 12px">' + escHtml(label) + '</span></div>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px;color:var(--navy-dark)">' +
@@ -607,6 +669,8 @@
           '<div><span style="color:var(--gray-500);font-size:12px">' + t('ss_date') + '</span><br>' + dateStr + ' ' + timeStr + '</div>' +
         '</div>' +
         (a.notes ? '<div style="margin-top:8px;padding:8px 12px;background:var(--gray-50);border-radius:8px;font-size:13px;color:var(--gray-700)"><span style="color:var(--gray-500);font-size:12px;font-weight:600">' + t('ss_notes') + '</span><br>' + escHtml(a.notes) + '</div>' : '') +
+        // المستند المرفق — اتنقل من شاشة المغادرة قبل ما تتشال
+        (a.attachmentFileName ? attachmentHtml('/api/student-status/' + a.id + '/attachment', a.attachmentFileName) : '') +
       '</div>';
     }).join('');
   }
@@ -615,14 +679,143 @@
   var transferStudentLoaded = false;
   var transferStudentData = null;
 
+  var SS_PH = @Html.Raw(__ssHousingPh);
+  // الشقة بتتولد من الدور، والغرفة 1-4 — نفس قاعدة شاشات التسجيل
+  NuhHousing.attach({
+    floor: 'transferNewFloor', apartment: 'transferNewApartment', room: 'transferNewRoom',
+    labels: { floorFirst: SS_PH.floorFirst, selectApartment: SS_PH.selectApartment, selectRoom: SS_PH.selectRoom }
+  });
+
+  // الدور متخزّن كود ("0" = الأرضي) — بيتترجم عند العرض بس
+  function floorLabel(v) {
+    if (v === null || v === undefined || v === '') return '--';
+    return String(v) === '0' ? SS_PH.ground : String(v);
+  }
+
+  // المباني بتتفلتر حسب جنس الطالب — من غير كده ممكن المشرف ينقل طالب لمبنى بنات.
+  // احتياطي ثابت لو جدول القوائم مش متاح، بنفس التوزيع المعتمد.
+  var TRANSFER_FALLBACK = { male: ['65','66','67','68','69','70'], female: ['40','41','42','43'] };
+
+  async function loadTransferBuildings(gender) {
+    var sel = document.getElementById('transferNewBuilding');
+    sel.innerHTML = '';
+    var ph = document.createElement('option');
+    ph.value = '';
+    sel.appendChild(ph);
+
+    var g = (gender || '').toString().toLowerCase();
+    if (g !== 'male' && g !== 'female') {
+      ph.textContent = t('ss_studentNumber');
+      sel.disabled = true;
+      updateTransferBtnState();
+      return;
+    }
+
+    ph.textContent = SS_PH.selectBuilding;
+    sel.disabled = false;
+
+    var items = [];
+    try {
+      var res = await fetch('/api/lookups/buildings?gender=' + encodeURIComponent(g), { headers: NUH.headers() });
+      if (res.ok) items = await res.json();
+    } catch (e) { items = []; }
+
+    if (items && items.length) {
+      items.forEach(function (b) {
+        var o = document.createElement('option');
+        o.value = b.code || b.Code || '';
+        o.textContent = b.name || b.Name || o.value;
+        sel.appendChild(o);
+      });
+    } else {
+      (TRANSFER_FALLBACK[g] || []).forEach(function (code) {
+        var o = document.createElement('option');
+        o.value = code; o.textContent = code;
+        sel.appendChild(o);
+      });
+    }
+    updateTransferBtnState();
+  }
+
+  // وصف الموقع بصيغة مقروءة: «مبنى 69 · الدور 3 · شقة 15 · غرفة 3»
+  // الأرقام لوحدها (69/3/15/3) مالهاش معنى لحد ما يحفظ الترتيب — الليبل بيشيل اللبس.
+  var LOC_SEP = ' · ';
+  function locText(b, f, a, r) {
+    var parts = [];
+    if (b) parts.push(t('loc_building') + ' ' + b);
+    var fl = floorLabel(f);
+    if (fl !== '--') parts.push(t('loc_floor') + ' ' + fl);
+    if (a) parts.push(t('loc_apartment') + ' ' + a);
+    if (r) parts.push(t('loc_room') + ' ' + r);
+    return parts.length ? parts.join(LOC_SEP) : '--';
+  }
+
+  // ===== المرفقات =====
+  // الرابط بيروح على endpoint بيتحقق من الصلاحية (مش ملف ثابت في wwwroot).
+  // الصور بتتفتح في نافذة معاينة جوه الصفحة، و PDF/Word بيتفتحوا في تبويب جديد،
+  // و«تحميل» بترجع الملف باسمه الأصلي.
+  function isImageName(n) { return /\.(png|jpe?g|gif|webp)$/i.test(n || ''); }
+
+  function attachmentHtml(url, name) {
+    return '<div style="margin-top:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px">' +
+        '<span style="color:var(--gray-500)">📎 ' + escHtml(name) + '</span>' +
+        '<a href="' + escHtml(url) + '" target="_blank" rel="noopener"' +
+          (isImageName(name) ? ' data-preview="' + escHtml(url) + '" data-preview-name="' + escHtml(name) + '"' : '') +
+          ' style="color:var(--navy);text-decoration:underline">' + escHtml(SS_PH.preview) + '</a>' +
+        '<a href="' + escHtml(url) + '?download=true" style="color:var(--navy);text-decoration:underline">' +
+          escHtml(SS_PH.download) + '</a>' +
+      '</div>';
+  }
+
+  // معاينة الصور جوه الصفحة — من غير ما المستخدم يسيب الشاشة
+  document.addEventListener('click', function (e) {
+    var link = e.target.closest ? e.target.closest('[data-preview]') : null;
+    if (!link) return;
+    e.preventDefault();
+    showAttachmentPreview(link.getAttribute('data-preview'), link.getAttribute('data-preview-name'));
+  });
+
+  function showAttachmentPreview(url, name) {
+    var overlay = document.getElementById('attPreviewOverlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'attPreviewOverlay';
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.75);z-index:9999;' +
+        'display:flex;align-items:center;justify-content:center;padding:24px';
+      overlay.addEventListener('click', function (ev) { if (ev.target === overlay) closeAttachmentPreview(); });
+      document.body.appendChild(overlay);
+      document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') closeAttachmentPreview(); });
+    }
+    overlay.innerHTML =
+      '<div style="background:var(--white);border-radius:14px;max-width:90vw;max-height:90vh;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:12px">' +
+        '<div style="display:flex;align-items:center;justify-content:space-between;gap:16px">' +
+          '<strong style="font-size:14px;color:var(--navy-dark)">' + escHtml(name) + '</strong>' +
+          '<div style="display:flex;gap:12px;font-size:13px">' +
+            '<a href="' + escHtml(url) + '?download=true" style="color:var(--navy);text-decoration:underline">' + escHtml(SS_PH.download) + '</a>' +
+            '<button type="button" id="attPreviewClose" style="border:none;background:none;cursor:pointer;color:var(--gray-500);font-size:13px">' + escHtml(SS_PH.close) + '</button>' +
+          '</div>' +
+        '</div>' +
+        '<img src="' + escHtml(url) + '" alt="' + escHtml(name) + '" style="max-width:100%;max-height:75vh;border-radius:10px;display:block">' +
+      '</div>';
+    overlay.style.display = 'flex';
+    var btn = document.getElementById('attPreviewClose');
+    if (btn) btn.onclick = closeAttachmentPreview;
+  }
+
+  function closeAttachmentPreview() {
+    var overlay = document.getElementById('attPreviewOverlay');
+    if (overlay) overlay.style.display = 'none';
+  }
+
   function updateTransferBtnState() {
     var nb = document.getElementById('transferNewBuilding').value.trim();
+    var nf = document.getElementById('transferNewFloor').value;
     var na = document.getElementById('transferNewApartment').value.trim();
     var nr = document.getElementById('transferNewRoom').value.trim();
     var reason = document.getElementById('transferReason').value;
     var customReason = document.getElementById('transferCustomReason').value.trim();
     var btn = document.getElementById('transferBtn');
-    var canTransfer = transferStudentLoaded && nb && na && nr && reason && (reason !== 'other' || customReason.length >= 3);
+    var canTransfer = transferStudentLoaded && nb && nf && na && nr && reason && (reason !== 'other' || customReason.length >= 3);
     btn.disabled = !canTransfer;
     btn.style.background = canTransfer ? 'var(--navy)' : 'var(--gray-300)';
   }
@@ -641,6 +834,7 @@
     document.getElementById('transferStudentInfo').style.display = 'none';
     document.getElementById('customReasonField').style.display = 'none';
     document.getElementById('transferOldBuilding').textContent = '--';
+    document.getElementById('transferOldFloor').textContent = '--';
     document.getElementById('transferOldApartment').textContent = '--';
     document.getElementById('transferOldRoom').textContent = '--';
     transferStudentLoaded = false;
@@ -658,19 +852,20 @@
   async function handleTransfer() {
     var sn = document.getElementById('transferStudentNumber').value.trim();
     var nb = document.getElementById('transferNewBuilding').value.trim();
+    var nf = document.getElementById('transferNewFloor').value;
     var na = document.getElementById('transferNewApartment').value.trim();
     var nr = document.getElementById('transferNewRoom').value.trim();
     var reason = document.getElementById('transferReason').value;
     var customReason = document.getElementById('transferCustomReason').value.trim();
 
     if (!transferStudentData) { showToast(t('ss_studentNotFound'), 'error'); return; }
-    if (!nb || !na || !nr) { showToast(t('ss_completeNewHousing'), 'error'); return; }
+    if (!nb || !nf || !na || !nr) { showToast(t('ss_completeNewHousing'), 'error'); return; }
     if (!reason) { showToast(t('ss_selectTransferReason'), 'error'); return; }
     if (reason === 'other' && customReason.length < 3) { showToast(t('ss_customReasonPlaceholder'), 'error'); return; }
 
     var student = transferStudentData;
-    var oldLoc = (student.housing_building || '--') + '/' + (student.apartment_number || '--') + '/' + (student.room_number || '--');
-    var newLoc = nb + '/' + na + '/' + nr;
+    var oldLoc = locText(student.housing_building, student.floor_number, student.apartment_number, student.room_number);
+    var newLoc = locText(nb, nf, na, nr);
     var reasonLabel = reason === 'other' ? customReason : getTransferReasonLabel(reason);
 
     document.getElementById('transferConfirmName').textContent = student.full_name;
@@ -680,7 +875,7 @@
     document.getElementById('transferConfirmDialog').classList.add('show');
 
     window._pendingTransfer = {
-      studentNumber: sn, newBuilding: nb, newApartment: na, newRoom: nr,
+      studentNumber: sn, newBuilding: nb, newFloor: nf, newApartment: na, newRoom: nr,
       reason: reason, customReason: reason === 'other' ? customReason : null,
       file: document.getElementById('transferAttachmentFile').files[0]
     };
@@ -704,6 +899,7 @@
       var formData = new FormData();
       formData.append('studentNumber', data.studentNumber);
       formData.append('newBuilding', data.newBuilding);
+      formData.append('newFloor', data.newFloor);
       formData.append('newApartment', data.newApartment);
       formData.append('newRoom', data.newRoom);
       formData.append('reason', data.reason);
@@ -736,6 +932,8 @@
 
   var _transferHistoryData = null;
   async function loadTransferHistory() {
+    // القسم كله مخفي لو المستخدم مالوش صلاحية النقل — بلاش نداء بيرجّع 403
+    if (!document.getElementById('transferHistoryList')) return;
     _transferHistoryData = await apiFetch('/api/supervisor/housing-transfer/recent');
     renderTransferHistory();
   }
@@ -752,14 +950,16 @@
       var dateObj = new Date(x.createdAt);
       var dateStr = dateObj.toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' });
       var timeStr = dateObj.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
-      var userName = userMap[x.createdBy] || t('ss_unknown');
-      var oldLoc = (x.oldBuilding || '--') + '/' + (x.oldApartment || '--') + '/' + (x.oldRoom || '--');
-      var newLoc = (x.newBuilding || '--') + '/' + (x.newApartment || '--') + '/' + (x.newRoom || '--');
+      var userName = x.createdByName || t('ss_unknown');
+      var oldLoc = locText(x.oldBuilding, x.oldFloor, x.oldApartment, x.oldRoom);
+      var newLoc = locText(x.newBuilding, x.newFloor, x.newApartment, x.newRoom);
       var reasonLabel = x.customReason || getTransferReasonLabel(x.reason);
-      var attachHtml = '';
-      if (x.originalFileName) {
-        attachHtml = '<div style="margin-top:6px;font-size:12px;color:var(--navy)">📎 <a href="/uploads/housing-transfer/' + x.id + '/' + encodeURIComponent(x.originalFileName) + '" target="_blank" style="color:var(--navy);text-decoration:underline">' + escHtml(x.originalFileName) + '</a></div>';
-      }
+      // الرابط القديم كان بيستخدم الاسم الأصلي للملف، والملف متخزّن على الديسك
+      // باسم GUID — فكان بيطلع 404 دايمًا. بيعدّي دلوقتي من endpoint بيتحقق من
+      // الصلاحية ويرجّع الملف بنوعه الصحيح.
+      var attachHtml = x.originalFileName
+        ? attachmentHtml('/api/supervisor/housing-transfer/' + x.id + '/attachment', x.originalFileName)
+        : '';
       return '<div class="history-item" style="display:block;padding:14px 16px;border-bottom:1px solid var(--gray-100)">' +
         '<div style="margin-bottom:8px"><span class="badge badge-status-transferred" style="font-size:13px;padding:4px 12px">🏠 ' + t('ss_housingTransferBadge') + '</span></div>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px;color:var(--navy-dark)">' +
@@ -780,9 +980,9 @@
   document.getElementById('studentNumber').addEventListener('blur', async function () {
     var val = this.value.trim();
     if (!val) return;
-    var students = await apiFetch('/api/students');
-    var list = Array.isArray(students) ? students : [];
-    var found = list.find(function (s) { return s.student_id === val; });
+    // ⚠️ كان بيسحب *كل* الطلاب من السيرفر ويدوّر فيهم هنا، على كل خروج من الخانة.
+    //    مع آلاف طالب ده ميجابايتات على كل ضغطة. بقى صف واحد بالرقم الجامعي.
+    var found = await apiFetch('/api/students/by-number/' + encodeURIComponent(val));
     var info = document.getElementById('studentInfo');
     if (found) {
       var st = (found.student_status || 'active');
@@ -807,9 +1007,9 @@
     transferStudentData = null;
     updateTransferBtnState();
     if (!val) return;
-    var students = await apiFetch('/api/students');
-    var list = Array.isArray(students) ? students : [];
-    var found = list.find(function (s) { return s.student_id === val; });
+    // ⚠️ كان بيسحب *كل* الطلاب من السيرفر ويدوّر فيهم هنا، على كل خروج من الخانة.
+    //    مع آلاف طالب ده ميجابايتات على كل ضغطة. بقى صف واحد بالرقم الجامعي.
+    var found = await apiFetch('/api/students/by-number/' + encodeURIComponent(val));
     var info = document.getElementById('transferStudentInfo');
     var text = document.getElementById('transferStudentInfoText');
     if (found) {
@@ -819,28 +1019,38 @@
       info.style.display = 'block';
       info.style.background = '';
       document.getElementById('transferOldBuilding').textContent = found.housing_building || '--';
+      document.getElementById('transferOldFloor').textContent = floorLabel(found.floor_number);
+      await loadTransferBuildings(found.gender);
       document.getElementById('transferOldApartment').textContent = found.apartment_number || '--';
       document.getElementById('transferOldRoom').textContent = found.room_number || '--';
     } else {
       text.textContent = '✗ ' + t('ss_studentNotFound');
       info.style.display = 'block';
       info.style.background = '#FEF2F2';
+      await loadTransferBuildings(null);
     }
     updateTransferBtnState();
   });
 
-  ['transferNewBuilding', 'transferNewApartment', 'transferNewRoom', 'transferCustomReason'].forEach(function (id) {
+  ['transferCustomReason'].forEach(function (id) {
     document.getElementById(id).addEventListener('input', updateTransferBtnState);
+  });
+  // المبنى والدور والشقة والغرفة كلهم قوائم — الحدث بتاعها change مش input
+  ['transferNewBuilding', 'transferNewFloor', 'transferNewApartment', 'transferNewRoom'].forEach(function (id) {
+    document.getElementById(id).addEventListener('change', updateTransferBtnState);
   });
   document.getElementById('transferReason').addEventListener('change', function () {
     document.getElementById('customReasonField').style.display = this.value === 'other' ? 'block' : 'none';
     updateTransferBtnState();
   });
 
-  loadUsers().then(function () {
-    loadHistory();
-    loadTransferHistory();
-  });
+  // السجلين بيتحمّلوا على طول وبالتوازي.
+  // قبل كده كانت الصفحة بتنادي /api/users الأول عشان تجيب أسماء المستخدمين،
+  // وده نداء مقفول على المشرف (users.view للأدمن بس) — يعني كانت بتستنى رد 403
+  // قبل ما تبدأ تحمّل أي سجل. الأسماء بقت بترجع من السيرفر مع الصفوف نفسها
+  // (createdByName)، فالنداء ده اتشال خالص.
+  loadHistory();
+  loadTransferHistory();
 
   // اللغة تتبع ثقافة السيرفر — setLang بيترجم عناصر الترجمة وبيستدعي onLanguageChange لإعادة رسم السجلات من الكاش
   window.onLanguageChange = function () {

@@ -7,7 +7,9 @@ using NUH_PORTAL.Services.Interfaces;
 namespace NUH_PORTAL.Controllers
 {
     // كنترولر رفيع — إدارة حسابات AD في IHousingAccountService
-    [Authorize(Roles = "admin")]
+    // الأساس: القراءة housing.view، والإجراءات اللي بتلمس الأكتف دايركتوري فعليًا
+    // housing.manageAccounts، والمزامنة/الإعدادات housing.syncAd.
+    [Authorize(Policy = "housing.view")]
     [Route("api/[controller]")]
     [ApiController]
     public class HousingAccountManagementController : ControllerBase
@@ -15,6 +17,26 @@ namespace NUH_PORTAL.Controllers
         private readonly IHousingAccountService _service;
 
         public HousingAccountManagementController(IHousingAccountService service) => _service = service;
+
+        // POST api/HousingAccountManagement/refresh-status
+        // «تحديث الحالات من الدومين» — بيقرا حالة الحسابات المربوطة بالفعل ويحدّثها.
+        // مابيربطش أي حساب جديد، فمالوش أي خطر على بيانات الربط.
+        [Authorize(Policy = "housing.syncAd")]
+        [HttpPost("refresh-status")]
+        public async Task<IActionResult> RefreshStatus()
+            => Ok(await _service.SyncAdAccountsAsync(AdSyncMode.RefreshLinked, dryRun: false));
+
+        // POST api/HousingAccountManagement/link-existing?dryRun=true
+        // «ربط الحسابات» — بيدوّر على h + الرقم الجامعي للطلاب اللي لسه مالهمش حساب
+        // مسجّل في النظام ويربطهم. قراءة فقط من الأكتف دايركتوري: مفيش إنشاء ولا تعطيل.
+        //
+        // ⚠️ dryRun افتراضيًا true: الربط الغلط (رقم جامعي غلط في الشيت) بيخلّي
+        //    «تخرّج» بعد كده يعطّل حساب شخص تاني، فالمعاينة قبل الحفظ إجبارية
+        //    من الواجهة — التنفيذ الفعلي لازم يتطلب صراحةً بـ dryRun=false.
+        [Authorize(Policy = "housing.syncAd")]
+        [HttpPost("link-existing")]
+        public async Task<IActionResult> LinkExisting([FromQuery] bool dryRun = true)
+            => Ok(await _service.SyncAdAccountsAsync(AdSyncMode.LinkNew, dryRun));
 
         // GET api/HousingAccountManagement?status=
         [HttpGet]
@@ -32,16 +54,19 @@ namespace NUH_PORTAL.Controllers
             => Ok(await _service.GetDetailsAsync(studentId));
 
         // POST api/HousingAccountManagement/{studentId}/enable
+        [Authorize(Policy = "housing.manageAccounts")]
         [HttpPost("{studentId}/enable")]
         public async Task<IActionResult> EnableAccount(int studentId)
             => Ok(await _service.EnableAccountAsync(studentId));
 
         // POST api/HousingAccountManagement/{studentId}/disable
+        [Authorize(Policy = "housing.manageAccounts")]
         [HttpPost("{studentId}/disable")]
         public async Task<IActionResult> DisableAccount(int studentId)
             => Ok(await _service.DisableAccountAsync(studentId));
 
         // POST api/HousingAccountManagement/{studentId}/reset-password
+        [Authorize(Policy = "housing.manageAccounts")]
         [HttpPost("{studentId}/reset-password")]
         public async Task<IActionResult> ResetPassword(int studentId, [FromBody] ResetPasswordDto dto)
         {
@@ -50,6 +75,7 @@ namespace NUH_PORTAL.Controllers
         }
 
         // POST api/HousingAccountManagement/{studentId}/re-provision
+        [Authorize(Policy = "housing.manageAccounts")]
         [HttpPost("{studentId}/re-provision")]
         public async Task<IActionResult> ReProvision(int studentId)
         {
@@ -58,6 +84,7 @@ namespace NUH_PORTAL.Controllers
         }
 
         // POST api/HousingAccountManagement/{studentId}/sync-attrs
+        [Authorize(Policy = "housing.syncAd")]
         [HttpPost("{studentId}/sync-attrs")]
         public async Task<IActionResult> SyncExtensionAttributes(int studentId)
         {
@@ -79,11 +106,13 @@ namespace NUH_PORTAL.Controllers
             => Ok(new { logs = await _service.GetLifecycleLogsAsync(studentId, limit) });
 
         // GET api/HousingAccountManagement/ad-config
+        [Authorize(Policy = "housing.syncAd")]
         [HttpGet("ad-config")]
         public async Task<IActionResult> GetAdConfig()
             => Ok(new { configs = await _service.GetAdConfigAsync() });
 
         // POST api/HousingAccountManagement/ad-config
+        [Authorize(Policy = "housing.syncAd")]
         [HttpPost("ad-config")]
         public async Task<IActionResult> UpdateAdConfig([FromBody] List<AdConfigDto> configs)
         {

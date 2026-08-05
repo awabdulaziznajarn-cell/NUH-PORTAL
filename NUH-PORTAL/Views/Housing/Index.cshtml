@@ -11,7 +11,24 @@
   .stat-card{background:var(--white);border-radius:12px;padding:16px 20px;border:1px solid var(--gray-100);box-shadow:0 2px 8px rgba(0,0,0,.04)}
   .stat-card .stat-label{font-size:13px;color:var(--gray-500);margin-bottom:4px}
   .stat-card .stat-value{font-size:28px;font-weight:700;color:var(--navy)}
-  .search-box{display:flex;gap:8px;align-items:center}
+  .search-box{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+  /* شريط أدوات المزامنة — قبل كده كانت الأزرار نص عريان جنب بعضه من غير أي
+     تمييز، فمكانش باين إن دي إجراءات ولا إن التنين مختلفين عن بعض. */
+  .tool-sep{width:1px;align-self:stretch;background:var(--gray-200);margin:0 2px}
+  .tbtn{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border-radius:9px;
+        border:1px solid var(--gray-200);background:var(--white);color:var(--navy);
+        font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;
+        transition:background .15s,border-color .15s,box-shadow .15s;white-space:nowrap}
+  .tbtn svg{width:15px;height:15px;flex-shrink:0;opacity:.85}
+  .tbtn:hover{background:var(--gray-50,#F7F8FB);border-color:var(--gray-300);box-shadow:0 1px 3px rgba(27,42,94,.07)}
+  .tbtn:active{transform:translateY(1px)}
+  .tbtn:disabled{opacity:.55;cursor:default;box-shadow:none;transform:none}
+  /* الزر الأساسي: الإجراء اللي بيغيّر بيانات فعلاً */
+  .tbtn.primary{background:var(--navy);border-color:var(--navy);color:#fff}
+  .tbtn.primary:hover{background:var(--navy-dark,#16244f);border-color:var(--navy-dark,#16244f)}
+  .tbtn.icon-only{padding:8px 10px}
+  .tbtn.is-busy svg{animation:spin 1s linear infinite}
   .search-box select{padding:8px 12px;border:1px solid var(--gray-300);border-radius:8px;font-family:inherit;font-size:13px;background:var(--white)}
   .hbtn{padding:8px 16px;border:none;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
   .btn-outline{background:transparent;border:1px solid var(--gray-300);color:var(--gray-700)}
@@ -42,10 +59,128 @@
   .modal-close{background:none;border:none;font-size:24px;cursor:pointer;color:var(--gray-500);padding:4px}
   .modal-body{padding:20px}
   .modal-footer{padding:12px 20px;border-top:1px solid var(--gray-100);display:flex;justify-content:flex-end;gap:8px}
+
+  /* ⚠️ كلاسات سجل دورة الحياة (.log-entry / .log-icon / .log-details ...) كانت
+     مستخدمة في housing-management.js من غير أي CSS في المشروع كله، فالسطور كانت
+     بتطلع ملزوقة في بعضها: الإجراء والتاريخ والمنفّذ و IP في سطر واحد متصل. */
+  .log-list{display:flex;flex-direction:column;max-height:430px;overflow-y:auto;padding-inline-end:6px}
+  .log-entry{display:flex;gap:12px;padding:14px 2px;border-bottom:1px solid var(--gray-100)}
+  .log-entry:last-child{border-bottom:none}
+  .log-icon{flex-shrink:0;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;background:var(--gray-100);color:var(--gray-500)}
+  .log-icon.created,.log-icon.enabled,.log-icon.reprovisioned{background:var(--green-light);color:var(--green)}
+  .log-icon.disabled{background:var(--red-light);color:var(--red)}
+  .log-icon.password_reset{background:#FEF7E6;color:#8A6100}
+  .log-details{flex:1;min-width:0}
+  .log-action{font-size:13.5px;font-weight:700;color:var(--navy);margin-bottom:3px}
+  .log-desc{font-size:12.5px;color:var(--gray-700);line-height:1.75;margin-bottom:5px;word-break:break-word}
+  .log-meta{display:flex;flex-wrap:wrap;gap:2px 16px;font-size:11.5px;color:var(--gray-500)}
+  .log-meta span{white-space:nowrap}
+  .log-meta .log-ip{direction:ltr;unicode-bidi:embed}
+
+  /* ============================================================================
+     لوحة المزامنة مع Active Directory
+     ⚠️ كانت زرارين مرصوصين جنب فلتر الجدول في ترويسة الكارت. ده بيخلّي إجراءين
+        نادرين وليهم أثر حقيقي على الحسابات شكلهم زي فلتر عرض. بقوا لوحة مستقلة
+        فوق الجدول: كل إجراء ليه عنوان وسطر بيقول بيعمل إيه بالظبط.
+     ============================================================================ */
+  .sync-panel{background:var(--white);border:1px solid var(--gray-100);border-radius:14px;
+              box-shadow:0 2px 8px rgba(27,42,94,.05);margin-bottom:20px;overflow:hidden}
+  .sync-panel-head{display:flex;align-items:center;gap:11px;padding:15px 20px;border-bottom:1px solid var(--gray-100)}
+  .sync-panel-head .ic{width:34px;height:34px;border-radius:10px;background:#E8F0FE;color:var(--navy);
+                       display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .sync-panel-head .ic svg{width:17px;height:17px}
+  .sync-panel-head h3{font-size:14.5px;font-weight:700;color:var(--navy-dark);line-height:1.4}
+  .sync-panel-head p{font-size:11.5px;color:var(--gray-500);margin-top:2px;line-height:1.6}
+  .sync-actions{display:grid;grid-template-columns:1fr;gap:14px;padding:18px 20px}
+  @@media(min-width:860px){ .sync-actions{grid-template-columns:1fr 1fr} }
+  .sync-action{border:1px solid var(--gray-200);border-radius:12px;padding:16px 17px;
+               display:flex;flex-direction:column;gap:9px;transition:border-color .15s,box-shadow .15s}
+  .sync-action:hover{border-color:var(--gray-300);box-shadow:0 2px 10px rgba(27,42,94,.06)}
+  .sync-action.accent{border-color:rgba(27,42,94,.22);background:linear-gradient(180deg,#FBFCFF,#fff)}
+  .sync-action b{font-size:13.5px;font-weight:700;color:var(--navy-dark);display:flex;align-items:center;gap:7px}
+  .sync-action b svg{width:15px;height:15px;flex-shrink:0;opacity:.8}
+  .sync-action p{font-size:11.5px;color:var(--gray-500);line-height:1.75;flex:1;margin:0}
+  .sync-action .safe{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;
+                     padding:2px 9px;border-radius:999px;background:var(--green-light);color:var(--green);align-self:flex-start}
+  .sync-action .care{background:var(--amber-light,#FEF7E6);color:#8A6100}
+  .sbtn{display:inline-flex;align-items:center;justify-content:center;gap:8px;align-self:flex-start;
+        padding:9px 18px;border-radius:9px;border:1px solid var(--gray-200);background:var(--white);
+        color:var(--navy);font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;
+        transition:background .15s,border-color .15s,box-shadow .15s}
+  .sbtn svg{width:14px;height:14px;flex-shrink:0}
+  .sbtn:hover{background:var(--gray-50,#F7F8FB);border-color:var(--gray-300);box-shadow:0 1px 4px rgba(27,42,94,.08)}
+  .sbtn.primary{background:var(--navy);border-color:var(--navy);color:#fff}
+  .sbtn.primary:hover{background:var(--navy-dark,#111C42);border-color:var(--navy-dark,#111C42)}
+  .sbtn:disabled{opacity:.55;cursor:default;box-shadow:none}
+  .sbtn.is-busy svg{animation:spin 1s linear infinite}
+
+  /* نتيجة المزامنة — بدل نافذة alert() بتاعة المتصفح */
+  .sync-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:18px}
+  .sync-stat{background:var(--gray-50,#F7F8FB);border:1px solid var(--gray-100);border-radius:10px;padding:12px 14px}
+  .sync-stat .v{font-size:22px;font-weight:700;color:var(--navy);line-height:1.2}
+  .sync-stat .l{font-size:11.5px;color:var(--gray-500);margin-top:2px}
+  .sync-stat.warn .v{color:var(--red)}
+  .sync-section{margin-top:18px}
+  .sync-section h4{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px}
+  .sync-note{font-size:12px;line-height:1.8;padding:10px 12px;border-radius:8px;margin-bottom:10px}
+  .sync-note.info{background:#EFF6FF;color:#1E40AF;border:1px solid #DBEAFE}
+  .sync-note.danger{background:#FEF2F2;color:#991B1B;border:1px solid #FECACA}
+  .sync-list{max-height:220px;overflow-y:auto;border:1px solid var(--gray-100);border-radius:8px}
+  .sync-list .row{display:flex;flex-wrap:wrap;gap:4px 12px;padding:9px 12px;font-size:12.5px;border-bottom:1px solid var(--gray-100)}
+  .sync-list .row:last-child{border-bottom:none}
+  .sync-list .row .id{font-weight:700;color:var(--navy);direction:ltr}
+  .sync-list .row .muted{color:var(--gray-500)}
+  .sync-list .more{padding:8px 12px;font-size:12px;color:var(--gray-500);background:var(--gray-50,#F7F8FB)}
   .group-tag{display:inline-block;background:var(--gray-100);border-radius:6px;padding:2px 8px;font-size:11px;margin:2px;direction:ltr}
 </style>
 
 <div class="stats-grid" id="statsGrid"></div>
+
+@* إجراءان منفصلان عن قصد: التحديث بيقرا حالة المربوطين بس (بلا خطر)، والربط
+   بيلمس طلاب لسه مالهمش حساب — وده اللي محتاج معاينة قبل الحفظ.
+   الاتنين بصلاحية housing.syncAd، والـ API بيتحقق منها كمان. *@
+@if (User.HasClaim("permission", "housing.syncAd"))
+{
+  <div class="sync-panel">
+    <div class="sync-panel-head">
+      <span class="ic">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>
+      </span>
+      <div>
+                <h3>المزامنة مع Active Directory</h3>
+        <p>يقرأ النظام البيانات من الدليل النشط ويحدّث سجلّاته هو فقط - دون إنشاء أو تعطيل أو تعديل أي حساب في الدليل.</p>
+      </div>
+    </div>
+
+    <div class="sync-actions">
+      <div class="sync-action">
+        <b>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+          تحديث الحالات من الدومين
+        </b>
+        <p>يقرأ حالة الحسابات المرتبطة (مفعّل / معطّل) ويحدّثها في النظام. يُستخدم عند تفعيل حساب أو تعطيله من الدليل النشط مباشرة.</p>
+        <span class="safe">لا يربط أي حساب جديد</span>
+        <button class="sbtn" id="adRefreshBtn" onclick="refreshAdStatuses()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+          <span>تشغيل التحديث</span>
+        </button>
+      </div>
+
+      <div class="sync-action accent">
+        <b>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>
+          ربط الحسابات الجديدة
+        </b>
+        <p>يبحث عن حساب كل طالب غير مرتبط باسم <span dir="ltr">h + الرقم الجامعي</span> ويربطه بسجلّه في النظام، مع عرض معاينة كاملة قبل الحفظ.</p>
+        <span class="safe care">يتطلّب مراجعتك قبل التنفيذ</span>
+        <button class="sbtn primary" id="adLinkBtn" onclick="linkExistingAdAccounts()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>
+          <span>معاينة وربط</span>
+        </button>
+      </div>
+    </div>
+  </div>
+}
 
 <div class="card">
   <div class="card-header">
@@ -57,7 +192,11 @@
         <option value="disabled" >@SharedLocalizer["hs_filterDisabled"]</option>
         <option value="unknown" >@SharedLocalizer["hs_filterUnknown"]</option>
       </select>
-      <button class="hbtn btn-outline btn-sm" onclick="loadAccounts()" >@SharedLocalizer["hs_refresh"]</button>
+      @* تحديث عرض الجدول من قاعدة البيانات — مالوش علاقة بالدومين، فأيقونة بس.
+         إجراءات المزامنة اتنقلت للوحة مستقلة فوق الجدول. *@
+      <button class="tbtn icon-only" onclick="loadAccounts()" title="@SharedLocalizer["hs_refresh"]">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+      </button>
     </div>
   </div>
   <div class="card-body">
@@ -111,6 +250,18 @@
   </div>
 </div>
 
+@* نتيجة المزامنة مع الدومين — بدل نافذة المتصفح، عشان النتيجة تتقرا وتتراجع *@
+<div class="modal-overlay" id="adSyncModal">
+  <div class="modal" style="max-width:720px">
+    <div class="modal-header">
+      <h3 id="adSyncTitle"></h3>
+      <button class="modal-close" onclick="closeModal('adSyncModal')">&times;</button>
+    </div>
+    <div class="modal-body" id="adSyncBody"></div>
+    <div class="modal-footer" id="adSyncFooter"></div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="adSearchModal">
   <div class="modal" style="max-width:800px">
     <div class="modal-header">
@@ -135,7 +286,186 @@
   // housing-management.js القديم بيعتمد على i18n و token من التخزين — بنوفرهم بنفس الأسماء
   // اللغة من نفس مصدر ثقافة السيرفر (اللياوت بيزامن localStorage مع الكوكي)
   var currentLang = localStorage.getItem('uiLanguage') || 'ar';
+
+  // ===== المزامنة مع Active Directory =====
+  // كل العمليات هنا *قراءة* من الدومين وكتابة في قاعدة بيانات النظام بس.
+  // مفيش إنشاء ولا تعطيل ولا تعديل على أي حساب في الأكتف دايركتوري.
+
+  async function adPost(url) {
+    var res = await fetch(url, { method: 'POST', credentials: 'same-origin' });
+    if (!res.ok) {
+      var err = {};
+      try { err = await res.json(); } catch (e) { }
+      throw new Error(err.message || 'تعذّر تنفيذ العملية');
+    }
+    return await res.json();
+  }
+
+  // بنغيّر نص الزر بس ونسيب الأيقونة مكانها (بتلف أثناء الانتظار)،
+  // بدل ما نستبدل محتوى الزر كله فتختفي.
+  function adBusy(btn, text) {
+    var label = btn.querySelector('span');
+    if (label) {
+      btn.dataset.original = label.textContent;
+      label.textContent = text;
+    }
+    btn.classList.add('is-busy');
+    btn.disabled = true;
+  }
+
+  function adDone(btn) {
+    var label = btn.querySelector('span');
+    if (label && btn.dataset.original) label.textContent = btn.dataset.original;
+    btn.classList.remove('is-busy');
+    btn.disabled = false;
+  }
+
+  // ---- عرض نتيجة المزامنة في نافذة الصفحة بدل alert() ----
+  function adStat(value, label, warn) {
+    return '<div class="sync-stat' + (warn && value > 0 ? ' warn' : '') + '">' +
+             '<div class="v">' + value + '</div><div class="l">' + label + '</div>' +
+           '</div>';
+  }
+
+  // قائمة مختصرة: أول 15 صف والباقي بيتلخّص في سطر واحد
+  function adRows(items, render, limit) {
+    limit = limit || 15;
+    var html = '<div class="sync-list">';
+    items.slice(0, limit).forEach(function (x) { html += '<div class="row">' + render(x) + '</div>'; });
+    if (items.length > limit)
+      html += '<div class="more">… و' + (items.length - limit) + ' غيرهم</div>';
+    return html + '</div>';
+  }
+
+  function showSyncModal(title, bodyHtml, footerHtml) {
+    document.getElementById('adSyncTitle').textContent = title;
+    document.getElementById('adSyncBody').innerHTML = bodyHtml;
+    document.getElementById('adSyncFooter').innerHTML = footerHtml ||
+      '<button class="hbtn btn-outline" onclick="closeModal(\'adSyncModal\')">إغلاق</button>';
+    openModal('adSyncModal');
+  }
+
+  function syncErrorBlock(r) {
+    return r.error ? '<div class="sync-note danger"><strong>خطأ في الاتصال بالدومين:</strong> ' + escHtml(r.error) + '</div>' : '';
+  }
+
+  // ---- تحديث الحالات: بيقرا حالة المربوطين بالفعل بس ----
+  async function refreshAdStatuses() {
+    var btn = document.getElementById('adRefreshBtn');
+    adBusy(btn, 'جاري التحديث...');
+    try {
+      var r = await adPost('/api/HousingAccountManagement/refresh-status');
+
+      var html = syncErrorBlock(r) +
+        '<div class="sync-stats">' +
+          adStat(r.scanned, 'حساب مرتبط تم فحصه') +
+          adStat(r.statusChanged, 'تغيّرت حالته') +
+          adStat(r.notFound, 'غير موجود في الدليل', true) +
+          adStat(r.failed, 'فشل الاستعلام', true) +
+        '</div>';
+
+      if (r.statusChanged > 0) {
+        html += '<div class="sync-section"><h4>الحالات التي تم تحديثها</h4>' +
+          '<div class="sync-note info">هذه التغييرات نُفِّذت في الدليل النشط من خارج النظام. لا يتيح الاستعلام معرفة منفّذ الإجراء؛ يمكن الرجوع إلى سجل أحداث الأمان على وحدة التحكم بالنطاق.</div>' +
+          adRows(r.statusChanges || [], function (c) {
+            return '<span class="id">' + escHtml(c.studentId) + '</span>' +
+                   '<span>' + escHtml(c.fullName || '') + '</span>' +
+                   '<span class="muted">' + escHtml(c.from) + ' ← <strong>' + escHtml(c.to) + '</strong></span>';
+          }) + '</div>';
+      }
+
+      if (r.notFound > 0) {
+        html += '<div class="sync-section"><h4>حسابات مرتبطة وغير موجودة في الدليل</h4>' +
+          '<div class="sync-note danger">هذه الحسابات مسجّلة في النظام ولم يعثر عليها الاستعلام. الاحتمال الأرجح أنها حُذفت من الدليل النشط، أو أن الاسم المسجّل غير صحيح.</div>' +
+          adRows(r.notFoundStudents || [], function (x) {
+            return '<span class="id">' + escHtml(x.studentId) + '</span>' +
+                   '<span>' + escHtml(x.fullName || '') + '</span>' +
+                   '<span class="muted" style="direction:ltr">' + escHtml(x.expectedAccount || '') + '</span>';
+          }) + '</div>';
+      }
+
+      showSyncModal('نتيجة تحديث الحالات من الدليل', html);
+      loadAccounts();
+    } catch (e) {
+      showSyncModal('تعذّر التحديث', '<div class="sync-note danger">' + escHtml(e.message || 'تعذّر الاتصال بالخادم') + '</div>');
+    } finally {
+      adDone(btn);
+    }
+  }
+
+  // ---- ربط الحسابات الجديدة: معاينة الأول، والحفظ بموافقة صريحة ----
+  // ⚠️ الربط الغلط مش بيبان فورًا: بيظهر بعد شهور لما «تخرّج» يعطّل حساب شخص
+  //    تاني. عشان كده المعاينة إجبارية، وأي اسم في الدومين مالوش أي كلمة مشتركة
+  //    مع اسم الطالب عندنا بيتعرض كتحذير قبل ما المسؤول يوافق.
+  async function linkExistingAdAccounts() {
+    var btn = document.getElementById('adLinkBtn');
+    adBusy(btn, 'جاري المعاينة...');
+    try {
+      var p = await adPost('/api/HousingAccountManagement/link-existing?dryRun=true');
+
+      var html = '<div class="sync-note info"><strong>معاينة فقط —</strong> لم يُحفظ أي تغيير حتى الآن.</div>' +
+        syncErrorBlock(p) +
+        '<div class="sync-stats">' +
+          adStat(p.scanned, 'طالب بلا حساب مرتبط') +
+          adStat(p.linked, 'سيتم ربطهم') +
+          adStat(p.notFound, 'بلا حساب في الدليل') +
+          adStat(p.failed, 'فشل الاستعلام', true) +
+        '</div>';
+
+      if (p.nameMismatches && p.nameMismatches.length) {
+        html += '<div class="sync-section"><h4>⚠️ أسماء غير متطابقة (' + p.nameMismatches.length + ')</h4>' +
+          '<div class="sync-note danger">لا توجد أي كلمة مشتركة بين اسم الحساب في الدليل واسم الطالب في النظام، ويرجع ذلك غالبًا إلى رقم جامعي غير صحيح في الملف. أثر الربط الخاطئ لا يظهر فورًا، بل بعد أشهر عند تسجيل «تخرّج» يعطّل حساب شخص آخر. يُرجى مراجعتها قبل الاعتماد.</div>' +
+          adRows(p.nameMismatches, function (m) {
+            return '<span class="id">' + escHtml(m.studentId) + '</span>' +
+                   '<span>النظام: ' + escHtml(m.systemName || '—') + '</span>' +
+                   '<span class="muted">الدومين: ' + escHtml(m.directoryName || '—') + '</span>';
+          }) + '</div>';
+      }
+
+      if (p.notFoundStudents && p.notFoundStudents.length) {
+        html += '<div class="sync-section"><h4>طلاب بلا حساب في الدليل النشط</h4>' +
+          adRows(p.notFoundStudents, function (x) {
+            return '<span class="id">' + escHtml(x.studentId) + '</span>' +
+                   '<span>' + escHtml(x.fullName || '') + '</span>' +
+                   '<span class="muted" style="direction:ltr">' + escHtml(x.expectedAccount || '') + '</span>';
+          }) + '</div>';
+      }
+
+      var footer = p.linked > 0
+        ? '<button class="hbtn btn-outline" onclick="closeModal(\'adSyncModal\')">إلغاء</button>' +
+          '<button class="hbtn" style="background:var(--navy);color:#fff" onclick="confirmAdLink()">تنفيذ الربط (' + p.linked + ')</button>'
+        : null;
+
+      showSyncModal('معاينة ربط الحسابات', html, footer);
+    } catch (e) {
+      showSyncModal('تعذّر تنفيذ المعاينة', '<div class="sync-note danger">' + escHtml(e.message || 'تعذّر الاتصال بالخادم') + '</div>');
+    } finally {
+      adDone(btn);
+    }
+  }
+
+  // التنفيذ الفعلي بعد موافقة المسؤول على المعاينة
+  async function confirmAdLink() {
+    var footer = document.getElementById('adSyncFooter');
+    footer.innerHTML = '<span style="color:var(--gray-500);font-size:13px">جاري الربط...</span>';
+    try {
+      var r = await adPost('/api/HousingAccountManagement/link-existing?dryRun=false');
+      var html = syncErrorBlock(r) +
+        '<div class="sync-stats">' +
+          adStat(r.linked, 'تم ربطه') +
+          adStat(r.notFound, 'بلا حساب') +
+          adStat(r.failed, 'فشل الاستعلام', true) +
+        '</div>';
+      showSyncModal('تم الربط', html);
+      loadAccounts();
+    } catch (e) {
+      showSyncModal('فشل الربط', '<div class="sync-note danger">' + escHtml(e.message || 'تعذّر الاتصال بالخادم') + '</div>');
+    }
+  }
 </script>
 <script src="/i18n.js"></script>
+@* صلاحيات المستخدم للواجهة — الفحص الحقيقي على السيرفر في كل نداء *@
+<script>window.NUH_PERMS = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+    User.FindAll("permission").Select(c => c.Value).ToArray()));</script>
 <script src="/housing-management.js"></script>
 }

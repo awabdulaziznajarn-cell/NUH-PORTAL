@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using NUH_PORTAL.Data;
+using NUH_PORTAL.DTOs.Housing;
 using NUH_PORTAL.Models;
 using NUH_PORTAL.Models.Enums;
 using System.Security.Cryptography;
@@ -136,7 +137,7 @@ namespace NUH_PORTAL.Services
             statusAction.ADActionCompleted = true;
             statusAction.ADActionDate = DateTime.UtcNow;
 
-            LogLifecycleEvent(student.Id, "provisioned", actorId, $"AD account created: {samAccountName}", ipAddress);
+            LogLifecycleEvent(student.Id, "provisioned", actorId, $"تم إنشاء حساب الشبكة: {samAccountName}", ipAddress);
 
             _db.AuditLogs.Add(new AuditLog
             {
@@ -215,7 +216,7 @@ namespace NUH_PORTAL.Services
             student.ad_status = AdStatus.enabled;
             student.ad_last_sync_at = DateTime.UtcNow;
 
-            LogLifecycleEvent(student.Id, "reprovisioned", actorId, $"AD account re-provisioned: {samAccountName}", ipAddress);
+            LogLifecycleEvent(student.Id, "reprovisioned", actorId, $"تمت إعادة إنشاء حساب الشبكة: {samAccountName}", ipAddress);
 
             await _db.SaveChangesAsync();
 
@@ -253,7 +254,7 @@ namespace NUH_PORTAL.Services
 
             student.ad_last_sync_at = DateTime.UtcNow;
 
-            LogLifecycleEvent(student.Id, "extension_attrs_synced", actorId, $"Extension attributes synced for {samAccountName}");
+            LogLifecycleEvent(student.Id, "extension_attrs_synced", actorId, $"تمت مزامنة الخصائص الإضافية للحساب: {samAccountName}");
 
             await _db.SaveChangesAsync();
 
@@ -298,27 +299,20 @@ namespace NUH_PORTAL.Services
         }
 
         // تفكيك الاسم الإنجليزي حسب معيار الجامعة:
-        //   initials = أول حرف من اسم الأب فقط (الاسم الثاني) — مش كل الأسماء الوسطى.
-        //   "MOHAMMED SALEM ALSAIARI"              → (MOHAMMED, "S", ALSAIARI)
-        //   "MOHAMMED SALEM MOHAMMED ALSAIARI"     → (MOHAMMED, "S", ALSAIARI)
-        //   "MOHAMMED SALEM MOHAMMED ALI ALSAIARI" → (MOHAMMED, "S", ALSAIARI)   ← خماسي
-        //   "AHMED ALI"                            → (AHMED,    null, ALI)
-        //
-        // فورم التسجيل بياخد الاسم في تلات خانات (الأول / الأب والجد / العائلة) وبيلزّقهم
-        // بمسافة واحدة، فالمدخل هنا نضيف دايمًا للطلبات الجديدة. الفحوص تحت للطلبات القديمة
-        // اللي اتسجّلت بالفورم القديم (خانة واحدة) — ممكن تكون باسم واحد أو اتنين.
+        //   "MOHAMMED SALEM ALSAIARI"          → (MOHAMMED, "S",  ALSAIARI)
+        //   "MOHAMMED SALEM MOHAMMED ALSAIARI" → (MOHAMMED, "SM", ALSAIARI)
+        //   "AHMED ALI"                        → (AHMED,    null, ALI)
         private static (string given, string? initials, string sn) SplitEnglishName(string? fullNameEn, string fallback)
         {
-            // فاصل null = أي مسافة بيضاء (Tab، NBSP، سطر جديد) مش المسافة العادية بس.
-            // بيانات قديمة اتلصقت من Word ممكن يكون فيها NBSP بين الأسماء، وبالفاصل
-            // الصريح ' ' كان اسمين بيتحسبوا اسم واحد.
-            var parts = (fullNameEn ?? "").Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+            var parts = (fullNameEn ?? "").Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
             if (parts.Length == 0) return (fallback, null, fallback);
             if (parts.Length == 1) return (parts[0], null, parts[0]);
             if (parts.Length == 2) return (parts[0], null, parts[1]);
 
-            // اسم الأب فقط — حرف واحد، وخاصية initials في AD محدودة بـ 6 أحرف أصلاً
+            // حرف واحد فقط — أول حرف من اسم الأب (الاسم اللي بعد الأول مباشرة).
+            // كان بياخد أول حرف من *كل* الأسماء الوسطى، فاسم زي
+            // "MAHMOUD MOHAMED AHMED RASHED" كان بيطلع initials = "MA".
             var middle = char.ToUpperInvariant(parts[1][0]).ToString();
 
             return (parts[0], middle, parts[^1]);
@@ -347,15 +341,210 @@ namespace NUH_PORTAL.Services
                     string.IsNullOrWhiteSpace(department) ? student.department : department);
         }
 
+        // ─────────────────────────────────────────────────────────────────────
+        //  مزامنة حسابات الشبكة الموجودة أصلاً
+        // ---------------------------------------------------------------------
+        //  طلاب الجامعة عندهم حسابات في الأكتف دايركتوري من قبل النظام ده. فلما
+        //  نرفع بياناتهم من إكسل، إحنا مش عايزين ننشئ حسابات جديدة — عايزين
+        //  **نربط** كل طالب بحسابه القائم، عشان إجراءات زي «تخرّج» أو «فصل» تقدر
+        //  تعطّل الحساب الصح.
+        //
+        //  الربط بيتم بصيغة h + الرقم الجامعي، وde المعيار المتفق عليه في الجامعة.
+        //  العملية **قراءة فقط** من ناحية الأكتف دايركتوري: مفيش إنشاء ولا تعديل
+        //  ولا تعطيل — بنسجّل بس اسم الحساب وحالته في قاعدة بيانات النظام.
+        //
+        //  قابلة لإعادة التشغيل أي عدد مرات؛ بتحدّث الحالة للمربوطين وبتربط الجداد.
+        // ============================================================================
+        //  مزامنة حسابات الشبكة مع الأكتف دايركتوري — قراءة من الدومين وكتابة عندنا بس.
+        //  مفيش إنشاء ولا تعطيل ولا تعديل على أي حساب في الدومين هنا إطلاقًا.
+        //
+        //  وضعين منفصلين عن قصد:
+        //   • RefreshLinked: الطلاب المربوطين بالفعل — بنقرا حالتهم الحقيقية ونحدّثها.
+        //     ده اللي بيحل مشكلة «فعّلت الحساب في الدومين والنظام لسه شايفه معطّل».
+        //     مالوش أي خطر لأنه مابيربطش حد جديد.
+        //   • LinkNew: الطلاب اللي لسه مالهمش حساب مسجّل — بندوّر على h+الرقم الجامعي
+        //     ونربط. ⚠️ ده اللي فيه الخطر: رقم جامعي غلط في الشيت = ربط الطالب بحساب
+        //     شخص تاني، وأول «تخرّج» بعدها بيعطّل حساب الغلط. عشان كده فيه معاينة
+        //     (dryRun) وفحص تشابه أسماء.
+        // ============================================================================
+        public async Task<AdLinkResultDto> SyncAdAccountsAsync(int actorId, AdSyncMode mode, bool dryRun = false)
+        {
+            var result = new AdLinkResultDto
+            {
+                Mode = mode == AdSyncMode.LinkNew ? "linkNew" : "refreshLinked",
+                DryRun = dryRun
+            };
+
+            var query = _db.Students.Where(s => !s.IsDeleted && s.student_id != null);
+            query = mode == AdSyncMode.LinkNew
+                ? query.Where(s => s.ad_username == null || s.ad_username == "")
+                : query.Where(s => s.ad_username != null && s.ad_username != "");
+
+            var students = await query.OrderBy(s => s.student_id).ToListAsync();
+            result.Scanned = students.Count;
+
+            foreach (var student in students)
+            {
+                // في وضع التحديث بنستخدم اسم الحساب المسجّل فعلاً، مش المحسوب —
+                // ممكن يكون اتربط يدويًا باسم مختلف عن h+الرقم.
+                var sam = mode == AdSyncMode.RefreshLinked && !string.IsNullOrWhiteSpace(student.ad_username)
+                    ? student.ad_username!
+                    : "h" + student.student_id;
+
+                var wasLinked = !string.IsNullOrWhiteSpace(student.ad_username);
+
+                ADReadUserResult lookup;
+                try
+                {
+                    lookup = await _adService.GetUserBySamAccountNameAsync(sam);
+                }
+                catch (Exception ex)
+                {
+                    result.Failed++;
+                    _logger.LogError(ex, "AD lookup threw for {Sam}", sam);
+                    continue;
+                }
+
+                if (!lookup.Success)
+                {
+                    // «مش موجود» مختلف عن «الاستعلام فشل» — الأول بيانات، والتاني عطل.
+                    // بنفرّق بينهم عشان المستخدم يعرف يعمل إيه.
+                    if (lookup.Error != null && lookup.Error.Contains("not found", StringComparison.OrdinalIgnoreCase))
+                    {
+                        result.NotFound++;
+                        if (result.NotFoundStudents.Count < 200)
+                        {
+                            result.NotFoundStudents.Add(new AdLinkStudentDto
+                            {
+                                StudentId = student.student_id,
+                                FullName = student.full_name,
+                                ExpectedAccount = sam
+                            });
+                        }
+                    }
+                    else
+                    {
+                        result.Failed++;
+                        result.Error ??= lookup.Error;
+                        _logger.LogWarning("AD lookup failed for {Sam}: {Error}", sam, lookup.Error);
+                    }
+                    continue;
+                }
+
+                var newStatus = lookup.AccountEnabled ? AdStatus.enabled : AdStatus.disabled;
+
+                if (student.ad_status != newStatus)
+                {
+                    result.StatusChanged++;
+                    if (result.StatusChanges.Count < 200)
+                    {
+                        result.StatusChanges.Add(new AdStatusChangeDto
+                        {
+                            StudentId = student.student_id,
+                            FullName = student.full_name,
+                            Account = lookup.SamAccountName,
+                            From = student.ad_status?.ToString() ?? "unknown",
+                            To = newStatus.ToString()
+                        });
+                    }
+                }
+
+                // فحص تشابه الاسم — في وضع الربط بس، لأن المربوط بالفعل اتراجع قبل كده
+                if (mode == AdSyncMode.LinkNew && !NamesLookRelated(student.full_name_english, student.full_name, lookup.DisplayName)
+                    && result.NameMismatches.Count < 200)
+                {
+                    result.NameMismatches.Add(new AdNameMismatchDto
+                    {
+                        StudentId = student.student_id,
+                        SystemName = student.full_name_english ?? student.full_name,
+                        DirectoryName = lookup.DisplayName,
+                        Account = lookup.SamAccountName
+                    });
+                }
+
+                if (!dryRun)
+                {
+                    student.ad_username = lookup.SamAccountName;
+                    student.ad_status = newStatus;
+                    student.ad_last_sync_at = DateTime.UtcNow;
+                }
+
+                if (wasLinked) result.AlreadyLinked++; else result.Linked++;
+            }
+
+            if (!dryRun && (result.Linked > 0 || result.AlreadyLinked > 0))
+            {
+                _db.AuditLogs.Add(new AuditLog
+                {
+                    user_id = actorId,
+                    action = mode == AdSyncMode.LinkNew ? "ad_accounts_linked" : "ad_status_refreshed",
+                    target_table = "Students",
+                    target_id = 0,
+                    action_at = DateTime.UtcNow
+                });
+                await _db.SaveChangesAsync();
+            }
+
+            _logger.LogInformation(
+                "AD sync ({Mode}{Dry}): scanned={Scanned} linked={Linked} already={Already} statusChanged={Changed} notFound={NotFound} failed={Failed}",
+                result.Mode, dryRun ? ", dry-run" : "", result.Scanned, result.Linked, result.AlreadyLinked,
+                result.StatusChanged, result.NotFound, result.Failed);
+
+            return result;
+        }
+
+        // فحص متساهل عن قصد: كلمة واحدة مشتركة تكفي. الأسماء في الدومين مكتوبة
+        // بترتيب وصيغ مختلفة، ففحص صارم كان هيحط كل الطلاب في قايمة التحذير
+        // ويخلّيها بلا فايدة. الهدف نمسك الغلط الواضح: "Ahmed Ali" مقابل "Sara Hassan".
+        private static bool NamesLookRelated(string? systemNameEn, string? systemNameAr, string? directoryName)
+        {
+            if (string.IsNullOrWhiteSpace(directoryName)) return true;   // مفيش اسم نقارن بيه — مانحذّرش
+
+            var dirTokens = Tokenize(directoryName);
+            if (dirTokens.Count == 0) return true;
+
+            foreach (var name in new[] { systemNameEn, systemNameAr })
+            {
+                if (string.IsNullOrWhiteSpace(name)) continue;
+                if (Tokenize(name).Any(tok => dirTokens.Contains(tok)))
+                    return true;
+            }
+            return false;
+        }
+
+        private static HashSet<string> Tokenize(string value) =>
+            value.Split(new[] { ' ', '.', '-', '_', ',' }, StringSplitOptions.RemoveEmptyEntries)
+                 .Select(p => p.Trim().ToLowerInvariant())
+                 .Where(p => p.Length >= 3)
+                 .ToHashSet();
+
+        // الـ Base DN بيتبني من الدومين المضبوط في الإعدادات: nuh.edu.sa → DC=nuh,DC=edu,DC=sa
+        // ⚠️ كانت المسارات الاحتياطية مكتوبة صراحةً بـ DC=globalgroups,DC=com — دومين
+        //    قديم. لو صف الإعدادات في جدول ADConfigurations ناقص، النظام كان بيحاول
+        //    ينشئ الحساب في دومين مش موجود من غير ما يقول إنه بيستخدم قيمة احتياطية.
+        private string BaseDn() =>
+            string.Join(",", (_adConfig.Domain ?? "").Split('.', StringSplitOptions.RemoveEmptyEntries)
+                                                    .Select(p => $"DC={p}"));
+
         private async Task<string> GetOuForStudentAsync(Student student)
         {
             var config = await _db.ADConfigurations.FirstOrDefaultAsync(c => c.ConfigKey == ADConfigurationKeys.StudentOuPath);
-            var baseOu = config?.ConfigValue ?? "OU=New,OU=Students,DC=globalgroups,DC=com";
+            var baseOu = config?.ConfigValue;
+            if (string.IsNullOrWhiteSpace(baseOu))
+            {
+                baseOu = $"OU=New,OU=Students,{BaseDn()}";
+                _logger.LogWarning("ADConfigurations['{Key}'] غير مضبوط — استخدام المسار الافتراضي {Ou}",
+                    ADConfigurationKeys.StudentOuPath, baseOu);
+            }
 
             var isMale = student.gender == Gender.Male;
             var genderOu = isMale ? "Male" : "Female";
 
-            if (baseOu.Contains("OU=New"))
+            // ⚠️ المقارنة لازم تتجاهل حالة الحروف: المسار في الأكتف دايركتوري متكتب
+            //    OU=NEW بحروف كبيرة، والفحص القديم كان حرفيًا — فكان بينتج مسار
+            //    فيه OU=New مكررة (OU=Male,OU=New,OU=NEW,OU=STUDENTS,...) وde مسار
+            //    مش موجود. أسماء الـ DN في LDAP مش حساسة لحالة الحروف أصلاً.
+            if (baseOu.Contains("OU=New", StringComparison.OrdinalIgnoreCase))
             {
                 return $"OU={genderOu},{baseOu}";
             }
@@ -368,18 +557,18 @@ namespace NUH_PORTAL.Services
             var configMale = await _db.ADConfigurations.FirstOrDefaultAsync(c => c.ConfigKey == "male_group_dn");
             var configFemale = await _db.ADConfigurations.FirstOrDefaultAsync(c => c.ConfigKey == "female_group_dn");
 
-            if (configMale != null && configFemale != null)
-            {
-                var isMale = student.gender == Gender.Male;
-                return isMale
-                    ? (configMale.ConfigValue ?? "CN=NUH-Student-B,OU=Groups,DC=globalgroups,DC=com")
-                    : (configFemale.ConfigValue ?? "CN=NUH-Student-G,OU=Groups,DC=globalgroups,DC=com");
-            }
+            var isMale = student.gender == Gender.Male;
+            var configured = isMale ? configMale?.ConfigValue : configFemale?.ConfigValue;
+            if (!string.IsNullOrWhiteSpace(configured))
+                return configured;
 
-            var isMaleFallback = student.gender == Gender.Male;
-            return isMaleFallback
-                ? "CN=NUH-Student-B,OU=Groups,DC=globalgroups,DC=com"
-                : "CN=NUH-Student-G,OU=Groups,DC=globalgroups,DC=com";
+            // نفس الملاحظة اللي فوق: الاحتياطي بيتبني من الدومين المضبوط مش من دومين مكتوب في الكود
+            var fallback = isMale
+                ? $"CN=NUH-Student-B,OU=Groups,{BaseDn()}"
+                : $"CN=NUH-Student-G,OU=Groups,{BaseDn()}";
+            _logger.LogWarning("مجموعة الطلاب ({Gender}) غير مضبوطة في ADConfigurations — استخدام {Group}",
+                isMale ? "male" : "female", fallback);
+            return fallback;
         }
 
         private void LogLifecycleEvent(int studentId, string action, int performedBy, string details, string? ipAddress = null)

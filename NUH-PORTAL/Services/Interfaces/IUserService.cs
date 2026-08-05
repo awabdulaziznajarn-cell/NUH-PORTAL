@@ -5,7 +5,11 @@ namespace NUH_PORTAL.Services.Interfaces
     // منطق المستخدمين — قراءة + إدارة (إنشاء/تعديل/تفعيل/إسناد دور) + إضافة من الـ AD.
     public interface IUserService
     {
-        Task<List<UserListItemDto>> GetUsersAsync();
+        // ⚠️ الطلاب بيتعمل لهم حساب تلقائيًا أول ما يتحققوا برمز الجوال — مش موظفين
+        //    وماحدش بيديرهم من الشاشة دي، فالشاشة اتقسمت تبويبين:
+        //    studentsOnly=false → الموظفين، studentsOnly=true → حسابات الطلاب.
+        Task<List<UserListItemDto>> GetUsersAsync(bool studentsOnly = false);
+        Task<UserCountsDto> GetCountsAsync();
         Task<UserListItemDto> GetUserAsync(int id);
         Task<UserDetailDto> GetUserDetailAsync(int id);
 

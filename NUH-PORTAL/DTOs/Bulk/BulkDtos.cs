@@ -20,6 +20,8 @@ namespace NUH_PORTAL.DTOs.Bulk
         public string? AcademicLevel { get; set; }
         public string? Gender { get; set; }
         public string? BuildingNumber { get; set; }
+        // الدور: "0" = الأرضي، وبعدها 1..4. متخزّن كود مش نص عشان الفرز والمقارنة.
+        public string? FloorNumber { get; set; }
         public string? ApartmentNumber { get; set; }
         public string? RoomNumber { get; set; }
     }
@@ -46,6 +48,7 @@ namespace NUH_PORTAL.DTOs.Bulk
         public string? AcademicLevel { get; set; }
         public string? Gender { get; set; }
         public string? BuildingNumber { get; set; }
+        public string? FloorNumber { get; set; }
         public string? ApartmentNumber { get; set; }
         public string? RoomNumber { get; set; }
     }

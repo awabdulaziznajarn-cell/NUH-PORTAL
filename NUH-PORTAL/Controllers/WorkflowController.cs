@@ -6,7 +6,10 @@ using NUH_PORTAL.Services.Interfaces;
 namespace NUH_PORTAL.Controllers
 {
     // كنترولر رفيع — منطق الطوابير والاعتماد في IWorkflowActionService
-    [Authorize(Roles = "admin,supervisor,cyber")]
+    // الدخول للـ endpoints بصلاحية requests.view، أما مين يقدر يعتمد/يرفض فبيتحدّد
+    // من *مرحلة* الطلب: WorkflowActionService بيطلب requests.reviewHousing أو
+    // requests.reviewCyber أو requests.complete حسب الحالة الحالية.
+    [Authorize(Policy = "requests.view")]
     [Route("api/[controller]")]
     [ApiController]
     public class WorkflowController : ControllerBase
@@ -19,6 +22,11 @@ namespace NUH_PORTAL.Controllers
         [HttpGet("queue")]
         public async Task<IActionResult> GetQueue([FromQuery] string? stage)
             => Ok(await _service.GetQueueAsync(stage));
+
+        // GET api/Workflow/queue/my-count — عدد الطلبات المستنية إجراء من المستخدم الحالي
+        [HttpGet("queue/my-count")]
+        public async Task<IActionResult> GetMyQueueCount()
+            => Ok(new { count = await _service.GetMyQueueCountAsync() });
 
         // GET api/Workflow/queue/counts
         [HttpGet("queue/counts")]

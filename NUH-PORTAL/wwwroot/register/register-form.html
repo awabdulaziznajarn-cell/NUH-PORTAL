@@ -40,6 +40,13 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);col
 select.form-control{appearance:auto}
 .field-error{font-size:11px;color:#EF4444;font-weight:500;display:none;margin-top:4px}
 .field-error.show{display:block}
+/* تنبيه التكرار المبكر: يخصّ خانتين معًا (الرقم الجامعي + الهوية) فمكانه تحتهما
+   على عرض الصف كله، مش تحت خانة واحدة. */
+.dup-warn{display:none;grid-column:1/-1;margin-top:-4px;padding:11px 14px;border-radius:10px;
+          background:#FEF3C7;border:1px solid #FCD34D;color:#92400E;font-size:12.5px;
+          font-weight:600;line-height:1.8}
+.dup-warn.show{display:block}
+.form-control.dup{border-color:#F59E0B;background:#FFFBEB}
 .form-section{margin-bottom:24px}
 .form-section-title{font-size:15px;font-weight:700;color:var(--navy-dark);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--gray-100)}
 .form-row{display:flex;gap:12px}
@@ -120,7 +127,7 @@ select.form-control{appearance:auto}
 </div>
 </div>
 <span class="field-error" id="err-name_en">اكتب الاسم بالإنجليزية في الخانات الثلاث</span>
-<span class="field-error" id="val-name_match">عدد الأسماء في خانة "اسم الأب والجد" لازم يكون واحد في العربي والإنجليزي</span>
+<span class="field-error" id="val-name_match">يجب تطابق عدد الأسماء في خانة «اسم الأب والجد» بين العربية والإنجليزية</span>
 </div>
 <div class="form-row">
 <div class="field">
@@ -136,6 +143,8 @@ select.form-control{appearance:auto}
 <span class="field-error" id="err-national_id">حقل مطلوب</span>
 <span class="field-error" id="val-national_id">يجب أن تتكون الهوية الوطنية من 10 أرقام</span>
 </div>
+<!-- تنبيه التكرار يخصّ الخانتين معًا، فيمتد على عرض الصف تحتهما -->
+<div class="dup-warn" id="dupWarn"></div>
 </div>
 <div class="form-row">
 <div class="field">
@@ -211,7 +220,9 @@ select.form-control{appearance:auto}
 </div>
 <div class="field">
 <label>اسم المستخدم</label>
-<input type="text" id="ad_username" class="form-control">
+<!-- اسم مستخدم الشبكة بيتولّد تلقائيًا من الرقم الجامعي (h + الرقم) — للعرض فقط -->
+<input type="text" id="ad_username" class="form-control" readonly tabindex="-1"
+       style="background:#F1F5F9;color:#64748B;cursor:not-allowed">
 </div>
 </div>
 </div>
@@ -410,8 +421,9 @@ document.getElementById('gender').addEventListener('change', updateBuildings);
 });
 
 document.getElementById('student_id').addEventListener('input', function() {
+  // معاينة اسم مستخدم الشبكة — نفس اللي ADProvisioningService بيعمله
   var uf = document.getElementById('ad_username');
-  if (!uf._manuallyEdited) uf.value = this.value;
+  uf.value = this.value.trim() ? 'h' + this.value.trim() : '';
   validateFieldMulti('student_id', [
     { valId: 'val-student_id_start', regex: /^4/ },
     { valId: 'val-student_id_length', regex: /^\d{9}$/ }
@@ -449,16 +461,77 @@ document.getElementById('national_id').addEventListener('blur', function() {
   validateField('national_id','val-national_id',/^\d{10}$/);
 });
 
+// ============================================================================
+//  فحص مبكر للتكرار: الرقم الجامعي + رقم الهوية معًا.
+//  الغرض راحة الطالب — يعرف من أول خانتين بدل ما يملأ النموذج كله ويترفض.
+//  ليس حماية: فحص الإرسال على الخادم هو الذي يمنع فعلًا، وهو يرفض على أي حقل
+//  بمفرده (الجوال أو الهوية أو الرقم الجامعي). الفحص هنا أضيق عن قصد حتى لا
+//  يتحوّل إلى أداة استعلام عن أرقام الهوية.
+// ============================================================================
+var dupTimer = null;
+var dupBlocked = false;
+
+function setDupBlocked(on, message) {
+  dupBlocked = on;
+  var box = document.getElementById('dupWarn');
+  box.textContent = on ? (message || 'هذه البيانات مرتبطة بطلب مسجَّل.') : '';
+  box.classList.toggle('show', on);
+  document.getElementById('student_id').classList.toggle('dup', on);
+  document.getElementById('national_id').classList.toggle('dup', on);
+  var btn = document.getElementById('submitBtn');
+  btn.disabled = on;
+  btn.style.opacity = on ? '.55' : '';
+  btn.style.cursor = on ? 'not-allowed' : '';
+}
+
+async function runDuplicateCheck() {
+  // في وضع التعديل الطلب المتطابق هو طلب الطالب نفسه — الفحص هنا سيمنعه من
+  // إعادة تقديم طلبه هو. الفحص للتسجيل الجديد فقط.
+  if (editRequestId) return;
+
+  var sid = document.getElementById('student_id').value.trim();
+  var nid = document.getElementById('national_id').value.trim();
+
+  // الفحص لا ينطلق إلا بالحقلين صحيحين معًا
+  if (!/^4\d{8}$/.test(sid) || !/^\d{10}$/.test(nid)) { setDupBlocked(false); return; }
+
+  try {
+    var r = await fetch('/api/Registration/check-duplicate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ studentId: sid, nationalId: nid })
+    });
+    if (!r.ok) { setDupBlocked(false); return; }   // فشل الفحص لا يمنع — الخادم يحسم عند الإرسال
+    var d = await r.json();
+    setDupBlocked(!!d.found, d.message);
+  } catch (e) {
+    setDupBlocked(false);
+  }
+}
+
+// تأخير بسيط: الطالب بيكتب رقم الهوية رقمًا رقمًا، وما ينفعش نداء مع كل ضغطة
+function scheduleDuplicateCheck() {
+  if (editRequestId) return;
+  setDupBlocked(false);
+  if (dupTimer) clearTimeout(dupTimer);
+  dupTimer = setTimeout(runDuplicateCheck, 450);
+}
+
+['student_id', 'national_id'].forEach(function (id) {
+  var el = document.getElementById(id);
+  el.addEventListener('input', scheduleDuplicateCheck);
+  el.addEventListener('blur', function () {
+    if (dupTimer) clearTimeout(dupTimer);
+    runDuplicateCheck();
+  });
+});
+
 document.getElementById('phone').addEventListener('input', function() {
   validateField('phone','val-phone',/^9665\d{8}$/);
   var err = document.getElementById('err-phone'); if (this.value.trim()) err.classList.remove('show');
 });
 document.getElementById('phone').addEventListener('blur', function() {
   validateField('phone','val-phone',/^9665\d{8}$/);
-});
-
-document.getElementById('ad_username').addEventListener('input', function() {
-  this._manuallyEdited = true;
 });
 
 // الشقة بتتولد من الدور، والغرفة 1-4 — المنطق كله في js/housing-fields.js
@@ -520,8 +593,7 @@ function fillForm(data) {
     phone: 'phone', gender: 'gender', college: 'college',
     department: 'department', academic_level: 'academic_level',
     housing_building: 'housing_building', floor_number: 'floor_number',
-    room_number: 'room_number', apartment_number: 'apartment_number',
-    ad_username: 'ad_username'
+    room_number: 'room_number', apartment_number: 'apartment_number'
   };
   for (var key in map) {
     var el = document.getElementById(map[key]);
@@ -562,7 +634,6 @@ async function submitForm(e) {
     college: document.getElementById('college').value,
     department: document.getElementById('department').value,
     academic_level: document.getElementById('academic_level').value,
-    ad_username: document.getElementById('ad_username').value.trim(),
     housing_building: document.getElementById('housing_building').value,
     floor_number: document.getElementById('floor_number').value,
     room_number: document.getElementById('room_number').value.trim(),
@@ -600,6 +671,9 @@ async function submitForm(e) {
       if (r.ok) {
         localStorage.setItem('lastRequestId', d.requestId);
         localStorage.setItem('lastRequestNumber', d.requestNumber);
+        // ختم وقت التقديم — شاشة تتبع الطلب بتستخدمه عشان تفتح الطلب على طول
+        // بعد التقديم مباشرة من غير ما تطلب من الطالب يتحقق تاني.
+        localStorage.setItem('lastRequestAt', String(Date.now()));
         window.location.href = 'register-confirmation.html';
       } else {
         showAlert(d.message || 'فشل التقديم', 'error');

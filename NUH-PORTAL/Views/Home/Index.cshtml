@@ -1,15 +1,46 @@
 @model NUH_PORTAL.ViewModels.DashboardViewModel
 @{
     ViewData["Title"] = SharedLocalizer["Page_Home"].Value;
-    var role = (User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "").ToLowerInvariant();
     var fullName = User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "";
-    var isAdmin = role == "admin";
-    var canRegister = role != "cyber" && role != "user";
+
+    // ⚠️ الشاشة كانت بتتحكم بالدور. بقت بالصلاحية عشان أي دور جديد يشتغل صح.
+    bool Perm(string p) => User.HasClaim("permission", p);
+    var canReviewHousing = Perm("requests.reviewHousing");
+    var canReviewCyber   = Perm("requests.reviewCyber");
+    var canComplete      = Perm("requests.complete");
+    var canHousingView   = Perm("housing.view");
+    var canRegister      = Perm("students.create");
+
+    // الأرقام اللي بتستنى إجراء من المستخدم ده تحديدًا
+    var waitHousing  = canReviewHousing ? Model.Stats.submitted : 0;
+    var waitCyber    = canReviewCyber ? Model.Stats.cyber_review : 0;
+    var waitHandover = canComplete ? Model.Stats.housing_approved : 0;
+    var waitProvision= canComplete ? Model.Stats.cyber_approved + Model.Stats.ready_for_provisioning : 0;
+
+    var openRequests = Model.Stats.submitted + Model.Stats.housing_approved + Model.Stats.cyber_review
+                     + Model.Stats.cyber_approved + Model.Stats.ready_for_provisioning;
 }
 
 <style>
   /* خاص بلوحة التحكم فقط — الباقي كله من site.css */
-  .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-bottom:24px}
+  /* ⚠️ auto-fill كان بيسيب أعمدة فاضية في آخر السطر، فالبطاقات تتزنق على اليمين
+     ويفضل فراغ كبير على الشمال. auto-fit بيمدّد الموجود ويملا العرض. */
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}
+
+  /* بطاقات «يحتاج إجراءك» — أكبر وقابلة للضغط، ودي أهم حاجة في الشاشة */
+  .todo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin-bottom:8px}
+  .todo-card{display:flex;align-items:center;gap:16px;background:var(--white);border:1px solid var(--gray-200);
+             border-inline-start:4px solid var(--navy);border-radius:14px;padding:18px 20px;
+             text-decoration:none;color:inherit;transition:box-shadow .18s,transform .18s,border-color .18s}
+  .todo-card:hover{box-shadow:0 8px 24px rgba(27,42,94,.11);transform:translateY(-2px);border-color:var(--navy)}
+  .todo-card .n{font-size:34px;font-weight:800;color:var(--navy-dark);line-height:1;min-width:52px}
+  .todo-card .t{flex:1;min-width:0}
+  .todo-card .t b{display:block;font-size:13.5px;font-weight:700;color:var(--navy-dark);line-height:1.5}
+  .todo-card .t span{display:block;font-size:11.5px;color:var(--gray-500);margin-top:2px;line-height:1.6}
+  .todo-card .go{color:var(--gray-300);flex-shrink:0}
+  .todo-card:hover .go{color:var(--navy)}
+  .todo-card.zero{border-inline-start-color:var(--gray-200);opacity:.72}
+  .todo-card.zero .n{color:var(--gray-300)}
   .stat-card{background:var(--white);border-radius:16px;padding:20px;border:1px solid var(--gray-100);box-shadow:0 2px 8px rgba(27,42,94,.05);display:flex;flex-direction:column;gap:12px;transition:transform .2s,box-shadow .2s}
   .stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(27,42,94,.1)}
   .stat-top{display:flex;align-items:center;justify-content:space-between}
@@ -37,250 +68,122 @@
   <p >@SharedLocalizer["home_summaryToday"]</p>
 </div>
 
-@* ===== إحصائيات مسار الطلبات — أرقام حقيقية من السيرفر ===== *@
+@* ============================================================================
+   ⚠️ الشاشة دي كانت ٢٥ عدّاد على ٤ أقسام (مسار الطلبات، حالات الطلاب، نشاط اليوم،
+      حسابات الشبكة) ومعظمهم أصفار. لوحة التحكم المفروض تجاوب على سؤال واحد:
+      «فيه إيه مستني إجراء مني؟» — والباقي مكانه الشاشة المتخصصة فيه.
+
+      اتشال: «نشاط اليوم» (مكانه سجل الدخول وسجل الإجراءات)، «حالات الطلاب»
+      (مكانها شاشة الطلاب)، و«تنبيهات الأمان» (كانت فاضية دايمًا).
+   ============================================================================ *@
+
+@* ===== يحتاج إجراءك — بيظهر حسب صلاحيات المستخدم بس ===== *@
+@if (canReviewHousing || canReviewCyber || canComplete)
+{
+  <div class="section-heading">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    <span>يحتاج إجراءك</span>
+  </div>
+
+  @* ⚠️ كان فيه لافتة خضراء «مفيش طلبات مستنية إجراء منك» بتحلّ محل البطاقات لما
+     الكل صفر. اتشالت لسببين: الشاشة كانت بتتغيّر شكلها كل ما رقم يتحرك، والبطاقة
+     الصفر نفسها بتقول نفس المعلومة وزيادة — بتقول *أنهي* طابور فاضي وتفضل قابلة
+     للضغط. البطاقات دلوقتي ثابتة والصفر بيبان رمادي. *@
+  <div class="todo-grid">
+      @if (canReviewHousing)
+      {
+        <a class="todo-card @(waitHousing == 0 ? "zero" : "")" href="/Requests">
+          <span class="n">@waitHousing</span>
+          <span class="t"><b>بانتظار مراجعة الإسكان</b><span>طلبات لم تُراجَع بعد من إدارة الإسكان</span></span>
+          <span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
+        </a>
+      }
+      @if (canReviewCyber)
+      {
+        <a class="todo-card @(waitCyber == 0 ? "zero" : "")" href="/Requests">
+          <span class="n">@waitCyber</span>
+          <span class="t"><b>بانتظار مراجعة الأمن السيبراني</b><span>طلبات اعتمدتها إدارة الإسكان وأُحيلت إليك</span></span>
+          <span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
+        </a>
+      }
+      @if (canComplete)
+      {
+        <a class="todo-card @(waitHandover == 0 ? "zero" : "")" href="/Requests">
+          <span class="n">@waitHandover</span>
+          <span class="t"><b>بانتظار التحويل للمراجعة الإلكترونية</b><span>معتمدة من إدارة الإسكان وبانتظار الإحالة</span></span>
+          <span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
+        </a>
+        <a class="todo-card @(waitProvision == 0 ? "zero" : "")" href="/Requests">
+          <span class="n">@waitProvision</span>
+          <span class="t"><b>جاهز لإنشاء حساب الشبكة</b><span>الخطوة الأخيرة قبل إغلاق الطلب</span></span>
+          <span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
+        </a>
+      }
+  </div>
+}
+
+@* ===== نظرة عامة — أربعة أرقام بس ===== *@
+<div class="section-heading" style="margin-top:24px">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+  <span>نظرة عامة</span>
+</div>
+
 <div class="stats-grid">
-  <div class="stat-card">
+  <div class="stat-card" style="cursor:pointer" onclick="location.href='/Students'">
     <div class="stat-top">
       <div class="stat-icon" style="background:#E6F1FB">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       </div>
-      <span class="stat-badge" style="background:#E6F1FB;color:#1B2A5E" >@SharedLocalizer["home_badge_total"]</span>
     </div>
     <div class="stat-num">@Model.Stats.total</div>
-    <div class="stat-label" >@SharedLocalizer["home_totalStudents"]</div>
+    <div class="stat-label">إجمالي الطلاب</div>
   </div>
 
-  <div class="stat-card">
+  <div class="stat-card" style="cursor:pointer" onclick="location.href='/Requests'">
     <div class="stat-top">
       <div class="stat-icon" style="background:#FFF7ED">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#92400E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       </div>
-      <span class="stat-badge" style="background:#FFF7ED;color:#92400E" >@SharedLocalizer["home_badge_housingReview"]</span>
     </div>
-    <div class="stat-num">@Model.Stats.submitted</div>
-    <div class="stat-label" >@SharedLocalizer["home_pendingHousingReview"]</div>
+    <div class="stat-num">@openRequests</div>
+    <div class="stat-label">طلبات مفتوحة</div>
   </div>
 
-  <div class="stat-card">
-    <div class="stat-top">
-      <div class="stat-icon" style="background:#E0F2FE">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0369A1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+  @if (canHousingView)
+  {
+    <div class="stat-card" style="cursor:pointer" onclick="location.href='/Housing'">
+      <div class="stat-top">
+        <div class="stat-icon" style="background:#E1F5EE">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        </div>
       </div>
-      <span class="stat-badge" style="background:#E0F2FE;color:#0369A1" >@SharedLocalizer["home_badge_housingApproved"]</span>
+      <div class="stat-num" id="hs-enabled">0</div>
+      <div class="stat-label">حسابات شبكة مفعّلة</div>
     </div>
-    <div class="stat-num">@Model.Stats.housing_approved</div>
-    <div class="stat-label" >@SharedLocalizer["home_pendingCyberReview"]</div>
-  </div>
 
-  <div class="stat-card">
-    <div class="stat-top">
-      <div class="stat-icon" style="background:#F3E8FF">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B21A8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+    <div class="stat-card" style="cursor:pointer" onclick="location.href='/Housing'">
+      <div class="stat-top">
+        <div class="stat-icon" style="background:#FEF2F2">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#991B1B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        </div>
       </div>
-      <span class="stat-badge" style="background:#F3E8FF;color:#6B21A8" >@SharedLocalizer["home_badge_cyberReview"]</span>
+      <div class="stat-num" id="hs-disabled">0</div>
+      <div class="stat-label">حسابات شبكة معطّلة</div>
     </div>
-    <div class="stat-num">@Model.Stats.cyber_review</div>
-    <div class="stat-label" >@SharedLocalizer["home_underCyberReview"]</div>
-  </div>
-
-  <div class="stat-card">
-    <div class="stat-top">
-      <div class="stat-icon" style="background:#E1F5EE">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+  }
+  else
+  {
+    <div class="stat-card" style="cursor:pointer" onclick="location.href='/Requests'">
+      <div class="stat-top">
+        <div class="stat-icon" style="background:#E1F5EE">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        </div>
       </div>
-      <span class="stat-badge" style="background:#E1F5EE;color:#0F6E56" >@SharedLocalizer["home_badge_approved"]</span>
+      <div class="stat-num">@Model.Stats.completed</div>
+      <div class="stat-label">طلبات مكتملة</div>
     </div>
-    <div class="stat-num">@Model.Stats.cyber_approved</div>
-    <div class="stat-label" >@SharedLocalizer["home_approvedRequests"]</div>
-  </div>
-
-  <div class="stat-card">
-    <div class="stat-top">
-      <div class="stat-icon" style="background:#FFF7ED">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#92400E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-      </div>
-      <span class="stat-badge" style="background:#FFF7ED;color:#92400E" >@SharedLocalizer["home_badge_readyProvision"]</span>
-    </div>
-    <div class="stat-num">@Model.Stats.ready_for_provisioning</div>
-    <div class="stat-label" >@SharedLocalizer["home_readyForProvisioning"]</div>
-  </div>
-
-  <div class="stat-card">
-    <div class="stat-top">
-      <div class="stat-icon" style="background:#E1F5EE">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-      </div>
-      <span class="stat-badge" style="background:#E1F5EE;color:#0F6E56" >@SharedLocalizer["home_badge_completed"]</span>
-    </div>
-    <div class="stat-num">@Model.Stats.completed</div>
-    <div class="stat-label" >@SharedLocalizer["home_completedRequests"]</div>
-  </div>
-
-  <div class="stat-card">
-    <div class="stat-top">
-      <div class="stat-icon" style="background:#FEF2F2">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#991B1B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-      </div>
-      <span class="stat-badge" style="background:#FEF2F2;color:#991B1B" >@SharedLocalizer["home_badge_left"]</span>
-    </div>
-    <div class="stat-num">@Model.Stats.left</div>
-    <div class="stat-label" >@SharedLocalizer["home_studentsLeft"]</div>
-  </div>
+  }
 </div>
-
-@* ===== إحصائيات حالة الطلاب — من السيرفر ===== *@
-<div class="section-heading">
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-  <span >@SharedLocalizer["home_studentStats"]</span>
-</div>
-
-<div class="stats-grid">
-  <div class="stat-card" style="cursor:pointer" onclick="location.href='/Students'">
-    <div class="stat-top">
-      <div class="stat-icon" style="background:#E1F5EE">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      </div>
-      <span class="stat-badge" style="background:#E1F5EE;color:#0F6E56" >@SharedLocalizer["home_badge_active"]</span>
-    </div>
-    <div class="stat-num">@Model.StatusStats.Active</div>
-    <div class="stat-label" >@SharedLocalizer["home_activeStudents"]</div>
-  </div>
-
-  <div class="stat-card" style="cursor:pointer" onclick="location.href='/Students'">
-    <div class="stat-top">
-      <div class="stat-icon" style="background:#DBEAFE">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1E40AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-      </div>
-      <span class="stat-badge" style="background:#DBEAFE;color:#1E40AF" >@SharedLocalizer["home_badge_graduated"]</span>
-    </div>
-    <div class="stat-num">@Model.StatusStats.Graduated</div>
-    <div class="stat-label" >@SharedLocalizer["home_graduatedStudents"]</div>
-  </div>
-
-  <div class="stat-card" style="cursor:pointer" onclick="location.href='/Students'">
-    <div class="stat-top">
-      <div class="stat-icon" style="background:#FEF2F2">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#991B1B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-      </div>
-      <span class="stat-badge" style="background:#FEF2F2;color:#991B1B" >@SharedLocalizer["home_badge_dismissed"]</span>
-    </div>
-    <div class="stat-num">@Model.StatusStats.Dismissed</div>
-    <div class="stat-label" >@SharedLocalizer["home_dismissedStudents"]</div>
-  </div>
-
-  <div class="stat-card" style="cursor:pointer" onclick="location.href='/Students'">
-    <div class="stat-top">
-      <div class="stat-icon" style="background:#FFF7ED">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#92400E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      </div>
-      <span class="stat-badge" style="background:#FFF7ED;color:#92400E" >@SharedLocalizer["home_badge_transferred"]</span>
-    </div>
-    <div class="stat-num">@Model.StatusStats.Transferred</div>
-    <div class="stat-label" >@SharedLocalizer["home_transferredStudents"]</div>
-  </div>
-</div>
-
-@* ===== نشاط اليوم — بيتحمّل بالـ JS من سجل العمليات ===== *@
-<div class="section-heading">
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-  <span >@SharedLocalizer["home_todayActivity"]</span>
-</div>
-
-<div class="stats-grid">
-  <div class="stat-card">
-    <div class="stat-top">
-      <div class="stat-icon" style="background:#E8F4FD">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-      </div>
-      <span class="stat-badge" style="background:#E8F4FD;color:#1B2A5E" >@SharedLocalizer["home_badge_today"]</span>
-    </div>
-    <div class="stat-num" id="cnt-today-logins">0</div>
-    <div class="stat-label" >@SharedLocalizer["home_todayLogins"]</div>
-  </div>
-
-  <div class="stat-card">
-    <div class="stat-top">
-      <div class="stat-icon" style="background:#E1F5EE">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-      </div>
-      <span class="stat-badge" style="background:#E1F5EE;color:#0F6E56" >@SharedLocalizer["home_badge_today"]</span>
-    </div>
-    <div class="stat-num" id="cnt-today-student-ops">0</div>
-    <div class="stat-label" >@SharedLocalizer["home_todayStudentOps"]</div>
-  </div>
-
-  <div class="stat-card">
-    <div class="stat-top">
-      <div class="stat-icon" style="background:#FFF7ED">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#92400E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
-      </div>
-      <span class="stat-badge" style="background:#FFF7ED;color:#92400E" >@SharedLocalizer["home_badge_today"]</span>
-    </div>
-    <div class="stat-num" id="cnt-today-request-ops">0</div>
-    <div class="stat-label" >@SharedLocalizer["home_todayRequestOps"]</div>
-  </div>
-
-  <div class="stat-card">
-    <div class="stat-top">
-      <div class="stat-icon" style="background:#F3E8FF">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B21A8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-      </div>
-      <span class="stat-badge" style="background:#F3E8FF;color:#6B21A8" >@SharedLocalizer["home_badge_today"]</span>
-    </div>
-    <div class="stat-num" id="cnt-today-total-ops">0</div>
-    <div class="stat-label" >@SharedLocalizer["home_todayTotalOps"]</div>
-  </div>
-
-  <div class="stat-card">
-    <div class="stat-top">
-      <div class="stat-icon" style="background:#FEF2F2">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#991B1B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-      </div>
-      <span class="stat-badge" style="background:#FEF2F2;color:#991B1B" >@SharedLocalizer["home_badge_today"]</span>
-    </div>
-    <div class="stat-num" id="cnt-today-failed-logins">0</div>
-    <div class="stat-label" >@SharedLocalizer["home_todayFailedLogins"]</div>
-  </div>
-
-  <div class="stat-card">
-    <div class="stat-top">
-      <div class="stat-icon" style="background:#FEF2F2">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#991B1B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-      </div>
-      <span class="stat-badge" style="background:#FEF2F2;color:#991B1B" >@SharedLocalizer["home_badge_today"]</span>
-    </div>
-    <div class="stat-num" id="cnt-today-deletes">0</div>
-    <div class="stat-label" >@SharedLocalizer["home_todayDeletes"]</div>
-  </div>
-
-  <div class="stat-card">
-    <div class="stat-top">
-      <div class="stat-icon" style="background:#E6F1FB">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      </div>
-      <span class="stat-badge" style="background:#E6F1FB;color:#1B2A5E" >@SharedLocalizer["home_badge_today"]</span>
-    </div>
-    <div class="stat-num" id="cnt-today-active-users">0</div>
-    <div class="stat-label" >@SharedLocalizer["home_todayActiveUsers"]</div>
-  </div>
-</div>
-
-@if (isAdmin)
-{
-  @* ===== إحصائيات حسابات شبكة السكن — admin فقط (نفس صلاحية الـ API) ===== *@
-  <div class="section-heading">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-    <span >@SharedLocalizer["home_housingAccountStats"]</span>
-  </div>
-  <div class="stats-row" style="flex-wrap:wrap">
-    <div class="stat-pill"><div class="stat-pill-num" id="hs-total-accounts">0</div><div class="stat-pill-label" >@SharedLocalizer["home_totalAccounts"]</div></div>
-    <div class="stat-pill"><div class="stat-pill-num" id="hs-enabled">0</div><div class="stat-pill-label" >@SharedLocalizer["home_enabled"]</div></div>
-    <div class="stat-pill"><div class="stat-pill-num" id="hs-disabled">0</div><div class="stat-pill-label" >@SharedLocalizer["home_disabled"]</div></div>
-    <div class="stat-pill"><div class="stat-pill-num" id="hs-synced-today">0</div><div class="stat-pill-label" >@SharedLocalizer["home_syncedToday"]</div></div>
-    <div class="stat-pill"><div class="stat-pill-num" id="hs-without">0</div><div class="stat-pill-label" >@SharedLocalizer["home_withoutAccounts"]</div></div>
-    <div class="stat-pill"><div class="stat-pill-num" id="hs-total-students">0</div><div class="stat-pill-label" >@SharedLocalizer["home_totalStudents"]</div></div>
-  </div>
-}
 
 @* ===== آخر الطلاب + آخر الطلبات — من السيرفر ===== *@
 <div class="grid-2">
@@ -377,14 +280,6 @@
 <div class="grid-2">
   <div class="card">
     <div class="card-header">
-      <div class="card-title" >@SharedLocalizer["home_securityAlerts"]</div>
-      <a class="card-action" onclick="loadAlerts()" >@SharedLocalizer["home_refresh"]</a>
-    </div>
-    <div id="alerts-body" style="padding:16px;color:var(--gray-500);text-align:center" >@SharedLocalizer["home_noAlerts"]</div>
-  </div>
-
-  <div class="card">
-    <div class="card-header">
       <div class="card-title" >@SharedLocalizer["home_quickActions"]</div>
     </div>
     <div class="actions-grid">
@@ -440,7 +335,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@@4.4.7/dist/chart.umd.min.js"></script>
 <script src="/i18n.js"></script>
 <script>
-  var IS_ADMIN = @(isAdmin ? "true" : "false");
+  var CAN_HOUSING = @(canHousingView ? "true" : "false");
 
   // تواريخ الطلبات — نحولها لتوقيت المتصفح بنفس أسلوب الصفحة القديمة
   document.querySelectorAll('[data-dt]').forEach(function (el) {
@@ -477,18 +372,6 @@
     return v === k ? a : v;
   }
 
-  async function loadAuditStats() {
-    var data = await apiFetch('/api/auditlogs/today-stats');
-    if (!data) return;
-    animateNum('cnt-today-logins', data.todayLogins || 0);
-    animateNum('cnt-today-student-ops', data.todayStudentOps || 0);
-    animateNum('cnt-today-request-ops', data.todayRequestOps || 0);
-    animateNum('cnt-today-failed-logins', data.todayFailedLogins || 0);
-    animateNum('cnt-today-deletes', data.todayDeletes || 0);
-    animateNum('cnt-today-active-users', data.todayActiveUsers || 0);
-    animateNum('cnt-today-total-ops', data.todayTotalOps || 0);
-  }
-
   var auditActivityData;
   async function loadAuditActivity() {
     auditActivityData = await apiFetch('/api/auditlogs?pageSize=10&page=1');
@@ -509,30 +392,6 @@
       var dt = r.action_at ? fmt.format(new Date(r.action_at)) : '—';
       return '<tr><td>' + escHtml(user) + '</td><td>' + escHtml(translateAction(r.action)) + '</td><td>' + dt + '</td></tr>';
     }).join('') || '<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--gray-500)">' + t('home_noOperations') + '</td></tr>';
-  }
-
-  var alertsData;
-  async function loadAlerts() {
-    alertsData = await apiFetch('/api/auditlogs/alerts');
-    renderAlerts();
-  }
-  function renderAlerts() {
-    if (typeof alertsData === 'undefined') return;
-    var el = document.getElementById('alerts-body');
-    if (!el) return;
-    var data = alertsData;
-    if (!data || data.length === 0) {
-      el.innerHTML = '<div style="padding:8px;color:var(--gray-500);text-align:center">' + t('home_noSecurityAlerts') + '</div>';
-      return;
-    }
-    el.innerHTML = data.map(function (a) {
-      var bg = a.severity === 'high' ? '#FEF2F2' : '#FFF7ED';
-      var clr = a.severity === 'high' ? '#991B1B' : '#92400E';
-      return '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:8px;border-radius:10px;background:' + bg + ';border:1px solid ' + clr + '20">' +
-        '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="' + clr + '" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' +
-        '<div><div style="font-weight:600;font-size:13px;color:' + clr + '">' + escHtml(a.message_ar) + '</div>' +
-        '<div style="font-size:11px;color:' + clr + 'CC">' + t('home_countFmt').replace('{0}', a.count) + '</div></div></div>';
-    }).join('');
   }
 
   async function loadHousingStats() {
@@ -635,18 +494,17 @@
     }
   }
 
-  loadAuditStats();
+  // ⚠️ loadAuditStats و loadAlerts اتشالوا مع بطاقاتهم — كانوا بينادوا الـ API
+  //    على كل فتح للصفحة عشان أرقام مالهاش مكان تتعرض فيه.
   loadAuditActivity();
-  loadAlerts();
   loadNotifCard();
   loadCharts();
-  if (IS_ADMIN) loadHousingStats();
+  if (CAN_HOUSING) loadHousingStats();
 
   // اللغة تتبع ثقافة السيرفر — setLang بيترجم عناصر الترجمة وبيستدعي onLanguageChange
   window.onLanguageChange = function () {
     renderCharts();
     renderAuditActivity();
-    renderAlerts();
     renderNotifCard();
   };
   setLang(localStorage.getItem('uiLanguage') || 'ar');

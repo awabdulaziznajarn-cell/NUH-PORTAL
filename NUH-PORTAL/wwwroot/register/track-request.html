@@ -58,7 +58,11 @@ h1{font-size:22px;font-weight:800;text-align:center;margin-bottom:4px}
 .status-cyber_approved{background:#F3E5F5;color:#7B1FA2}
 .status-cyber_rejected{background:var(--red-light);color:var(--red)}
 .status-housing_rejected{background:var(--red-light);color:var(--red)}
-.timeline{margin-top:14px;position:relative}
+/* العنوان اتطلّع بره .timeline عشان الخط الرأسي ما يعديش جنبه، وبياخد نفس
+   إزاحة عناوين المراحل (28px) فيبان في عمود واحد معاها. */
+.timeline-title{font-size:13px;font-weight:700;color:var(--navy-dark);margin:16px 0 2px;padding-right:28px}
+[dir="ltr"] .timeline-title{padding-right:0;padding-left:28px}
+.timeline{margin-top:6px;position:relative}
 .timeline::before{content:'';position:absolute;top:8px;bottom:8px;right:12px;width:2px;background:var(--gray-200)}
 [dir="ltr"] .timeline::before{right:auto;left:12px}
 .timeline-item{display:flex;gap:12px;padding:10px 0;position:relative;padding-right:28px}
@@ -70,14 +74,25 @@ h1{font-size:22px;font-weight:800;text-align:center;margin-bottom:4px}
 .timeline-content{flex:1}
 .timeline-stage{font-size:13px;font-weight:600;color:var(--navy-dark)}
 .timeline-date{font-size:11px;color:var(--gray-500);margin-top:2px}
-.timeline-actor{font-size:12px;color:var(--gray-700);margin-top:2px}
+/* بطاقة «الحالة الآن» — سطر واحد يقول للطالب فين طلبه وإيه اللي جاي.
+   واحدة بس مش تحت كل خطوة: التكرار بيبقى ضوضاء والطالب بيبطّل يقراه. */
+.now-box{margin-top:16px;border:1px solid #C7D4F5;background:#F4F7FF;border-radius:12px;padding:14px 16px;display:flex;gap:11px;align-items:flex-start}
+.now-box svg{flex-shrink:0;margin-top:1px}
+.now-title{font-size:13.5px;font-weight:700;color:var(--navy);line-height:1.7}
+.now-text{font-size:12.5px;color:var(--gray-700);line-height:1.9;margin-top:2px}
+.now-next{display:block;font-size:11.5px;color:var(--gray-500);margin-top:6px}
 .reject-box{margin-top:14px;border:1px solid var(--red);background:var(--red-light);padding:16px;border-radius:12px}
+.info-box{margin-top:14px;border:1px solid #E65100;background:#FFF3E0;padding:16px;border-radius:12px}
+.info-box-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:#E65100;margin-bottom:6px}
+.info-box-text{font-size:13px;line-height:1.9;color:var(--navy-dark);white-space:pre-wrap;word-break:break-word}
+.info-box-btn{display:inline-block;margin-top:12px;background:#E65100;color:#fff;text-decoration:none;font-size:13px;font-weight:700;padding:10px 22px;border-radius:10px}
 .reject-box-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--red);margin-bottom:6px}
 .reject-box-text{font-size:13px;line-height:1.9;color:var(--navy-dark);white-space:pre-wrap;word-break:break-word}
 .done-box{margin-top:14px;border:2px solid var(--green);background:var(--green-light);padding:20px;border-radius:12px;text-align:center}
 .alert{padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:16px;display:none}
 .alert-error{background:var(--red-light);color:var(--red);border:1px solid var(--red);display:block}
 .alert-success{background:var(--green-light);color:var(--green);border:1px solid var(--green);display:block}
+.alert-info{background:#EEF3FF;color:var(--navy);border:1px solid #C7D4F5;display:block}
 .footer{text-align:center;font-size:11px;color:var(--gray-500);padding:20px;border-top:1px solid var(--gray-100);margin-top:auto;width:100%}
 .nav-link{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--gray-500);text-decoration:none;margin-bottom:16px}
 .nav-link:hover{color:var(--navy)}
@@ -120,7 +135,7 @@ h1{font-size:22px;font-weight:800;text-align:center;margin-bottom:4px}
   </div>
   <div id="numStep2" style="display:none">
     <div class="hint">
-      للتأكد إن الطلب طلبك، اكتب <strong>آخر ٤ أرقام</strong> من رقم الجوال المسجّل في الطلب
+      للتحقق من ملكية الطلب، يرجى إدخال <strong>آخر ٤ أرقام</strong> من رقم الجوال المسجّل فيه
       <strong id="numEcho"></strong>
     </div>
     <div class="form-group">
@@ -193,7 +208,7 @@ async function apiFetch(url, opts) {
 // رسالة مفهومة بدل "تعذر الاتصال بالخادم" لكل حاجة — محدّد المعدل بيرد 429
 // بجسم مش JSON، وكان بيتفسّر غلط كانقطاع اتصال.
 function httpMessage(r, fallback) {
-  if (r.status === 429) return 'محاولات كتيرة في وقت قصير — انتظر دقيقة وحاول تاني';
+  if (r.status === 429) return 'عدد المحاولات تجاوز الحد المسموح — يرجى الانتظار دقيقة ثم إعادة المحاولة';
   if (r.data && r.data.message) return r.data.message;
   if (r.status >= 500) return 'خطأ في الخادم، حاول بعد قليل';
   return fallback;
@@ -217,13 +232,16 @@ var STATUS_MAP = {
 
 function getHistoryLabel(toStage) {
   var map = {
+    // الصياغة موحّدة عن قصد: «تمت موافقة إدارة …» في الخطوتين. المراجعة
+    // متضمَّنة في الموافقة، وتوازي الصياغة هو اللي بيخلّي المسار يتقرأ مرتّبًا.
     pending_supervisor: 'تم تقديم الطلب',
     pending_cyber: 'تمت موافقة إدارة الإسكان',
-    ready_for_provisioning: 'تمت مراجعة إدارة الأمن السيبراني',
-    completed: 'مكتمل', approved: 'مكتمل', rejected: 'مرفوض',
+    ready_for_provisioning: 'تمت موافقة إدارة الأمن السيبراني',
+    completed: 'تم إنشاء حساب شبكة السكن', approved: 'تم إنشاء حساب شبكة السكن',
+    rejected: 'مرفوض',
     need_more_info: 'مطلوب استكمال بيانات',
     cyber_review: 'تمت موافقة إدارة الإسكان',
-    cyber_approved: 'تمت مراجعة إدارة الأمن السيبراني',
+    cyber_approved: 'تمت موافقة إدارة الأمن السيبراني',
     cyber_rejected: 'مرفوض', housing_rejected: 'مرفوض'
   };
   return map[toStage] || STATUS_MAP[toStage] || toStage;
@@ -392,20 +410,22 @@ function headerRows(d) {
 function renderDetail(d) {
   var html = '';
   var rejectionNotes = null;
+  var infoNotes = null;
 
   if (d.history && d.history.length) {
-    html += '<div class="timeline"><h4 style="font-size:13px;font-weight:700;margin:14px 0 4px">مسار الطلب</h4>';
+    html += '<div class="timeline-title">مراحل الطلب</div><div class="timeline">';
     d.history.forEach(function (h) {
       var isRejected = (h.toStage === 'rejected' || h.toStage === 'cyber_rejected' || h.toStage === 'housing_rejected');
       // سبب الرفض بيتاخد من خطوة الرفض نفسها — سواء جه من إدارة الإسكان
       // أو من الأمن السيبراني. الطالب لازم يشوفه عشان يعرف يصحّح إيه.
       if (isRejected && h.notes) rejectionNotes = h.notes;
+      // المطلوب استكماله بيتاخد من خطوته — الطالب لازم يعرف يعدّل إيه بالظبط
+      if (h.toStage === 'need_more_info' && h.notes) infoNotes = h.notes;
       html += '<div class="timeline-item">' +
           '<div class="timeline-dot ' + (isRejected ? 'rejected' : 'completed') + '"></div>' +
           '<div class="timeline-content">' +
             '<div class="timeline-stage">' + (isRejected ? '✕ ' : '✓ ') + escHtml(getHistoryLabel(h.toStage)) + '</div>' +
             '<div class="timeline-date">' + fmtDateTime(h.actionDate) + '</div>' +
-            '<div class="timeline-actor">' + escHtml(h.actorName || '') + '</div>' +
           '</div>' +
         '</div>';
     });
@@ -413,6 +433,8 @@ function renderDetail(d) {
   }
 
   var st = d.status || '';
+
+  html += renderNowBox(st);
 
   // الحالة "مرفوض" من غير سبب كانت بتسيب الطالب من غير أي إرشاد
   var isRejected = (st === 'rejected' || st === 'cyber_rejected' || st === 'housing_rejected');
@@ -423,6 +445,20 @@ function renderDetail(d) {
           'سبب الرفض' +
         '</div>' +
         '<div class="reject-box-text">' + escHtml(rejectionNotes) + '</div>' +
+      '</div>';
+  }
+
+  // «مطلوب استكمال بيانات» كانت بتظهر كحالة بس — من غير المطلوب إيه ولا إزاي
+  // الطالب يكمّله. الزر بيوديه على شاشة التحقق بالجوال، وبعد الـ OTP النظام
+  // بيفتحله طلبه في وضع التعديل مباشرة.
+  if (st === 'need_more_info') {
+    html += '<div class="info-box">' +
+        '<div class="info-box-title">' +
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' +
+          'المطلوب استكماله' +
+        '</div>' +
+        '<div class="info-box-text">' + (infoNotes ? escHtml(infoNotes) : 'يرجى مراجعة بيانات الطلب واستكمال الناقص.') + '</div>' +
+        '<a class="info-box-btn" href="register-phone.html">استكمال الطلب</a>' +
       '</div>';
   }
 
@@ -437,6 +473,94 @@ function renderDetail(d) {
 
   return html;
 }
+
+// ما الذي يحدث الآن، وما الخطوة التالية. مقصود إنها رسالة واحدة تتغيّر مع
+// الحالة — مش سطر مكرّر تحت كل خطوة. الحالات اللي ليها بطاقة مخصّصة
+// (مرفوض / بحاجة معلومات / مكتمل) مستثناة عشان ما نكرّرش نفس الكلام.
+var NOW_STATE = {
+  submitted: {
+    title: 'طلبك قيد المراجعة لدى إدارة الإسكان',
+    text: 'تم استلام طلبك وإحالته إلى الموظف المختص، وسيتم التواصل معك عند صدور القرار.',
+    next: 'الخطوة التالية: مراجعة إدارة الأمن السيبراني'
+  },
+  cyber_review: {
+    title: 'طلبك قيد مراجعة إدارة الأمن السيبراني',
+    text: 'اعتمدت إدارة الإسكان طلبك وأُحيل إلى إدارة الأمن السيبراني لاستكمال المراجعة.',
+    next: 'الخطوة التالية: تجهيز حساب شبكة السكن'
+  },
+  cyber_approved: {
+    title: 'اكتملت المراجعات ويجري تجهيز حسابك',
+    text: 'تمت الموافقة على طلبك من الجهتين، ويجري حاليًا إنشاء حساب شبكة السكن.',
+    next: 'الخطوة التالية: استلام اسم المستخدم وبيانات الدخول برسالة نصية'
+  }
+};
+NOW_STATE.pending_supervisor = NOW_STATE.submitted;
+NOW_STATE.pending_cyber = NOW_STATE.cyber_review;
+NOW_STATE.ready_for_provisioning = NOW_STATE.cyber_approved;
+
+function renderNowBox(status) {
+  var info = NOW_STATE[status];
+  if (!info) return '';
+  return '<div class="now-box">' +
+      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+      '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' +
+      '<div>' +
+        '<div class="now-title">' + info.title + '</div>' +
+        '<div class="now-text">' + info.text + '</div>' +
+        '<span class="now-next">' + info.next + '</span>' +
+      '</div>' +
+    '</div>';
+}
+
+// نافذة الثقة بعد التقديم: الطالب اللي لسه ضاغط "تقديم الطلب" من نفس المتصفح
+// مش منطقي نطلب منه يتحقق تاني في نفس اللحظة. خلال النافذة دي بناخد آخر ٤
+// أرقام من الجوال المتحقَّق منه في الخطوة الأولى ونفتح الطلب على طول. بعد
+// انتهاء النافذة بيرجع المسار الطبيعي: يكتب آخر ٤ أرقام بنفسه.
+// التحقق نفسه لسه بيتعمل على السيرفر — إحنا بنملا الخانة مش بنتخطاها.
+var TRUST_WINDOW_MS = 30 * 60 * 1000; // ٣٠ دقيقة
+
+// فتح مباشر من رابط: ?req=2026-000005[&last4=1234] — بييجي من شاشة التحقق أو
+// من شاشة تأكيد التقديم، فمالوش لازمة يعيد كتابة بيانات إحنا عارفينها.
+(function autoOpenFromUrl() {
+  try {
+    var q = new URLSearchParams(window.location.search);
+    var req = q.get('req') || q.get('number');
+    var l4 = q.get('last4');
+
+    // تسليم لمرة واحدة من شاشة «طلباتي» — الطالب اتحقق هناك بالفعل.
+    // بنقراه ونمسحه فورًا عشان ما يفضلش شغّال بعد كده.
+    var handoff = null;
+    try {
+      handoff = localStorage.getItem('openRequestNumber');
+      if (handoff) localStorage.removeItem('openRequestNumber');
+    } catch (e) { handoff = null; }
+    if (!req && handoff) req = handoff;
+
+    if (!req) return;
+
+    // مافيش last4 في الرابط؟ نجرّب نافذة الثقة قبل ما نطلبها من الطالب.
+    // بنتأكد إن الرقم اللي في الرابط هو نفسه آخر طلب اتقدّم من المتصفح ده،
+    // عشان الرابط ما يتبعتش لحد تاني ويفتح عنده من غير تحقق.
+    if (!/^\d{4}$/.test(l4 || '')) {
+      var savedNum = localStorage.getItem('lastRequestNumber') || '';
+      var savedAt = parseInt(localStorage.getItem('lastRequestAt') || '0', 10);
+      var savedMob = (localStorage.getItem('regMobile') || '').replace(/\D/g, '');
+      var fresh = savedAt > 0 && (Date.now() - savedAt) < TRUST_WINDOW_MS;
+      var trusted = (fresh && savedNum === req) || (handoff && handoff === req);
+      if (trusted && savedMob.length >= 4) l4 = savedMob.slice(-4);
+    }
+
+    document.getElementById('requestNumberInput').value = req;
+    goToLast4();
+    if (/^\d{4}$/.test(l4 || '')) {
+      document.getElementById('last4Input').value = l4;
+      trackByNumber();
+    } else {
+      // خارج نافذة الثقة: رقم الطلب متعبّي والمؤشر واقف على خانة التحقق.
+      showAlert('للتحقق من ملكية الطلب، يرجى إدخال آخر ٤ أرقام من رقم جوالك', 'info');
+    }
+  } catch (e) { /* رابط غير صالح — الصفحة تفضل تشتغل عادي */ }
+})();
 
 document.getElementById('requestNumberInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') goToLast4(); });
 document.getElementById('last4Input').addEventListener('keydown', function (e) { if (e.key === 'Enter') trackByNumber(); });

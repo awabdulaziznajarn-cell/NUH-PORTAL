@@ -4225,4 +4225,25 @@
   <data name="reg_optSelectRoom" xml:space="preserve">
     <value>Select room</value>
   </data>
+  <data name="loc_building" xml:space="preserve">
+    <value>Building</value>
+  </data>
+  <data name="loc_floor" xml:space="preserve">
+    <value>Floor</value>
+  </data>
+  <data name="loc_apartment" xml:space="preserve">
+    <value>Apt</value>
+  </data>
+  <data name="loc_room" xml:space="preserve">
+    <value>Room</value>
+  </data>
+  <data name="att_preview" xml:space="preserve">
+    <value>Preview</value>
+  </data>
+  <data name="att_download" xml:space="preserve">
+    <value>Download</value>
+  </data>
+  <data name="att_close" xml:space="preserve">
+    <value>Close</value>
+  </data>
 </root>

@@ -10,6 +10,11 @@ namespace NUH_PORTAL.Models
         public DateTime ActionDate { get; set; }
         public string? Notes { get; set; }
 
+        // التعديلات التي أجراها الطالب في هذه الخطوة، بصيغة JSON منظّمة:
+        // [{ "field":"housing_building", "label":"رقم المبنى", "old":"40", "new":"43" }]
+        // تُستخدم لتعليم الحقول المتغيّرة في شاشة تفاصيل الطلب.
+        public string? ChangesJson { get; set; }
+
         public Request? Request { get; set; }
         public User? Actor { get; set; }
     }

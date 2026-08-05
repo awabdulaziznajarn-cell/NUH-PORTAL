@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using NUH_PORTAL.Core.Exceptions;
 using NUH_PORTAL.Data;
 using NUH_PORTAL.Models;
 using NUH_PORTAL.Models.Enums;
 using NUH_PORTAL.Services.Interfaces;
-using System.Text.Json;
 
 namespace NUH_PORTAL.Services
 {
@@ -54,6 +54,17 @@ namespace NUH_PORTAL.Services
             return digits;
         }
 
+        // ⚠️ الحالات "المفتوحة" لازم تشمل مصطلحات المسارين: مسار تسجيل الطالب
+        //    (pending_*) ومسار طلبات الموظف (submitted / cyber_review / cyber_approved).
+        //    كانت الأولى بس، فطلب مفتوح عمله موظف مكانش بيمنع تكرار.
+        //    الحالات المنتهية (مكتمل/مرفوض) مش مفتوحة عن قصد — الطالب المرفوض
+        //    لازم يقدر يقدّم من جديد.
+        private static readonly string[] OpenStatuses =
+        {
+            "submitted", "pending_supervisor", "pending_cyber",
+            "cyber_review", "cyber_approved", "ready_for_provisioning", "need_more_info"
+        };
+
         private static bool PhonesMatch(string a, string b)
         {
             if (string.IsNullOrWhiteSpace(a) || string.IsNullOrWhiteSpace(b)) return false;
@@ -65,11 +76,9 @@ namespace NUH_PORTAL.Services
             if (string.IsNullOrWhiteSpace(mobile))
                 return false;
 
-            var activeStatuses = new[] { "pending_supervisor", "pending_cyber", "ready_for_provisioning", "need_more_info" };
-
             var requests = await _context.Requests
                 .Include(r => r.Student)
-                .Where(r => r.RequestType == RequestType.self_registration && activeStatuses.Contains(r.Status))
+                .Where(r => OpenStatuses.Contains(r.Status))
                 .ToListAsync();
 
             foreach (var req in requests)
@@ -77,21 +86,10 @@ namespace NUH_PORTAL.Services
                 if (excludeRequestId.HasValue && req.Id == excludeRequestId.Value)
                     continue;
 
-                if (!string.IsNullOrEmpty(req.RegistrationData))
-                {
-                    try
-                    {
-                        var data = JsonSerializer.Deserialize<JsonElement>(req.RegistrationData);
-                        if (data.TryGetProperty("mobile", out var mobileProp))
-                        {
-                            var reqMobile = mobileProp.GetString();
-                            if (PhonesMatch(reqMobile, mobile))
-                                return true;
-                        }
-                    }
-                    catch { }
-                }
-
+                // ⚠️ كان الفحص يقرأ الجوال من registration_data أولًا ثم من سجل
+                //    الطالب. الاتنين كانوا بيفترقوا بعد إعادة التقديم، فالفحص كان
+                //    ممكن يمسك رقمًا قديمًا. المصدر الوحيد الآن هو سجل الطالب —
+                //    وإعادة التقديم تحدّثه عبر RegistrationDataMapper.
                 if (req.Student != null && !string.IsNullOrEmpty(req.Student.phone) && PhonesMatch(req.Student.phone, mobile))
                     return true;
             }
@@ -104,19 +102,125 @@ namespace NUH_PORTAL.Services
             if (string.IsNullOrWhiteSpace(studentId))
                 return false;
 
-            var activeStatuses = new[] { "pending_supervisor", "pending_cyber", "ready_for_provisioning", "need_more_info" };
-
             var student = await _context.Students.FirstOrDefaultAsync(s => s.student_id == studentId);
             if (student == null)
                 return false;
 
             var query = _context.Requests
-                .Where(r => r.StudentId == student.Id && r.RequestType == RequestType.self_registration && activeStatuses.Contains(r.Status));
+                .Where(r => r.StudentId == student.Id && OpenStatuses.Contains(r.Status));
 
             if (excludeRequestId.HasValue)
                 query = query.Where(r => r.Id != excludeRequestId.Value);
 
             return await query.AnyAsync();
+        }
+
+        // ====================================================================
+        //  فحص موحّد للتكرار — بيرجّع رقم الطلب المفتوح المتعارض بدل مجرد true.
+        //  ثلاث مفاتيح هوية: الرقم الجامعي، رقم الهوية، رقم الجوال. أي واحد فيهم
+        //  يكفي للمنع، لأن الثلاثة بيميّزوا نفس الشخص.
+        //  بيغطّي المسارين (طلب الطالب وطلب الموظف) عشان مايبقاش فيه باب خلفي:
+        //  الطالب يتقدّم، والموظف يتقدّم له تاني، فيبقى ليه طلبين مفتوحين.
+        // ====================================================================
+        // الترتيب مقصود: الرقم الجامعي ثم الهوية ثم الجوال — من الأقوى دلالة على
+        // الهوية إلى الأضعف، عشان الرسالة تشاور على أهم حقل متعارض.
+        private static DuplicateField? MatchField(Models.Student s, string? studentId, string? nationalId, string? mobile)
+        {
+            if (!string.IsNullOrWhiteSpace(studentId)  && s.student_id  == studentId.Trim())  return DuplicateField.StudentId;
+            if (!string.IsNullOrWhiteSpace(nationalId) && s.national_id == nationalId.Trim()) return DuplicateField.NationalId;
+            if (!string.IsNullOrWhiteSpace(mobile)     && PhonesMatch(s.phone ?? "", mobile)) return DuplicateField.Mobile;
+            return null;
+        }
+
+        private static string NumberOf(Request r) => r.RequestNumber ?? $"{r.SubmittedAt.Year}-{r.Id:D6}";
+
+        public async Task<DuplicateMatch?> FindOpenRequestNumberAsync(string? studentId, string? nationalId, string? mobile, int? excludeRequestId = null)
+        {
+            var open = await _context.Requests
+                .Include(r => r.Student)
+                .Where(r => OpenStatuses.Contains(r.Status))
+                .OrderBy(r => r.SubmittedAt)
+                .ToListAsync();
+
+            foreach (var req in open)
+            {
+                if (excludeRequestId.HasValue && req.Id == excludeRequestId.Value) continue;
+                var s = req.Student;
+                if (s == null) continue;
+
+                // (كان هنا فحص احتياطي يقرأ الجوال من registration_data. اتشال:
+                //  سجل الطالب بيتعمل دايمًا مع الطلب، والسطر اللي فوق بيتخطّى أي
+                //  طلب بلا سجل طالب أصلًا — فالفحص ده كان بيضيف مصدر تاني للبيانات
+                //  من غير أي فايدة.)
+                var field = MatchField(s, studentId, nationalId, mobile);
+                if (field != null)
+                    return new DuplicateMatch { Field = field.Value, RequestNumber = NumberOf(req) };
+            }
+
+            return null;
+        }
+
+        // ====================================================================
+        //  الطلب المكتمل لا يُعدّ «مفتوحًا»، لكنه لا يعني أن الطالب يستطيع التسجيل
+        //  من جديد: هو بالفعل مسجَّل في الإسكان وله حساب شبكة. التسجيل مرة أخرى
+        //  كان يُنشئ طلبًا ثانيًا لنفس الشخص وينتهي بمحاولة إنشاء حساب موجود.
+        //
+        //  الاستثناء المقصود: الطالب الذي غادر السكن أو تخرّج أو حُوِّل — حالته لم
+        //  تعد active، فيُسمح له بالتسجيل من جديد دون أي إجراء إضافي. أي أن إعادة
+        //  فتح التسجيل لطالب سابق تتم من شاشة «تحديث حالة الطالب»، لا بالتحايل هنا.
+        // ====================================================================
+        private static readonly string[] HousedStatuses = { "completed", "approved" };
+
+        public async Task<DuplicateMatch?> FindActiveHousingRequestNumberAsync(string? studentId, string? nationalId, string? mobile)
+        {
+            var done = await _context.Requests
+                .Include(r => r.Student)
+                .Where(r => HousedStatuses.Contains(r.Status))
+                .OrderByDescending(r => r.SubmittedAt)
+                .ToListAsync();
+
+            foreach (var req in done)
+            {
+                var s = req.Student;
+                if (s == null || s.IsDeleted) continue;
+                if (s.status != StudentState.active) continue;   // غادر / تخرّج / حُوِّل → يُسمح بالتسجيل
+
+                var field = MatchField(s, studentId, nationalId, mobile);
+                if (field != null)
+                    return new DuplicateMatch { Field = field.Value, RequestNumber = NumberOf(req) };
+            }
+
+            return null;
+        }
+
+        public async Task<DuplicateMatch?> FindByStudentAndNationalIdAsync(string studentId, string nationalId)
+        {
+            if (string.IsNullOrWhiteSpace(studentId) || string.IsNullOrWhiteSpace(nationalId))
+                return null;
+
+            var sid = studentId.Trim();
+            var nid = nationalId.Trim();
+
+            // الطلبات المفتوحة والمكتملة معًا — أي منهما يمنع طلبًا جديدًا
+            var blocking = OpenStatuses.Concat(HousedStatuses).ToArray();
+
+            var req = await _context.Requests
+                .Include(r => r.Student)
+                .Where(r => blocking.Contains(r.Status)
+                            && r.Student != null
+                            && !r.Student.IsDeleted
+                            && r.Student.student_id == sid
+                            && r.Student.national_id == nid)
+                .OrderByDescending(r => r.SubmittedAt)
+                .FirstOrDefaultAsync();
+
+            if (req == null) return null;
+
+            // الطالب المكتمل الذي غادر أو تخرّج لا يمنع التسجيل من جديد
+            if (HousedStatuses.Contains(req.Status) && req.Student!.status != StudentState.active)
+                return null;
+
+            return new DuplicateMatch { Field = DuplicateField.StudentId, RequestNumber = NumberOf(req) };
         }
 
         public async Task<Request> CreateRegistrationRequestAsync(int studentId, string requestNumber, string registrationData, int submittedBy)
@@ -291,7 +395,14 @@ namespace NUH_PORTAL.Services
                     _logger.LogError("AD provisioning FAILED for self-registration student {Id}: {Error}", student.student_id, provResult.Error);
                     request.Status = "ready_for_provisioning";
                     await _context.SaveChangesAsync();
-                    return false;
+
+                    // ⚠️ كان بيرجّع false، والنتيجة إن المستخدم بياخد رسالة
+                    //    "لا يمكن اعتماد الطلب في المرحلة الحالية" — وde كذب:
+                    //    المرحلة صح تمامًا، اللي فشل هو إنشاء الحساب في الأكتف
+                    //    دايركتوري. السبب الحقيقي كان بيتدفن في اللوج بس.
+                    //    نفس صيغة الرسالة المستخدمة في RequestService.ReviewAsync.
+                    throw new UserFriendlyException(
+                        $"فشل إنشاء حساب الشبكة — لم يتم إكمال الطلب: {provResult.Error}", 500);
                 }
 
                 _logger.LogInformation("AD account created for self-registration student {Id}: {Sam}", student.student_id, provResult.SamAccountName);
@@ -370,7 +481,7 @@ namespace NUH_PORTAL.Services
             return true;
         }
 
-        public async Task<string?> ResubmitRequestAsync(int requestId, int userId, string? registrationData = null)
+        public async Task<string?> ResubmitRequestAsync(int requestId, int userId, string? registrationData = null, string? notes = null, string? changesJson = null)
         {
             var req = await _context.Requests.FindAsync(requestId);
             if (req == null || req.RequestType != RequestType.self_registration || req.Status != "need_more_info")
@@ -387,7 +498,10 @@ namespace NUH_PORTAL.Services
             req.ReviewedBy = null;
 
             await _context.SaveChangesAsync();
-            await _workflowService.LogTransitionAsync(requestId, "need_more_info", targetStage, userId, "إعادة تقديم بعد طلب معلومات");
+            // الملاحظة بتيجي من طبقة التدفق ومعاها ملخّص التعديلات — من غيرها المراجع
+            // كان بيشوف إن الطلب رجعله من غير ما يعرف الطالب غيّر إيه.
+            await _workflowService.LogTransitionAsync(requestId, "need_more_info", targetStage, userId,
+                string.IsNullOrWhiteSpace(notes) ? "إعادة تقديم بعد طلب معلومات" : notes, changesJson);
 
             return targetStage;
         }

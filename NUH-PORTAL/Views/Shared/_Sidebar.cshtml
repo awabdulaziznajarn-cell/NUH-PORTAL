@@ -1,4 +1,13 @@
 @* السايدبار الموحد — قوائم parent/child بتتفتح وتتقفل (accordion). النصوص من SharedResource (.resx). *@
+@{
+  // إخفاء عنوان المجموعة نفسه لو المستخدم مالوش أي شاشة جوّاها — عشان مايظهرش قسم فاضي
+  bool Perm(string p) => User.HasClaim("permission", p);
+  var canStudents = Perm("students.view") || Perm("students.create")
+                    || Perm("students.bulkImport") || Perm("students.changeStatus");
+  var canRequests = Perm("requests.view") || Perm("housing.view");
+  var canSystem   = Perm("reports.view") || Perm("auditLogs.view") || Perm("errorLogs.view")
+                    || Perm("signInLog.view") || Perm("users.view") || Perm("roles.view");
+}
 <style>
   /* السايدبار بطول الشاشة، والقائمة بتعمل scroll جوّاها عشان توصل لكل الشاشات (إعدادات النظام تحت) */
   .sidebar{height:100vh}
@@ -33,6 +42,8 @@
       <span>@SharedLocalizer["Nav_Dashboard"]</span>
     </a>
 
+    @if (canStudents)
+    {
     <div class="nav-group" data-group="students">
       <button class="nav-group-header" type="button" onclick="toggleNavGroup(this)">
         <svg class="ng-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
@@ -40,29 +51,42 @@
         <svg class="ng-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
       <div class="nav-group-body">
-        <a class="nav-item" href="/Students">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-          <span>@SharedLocalizer["Nav_StudentsList"]</span>
-        </a>
-        <a class="nav-item" href="/Register">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
-          <span>@SharedLocalizer["Nav_RegisterSingle"]</span>
-        </a>
-        <a class="nav-item" href="/Bulk">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 11 9 11 11 13 11 13 12 10 12 10 9"/></svg>
-          <span>@SharedLocalizer["Nav_BulkExcel"]</span>
-        </a>
-        <a class="nav-item" href="/StudentStatus">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          <span>@SharedLocalizer["Nav_UpdateStatus"]</span>
-        </a>
-        <a class="nav-item" href="/Departure">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          <span>@SharedLocalizer["Nav_Departure"]</span>
-        </a>
+        @if (User.HasClaim("permission", "students.view"))
+        {
+          <a class="nav-item" href="/Students">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+            <span>@SharedLocalizer["Nav_StudentsList"]</span>
+          </a>
+        }
+        @if (User.HasClaim("permission", "students.create"))
+        {
+          <a class="nav-item" href="/Register">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+            <span>@SharedLocalizer["Nav_RegisterSingle"]</span>
+          </a>
+        }
+        @if (User.HasClaim("permission", "students.bulkImport"))
+        {
+          <a class="nav-item" href="/Bulk">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 11 9 11 11 13 11 13 12 10 12 10 9"/></svg>
+            <span>@SharedLocalizer["Nav_BulkExcel"]</span>
+          </a>
+        }
+        @if (User.HasClaim("permission", "students.changeStatus"))
+        {
+          <a class="nav-item" href="/StudentStatus">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span>@SharedLocalizer["Nav_UpdateStatus"]</span>
+          </a>
+        }
+        @* شاشة «المغادرة والإخلاء» اتشالت — كانت نسخة تانية من نفس الفورم اللي في
+           /StudentStatus بنفس أنواع الحالات. الرابط القديم بيحوّل عليها من Program.cs *@
       </div>
     </div>
+    }
 
+    @if (canRequests)
+    {
     <div class="nav-group" data-group="requests">
       <button class="nav-group-header" type="button" onclick="toggleNavGroup(this)">
         <svg class="ng-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
@@ -70,16 +94,25 @@
         <svg class="ng-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
       <div class="nav-group-body">
-        <a class="nav-item" href="/Requests">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-          <span>@SharedLocalizer["Nav_AllRequests"]</span>
-        </a>
-        <a class="nav-item" href="/Housing">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-          <span>@SharedLocalizer["Nav_Housing"]</span>
-        </a>
+        @if (User.HasClaim("permission", "requests.view"))
+        {
+          <a class="nav-item" href="/Requests">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            <span>@SharedLocalizer["Nav_AllRequests"]</span>
+            @* عدد الطلبات المستنية إجراء من المستخدم الحالي — بيتملى من الـ API تحت *@
+            <span id="navRequestsBadge" style="display:none;margin-inline-start:auto;background:#DC2626;color:#fff;font-size:11px;font-weight:700;min-width:20px;height:20px;border-radius:10px;align-items:center;justify-content:center;padding:0 6px;line-height:1"></span>
+          </a>
+        }
+        @if (User.HasClaim("permission", "housing.view"))
+        {
+          <a class="nav-item" href="/Housing">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+            <span>@SharedLocalizer["Nav_Housing"]</span>
+          </a>
+        }
       </div>
     </div>
+    }
 
     @if (User.HasClaim("permission", "lookups.manage"))
     {
@@ -114,6 +147,8 @@
       </div>
     }
 
+    @if (canSystem)
+    {
     <div class="nav-group" data-group="system">
       <button class="nav-group-header" type="button" onclick="toggleNavGroup(this)">
         <svg class="ng-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -121,10 +156,13 @@
         <svg class="ng-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
       <div class="nav-group-body">
-        <a class="nav-item" href="/Reports">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-          <span>@SharedLocalizer["Nav_Reports"]</span>
-        </a>
+        @if (User.HasClaim("permission", "reports.view"))
+        {
+          <a class="nav-item" href="/Reports">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            <span>@SharedLocalizer["Nav_Reports"]</span>
+          </a>
+        }
         @if (User.HasClaim("permission", "auditLogs.view"))
         {
           <a class="nav-item" href="/AuditLog">
@@ -162,6 +200,7 @@
         }
       </div>
     </div>
+    }
   </nav>
 
   <div class="sidebar-footer">
@@ -216,5 +255,31 @@
       });
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+
+    // ===== شارة الطلبات المستنية =====
+    // جرس الإشعارات ممكن يعدّي من غير ما حد ياخد باله، فبنحط الرقم على الزر نفسه.
+    // العدد = الطلبات الواقفة عند مرحلة المستخدم الحالي، فبيقل لوحده مع كل طلب بيتقفل.
+    // الكوكي بتتبعت تلقائيًا فمش محتاجين ترويسة توثيق هنا.
+    async function refreshRequestsBadge() {
+      var badge = document.getElementById('navRequestsBadge');
+      if (!badge) return;
+      try {
+        var res = await fetch('/api/workflow/queue/my-count', { credentials: 'same-origin' });
+        if (!res.ok) return;                       // 401/403 — مانعملش حاجة
+        var data = await res.json();
+        var n = (data && data.count) || 0;
+        if (n > 0) {
+          badge.textContent = n > 99 ? '99+' : n;
+          badge.style.display = 'inline-flex';
+        } else {
+          badge.style.display = 'none';
+        }
+      } catch (e) { /* الشبكة — الشارة مش حاجة حرجة */ }
+    }
+
+    refreshRequestsBadge();
+    setInterval(refreshRequestsBadge, 60000);
+    // بعد أي اعتماد/رفض في نفس التبويب الصفحة بتعيد التحميل، وبيتحدّث الرقم معاها.
+    window.refreshRequestsBadge = refreshRequestsBadge;
   })();
 </script>

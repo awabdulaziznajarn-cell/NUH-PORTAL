@@ -165,6 +165,28 @@ namespace NUH_PORTAL.Services
                 }
             }
 
+            // ⚠️ الشاشة كانت بتقرا الحالة الحقيقية من الدومين (adDetails فوق) وترميها،
+            //    وتعرض القيمة المسجّلة في قاعدة البيانات. فلو حد فعّل أو عطّل الحساب
+            //    من الأكتف دايركتوري مباشرة، النظام يفضل شايف الحالة القديمة للأبد.
+            //    دلوقتي بنصالح على طول ونسجّل إن التغيير جه من خارج النظام — الأكتف
+            //    دايركتوري مش بيقول *مين* عمل الإجراء (الاسم في سجل أحداث الـ DC)،
+            //    فبنسجّل الحقيقة اللي نعرفها بس.
+            if (adDetails != null)
+            {
+                var actualStatus = adDetails.AccountEnabled ? AdStatus.enabled : AdStatus.disabled;
+                if (student.ad_status != actualStatus)
+                {
+                    var previous = student.ad_status?.ToString() ?? "غير معروفة";
+                    student.ad_status = actualStatus;
+                    student.ad_last_sync_at = DateTime.UtcNow;
+
+                    await AddLifecycleLogAsync(student.Id,
+                        actualStatus == AdStatus.enabled ? "enabled" : "disabled",
+                        $"تغيّرت حالة الحساب من خارج النظام (من {previous} إلى {actualStatus}) — اكتُشف عند فتح الشاشة");
+                    await UnitOfWork.SaveAsync();
+                }
+            }
+
             var lifecycleLogs = await GetLifecycleLogsAsync(student.Id, 50);
 
             return new HousingAccountDetailsDto
@@ -205,7 +227,7 @@ namespace NUH_PORTAL.Services
             student.ad_status = AdStatus.enabled;
             student.ad_last_sync_at = DateTime.UtcNow;
 
-            await AddLifecycleLogAsync(studentId, "enabled", $"AD account enabled by {UnitOfWork.GetCurrentUserRole()?.ToLower()}");
+            await AddLifecycleLogAsync(studentId, "enabled", "تم تفعيل حساب الشبكة من داخل النظام");
             await UnitOfWork.SaveAsync();
 
             _logger.LogInformation("AD account enabled for student {Id}: {Sam}", studentId, student.ad_username);
@@ -223,7 +245,7 @@ namespace NUH_PORTAL.Services
             student.ad_status = AdStatus.disabled;
             student.ad_last_sync_at = DateTime.UtcNow;
 
-            await AddLifecycleLogAsync(studentId, "disabled", $"AD account disabled by {UnitOfWork.GetCurrentUserRole()?.ToLower()}");
+            await AddLifecycleLogAsync(studentId, "disabled", "تم تعطيل حساب الشبكة من داخل النظام");
             await UnitOfWork.SaveAsync();
 
             _logger.LogInformation("AD account disabled for student {Id}: {Sam}", studentId, student.ad_username);
@@ -249,7 +271,7 @@ namespace NUH_PORTAL.Services
 
             student.ad_last_sync_at = DateTime.UtcNow;
 
-            await AddLifecycleLogAsync(studentId, "password_reset", $"Password reset by {UnitOfWork.GetCurrentUserRole()?.ToLower()}");
+            await AddLifecycleLogAsync(studentId, "password_reset", "تمت إعادة تعيين كلمة مرور حساب الشبكة");
             await UnitOfWork.SaveAsync();
 
             _logger.LogInformation("Password reset for student {Id}: {Sam}", studentId, student.ad_username);
@@ -333,7 +355,8 @@ namespace NUH_PORTAL.Services
 
         public async Task UpdateAdConfigAsync(List<AdConfigDto> configs)
         {
-            if (UnitOfWork.GetCurrentUserRole()?.ToLower() != "admin")
+            // إعدادات الاتصال بالأكتف دايركتوري (مسارات الـ OU والمجموعات) — housing.syncAd
+            if (!UnitOfWork.HasPermission("housing.syncAd"))
                 throw UserFriendlyException.Forbidden();
 
             var actorId = UnitOfWork.GetCurrentUserId();
@@ -364,6 +387,17 @@ namespace NUH_PORTAL.Services
 
             await UnitOfWork.SaveAsync();
             _logger.LogInformation("AD configuration updated by user {UserId}", actorId);
+        }
+
+        // «مزامنة حسابات الشبكة» — المنطق كله في ADProvisioningService، ده تمرير
+        // بس مع تحديد المستخدم اللي طلبها عشان يتسجّل في سجل العمليات.
+        public async Task<AdLinkResultDto> SyncAdAccountsAsync(AdSyncMode mode, bool dryRun)
+        {
+            var actorId = UnitOfWork.GetCurrentUserId();
+            if (actorId == 0)
+                throw new UserFriendlyException("غير مصرح", 401);
+
+            return await _adProvisioning.SyncAdAccountsAsync(actorId, mode, dryRun);
         }
 
         public async Task<HousingStatsDto> GetHousingStatsAsync()
