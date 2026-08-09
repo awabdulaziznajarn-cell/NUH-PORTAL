@@ -1,6 +1,17 @@
-const token = localStorage.getItem('staffToken');
-if (!token) window.location.replace('/Account/Login');
-const currentUser = JSON.parse(localStorage.getItem('staffUser') || '{}');
+// ⚠️ هذا الملف بقي من البوابة القديمة (HTML ثابت + توكن في localStorage).
+//    بعد نقل الشاشة إلى MVC صار فيه عطلان يوقفان الصفحة كلها:
+//
+//    1) كان يقرأ staffToken من localStorage ويرسله في ترويسة Authorization.
+//       لم يعد أي كود يكتب هذا المفتاح بعد توحيد الدخول على الكوكي، فالنتيجة
+//       إمّا تحويل فوري إلى صفحة الدخول، أو إرسال "Bearer null" — والترويسة
+//       تسبق الكوكي في سياسة NUH_Smart، فيُرفض كل نداء بـ 401 وتظل الشاشة أصفارًا.
+//    2) كان setLang يكتب في sidebar-user-name و sidebar-user-role، وهما عنصران
+//       من القائمة الجانبية القديمة لا وجود لهما في تخطيط MVC. فيرمي TypeError،
+//       و setLang أول سطر في التهيئة — فيتوقف كل ما بعده: الجدول والعدّادات
+//       والرسوم و«تنبيهات الأمان» تبقى على «جاري التحميل...» بلا نهاية.
+//
+//    الكوكي يُرسَل تلقائيًا مع كل نداء لنفس الأصل، فلا حاجة لأي ترويسة.
+const currentUser = { role: (window.NUH && NUH.role) || '' };
 const _userRole = (currentUser.role || '').toLowerCase();
 
 const actionTranslations = {
@@ -40,16 +51,10 @@ function escHtml(str) {
   return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-function logout() {
-  localStorage.removeItem('staffToken');
-  localStorage.removeItem('staffUser');
-  window.location.replace('/Account/Login');
-}
-
 async function apiFetch(url) {
   try {
-    const res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
-    if (res.status === 401) { localStorage.removeItem('staffToken'); localStorage.removeItem('staffUser'); window.location.replace('/Account/Login'); return null; }
+    const res = await fetch(url, { credentials: 'same-origin' });
+    if (res.status === 401) { window.location.replace('/Account/Login'); return null; }
     return await res.json();
   } catch(e) { return null; }
 }
@@ -60,8 +65,6 @@ function setLang(l) {
   document.getElementById('dateNow').textContent = l === 'ar'
     ? d.toLocaleDateString('ar-SA', {weekday:'long', year:'numeric', month:'long', day:'numeric'})
     : d.toLocaleDateString('en-US', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
-  document.getElementById('sidebar-user-name').textContent = currentUser.full_name || currentUser.username || '';
-  document.getElementById('sidebar-user-role').textContent = currentUser.role || '';
   rebuildActionFilter();
   var userFilterEl = document.getElementById('userFilter');
   var allOption = userFilterEl.options[0];
@@ -190,12 +193,12 @@ function updatePagination(recs) {
   document.getElementById('totalRecordsLabel').textContent = t('totalRecords') + ': ' + recs;
 }
 
-function updateStats(stats) {
-  if (!stats) return;
-  document.getElementById('statTotalRecords').textContent = stats.totalRecords || 0;
-  document.getElementById('statStudentRecs').textContent = stats.studentOperations || 0;
-  document.getElementById('statRequestRecs').textContent = stats.requestOperations || 0;
-}
+// ⚠️ كانت هنا updateStats تكتب في statTotalRecords / statStudentRecs /
+//    statRequestRecs — ثلاثة معرّفات لا وجود لها في الصفحة إطلاقًا (بطاقات
+//    العدّادات اسمها statTotOps / statStudentOps / statRequestOps). فكانت ترمي
+//    TypeError داخل loadLogs بعد رسم الجدول مباشرة، فيُبتلع في catch ويُستبدل
+//    الجدول برسالة «خطأ اتصال» — والسبب الحقيقي لا علاقة له بالشبكة.
+//    البطاقات الست تملأها loadSummaryStats من /api/auditlogs/today-stats.
 
 function openModal(record) {
   var lang = document.getElementById('html-root').getAttribute('lang') || 'ar';
@@ -217,8 +220,8 @@ async function loadLogs(page, pageSize) {
   currentPage = p;
   currentPageSize = ps;
   try {
-    const res = await fetch(buildUrl(p, ps), { headers: { 'Authorization': 'Bearer ' + token } });
-    if (res.status === 401) { localStorage.removeItem('staffToken'); localStorage.removeItem('staffUser'); window.location.replace('/Account/Login'); return; }
+    const res = await fetch(buildUrl(p, ps), { credentials: 'same-origin' });
+    if (res.status === 401) { window.location.replace('/Account/Login'); return; }
     const body = await res.json();
     cachedData = body.data;
     totalPages = body.totalPages;
@@ -226,7 +229,6 @@ async function loadLogs(page, pageSize) {
     dataLoaded = true;
     renderTable();
     updatePagination(body.totalRecords);
-    updateStats(body.stats);
     syncUrlParams();
     if (!topDataLoaded) loadTopData();
     if (cachedChartData) { computeKpi(); computeTopWidgets(); generateExecSummary(); }
@@ -238,7 +240,7 @@ async function loadLogs(page, pageSize) {
 
 async function loadAuditUsers() {
   try {
-    const res = await fetch('/api/auditlogs/users', { headers: { 'Authorization': 'Bearer ' + token } });
+    const res = await fetch('/api/auditlogs/users', { credentials: 'same-origin' });
     if (res.ok) {
       const users = await res.json();
       cachedUsers = users;
@@ -266,10 +268,40 @@ async function loadSummaryStats() {
   document.getElementById('statDeletes').textContent = data.todayDeletes || 0;
 }
 
+// انتظار محدود لوصول مكتبة الرسوم. المهلة مقصودة: بعدها نعرض رسالة واضحة
+// بدل انتظار بلا نهاية أمام مربعات فارغة.
+function waitForChartLib(maxMs) {
+  return new Promise(function (resolve) {
+    if (typeof Chart !== 'undefined') { resolve(true); return; }
+    var waited = 0, step = 120;
+    var iv = setInterval(function () {
+      if (typeof Chart !== 'undefined') { clearInterval(iv); resolve(true); }
+      else if ((waited += step) >= maxMs) { clearInterval(iv); resolve(false); }
+    }, step);
+  });
+}
+
 async function loadCharts() {
   const data = await apiFetch('/api/auditlogs/chart-data');
   if (!data) return;
   cachedChartData = data;
+
+  // ⚠️ مكتبة الرسوم تُحمَّل من CDN خارجي (cdn.jsdelivr.net) بوسم async، فقد
+  //    تصل بعد البيانات. ننتظرها هنا وحدها — لا توقف بقية الصفحة.
+  //    وإن لم تصل (خادم أو جهاز بلا منفذ للإنترنت) تبقى المربعات الأربعة فارغة
+  //    بلا كلمة تشرح السبب، فيظن المستخدم أن لا بيانات لديه. نقولها صراحة.
+  if (!(await waitForChartLib(10000))) {
+    ['chartOps7', 'chartLogins30', 'chartStudents', 'chartRequests'].forEach(function (id) {
+      var c = document.getElementById(id);
+      if (c && c.parentNode) {
+        c.parentNode.innerHTML = '<div style="padding:28px 14px;text-align:center;color:var(--gray-500);' +
+          'font-size:12.5px;line-height:1.9">' + t('rep_chartsUnavailable') + '</div>';
+      }
+    });
+    if (dataLoaded) { computeKpi(); computeTopWidgets(); generateExecSummary(); }
+    return;
+  }
+
   if (data.last7Days && data.last7Days.length) {
     var labels = data.last7Days.map(function(d) { return d.date.slice(5, 10); });
     var counts = data.last7Days.map(function(d) { return d.count; });
@@ -353,10 +385,12 @@ async function exportExcel() {
     if (f.toDate) qs.push('toDate=' + encodeURIComponent(f.toDate));
     if (f.search) qs.push('search=' + encodeURIComponent(f.search));
     if (qs.length) url += '?' + qs.join('&');
-    const res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
-    if (!res.ok) return;
+    const res = await fetch(url, { credentials: 'same-origin' });
+    // ⚠️ كان `if (!res.ok) return;` بلا أي رسالة: يضغط المستخدم فلا يحدث شيء
+    //    إطلاقًا ولا يعرف هل الملف قيد التحضير أم أن الإجراء فشل.
+    if (!res.ok) { NuhDialog.error(t('rep_expFailed')); return; }
     var blob = await res.blob();
-    if (blob.size === 0) return;
+    if (blob.size === 0) { NuhDialog.alert(t('rep_expEmpty')); return; }
     var a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = 'AuditLogs.xlsx';
@@ -364,15 +398,26 @@ async function exportExcel() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(a.href);
-  } catch(e) {}
+  } catch(e) { NuhDialog.error(t('rep_expFailed')); }
 }
 
 function exportPdf() {
-  var lang = document.getElementById('html-root').getAttribute('lang') || 'ar';
   var activeGroup = document.querySelector('.report-tab.active')?.getAttribute('data-group') || '';
   var typeMap = { '': 'activity', 'login': 'login', 'student': 'student', 'request': 'request' };
   var reportType = typeMap[activeGroup] || 'activity';
-  window.open('/api/auditlogs/report-html?type=' + reportType, '_blank');
+
+  // ⚠️ كان يرسل النوع فقط. المستخدم يحصر النتائج في آخر ٧ أيام أو في مستخدم
+  //    بعينه ثم يضغط «PDF» فيخرج له التقرير كاملًا بلا أي فلتر — والفرق لا
+  //    يظهر إلا لمن يقرأ التقرير بعناية. الخادم يقبل هذه الفلاتر أصلًا.
+  var f = getFilters();
+  var url = '/api/auditlogs/report-html?type=' + encodeURIComponent(reportType);
+  if (f.userId) url += '&userId=' + encodeURIComponent(f.userId);
+  if (f.fromDate) url += '&fromDate=' + encodeURIComponent(f.fromDate);
+  if (f.toDate) url += '&toDate=' + encodeURIComponent(f.toDate);
+
+  // ⚠️ نافذة محجوبة من المتصفح كانت تعني «لا شيء يحدث» بلا تفسير.
+  var w = window.open(url, '_blank');
+  if (!w) NuhDialog.alert(t('rep_expBlocked'));
 }
 
 /* ====== Phase 2: Date Presets ====== */
@@ -411,7 +456,7 @@ var cachedTopData = [];
 
 async function loadTopData() {
   try {
-    var res = await fetch('/api/auditlogs?page=1&pageSize=500&sort=action_at&order=desc', { headers: { 'Authorization': 'Bearer ' + token } });
+    var res = await fetch('/api/auditlogs?page=1&pageSize=500&sort=action_at&order=desc', { credentials: 'same-origin' });
     if (!res.ok) return;
     var body = await res.json();
     if (body.data) cachedTopData = body.data;
@@ -637,62 +682,19 @@ document.querySelectorAll('.stat-card-clickable').forEach(function(card) {
   card.addEventListener('click', function() { applyDrill(this.getAttribute('data-drill')); });
 });
 
-async function fetchNotifs() {
-  try {
-    const res = await fetch('/api/notifications?role=' + encodeURIComponent(_userRole), { headers: { 'Authorization': 'Bearer ' + token } });
-    if (res.status === 401) { localStorage.removeItem('staffToken'); localStorage.removeItem('staffUser'); window.location.replace('/Account/Login'); return null; }
-    return await res.json();
-  } catch(e) { return null; }
-}
-async function loadNotifDropdown() {
-  const data = await fetchNotifs();
-  const list = document.getElementById('notif-dropdown-list');
-  if (!data) { list.innerHTML = '<div class="notif-empty">' + t('repj_notif_apiError') + '</div>'; return; }
-  list.innerHTML = data.length ? data.map(function(n) {
-    return '<div class="notif-item" onclick="markNotifRead(' + n.id + ',this)" data-id="' + n.id + '">' +
-      '<div class="notif-item-dot" style="background:' + (n.status === 'pending' ? '#1B2A5E' : '#CBD5E1') + ';"></div>' +
-      '<div>' +
-        '<div class="notif-item-text">' + escHtml(n.message) + '</div>' +
-        '<div class="notif-item-time">' + new Date(n.sent_at || Date.now()).toLocaleDateString('ar-SA') + '</div>' +
-      '</div>' +
-    '</div>';
-  }).join('') : '<div class="notif-empty">' + t('repj_notif_empty') + '</div>';
-}
-async function loadUnreadCount() {
-  try {
-    const res = await fetch('/api/notifications/unread-count?role=' + encodeURIComponent(_userRole), { headers: { 'Authorization': 'Bearer ' + token } });
-    if (res.status === 401) { localStorage.removeItem('staffToken'); localStorage.removeItem('staffUser'); window.location.replace('/Account/Login'); return; }
-    var d = await res.json();
-    var badge = document.getElementById('notif-badge');
-    var dot = document.querySelector('.notif-dot');
-    if (d && d.count > 0) { badge.textContent = d.count; badge.classList.add('show'); if (dot) dot.classList.remove('hidden'); } else { badge.classList.remove('show'); if (dot) dot.classList.add('hidden'); }
-  } catch(e) {}
-}
-function toggleNotifDropdown(e) {
-  e.stopPropagation();
-  var dd = document.getElementById('notif-dropdown');
-  var isOpen = dd.classList.contains('open');
-  document.querySelectorAll('.notif-dropdown.open').forEach(function(d) { d.classList.remove('open'); });
-  if (!isOpen) { dd.classList.add('open'); if (!dd.dataset.loaded) { loadNotifDropdown(); dd.dataset.loaded = '1'; } }
-}
-async function markNotifRead(id, el) {
-  try { await fetch('/api/notifications/read', { method: 'PATCH', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify([id]) }); el.querySelector('.notif-item-dot').style.background = '#CBD5E1'; loadUnreadCount(); } catch(e) {}
-}
-async function markAllNotifRead() {
-  var items = document.querySelectorAll('#notif-dropdown-list .notif-item[data-id]'), ids = [];
-  items.forEach(function(el) { ids.push(parseInt(el.dataset.id)); });
-  if (!ids.length) return;
-  try { await fetch('/api/notifications/read', { method: 'PATCH', headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }, body: JSON.stringify(ids) }); document.querySelectorAll('#notif-dropdown-list .notif-item-dot').forEach(function(d) { d.style.background = '#CBD5E1'; }); loadUnreadCount(); } catch(e) {}
-}
-document.addEventListener('click', function(e) { if (!e.target.closest('.notif-wrapper')) { document.querySelectorAll('.notif-dropdown.open').forEach(function(d) { d.classList.remove('open'); }); } });
+// ⚠️ كانت هنا نسخة كاملة من كود الإشعارات (fetchNotifs / loadNotifDropdown /
+//    loadUnreadCount / toggleNotifDropdown / markNotifRead / markAllNotifRead)
+//    تعيد تعريف نفس الدوال الموجودة في التخطيط المشترك وتعمل على نفس عناصره —
+//    نسختان من منطق واحد ومؤقّتان يعملان معًا. حُذفت، والتخطيط هو المسؤول.
 
 loadFromUrlParams();
 setLang(localStorage.getItem('uiLanguage') || 'ar');
 rebuildActionFilter();
-loadLogs(1, currentPageSize);
-loadAuditUsers();
+// ⚠️ الترتيب مقصود: النداءات الست تنطلق معًا، لكن المتصفح يحدّ عدد الاتصالات
+//    المتزامنة لكل خادم. البطاقات الست وتنبيهات الأمان استعلامات صغيرة ويراها
+//    المستخدم أول ما تفتح الصفحة، فتسبق. سجل العمليات والرسوم أثقل فتليها.
 loadSummaryStats();
-loadCharts();
 loadAlerts();
-loadUnreadCount();
-setInterval(loadUnreadCount, 30000);
+loadLogs(1, currentPageSize);
+loadCharts();
+loadAuditUsers();

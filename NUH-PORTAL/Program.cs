@@ -247,6 +247,12 @@ builder.Services.AddDataProtection()
 // ✅ Rate Limiting
 builder.Services.AddMemoryCache();
 
+// ⚠️ الصلاحيات تُقرأ من الدور في كل طلب بدل أن تُطبع في الكوكي/التوكن لحظة
+//    الدخول. بدونها: إضافة صلاحية لا تصل لمن هو مسجَّل دخوله (403 حتى يخرج
+//    ويدخل)، وسحب صلاحية لا يُطبَّق فورًا — وهذه ثغرة لا مجرد إزعاج.
+builder.Services.AddScoped<Microsoft.AspNetCore.Authentication.IClaimsTransformation,
+                           NUH_PORTAL.Core.PermissionClaimsTransformation>();
+
 // ✅ ضغط الردود — الموقع كان بيبعت كل حاجة بدون ضغط.
 //    صفحة الموظف الواحدة فيها قاموس ترجمة محقون بالـ inline، وده لوحده كان
 //    ~142 كيلوبايت خام لكل تنقّل. مع Brotli بينزل لأقل من 15.
@@ -373,8 +379,79 @@ var app = builder.Build();
 // ✅ Forwarded Headers — لازم يكون أول Middleware
 app.UseForwardedHeaders();
 
-// ✅ الضغط — لازم يسبق أي middleware بيكتب رد (الملفات الثابتة، MVC، الـ API)
-app.UseResponseCompression();
+// ====================================================================
+//  ⏱️ قياس زمن الخادم — يُكتب في ترويسة كل رد.
+//
+//  ⚠️ ليه ده موجود:
+//     «الصفحة بطيئة» جملة مش قابلة للإصلاح لوحدها. الوقت اللي بيحسّه المستخدم
+//     مجموع ثلاث حاجات مختلفة تمامًا في العلاج: زمن الخادم (استعلام/كود)،
+//     وزمن الشبكة، وزمن المتصفح (رسم وجافاسكريبت). ومن غير رقم، أي إصلاح
+//     بيبقى تخمين — وبيتصلّح الجزء الغلط.
+//
+//     الترويسة دي بتفصل الجزء الأول عن الباقي: تفتح F12 ← Network ← أي نداء،
+//     ولو Server-Timing قال ٢٠ مللي والنداء واخد ثانيتين، فالمشكلة مش في
+//     الخادم. Server-Timing ترويسة قياسية والمتصفح بيعرضها في تبويب Timing.
+//
+//     وأي طلب بيعدّي الحد المسموح بيتسجّل في **سجل الأخطاء** برسالة عربية
+//     تقول المدة والسبب المرجّح — فالبطء بيبان لوحده بدل ما المستخدم يقول
+//     «في تأخير» ونفضل نخمّن. الحد من الإعدادات: Diagnostics:SlowRequestMs.
+//
+//  ⚠️ أول middleware عمليًا (بعد ترويسات البروكسي) عشان يقيس كل اللي بعده.
+// ====================================================================
+// الحد الفاصل بين «بطيء» و«طبيعي» — من الإعدادات، الافتراضي ٣ ثوانٍ.
+var slowRequestMs = builder.Configuration.GetValue("Diagnostics:SlowRequestMs", 3000);
+
+app.Use(async (context, next) =>
+{
+    var started = System.Diagnostics.Stopwatch.GetTimestamp();
+
+    // الترويسة لازم تتكتب قبل ما يبدأ الرد يتبعت — OnStarting هي اللحظة دي.
+    context.Response.OnStarting(() =>
+    {
+        var ms = System.Diagnostics.Stopwatch.GetElapsedTime(started).TotalMilliseconds;
+        context.Response.Headers["Server-Timing"] =
+            "app;dur=" + ms.ToString("F1", System.Globalization.CultureInfo.InvariantCulture);
+        return Task.CompletedTask;
+    });
+
+    await next();
+
+    var total = System.Diagnostics.Stopwatch.GetElapsedTime(started).TotalMilliseconds;
+
+    if (total > slowRequestMs)
+    {
+        app.Logger.LogWarning("SLOW {Method} {Path} - {Ms:F0} ms",
+            context.Request.Method, context.Request.Path.Value, total);
+
+        // يُكتب في سجل الأخطاء برسالة عربية. مؤجّل عن مسار الرد فلا يؤخّر المستخدم.
+        await NUH_PORTAL.Core.Diagnostics.RequestDiagnostics
+            .RecordSlowRequestAsync(context, total, slowRequestMs);
+    }
+});
+
+// ====================================================================
+//  ضغط الردود — قابل للإطفاء من الإعدادات بلا إعادة بناء.
+//
+//  ⚠️ السبب: السجل أثبت إن النداءات ذات الرد الكبير (سجل العمليات، سجل
+//     الأخطاء، سجل الدخول، المستخدمون) بتدخل التطبيق (REQ-IN) وما بتخرجش
+//     أبدًا (لا REQ-OUT)، بينما النداءات ذات الرد الصغير (الإشعارات،
+//     الأدوار، قائمة مستخدمي الفلتر) بترجع في ٤–٣٤ مللي. الحجم هو الفيصل
+//     الوحيد — لا الاستعلام ولا الدور ولا الشاشة.
+//
+//     ودي بصمة تعارض في الضغط: التطبيق بيضغط الرد و IIS بيضغطه كمان،
+//     فالرد الصغير بيعدّي (تحت عتبة IIS) والكبير بيقف. إطفاء طبقة واحدة
+//     بيحسم السبب، ولو اتأكد يفضل الضغط عند IIS وحده — وده أكفأ أصلًا
+//     لأنه بيحصل خارج عملية التطبيق.
+//
+//     ⚠️ النتيجة بعد التجربة: الضغط لم يكن السبب. السبب كان منحة ذاكرة
+//        ضخمة في SQL Server (RESOURCE_SEMAPHORE) من وسيط قائمة يُترجَم إلى
+//        OPENJSON. فعاد الضغط للعمل داخل التطبيق، وأُطفئ الضغط الديناميكي في
+//        IIS من web.config — طبقة واحدة تضغط، لا اثنتان.
+//
+//     المفتاح: "ResponseCompression:Enabled" في appsettings — الافتراضي true.
+// ====================================================================
+if (builder.Configuration.GetValue("ResponseCompression:Enabled", true))
+    app.UseResponseCompression();
 
 // ✅ معالجة الأخطاء المركزية (UserFriendlyException → JSON نظيف، وأي خطأ تاني → 500 من غير تسريب تفاصيل)
 app.UseMiddleware<ExceptionHandlingMiddleware>();
@@ -409,7 +486,7 @@ try
 }
 catch (Exception ex)
 {
-    app.Logger.LogWarning(ex, "Role/permission seeding skipped — run 'dotnet ef database update' first.");
+    app.Logger.LogWarning(ex, "Role/permission seeding skipped - run 'dotnet ef database update' first.");
 }
 
 // ✅ Seed dev users (Development فقط) — للدخول عبر local fallback من غير AD
@@ -424,6 +501,43 @@ if (app.Environment.IsDevelopment())
     DbSeeder.SeedDevData(seedDb);
 }
 
+// ✅ استكمال صلاحيات دور «admin» — في كل البيئات.
+//
+// ⚠️ سبب وجوده: زرع الصلاحيات الأول يعمل في بيئة التطوير فقط. فأي صلاحية جديدة
+//    تُضاف للنظام بعد التشغيل لا تصل لدور admin في الإنتاج، والنتيجة أن مدير
+//    النظام يفقد قدرة كان يملكها — بلا رسالة ولا سبب ظاهر. حدث هذا فعليًا مع
+//    auditLogs.viewAll: بدونها كان مدير النظام سيرى سجلًا منقوصًا ويظنّه عطلًا.
+//    الدور معرَّف في النظام بأنه يملك كل الصلاحيات، فهذا تنفيذ للتعريف لا توسيع له.
+//    (الأدوار الأخرى لا تُمسّ — صلاحياتها قرار إداري من شاشة الأدوار.)
+try
+{
+    using var permScope = app.Services.CreateScope();
+    var permRoleManager = permScope.ServiceProvider.GetRequiredService<RoleManager<Role>>();
+    var adminRole = await permRoleManager.FindByNameAsync("admin");
+    if (adminRole != null)
+    {
+        var have = (await permRoleManager.GetClaimsAsync(adminRole))
+            .Where(c => c.Type == ClaimConstants.Permission)
+            .Select(c => c.Value)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var added = 0;
+        foreach (var p in NUH_PORTAL.Core.ApplicationPermissions.All)
+            if (!have.Contains(p.Value))
+            {
+                await permRoleManager.AddClaimAsync(adminRole, new Claim(ClaimConstants.Permission, p.Value));
+                added++;
+            }
+
+        if (added > 0)
+        {
+            var permCache = permScope.ServiceProvider.GetRequiredService<IMemoryCache>();
+            NUH_PORTAL.Core.PermissionClaimsTransformation.Invalidate(permCache, "admin");
+        }
+    }
+}
+catch { /* لا يوقف الإقلاع — الصلاحيات تُمنح يدويًا من شاشة الأدوار عند الحاجة */ }
+
 // ✅ زرع القوائم المرجعية (lookups) — في كل البيئات لأنها بيانات أساسية.
 // try/catch عشان لو الـ migration الخاصة بالقوائم لسه ماتطبّقتش مايكسرش الإقلاع.
 try
@@ -435,7 +549,60 @@ try
 }
 catch (Exception ex)
 {
-    app.Logger.LogWarning(ex, "Lookup seeding skipped — run 'dotnet ef database update' first (lookup tables may not exist yet).");
+    app.Logger.LogWarning(ex, "Lookup seeding skipped - run 'dotnet ef database update' first (lookup tables may not exist yet).");
+}
+
+// ====================================================================
+//  🔤 فحص النصوص المعروضة عند الإقلاع.
+//
+//  ⚠️ العيب اللي بيعالجه:
+//     الأكواد (زي ad_provisioning أو user_created) بتتولد في الكود C#،
+//     ونصوصها المعروضة عايشة في ملف ترجمة منفصل. مفيش رابط بين الاتنين،
+//     فلو كود اتضاف من غير مفتاح ترجمة، الشاشة بتعرض الكود الخام للمستخدم
+//     — وماحدش بيعرف غير لما حد يشوفه بعينه في الإنتاج. وده اللي حصل فعلًا.
+//
+//     الفحص ده بيقرأ الأكواد *الموجودة فعلًا في قاعدة البيانات* (مش من قراءة
+//     الكود، عشان ما يفوتوش حاجة)، ويقارنها بملف الترجمة، ويكتب تحذيرًا في
+//     السجل بأي كود بلا نص. فالنقص بيبان في سجل الأخطاء بدل شاشة المستخدم.
+//
+//  استعلامان صغيران مرة واحدة عند الإقلاع — بلا أي تكلفة على الطلبات.
+// ====================================================================
+try
+{
+    using var textScope = app.Services.CreateScope();
+    var textDb = textScope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var loc = textScope.ServiceProvider
+        .GetRequiredService<Microsoft.Extensions.Localization.IStringLocalizer<NUH_PORTAL.SharedResource>>();
+
+    var known = loc.GetAllStrings(true).Select(x => x.Name).ToHashSet(StringComparer.Ordinal);
+
+    // (بادئة المفتاح، وصف المكان، الأكواد الموجودة في قاعدة البيانات)
+    var families = new (string Prefix, string Where, List<string?> Codes)[]
+    {
+        ("aud_action_", "سجل العمليات",
+            await textDb.AuditLogs.AsNoTracking()
+                .Select(a => a.action).Distinct().ToListAsync()),
+
+        ("ss_status_", "تحديث حالة الطالب",
+            await textDb.StudentStatusActions.AsNoTracking()
+                .Select(a => a.StatusType).Distinct().ToListAsync())
+    };
+
+    var missing = families
+        .SelectMany(f => f.Codes
+            .Where(c => !string.IsNullOrWhiteSpace(c) && !known.Contains(f.Prefix + c))
+            .Select(c => $"{f.Prefix}{c} ({f.Where})"))
+        .OrderBy(x => x, StringComparer.Ordinal)
+        .ToList();
+
+    if (missing.Count > 0)
+        app.Logger.LogWarning(
+            "MISSING UI TEXT - {Count} code(s) appear on screen as raw codes because they have no key in SharedResource.resx: {Keys}",
+            missing.Count, string.Join(", ", missing));
+}
+catch (Exception ex)
+{
+    app.Logger.LogWarning(ex, "UI text check skipped.");
 }
 
 // ✅ Security headers — حماية أساسية على مستوى كل الردود
@@ -505,9 +672,10 @@ app.Use(async (context, next) =>
         {
             var cache = context.RequestServices.GetRequiredService<IMemoryCache>();
             var cacheKey = "activity_" + userId;
-            // لو فيه نشاط سابق مسجّل وعدّى عليه 15 دقيقة → اقفل الجلسة
+            // لو فيه نشاط سابق مسجّل وعدّت عليه مهلة الخمول → اقفل الجلسة.
+            // الرقم من Core/SessionPolicy.cs — نفس اللي بتقراه الواجهة، فما يفترقوش.
             if (cache.TryGetValue(cacheKey, out DateTime lastActivity) &&
-                (DateTime.UtcNow - lastActivity).TotalMinutes > 15)
+                (DateTime.UtcNow - lastActivity).TotalMinutes > NUH_PORTAL.Core.SessionPolicy.IdleTimeoutMinutes)
             {
                 // امسح العدّاد الأول — من غير السطر ده المستخدم يفضل مقفول حتى بعد
                 // ما يسجّل دخول من جديد، وده بالظبط اللي كان بيحصل.

@@ -7,6 +7,15 @@
     // نرجّع المستخدم لنفس الصفحة بعد تبديل اللغة
     var __returnUrl = Uri.EscapeDataString(Context.Request.Path.ToString() + Context.Request.QueryString.ToString());
 
+    // هوية المستخدم للشريط العلوي. الحرفان الأولان من الاسم يصنعان الأيقونة —
+    // أوضح من أيقونة عامة موحّدة لكل المستخدمين، ولا تحتاج رفع صورة.
+    var __fullName = User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "";
+    var __roleName = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
+    var __nameParts = __fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+    var __initials = __nameParts.Length == 0 ? "?"
+        : (__nameParts.Length == 1 ? __nameParts[0].Substring(0, 1)
+        : __nameParts[0].Substring(0, 1) + __nameParts[1].Substring(0, 1));
+
     // قاموس الترجمة + خريطة القوائم — الاتنين بيتبنوا مرة واحدة ويتخزّنوا في الكاش.
     // قبل كده كانوا بيتبنوا من الأول في كل طلب: قراءة 1380 مورد من الـ resx +
     // أربع استعلامات قاعدة بيانات، لكل ضغطة على أي صفحة — وده كان سبب التأخير
@@ -20,23 +29,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>@ViewData["Title"] — @SharedLocalizer["AppTitleSuffix"]</title>
-  <link rel="stylesheet" href="/css/site.css" />
-  <style>
-    /* ⚠️ إصلاح تخطيط: الصفحة كانت أعرض من الشاشة فيظهر شريط تمرير أفقي
-       والقائمة الجانبية (position:fixed على اليمين) تتقص من الطرف.
-
-       السبب: body{display:flex} و .main{flex:1} من غير min-width:0. عنصر الـ flex
-       بشكل افتراضي min-width:auto — يعني بيرفض ينكمش أقل من أعرض محتوى جوّاه.
-       فأي جدول عريض (زي «آخر العمليات») بيوسّع .main ويدفع التخطيط كله.
-
-       min-width:0 بيسمح له ينكمش، والجداول بتاخد تمرير أفقي جوّه الكارت بدل
-       ما توسّع الصفحة. مكان الإصلاح الطبيعي css/site.css — اتحط هنا مؤقتًا. */
-    .main, .content { min-width: 0; }
-    .content .card > table,
-    .content .card > .table-wrap > table { max-width: 100%; }
-    .content .card { overflow-x: auto; }
-  </style>
+  <title>@ViewData["Title"] - @SharedLocalizer["AppTitleSuffix"]</title>
+  @* ⚠️ asp-append-version بتضيف بصمة محتوى الملف في الرابط، فالمتصفح يجيب
+     النسخة الجديدة أول ما تتغيّر ويفضل مخزّنها لحد ما تتغيّر تاني.
+     من غيرها كان لازم Ctrl+Shift+R بعد كل نشر عشان تشوف تعديل التصميم —
+     وده مستحيل تطلبه من كل موظف. كل ملفات الجافاسكريبت كانت عليها البصمة
+     وده الملف الوحيد اللي كان ناقصها. *@
+  <link rel="stylesheet" href="/css/site.css" asp-append-version="true" />
 </head>
 <body class="app-shell">
   <partial name="_Sidebar" />
@@ -64,6 +63,31 @@
             <div class="notif-list" id="notif-dropdown-list"></div>
           </div>
         </div>
+
+        @* ⚠️ الهوية والخروج كانا أسفل القائمة الجانبية: زر خروج بعرض كامل ظاهر
+           طوال الوقت رغم أنه أندر إجراء، والاسم في أبعد نقطة عن مكان العمل.
+           هنا في طرف الشريط العلوي: الاسم ظاهر، والخروج تحت ضغطة واحدة. *@
+        <div class="user-menu" id="userMenu">
+          <button class="user-btn" type="button" id="userMenuBtn" aria-haspopup="menu" aria-expanded="false"
+                  onclick="toggleUserMenu(event)" title="@__fullName">
+            <span class="user-mono">@__initials</span>
+            <span class="nm"><b>@__fullName</b><i>@__roleName</i></span>
+            <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="user-dd" id="userDropdown" role="menu">
+            <div class="who">
+              <span class="user-mono">@__initials</span>
+              <span class="t"><b>@__fullName</b><i>@__roleName</i></span>
+            </div>
+            <form method="post" action="/Account/Logout">
+              @Html.AntiForgeryToken()
+              <button class="out" type="submit" role="menuitem">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                <span>@SharedLocalizer["Logout"]</span>
+              </button>
+            </form>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -78,15 +102,25 @@
     // خريطة القوائم (كود → اسم) — i18n.js بيقرأ منها في collegeName()/deptName()
     window.__LKMAP = @Html.Raw(__lkMapJson);
 
-    // حاجات مشتركة لكل صفحات الـ MVC — الدور من كليم السيرفر، والتوكن من نفس مفاتيح الصفحات القديمة
+    // حاجات مشتركة لكل صفحات الـ MVC — الدور من كليم السيرفر.
+    // ⚠️ headers() كانت ترسل staffToken من localStorage في ترويسة Authorization.
+    //    لم يعد أي كود يكتب هذا المفتاح بعد توحيد الدخول على الكوكي، وأي بقيّة
+    //    قديمة منه في متصفح مستخدم كانت تُرسَل كتوكن منتهٍ — والترويسة تسبق
+    //    الكوكي في سياسة NUH_Smart، فيُرفَض النداء بـ 401 بينما الصفحة نفسها
+    //    مفتوحة بكوكي سليم. الكوكي يُرسَل تلقائيًا لنفس الأصل، فلا ترويسة أصلًا.
+    //    الدالة باقية (ترجع {}) لأن شاشات كثيرة تدمجها بـ Object.assign.
     var NUH = {
       role: '@(User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "")',
-      token: function () { return localStorage.getItem('staffToken') || ''; },
-      headers: function () {
-        var t = NUH.token();
-        return t ? { 'Authorization': 'Bearer ' + t } : {};
-      }
+      token: function () { return ''; },
+      headers: function () { return {}; }
     };
+
+    // ⚠️ تنظيف نهائي لمفاتيح الدخول القديمة. محدش بيكتبها من يوم ما الدخول اتوحّد
+    //    على الكوكي، لكن أي متصفح موظف شغّال من قبل التوحيد لسه شايلها. وطول ما
+    //    هي موجودة، أي كود قديم يقراها هيبعت توكن منتهي في ترويسة Authorization —
+    //    والترويسة بتسبق الكوكي، فالنداء يترفض ٤٠١ والجلسة سليمة. السطر ده بيموّتها
+    //    في كل متصفح من غير ما حد يمسح بياناته بإيده.
+    try { localStorage.removeItem('staffToken'); localStorage.removeItem('staffUser'); } catch (e) { }
 
     // مزامنة لغة الواجهة مع ثقافة السيرفر — عشان صفحات i18n.js (تقارير/تفاصيل الطلب/المغادرة) تتبع نفس الاختيار
     try { localStorage.setItem('uiLanguage', '@__lang'); } catch (e) { }
@@ -123,7 +157,7 @@
           badge.classList.remove('show');
           if (dot) dot.classList.add('hidden');
         }
-      } catch (e) { /* صامت — الجرس مش أساسي */ }
+      } catch (e) { /* صامت - الجرس مش أساسي */ }
     }
 
     async function loadNotifDropdown() {
@@ -193,15 +227,59 @@
       } catch (e) { }
     }
 
+    function setUserMenu(open) {
+      var m = document.getElementById('userMenu');
+      if (!m) return;
+      m.classList.toggle('open', open);
+      var b = document.getElementById('userMenuBtn');
+      if (b) b.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+
+    function toggleUserMenu(e) {
+      e.stopPropagation();
+      var m = document.getElementById('userMenu');
+      setUserMenu(!m.classList.contains('open'));
+    }
+
     document.addEventListener('click', function (e) {
       if (!e.target.closest('.notif-wrapper')) {
         document.querySelectorAll('.notif-dropdown.open').forEach(function (d) { d.classList.remove('open'); });
       }
+      // الضغط على الجرس يقفل قائمة المستخدم والعكس — القائمتان لا تفتحان معًا
+      if (!e.target.closest('.user-menu')) setUserMenu(false);
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      setUserMenu(false);
+      document.querySelectorAll('.notif-dropdown.open').forEach(function (d) { d.classList.remove('open'); });
     });
 
     loadUnreadCount();
     setInterval(loadUnreadCount, 30000);
   </script>
+  @* حالات الجداول (تحميل / لا توجد نتائج / خطأ) — تعريف واحد لكل الشاشات.
+     ⚠️ لازم قبل قسم Scripts: الشاشات بتنادي NuhTable.bind وقت التحميل لا وقت الحدث. *@
+  <script src="/js/table-state.js" asp-append-version="true"></script>
+
+  @* قائمة الاختيار بشكل النظام بدل قائمة نظام التشغيل — بتشتغل تلقائيًا على
+     كل <select>. بعد قسم Scripts عمدًا: الشاشات بتبني قوائمها في القسم ده،
+     فلازم تكون موجودة قبل ما نلفّ عليها. *@
+
   @await RenderSectionAsync("Scripts", required: false)
+  <script src="/js/select-field.js" asp-append-version="true"></script>
+
+  @* ===== إنهاء الجلسة عند الخمول =====
+     المهلة تأتي من Core/SessionPolicy.cs — نفس الرقم الذي يفحص به الخادم.
+     كتابته هنا رقمًا ثانيًا كان يعني أن يفترق الاثنان مع أول تعديل. *@
+  @* نوافذ التأكيد والتنبيه بشكل النظام — بديل confirm/alert/prompt المتصفح *@
+  <script src="/js/dialog.js" asp-append-version="true"></script>
+  <script src="/js/idle-session.js" asp-append-version="true"></script>
+  <script>
+    NuhIdle.start({
+      minutes: @NUH_PORTAL.Core.SessionPolicy.IdleTimeoutMinutes,
+      warnSeconds: @NUH_PORTAL.Core.SessionPolicy.WarnBeforeSeconds
+    });
+  </script>
 </body>
 </html>

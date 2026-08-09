@@ -402,7 +402,7 @@ namespace NUH_PORTAL.Services
                     //    دايركتوري. السبب الحقيقي كان بيتدفن في اللوج بس.
                     //    نفس صيغة الرسالة المستخدمة في RequestService.ReviewAsync.
                     throw new UserFriendlyException(
-                        $"فشل إنشاء حساب الشبكة — لم يتم إكمال الطلب: {provResult.Error}", 500);
+                        $"فشل إنشاء حساب الشبكة - لم يتم إكمال الطلب: {provResult.Error}", 500);
                 }
 
                 _logger.LogInformation("AD account created for self-registration student {Id}: {Sam}", student.student_id, provResult.SamAccountName);

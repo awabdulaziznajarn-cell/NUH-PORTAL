@@ -82,7 +82,7 @@
 {
   <div class="section-heading">
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-    <span>يحتاج إجراءك</span>
+    <span>@SharedLocalizer["dash_needsAction"]</span>
   </div>
 
   @* ⚠️ كان فيه لافتة خضراء «مفيش طلبات مستنية إجراء منك» بتحلّ محل البطاقات لما
@@ -94,7 +94,7 @@
       {
         <a class="todo-card @(waitHousing == 0 ? "zero" : "")" href="/Requests">
           <span class="n">@waitHousing</span>
-          <span class="t"><b>بانتظار مراجعة الإسكان</b><span>طلبات لم تُراجَع بعد من إدارة الإسكان</span></span>
+          <span class="t"><b>@SharedLocalizer["dash_waitHousing"]</b><span>@SharedLocalizer["dash_waitHousingDesc"]</span></span>
           <span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
         </a>
       }
@@ -102,7 +102,7 @@
       {
         <a class="todo-card @(waitCyber == 0 ? "zero" : "")" href="/Requests">
           <span class="n">@waitCyber</span>
-          <span class="t"><b>بانتظار مراجعة الأمن السيبراني</b><span>طلبات اعتمدتها إدارة الإسكان وأُحيلت إليك</span></span>
+          <span class="t"><b>@SharedLocalizer["dash_waitCyber"]</b><span>@SharedLocalizer["dash_waitCyberDesc"]</span></span>
           <span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
         </a>
       }
@@ -110,12 +110,12 @@
       {
         <a class="todo-card @(waitHandover == 0 ? "zero" : "")" href="/Requests">
           <span class="n">@waitHandover</span>
-          <span class="t"><b>بانتظار التحويل للمراجعة الإلكترونية</b><span>معتمدة من إدارة الإسكان وبانتظار الإحالة</span></span>
+          <span class="t"><b>@SharedLocalizer["dash_waitHandover"]</b><span>@SharedLocalizer["dash_waitHandoverDesc"]</span></span>
           <span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
         </a>
         <a class="todo-card @(waitProvision == 0 ? "zero" : "")" href="/Requests">
           <span class="n">@waitProvision</span>
-          <span class="t"><b>جاهز لإنشاء حساب الشبكة</b><span>الخطوة الأخيرة قبل إغلاق الطلب</span></span>
+          <span class="t"><b>@SharedLocalizer["dash_waitProvision"]</b><span>@SharedLocalizer["dash_waitProvisionDesc"]</span></span>
           <span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
         </a>
       }
@@ -125,7 +125,7 @@
 @* ===== نظرة عامة — أربعة أرقام بس ===== *@
 <div class="section-heading" style="margin-top:24px">
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
-  <span>نظرة عامة</span>
+  <span>@SharedLocalizer["dash_overview"]</span>
 </div>
 
 <div class="stats-grid">
@@ -136,7 +136,7 @@
       </div>
     </div>
     <div class="stat-num">@Model.Stats.total</div>
-    <div class="stat-label">إجمالي الطلاب</div>
+    <div class="stat-label">@SharedLocalizer["home_totalStudents"]</div>
   </div>
 
   <div class="stat-card" style="cursor:pointer" onclick="location.href='/Requests'">
@@ -146,7 +146,7 @@
       </div>
     </div>
     <div class="stat-num">@openRequests</div>
-    <div class="stat-label">طلبات مفتوحة</div>
+    <div class="stat-label">@SharedLocalizer["dash_openRequests"]</div>
   </div>
 
   @if (canHousingView)
@@ -158,7 +158,7 @@
         </div>
       </div>
       <div class="stat-num" id="hs-enabled">0</div>
-      <div class="stat-label">حسابات شبكة مفعّلة</div>
+      <div class="stat-label">@SharedLocalizer["dash_adEnabled"]</div>
     </div>
 
     <div class="stat-card" style="cursor:pointer" onclick="location.href='/Housing'">
@@ -168,7 +168,7 @@
         </div>
       </div>
       <div class="stat-num" id="hs-disabled">0</div>
-      <div class="stat-label">حسابات شبكة معطّلة</div>
+      <div class="stat-label">@SharedLocalizer["dash_adDisabled"]</div>
     </div>
   }
   else
@@ -180,7 +180,7 @@
         </div>
       </div>
       <div class="stat-num">@Model.Stats.completed</div>
-      <div class="stat-label">طلبات مكتملة</div>
+      <div class="stat-label">@SharedLocalizer["home_completedRequests"]</div>
     </div>
   }
 </div>
@@ -389,7 +389,7 @@
     var fmt = new Intl.DateTimeFormat('ar-EG', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
     tbody.innerHTML = data.data.slice(0, 10).map(function (r) {
       var user = (r.user && (r.user.full_name || r.user.username)) || r.user_id;
-      var dt = r.action_at ? fmt.format(new Date(r.action_at)) : '—';
+      var dt = r.action_at ? fmt.format(new Date(r.action_at)) : '-';
       return '<tr><td>' + escHtml(user) + '</td><td>' + escHtml(translateAction(r.action)) + '</td><td>' + dt + '</td></tr>';
     }).join('') || '<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--gray-500)">' + t('home_noOperations') + '</td></tr>';
   }

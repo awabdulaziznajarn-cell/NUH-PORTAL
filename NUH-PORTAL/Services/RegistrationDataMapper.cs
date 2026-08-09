@@ -168,7 +168,7 @@ namespace NUH_PORTAL.Services
         public static string BuildChangeSummary(List<FieldChange> changes)
         {
             if (changes.Count == 0)
-                return "إعادة تقديم بعد طلب معلومات — دون تعديل في البيانات";
+                return "إعادة تقديم بعد طلب معلومات - دون تعديل في البيانات";
 
             var lines = changes.Select(c => $"{c.Label}: من «{Show(c.Old)}» إلى «{Show(c.New)}»");
             var text = "التعديلات التي أجراها الطالب: " + string.Join("، ", lines);

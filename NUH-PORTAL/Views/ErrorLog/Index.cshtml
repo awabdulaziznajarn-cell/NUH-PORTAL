@@ -3,12 +3,6 @@
 }
 
 <style>
-  .filters-bar{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px;align-items:end}
-  .filter-group{display:flex;flex-direction:column;gap:4px}
-  .filter-group label{font-size:11px;font-weight:600;color:var(--gray-500)}
-  .filter-group select,.filter-group input{padding:8px 10px;border:1px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:13px;background:var(--white);color:var(--navy-dark);min-width:150px}
-  .spinner{width:32px;height:32px;border:3px solid var(--gray-200);border-top-color:var(--navy);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto}
-  @@keyframes spin{to{transform:rotate(360deg)}}
   .badge-500{background:var(--red-light);color:var(--red)}
   .mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
   .clip{max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -94,7 +88,8 @@
 <script>
   var page = 1, pageSize = 50, totalPages = 1, cache = [];
   var esc = function (v) { return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
-  function authHeaders() { var tk = localStorage.getItem('staffToken'); return tk ? { 'Authorization': 'Bearer ' + tk } : {}; }
+  // الجدول وحالاته من NuhTable، والترويسات من NUH.headers في التخطيط — مفيش نسخة محلية.
+  var errTable = NuhTable.bind('tbody', 7);
 
   function fmt(d) {
     if (!d) return '';
@@ -114,10 +109,14 @@
     return u;
   }
 
+  // ⚠️ setLang تستدعي onLanguageChange المربوطة بـ render، فكانت الصفحة ترسم
+  //    «لا توجد سجلات» قبل انطلاق أول نداء، ثم تمتلئ فجأة. أي بطء عادي كان
+  //    يبدو كعطل. التفرقة نفسها صارت في NuhTable لكل الشاشات.
+
   function render() {
-    var tb = document.getElementById('tbody');
-    if (!cache.length) { tb.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--gray-500);padding:40px">' + t('err_noItems') + '</td></tr>'; return; }
-    tb.innerHTML = cache.map(function (e, i) {
+    if (!errTable.isDone()) return errTable.loading();
+    if (!cache.length) return errTable.rows('', t('err_noItems'));
+    errTable.rows(cache.map(function (e, i) {
       var n = (page - 1) * pageSize + i + 1;
       return '<tr onclick="openDetail(' + e.id + ')">' +
         '<td style="color:var(--gray-500)">' + n + '</td>' +
@@ -126,16 +125,17 @@
         '<td class="mono">' + esc(e.exceptionType) + '</td>' +
         '<td><div class="clip" title="' + esc(e.message) + '">' + esc(e.message) + '</div></td>' +
         '<td><span class="badge badge-500">' + esc(e.statusCode) + '</span></td>' +
-        '<td>' + esc(e.username || '—') + '</td></tr>';
-    }).join('');
+        '<td>' + esc(e.username || '-') + '</td></tr>';
+    }).join(''), t('err_noItems'));
   }
 
   async function load() {
     try {
-      var res = await fetch(buildUrl(), { headers: authHeaders() });
+      var res = await fetch(buildUrl(), { headers: NUH.headers() });
       if (res.status === 401) { window.location.replace('/Account/Login'); return; }
-      if (!res.ok) { document.getElementById('tbody').innerHTML = '<tr><td colspan="7" style="text-align:center;color:#991B1B;padding:40px">' + t('err_loadError') + '</td></tr>'; return; }
+      if (!res.ok) { errTable.error(t('err_loadError')); return; }
       var body = await res.json();
+      errTable.done();
       cache = body.data || [];
       totalPages = body.totalPages || 1;
       render();
@@ -143,21 +143,21 @@
       document.getElementById('prevBtn').disabled = page <= 1;
       document.getElementById('nextBtn').disabled = page >= totalPages;
       document.getElementById('totalLabel').textContent = t('err_totalFmt').replace('{0}', body.totalRecords || 0);
-    } catch (e) { document.getElementById('tbody').innerHTML = '<tr><td colspan="7" style="text-align:center;color:#991B1B;padding:40px">' + t('err_loadError') + '</td></tr>'; }
+    } catch (e) { errTable.error(t('err_loadError')); }
   }
 
   async function openDetail(id) {
     try {
-      var res = await fetch('/api/logs/errors/' + id, { headers: authHeaders() });
+      var res = await fetch('/api/logs/errors/' + id, { headers: NUH.headers() });
       if (!res.ok) return;
       var d = await res.json();
       document.getElementById('d_time').textContent = fmt(d.occurredAt);
       document.getElementById('d_type').textContent = d.exceptionType || '';
       document.getElementById('d_message').textContent = d.message || '';
       document.getElementById('d_path').textContent = (d.requestMethod || '') + ' ' + (d.requestPath || '');
-      document.getElementById('d_user').textContent = (d.username || '—') + (d.ipAddress ? ' · ' + d.ipAddress : '');
-      document.getElementById('d_ua').textContent = d.userAgent || '—';
-      document.getElementById('d_stack').textContent = d.stackTrace || '—';
+      document.getElementById('d_user').textContent = (d.username || '-') + (d.ipAddress ? ' · ' + d.ipAddress : '');
+      document.getElementById('d_ua').textContent = d.userAgent || '-';
+      document.getElementById('d_stack').textContent = d.stackTrace || '-';
       document.getElementById('detailModal').classList.add('open');
     } catch (e) { }
   }

@@ -16,6 +16,7 @@ namespace NUH_PORTAL.Services
     {
         private readonly RoleManager<Role> _roleManager;
         private readonly IRepository<UserRole> _userRoles;
+        private readonly Microsoft.Extensions.Caching.Memory.IMemoryCache _cache;
 
         // الأدوار الأساسية اللي مينفعش تتحذف (بيعتمد عليها الزرع والتدفقات).
         private static readonly HashSet<string> ProtectedRoles = new(StringComparer.OrdinalIgnoreCase)
@@ -27,10 +28,12 @@ namespace NUH_PORTAL.Services
         private static readonly HashSet<string> ValidPermissions =
             ApplicationPermissions.All.Select(p => p.Value).ToHashSet();
 
-        public RoleAdminService(RoleManager<Role> roleManager, IRepository<UserRole> userRoles)
+        public RoleAdminService(RoleManager<Role> roleManager, IRepository<UserRole> userRoles,
+                                Microsoft.Extensions.Caching.Memory.IMemoryCache cache)
         {
             _roleManager = roleManager;
             _userRoles = userRoles;
+            _cache = cache;
         }
 
         public async Task<List<RoleListItemDto>> GetRolesAsync()
@@ -134,7 +137,7 @@ namespace NUH_PORTAL.Services
 
             var inUse = await _userRoles.Query().AnyAsync(ur => ur.RoleId == id);
             if (inUse)
-                throw new UserFriendlyException("لا يمكن حذف دور مُسند لمستخدمين — انقل المستخدمين لدور آخر أولًا", 400);
+                throw new UserFriendlyException("لا يمكن حذف دور مُسند لمستخدمين - انقل المستخدمين لدور آخر أولًا", 400);
 
             var res = await _roleManager.DeleteAsync(role);
             if (!res.Succeeded)
@@ -161,6 +164,10 @@ namespace NUH_PORTAL.Services
 
             foreach (var p in desired.Where(p => !existingValues.Contains(p)))
                 await _roleManager.AddClaimAsync(role, new Claim(ClaimConstants.Permission, p));
+
+            // التعديل يسري على الطلب التالي بلا انتظار انتهاء مدة التخزين المؤقت
+            if (!string.IsNullOrWhiteSpace(role.Name))
+                PermissionClaimsTransformation.Invalidate(_cache, role.Name);
         }
 
         private static string Errors(IdentityResult res)

@@ -14,7 +14,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>@SharedLocalizer["login_submit"] — @SharedLocalizer["login_brandTitle"]</title>
+  <title>@SharedLocalizer["login_submit"] - @SharedLocalizer["login_brandTitle"]</title>
   <link rel="stylesheet" href="/css/site.css" />
   <style>
     /* خاص بصفحة الدخول — نفس هوية login.html */
@@ -112,5 +112,14 @@
       <div class="login-footer">@SharedLocalizer["login_footer"]</div>
     </div>
   </div>
+
+  @* ⚠️ حالة مجموعات القائمة الجانبية محفوظة في المتصفح حتى تبقى كما تركها
+     المستخدم وهو يتنقّل بين الصفحات. لكنها كانت تبقى كذلك بعد الخروج والدخول
+     من جديد أيضًا، فيجد جلسته الجديدة بمجموعات مفتوحة من جلسة أمس.
+     صفحة الدخول هي الحدّ الفاصل بين الجلستين، فهنا نمسحها: كل دخول يبدأ
+     بقائمة مطويّة، ثم يفتح المستخدم ما يحتاجه فيبقى مفتوحًا حتى يخرج. *@
+  <script>
+    try { sessionStorage.removeItem('navGroups'); localStorage.removeItem('navGroups'); } catch (e) { }
+  </script>
 </body>
 </html>

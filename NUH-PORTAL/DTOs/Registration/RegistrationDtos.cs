@@ -28,8 +28,10 @@ namespace NUH_PORTAL.DTOs.Registration
     public class DuplicateCheckResultDto
     {
         public bool Found { get; set; }
-        public string? RequestNumber { get; set; }
         public string? Message { get; set; }
+
+        // ⚠️ لا يوجد RequestNumber هنا عن قصد. هذا الفحص لا يثبت ملكية الطلب
+        //    (يطابق على الرقم الجامعي والهوية دون الجوال)، وما لا يُرسَل لا يُسرَّب.
     }
 
     public class ResubmitRequest

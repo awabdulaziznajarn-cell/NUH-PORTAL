@@ -35,6 +35,13 @@
     }
 }
 
+@* ⚠️ الشاشتين دول (الطلاب وحسابات السكن) كانوا الوحيدين من غير ترويسة صفحة
+   (عنوان + وصف)، فالمحتوى كان بيبدأ من مكان مختلف عن باقي الشاشات. *@
+<div class="page-header">
+  <h2>@SharedLocalizer["Page_Students"]</h2>
+  <p>@SharedLocalizer["stu_pageSubtitle"]</p>
+</div>
+
 <div class="stats-row">
   <div class="stat-pill">
     <div class="stat-pill-num" id="cnt-total">@Model.Stats.total</div>
@@ -57,7 +64,7 @@
 <div class="card">
   <div class="card-header">
     <div >@SharedLocalizer["stu_registered"]</div>
-    <div style="display:flex;align-items:center;gap:10px">
+    <div class="card-tools">
       <div class="search-wrap">
         <input id="searchBox" type="text" placeholder='@(SharedLocalizer["stu_searchPlaceholder"].Value)' />
         <span class="search-icon">
@@ -155,42 +162,78 @@
     <div class="edit-modal-body">
       <input type="hidden" id="e_id">
       <div class="e-grid">
-        <div class="e-field name-group">
-          <label >@SharedLocalizer["reg_lblFullName"]<span>*</span></label>
-          <div class="name-row">
-            <div>
-              <label >@SharedLocalizer["reg_lblNameFirst"]</label>
-              <input type="text" id="e_ar_first" autocomplete="off">
-            </div>
-            <div>
-              <label >@SharedLocalizer["reg_lblNameMiddle"]</label>
-              <input type="text" id="e_ar_middle" autocomplete="off">
-            </div>
-            <div>
-              <label >@SharedLocalizer["reg_lblNameFamily"]</label>
-              <input type="text" id="e_ar_family" autocomplete="off">
-            </div>
-          </div>
-          <span class="field-error" id="e_err-name_ar" >@SharedLocalizer["reg_errNameParts"]</span>
-        </div>
-        <div class="e-field name-group">
-          <label >@SharedLocalizer["reg_lblFullNameEn"]<span>*</span></label>
-          <div class="name-row">
-            <div>
-              <label >@SharedLocalizer["reg_lblNameFirst"]</label>
-              <input type="text" id="e_en_first" dir="ltr" autocomplete="off">
-            </div>
-            <div>
-              <label >@SharedLocalizer["reg_lblNameMiddle"]</label>
-              <input type="text" id="e_en_middle" dir="ltr" autocomplete="off">
-            </div>
-            <div>
-              <label >@SharedLocalizer["reg_lblNameFamily"]</label>
-              <input type="text" id="e_en_family" dir="ltr" autocomplete="off">
-            </div>
-          </div>
-          <span class="field-error" id="e_err-name_en" >@SharedLocalizer["reg_errNameParts"]</span>
-        </div>
+        <div class="e-field name-group">
+
+          <label >@SharedLocalizer["reg_lblFullName"]<span>*</span></label>
+
+          <div class="name-row">
+
+            <div>
+
+              <label >@SharedLocalizer["reg_lblNameFirst"]</label>
+
+              <input type="text" id="e_ar_first" autocomplete="off">
+
+            </div>
+
+            <div>
+
+              <label >@SharedLocalizer["reg_lblNameMiddle"]</label>
+
+              <input type="text" id="e_ar_middle" autocomplete="off">
+
+            </div>
+
+            <div>
+
+              <label >@SharedLocalizer["reg_lblNameFamily"]</label>
+
+              <input type="text" id="e_ar_family" autocomplete="off">
+
+            </div>
+
+          </div>
+
+          <span class="field-error" id="e_err-name_ar" >@SharedLocalizer["reg_errNameParts"]</span>
+
+        </div>
+
+        <div class="e-field name-group">
+
+          <label >@SharedLocalizer["reg_lblFullNameEn"]<span>*</span></label>
+
+          <div class="name-row">
+
+            <div>
+
+              <label >@SharedLocalizer["reg_lblNameFirst"]</label>
+
+              <input type="text" id="e_en_first" dir="ltr" autocomplete="off">
+
+            </div>
+
+            <div>
+
+              <label >@SharedLocalizer["reg_lblNameMiddle"]</label>
+
+              <input type="text" id="e_en_middle" dir="ltr" autocomplete="off">
+
+            </div>
+
+            <div>
+
+              <label >@SharedLocalizer["reg_lblNameFamily"]</label>
+
+              <input type="text" id="e_en_family" dir="ltr" autocomplete="off">
+
+            </div>
+
+          </div>
+
+          <span class="field-error" id="e_err-name_en" >@SharedLocalizer["reg_errNameParts"]</span>
+
+        </div>
+
         <span class="field-error name-group" id="e_err-name_match" >@SharedLocalizer["reg_valNameMismatch"]</span>
         <div class="e-field">
           <label >@SharedLocalizer["reg_lblStudentId"]</label>
@@ -204,7 +247,12 @@
         </div>
         <div class="e-field">
           <label >@SharedLocalizer["reg_lblPhone"]</label>
-          <input type="tel" id="e_phone" maxlength="12" placeholder='@(SharedLocalizer["reg_phPhone"].Value)'>
+          @* من غير maxlength: المتصفح بيقص اللصق قبل التنظيف فيضيّع رقم *@
+          <div class="phone-wrap" id="e_phoneWrap">
+            <span class="cc">+966</span>
+            <input type="tel" id="e_phone" placeholder='@(SharedLocalizer["reg_phPhone"].Value)'
+                   inputmode="numeric" autocomplete="tel-national" dir="ltr">
+          </div>
           <span class="field-error" id="e-val-phone" >@SharedLocalizer["reg_valPhone"]</span>
         </div>
         <div class="e-field">
@@ -335,50 +383,33 @@
   .action-delete:hover{background:#fee2e2}
   .action-edit{background:#eef1f8;color:var(--navy)}
   .action-edit:hover{background:#e0e6f5}
-  .row-actions{display:flex;gap:6px;align-items:center}
-  th.sortable{cursor:pointer;user-select:none;white-space:nowrap;transition:color .15s}
-  th.sortable:hover{color:var(--navy)}
-  .sort-ind{font-size:10px;color:var(--navy);font-weight:700}
   /* مودال تعديل بيانات الطالب */
-  .edit-overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;z-index:1000;padding:20px}
-  .edit-overlay.show{display:flex}
-  .edit-modal{background:#fff;border-radius:16px;width:100%;max-width:780px;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden}
-  .edit-modal-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 24px;border-bottom:1px solid var(--gray-100)}
-  .edit-modal-title{font-size:16px;font-weight:700;color:var(--navy-dark)}
-  .edit-modal-sub{font-size:12px;color:var(--gray-500);margin-top:4px}
-  .edit-close{background:var(--gray-100);border:none;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--gray-700);flex-shrink:0}
-  .edit-close:hover{background:#e5e7eb}
-  .edit-modal-body{padding:24px;overflow-y:auto}
-  .e-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-  .e-field{display:flex;flex-direction:column;gap:6px}
+  /* ⚠️ .edit-modal-header اتشالت من هنا — كانت مكرّرة في ثلاث شاشات.
+     مكانها الآن site.css مرة واحدة. */
   .name-group{grid-column:1/-1}
   .name-row{display:grid;grid-template-columns:1fr 1.6fr 1fr;gap:12px}
   .name-row>div{display:flex;flex-direction:column;gap:4px}
   .name-row label{font-size:11px;font-weight:500;color:var(--gray-500)}
   @@media(max-width:700px){.name-row{grid-template-columns:1fr}}
-  .e-field label{font-size:13px;font-weight:600;color:var(--gray-700)}
-  .e-field label span{color:#EF4444;margin-right:2px}
-  .e-field input,.e-field select{width:100%;height:44px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:10px;padding:0 14px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;color:var(--navy-dark);outline:none;appearance:none}
-  .e-field input:focus,.e-field select:focus{border-color:var(--navy);background:#fff;box-shadow:0 0 0 3px rgba(27,42,94,.08)}
-  .e-field input.error,.e-field select.error{border-color:#EF4444}
-  .e-field input[readonly]{background:#eef0f4;color:var(--gray-500);cursor:not-allowed}
-  .e-field .field-error{font-size:11px;color:#EF4444;font-weight:500;display:none}
-  .e-field .field-error.show{display:block}
-  .edit-modal-actions{display:flex;gap:12px;justify-content:flex-end;padding:18px 24px;border-top:1px solid var(--gray-100)}
-  .edit-modal-actions .btn{padding:0 24px;height:44px;border-radius:10px;font-family:'IBM Plex Sans Arabic',sans-serif;font-weight:700;font-size:14px;cursor:pointer;border:none;display:flex;align-items:center;gap:8px}
-  .edit-modal-actions .btn.loading{opacity:.75;pointer-events:none}
-  .spinner2{width:16px;height:16px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin2 .6s linear infinite;display:none}
-  .btn.loading .spinner2{display:block}
-  .btn.loading .btn-text{display:none}
-  @@keyframes spin2{to{transform:rotate(360deg)}}
-  .toast{position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-90px);background:#0F6E56;color:#fff;padding:14px 24px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:0 8px 32px rgba(0,0,0,.2);z-index:1100;transition:transform .4s cubic-bezier(.16,1,.3,1)}
-  .toast.show{transform:translateX(-50%) translateY(0)}
-  @@media(max-width:640px){.e-grid{grid-template-columns:1fr}}
+  /* خانة الجوال: نفس صيغة باقي الشاشات — مفتاح +966 ثابت و٩ أرقام تبدأ بـ 5 */
+  .phone-wrap{display:flex;align-items:stretch;direction:ltr;background:var(--gray-50);
+              border:1.5px solid var(--gray-200);border-radius:10px;overflow:hidden;transition:all .2s}
+  .phone-wrap:focus-within{border-color:var(--navy);background:#fff;box-shadow:0 0 0 3px rgba(27,42,94,.08)}
+  .phone-wrap.ok{border-color:var(--green)}
+  .phone-wrap .cc{display:flex;align-items:center;flex-shrink:0;padding:0 13px;background:var(--gray-100);
+                  border-right:1.5px solid var(--gray-200);font-size:13.5px;font-weight:700;
+                  color:var(--gray-700);letter-spacing:.5px;user-select:none}
+  .phone-wrap input{flex:1;min-width:0;height:44px;padding:0 14px;border:none;outline:none;background:transparent;
+                    font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;font-weight:600;
+                    letter-spacing:1.2px;color:var(--navy-dark)}
+  .phone-wrap input:focus{box-shadow:none;background:transparent}
 </style>
 <script src="/i18n.js"></script>
-<script src="/lookups.js"></script>
+<script src="/lookups.js"></script>
+
 <script src="/js/name-fields.js"></script>
 <script src="/js/housing-fields.js"></script>
+<script src="/js/phone-field.js"></script>
 <script>
   var CAN_EDIT = @(canEdit ? "true" : "false");
   var CAN_DELETE = @(canDelete ? "true" : "false");
@@ -393,10 +424,7 @@
     sortAsc: false
   };
 
-  function authHeaders() {
-    var t2 = localStorage.getItem('staffToken');
-    return t2 ? { 'Authorization': 'Bearer ' + t2 } : {};
-  }
+  // الترويسات من NUH.headers في التخطيط — الكوكي بيتبعت لوحده، ومفيش توكن.
 
   var esc = function (v) {
     return String(v == null ? '' : v)
@@ -423,7 +451,7 @@
     var url = '/api/Students/paged?page=' + state.page + '&pageSize=' + state.pageSize +
               '&filterText=' + encodeURIComponent(state.filter) +
               (state.sortBy ? '&sortBy=' + encodeURIComponent(state.sortBy) + '&sortAsc=' + state.sortAsc : '');
-    var res = await fetch(url, { headers: authHeaders() });
+    var res = await fetch(url, { headers: NUH.headers() });
     if (!res.ok) return;
     var data = await res.json();
     state.totalPages = data.totalPages;
@@ -499,15 +527,19 @@
   });
 
   async function deleteStudent(id, btn) {
-    if (!confirm(t('stu_confirmDelete'))) return;
-    var res = await fetch('/api/Students/' + id, { method: 'DELETE', headers: authHeaders() });
+    // الحذف إجراء خطر: نافذة حمراء ولا تُغلق بالضغط خارجها
+    if (!await NuhDialog.confirm({ message: t('stu_confirmDelete'), danger: true })) return;
+    var res = await fetch('/api/Students/' + id, { method: 'DELETE', headers: NUH.headers() });
     var data = await res.json().catch(function () { return {}; });
     if (res.ok) { loadPage(); }
-    else { alert(data.message || t('stu_deleteFailed')); }
+    else { NuhDialog.error(data.message || t('stu_deleteFailed')); }
   }
 
   // ===== تعديل بيانات الطالب =====
   function eGet(id) { return document.getElementById('e_' + id); }
+
+  // القاعدة كلها في js/phone-field.js — نفس ملف باقي الشاشات
+  var editPhone = NuhPhone.attach({ input: 'e_phone', wrap: 'e_phoneWrap' });
 
   function showToast(msg, isError) {
     var el = document.getElementById('toast');
@@ -550,8 +582,8 @@
     clearEditErrors();
     var data;
     try {
-      var res = await fetch('/api/Students/' + id, { headers: authHeaders() });
-      if (res.status === 401) { localStorage.removeItem('staffToken'); window.location.replace('/Account/Login'); return; }
+      var res = await fetch('/api/Students/' + id, { headers: NUH.headers() });
+      if (res.status === 401) { window.location.replace('/Account/Login'); return; }
       if (!res.ok) { showToast(t('stu_editLoadError'), true); return; }
       data = await res.json();
     } catch (e) { showToast(t('reg_toastConnError'), true); return; }
@@ -562,6 +594,8 @@
     ['student_id', 'national_id', 'phone'].forEach(function (f) {
       eGet(f).value = (data[f] == null ? '' : data[f]);
     });
+    // الجوال متخزّن 9665XXXXXXXX والخانة بتعرض ٩ أرقام فقط (المفتاح ثابت جنبها)
+    editPhone.validate();
     setEditSelect('gender', normalizeGender(data.gender));
     // الدور متخزّن كود ("0" = الأرضي) — القيمة الفاضية بتخلّي "اختر الدور" ظاهرة
     setEditSelect('floor_number', data.floor_number == null ? '' : String(data.floor_number));
@@ -600,7 +634,7 @@
       else if (el.value.trim()) { el.classList.remove('error'); if (val) val.classList.remove('show'); }
     }
     valErr('national_id', 'e-val-national_id', /^\d{10}$/.test(eGet('national_id').value.trim()));
-    valErr('phone', 'e-val-phone', /^9665\d{8}$/.test(eGet('phone').value.trim()));
+    valErr('phone', 'e-val-phone', NuhPhone.isValid(NuhPhone.normalize(eGet('phone').value)));
     var g = eGet('gender'), ge = document.getElementById('e-err-gender');
     if (!g.value) { g.classList.add('error'); if (ge) ge.classList.add('show'); ok = false; }
     else { g.classList.remove('error'); if (ge) ge.classList.remove('show'); }
@@ -617,7 +651,8 @@
       full_name_english: NuhName.join('e_', 'en'),
       student_id: eGet('student_id').value.trim(),
       national_id: eGet('national_id').value.trim(),
-      phone: eGet('phone').value.trim(),
+      // الصيغة الموحّدة 9665XXXXXXXX — نفس المخزّن في قاعدة البيانات
+      phone: NuhPhone.toStorage(eGet('phone').value),
       gender: eGet('gender').value,
       college: eGet('college').value,
       department: eGet('department').value,
@@ -631,10 +666,10 @@
     try {
       var res = await fetch('/api/Students/' + id, {
         method: 'PUT',
-        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        headers: Object.assign({ 'Content-Type': 'application/json' }, NUH.headers()),
         body: JSON.stringify(payload)
       });
-      if (res.status === 401) { localStorage.removeItem('staffToken'); window.location.replace('/Account/Login'); return; }
+      if (res.status === 401) { window.location.replace('/Account/Login'); return; }
       if (res.ok) { closeEditModal(); loadPage(); showToast(t('stu_editSuccess')); }
       else {
         var err = await res.json().catch(function () { return {}; });

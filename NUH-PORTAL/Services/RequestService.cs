@@ -342,7 +342,7 @@ namespace NUH_PORTAL.Services
                     dupStudent.student_id, dupStudent.national_id, dupStudent.phone);
                 if (dup != null)
                     throw new UserFriendlyException(
-                        $"يوجد طلب قائم بالفعل لهذا الطالب رقمه {dup.RequestNumber} (تطابق في {dup.FieldLabel}) — راجعه قبل إنشاء طلب جديد.", 400);
+                        $"يوجد طلب قائم بالفعل لهذا الطالب رقمه {dup.RequestNumber} (تطابق في {dup.FieldLabel}) - راجعه قبل إنشاء طلب جديد.", 400);
             }
 
             // اللي بيراجع مرحلة الإسكان لما ينشئ الطلب بنفسه → موافقة الإسكان تلقائيًا
@@ -420,37 +420,68 @@ namespace NUH_PORTAL.Services
             var allowed = (req.Status, dto.Status) switch
             {
                 ("submitted", "housing_approved" or "housing_rejected") => canHousing,
-                // تحويل الطلب من "معتمد من الإسكان" للمراجعة الإلكترونية كان للأدمن بس
-                ("housing_approved", "cyber_review") => canComplete,
                 ("cyber_review", "cyber_approved" or "cyber_rejected") => canCyber,
-                ("cyber_approved", "ready_for_provisioning") => canCyber || canComplete,
                 ("ready_for_provisioning", "completed") => canComplete,
+
+                // انتقالات قديمة: الطلبات اللي اتوقفت في المرحلتين الوسيطتين قبل
+                // التوحيد لازم تفضل قابلة للتحريك، وإلا تفضل عالقة للأبد.
+                ("housing_approved", "cyber_review") => canComplete,
+                ("cyber_approved", "ready_for_provisioning") => canCyber || canComplete,
                 _ => false
             };
 
             if (!allowed)
                 throw new UserFriendlyException("هذا الإجراء غير متاح على الطلب في مرحلته الحالية", 400);
 
-            req.Status = dto.Status;
+            // ====================================================================
+            //  ⚠️ كان مسار طلبات الموظف فيه وقفتين وسيطتين مالهمش قرار:
+            //       موافقة الإسكان → (ضغطة) → مراجعة السيبراني
+            //       موافقة السيبراني → (ضغطة) → جاهز لإنشاء الحساب
+            //
+            //     الأثر مش بطء بس: الطلب بعد موافقة الإسكان ماكانش بيظهر عند الأمن
+            //     السيبراني أصلًا — لا في طابوره ولا في إشعاراته. والوحيد اللي يقدر
+            //     يحرّكه هو صاحب صلاحية «إكمال الطلب». يعني المسؤول عن *إنهاء*
+            //     الطلبات كان بيتحكم في *وصولها للمراجعة الأمنية*، ولو نسي أو قرر
+            //     ما يحوّلش، المراجعة الأمنية تتخطّى بلا أثر ظاهر.
+            //
+            //     مسار تسجيل الطالب ماكانش فيه المشكلة دي أصلًا: الموافقة بتنقل
+            //     الطلب للمكتب اللي بعده في نفس اللحظة. المسارين بقوا متطابقين.
+            // ====================================================================
+            var effectiveStatus = (req.Status, dto.Status) switch
+            {
+                ("submitted", "housing_approved") => "cyber_review",
+                ("cyber_review", "cyber_approved") => "ready_for_provisioning",
+                _ => dto.Status
+            };
+
+            req.Status = effectiveStatus;
             req.Notes = dto.Notes;
 
             Student? student = null;
 
             if (dto.Status == "housing_approved" || dto.Status == "housing_rejected")
             {
-                req.HousingReviewedBy = dto.ReviewedBy > 0 ? dto.ReviewedBy : actorId;
+                req.HousingReviewedBy = actorId;
                 req.HousingReviewedAt = DateTime.UtcNow;
                 req.HousingNotes = dto.Notes;
             }
             else if (dto.Status == "cyber_approved" || dto.Status == "cyber_rejected")
             {
-                req.CyberReviewedBy = dto.ReviewedBy > 0 ? dto.ReviewedBy : actorId;
+                req.CyberReviewedBy = actorId;
                 req.CyberReviewedAt = DateTime.UtcNow;
                 req.CyberNotes = dto.Notes;
             }
             else if (dto.Status == "ready_for_provisioning")
             {
-                req.ReadyForProvisioningBy = dto.ReviewedBy > 0 ? dto.ReviewedBy : actorId;
+                req.ReadyForProvisioningBy = actorId;
+                req.ReadyForProvisioningAt = DateTime.UtcNow;
+            }
+
+            // المرحلة اللي اتخطّت لازم تتختم كمان، وإلا يظهر الطلب «جاهز للإنشاء»
+            // من غير تاريخ للجاهزية وتبان فجوة في سجل المراجعات.
+            if (effectiveStatus == "ready_for_provisioning" && dto.Status == "cyber_approved")
+            {
+                req.ReadyForProvisioningBy = actorId;
                 req.ReadyForProvisioningAt = DateTime.UtcNow;
             }
             else if (dto.Status == "completed")
@@ -468,7 +499,7 @@ namespace NUH_PORTAL.Services
                         _logger.LogError("AD provisioning FAILED for student {Id}: {Error} | StackTrace: {Stack}",
                             student.student_id, provResult.Error, provResult.StackTrace);
                         // الرسالة فيها سبب الفشل — من غير stack trace للعميل (كان بيتسرب قبل كده)
-                        throw new UserFriendlyException($"فشل إنشاء حساب الشبكة — لم يتم إكمال الطلب: {provResult.Error}", 500);
+                        throw new UserFriendlyException($"فشل إنشاء حساب الشبكة - لم يتم إكمال الطلب: {provResult.Error}", 500);
                     }
 
                     _logger.LogInformation("AD account created for student {Id}: {Sam}", student.student_id, provResult.SamAccountName);
@@ -477,7 +508,7 @@ namespace NUH_PORTAL.Services
                         _logger.LogWarning("Extension attribute sync failed for student {Id}: {Error}", student.student_id, syncResult.Error);
                 }
 
-                req.CompletedBy = dto.ReviewedBy > 0 ? dto.ReviewedBy : actorId;
+                req.CompletedBy = actorId;
                 req.CompletedAt = DateTime.UtcNow;
                 if (student != null && student.status != StudentState.left)
                     student.status = StudentState.active;
@@ -515,23 +546,27 @@ namespace NUH_PORTAL.Services
             // الموافقة داخلية وRequestTrackingService بيخفيها.
             // dto.Status هنا مستحيل يكون فاضي (جدول الانتقالات فوق كان هيرمي)،
             // بس الفحص مكتوب صراحةً عشان الكمبايلر ما يحذّرش من nullable.
-            if (!string.IsNullOrEmpty(dto.Status) && oldStatus != dto.Status)
-                await LogStageAsync(req.Id, oldStatus, dto.Status, actorId, dto.Notes);
+            // الحالة الفعلية هي اللي بتتسجّل — لو الموافقة نقلت الطلب مرحلتين
+            // (اعتماد + إحالة) يبان في السجل انتقال واحد صحيح مش انتقال ناقص.
+            if (!string.IsNullOrEmpty(effectiveStatus) && oldStatus != effectiveStatus)
+                await LogStageAsync(req.Id, oldStatus, effectiveStatus, actorId, dto.Notes);
 
             if (reviewAction != null)
             {
                 var changes = new List<AuditChangeLog>();
-                if (oldStatus != dto.Status)
-                    changes.Add(new AuditChangeLog { FieldName = "Status", OldValue = oldStatus, NewValue = dto.Status });
+                if (oldStatus != effectiveStatus)
+                    changes.Add(new AuditChangeLog { FieldName = "Status", OldValue = oldStatus, NewValue = effectiveStatus });
 
                 await _audit.LogAsync(reviewAction, "Requests", req.Id, changes.Count > 0 ? changes : null);
 
                 var reqNum = req.RequestNumber ?? $"{DateTime.UtcNow.Year}-{req.Id:D6}";
                 var notifRoles = dto.Status switch
                 {
-                    "housing_approved" => new[] { "admin", "cyber" },
+                    // الموافقة بقت بتحوّل الطلب للسيبراني فورًا — فالإشعار يروح له
+                    "housing_approved" => new[] { "cyber", "admin" },
                     "housing_rejected" => new[] { "admin", req.RequestedByRole ?? "supervisor" },
                     "cyber_review" => new[] { "cyber" },
+                    // وموافقة السيبراني بقت بتخلّي الطلب جاهزًا للإنشاء فورًا
                     "cyber_approved" => new[] { "admin", "supervisor", req.RequestedByRole ?? "admin" },
                     "cyber_rejected" => new[] { req.RequestedByRole ?? "admin" },
                     "ready_for_provisioning" => new[] { "admin", "supervisor" },
@@ -540,10 +575,10 @@ namespace NUH_PORTAL.Services
                 };
                 var notifMsg = dto.Status switch
                 {
-                    "housing_approved" => $"تمت الموافقة على الطلب ({reqNum}) من قبل لجنة الإسكان",
+                    "housing_approved" => $"تمت موافقة إدارة الإسكان على الطلب ({reqNum}) وأُحيل إلى الأمن السيبراني",
                     "housing_rejected" => $"تم رفض الطلب ({reqNum}) من قبل لجنة الإسكان",
                     "cyber_review" => $"تم إحالة الطلب ({reqNum}) إلى المراجعة الإلكترونية",
-                    "cyber_approved" => $"تمت الموافقة الإلكترونية على الطلب ({reqNum})",
+                    "cyber_approved" => $"تمت موافقة الأمن السيبراني على الطلب ({reqNum}) وأصبح جاهزًا لإنشاء حساب الشبكة",
                     "cyber_rejected" => $"تم الرفض الإلكتروني للطلب ({reqNum})",
                     "ready_for_provisioning" => $"الطلب ({reqNum}) جاهز لإنشاء حساب شبكة السكن",
                     "completed" => $"تم إكمال الطلب ({reqNum})",

@@ -208,7 +208,21 @@
 
 @section Scripts {
 <script src="/i18n.js"></script>
-@* @@ للهروب — الرابط النهائي فيه @ عادية *@
-<script src="https://cdn.jsdelivr.net/npm/chart.js@@4.4.7/dist/chart.umd.min.js"></script>
+@* ⚠️ مكتبة الرسوم كانت تأتي من CDN خارجي بوسم حاجز قبل reports-page.js مباشرة.
+   الوسم الحاجز يوقف تنفيذ أي جافاسكريبت بعده حتى ينتهي تنزيله من الإنترنت،
+   فكانت الصفحة تقف بلا أرقام ولا جدول طوال ذلك الانتظار رغم أن كل بياناتها
+   محلية ولا علاقة لها بالمكتبة. صارت الآن:
+     • محلية من /js — لا انتظار لشبكة خارجية، وتعمل لو انقطع منفذ الإنترنت.
+     • async — تُنزَّل بالتوازي ولا تحجز أحدًا، و loadCharts وحدها تنتظرها.
+   والرجوع للـ CDN يبقى شبكة أمان لو لم يُنسخ الملف بعد على الخادم. *@
+<script>
+  function __chartLibFallback() {
+    var s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/chart.js@@4.4.7/dist/chart.umd.min.js';
+    s.async = true;
+    document.head.appendChild(s);
+  }
+</script>
+<script async src="/js/chart.umd.min.js" onerror="__chartLibFallback()"></script>
 <script src="/js/reports-page.js"></script>
 }

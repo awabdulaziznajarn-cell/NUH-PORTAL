@@ -112,7 +112,7 @@ namespace NUH_PORTAL.Services
             {
                 var currentAr = StatusLabel(student.student_status);
                 throw new UserFriendlyException(
-                    $"حالة الطالب مسجّلة بالفعل: {currentAr}. لا يمكن تسجيل حالة نهائية جديدة — راجع مسؤول النظام لتصحيحها.", 400);
+                    $"حالة الطالب مسجّلة بالفعل: {currentAr}. لا يمكن تسجيل حالة نهائية جديدة - راجع مسؤول النظام لتصحيحها.", 400);
             }
 
             if (file != null)
@@ -168,15 +168,17 @@ namespace NUH_PORTAL.Services
             await _actions.AddAsync(action);
             await UnitOfWork.SaveAsync();
 
-            // ⚠️ «ترك الإسكان الجامعي» مايتعملهاش تعطيل.
-            //    الطالب ساب السكن بس — لسه طالب في الجامعة ومحتاج حسابه للدراسة.
-            //    التعطيل للحالات اللي بتنهي علاقته بالجامعة: تخرّج / فصل / تحويل.
-            //    قبل كده كانت كل الحالات بتعطّل، يعني طالب بينتقل لسكن خارجي
-            //    كان بيفقد حسابه الجامعي.
-            var disablesNetworkAccount = st is "graduated" or "dismissed" or "transferred";
+            // ⚠️ تصحيح مقصود: كان «ترك الإسكان الجامعي» وحده لا يُعطِّل الحساب،
+            //    بناءً على افتراض أن الحساب هو حساب الطالب الجامعي فيبقى محتاجًا
+            //    إليه للدراسة. الافتراض خاطئ: الحساب الذي ينشئه هذا النظام هو
+            //    حساب **شبكة السكن** — اسمه h + الرقم الجامعي، ويُنشأ داخل وحدة
+            //    السكن التنظيمية ومجموعتها، ولا علاقة له بالحساب الأكاديمي.
+            //    فمن يترك السكن لا يبقى له به استخدام، وإبقاؤه مفعَّلًا يعني وصولًا
+            //    قائمًا إلى شبكة لم يعد من ساكنيها — وهذه ثغرة لا مسألة ترتيب.
+            //    الحالات الأربع كلها تُنهي السكن، فكلها تُعطِّل. لا استثناء.
 
             var (adSuccess, adMessage) = (false, "");
-            if (disablesNetworkAccount && !string.IsNullOrEmpty(student.ad_username))
+            if (!string.IsNullOrEmpty(student.ad_username))
             {
                 try
                 {
@@ -209,18 +211,16 @@ namespace NUH_PORTAL.Services
             await _lifecycle.AddAsync(new AccountLifecycleLog
             {
                 StudentId = student.Id,
-                Action = !disablesNetworkAccount ? "left_housing"
+                Action = string.IsNullOrEmpty(student.ad_username) ? "left_housing"
                        : adSuccess ? "disabled" : "disable_failed",
                 PerformedBy = actorId,
                 PerformedAt = DateTime.UtcNow,
                 Details = $"{detailsPrefix} - {statusAr}: {notes.Trim()}" +
-                          (!disablesNetworkAccount
-                              ? " (حساب الشبكة لم يُمسّ — ترك السكن لا ينهي العلاقة بالجامعة)"
-                              : string.IsNullOrEmpty(student.ad_username)
-                                  ? " (لا يوجد حساب شبكة)"
-                                  : adSuccess
-                                      ? " (تم تعطيل حساب الشبكة)"
-                                      : $" (فشل تعطيل الشبكة: {adMessage})"),
+                          (string.IsNullOrEmpty(student.ad_username)
+                              ? " (لا يوجد حساب شبكة)"
+                              : adSuccess
+                                  ? " (تم تعطيل حساب الشبكة)"
+                                  : $" (فشل تعطيل الشبكة: {adMessage})"),
                 IpAddress = clientIp
             });
 
@@ -252,8 +252,9 @@ namespace NUH_PORTAL.Services
             await UnitOfWork.SaveAsync();
             await _audit.LogAsync("student_departure_status", "StudentStatusActions", action.Id);
 
-            // التحذير للحالات اللي المفروض تعطّل بس — «ترك السكن» نجاح كامل من غير تعطيل
-            if (disablesNetworkAccount && !adSuccess && !string.IsNullOrEmpty(student.ad_username))
+            // فشل التعطيل تحذير لا خطأ: الحالة سُجّلت فعلًا، والحساب يُعطَّل يدويًا
+            // من «إدارة حسابات السكن». إخفاء الفشل أسوأ من إظهاره.
+            if (!adSuccess && !string.IsNullOrEmpty(student.ad_username))
             {
                 return new StudentStatusResultDto
                 {
@@ -272,7 +273,7 @@ namespace NUH_PORTAL.Services
                 ActionId = action.Id,
                 StatusType = st,
                 AdDisabled = adSuccess,
-                AdError = (adSuccess || !disablesNetworkAccount || string.IsNullOrEmpty(student.ad_username))
+                AdError = (adSuccess || string.IsNullOrEmpty(student.ad_username))
                     ? null
                     : adMessage
             };

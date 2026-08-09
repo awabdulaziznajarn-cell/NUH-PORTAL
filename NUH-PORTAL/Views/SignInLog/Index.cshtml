@@ -3,12 +3,6 @@
 }
 
 <style>
-  .filters-bar{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px;align-items:end}
-  .filter-group{display:flex;flex-direction:column;gap:4px}
-  .filter-group label{font-size:11px;font-weight:600;color:var(--gray-500)}
-  .filter-group select,.filter-group input{padding:8px 10px;border:1px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:13px;background:var(--white);color:var(--navy-dark);min-width:150px}
-  .spinner{width:32px;height:32px;border:3px solid var(--gray-200);border-top-color:var(--navy);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto}
-  @@keyframes spin{to{transform:rotate(360deg)}}
   .badge-ok{background:var(--green-light);color:var(--green)}
   .badge-fail{background:var(--red-light);color:var(--red)}
   .badge-out{background:var(--gray-100);color:var(--gray-700)}
@@ -79,7 +73,8 @@
 <script>
   var page = 1, pageSize = 50, totalPages = 1, cache = [];
   var esc = function (v) { return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
-  function authHeaders() { var tk = localStorage.getItem('staffToken'); return tk ? { 'Authorization': 'Bearer ' + tk } : {}; }
+  // الجدول وحالاته من NuhTable، والترويسات من NUH.headers في التخطيط — مفيش نسخة محلية.
+  var silTable = NuhTable.bind('tbody', 8);
 
   function fmt(d) {
     if (!d) return '';
@@ -107,32 +102,37 @@
     return u;
   }
 
+  // ⚠️ setLang تستدعي onLanguageChange المربوطة بـ render، فكانت الصفحة ترسم
+  //    «لا توجد سجلات» قبل انطلاق أول نداء، ثم تمتلئ فجأة. أي بطء عادي كان
+  //    يبدو كعطل. التفرقة نفسها صارت في NuhTable لكل الشاشات.
+
   function render() {
-    var tb = document.getElementById('tbody');
-    if (!cache.length) { tb.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--gray-500);padding:40px">' + t('sil_noItems') + '</td></tr>'; return; }
-    tb.innerHTML = cache.map(function (s, i) {
+    if (!silTable.isDone()) return silTable.loading();
+    if (!cache.length) return silTable.rows('', t('sil_noItems'));
+    silTable.rows(cache.map(function (s, i) {
       var n = (page - 1) * pageSize + i + 1;
       var result = s.eventType === 'logout'
-        ? '—'
+        ? '-'
         : (s.success ? '<span class="badge badge-ok">' + t('sil_result_success') + '</span>' : '<span class="badge badge-fail">' + t('sil_result_fail') + '</span>');
       return '<tr>' +
         '<td style="color:var(--gray-500)">' + n + '</td>' +
         '<td>' + fmt(s.occurredAt) + '</td>' +
-        '<td class="mono">' + esc(s.username || '—') + '</td>' +
-        '<td>' + esc(s.fullName || '—') + '</td>' +
+        '<td class="mono">' + esc(s.username || '-') + '</td>' +
+        '<td>' + esc(s.fullName || '-') + '</td>' +
         '<td>' + eventBadge(s.eventType, s.success) + '</td>' +
-        '<td>' + (s.method ? '<span class="badge badge-method">' + esc(s.method) + '</span>' : '—') + '</td>' +
+        '<td>' + (s.method ? '<span class="badge badge-method">' + esc(s.method) + '</span>' : '-') + '</td>' +
         '<td>' + result + '</td>' +
-        '<td class="mono">' + esc(s.ipAddress || '—') + '</td></tr>';
-    }).join('');
+        '<td class="mono">' + esc(s.ipAddress || '-') + '</td></tr>';
+    }).join(''), t('sil_noItems'));
   }
 
   async function load() {
     try {
-      var res = await fetch(buildUrl(), { headers: authHeaders() });
+      var res = await fetch(buildUrl(), { headers: NUH.headers() });
       if (res.status === 401) { window.location.replace('/Account/Login'); return; }
-      if (!res.ok) { document.getElementById('tbody').innerHTML = '<tr><td colspan="8" style="text-align:center;color:#991B1B;padding:40px">' + t('sil_loadError') + '</td></tr>'; return; }
+      if (!res.ok) { silTable.error(t('sil_loadError')); return; }
       var body = await res.json();
+      silTable.done();
       cache = body.data || [];
       totalPages = body.totalPages || 1;
       render();
@@ -140,7 +140,7 @@
       document.getElementById('prevBtn').disabled = page <= 1;
       document.getElementById('nextBtn').disabled = page >= totalPages;
       document.getElementById('totalLabel').textContent = t('sil_totalFmt').replace('{0}', body.totalRecords || 0);
-    } catch (e) { document.getElementById('tbody').innerHTML = '<tr><td colspan="8" style="text-align:center;color:#991B1B;padding:40px">' + t('sil_loadError') + '</td></tr>'; }
+    } catch (e) { silTable.error(t('sil_loadError')); }
   }
 
   function onFilter() { page = 1; load(); }

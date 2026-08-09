@@ -1,5 +1,6 @@
 using MapsterMapper;
 using Microsoft.AspNetCore.Identity;
+using NUH_PORTAL.Core;
 using NUH_PORTAL.Core.Exceptions;
 using NUH_PORTAL.Data.Interfaces;
 using NUH_PORTAL.DTOs.Otp;
@@ -68,7 +69,8 @@ namespace NUH_PORTAL.Services
         // وبيكسر أي مقارنة لاحقة بين الحسابين.
         // لاحقة البريد لحسابات الطلاب. مش بريد حقيقي — الطالب بيدخل برمز الجوال،
         // بس Identity محتاج قيمة، والصيغة الموحّدة بتخلّي القائمة مفهومة.
-        private const string StudentEmailSuffix = "@std.nuh.edu.sa";
+        // اللاحقة مصدرها StudentLoginIdentity — كانت مكرّرة هنا كثابت مستقل
+        private const string StudentEmailSuffix = StudentLoginIdentity.EmailSuffix;
 
         // نفس منطق NormalizeMobile في RegistrationFlowService و normalizeSaudiMobile في الواجهة.
         private static string? NormalizeMobile(string? mobile)
@@ -152,11 +154,14 @@ namespace NUH_PORTAL.Services
 
             if (user == null)
             {
+                // الشكل من StudentLoginIdentity، لا من سطر مكتوب هنا — وإلا صار
+                // للقاعدة نسختان: واحدة للإنشاء وأخرى للمزامنة، وتفترقان.
+                var (userName, fullName) = StudentLoginIdentity.Desired(student, mobile);
                 user = new User
                 {
-                    UserName = "student_" + (student?.student_id ?? mobile),
-                    full_name = student?.full_name ?? "طالب",
-                    Email = mobile + StudentEmailSuffix,
+                    UserName = userName,
+                    full_name = fullName,
+                    Email = StudentLoginIdentity.Email(mobile),
                     mobile = mobile,
                     is_active = true,
                     created_at = DateTime.UtcNow
@@ -166,39 +171,10 @@ namespace NUH_PORTAL.Services
             }
             else
             {
-                // إصلاح ذاتي للحسابات القديمة: توحيد صيغة الرقم، وتعويض الاسم
-                // اللي اتخزّن "طالب" لما البحث كان بيفشل. بيتصلح من أول دخول.
-                var needsUpdate = false;
-                if (user.mobile != mobile) { user.mobile = mobile; needsUpdate = true; }
-                if (student?.full_name != null &&
-                    (string.IsNullOrWhiteSpace(user.full_name) || user.full_name == "طالب"))
-                {
-                    user.full_name = student.full_name;
-                    needsUpdate = true;
-                }
-
-                // ⚠️ الإصلاح الذاتي كان بيوحّد عمود الجوال بس، فاسم المستخدم والبريد
-                //    بيفضلوا بالصيغة القديمة اللي اتكتبت أول مرة. النتيجة في شاشة
-                //    المستخدمين: صفوف بـ 0523698666@... وصفوف بـ 966523698666@...
-                //    لنفس نوع الحساب. بنوحّدهم هنا كمان.
-                var expectedEmail = mobile + StudentEmailSuffix;
-                if (!string.Equals(user.Email, expectedEmail, StringComparison.OrdinalIgnoreCase))
-                {
-                    user.Email = expectedEmail;
-                    needsUpdate = true;
-                }
-
-                // اسم المستخدم المفضّل هو الرقم الجامعي؛ الجوال بديل لو الطالب لسه
-                // مش مسجّل في النظام. مابنغيّرش اسم موجود صح عشان مانكسرش أي ربط.
-                var expectedUserName = "student_" + (student?.student_id ?? mobile);
-                if (!string.Equals(user.UserName, expectedUserName, StringComparison.OrdinalIgnoreCase))
-                {
-                    user.UserName = expectedUserName;
-                    needsUpdate = true;
-                }
-
-                if (needsUpdate) await _userManager.UpdateAsync(user);
-
+                // إصلاح ذاتي للحسابات القديمة: اسم المستخدم والاسم الكامل وصيغة
+                // الجوال والبريد، كلها بنفس القاعدة الواحدة. كان هنا أربع مقارنات
+                // مكتوبة باليد تكرّر المنطق نفسه بصياغة مختلفة قليلًا.
+                await StudentLoginIdentity.SyncAsync(_userManager, user, student, mobile);
                 await EnsureUserRoleAsync(user);
             }
 

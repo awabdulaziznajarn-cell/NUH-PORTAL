@@ -7,6 +7,20 @@
   var canRequests = Perm("requests.view") || Perm("housing.view");
   var canSystem   = Perm("reports.view") || Perm("auditLogs.view") || Perm("errorLogs.view")
                     || Perm("signInLog.view") || Perm("users.view") || Perm("roles.view");
+
+  // ⚠️ كل المجموعات كانت تُرسَل *مفتوحة* من الخادم، ثم يقفلها الـ JS بعد تحميل
+  //    الصفحة كاملة. وبما أن .nav-group-body عليها transition، كان المستخدم يرى
+  //    المجموعة تنفتح ثم تنطوي أمامه — يبدو كأن أحدًا ضغط عليها.
+  //    الحل من جذره: الخادم يرسل المجموعات مقفولة إلا التي تحتوي الصفحة الحالية.
+  var navPath = (Context.Request.Path.Value ?? "/Home").TrimEnd('/').ToLowerInvariant();
+  if (navPath.Length == 0) { navPath = "/home"; }
+  bool InGroup(params string[] routes) =>
+      routes.Any(r => navPath == r || navPath.StartsWith(r + "/", StringComparison.Ordinal));
+
+  var openStudents = InGroup("/students", "/register", "/bulk", "/studentstatus");
+  var openRequests = InGroup("/requests", "/housing");
+  var openLookups  = InGroup("/colleges", "/departments", "/buildings", "/academiclevels", "/terms");
+  var openSystem   = InGroup("/reports", "/auditlog", "/errorlog", "/signinlog", "/users", "/roles");
 }
 <style>
   /* السايدبار بطول الشاشة، والقائمة بتعمل scroll جوّاها عشان توصل لكل الشاشات (إعدادات النظام تحت) */
@@ -24,6 +38,10 @@
   .nav-group-header .ng-chevron{width:13px;height:13px;flex-shrink:0;transition:transform .22s ease;opacity:.7}
   .nav-group.collapsed .ng-chevron{transform:rotate(-90deg)}
   .nav-group-body{overflow:hidden;max-height:700px;transition:max-height .26s ease;display:flex;flex-direction:column;gap:4px;padding-top:2px}
+  /* أثناء تحميل الصفحة لا حركة إطلاقًا: استرجاع الحالة المحفوظة يجب أن يبدو
+     كأن الصفحة فُتحت عليه، لا كأن القائمة تتحرك وحدها. تُرفع بعد أول رسم. */
+  .sidebar-nav.no-anim .nav-group-body,
+  .sidebar-nav.no-anim .ng-chevron{transition:none}
   .nav-group.collapsed .nav-group-body{max-height:0;padding-top:0}
   .nav-group-body .nav-item{padding-inline-start:22px}
 </style>
@@ -36,7 +54,7 @@
     <div class="sidebar-logo-sub">@SharedLocalizer["Brand_Sub"]</div>
   </div>
 
-  <nav class="sidebar-nav">
+  <nav class="sidebar-nav no-anim">
     <a class="nav-item" href="/Home">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
       <span>@SharedLocalizer["Nav_Dashboard"]</span>
@@ -44,7 +62,7 @@
 
     @if (canStudents)
     {
-    <div class="nav-group" data-group="students">
+    <div class="nav-group @(openStudents ? "" : "collapsed")" data-group="students">
       <button class="nav-group-header" type="button" onclick="toggleNavGroup(this)">
         <svg class="ng-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
         <span class="ng-title">@SharedLocalizer["Nav_Section_Students"]</span>
@@ -87,7 +105,7 @@
 
     @if (canRequests)
     {
-    <div class="nav-group" data-group="requests">
+    <div class="nav-group @(openRequests ? "" : "collapsed")" data-group="requests">
       <button class="nav-group-header" type="button" onclick="toggleNavGroup(this)">
         <svg class="ng-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
         <span class="ng-title">@SharedLocalizer["Nav_Section_Requests"]</span>
@@ -116,7 +134,7 @@
 
     @if (User.HasClaim("permission", "lookups.manage"))
     {
-      <div class="nav-group" data-group="lookups">
+      <div class="nav-group @(openLookups ? "" : "collapsed")" data-group="lookups">
         <button class="nav-group-header" type="button" onclick="toggleNavGroup(this)">
           <svg class="ng-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
           <span class="ng-title">@SharedLocalizer["Nav_Section_Lookups"]</span>
@@ -149,7 +167,7 @@
 
     @if (canSystem)
     {
-    <div class="nav-group" data-group="system">
+    <div class="nav-group @(openSystem ? "" : "collapsed")" data-group="system">
       <button class="nav-group-header" type="button" onclick="toggleNavGroup(this)">
         <svg class="ng-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         <span class="ng-title">@SharedLocalizer["Nav_Section_System"]</span>
@@ -203,22 +221,9 @@
     }
   </nav>
 
-  <div class="sidebar-footer">
-    <div class="user-card">
-      <div class="user-avatar">👤</div>
-      <div>
-        <div class="user-name">@(User.FindFirst("FullName")?.Value ?? User.Identity?.Name)</div>
-        <div class="user-role">@User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value</div>
-      </div>
-    </div>
-    <form method="post" action="/Account/Logout" style="margin:0">
-      @Html.AntiForgeryToken()
-      <button class="logout-btn" type="submit">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        <span>@SharedLocalizer["Logout"]</span>
-      </button>
-    </form>
-  </div>
+  @* ⚠️ بطاقة المستخدم وزر «تسجيل الخروج» انتقلا إلى طرف الشريط العلوي
+     (Views/Shared/_Layout.cshtml). لا تُعِدهما هنا: نموذج الخروج يجب أن
+     يبقى في مكان واحد فقط، وإلا صار في الصفحة نموذجان بنفس الإجراء. *@
 </aside>
 
 <script>
@@ -230,7 +235,7 @@
         document.querySelectorAll('.sidebar-nav .nav-group').forEach(function (g) {
           var k = g.getAttribute('data-group'); if (k) st[k] = g.classList.contains('collapsed');
         });
-        localStorage.setItem('navGroups', JSON.stringify(st));
+        sessionStorage.setItem('navGroups', JSON.stringify(st));
       } catch (e) { }
     }
     window.toggleNavGroup = function (btn) {
@@ -238,11 +243,19 @@
       g.classList.toggle('collapsed'); persist();
     };
     function init() {
+      // ⚠️ sessionStorage لا localStorage: حالة المجموعات تخصّ جلسة العمل الحالية.
+      //    كانت محفوظة بلا انتهاء، فالمستخدم يخرج ويدخل في اليوم التالي فيجد
+      //    «إعدادات النظام» مفتوحة من جلسة أمس. الآن كل جلسة تبدأ بقائمة مطويّة
+      //    فيرى الأقسام الرئيسية أولًا، وما يفتحه يبقى مفتوحًا حتى نهاية جلسته.
+      //    (صفحة الدخول تمسحها أيضًا، لتغطية الخروج والدخول في نفس التبويب.)
       var saved = {};
-      try { saved = JSON.parse(localStorage.getItem('navGroups') || '{}'); } catch (e) { }
+      try { saved = JSON.parse(sessionStorage.getItem('navGroups') || '{}'); } catch (e) { }
+      // الحالة المحفوظة تُطبَّق في الاتجاهين: مقفولة *ومفتوحة*. الاكتفاء بإضافة
+      // collapsed كان يعني أن اختيار المستخدم بفتح مجموعة يضيع مع كل صفحة.
       document.querySelectorAll('.sidebar-nav .nav-group').forEach(function (g) {
         var k = g.getAttribute('data-group');
-        if (k && saved[k] === true) g.classList.add('collapsed');
+        if (!k || !(k in saved)) return;
+        g.classList.toggle('collapsed', saved[k] === true);
       });
       var path = (location.pathname || '').replace(/\/+$/, '').toLowerCase(); if (path === '') path = '/home';
       document.querySelectorAll('.sidebar-nav a.nav-item').forEach(function (a) {
@@ -254,7 +267,18 @@
         }
       });
     }
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+    // ⚠️ كان الاسترجاع ينتظر DOMContentLoaded — أي بعد رسم الصفحة كاملة، فيرى
+    //    المستخدم الحركة. السكربت هنا بعد <nav> مباشرة، فالعناصر مقروءة بالفعل
+    //    ويمكن التنفيذ فورًا قبل أول رسم.
+    init();
+
+    // رفع منع الحركة بعد أول رسم — الضغط اليدوي بعدها يتحرك بسلاسة كالمعتاد
+    var navEl = document.querySelector('.sidebar-nav');
+    if (navEl) {
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () { navEl.classList.remove('no-anim'); });
+      });
+    }
 
     // ===== شارة الطلبات المستنية =====
     // جرس الإشعارات ممكن يعدّي من غير ما حد ياخد باله، فبنحط الرقم على الزر نفسه.
@@ -265,7 +289,7 @@
       if (!badge) return;
       try {
         var res = await fetch('/api/workflow/queue/my-count', { credentials: 'same-origin' });
-        if (!res.ok) return;                       // 401/403 — مانعملش حاجة
+        if (!res.ok) return;                       // 401/403 - مانعملش حاجة
         var data = await res.json();
         var n = (data && data.count) || 0;
         if (n > 0) {
@@ -274,7 +298,7 @@
         } else {
           badge.style.display = 'none';
         }
-      } catch (e) { /* الشبكة — الشارة مش حاجة حرجة */ }
+      } catch (e) { /* الشبكة - الشارة مش حاجة حرجة */ }
     }
 
     refreshRequestsBadge();

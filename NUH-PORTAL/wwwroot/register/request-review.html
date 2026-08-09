@@ -25,7 +25,7 @@
     var q = new URLSearchParams(window.location.search);
     var n = q.get('number') || q.get('req');
     if (n) localStorage.setItem('openRequestNumber', n);
-  } catch (e) { /* رابط غير صالح — التحويل يتم على أي حال */ }
+  } catch (e) { /* رابط غير صالح - التحويل يتم على أي حال */ }
   window.location.replace('track-request.html');
 </script>
 </head>

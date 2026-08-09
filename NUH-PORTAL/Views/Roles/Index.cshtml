@@ -9,12 +9,14 @@
 </div>
 
 <div class="card">
-  <div class="lk-toolbar">
-    <div class="lk-toolbar-title">@SharedLocalizer["rol_pageTitle"]</div>
-    @if (canManage)
-    {
-      <button class="btn btn-primary" type="button" onclick="openCreate()">@SharedLocalizer["rol_addRole"]</button>
-    }
+  <div class="card-header">
+    <div class="card-title">@SharedLocalizer["rol_pageTitle"]</div>
+    <div class="card-tools">
+      @if (canManage)
+      {
+        <button class="btn btn-primary" type="button" onclick="openCreate()">@SharedLocalizer["rol_addRole"]</button>
+      }
+    </div>
   </div>
 
   <div style="overflow-x:auto">
@@ -79,36 +81,15 @@
 
 @section Scripts {
 <style>
-  .lk-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;border-bottom:1px solid var(--gray-100)}
-  .lk-toolbar-title{font-weight:700;color:var(--navy-dark);font-size:14px}
-  .spinner{width:32px;height:32px;border:3px solid var(--gray-200);border-top-color:var(--navy);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto}
-  @@keyframes spin{to{transform:rotate(360deg)}}
   .action-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:8px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;cursor:pointer;border:none;transition:all .2s}
   .action-edit{background:#eef1f8;color:var(--navy)}
   .action-edit:hover{background:#e0e6f5}
   .action-delete{background:var(--red-light);color:var(--red)}
   .action-delete:hover{background:#fee2e2}
-  .row-actions{display:flex;gap:6px;align-items:center}
   .rol-name{display:inline-block;padding:2px 10px;border-radius:6px;font-size:12px;font-weight:700;background:#EEF2FF;color:#3730A3}
   .rol-count{display:inline-block;min-width:26px;text-align:center;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;background:var(--gray-100);color:var(--gray-700)}
-  .edit-overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;z-index:1000;padding:20px}
-  .edit-overlay.show{display:flex}
-  .edit-modal{background:#fff;border-radius:16px;width:100%;max-width:720px;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden}
-  .edit-modal-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 24px;border-bottom:1px solid var(--gray-100)}
-  .edit-modal-title{font-size:16px;font-weight:700;color:var(--navy-dark)}
-  .edit-modal-sub{font-size:12px;color:var(--gray-500);margin-top:4px}
-  .edit-close{background:var(--gray-100);border:none;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--gray-700);flex-shrink:0}
-  .edit-close:hover{background:#e5e7eb}
-  .edit-modal-body{padding:24px;overflow-y:auto}
-  .e-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-  .e-field{display:flex;flex-direction:column;gap:6px}
-  .e-field label{font-size:13px;font-weight:600;color:var(--gray-700)}
-  .e-field label span{color:#EF4444;margin-right:2px}
-  .e-field input{width:100%;height:44px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:10px;padding:0 14px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;color:var(--navy-dark);outline:none}
-  .e-field input:focus{border-color:var(--navy);background:#fff;box-shadow:0 0 0 3px rgba(27,42,94,.08)}
-  .e-field input.error{border-color:#EF4444}
-  .e-field .field-error{font-size:11px;color:#EF4444;font-weight:500;display:none}
-  .e-field .field-error.show{display:block}
+  /* ⚠️ .edit-modal-header اتشالت من هنا — كانت مكرّرة في ثلاث شاشات.
+     مكانها الآن site.css مرة واحدة. */
   .perm-group{border:1px solid var(--gray-200);border-radius:12px;margin-bottom:12px;overflow:hidden}
   .perm-group-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;background:var(--gray-50);cursor:pointer}
   .perm-group-title{font-size:13px;font-weight:700;color:var(--navy-dark)}
@@ -119,23 +100,14 @@
   .perm-item input{margin-top:3px;width:16px;height:16px;cursor:pointer}
   .perm-item label{cursor:pointer;font-size:13px;color:var(--navy-dark)}
   .perm-item .perm-desc{display:block;font-size:11px;color:var(--gray-500);margin-top:2px}
-  .edit-modal-actions{display:flex;gap:12px;justify-content:flex-end;padding:18px 24px;border-top:1px solid var(--gray-100)}
-  .edit-modal-actions .btn{padding:0 24px;height:44px;border-radius:10px;font-family:'IBM Plex Sans Arabic',sans-serif;font-weight:700;font-size:14px;cursor:pointer;border:none;display:flex;align-items:center;gap:8px}
-  .edit-modal-actions .btn.loading{opacity:.75;pointer-events:none}
-  .spinner2{width:16px;height:16px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin2 .6s linear infinite;display:none}
-  .btn.loading .spinner2{display:block}
-  .btn.loading .btn-text{display:none}
-  @@keyframes spin2{to{transform:rotate(360deg)}}
-  .toast{position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-90px);background:#0F6E56;color:#fff;padding:14px 24px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:0 8px 32px rgba(0,0,0,.2);z-index:1100;transition:transform .4s cubic-bezier(.16,1,.3,1)}
-  .toast.show{transform:translateX(-50%) translateY(0)}
-  @@media(max-width:640px){.e-grid{grid-template-columns:1fr}.perm-list{grid-template-columns:1fr}}
 </style>
 <script src="/i18n.js"></script>
 <script>
   var PERM_MANAGE = @(canManage ? "true" : "false");
   var state = { roles: [], catalog: [] };
 
-  function authHeaders() { var tk = localStorage.getItem('staffToken'); return tk ? { 'Authorization': 'Bearer ' + tk } : {}; }
+  // الجدول وحالاته من NuhTable، والترويسات من NUH.headers في التخطيط — مفيش نسخة محلية.
+  var rolTable = NuhTable.bind('rolBody', 6);
   var esc = function (v) { return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
 
   function showToast(msg, isError) {
@@ -147,6 +119,9 @@
   }
 
   function renderTable() {
+    // ⚠️ setLang في التهيئة بتنادي onLanguageChange → renderTable قبل أول نداء،
+    //    فكانت الشاشة تكتب «لا توجد أدوار» ثم تمتلئ. الحالتان مختلفتان.
+    if (!rolTable.isDone()) return rolTable.loading();
     var body = '';
     state.roles.forEach(function (r, idx) {
       var actions = '';
@@ -160,26 +135,26 @@
         '<td>' + esc(r.description) + '</td>' +
         '<td><span class="rol-count">' + r.userCount + '</span></td>' +
         '<td><span class="rol-count">' + r.permissionCount + '</span></td>' +
-        '<td><div class="row-actions">' + (actions || '—') + '</div></td></tr>';
+        '<td><div class="row-actions">' + (actions || '-') + '</div></td></tr>';
     });
-    document.getElementById('rolBody').innerHTML = body ||
-      '<tr><td colspan="6" style="text-align:center;color:var(--gray-500);padding:28px">' + t('rol_noItems') + '</td></tr>';
+    rolTable.rows(body, t('rol_noItems'));
   }
 
   async function loadRoles() {
     try {
-      var res = await fetch('/api/Roles', { headers: authHeaders() });
+      var res = await fetch('/api/Roles', { headers: NUH.headers() });
       if (res.status === 401) { window.location.replace('/Account/Login'); return; }
-      if (!res.ok) { showToast(t('rol_loadError'), true); return; }
+      if (!res.ok) { rolTable.error(t('rol_loadError')); showToast(t('rol_loadError'), true); return; }
       state.roles = await res.json();
+      rolTable.done();
       renderTable();
-    } catch (e) { showToast(t('rol_loadError'), true); }
+    } catch (e) { rolTable.error(t('rol_loadError')); showToast(t('rol_loadError'), true); }
   }
 
   async function ensureCatalog() {
     if (state.catalog.length) return;
     try {
-      var res = await fetch('/api/Roles/permissions', { headers: authHeaders() });
+      var res = await fetch('/api/Roles/permissions', { headers: NUH.headers() });
       if (res.ok) state.catalog = await res.json();
     } catch (e) { /* صامت */ }
   }
@@ -241,7 +216,7 @@
     document.getElementById('m-err-name').classList.remove('show');
     mGet('name').classList.remove('error');
     try {
-      var res = await fetch('/api/Roles/' + id, { headers: authHeaders() });
+      var res = await fetch('/api/Roles/' + id, { headers: NUH.headers() });
       if (!res.ok) { showToast(t('rol_loadError'), true); return; }
       var d = await res.json();
       mGet('name').value = d.name || '';
@@ -269,7 +244,7 @@
     try {
       var res = await fetch(isEdit ? '/api/Roles/' + id : '/api/Roles', {
         method: isEdit ? 'PUT' : 'POST',
-        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        headers: Object.assign({ 'Content-Type': 'application/json' }, NUH.headers()),
         body: JSON.stringify(payload)
       });
       if (res.status === 401) { window.location.replace('/Account/Login'); return; }
@@ -282,7 +257,7 @@
   async function delRole(id, name) {
     if (!confirm(t('rol_confirmDelete').replace('{0}', name))) return;
     try {
-      var res = await fetch('/api/Roles/' + id, { method: 'DELETE', headers: authHeaders() });
+      var res = await fetch('/api/Roles/' + id, { method: 'DELETE', headers: NUH.headers() });
       if (res.status === 401) { window.location.replace('/Account/Login'); return; }
       if (res.ok) { loadRoles(); showToast(t('rol_deleted')); }
       else { var err = await res.json().catch(function () { return {}; }); showToast(err.message || t('rol_saveError'), true); }

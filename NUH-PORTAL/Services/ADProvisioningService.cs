@@ -432,8 +432,9 @@ namespace NUH_PORTAL.Services
                 }
 
                 var newStatus = lookup.AccountEnabled ? AdStatus.enabled : AdStatus.disabled;
+                var statusChanged = student.ad_status != newStatus;
 
-                if (student.ad_status != newStatus)
+                if (statusChanged)
                 {
                     result.StatusChanged++;
                     if (result.StatusChanges.Count < 200)
@@ -464,15 +465,35 @@ namespace NUH_PORTAL.Services
 
                 if (!dryRun)
                 {
+                    // ⚠️ التحديث كان يكتب الحالة الجديدة بلا أي قيد في السجل، فتفعيل
+                    //    أو تعطيل تمّ في الدليل مباشرة كان يختفي أثره: لوحة النتيجة
+                    //    تعرضه ثم تُغلق. والأسوأ أنه كان يمنع المسار الآخر من تسجيله —
+                    //    فحص «تفاصيل» يقارن المسجَّل بالفعلي، وبعد أن يكون التحديث
+                    //    ساواهما لا يجد فرقًا. فبدل أن يوثّق التغيير كان يطمسه.
+                    if (wasLinked)
+                    {
+                        ReconcileStatus(student, lookup.AccountEnabled, actorId, "تحديث الحالات من الدليل");
+                    }
+                    else
+                    {
+                        // ربط أول مرة: ليس تغييرًا خارجيًا بل بداية المتابعة
+                        student.ad_status = newStatus;
+                        student.ad_last_sync_at = DateTime.UtcNow;
+                        LogLifecycleEvent(student.Id,
+                            newStatus == AdStatus.enabled ? "enabled" : "disabled", actorId,
+                            $"تم ربط حساب الدليل {lookup.SamAccountName} بالطالب - حالته في الدليل: {newStatus}");
+                    }
+
                     student.ad_username = lookup.SamAccountName;
-                    student.ad_status = newStatus;
-                    student.ad_last_sync_at = DateTime.UtcNow;
                 }
 
                 if (wasLinked) result.AlreadyLinked++; else result.Linked++;
             }
 
-            if (!dryRun && (result.Linked > 0 || result.AlreadyLinked > 0))
+            // ⚠️ الشرط كان (Linked > 0 || AlreadyLinked > 0) فقط. القيود المضافة أعلاه
+            //    تُحفظ ضمن نفس SaveChanges، فلو مرّ التحديث بلا أي حساب مربوط لم
+            //    يُحفظ شيء أصلًا. الحفظ الآن كلما وُجد ما يُحفظ.
+            if (!dryRun && (result.Linked > 0 || result.AlreadyLinked > 0 || result.StatusChanged > 0))
             {
                 _db.AuditLogs.Add(new AuditLog
                 {
@@ -533,7 +554,7 @@ namespace NUH_PORTAL.Services
             if (string.IsNullOrWhiteSpace(baseOu))
             {
                 baseOu = $"OU=New,OU=Students,{BaseDn()}";
-                _logger.LogWarning("ADConfigurations['{Key}'] غير مضبوط — استخدام المسار الافتراضي {Ou}",
+                _logger.LogWarning("ADConfigurations['{Key}'] غير مضبوط - استخدام المسار الافتراضي {Ou}",
                     ADConfigurationKeys.StudentOuPath, baseOu);
             }
 
@@ -566,9 +587,46 @@ namespace NUH_PORTAL.Services
             var fallback = isMale
                 ? $"CN=NUH-Student-B,OU=Groups,{BaseDn()}"
                 : $"CN=NUH-Student-G,OU=Groups,{BaseDn()}";
-            _logger.LogWarning("مجموعة الطلاب ({Gender}) غير مضبوطة في ADConfigurations — استخدام {Group}",
+            _logger.LogWarning("مجموعة الطلاب ({Gender}) غير مضبوطة في ADConfigurations - استخدام {Group}",
                 isMale ? "male" : "female", fallback);
             return fallback;
+        }
+
+        // ====================================================================
+        //  مصالحة حالة الحساب مع الدليل — القاعدة الوحيدة في النظام.
+        //
+        //  ⚠️ كانت مكتوبة مرتين: مرة عند فتح «تفاصيل» الحساب في HousingAccountService،
+        //     ومرة هنا في التحديث الجماعي. المقارنة نفسها والتحديث نفسه والصياغة
+        //     نفسها تقريبًا — «تقريبًا» هي المشكلة. أي تعديل لاحق (كلمة في النص،
+        //     حقل يُضاف، شرط يتغيّر) كان سيقع في نسخة ويُنسى في الأخرى، فيصير
+        //     السجل نفسه بصيغتين حسب أي شاشة اكتشفت التغيير.
+        //
+        //  القاعدة هنا مرة واحدة، والمتغيّر الوحيد بين المسارين هو «أين اكتُشف».
+        //  الدالة تُعدّل الكيان وتضيف القيد؛ الحفظ على المستدعي (كلاهما يعمل على
+        //  نفس AppDbContext، فأي SaveChanges من أيّهما يحفظ ما أضافته).
+        // ====================================================================
+        public bool ReconcileStatus(Student student, bool actualEnabled, int actorId, string discoveredAt)
+        {
+            var actual = actualEnabled ? AdStatus.enabled : AdStatus.disabled;
+            if (student.ad_status == actual)
+            {
+                student.ad_last_sync_at = DateTime.UtcNow;
+                return false;
+            }
+
+            var previous = student.ad_status?.ToString() ?? "غير معروفة";
+            student.ad_status = actual;
+            student.ad_last_sync_at = DateTime.UtcNow;
+
+            // الدليل لا يخبرنا *من* نفّذ الإجراء (اسم المنفّذ في سجل أحداث وحدة
+            // التحكم بالنطاق)، فنسجّل ما نعرفه: أن التغيير جاء من خارج النظام،
+            // ومن أين اكتشفناه، ومتى.
+            LogLifecycleEvent(student.Id,
+                actual == AdStatus.enabled ? "enabled" : "disabled",
+                actorId,
+                $"تغيّرت حالة الحساب من خارج النظام (من {previous} إلى {actual}) - اكتُشف عند {discoveredAt}");
+
+            return true;
         }
 
         private void LogLifecycleEvent(int studentId, string action, int performedBy, string details, string? ipAddress = null)

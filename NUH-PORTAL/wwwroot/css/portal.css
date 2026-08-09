@@ -23,7 +23,15 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 img{max-width:100%;height:auto;display:block}
 a{text-decoration:none;color:inherit}
-button{font-family:inherit}
+
+/* ⚠️ القواعد الثلاث التالية كانت مكرّرة حرفيًا في ست صفحات. مكانها هنا:
+   • touch-action:manipulation يلغي تأخير الاستجابة للمس في بعض المتصفحات.
+   • font-size:16px على حقول الإدخال ليس اختيارًا جماليًا: iOS يقرّب الشاشة
+     تلقائيًا عند التركيز على حقل خطّه أصغر من 16px، فتقفز الصفحة أمام الطالب.
+   • مربع الاختيار يُستثنى من appearance:none وإلا اختفى شكله تمامًا. */
+button{font-family:inherit;touch-action:manipulation}
+input,select,textarea{font-size:16px;-webkit-appearance:none;appearance:none;border-radius:0}
+input[type="checkbox"]{-webkit-appearance:checkbox;appearance:checkbox}
 
 /* ---------- التوكنز ---------- */
 :root{
@@ -62,20 +70,31 @@ body{
 .pbar-logo img{width:30px;height:30px;object-fit:contain}
 .pbar-titles{flex:1;min-width:0}
 .pbar-titles b{display:block;font-size:14px;font-weight:700;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pbar-titles span{display:block;font-size:11px;color:var(--gold-light);line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pbar-titles span{display:block;font-size:12px;color:var(--gold-light);line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pbar-lang{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;
            border-radius:var(--r-sm);padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;transition:background .2s;flex-shrink:0}
 .pbar-lang:hover{background:rgba(255,255,255,.2)}
 
 /* ---------- الحاوية ---------- */
 .wrap{width:100%;max-width:var(--page-max);margin:0 auto;padding:0 16px;flex:1}
+/* ⚠️ كان التوسيط يتم بـ align-items:center على body. وهذا يُقلّص *كل* أبناء
+   الصفحة إلى عرض محتواهم — فالشريط العلوي والغلاف والتذييل في الصفحة الرئيسية
+   انكمشوا إلى منتصف الشاشة بدل أن يمتدوا. التوسيط مسؤولية الحاوية وحدها.
+   عرضها الأقصى يبقى قرار كل صفحة (٥٢٠ للتحقق، ٦٤٠ للنموذج، ٨٦٠ للطلبات). */
+.content,.container{width:100%;margin-inline:auto;padding:20px 16px;flex:1}
 .section{padding:28px 0}
 .section-head{margin-bottom:16px}
 .section-head h2{font-size:17px;font-weight:700;color:var(--navy-dark)}
 .section-head p{font-size:12.5px;color:var(--gray-500);margin-top:2px}
 
 /* ---------- الكارت ---------- */
-.card{background:var(--white);border:1px solid var(--gray-100);border-radius:var(--r-lg);box-shadow:var(--sh-1)}
+.card{background:var(--white);border:1px solid var(--gray-100);border-radius:var(--r-lg);
+      box-shadow:0 2px 8px rgba(27,42,94,.05);transition:box-shadow .2s}
+/* الحشو مقياس صريح لا جزء من الكارت: مقياسان فقط في البوابة كلها.
+   card-flush للكارت الذي يحتضن جدولًا بحوافه. */
+.card-pad-lg{padding:28px}
+.card-flush{padding:0;overflow:hidden}
+.card-center{text-align:center}
 .card-pad{padding:22px}
 .card-head{padding:16px 22px;border-bottom:1px solid var(--gray-100)}
 .card-head h3{font-size:15px;font-weight:700;color:var(--navy-dark)}
@@ -83,19 +102,24 @@ body{
 .card-body{padding:22px}
 
 /* ---------- الأزرار ---------- */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
-     padding:12px 22px;border-radius:var(--r-md);border:1px solid transparent;
-     font-size:14px;font-weight:600;cursor:pointer;transition:background .15s,box-shadow .15s,border-color .15s;
-     line-height:1.2;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;
+     padding:10px 24px;border-radius:10px;border:none;
+     font-family:inherit;font-size:14px;font-weight:700;
+     cursor:pointer;transition:all .2s;line-height:1.2}
+/* عرض الزر تخطيط لا هوية: الصفحات التي تريده ممتدًا تضيف .btn-block،
+   والزر المصغّر في الجداول .btn-sm. بدل أربع نسخ من .btn تختلف في العرض. */
+.btn-block{width:100%}
+.btn-sm{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600}
 .btn svg{width:16px;height:16px;flex-shrink:0}
 .btn-primary{background:var(--navy);color:#fff}
-.btn-primary:hover{background:var(--navy-dark);box-shadow:var(--sh-2)}
-.btn-outline{background:var(--white);color:var(--navy);border-color:var(--gray-200)}
-.btn-outline:hover{border-color:var(--navy);background:var(--gray-50)}
+.btn-primary:hover{background:var(--navy-light);transform:translateY(-1px)}
+.btn-outline{background:transparent;border:1.5px solid var(--gray-200);color:var(--gray-700)}
+.btn-outline:hover{border-color:var(--navy);color:var(--navy)}
 .btn-ghost{background:transparent;color:var(--gray-700)}
 .btn-ghost:hover{background:var(--gray-100)}
-.btn-block{width:100%}
-.btn:disabled{opacity:.55;cursor:default;box-shadow:none}
+.btn-gold{background:var(--gold);color:var(--navy-dark)}
+.btn-gold:hover{background:var(--gold-light);transform:translateY(-1px)}
+.btn:disabled{opacity:.55;cursor:default;box-shadow:none;transform:none}
 
 /* ---------- بطاقات الخدمات ---------- */
 .tiles{display:grid;grid-template-columns:1fr;gap:14px}
@@ -115,20 +139,41 @@ body{
 .tile:hover .tile-go{color:var(--navy)}
 
 /* ============================================================================
-   خطوات الرحلة
+   خطوات الرحلة (بطاقات عريضة في الصفحة الرئيسية) — .journey
+   ⚠️ كانت تُسمّى .step، والاسم نفسه مستخدم في صفحات التسجيل بمعنى مختلف تمامًا:
+      دائرة رقم صغيرة في شريط الخطوات. عند تحميل الملفين معًا كان padding البطاقة
+      يُطبَّق داخل الدائرة فينضغط محتواها حتى يختفي — بلا أي رسالة خطأ.
    ⚠️ كانت grid بسبع أعمدة ثابتة على الشاشات الكبيرة، فالنص بيتزنق ويبقى غير
       مقروء. بقت auto-fit بحد أدنى للعرض: بتلف لسطر جديد بدل ما تضغط النص.
    ============================================================================ */
-.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
-.step{background:var(--white);border:1px solid var(--gray-100);border-radius:var(--r-md);
+.journey{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.journey-step{background:var(--white);border:1px solid var(--gray-100);border-radius:var(--r-md);
       padding:16px;display:flex;gap:12px;align-items:flex-start}
-.step-n{width:28px;height:28px;border-radius:50%;background:var(--gray-100);color:var(--gray-500);
+.journey-num{width:28px;height:28px;border-radius:50%;background:var(--gray-100);color:var(--gray-500);
         display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;flex-shrink:0}
-.step.on .step-n{background:var(--navy);color:#fff}
-.step.done .step-n{background:var(--green);color:#fff}
-.step-t{min-width:0}
-.step-t b{display:block;font-size:13px;font-weight:700;color:var(--navy-dark);margin-bottom:2px;line-height:1.45}
-.step-t span{display:block;font-size:11.5px;color:var(--gray-500);line-height:1.6}
+.journey-step.on .journey-num{background:var(--navy);color:#fff}
+.journey-step.done .journey-num{background:var(--green);color:#fff}
+.journey-txt{min-width:0}
+.journey-txt b{display:block;font-size:13px;font-weight:700;color:var(--navy-dark);margin-bottom:2px;line-height:1.45}
+.journey-txt span{display:block;font-size:12px;color:var(--gray-500);line-height:1.6}
+
+/* ============================================================================
+   شريط خطوات المعالج — الدوائر المرقّمة أعلى صفحات التسجيل.
+   كان معرَّفًا بالنص نفسه في أربع صفحات. (وكان اسمه يشتبك مع .journey أعلاه.)
+   ============================================================================ */
+.step-indicator{display:flex;gap:8px;margin-bottom:24px;justify-content:center}
+.step{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+      font-size:13px;font-weight:700;background:var(--gray-200);color:var(--gray-500);flex-shrink:0}
+.step.active{background:var(--navy);color:var(--white);box-shadow:0 0 0 4px rgba(27,42,94,.15)}
+.step.done{background:var(--green);color:var(--white)}
+
+/* ---------- التنبيهات ---------- */
+/* ⚠️ .alert-info كان بلونين مختلفين: صفحة بألوان مكتوبة بالإيد (#065986) وأخرى
+   بالتوكنز. الفائز نسخة التوكنز — اللون يتبع الهوية بدل رقم مكتوب في مكان واحد. */
+.alert{padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:16px;display:none}
+.alert-error{background:var(--red-light);color:var(--red);border:1px solid var(--red);display:block}
+.alert-success{background:var(--green-light);color:var(--green);border:1px solid var(--green);display:block}
+.alert-info{background:#EEF3FF;color:var(--navy);border:1px solid #C7D4F5;display:block}
 
 /* ---------- صفوف معلومات ---------- */
 .rows{display:flex;flex-direction:column;gap:10px}
@@ -156,11 +201,8 @@ body{
 .grid-2{display:grid;grid-template-columns:1fr;gap:0 16px}
 
 /* ---------- تنبيهات ---------- */
-.alert{padding:12px 15px;border-radius:var(--r-md);font-size:12.5px;line-height:1.8;border:1px solid}
-.alert-info{background:var(--blue-light);color:var(--blue);border-color:#DBEAFE}
-.alert-ok{background:var(--green-light);color:var(--green);border-color:#C8EBDF}
-.alert-warn{background:var(--amber-light);color:var(--amber);border-color:#F5E3B8}
-.alert-err{background:var(--red-light);color:var(--red);border-color:#FECACA}
+/* (تعريفات .alert القديمة كانت هنا — أُزيلت. النسخة الموحّدة أعلاه، والأسماء
+   المستخدمة فعلًا في كل الصفحات هي error / success / info.) */
 
 /* ---------- شارات ---------- */
 .pill{display:inline-flex;align-items:center;gap:5px;padding:3px 11px;border-radius:var(--r-pill);

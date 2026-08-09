@@ -38,16 +38,50 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);col
 .nav-item:hover{background:rgba(255,255,255,.07);color:#fff}
 .nav-item.active{background:var(--gold);color:var(--navy-dark);font-weight:700}
 .nav-item svg{flex-shrink:0}
-.sidebar-footer{padding:16px 12px;border-top:1px solid rgba(255,255,255,.08)}
+/* ---------- قائمة المستخدم في الشريط العلوي ---------- */
+/* ⚠️ كانت بطاقة المستخدم وزر «تسجيل الخروج» ملصقين أسفل القائمة الجانبية.
+   عيبان: زر الخروج ظاهر دائمًا بعرض كامل رغم أنه أندر إجراء في النظام كله،
+   وهوية المستخدم في أبعد نقطة عن الشريط الذي يعمل فيه. المكان المتعارف عليه
+   في أي واجهة إدارية هو طرف الشريط العلوي: الاسم ظاهر، وما تحته يُفتح بالضغط.
+   ملاحظة مهمة: نموذج الخروج ما زال موجودًا في الصفحة (داخل القائمة المنسدلة)
+   لأن idle-session.js يبحث عن form[action="/Account/Logout"] لينهي الجلسة. */
+.user-menu{position:relative}
+.user-btn{display:flex;align-items:center;gap:9px;height:40px;padding:4px;padding-inline-end:10px;
+          background:var(--gray-100);border:1px solid transparent;border-radius:12px;cursor:pointer;
+          font-family:'IBM Plex Sans Arabic',sans-serif;transition:background .18s,border-color .18s,box-shadow .18s}
+.user-btn:hover{background:var(--gray-200)}
+.user-menu.open .user-btn{background:var(--white);border-color:var(--gray-200);box-shadow:0 2px 10px rgba(27,42,94,.08)}
+/* الحرفان الأولان من الاسم بدل أيقونة عامة: يميّز المستخدم بلمحة، ولا يبدو
+   كصورة ناقصة لم تُحمَّل. */
+.user-mono{width:32px;height:32px;border-radius:9px;background:var(--navy);color:#fff;flex-shrink:0;
+           display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;letter-spacing:.5px}
+.user-btn .nm{display:flex;flex-direction:column;align-items:flex-start;line-height:1.35;min-width:0;max-width:160px}
+.user-btn .nm b,.user-btn .nm i{max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.user-btn .nm b{font-size:12.5px;font-weight:700;color:var(--navy-dark)}
+.user-btn .nm i{font-size:10.5px;color:var(--gray-500);font-style:normal}
+.user-btn .chev{width:14px;height:14px;color:var(--gray-500);flex-shrink:0;transition:transform .2s}
+.user-menu.open .user-btn .chev{transform:rotate(180deg)}
+@media(max-width:760px){ .user-btn .nm{display:none} }
 
-/* ---------- كارت المستخدم + الخروج ---------- */
-.user-card{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;background:rgba(255,255,255,.06);margin-bottom:8px}
-.user-avatar{width:36px;height:36px;background:var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:var(--navy-dark);flex-shrink:0}
-.user-name{font-size:12px;font-weight:600;color:#fff}
-.user-role{font-size:10px;color:rgba(255,255,255,.4)}
-.user-version{font-size:10px;color:rgba(255,255,255,.35);margin-top:2px}
-.logout-btn{width:100%;padding:8px;background:rgba(255,255,255,.06);border:none;border-radius:8px;color:rgba(255,255,255,.5);font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px}
-.logout-btn:hover{background:rgba(255,255,255,.12);color:#fff}
+.user-dd{position:absolute;top:calc(100% + 8px);inset-inline-end:0;min-width:250px;background:#fff;
+         border:1px solid var(--gray-100);border-radius:12px;box-shadow:0 14px 36px rgba(17,28,66,.16);
+         z-index:1000;display:none;overflow:hidden}
+@supports not (inset-inline-end:0){
+  [dir=rtl] .user-dd{left:0;right:auto}
+  [dir=ltr] .user-dd{right:0;left:auto}
+}
+.user-menu.open .user-dd{display:block}
+.user-dd .who{display:flex;align-items:center;gap:10px;padding:14px;border-bottom:1px solid var(--gray-100)}
+.user-dd .who .t{min-width:0}
+.user-dd .who b{display:block;font-size:13px;font-weight:700;color:var(--navy-dark);
+                white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-dd .who i{display:block;font-size:11px;color:var(--gray-500);margin-top:2px;font-style:normal}
+.user-dd form{margin:0}
+.user-dd .out{width:100%;display:flex;align-items:center;gap:9px;padding:12px 14px;background:none;
+              border:none;cursor:pointer;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:13px;
+              font-weight:600;color:var(--red);text-align:start;transition:background .15s}
+.user-dd .out:hover{background:#FEF2F2}
+.user-dd .out svg{width:15px;height:15px;flex-shrink:0}
 
 /* ---------- الهيكل الرئيسي + التوب بار ---------- */
 .main{margin-right:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
@@ -97,13 +131,89 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);col
 .stat-pill-num{font-size:28px;font-weight:900;color:var(--navy-dark);line-height:1}
 .stat-pill-label{font-size:12px;color:var(--gray-500);font-weight:500}
 
-/* ---------- الكروت ---------- */
+/* ---------- الكروت ----------
+   ⚠️ ترويسة القسم على خلفية زرقاء فاتحة، والبيانات على أبيض.
+      السبب: البطاقة كانت بيضاء بالكامل فوق خلفية صفحة فاتحة، فحدودها كانت
+      بتتلاشى والعين ما بتلاقيش فاصلًا بين قسم وقسم في شاشة زي تفاصيل الطلب
+      اللي فيها خمس بطاقات فوق بعض.
+      وليه الترويسة وحدها مش البطاقة كلها؟ لأن دي شاشات بيتقري منها أرقام
+      وأسماء طول اليوم، وأي تلوين خلف النص بيقلّل التباين ويتعب القراءة.
+      اللون في الترويسة بيدّي الفصل المطلوب، والقيم تفضل على أبيض نقي.
+      ⚠️ التعريف هنا في site.css فقط — كل الشاشات بتاخد منه. */
 .card{background:var(--white);border-radius:16px;border:1px solid var(--gray-100);box-shadow:0 2px 8px rgba(27,42,94,.05);overflow:hidden}
-.card-header{padding:18px 20px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between}
-.card-header > div{font-size:15px;font-weight:700;color:var(--navy-dark)}
-.card-title{font-size:15px;font-weight:700;color:var(--navy-dark)}
+/* ⚠️ min-height: الرأس اللي فيه صندوق بحث (٣٣ بكسل) كان أطول ٢ بكسل من الرأس
+   اللي فيه زرار بس (٣١ بكسل) — فالجدول بيبدأ من ارتفاع مختلف بين شاشة وشاشة. */
+.card-header{padding:16px 20px;min-height:66px;background:#EEF2FB;border-bottom:1px solid #DCE4F5;display:flex;align-items:center;justify-content:space-between}
+.card-header > div{font-size:15px;font-weight:700;color:var(--navy)}
+.card-header svg{color:var(--navy)}
+.card-title{font-size:15px;font-weight:700;color:var(--navy)}
 .card-action{font-size:12px;color:var(--navy);font-weight:600;cursor:pointer;text-decoration:none;background:var(--gray-100);padding:4px 12px;border-radius:20px;transition:background .2s}
 .card-action:hover{background:var(--gray-200)}
+
+/* ⚠️ العناصر اللي جوه الترويسة كانت خلفيتها gray-100 (#EEF1F8) — قريبة جدًا من
+   لون الترويسة الجديد (#EEF2FB) فكانت هتختفي فيه. بتبقى بيضاء بحدّ واضح. */
+.card-header .card-action{background:var(--white);border:1px solid #D8E0F2}
+.card-header .card-action:hover{background:#E3EAF8}
+.card-header .search-wrap input{background:var(--white);border-color:#D8E0F2}
+
+/* ---------- بطاقة النموذج (form-card) ----------
+   ⚠️ الكتلة دي كانت **مكرّرة حرفًا بحرف في أربع صفحات**: تسجيل طالب جديد،
+      والتسجيل الجماعي، وتحديث حالة الطالب، والمغادرة. فأي تعديل في الشكل كان
+      لازم يتكرر أربع مرات — ولما اتغيّر لون ترويسة .card ما وصلش لها، فبانت
+      شاشة «تسجيل طالب جديد» بيضاء وباقي الشاشات زرقاء.
+      التعريف هنا مرة واحدة، واتشال من الصفحات الأربع. */
+.form-card{background:var(--white);border-radius:16px;border:1px solid var(--gray-100);box-shadow:0 2px 8px rgba(27,42,94,.05);overflow:hidden;margin-bottom:20px}
+.form-card-header{padding:16px 24px;background:#EEF2FB;border-bottom:1px solid #DCE4F5;display:flex;align-items:center;gap:10px}
+/* ⚠️ أيقونة القسم كانت على خلفية gray-100 — تختفي فوق الترويسة الملوّنة. بيضاء بحدّ. */
+.form-card-header-icon{width:36px;height:36px;border-radius:10px;background:var(--white);border:1px solid #D8E0F2;color:var(--navy);display:flex;align-items:center;justify-content:center}
+.form-card-title{font-size:15px;font-weight:700;color:var(--navy)}
+.form-card-body{padding:24px}
+
+/* ---------- ترويسة نافذة التعديل ----------
+   ⚠️ كانت مكرّرة في ثلاث شاشات (الأدوار، المستخدمون، الطلاب) بنفس السطر بالضبط. */
+.edit-modal-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:18px 24px;background:#EEF2FB;border-bottom:1px solid #DCE4F5}
+
+/* ---------- قائمة الاختيار (select) ----------
+   ⚠️ عنصر <select> بترسم قائمته المنسدلة **نظام التشغيل** لا الصفحة: خط ويندوز،
+      وحواف حادّة، وسطر مختار بأزرق ويندوز. فشاشة فيها ست قوائم بتبان نصّها من
+      تصميم النظام ونصّها من تصميم ويندوز.
+      الحل في js/select-field.js: العنصر الأصلي بيفضل في الصفحة (فكل الكود
+      القديم وإرسال النموذج شغّالين زي ما هم) لكنه بيتخفي بصريًا، وبنرسم فوقه
+      الواجهة دي. ⚠️ ما نستخدمش display:none — عشان required والتركيز
+      والوصولية يفضلوا شغّالين. */
+.nsel{position:relative;width:100%}
+.nsel-native{position:absolute;inset:0;width:100%;height:100%;opacity:0;pointer-events:none;z-index:-1}
+.nsel-btn{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:10px 14px;min-height:44px;background:var(--gray-50);border:1px solid var(--gray-200);
+  border-radius:10px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;font-weight:600;
+  color:var(--navy-dark);cursor:pointer;text-align:start;transition:border-color .15s,background .15s}
+.nsel-btn:hover{border-color:var(--gray-300);background:var(--white)}
+.nsel-btn:focus-visible{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(27,42,94,.12)}
+.nsel.is-open .nsel-btn{background:var(--white);border-color:var(--navy);box-shadow:0 0 0 3px rgba(27,42,94,.12)}
+.nsel-txt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nsel-txt.is-ph{color:var(--gray-500);font-weight:500}
+.nsel-chev{width:16px;height:16px;flex-shrink:0;color:var(--gray-500);transition:transform .2s}
+.nsel.is-open .nsel-chev{transform:rotate(180deg);color:var(--navy)}
+.nsel-btn:disabled,.nsel-native:disabled+.nsel-btn{opacity:.55;cursor:not-allowed}
+
+/* اللوحة fixed عشان ما تتقصّش جوّه نافذة منبثقة أو حاوية عندها overflow */
+.nsel-panel{position:fixed;z-index:3000;background:var(--white);border:1px solid var(--gray-200);
+  border-radius:12px;box-shadow:0 16px 40px rgba(17,28,66,.18);overflow:hidden;display:flex;flex-direction:column}
+.nsel-search{padding:8px;border-bottom:1px solid var(--gray-100);background:#F8FAFE}
+.nsel-search input{width:100%;padding:8px 12px;border:1px solid var(--gray-200);border-radius:8px;
+  font-family:'IBM Plex Sans Arabic',sans-serif;font-size:13px;color:var(--navy-dark);background:var(--white)}
+.nsel-search input:focus{outline:none;border-color:var(--navy)}
+.nsel-list{overflow-y:auto;padding:6px}
+.nsel-opt{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;
+  border-radius:8px;font-size:13.5px;font-weight:500;color:var(--navy-dark);cursor:pointer}
+.nsel-opt:hover,.nsel-opt.is-active{background:#EEF2FB}
+.nsel-opt.is-sel{background:#E3EAF8;color:var(--navy);font-weight:700}
+.nsel-tick{width:15px;height:15px;flex-shrink:0;color:var(--navy);opacity:0}
+.nsel-opt.is-sel .nsel-tick{opacity:1}
+.nsel-empty{padding:18px;text-align:center;font-size:13px;color:var(--gray-500)}
+.nsel-list::-webkit-scrollbar{width:8px}
+.nsel-list::-webkit-scrollbar-thumb{background:var(--gray-200);border-radius:4px}
+.nsel-list::-webkit-scrollbar-thumb:hover{background:var(--gray-300)}
 
 /* ---------- البحث ---------- */
 .search-wrap{position:relative}
@@ -118,6 +228,46 @@ thead th{background:var(--gray-50);padding:11px 16px;text-align:right;font-size:
 tbody td{padding:13px 16px;border-bottom:1px solid var(--gray-100);color:var(--navy-dark);font-weight:500}
 tbody tr:last-child td{border-bottom:none}
 tbody tr:hover{background:var(--gray-50)}
+/* ⚠️ عرض الأعمدة كان بيتحسب من المحتوى، فعمود «#» بياخد عرض مختلف في كل شاشة
+   وعمود «إجراءات» بيتمطّ حسب عدد الأزرار. تثبيت الطرفين بيخلّي إطار الجدول
+   واحدًا في كل الشاشات، والأعمدة اللي جوّه بتتوزّع طبيعي. */
+thead th:first-child,tbody td:first-child{width:56px;text-align:center}
+[dir=ltr] thead th:first-child{text-align:center}
+thead th:last-child,tbody td:last-child{width:150px}
+
+/* ⚠️ جدول بأعمدة ثابتة العرض.
+   السبب: عرض العمود بيتحسب من المحتوى بشكل افتراضي. فشاشة فيها تبويبين على
+   نفس الجدول (المستخدمون: موظفون / طلاب) بتلاقي «الاسم الكامل» في مكان مختلف
+   في كل تبويب، لأن «student_966569999999» أعرض بكتير من «supervisor1» فبيدفع
+   كل الأعمدة اللي بعده. الفرق وصل ١٤٤ بكسل.
+   مع table-layout:fixed العرض بيتحدّد من الترويسة، فالأعمدة بتقف في نفس
+   المكان مهما كان المحتوى. القيم نفسها على الـ th في الشاشة، لأنها بتخص
+   أعمدتها هي. */
+.table-fixed{table-layout:fixed}
+.table-fixed td{overflow:hidden;text-overflow:ellipsis}
+
+/* ---------- تلميح (ⓘ) ----------
+   ⚠️ ليه موجود: الملاحظات المساعدة كانت بتتكتب كشريط كامل جوّه الشاشة، فبتدفع
+      الجدول لتحت وتخلّي التبويب الواحد شكله مختلف عن التاني. الأيقونة بتشيل
+      نفس المعلومة من غير ما تاخد مساحة، فالتخطيط يفضل واحد في كل الحالات.
+   ⚠️ بتفتح بالمرور **وبالتركيز** كمان (:focus-visible) عشان اللي بيتنقّل
+      بلوحة المفاتيح يوصلها. */
+.hint{position:relative;display:inline-flex;align-items:center;justify-content:center;
+  width:18px;height:18px;border:none;background:none;padding:0;cursor:help;
+  color:var(--gray-500);flex-shrink:0;transition:color .15s}
+.hint:hover,.hint:focus-visible{color:var(--navy);outline:none}
+.hint svg{width:15px;height:15px}
+.hint-bubble{position:absolute;top:calc(100% + 8px);inset-inline-start:50%;transform:translateX(50%);
+  width:max-content;max-width:320px;padding:10px 14px;border-radius:10px;
+  background:var(--navy-dark);color:#fff;font-size:12px;font-weight:500;line-height:1.85;
+  text-align:start;box-shadow:0 10px 30px rgba(17,28,66,.28);
+  opacity:0;visibility:hidden;transition:opacity .15s;z-index:900;pointer-events:none}
+[dir=ltr] .hint-bubble{transform:translateX(-50%)}
+/* السهم الصغير الواصل للأيقونة */
+.hint-bubble::before{content:'';position:absolute;bottom:100%;inset-inline-start:50%;
+  transform:translateX(50%);border:6px solid transparent;border-bottom-color:var(--navy-dark)}
+[dir=ltr] .hint-bubble::before{transform:translateX(-50%)}
+.hint:hover .hint-bubble,.hint:focus-visible .hint-bubble{opacity:1;visibility:visible}
 
 /* ---------- الشارات ---------- */
 .badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px}
@@ -125,6 +275,9 @@ tbody tr:hover{background:var(--gray-50)}
 .badge-pending,.badge-Pending{background:#FFF7ED;color:#92400E}
 .badge-rejected{background:var(--red-light);color:var(--red)}
 .badge-left,.badge-Left,.badge-inactive,.badge-Inactive{background:var(--gray-100);color:var(--gray-500)}
+/* ⚠️ .badge-gray كانت معرّفة في سجل العمليات بس، وسجل الأخطاء بيستخدمها كمان
+   لطريقة الطلب (GET/POST) — فكانت بتطلع بلا خلفية هناك. */
+.badge-gray{background:var(--gray-100);color:var(--gray-700)}
 
 /* ---------- الأزرار ---------- */
 .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:10px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:13px;font-weight:600;text-decoration:none;cursor:pointer;border:none;transition:all .2s}
@@ -168,7 +321,25 @@ tbody tr:hover{background:var(--gray-50)}
    وبنخليها ltr علشان المتصفح يحط شريط السكرول على يمينها (جنب السايدبار) بدل طرف الشاشة،
    والمحتوى جواها بيرجع rtl طبيعي. */
 body.app-shell{overflow:hidden;height:100vh}
-.app-shell .main{height:100vh;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--gray-300) transparent}
+
+/* ⚠️ إصلاح تخطيط كان مكتوبًا في <style> جوّه _Layout.cshtml بتعليق بيقول
+   «مكان الإصلاح الطبيعي css/site.css — اتحط هنا مؤقتًا». اتنقل لمكانه.
+
+   المشكلة: body{display:flex} و .main{flex:1} من غير min-width:0. عنصر الـ flex
+   بشكل افتراضي min-width:auto — يعني بيرفض ينكمش أقل من أعرض محتوى جوّاه.
+   فأي جدول عريض بيوسّع .main ويدفع التخطيط كله، ويظهر شريط تمرير أفقي
+   والقائمة الجانبية تتقص من الطرف. */
+.main,.content{min-width:0}
+.content .card>table,.content .card>.table-wrap>table{max-width:100%}
+.content .card{overflow-x:auto}
+.app-shell .main{height:100vh;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--gray-300) transparent;
+  /* ⚠️ ثبات عرض المحتوى: منطقة .main هي اللي بتسكرول (مش الصفحة). فالشاشة
+     القصيرة (٥ صفوف) مالهاش شريط سكرول، والطويلة (١٨ صف) بيظهر فيها شريط
+     بعرض ١٠ بكسل — فالمحتوى بيضيق ١٠ بكسل وكل حاجة بتزحلق.
+     النتيجة إن التبديل بين تبويب وتبويب أو بين شاشة وشاشة بينطّ قدام العين.
+     scrollbar-gutter:stable بتحجز مكان الشريط دايمًا، موجود أو لأ — فالعرض
+     ثابت والانتقال بين الشاشات ما بيتحسّش. */
+  scrollbar-gutter:stable}
 /* السكرول يقع على الحافة الداخلية جنب السايدبار في الاتجاهين */
 /* RTL: السايدبار يمين → سكرول .main يمين عبر direction:ltr، والأبناء يرجعوا rtl */
 html[dir=rtl] .app-shell .main{direction:ltr}
@@ -205,3 +376,96 @@ html[dir=ltr] .app-shell .main>.topbar,html[dir=ltr] .app-shell .main>.content{d
 .tl-value.username { font-weight:600; color:var(--navy); }
 .tl-notes { font-size:12px; color:var(--gray-700); margin-top:10px; background:var(--gray-50); padding:10px 14px; border-radius:8px; }
 .history-empty { padding:24px; text-align:center; color:var(--gray-500); font-size:13px; }
+
+/* ============================================================================
+   مكوّنات شاشات القوائم — تعريف واحد لكل مكوّن
+   ⚠️ الكتل دي كانت مكتوبة داخل <style> في كل شاشة على حدة، فكل شاشة كانت
+      بتاخد نسختها الخاصة. النتيجة اللي ظهرت فعليًا: شاشة «إدارة المستخدمين»
+      و«الأدوار والصلاحيات» كان رأس بطاقتهم اسمه .lk-toolbar (أبيض، حشوة 14px)
+      بينما باقي الشاشات بتستخدم .card-header (أزرق فاتح، حشوة 16px) — فالشاشتين
+      دول بانوا مختلفين عن السيستم كله بعد تغيير تصميم البطاقات.
+      وأربع شاشات (الطلبات، سجل العمليات، سجل الأخطاء، سجل الدخول) ما كانش
+      لبطاقتهم رأس أصلًا، فالجدول كان بيبدأ من غير عنوان.
+      كل ده بقى من هنا.
+   ============================================================================ */
+
+/* أدوات رأس البطاقة (بحث + أزرار) — كانت style="display:flex;gap:10px" مكتوبة يدويًا */
+.card-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+/* ---------- التبويبات ----------
+   ⚠️ كان في تصميمين مختلفين: .tabs/.tab-btn في شاشة الطلبات (أزرار فوق البطاقة)
+      و .usr-tabs/.usr-tab في شاشة المستخدمين (تبويبات بخط سفلي جوّه البطاقة).
+      بقى مكوّن واحد فوق البطاقة، والعدّاد اختياري بـ .tab-count. */
+.tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
+.tab-btn{display:inline-flex;align-items:center;gap:8px;padding:8px 20px;border-radius:10px;
+  border:1.5px solid var(--gray-200);background:var(--white);font-family:'IBM Plex Sans Arabic',sans-serif;
+  font-size:13px;font-weight:600;cursor:pointer;color:var(--gray-500);transition:all .2s}
+.tab-btn:hover{border-color:var(--navy)}
+.tab-btn.active{background:var(--navy);color:var(--white);border-color:var(--navy)}
+.tab-count{background:var(--gray-100);color:var(--gray-500);border-radius:999px;padding:1px 8px;font-size:11.5px;font-weight:700}
+.tab-btn.active .tab-count{background:rgba(255,255,255,.2);color:var(--white)}
+
+/* ---------- ترتيب الأعمدة ---------- */
+th.sortable{cursor:pointer;user-select:none;white-space:nowrap;transition:color .15s}
+th.sortable:hover{color:var(--navy)}
+.sort-ind{font-size:10px;color:var(--navy);font-weight:700}
+
+/* ---------- مؤشر التحميل ---------- */
+.spinner{width:32px;height:32px;border:3px solid var(--gray-200);border-top-color:var(--navy);
+  border-radius:50%;animation:spin .7s linear infinite;margin:0 auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ---------- أزرار داخل صفوف الجدول ---------- */
+.row-actions{display:flex;gap:6px;align-items:center}
+
+/* ---------- نافذة التعديل ----------
+   ⚠️ الكتلة دي كانت مكرّرة حرفيًا في أربع شاشات (الأدوار، القوائم المرجعية،
+      المستخدمون، الطلاب). العرض بيتحدّد من style على العنصر نفسه في كل شاشة. */
+.edit-overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;z-index:1000;padding:20px}
+.edit-overlay.show{display:flex}
+.edit-modal{background:var(--white);border-radius:16px;width:100%;max-width:640px;max-height:92vh;
+  display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden}
+.edit-modal-title{font-size:16px;font-weight:700;color:var(--navy-dark)}
+.edit-modal-sub{font-size:12px;color:var(--gray-500);margin-top:4px}
+.edit-close{background:var(--gray-100);border:none;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--gray-700);flex-shrink:0}
+.edit-close:hover{background:#e5e7eb}
+.edit-modal-body{padding:24px;overflow-y:auto}
+.e-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.e-field{display:flex;flex-direction:column;gap:6px}
+.e-field label{font-size:13px;font-weight:600;color:var(--gray-700)}
+.e-field label span{color:#EF4444;margin-inline-start:2px}
+.e-field input,.e-field select{width:100%;height:44px;background:var(--gray-50);border:1.5px solid var(--gray-200);
+  border-radius:10px;padding:0 14px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;
+  color:var(--navy-dark);outline:none;appearance:none}
+.e-field input:focus,.e-field select:focus{border-color:var(--navy);background:var(--white);box-shadow:0 0 0 3px rgba(27,42,94,.08)}
+.e-field input.error,.e-field select.error{border-color:#EF4444}
+.e-field input[readonly]{background:#eef0f4;color:var(--gray-500);cursor:not-allowed}
+.field-error{font-size:11px;color:#EF4444;font-weight:500;display:none}
+.field-error.show{display:block}
+
+/* ---------- رسالة التأكيد (toast) ---------- */
+.toast{position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-90px);background:#0F6E56;
+  color:#fff;padding:14px 24px;border-radius:12px;font-size:14px;font-weight:600;
+  box-shadow:0 8px 32px rgba(0,0,0,.2);z-index:1100;transition:transform .4s cubic-bezier(.16,1,.3,1)}
+.toast.show{transform:translateX(-50%) translateY(0)}
+
+/* أزرار أسفل نافذة التعديل + مؤشر الحفظ داخل الزر */
+.edit-modal-actions{display:flex;gap:12px;justify-content:flex-end;padding:18px 24px;border-top:1px solid var(--gray-100)}
+.edit-modal-actions .btn{padding:0 24px;height:44px;border-radius:10px;font-family:'IBM Plex Sans Arabic',sans-serif;font-weight:700;font-size:14px;cursor:pointer;border:none;display:flex;align-items:center;gap:8px}
+.edit-modal-actions .btn.loading{opacity:.75;pointer-events:none}
+.spinner2{width:16px;height:16px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin2 .6s linear infinite;display:none}
+.btn.loading .spinner2{display:block}
+.btn.loading .btn-text{display:none}
+@keyframes spin2{to{transform:rotate(360deg)}}
+.e-field[hidden]{display:none}
+@media(max-width:640px){.e-grid{grid-template-columns:1fr}}
+
+/* ---------- شريط الفلاتر فوق الجدول ----------
+   ⚠️ كان مكرّرًا في ثلاث شاشات (سجل العمليات، سجل الدخول، سجل الأخطاء)
+      بقيم متقاربة مش متطابقة (min-width 140 و150 و180) — فعرض خانات الفلترة
+      كان مختلفًا بين شاشة وشاشة من غير سبب. */
+.filters-bar{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px;align-items:end}
+.filter-group{display:flex;flex-direction:column;gap:4px}
+.filter-group label{font-size:11px;font-weight:600;color:var(--gray-500)}
+.filter-group select,.filter-group input{padding:8px 10px;border:1px solid var(--gray-200);border-radius:8px;
+  font-family:inherit;font-size:13px;background:var(--white);color:var(--navy-dark);min-width:150px}

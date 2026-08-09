@@ -5,7 +5,10 @@
 // المباني تترجّع حسب النوع (?gender=)، والأقسام حسب الكلية (?collegeId=).
 // ==========================================================================
 var Lookups = (function () {
-  function headers() { var tk = localStorage.getItem('staffToken'); return tk ? { 'Authorization': 'Bearer ' + tk } : {}; }
+  // ⚠️ كانت بتقرأ staffToken من localStorage. محدش بيكتب المفتاح ده من يوم ما
+  //    الدخول اتوحّد على الكوكي، واللي فاضل منه في متصفح قديم توكن منتهي —
+  //    والترويسة بتسبق الكوكي فيترفض النداء ٤٠١. الكوكي بيتبعت لوحده.
+  function headers() { return {}; }
   function escOpt(v) { return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
   async function fetchList(url) {
@@ -41,5 +44,57 @@ var Lookups = (function () {
     return v ? parseInt(v, 10) : null;
   }
 
-  return { fetchList: fetchList, fill: fill, selectedId: selectedId, headers: headers };
+  // ====================================================================
+  //  قائمة تابعة لقائمة تانية (الأقسام تتبع الكلية، والمباني تتبع النوع…)
+  //
+  //  ⚠️ العيب اللي بتعالجه:
+  //     قائمة «القسم» كانت بتتحمّل بكل الأقسام من كل الكليات قبل ما المستخدم
+  //     يختار كلية أصلًا. فبتفتح على عشرات الخيارات المختلطة، وممكن يختار
+  //     قسمًا لا يتبع الكلية اللي هيختارها بعد كده — بيانات متضاربة تعدّي
+  //     من غير ما حد يلاحظ.
+  //
+  //     نفس القاعدة كانت متطبّقة صح على المباني (لا تفتح قبل اختيار النوع)،
+  //     لكنها كانت مكتوبة جوّه شاشة الموظف، فالأقسام ما أخدتش منها ولا
+  //     بوابة الطالب أخدت منها. القاعدة هنا مرة واحدة، والشاشتين بتاخدوا منها.
+  //
+  //  السلوك:
+  //     • الأب فاضي  → الابن مقفول، ونصّه «اختر الكلية أولًا».
+  //     • الأب اتغيّر → الابن يتصفّى ويتحمّل من جديد ويتفتح.
+  //     • لو الفلترة رجّعت فاضي → نرجع للقائمة الكاملة بدل ما نقفل الطريق.
+  // ====================================================================
+  function dependent(opts) {
+    var parent = opts.parent, child = opts.child;
+    if (!parent || !child) return { refresh: function () {} };
+
+    function setOnly(text, disabled) {
+      child.innerHTML = '';
+      var o = document.createElement('option');
+      o.value = ''; o.textContent = text;
+      child.appendChild(o);
+      child.value = '';
+      child.disabled = !!disabled;
+    }
+
+    async function apply() {
+      var id = selectedId(parent);
+      var raw = parent.value;
+      if (!id && !raw) { setOnly(opts.waitText, true); return; }
+
+      setOnly(opts.loadingText || opts.chooseText, true);
+
+      var items = await fetchList(opts.url(id, raw));
+      if (!items.length && opts.fallbackUrl) items = await fetchList(opts.fallbackUrl);
+
+      setOnly(opts.chooseText, false);
+      fill(child, items, { keep: opts.keep || '' });
+      opts.keep = '';                 // القيمة المحفوظة تُستعمل مرة واحدة بس
+      child.disabled = false;
+    }
+
+    parent.addEventListener('change', function () { apply(); });
+    apply();
+    return { refresh: apply };
+  }
+
+  return { fetchList: fetchList, fill: fill, selectedId: selectedId, headers: headers, dependent: dependent };
 })();

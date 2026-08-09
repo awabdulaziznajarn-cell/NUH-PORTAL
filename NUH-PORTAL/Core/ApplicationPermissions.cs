@@ -26,12 +26,13 @@ namespace NUH_PORTAL.Core
 
         // الأدوار والصلاحيات
         public static readonly ApplicationPermission ViewRoles = new("عرض الأدوار", "roles.view", RolesGroup, "شاشة «الأدوار والصلاحيات»: عرض الأدوار وصلاحيات كل دور (قراءة فقط)");
-        public static readonly ApplicationPermission ManageRoles = new("إدارة الأدوار", "roles.manage", RolesGroup, "إنشاء دور، تعديل صلاحياته، حذفه — أخطر صلاحية في النظام، إذ تتيح لصاحبها توسيع صلاحيات أي مستخدم");
+        public static readonly ApplicationPermission ManageRoles = new("إدارة الأدوار", "roles.manage", RolesGroup, "إنشاء دور، تعديل صلاحياته، حذفه - أخطر صلاحية في النظام، إذ تتيح لصاحبها توسيع صلاحيات أي مستخدم");
         public static readonly ApplicationPermission AssignRoles = new("إسناد الأدوار", "roles.assign", RolesGroup, "تغيير دور الموظف من شاشة المستخدمين (مشرف / أمن سيبراني / مدير النظام)");
 
         // السجلّات
-        public static readonly ApplicationPermission ViewAuditLogs = new("سجل الإجراءات", "auditLogs.view", LogsGroup, "شاشة «سجل الإجراءات»: من نفّذ الإجراء ومتى — تسجيل، نقل، اعتماد، رفض، تغيير حالة");
-        public static readonly ApplicationPermission ViewErrorLogs = new("سجل الأخطاء", "errorLogs.view", LogsGroup, "شاشة «سجل الأخطاء»: أخطاء النظام التقنية — للدعم الفني");
+        public static readonly ApplicationPermission ViewAuditLogs = new("سجل الإجراءات", "auditLogs.view", LogsGroup, "شاشة «سجل الإجراءات»: من نفّذ الإجراء ومتى - تسجيل، نقل، اعتماد، رفض، تغيير حالة");
+        public static readonly ApplicationPermission ViewAllAuditLogs = new("سجل الإجراءات - كل الإدارات", "auditLogs.viewAll", LogsGroup, "بلا هذه الصلاحية يرى الموظف إجراءات إدارته وإجراءات الطلاب فقط، ولا يرى إجراءات موظفي الإدارات الأخرى. امنحها لمن يحتاج صورة النظام كاملة");
+        public static readonly ApplicationPermission ViewErrorLogs = new("سجل الأخطاء", "errorLogs.view", LogsGroup, "شاشة «سجل الأخطاء»: أخطاء النظام التقنية - للدعم الفني");
         public static readonly ApplicationPermission ViewSignInLog = new("سجل الدخول والخروج", "signInLog.view", LogsGroup, "شاشة «سجل الدخول»: محاولات الدخول الناجحة والفاشلة ووقتها وجهازها");
 
         // الطلاب
@@ -39,14 +40,14 @@ namespace NUH_PORTAL.Core
         public static readonly ApplicationPermission CreateStudents = new("تسجيل طالب", "students.create", StudentsGroup, "شاشة «تسجيل طالب»: إدخال طالب واحد يدويًا بكامل بياناته وسكنه");
         public static readonly ApplicationPermission BulkImportStudents = new("الرفع الجماعي (إكسل)", "students.bulkImport", StudentsGroup, "شاشة «الرفع الجماعي»: تنزيل القالب ورفع ملف إكسل بعشرات الطلاب مرة واحدة");
         public static readonly ApplicationPermission EditStudents = new("تعديل بيانات طالب", "students.edit", StudentsGroup, "تعديل بيانات طالب مسجّل (الاسم، الجوال، الكلية، السكن) من شاشة الطلاب");
-        public static readonly ApplicationPermission DeleteStudents = new("حذف واستعادة طالب", "students.delete", StudentsGroup, "حذف سجل طالب من النظام أو استعادته بعد الحذف — إجراء حسّاس، يُفضّل قصره على مدير النظام");
+        public static readonly ApplicationPermission DeleteStudents = new("حذف واستعادة طالب", "students.delete", StudentsGroup, "حذف سجل طالب من النظام أو استعادته بعد الحذف - إجراء حسّاس، يُفضّل قصره على مدير النظام");
         public static readonly ApplicationPermission ChangeStudentStatus = new("تحديث حالة الطالب", "students.changeStatus", StudentsGroup, "شاشة «تحديث حالة الطالب»: تسجيل تخرّج / فصل / تحويل / ترك السكن. تنبيه: التخرّج والفصل والتحويل تُعطِّل حساب الشبكة تلقائيًا");
-        public static readonly ApplicationPermission OverrideStudentStatus = new("تصحيح حالة نهائية", "students.overrideStatus", StudentsGroup, "تسجيل حالة نهائية جديدة لطالب حالته النهائية مسجّلة بالفعل — لتصحيح إدخال خاطئ فقط، يُفضّل قصره على مدير النظام");
+        public static readonly ApplicationPermission OverrideStudentStatus = new("تصحيح حالة نهائية", "students.overrideStatus", StudentsGroup, "تسجيل حالة نهائية جديدة لطالب حالته النهائية مسجّلة بالفعل - لتصحيح إدخال خاطئ فقط، يُفضّل قصره على مدير النظام");
 
         // الطلبات
-        public static readonly ApplicationPermission ViewRequests = new("عرض الطلبات", "requests.view", RequestsGroup, "شاشة «الطلبات»: عرض الطلبات وتفاصيلها ومسارها — يرى كل مستخدم الطلبات الواقعة في مرحلته وفق صلاحيات المراجعة");
+        public static readonly ApplicationPermission ViewRequests = new("عرض الطلبات", "requests.view", RequestsGroup, "شاشة «الطلبات»: عرض الطلبات وتفاصيلها ومسارها - يرى كل مستخدم الطلبات الواقعة في مرحلته وفق صلاحيات المراجعة");
         public static readonly ApplicationPermission CreateRequests = new("تقديم طلب نيابة عن طالب", "requests.create", RequestsGroup, "إنشاء طلب سكن لطالب من داخل النظام بدلًا من أن يقدّمه الطالب بنفسه");
-        public static readonly ApplicationPermission RequestAttachments = new("مرفقات الطلب", "requests.attachments", RequestsGroup, "عرض وتحميل ورفع وحذف مرفقات الطلب (صور الهوية والوثائق) — بيانات شخصية حسّاسة");
+        public static readonly ApplicationPermission RequestAttachments = new("مرفقات الطلب", "requests.attachments", RequestsGroup, "عرض وتحميل ورفع وحذف مرفقات الطلب (صور الهوية والوثائق) - بيانات شخصية حسّاسة");
         public static readonly ApplicationPermission ReviewHousing = new("مراجعة إدارة الإسكان", "requests.reviewHousing", RequestsGroup, "المرحلة الأولى: اعتماد أو رفض أو طلب معلومات إضافية على الطلب وهو عند إدارة الإسكان");
         public static readonly ApplicationPermission ReviewCyber = new("مراجعة الأمن السيبراني", "requests.reviewCyber", RequestsGroup, "المرحلة الثانية: اعتماد أو رفض الطلب بعد موافقة إدارة الإسكان عليه وإحالته إلى الأمن السيبراني");
         public static readonly ApplicationPermission CompleteRequests = new("إكمال الطلب وإنشاء الحساب", "requests.complete", RequestsGroup, "المرحلة الأخيرة: إغلاق الطلب وإنشاء حساب الشبكة للطالب فعليًا في Active Directory");
@@ -64,7 +65,7 @@ namespace NUH_PORTAL.Core
         public static readonly ApplicationPermission ManageLookups = new("إدارة القوائم", "lookups.manage", LookupsGroup, "شاشات «الكليات، الأقسام، المباني، المستويات الدراسية، الفصول الدراسية، بنود التعهّد»: إضافة وتعديل وحذف");
 
         // إعدادات النظام
-        public static readonly ApplicationPermission AdSetup = new("أدوات الأكتف دايركتوري", "system.adSetup", SystemGroup, "فحص جاهزية الاتصال بالأكتف دايركتوري وإنشاء مستخدم تجريبي حقيقي فيه — أداة تشخيص حسّاسة، لمدير النظام فقط");
+        public static readonly ApplicationPermission AdSetup = new("أدوات الأكتف دايركتوري", "system.adSetup", SystemGroup, "فحص جاهزية الاتصال بالأكتف دايركتوري وإنشاء مستخدم تجريبي حقيقي فيه - أداة تشخيص حسّاسة، لمدير النظام فقط");
 
         public static readonly ReadOnlyCollection<ApplicationPermission> All = new(new List<ApplicationPermission>
         {

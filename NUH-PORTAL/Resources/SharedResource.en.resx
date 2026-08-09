@@ -1,5 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
   <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
     <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
     <xsd:element name="root" msdata:IsDataSet="true">
@@ -67,6 +126,54 @@
   <data name="Brand_Title" xml:space="preserve">
     <value>Student Housing System</value>
   </data>
+  <data name="hs_actDisableDesc" xml:space="preserve">
+    <value>Immediately blocks the student from the housing network. The account and its data are kept.</value>
+  </data>
+  <data name="hs_actEnableDesc" xml:space="preserve">
+    <value>Restores the student’s access to the housing network with the same account.</value>
+  </data>
+  <data name="hs_actPwdDesc" xml:space="preserve">
+    <value>Sets a new password for the account, delivered to the student through the approved channel.</value>
+  </data>
+  <data name="hs_actRealignDesc" xml:space="preserve">
+    <value>Moves the account back to its correct directory location and group and refreshes its data. Use after a housing transfer or a college change.</value>
+  </data>
+  <data name="hs_actSyncDesc" xml:space="preserve">
+    <value>Pushes the current housing data (building, room, level) to the directory without changing the account location or group.</value>
+  </data>
+  <data name="hs_dn" xml:space="preserve">
+    <value>Account location (DN)</value>
+  </data>
+  <data name="hs_groups" xml:space="preserve">
+    <value>Directory groups</value>
+  </data>
+  <data name="hs_secActions" xml:space="preserve">
+    <value>Account actions</value>
+  </data>
+  <data name="hs_secDirectory" xml:space="preserve">
+    <value>Directory account</value>
+  </data>
+  <data name="hs_techDetails" xml:space="preserve">
+    <value>Technical details</value>
+  </data>
+  <data name="hs_uac" xml:space="preserve">
+    <value>Account control flags (UAC)</value>
+  </data>
+  <data name="hs_uacDisabled" xml:space="preserve">
+    <value>Normal account, disabled</value>
+  </data>
+  <data name="hs_uacDisabledNoExpire" xml:space="preserve">
+    <value>Disabled — password never expires</value>
+  </data>
+  <data name="hs_uacNoExpire" xml:space="preserve">
+    <value>Enabled — password never expires</value>
+  </data>
+  <data name="hs_uacNormal" xml:space="preserve">
+    <value>Normal account, enabled</value>
+  </data>
+  <data name="hs_upn" xml:space="preserve">
+    <value>Full logon name (UPN)</value>
+  </data>
   <data name="Lang_Switch_ToAr" xml:space="preserve">
     <value>عربي</value>
   </data>
@@ -92,10 +199,10 @@
     <value>Dashboard</value>
   </data>
   <data name="Nav_Housing" xml:space="preserve">
-    <value>Housing Management</value>
+    <value>Housing Accounts</value>
   </data>
   <data name="Nav_RegisterSingle" xml:space="preserve">
-    <value>Single Registration</value>
+    <value>Single Student Registration</value>
   </data>
   <data name="Nav_Reports" xml:space="preserve">
     <value>Reports</value>
@@ -133,9 +240,6 @@
   <data name="Page_Bulk" xml:space="preserve">
     <value>Bulk Registration</value>
   </data>
-  <data name="Page_Departure" xml:space="preserve">
-    <value>Student Departure &amp; Status</value>
-  </data>
   <data name="Page_Home" xml:space="preserve">
     <value>Dashboard</value>
   </data>
@@ -172,14 +276,11 @@
   <data name="acceptAndContinue" xml:space="preserve">
     <value>Accept &amp; Continue</value>
   </data>
-  <data name="accessDenied" xml:space="preserve">
-    <value>You do not have permission to access this page</value>
-  </data>
   <data name="accountActions" xml:space="preserve">
     <value>Account Actions</value>
   </data>
   <data name="accountLifecycle" xml:space="preserve">
-    <value>Account Lifecycle</value>
+    <value>Account Activity Log</value>
   </data>
   <data name="accountManagement" xml:space="preserve">
     <value>Account Management</value>
@@ -197,7 +298,7 @@
     <value>Enabled</value>
   </data>
   <data name="actionExtensionAttrsSynced" xml:space="preserve">
-    <value>Extension Attributes Synced</value>
+    <value>Housing data updated in AD</value>
   </data>
   <data name="actionLogin" xml:space="preserve">
     <value>Login</value>
@@ -212,22 +313,16 @@
     <value>Password Reset</value>
   </data>
   <data name="actionProvisioned" xml:space="preserve">
-    <value>Provisioned</value>
+    <value>Housing Account has been Created</value>
   </data>
   <data name="actionReason" xml:space="preserve">
     <value>Reason for Action</value>
-  </data>
-  <data name="actionReasonError" xml:space="preserve">
-    <value>Please enter the reason (at least 5 characters)</value>
-  </data>
-  <data name="actionReasonLabel" xml:space="preserve">
-    <value>Reason:</value>
   </data>
   <data name="actionReasonPlaceholder" xml:space="preserve">
     <value>Enter the reason for this action (required, min 5 characters)</value>
   </data>
   <data name="actionReprovisioned" xml:space="preserve">
-    <value>Re-provisioned</value>
+    <value>Account re-aligned</value>
   </data>
   <data name="actions" xml:space="preserve">
     <value>Actions</value>
@@ -279,9 +374,6 @@
   </data>
   <data name="adUsername" xml:space="preserve">
     <value>AD Username</value>
-  </data>
-  <data name="adUsernameLabel" xml:space="preserve">
-    <value>Username:</value>
   </data>
   <data name="additionalNotes" xml:space="preserve">
     <value>Additional Notes</value>
@@ -856,12 +948,6 @@
   <data name="confirmDisableIntro" xml:space="preserve">
     <value>The student's Housing Network account will be disabled.</value>
   </data>
-  <data name="confirmDisableQuestion" xml:space="preserve">
-    <value>Do you want to proceed?</value>
-  </data>
-  <data name="confirmDisableTitle" xml:space="preserve">
-    <value>Warning</value>
-  </data>
   <data name="confirmDisableYes" xml:space="preserve">
     <value>Yes, Disable Account</value>
   </data>
@@ -872,13 +958,13 @@
     <value>Confirm Password Reset</value>
   </data>
   <data name="confirmReProvision" xml:space="preserve">
-    <value>Are you sure you want to re-provision?</value>
+    <value>Re-align this account in the directory? It will be moved to the correct location and group, and its data refreshed.</value>
   </data>
   <data name="confirmRestore" xml:space="preserve">
     <value>Are you sure you want to restore this student?</value>
   </data>
   <data name="confirmSync" xml:space="preserve">
-    <value>Are you sure you want to sync attributes?</value>
+    <value>Update the housing data in the directory?</value>
   </data>
   <data name="connectionError" xml:space="preserve">
     <value>Connection error, please try again later</value>
@@ -1457,7 +1543,7 @@
     <value>Unknown</value>
   </data>
   <data name="hs_lifecycleLog" xml:space="preserve">
-    <value>Lifecycle Log</value>
+    <value>Account Activity Log</value>
   </data>
   <data name="hs_manageAccount" xml:space="preserve">
     <value>Manage Account</value>
@@ -1487,10 +1573,10 @@
     <value>Additional information requested</value>
   </data>
   <data name="lifecycleHistory" xml:space="preserve">
-    <value>Lifecycle History</value>
+    <value>Account Activity Log</value>
   </data>
   <data name="lifecycleLog" xml:space="preserve">
-    <value>Lifecycle Log</value>
+    <value>Account Activity Log</value>
   </data>
   <data name="loading" xml:space="preserve">
     <value>Loading...</value>
@@ -1528,14 +1614,8 @@
   <data name="login_usernamePlaceholder" xml:space="preserve">
     <value>Enter your username</value>
   </data>
-  <data name="logout" xml:space="preserve">
-    <value>Logout</value>
-  </data>
   <data name="male" xml:space="preserve">
     <value>Male</value>
-  </data>
-  <data name="markAllRead" xml:space="preserve">
-    <value>Mark all read</value>
   </data>
   <data name="markCompleted" xml:space="preserve">
     <value>Mark Completed</value>
@@ -1556,7 +1636,7 @@
     <value>National ID</value>
   </data>
   <data name="nationalIdPlaceholder" xml:space="preserve">
-    <value></value>
+    <value />
   </data>
   <data name="nationalIdValidation" xml:space="preserve">
     <value>National ID must contain exactly 10 digits</value>
@@ -1623,9 +1703,6 @@
   </data>
   <data name="notes" xml:space="preserve">
     <value>Notes</value>
-  </data>
-  <data name="notifications" xml:space="preserve">
-    <value>Notifications</value>
   </data>
   <data name="oldValue" xml:space="preserve">
     <value>Old Value</value>
@@ -1705,14 +1782,23 @@
   <data name="rd_retry" xml:space="preserve">
     <value>Retry</value>
   </data>
+  <data name="rep_chartsUnavailable" xml:space="preserve">
+    <value>The charting library could not be loaded, so this chart cannot be drawn. The figures and tables on this page are unaffected.</value>
+  </data>
+  <data name="rep_expBlocked" xml:space="preserve">
+    <value>The browser blocked the report window. Allow pop-ups for this site and try again.</value>
+  </data>
+  <data name="rep_expEmpty" xml:space="preserve">
+    <value>No records match the current filters, so no file was generated.</value>
+  </data>
+  <data name="rep_expFailed" xml:space="preserve">
+    <value>The file could not be generated. Check your permission to view the audit log and try again.</value>
+  </data>
   <data name="reProvision" xml:space="preserve">
-    <value>Re-provision</value>
+    <value>Re-align account</value>
   </data>
   <data name="readyForProvisioning" xml:space="preserve">
     <value>Ready For Housing Network Account Creation</value>
-  </data>
-  <data name="recentActions" xml:space="preserve">
-    <value>Recent Actions</value>
   </data>
   <data name="recentActivity" xml:space="preserve">
     <value>Recent Activity</value>
@@ -1886,7 +1972,7 @@
     <value>Enter full name in English</value>
   </data>
   <data name="reg_phPhone" xml:space="preserve">
-    <value>9665</value>
+    <value>5XXXXXXXX</value>
   </data>
   <data name="reg_phRoom" xml:space="preserve">
     <value>e.g. 101</value>
@@ -1925,16 +2011,13 @@
     <value>National ID must contain 10 digits</value>
   </data>
   <data name="reg_valPhone" xml:space="preserve">
-    <value>Mobile number must start with 9665 and contain 12 digits</value>
+    <value>Mobile number must start with 5 and contain 9 digits</value>
   </data>
   <data name="reg_valStudentId" xml:space="preserve">
     <value>University ID must be exactly 9 digits</value>
   </data>
   <data name="registerBulk" xml:space="preserve">
     <value>Bulk Registration (Excel)</value>
-  </data>
-  <data name="registerNewStatus" xml:space="preserve">
-    <value>Update Academic Status</value>
   </data>
   <data name="registerStudent" xml:space="preserve">
     <value>Register Student</value>
@@ -2093,7 +2176,7 @@
     <value>Bulk Registration</value>
   </data>
   <data name="req_type_registration" xml:space="preserve">
-    <value>Individual Registration</value>
+    <value>Single Student Registration</value>
   </data>
   <data name="req_type_self_registration" xml:space="preserve">
     <value>Self Registration</value>
@@ -2156,7 +2239,7 @@
     <value>Review</value>
   </data>
   <data name="roomNumber" xml:space="preserve">
-    <value>New Room</value>
+    <value>Room number</value>
   </data>
   <data name="roomNumberPlaceholder" xml:space="preserve">
     <value>e.g. 3</value>
@@ -2282,7 +2365,7 @@
     <value>Date</value>
   </data>
   <data name="ss_disableIntro" xml:space="preserve">
-    <value>The student's account in Active Directory will be disabled.</value>
+    <value>The student’s housing network account will be disabled.</value>
   </data>
   <data name="ss_dismissedBadge" xml:space="preserve">
     <value>Dismissed</value>
@@ -2645,7 +2728,7 @@
     <value>Student ID must contain exactly 9 digits</value>
   </data>
   <data name="studentIdPlaceholder" xml:space="preserve">
-    <value></value>
+    <value />
   </data>
   <data name="studentIdStartValidation" xml:space="preserve">
     <value>Student ID must start with 4</value>
@@ -2674,35 +2757,8 @@
   <data name="studentStatus" xml:space="preserve">
     <value>Student Status</value>
   </data>
-  <data name="studentStatusActive" xml:space="preserve">
-    <value>Active</value>
-  </data>
   <data name="studentStatusDesc" xml:space="preserve">
     <value>Record and update student academic status (Graduation, Dismissal, Transfer)</value>
-  </data>
-  <data name="studentStatusDismissed" xml:space="preserve">
-    <value>Dismissed</value>
-  </data>
-  <data name="studentStatusDismissedDesc" xml:space="preserve">
-    <value>Student has been academically dismissed</value>
-  </data>
-  <data name="studentStatusGraduated" xml:space="preserve">
-    <value>Graduated</value>
-  </data>
-  <data name="studentStatusGraduatedDesc" xml:space="preserve">
-    <value>Student completed all graduation requirements</value>
-  </data>
-  <data name="studentStatusLeftHousing" xml:space="preserve">
-    <value>Left Housing</value>
-  </data>
-  <data name="studentStatusLeftHousingDesc" xml:space="preserve">
-    <value>Student permanently left university housing</value>
-  </data>
-  <data name="studentStatusTransferred" xml:space="preserve">
-    <value>Transferred</value>
-  </data>
-  <data name="studentStatusTransferredDesc" xml:space="preserve">
-    <value>Student transferred to another university</value>
   </data>
   <data name="studentUpdated" xml:space="preserve">
     <value>Student updated successfully!</value>
@@ -2725,11 +2781,8 @@
   <data name="success" xml:space="preserve">
     <value>Success</value>
   </data>
-  <data name="supportingDocument" xml:space="preserve">
-    <value>Attach Supporting Document (optional)</value>
-  </data>
   <data name="syncAttributes" xml:space="preserve">
-    <value>Sync Attributes</value>
+    <value>Update housing data</value>
   </data>
   <data name="syncedToday" xml:space="preserve">
     <value>Synced Today</value>
@@ -2800,12 +2853,6 @@
   <data name="unknown" xml:space="preserve">
     <value>Unknown</value>
   </data>
-  <data name="updateStudentStatus" xml:space="preserve">
-    <value>Update Student Status</value>
-  </data>
-  <data name="updateStudentStatusDesc" xml:space="preserve">
-    <value>Record and update student academic status and housing data</value>
-  </data>
   <data name="username" xml:space="preserve">
     <value>Username</value>
   </data>
@@ -2870,22 +2917,22 @@
     <value>This year</value>
   </data>
   <data name="rep_14" xml:space="preserve">
-    <value>Total Ops</value>
+    <value>Operations today</value>
   </data>
   <data name="rep_15" xml:space="preserve">
-    <value>Active Users</value>
+    <value>Active users today</value>
   </data>
   <data name="rep_16" xml:space="preserve">
-    <value>Student Ops</value>
+    <value>Student operations today</value>
   </data>
   <data name="rep_17" xml:space="preserve">
-    <value>Request Ops</value>
+    <value>Request operations today</value>
   </data>
   <data name="rep_18" xml:space="preserve">
-    <value>Failed Today</value>
+    <value>Failed logins today</value>
   </data>
   <data name="rep_19" xml:space="preserve">
-    <value>Deletions</value>
+    <value>Deletions today</value>
   </data>
   <data name="rep_20" xml:space="preserve">
     <value>From Date</value>
@@ -3754,6 +3801,12 @@
   <data name="usr_pageTitle" xml:space="preserve">
     <value>User Management</value>
   </data>
+  <data name="stu_pageSubtitle" xml:space="preserve">
+    <value>View and edit the records of students registered in housing</value>
+  </data>
+  <data name="hou_pageSubtitle" xml:space="preserve">
+    <value>Track housing accounts and link them to Active Directory</value>
+  </data>
   <data name="usr_pageSubtitle" xml:space="preserve">
     <value>Add and edit users and assign roles</value>
   </data>
@@ -3764,7 +3817,7 @@
     <value>+ New User</value>
   </data>
   <data name="usr_addFromDir" xml:space="preserve">
-    <value>Add from Directory</value>
+    <value>Add from Active Drectory</value>
   </data>
   <data name="usr_col_username" xml:space="preserve">
     <value>Username</value>
@@ -3866,7 +3919,7 @@
     <value>Disabled</value>
   </data>
   <data name="usr_ldapTitle" xml:space="preserve">
-    <value>Add from Directory (Active Directory)</value>
+    <value>Add from (Active Directory)</value>
   </data>
   <data name="usr_ldapSub" xml:space="preserve">
     <value>Search for the user in the directory then add with a role</value>
@@ -4219,6 +4272,9 @@
   <data name="reg_optSelectFloorFirst" xml:space="preserve">
     <value>Select floor first</value>
   </data>
+  <data name="reg_optSelectCollegeFirst" xml:space="preserve">
+    <value>Select college first</value>
+  </data>
   <data name="reg_optSelectApartment" xml:space="preserve">
     <value>Select apartment</value>
   </data>
@@ -4245,5 +4301,194 @@
   </data>
   <data name="att_close" xml:space="preserve">
     <value>Close</value>
+  </data>
+  <data name="dash_needsAction" xml:space="preserve">
+    <value>Needs your action</value>
+  </data>
+  <data name="dash_waitHousing" xml:space="preserve">
+    <value>Awaiting housing review</value>
+  </data>
+  <data name="dash_waitHousingDesc" xml:space="preserve">
+    <value>Requests not yet reviewed by Housing</value>
+  </data>
+  <data name="dash_waitCyber" xml:space="preserve">
+    <value>Awaiting cybersecurity review</value>
+  </data>
+  <data name="dash_waitCyberDesc" xml:space="preserve">
+    <value>Approved by Housing and referred to you</value>
+  </data>
+  <data name="dash_waitHandover" xml:space="preserve">
+    <value>Awaiting referral to electronic review</value>
+  </data>
+  <data name="dash_waitHandoverDesc" xml:space="preserve">
+    <value>Approved by Housing, awaiting referral</value>
+  </data>
+  <data name="dash_waitProvision" xml:space="preserve">
+    <value>Ready for network account creation</value>
+  </data>
+  <data name="dash_waitProvisionDesc" xml:space="preserve">
+    <value>Final step before closing the request</value>
+  </data>
+  <data name="dash_overview" xml:space="preserve">
+    <value>Overview</value>
+  </data>
+  <data name="dash_openRequests" xml:space="preserve">
+    <value>Open requests</value>
+  </data>
+  <data name="dash_adEnabled" xml:space="preserve">
+    <value>Enabled network accounts</value>
+  </data>
+  <data name="dash_adDisabled" xml:space="preserve">
+    <value>Disabled network accounts</value>
+  </data>
+  <data name="usr_tabStudents" xml:space="preserve">
+    <value>Student login accounts</value>
+  </data>
+  <data name="usr_colCreatedAt" xml:space="preserve">
+    <value>Created</value>
+  </data>
+  <data name="hm_syncTitle" xml:space="preserve">
+    <value>Active Directory synchronisation</value>
+  </data>
+  <data name="hm_syncSubtitle" xml:space="preserve">
+    <value>The system reads from the directory and updates its own records only — it never creates, disables or edits any directory account.</value>
+  </data>
+  <data name="hm_refreshTitle" xml:space="preserve">
+    <value>Refresh statuses from the directory</value>
+  </data>
+  <data name="hm_refreshDesc" xml:space="preserve">
+    <value>Reads the status of linked accounts (enabled / disabled) and updates it in the system. Use it when an account was enabled or disabled directly in the directory.</value>
+  </data>
+  <data name="hm_refreshSafe" xml:space="preserve">
+    <value>Links no new accounts</value>
+  </data>
+  <data name="hm_refreshBtn" xml:space="preserve">
+    <value>Run refresh</value>
+  </data>
+  <data name="hm_linkTitle" xml:space="preserve">
+    <value>Link new accounts</value>
+  </data>
+  <data name="hm_linkDesc1" xml:space="preserve">
+    <value>Searches for each unlinked student's account named</value>
+  </data>
+  <data name="hm_linkDesc2" xml:space="preserve">
+    <value>and links it to their record, showing a full preview before saving.</value>
+  </data>
+  <data name="hm_linkCare" xml:space="preserve">
+    <value>Requires your review before running</value>
+  </data>
+  <data name="hm_linkBtn" xml:space="preserve">
+    <value>Preview and link</value>
+  </data>
+  <data name="hm_close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="hm_cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="hm_andOthers" xml:space="preserve">
+    <value>others</value>
+  </data>
+  <data name="hm_adError" xml:space="preserve">
+    <value>Directory connection error:</value>
+  </data>
+  <data name="hm_serverError" xml:space="preserve">
+    <value>Could not reach the server</value>
+  </data>
+  <data name="hm_actionFailed" xml:space="preserve">
+    <value>The operation could not be completed</value>
+  </data>
+  <data name="hm_busyRefresh" xml:space="preserve">
+    <value>Refreshing...</value>
+  </data>
+  <data name="hm_busyPreview" xml:space="preserve">
+    <value>Loading preview...</value>
+  </data>
+  <data name="hm_busyLink" xml:space="preserve">
+    <value>Linking...</value>
+  </data>
+  <data name="hm_statScanned" xml:space="preserve">
+    <value>linked accounts checked</value>
+  </data>
+  <data name="hm_statChanged" xml:space="preserve">
+    <value>status changed</value>
+  </data>
+  <data name="hm_statNotFound" xml:space="preserve">
+    <value>not found in the directory</value>
+  </data>
+  <data name="hm_statFailed" xml:space="preserve">
+    <value>lookup failed</value>
+  </data>
+  <data name="hm_secChanged" xml:space="preserve">
+    <value>Statuses that were updated</value>
+  </data>
+  <data name="hm_noteChanged" xml:space="preserve">
+    <value>These changes were made in the directory outside the system. The lookup cannot reveal who made them; refer to the security event log on the domain controller.</value>
+  </data>
+  <data name="hm_secOrphan" xml:space="preserve">
+    <value>Linked accounts missing from the directory</value>
+  </data>
+  <data name="hm_noteOrphan" xml:space="preserve">
+    <value>These accounts are recorded in the system but the lookup did not find them. They were most likely deleted from the directory, or the recorded name is wrong.</value>
+  </data>
+  <data name="hm_refreshResult" xml:space="preserve">
+    <value>Directory status refresh result</value>
+  </data>
+  <data name="hm_refreshFailed" xml:space="preserve">
+    <value>Refresh failed</value>
+  </data>
+  <data name="hm_previewOnly" xml:space="preserve">
+    <value>Preview only —</value>
+  </data>
+  <data name="hm_previewNothingSaved" xml:space="preserve">
+    <value>Nothing has been saved yet.</value>
+  </data>
+  <data name="hm_statUnlinked" xml:space="preserve">
+    <value>students without a linked account</value>
+  </data>
+  <data name="hm_statWillLink" xml:space="preserve">
+    <value>will be linked</value>
+  </data>
+  <data name="hm_statNoAccount" xml:space="preserve">
+    <value>no directory account</value>
+  </data>
+  <data name="hm_secMismatch" xml:space="preserve">
+    <value>Mismatched names</value>
+  </data>
+  <data name="hm_noteMismatch" xml:space="preserve">
+    <value>There is no word in common between the directory account name and the student's name in the system, usually because of a wrong university ID in the file. A wrong link does not surface immediately — it surfaces months later when a graduation record disables someone else's account. Please review before approving.</value>
+  </data>
+  <data name="hm_colSystem" xml:space="preserve">
+    <value>System:</value>
+  </data>
+  <data name="hm_colDirectory" xml:space="preserve">
+    <value>Directory:</value>
+  </data>
+  <data name="hm_secNoAccount" xml:space="preserve">
+    <value>Students without a directory account</value>
+  </data>
+  <data name="hm_previewTitle" xml:space="preserve">
+    <value>Account linking preview</value>
+  </data>
+  <data name="hm_previewFailed" xml:space="preserve">
+    <value>Preview failed</value>
+  </data>
+  <data name="hm_runLink" xml:space="preserve">
+    <value>Run linking</value>
+  </data>
+  <data name="hm_statLinked" xml:space="preserve">
+    <value>linked</value>
+  </data>
+  <data name="hm_statNoAcc" xml:space="preserve">
+    <value>no account</value>
+  </data>
+  <data name="hm_linkDone" xml:space="preserve">
+    <value>Linking complete</value>
+  </data>
+  <data name="hm_linkFailed" xml:space="preserve">
+    <value>Linking failed</value>
+  </data>
+  <data name="rdp_wf_cyberApp" xml:space="preserve">
+    <value>Cybersecurity approval</value>
   </data>
 </root>

@@ -101,7 +101,7 @@ function __baseSetLang(l) {
       var u = JSON.parse(localStorage.getItem('staffUser') || localStorage.getItem('studentUser') || '{}');
       sidebarName.textContent = u.full_name || u.username || '';
       if (sidebarRole) sidebarRole.textContent = u.role || '';
-    } catch (e) { /* بيانات تخزين تالفة — تجاهل */ }
+    } catch (e) { /* بيانات تخزين تالفة - تجاهل */ }
   }
 }
 

@@ -6,18 +6,10 @@
     var canReviewHousing = User.HasClaim("permission", "requests.reviewHousing");
     var canReviewCyber = User.HasClaim("permission", "requests.reviewCyber");
     var canComplete = User.HasClaim("permission", "requests.complete");
-    var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0";
 }
 
 <style>
   /* خاص بصفحة الطلبات فقط — الباقي من site.css */
-  .tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
-  th.sortable{cursor:pointer;user-select:none;white-space:nowrap;transition:color .15s}
-  th.sortable:hover{color:var(--navy)}
-  .sort-ind{font-size:10px;color:var(--navy);font-weight:700}
-  .tab-btn{padding:8px 20px;border-radius:10px;border:1.5px solid var(--gray-200);background:var(--white);font-family:'IBM Plex Sans Arabic',sans-serif;font-size:13px;font-weight:600;cursor:pointer;color:var(--gray-500);transition:all .2s}
-  .tab-btn.active{background:var(--navy);color:var(--white);border-color:var(--navy)}
-  .tab-btn:hover{border-color:var(--navy)}
   .stats-row{flex-wrap:wrap}
   .stats-row .stat-pill{min-width:120px}
   .badge-submitted{background:#FFF7ED;color:#92400E}
@@ -145,7 +137,7 @@
     //    الرقم بقى بيتولّد ويتخزّن وقت إنشاء الطلب (RequestService.CreateAsync)،
     //    والصفوف القديمة اتعبّت بـ BackfillRequestNumbers.sql. لو فاضل NULL نعرض شرطة.
     private static string ReqNum(string? requestNumber, string? type, int id)
-        => string.IsNullOrEmpty(requestNumber) ? "—" : requestNumber;
+        => string.IsNullOrEmpty(requestNumber) ? "-" : requestNumber;
 
 }
 
@@ -155,7 +147,6 @@
   var CAN_REVIEW_HOUSING = @(canReviewHousing ? "true" : "false");
   var CAN_REVIEW_CYBER = @(canReviewCyber ? "true" : "false");
   var CAN_COMPLETE = @(canComplete ? "true" : "false");
-  var USER_ID = @userId;
 
   // حالة الصفحة (أول صفحة جاهزة من السيرفر)
   var state = {
@@ -174,7 +165,7 @@
   });
 
   // نصوص الحالة/النوع من القاموس (fallback للقيمة الخام لو مفيش مفتاح)
-  function typeText(ty) { var k = 'req_type_' + ty; var v = t(k); return v === k ? (ty || '—') : v; }
+  function typeText(ty) { var k = 'req_type_' + ty; var v = t(k); return v === k ? (ty || '-') : v; }
   function badgeText(s) { var k = 'req_badge_' + s; var v = t(k); return v === k ? (s || '') : v; }
   function stageText(s) { var k = 'req_stage_' + s; var v = t(k); return v === k ? (s || '') : v; }
 
@@ -188,7 +179,7 @@
 
   // ماتخترعش رقم — راجع التعليق على ReqNum فوق
   function reqNum(r) {
-    return r.requestNumber || '—';
+    return r.requestNumber || '-';
   }
 
   function actionsFor(s, id) {
@@ -231,7 +222,7 @@
         '<td style="color:var(--gray-500)">' + reqNum(r) + '</td>' +
         '<td>' + escHtml(typeText(r.requestType)) + '</td>' +
         '<td>' + escHtml((r.student && r.student.full_name) || r.studentId || '') + '</td>' +
-        '<td>' + (r.submittedAt ? new Date(r.submittedAt).toLocaleDateString('ar-EG') : '—') + '</td>' +
+        '<td>' + (r.submittedAt ? new Date(r.submittedAt).toLocaleDateString('ar-EG') : '-') + '</td>' +
         '<td><span class="badge badge-' + s + '">' + badgeText(s) + '</span></td>' +
         '<td>' + escHtml(stageText(s)) + '</td>' +
         '<td>' + actionsFor(s, r.id) + '</td>' +
@@ -281,16 +272,17 @@
 
   async function reviewRequest(id, newStatus) {
     var label = badgeText(newStatus);
-    if (!confirm(t('req_confirmChangeFmt').replace('{0}', label))) return;
+    if (!await NuhDialog.confirm({ message: t('req_confirmChangeFmt').replace('{0}', label) })) return;
     try {
       var res = await fetch('/api/requests/' + id + '/review', {
         method: 'PUT',
         headers: Object.assign({ 'Content-Type': 'application/json' }, NUH.headers()),
-        body: JSON.stringify({ status: newStatus, reviewedBy: USER_ID, notes: '' })
+        // الهوية من الجلسة على السيرفر — الواجهة ما بتبعتش مين اللي راجع.
+        body: JSON.stringify({ status: newStatus, notes: '' })
       });
       if (!res.ok) {
         var err = await res.json().catch(function () { return {}; });
-        alert(err.message || t('req_updateFailed'));
+        NuhDialog.error(err.message || t('req_updateFailed'));
         return;
       }
       // إعادة تحميل الصفحة علشان العدادات وأول صفحة يتحدّثوا من السيرفر

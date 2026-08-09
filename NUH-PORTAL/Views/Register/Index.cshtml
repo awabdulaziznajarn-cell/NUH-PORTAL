@@ -23,11 +23,8 @@
   .breadcrumb{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--gray-500);margin-bottom:20px}
   .breadcrumb a{color:var(--navy);text-decoration:none;font-weight:500}
   .breadcrumb span{color:var(--gray-300)}
-  .form-card{background:var(--white);border-radius:16px;border:1px solid var(--gray-100);box-shadow:0 2px 8px rgba(27,42,94,.05);overflow:hidden;margin-bottom:20px}
-  .form-card-header{padding:18px 24px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;gap:10px}
-  .form-card-header-icon{width:36px;height:36px;border-radius:10px;background:var(--gray-100);display:flex;align-items:center;justify-content:center}
-  .form-card-title{font-size:15px;font-weight:700;color:var(--navy-dark)}
-  .form-card-body{padding:24px}
+  /* ⚠️ تعريفات .form-card* اتشالت من هنا — كانت مكرّرة حرفيًا في أربع شاشات.
+     مكانها الآن wwwroot/css/site.css مرة واحدة، فأي تغيير في الشكل يوصلها كلها. */
   .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
   .form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px}
   .name-group{grid-column:1/-1}
@@ -42,6 +39,20 @@
   .field label{font-size:13px;font-weight:600;color:var(--gray-700)}
   .field label span{color:#EF4444;margin-right:2px}
   .input-wrap{position:relative}
+  /* خانة الجوال: مفتاح +966 ثابت والمشرف يكتب ٩ أرقام تبدأ بـ 5 — نفس صيغة
+     نموذج الطالب بالحرف، عشان الشاشتين ما يختلفوش في نفس الحقل. */
+  .phone-wrap{display:flex;align-items:stretch;direction:ltr;background:var(--gray-50);
+              border:1.5px solid var(--gray-200);border-radius:10px;overflow:hidden;
+              transition:all .2s}
+  .phone-wrap:focus-within{border-color:var(--navy);background:var(--white);box-shadow:0 0 0 3px rgba(27,42,94,.08)}
+  .phone-wrap.ok{border-color:var(--green)}
+  .phone-wrap .cc{display:flex;align-items:center;flex-shrink:0;padding:0 13px;background:var(--gray-100);
+                  border-right:1.5px solid var(--gray-200);font-size:13.5px;font-weight:700;
+                  color:var(--gray-700);letter-spacing:.5px;user-select:none}
+  .phone-wrap input{flex:1;min-width:0;height:46px;padding:0 14px;border:none;outline:none;
+                    background:transparent;font-family:'IBM Plex Sans Arabic',sans-serif;
+                    font-size:14px;font-weight:600;letter-spacing:1.2px;color:var(--navy-dark)}
+  .phone-wrap input::placeholder{font-weight:400;letter-spacing:1px;color:var(--gray-300)}
   .input-wrap input,.input-wrap select{width:100%;height:46px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:10px;padding:0 14px 0 40px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;color:var(--navy-dark);transition:all .2s;appearance:none;outline:none}
   .input-wrap input:focus,.input-wrap select:focus{border-color:var(--navy);background:var(--white);box-shadow:0 0 0 3px rgba(27,42,94,.08)}
   .input-wrap input.error,.input-wrap select.error{border-color:#EF4444}
@@ -149,9 +160,12 @@
       </div>
       <div class="field">
         <label >@SharedLocalizer["reg_lblPhone"]</label>
-        <div class="input-wrap">
-          <input type="tel" id="phone" placeholder='@(SharedLocalizer["reg_phPhone"].Value)' maxlength="12">
-          <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.41 2 2 0 0 1 3.6 1.24h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16.92z"/></svg>
+        <div class="phone-wrap" id="phoneWrap">
+          <span class="cc">+966</span>
+          @* من غير maxlength: المتصفح بيقص اللصق قبل التنظيف، فلصق 0501234567
+             كان بيضيّع رقم. الحد في normalizeSaMobile بعد التنظيف. *@
+          <input type="tel" id="phone" placeholder='@(SharedLocalizer["reg_phPhone"].Value)'
+                 inputmode="numeric" autocomplete="tel-national" dir="ltr">
         </div>
         <span class="field-error" id="val-phone" >@SharedLocalizer["reg_valPhone"]</span>
       </div>
@@ -345,6 +359,7 @@
 <script src="/lookups.js"></script>
 <script src="/js/name-fields.js"></script>
 <script src="/js/housing-fields.js"></script>
+<script src="/js/phone-field.js"></script>
 <script>
   var USER_ID = @userId;
 
@@ -385,7 +400,7 @@
     showValError('student_id', 'val-student_id_start', /^4/.test(__sid));
     showValError('student_id', 'val-student_id', /^\d{9}$/.test(__sid));
     showValError('national_id', 'val-national_id', /^\d{10}$/.test(document.getElementById('national_id').value.trim()));
-    showValError('phone', 'val-phone', /^9665\d{8}$/.test(document.getElementById('phone').value.trim()));
+    showValError('phone', 'val-phone', NuhPhone.isValid(NuhPhone.normalize(document.getElementById('phone').value)));
     var gender = document.getElementById('gender');
     var errGender = document.getElementById('err-gender');
     if (!gender.value) { gender.classList.add('error'); errGender.classList.add('show'); ok = false; }
@@ -402,7 +417,8 @@
       full_name_english: NuhName.join('', 'en'),
       student_id: document.getElementById('student_id').value.trim(),
       national_id: document.getElementById('national_id').value.trim(),
-      phone: document.getElementById('phone').value.trim(),
+      // يُرسَل بالصيغة الموحّدة 9665XXXXXXXX — نفس المخزّن في قاعدة البيانات
+      phone: NuhPhone.toStorage(document.getElementById('phone').value),
       gender: document.getElementById('gender').value,
       college: document.getElementById('college').value,
       department: document.getElementById('department').value,
@@ -483,8 +499,10 @@
     validateField('national_id', 'val-national_id', /^\d{10}$/);
     var err = document.getElementById('err-national_id'); if (this.value.trim()) err.classList.remove('show');
   });
+  // القاعدة كلها في js/phone-field.js — نفس ملف شاشات الطالب
+  NuhPhone.attach({ input: 'phone', wrap: 'phoneWrap' });
   document.getElementById('phone').addEventListener('input', function () {
-    validateField('phone', 'val-phone', /^9665\d{8}$/);
+    validateField('phone', 'val-phone', NuhPhone.VALID);
   });
 
   // ===== القوائم المنسدلة من قاعدة البيانات (lookups) =====
@@ -500,12 +518,18 @@
     var i = await Lookups.fetchList('/api/lookups/colleges');
     if (i.length) Lookups.fill(lkCollege, i, { keep: lkCollege.value });
   }
-  async function lkLoadDepartments(collegeId) {
-    var url = '/api/lookups/departments' + (collegeId ? ('?collegeId=' + collegeId) : '');
-    var i = await Lookups.fetchList(url);
-    if (collegeId && !i.length) i = await Lookups.fetchList('/api/lookups/departments'); // متسبناش القائمة فاضية بسبب الفلترة
-    if (i.length) Lookups.fill(lkDept, i, { keep: lkDept.value });
-  }
+  // ⚠️ قائمة الأقسام كانت بتتحمّل بكل الأقسام من كل الكليات قبل اختيار الكلية،
+  //    فبتفتح على عشرات الخيارات المختلطة وممكن يتختار قسم لا يتبع الكلية.
+  //    القاعدة اتنقلت لـ lookups.js (Lookups.dependent) — نفس المكان اللي
+  //    بوابة الطالب بتقرا منه، فالشاشتين بيتصرّفوا بنفس الطريقة.
+  var deptGate = Lookups.dependent({
+    parent: lkCollege,
+    child: lkDept,
+    url: function (id) { return '/api/lookups/departments' + (id ? ('?collegeId=' + id) : ''); },
+    fallbackUrl: '/api/lookups/departments',
+    waitText: '@SharedLocalizer["reg_optSelectCollegeFirst"]',
+    chooseText: '@SharedLocalizer["reg_optSelectDepartment"]'
+  });
   async function lkLoadLevels() {
     var i = await Lookups.fetchList('/api/lookups/academic-levels');
     if (i.length) Lookups.fill(lkLevel, i, { keep: lkLevel.value });
@@ -551,10 +575,11 @@
   }
 
   // الأقسام تتفلتر حسب الكلية، والمباني حسب النوع
-  lkCollege.addEventListener('change', function () { lkLoadDepartments(Lookups.selectedId(lkCollege)); });
+  // تغيير الكلية بيحدّث الأقسام من جوّه Lookups.dependent — مفيش ربط تاني هنا.
   lkGender.addEventListener('change', function () { lkLoadBuildings(lkGender.value); });
 
-  lkLoadColleges(); lkLoadDepartments(null); lkLoadLevels();
+  lkLoadColleges().then(function () { deptGate.refresh(); });
+  lkLoadLevels();
   lkLoadBuildings(lkGender.value); // الحالة الابتدائية: مقفولة لحد ما يتحدد النوع
 
   window.onLanguageChange = function () { /* لا نص ديناميكي دائم يحتاج إعادة تطبيق */ };

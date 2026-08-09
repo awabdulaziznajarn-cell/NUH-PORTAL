@@ -4,10 +4,6 @@
 
 <style>
   /* خاص بصفحة سجل العمليات — الباقي من site.css */
-  .filters-bar{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px;align-items:end}
-  .filter-group{display:flex;flex-direction:column;gap:4px}
-  .filter-group label{font-size:11px;font-weight:600;color:var(--gray-500)}
-  .filter-group select,.filter-group input{padding:8px 10px;border:1px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:13px;background:var(--white);color:var(--navy-dark);min-width:140px}
   .filter-group input[type=text]{min-width:180px}
   .export-btn{padding:8px 16px;background:var(--green);color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;height:37px;align-self:end}
   .export-btn:hover{background:var(--navy)}
@@ -18,12 +14,9 @@
   .badge-green{background:var(--green-light);color:var(--green)}
   .badge-blue{background:#E6F1FB;color:#1B2A5E}
   .badge-red{background:var(--red-light);color:var(--red)}
-  .badge-gray{background:var(--gray-100);color:var(--gray-700)}
   .badge-orange{background:#FFF7ED;color:#92400E}
   .badge-purple{background:#F3E8FF;color:#6B21A8}
   .badge-darkred{background:#FEF2F2;color:#7F1D1D}
-  .spinner{width:32px;height:32px;border:3px solid var(--gray-200);border-top-color:var(--navy);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto}
-  @@keyframes spin{to{transform:rotate(360deg)}}
   .empty-state{text-align:center;padding:60px 20px;color:var(--gray-500)}
   .empty-state .empty-icon{font-size:48px;margin-bottom:12px}
   .empty-state .empty-text{font-size:14px}
@@ -37,9 +30,6 @@
   .modal-row-label{font-size:11px;font-weight:600;color:var(--gray-500)}
   .modal-row-value{font-size:14px;font-weight:500;color:var(--navy-dark)}
   tbody tr{cursor:pointer}
-  th.sortable{cursor:pointer;user-select:none;white-space:nowrap;transition:color .15s}
-  th.sortable:hover{color:var(--navy)}
-  .sort-ind{font-size:10px;color:var(--navy);font-weight:700}
 </style>
 
 <div class="page-header">
@@ -200,6 +190,13 @@
 
   var currentPage = 1;
   var currentPageSize = 50;
+
+  // ⚠️ أول صفحة والعدادات وقائمة الفلتر جايين مع الـ HTML من AuditLogController.
+  //    الشاشة كانت بتبعت نداءين تانيين بعد ما تتحمّل عشان ترسم أول صف — رحلتين
+  //    ذهاب وإياب كاملتين قبل ما المستخدم يشوف حاجة. دلوقتي بترسم فورًا.
+  var FIRST_PAGE = @Html.Raw(ViewData["FirstPageJson"] ?? "null");
+  var FIRST_PAGE_SIZE = @(ViewData["FirstPageSize"] ?? 50);
+  var FIRST_USERS = @Html.Raw(ViewData["FilterUsersJson"] ?? "null");
   var totalPages = 1;
   var totalRecords = 0;
   var cachedData = null;
@@ -307,8 +304,8 @@
         '</th><th style="padding:6px 8px;text-align:start;font-weight:600">' + t('aud_changeNewValue') + '</th></tr>' +
         record.changes.map(function (c) {
           return '<tr style="border-bottom:1px solid var(--gray-100)"><td style="padding:6px 8px;font-weight:500">' + escHtml(c.fieldName) +
-            '</td><td style="padding:6px 8px;color:var(--red)">' + escHtml(c.oldValue || '—') +
-            '</td><td style="padding:6px 8px;color:var(--green)">' + escHtml(c.newValue || '—') + '</td></tr>';
+            '</td><td style="padding:6px 8px;color:var(--red)">' + escHtml(c.oldValue || '-') +
+            '</td><td style="padding:6px 8px;color:var(--green)">' + escHtml(c.newValue || '-') + '</td></tr>';
         }).join('') + '</table>';
     } else {
       changesDiv.style.display = 'none';
@@ -371,6 +368,26 @@
   }
 
   function onFilterChange() { loadLogs(1, currentPageSize); }
+
+  // ⚠️ السيرفر رندر الصفحة الأولى **بلا فلترة وبلا فرز وبمقاس ثابت**. فلو المستخدم
+  //    راجع لفلتر محفوظ أو مقاس صفحة مختلف، البيانات دي مش بتاعته — بنتجاهلها
+  //    وننادي الـ API زي الأول. الصح أهم من السرعة.
+  function useServerFirstPage() {
+    if (!FIRST_PAGE || !FIRST_PAGE.data) return false;
+    if (currentPageSize !== FIRST_PAGE_SIZE) return false;
+    if (currentSortBy) return false;
+    var f = getFilters();
+    if (f.userId || f.actionGroup || f.action || f.fromDate || f.toDate || f.search) return false;
+
+    cachedData = FIRST_PAGE.data;
+    totalPages = FIRST_PAGE.totalPages;
+    totalRecords = FIRST_PAGE.totalRecords;
+    dataLoaded = true;
+    renderTable();
+    updatePagination(FIRST_PAGE.totalRecords);
+    updateStats(FIRST_PAGE.stats);
+    return true;
+  }
 
   function updatePagination(recs) {
     document.getElementById('pageIndicator').textContent = currentPage + ' / ' + (totalPages || 1);
@@ -444,7 +461,7 @@
   restoreFilters();
   setLang(localStorage.getItem('uiLanguage') || 'ar');
   updateSortIndicators();
-  loadLogs(1, currentPageSize);
-  loadAuditUsers();
+  if (!useServerFirstPage()) loadLogs(1, currentPageSize);
+  if (FIRST_USERS) populateUserFilter(FIRST_USERS); else loadAuditUsers();
 </script>
 }

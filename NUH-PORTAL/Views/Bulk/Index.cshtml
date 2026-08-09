@@ -17,11 +17,8 @@
   .step.active .step-num,.step.completed .step-num{background:rgba(255,255,255,.2)}
   .step-content{display:none}
   .step-content.active{display:block}
-  .form-card{background:var(--white);border-radius:16px;border:1px solid var(--gray-100);box-shadow:0 2px 8px rgba(27,42,94,.05);overflow:hidden;margin-bottom:20px}
-  .form-card-header{padding:18px 24px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;gap:10px}
-  .form-card-header-icon{width:36px;height:36px;border-radius:10px;background:var(--gray-100);display:flex;align-items:center;justify-content:center}
-  .form-card-title{font-size:15px;font-weight:700;color:var(--navy-dark)}
-  .form-card-body{padding:24px}
+  /* ⚠️ تعريفات .form-card* اتشالت من هنا — كانت مكرّرة حرفيًا في أربع شاشات.
+     مكانها الآن wwwroot/css/site.css مرة واحدة، فأي تغيير في الشكل يوصلها كلها. */
   .bbtn{padding:10px 24px;border:none;border-radius:10px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:8px}
   .bbtn:disabled{opacity:.5;cursor:not-allowed}
   .bbtn-primary{background:var(--navy);color:var(--white)}
@@ -222,7 +219,7 @@
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
       })
-      .catch(function (err) { alert(err.message); })
+      .catch(function (err) { NuhDialog.error(err.message); })
       .finally(function () {
         btn.disabled = false;
         btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span >@SharedLocalizer["bulk_s1_downloadBtn"]</span>';

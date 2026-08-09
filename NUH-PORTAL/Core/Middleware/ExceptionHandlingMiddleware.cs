@@ -76,6 +76,14 @@ namespace NUH_PORTAL.Core.Middleware
 
                 var root = ex.GetBaseException();
 
+                // ⚠️ الرسالة الأصلية إنجليزية ومكتوبة لمطوّر يعرف السياق. بنضيف
+                //    قبلها سطرًا عربيًا يقول «ده معناه إيه» — الشرح كله في مكان
+                //    واحد (RequestDiagnostics.ExplainException) مش متفرّق هنا وهناك.
+                var arabic = NUH_PORTAL.Core.Diagnostics.RequestDiagnostics.ExplainException(ex);
+                var message = string.IsNullOrEmpty(arabic)
+                    ? root.Message
+                    : arabic + "\r\n\r\n[الرسالة الأصلية] " + root.Message;
+
                 int? userId = null;
                 var uidStr = context.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 if (int.TryParse(uidStr, out var u) && u > 0) userId = u;
@@ -83,7 +91,7 @@ namespace NUH_PORTAL.Core.Middleware
                 db.ErrorLogs.Add(new ErrorLog
                 {
                     occurred_at = DateTime.UtcNow,
-                    message = Truncate(root.Message, 2000),
+                    message = Truncate(message, 2000),
                     exception_type = root.GetType().FullName,
                     stack_trace = Truncate(ex.ToString(), 8000),
                     source = Truncate(root.Source, 256),

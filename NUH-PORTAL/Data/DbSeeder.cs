@@ -164,7 +164,7 @@ namespace NUH_PORTAL.Data
             var hasAny = (await roleManager.GetClaimsAsync(role)).Any(c => c.Type == ClaimConstants.Permission);
             if (hasAny)
             {
-                logger?.LogInformation("Role {Role} already has permissions — defaults not re-applied.", roleName);
+                logger?.LogInformation("Role {Role} already has permissions - defaults not re-applied.", roleName);
                 return;
             }
 

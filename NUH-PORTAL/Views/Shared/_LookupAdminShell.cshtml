@@ -1,10 +1,15 @@
 @* قشرة مشتركة لشاشات القوائم المرجعية المنفصلة — الجدول + المودال. المنطق في /lookup-admin.js *@
-<link rel="stylesheet" href="/lookup-admin.css">
+<link rel="stylesheet" href="/lookup-admin.css" asp-append-version="true" />
 
 <div class="card">
-  <div class="lk-toolbar">
-    <div class="lk-toolbar-title" id="lkListTitle"></div>
-    <button class="btn btn-primary" type="button" onclick="LookupAdmin.openModal(null)">@SharedLocalizer["lk_add"]</button>
+  @* ⚠️ الرأس ده كان .lk-toolbar — خلفية بيضا وحشوة 14px — بينما باقي شاشات
+     السيستم بتستخدم .card-header (خلفية زرقا فاتحة وحشوة 16px) من site.css.
+     فشاشات القوائم المرجعية وشاشة المستخدمين والأدوار كانوا الوحيدين المختلفين. *@
+  <div class="card-header">
+    <div class="card-title" id="lkListTitle"></div>
+    <div class="card-tools">
+      <button class="btn btn-primary" type="button" onclick="LookupAdmin.openModal(null)">@SharedLocalizer["lk_add"]</button>
+    </div>
   </div>
   <div style="overflow-x:auto">
     <table>

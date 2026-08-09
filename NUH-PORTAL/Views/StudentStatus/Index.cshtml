@@ -29,11 +29,8 @@
   .two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
   .two-col .col-form{min-width:0}
   .two-col .col-history{min-width:0}
-  .form-card{background:var(--white);border-radius:16px;border:1px solid var(--gray-100);box-shadow:0 2px 8px rgba(27,42,94,.05);overflow:hidden;margin-bottom:20px}
-  .form-card-header{padding:18px 24px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;gap:10px}
-  .form-card-header-icon{width:36px;height:36px;border-radius:10px;background:var(--gray-100);display:flex;align-items:center;justify-content:center}
-  .form-card-title{font-size:15px;font-weight:700;color:var(--navy-dark)}
-  .form-card-body{padding:24px}
+  /* ⚠️ تعريفات .form-card* اتشالت من هنا — كانت مكرّرة حرفيًا في أربع شاشات.
+     مكانها الآن wwwroot/css/site.css مرة واحدة، فأي تغيير في الشكل يوصلها كلها. */
   .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
   .field{display:flex;flex-direction:column;gap:7px}
   .field.full{grid-column:1/-1}
@@ -423,8 +420,8 @@
     </div>
     <div class="modal-title" >@SharedLocalizer["ss_warningTitle"]</div>
     <div class="modal-body" id="confirmBody">
-      @* تحذير التعطيل بيظهر للحالات اللي بتنهي علاقة الطالب بالجامعة بس.
-         «ترك الإسكان الجامعي» مابيعطّلش الحساب، فالتحذير كان بيكذب على المستخدم. *@
+      @* تحذير التعطيل يظهر لكل الحالات — أربعتها تُنهي السكن فيُعطَّل حساب
+         شبكة السكن. يُخفى فقط إن لم يكن للطالب حساب شبكة أصلًا. *@
       <p id="confirmDisableIntro" >@SharedLocalizer["ss_disableIntro"]</p>
       <hr class="modal-divider" id="confirmDivider1">
       <p id="confirmUsernameRow"><strong >@SharedLocalizer["ss_usernameColonLabel"]</strong> <span id="confirmUsername">--</span></p>
@@ -564,20 +561,23 @@
       var student = Array.isArray(students) ? students.find(function (s) { return s.student_id === studentNumber; }) : null;
       if (!student) { showToast(t('ss_studentNotFound'), 'error'); enableSubmitBtn(); return; }
 
-      // نفس قاعدة السيرفر (StudentStatusService): التعطيل للحالات اللي بتنهي
-      // علاقة الطالب بالجامعة بس. «ترك السكن» بيسيب حساب الشبكة زي ما هو.
-      var disablesAccount = ['graduated', 'dismissed', 'transferred'].indexOf(statusEl.value) > -1;
+      // نفس قاعدة السيرفر (StudentStatusService): الحالات الأربع كلها تُنهي السكن،
+      // فكلها تُعطِّل حساب شبكة السكن. كان هنا استثناء لـ «ترك السكن» بُني على
+      // افتراض أن الحساب أكاديمي — وهو ليس كذلك. أي استثناء هنا يعني أن التحذير
+      // يكذب على المستخدم في اتجاه أو آخر، وهو أخطر من عدم وجود تحذير أصلًا.
+      var hasAdAccount = !!student.ad_username;
 
       document.getElementById('confirmUsername').textContent = student.ad_username || '--';
       document.getElementById('confirmStatus').textContent = getStatusLabel(statusEl.value);
 
-      document.getElementById('confirmDisableIntro').style.display = disablesAccount ? '' : 'none';
-      document.getElementById('confirmDivider1').style.display = disablesAccount ? '' : 'none';
-      document.getElementById('confirmUsernameRow').style.display = disablesAccount ? '' : 'none';
+      // بلا حساب شبكة لا يوجد ما يُعطَّل — فلا نعرض تحذير تعطيل لن يحدث
+      document.getElementById('confirmDisableIntro').style.display = hasAdAccount ? '' : 'none';
+      document.getElementById('confirmDivider1').style.display = hasAdAccount ? '' : 'none';
+      document.getElementById('confirmUsernameRow').style.display = hasAdAccount ? '' : 'none';
 
       var yesBtn = document.getElementById('confirmYesBtn');
-      yesBtn.textContent = disablesAccount ? t('ss_confirmDisableYes') : t('ss_confirmAction');
-      yesBtn.style.background = disablesAccount ? '#991B1B' : 'var(--navy)';
+      yesBtn.textContent = hasAdAccount ? t('ss_confirmDisableYes') : t('ss_confirmAction');
+      yesBtn.style.background = hasAdAccount ? '#991B1B' : 'var(--navy)';
 
       document.getElementById('confirmDialog').classList.add('show');
 
@@ -1015,7 +1015,7 @@
     if (found) {
       transferStudentLoaded = true;
       transferStudentData = found;
-      text.textContent = '✓ ' + found.full_name + ' — ' + found.student_id;
+      text.textContent = '✓ ' + found.full_name + ' - ' + found.student_id;
       info.style.display = 'block';
       info.style.background = '';
       document.getElementById('transferOldBuilding').textContent = found.housing_building || '--';

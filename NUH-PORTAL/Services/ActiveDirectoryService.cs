@@ -70,7 +70,7 @@ namespace NUH_PORTAL.Services
             // لو الـ AD متعطّل من الكونفيج (زي بيئة التطوير) → نتخطّاه ونروح مباشرة للـ local fallback
             if (!_config.Enabled)
             {
-                _logger.LogInformation("AD disabled via config (ActiveDirectory:Enabled=false) — using local fallback for {Username}", username);
+                _logger.LogInformation("AD disabled via config (ActiveDirectory:Enabled=false) - using local fallback for {Username}", username);
                 return new AdAuthResult { IsAdAvailable = false };
             }
 
@@ -98,7 +98,7 @@ namespace NUH_PORTAL.Services
                     // فشل اتصال بالـ AD (مثلاً DC مش متاح → Win32 "wait operation timed out").
                     // منرميش الاستثناء لفوق — نسجّله ونكمّل؛ ولو دي آخر محاولة نخرج من اللوب
                     // ونروح للـ local fallback بدل ما الدخول يقع بـ 500.
-                    _logger.LogWarning(ex, "AD connection failure on attempt {Attempt} for {Username} — falling back to local",
+                    _logger.LogWarning(ex, "AD connection failure on attempt {Attempt} for {Username} - falling back to local",
                         attempt + 1, username);
                 }
             }
@@ -315,7 +315,7 @@ try
 
         private string MapGroupsToRole(List<string> groups)
         {
-            _logger.LogInformation("TRACE: Role mapping evaluation — checking {Count} mappings against {GroupCount} groups",
+            _logger.LogInformation("TRACE: Role mapping evaluation - checking {Count} mappings against {GroupCount} groups",
                 _config.RoleMappings.Count, groups.Count);
 
             _logger.LogInformation(

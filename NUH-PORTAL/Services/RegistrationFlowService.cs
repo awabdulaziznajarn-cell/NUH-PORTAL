@@ -1,5 +1,7 @@
 using MapsterMapper;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using NUH_PORTAL.Core;
 using NUH_PORTAL.Core.Exceptions;
 using NUH_PORTAL.Data.Interfaces;
 using NUH_PORTAL.DTOs.Registration;
@@ -22,6 +24,7 @@ namespace NUH_PORTAL.Services
         private readonly IWorkflowService _workflow;
         private readonly IHttpContextAccessor _http;
         private readonly ILookupResolver _lookups;
+        private readonly UserManager<User> _userManager;
 
         public RegistrationFlowService(
             IRepository<Student> students,
@@ -32,6 +35,7 @@ namespace NUH_PORTAL.Services
             IWorkflowService workflow,
             IHttpContextAccessor http,
             ILookupResolver lookups,
+            UserManager<User> userManager,
             IUnitOfWork unitOfWork,
             IMapper mapper) : base(unitOfWork, mapper)
         {
@@ -43,6 +47,7 @@ namespace NUH_PORTAL.Services
             _workflow = workflow;
             _http = http;
             _lookups = lookups;
+            _userManager = userManager;
         }
 
         private (string? ip, string ua) ClientInfo()
@@ -105,6 +110,21 @@ namespace NUH_PORTAL.Services
                 await _students.AddAsync(student);
                 await UnitOfWork.SaveAsync();
             }
+
+            // ⚠️ حساب دخول الطالب يُنشأ لحظة التحقق برمز الجوال، أي قبل أن يوجد
+            //    له سجل طالب. فيولد باسم مؤقت مبني على رقم جواله واسمه «طالب».
+            //    وبعد هذه اللحظة صار الرقم الجامعي والاسم الكامل معروفين — ومن
+            //    غير هذا السطر يظل الحساب على شكله المؤقت حتى الدخول التالي،
+            //    فيظهر جدول واحد بصيغتين لاسم المستخدم وباسم «طالب» لحسابات
+            //    نعرف أصحابها. القاعدة واحدة في StudentLoginIdentity.
+            //    ⚠️ الشرط ليس تجميلًا: المشرف قد يقدّم الطلب نيابةً عن الطالب،
+            //    وحينها actorId حساب المشرف — ومزامنته ببيانات الطالب تعيد تسمية
+            //    حساب موظف باسم طالب. لا نزامن إلا إذا كان جوال المُقدِّم هو جوال
+            //    الطالب نفسه، أي أن الحساب حساب الطالب فعلًا.
+            var actor = await _userManager.FindByIdAsync(actorId.ToString());
+            var actorMobile = NormalizeMobile(actor?.mobile);
+            if (actor != null && actorMobile != null && actorMobile == NormalizeMobile(student.phone))
+                await StudentLoginIdentity.SyncAsync(_userManager, actor, student, actorMobile);
 
             var mobile = RegistrationDataMapper.Read(registrationDataJson, "mobile")
                          ?? RegistrationDataMapper.Read(registrationDataJson, "phone");
@@ -372,11 +392,15 @@ namespace NUH_PORTAL.Services
             if (hit == null)
                 return new DuplicateCheckResultDto { Found = false };
 
+            // ⚠️ رقم الطلب لا يخرج من هنا. هذا الفحص يطابق على الرقم الجامعي
+            //    ورقم الهوية فقط — ولا يثبت أن من أمام الشاشة هو صاحب الطلب.
+            //    من يكتب بيانات شخص آخر (خطأً أو قصدًا) كان يحصل على رقم طلبه،
+            //    ورقم الطلب مع آخر ٤ أرقام من الجوال يفتح شاشة التتبع.
+            //    الرقم يُذكر فقط حين يثبت التطابق بالجوال المتحقَّق منه بالـ OTP.
             return new DuplicateCheckResultDto
             {
                 Found = true,
-                RequestNumber = hit.RequestNumber,
-                Message = $"هذه البيانات مرتبطة بطلب مسجَّل رقمه {hit.RequestNumber}. يرجى التأكد من صحتها أو مراجعة إدارة الإسكان."
+                Message = "هذه البيانات مرتبطة بطلب مسجَّل. يرجى التأكد من صحتها أو مراجعة إدارة الإسكان."
             };
         }
 
@@ -389,12 +413,14 @@ namespace NUH_PORTAL.Services
         {
             if (m.IsSamePerson)
                 return isOpen
-                    ? $"لديك طلب قائم بالفعل رقمه {m.RequestNumber} — يمكنك متابعته من صفحة تتبع الطلب."
+                    ? $"لديك طلب قائم بالفعل رقمه {m.RequestNumber} - يمكنك متابعته من صفحة تتبع الطلب."
                     : $"أنت مسجَّل بالفعل في الإسكان الجامعي بموجب الطلب رقم {m.RequestNumber}. لا يمكن تقديم طلب جديد؛ للاستفسار يرجى مراجعة إدارة الإسكان.";
 
+            // التطابق على الهوية أو الرقم الجامعي لا يثبت الملكية، فلا يُذكر رقم
+            // الطلب. صاحب الطلب الحقيقي يصل إليه من شاشة التحقق بجواله.
             return isOpen
-                ? $"{m.FieldLabel} المُدخل مرتبط بطلب قائم رقمه {m.RequestNumber}. يرجى التأكد من صحة البيانات، وإن كان الطلب يخصّك فتابعه من صفحة تتبع الطلب."
-                : $"{m.FieldLabel} المُدخل مرتبط بطالب مسجَّل بالفعل في الإسكان الجامعي (الطلب رقم {m.RequestNumber}). يرجى التأكد من صحة البيانات أو مراجعة إدارة الإسكان.";
+                ? $"{m.FieldLabel} المُدخل مرتبط بطلب قائم. يرجى التأكد من صحة البيانات، وإن كان الطلب يخصّك فتابعه من صفحة تتبع الطلب بعد التحقق برقم جوالك."
+                : $"{m.FieldLabel} المُدخل مرتبط بطالب مسجَّل بالفعل في الإسكان الجامعي. يرجى التأكد من صحة البيانات أو مراجعة إدارة الإسكان.";
         }
 
 

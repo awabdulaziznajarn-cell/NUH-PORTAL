@@ -45,7 +45,19 @@ function tf(key, arText, enText) {
   return lng === 'en' ? enText : arText;
 }
 function goBack() { window.location.href = '/Requests'; }
-function formatDate(d) { if (!d) return '-'; return new Date(d).toLocaleString(); }
+// ⚠️ تنسيق التاريخ كان بأربع صيغ مختلفة في نفس الملف. أوضحها في الشاشة:
+//    «تاريخ التقديم» كان toLocaleDateString('ar-SA') فيطلع ٢٠٢٦/٨/٩، بينما
+//    «آخر مزامنة» كان toLocaleString() بلا لغة فيطلع 09/08/2026, 14:26:01 —
+//    تاريخان في صفحة واحدة بشكلين وأبجديتين مختلفتين. الصيغة هنا مرة واحدة.
+function __lang() {
+  var el = document.getElementById('html-root') || document.documentElement;
+  return (el.getAttribute('lang') || 'ar') === 'en' ? 'en-US' : 'ar-SA';
+}
+function formatDate(d) {
+  if (!d) return '-';
+  var x = new Date(d);
+  return isNaN(x.getTime()) ? '-' : x.toLocaleDateString(__lang());
+}
 
 window.onLanguageChange = function(l) {
   if (requestId) loadRequest();
@@ -95,11 +107,17 @@ const statusMap = {
   need_more_info: 'rdp_stage_needMoreInfo',
   approved: 'rdp_stage_completed', rejected: 'rdp_stage_rejected'
 };
+// ⚠️ كان فيه خطوة زيادة: cyber_approved ثم ready_for_provisioning، وهما مرحلة
+//    واحدة — موافقة الأمن السيبراني *هي* اللي بتخلّي الطلب جاهزًا لإنشاء الحساب.
+//    وكان عنوان الخطوة نفسه بيقول الاتنين: «موافقة إدارة الأمن السيبراني -
+//    جاهز لإنشاء حساب شبكة السكن»، فالمسار يبان فيه تكرار.
+//    كمان stageToWorkflowStep تحت مبني أصلًا على ٥ خطوات (completed:4)، فالمصفوفة
+//    السداسية كانت بتخلّي «مكتمل» يعلّم على الخطوة الغلط.
+//    المسارين دلوقتي بنفس الشكل: تقديم ← إسكان ← سيبراني ← تجهيز ← مكتمل.
 const workflowSteps = [
   { status:'submitted', key:'submitted' },
   { status:'housing_approved', key:'housing' },
   { status:'cyber_review', key:'cyber_review' },
-  { status:'cyber_approved', key:'cyber_approved' },
   { status:'ready_for_provisioning', key:'ready' },
   { status:'completed', key:'completed' }
 ];
@@ -216,7 +234,7 @@ function renderRequest(r) {
   document.getElementById('detail-content').style.display = 'block';
   // ماتخترعش رقم طلب — الرقم المصنوع هنا مكانش متخزّن، والطالب كان بيكتبه في
   // صفحة التتبع فمايتلاقاش. الرقم بقى بيتولّد ويتخزّن وقت إنشاء الطلب.
-  var reqNum = r.requestNumber || '—';
+  var reqNum = r.requestNumber || '-';
   var __pt = document.getElementById('pageTitle'); if (__pt) __pt.textContent = t('rdp_pageTitle')+' - '+reqNum;
 
   var s = r.student || {};
@@ -239,8 +257,11 @@ function renderRequest(r) {
     }
     var label = step.key === 'submitted' ? t('rdp_step_submitted')
       : step.key === 'housing' ? t('rdp_wf_housingApp')
-      : step.key === 'cyber_review' ? t('rdp_stage_cyberReview')
-      : step.key === 'cyber_approved' ? t('rdp_wf_cyberApprovedReady')
+      // ⚠️ مفتاح مستقل عن rdp_stage_cyberReview: ذاك اسم *حالة* («مراجعة
+      //    إدارة الأمن السيبراني») ومستخدم في الشارات وسجل المراحل.
+      //    أما هنا فاسم *مرحلة في المسار*، ولازم يوازي «موافقة إدارة الإسكان»
+      //    اللي قبله — التوازي هو اللي بيخلّي المسار يتقرا كوحدة واحدة.
+      : step.key === 'cyber_review' ? t('rdp_wf_cyberApp')
       : step.key === 'ready' ? t('rdp_wf_readyHousing')
       : t('rdp_stage_completed');
     var iconSvg = cls==='completed'
@@ -305,6 +326,17 @@ function renderRequest(r) {
       historyEntries.push({ label: t('rdp_stage_completed'), cls:'approved', time:r.completedAt, notes:null, username: r.completedByName });
     }
   }
+
+  // ⚠️ خطوات طلبات الموظف بتتبني من تواريخ الطلب بترتيب ثابت مكتوب في الكود،
+  //    مش مرتّبة بالوقت. طول ما التواريخ ماشية بالترتيب الطبيعي الشكل سليم،
+  //    وأول ما واحدة تخرج عن الترتيب (طلب اتعدّل أو اترجع لمرحلة سابقة) السجل
+  //    بيتقلب ويبان إجراء يوم ٦ قبل إجراء يوم ٥.
+  //    سجل طلبات الطالب مرتّب بالوقت أصلًا من قاعدة البيانات — دلوقتي الاتنين سواء.
+  historyEntries.sort(function (a, b) {
+    var ta = new Date(a.time).getTime(), tb = new Date(b.time).getTime();
+    if (isNaN(ta) || isNaN(tb)) return 0;
+    return ta - tb;
+  });
 
   function fmtDate(t) { return new Date(t).toLocaleDateString(lang==='ar'?'ar-SA':'en-US', { year:'numeric', month:'short', day:'numeric' }); }
   function fmtTime(t) { return new Date(t).toLocaleTimeString(lang==='ar'?'ar-SA':'en-US', { hour:'2-digit', minute:'2-digit' }); }
@@ -556,12 +588,19 @@ function renderRequest(r) {
       infoField('gender',         t('rdp_field_gender'),     escHtml((genderMap[s.gender]&&t(genderMap[s.gender]))||s.gender||''))+
     '</div></div></div>'+
 
-    /* 3b - Housing Account Card */
-    '<div class="detail-card" id="housingAccountCard" style="margin-top:16px;display:none">'+
-      '<div class="detail-card-header">'+
-        '<h3 data-i18n="housingAccounts">'+t('rdp_housingAccounts')+'</h3>'+
+    /* 3b - Housing Account Card
+       ⚠️ البطاقة دي كانت بكلاسات detail-card / detail-card-header /
+          detail-card-content — وهي أسماء **مالهاش أي CSS في المشروع كله**،
+          ومستعملة في المكان ده وحده. فالنتيجة إنها كانت تطلع بلا إطار ولا
+          ترويسة ولا حشو، مختلفة تمامًا عن باقي أقسام الصفحة.
+          دلوقتي بتستخدم card / card-header / card-body زي كل البطاقات،
+          ومعاها أيقونة زيّهم — فالشكل واحد ويتبع site.css تلقائيًا. */
+    '<div class="card" id="housingAccountCard" style="margin-top:16px;display:none">'+
+      '<div class="card-header">'+
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>'+
+        t('rdp_housingAccounts')+
       '</div>'+
-      '<div class="detail-card-content">'+
+      '<div class="card-body">'+
         '<div id="housingAccountContent">'+
           '<p style="color:var(--gray-500);text-align:center;padding:16px" data-i18n="loading">'+t('rdp_loading')+'</p>'+
         '</div>'+
@@ -580,7 +619,7 @@ function renderRequest(r) {
     (st === 'completed' || st === 'approved' ? '<div class="card" style="border:2px solid var(--green);background:var(--green-light)"><div class="card-body" style="text-align:center;padding:24px">'+
       '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'+
       '<h3 style="font-size:18px;color:var(--green);margin-bottom:8px">'+t('rdp_msg_accountCreated')+'</h3>'+
-      '<p style="font-size:14px;color:var(--navy-dark)">'+t('rdp_lbl_username')+': <strong dir="ltr" style="display:inline-block;background:var(--white);padding:4px 12px;border-radius:6px;border:1px solid var(--gray-200)">'+(s.ad_username || '-')+'</strong></p>'+
+      '<p style="font-size:14px;color:var(--navy-dark)">'+t('rdp_lbl_username')+': <strong dir="ltr" style="display:inline-block;background:var(--white);padding:4px 12px;border-radius:6px;border:1px solid var(--gray-200)">'+escHtml(s.ad_username || '-')+'</strong></p>'+
       '<p style="font-size:12px;color:var(--gray-500);margin-top:8px">'+t('rdp_msg_credentialsSms')+'</p>'+
     '</div></div>' : '')+
 
@@ -623,120 +662,35 @@ async function loadHousingAccount(studentId) {
     //    فالعنوان كان بيلزق في القيمة: "اسم المستخدم في ADh456969999".
     //    بنستخدم info-grid / info-field اللي بتستخدمها باقي بطاقات الصفحة —
     //    عمودين مرتبين بخط فاصل، نفس شكل «معلومات الطالب» بالظبط.
-    function adField(label, valueHtml, extra) {
+    // ⚠️ اسم المستخدم والتاريخ نصّان لاتينيان داخل صفحة عربية. كان الحل السابق
+    //    dir="ltr" على الخانة نفسها، وده غيّر معنى text-align:start من «يمين»
+    //    إلى «يسار»، فطارت القيمة لأقصى الشمال بعيدًا عن عنوانها.
+    //    الصحيح <bdi>: يعزل اتجاه النص في داخله فقط — فالحروف والأرقام تُقرأ
+    //    بترتيبها الصحيح — بينما محاذاة السطر تبقى تابعة لاتجاه الصفحة، فتقف
+    //    القيمة تحت عنوانها تمامًا في العربية وفي الإنجليزية بلا استثناء لأيهما.
+    function adField(label, valueHtml, ltr) {
       return '<div class="info-field">' +
                '<span class="info-label">' + label + '</span>' +
-               '<span class="info-value"' + (extra || '') + '>' + valueHtml + '</span>' +
+               '<span class="info-value">' +
+                 (ltr ? '<bdi>' + valueHtml + '</bdi>' : valueHtml) +
+               '</span>' +
              '</div>';
     }
 
     content.innerHTML = '<div class="info-grid">' +
-      adField(t('adUsername'), escHtml(s.ad_username || '-'), ' dir="ltr" style="text-align:start"') +
+      adField(t('adUsername'), escHtml(s.ad_username || '-'), true) +
       adField(t('adAccountStatus'), statusBadge) +
-      adField(t('adLastSync'), s.ad_last_sync_at ? formatDate(s.ad_last_sync_at) : '-') +
+      adField(t('adLastSync'), s.ad_last_sync_at ? formatDate(s.ad_last_sync_at) : '-', true) +
       adField(t('college'), escHtml(collegeName(s.college) || '-')) +
-    '</div>' +
-    '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">' +
-      (can('housing.manageAccounts') ? (enabled ? '<button class="btn btn-danger btn-sm" onclick="housingAction(' + studentId + ',\'disable\')">' + t('disableAccount') + '</button>'
-               : '<button class="btn btn-success btn-sm" onclick="housingAction(' + studentId + ',\'enable\')">' + t('enableAccount') + '</button>') : '') +
-      (can('housing.manageAccounts') ? '<button class="btn btn-warning btn-sm" onclick="housingResetPassword(' + studentId + ')">' + t('resetPassword') + '</button>' : '') +
-      // سجل دورة حياة الحساب بيتقرا من /api/students/{id}/lifecycle، فمحتاج صلاحية عرض الطلاب
-      (can('students.view') ? '<button class="btn btn-outline btn-sm" onclick="showHousingLifecycle(' + (s.id || studentId) + ',\'' + (s.full_name_english || '') + '\')">📋 ' + t('lifecycleLog') + '</button>' : '') +
     '</div>';
+
+  // ⚠️ إجراءات الحساب (تعطيل/تفعيل الحساب، إعادة تعيين كلمة المرور، سجل إجراءات
+  //    الحساب) أُزيلت من هذه الشاشة عن قصد. مكانها الوحيد «إدارة حسابات السكن».
+  //    السبب: الإجراء الواحد في شاشتين يعني منطقين لازم يُحدَّثا معًا وإلا افترقا،
+  //    وقد كان زر السجل هنا معطّلًا أصلًا لأن نافذته غير موجودة في هذه الشاشة.
+  //    هذه البطاقة للعرض فقط: تُظهر حالة حساب الشبكة ولا تعدّله.
   } catch(e) {
     card.style.display = 'none';
-  }
-}
-
-async function housingAction(studentId, action) {
-  var msgs = { enable: t('confirmEnable'), disable: t('confirmDisable') };
-  if (!confirm(msgs[action] || t('confirm'))) return;
-  if (!can('housing.manageAccounts')) { alert(t('apiError')); return; }
-  try {
-    var res = await fetch('/api/HousingAccountManagement/' + studentId + '/' + action, {
-      method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' })
-    });
-    if (res.ok) {
-      alert(t('success'));
-      loadHousingAccount(studentId);
-    } else {
-      var d = await res.json().catch(function(){return{};});
-      alert(d.message || t('errorOccurred'));
-    }
-  } catch(e) { alert(t('apiError')); }
-}
-
-function housingResetPassword(studentId) {
-  if (!can('housing.manageAccounts')) { alert(t('apiError')); return; }
-  var pwd = prompt(t('newPassword'));
-  if (!pwd || pwd.length < 8) { alert(t('passwordMinLength') || 'Password must be at least 8 characters'); return; }
-  (async function() {
-    try {
-      var res = await fetch('/api/HousingAccountManagement/' + studentId + '/reset-password', {
-        method: 'POST', headers: authHeaders({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify({ newPassword: pwd })
-      });
-      if (res.ok) { alert(t('success')); } else { var d = await res.json(); alert(d.message || t('errorOccurred')); }
-    } catch(e) { alert(t('apiError')); }
-  })();
-}
-
-// أسماء إجراءات سجل دورة حياة حساب الشبكة — tf بترجع نص ملف الترجمة لو موجود
-// وإلا النص المكتوب هنا حسب اللغة.
-function lifecycleActionLabel(action) {
-  switch (action) {
-    case 'provisioned':            return tf('actionProvisioned', 'تم إنشاء الحساب', 'Account created');
-    case 'reprovisioned':          return tf('actionReprovisioned', 'إعادة إنشاء الحساب', 'Account re-provisioned');
-    case 'enabled':                return tf('actionEnabled', 'تم التفعيل', 'Enabled');
-    case 'disabled':               return tf('actionDisabled', 'تم التعطيل', 'Disabled');
-    case 'disable_failed':         return tf('actionDisableFailed', 'فشل تعطيل الحساب', 'Disable failed');
-    case 'password_reset':         return tf('actionPasswordReset', 'إعادة تعيين كلمة المرور', 'Password reset');
-    case 'extension_attrs_synced': return tf('actionExtensionAttrsSynced', 'مزامنة الخصائص الإضافية', 'Extension attributes synced');
-    case 'housing_transfer':       return tf('actionHousingTransfer', 'نقل سكن', 'Housing transfer');
-    case 'left_housing':           return tf('actionLeftHousing', 'ترك الإسكان', 'Left housing');
-    default:                       return action || '';
-  }
-}
-
-async function showHousingLifecycle(studentId, name) {
-  var body = document.getElementById('housingLifecycleBody');
-  body.innerHTML = '<p style="text-align:center;color:var(--gray-500);padding:20px">' + t('loading') + '</p>';
-  document.getElementById('housingLifecycleModal').classList.add('open');
-  if (!can('students.view')) { body.innerHTML = '<p style="text-align:center;color:var(--red);padding:20px">' + t('apiError') + '</p>'; return; }
-  try {
-    var res = await fetch('/api/students/' + studentId + '/lifecycle', { headers: authHeaders() });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    var data = await res.json();
-    var logs = data.logs || [];
-    if (logs.length === 0) { body.innerHTML = '<p style="text-align:center;color:var(--gray-500);padding:20px">' + t('noData') + '</p>'; return; }
-    var html = '';
-    if (name) html += '<div style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:12px">' + escHtml(name) + '</div>';
-    html += '<div class="log-list">';
-    logs.forEach(function(l) {
-      var iconClass = (l.action === 'disabled' || l.action === 'disable_failed') ? 'disabled'
-                    : (l.action === 'password_reset') ? 'password_reset' : 'enabled';
-      // ⚠️ الأكواد اللي مالهاش اسم (housing_transfer / left_housing / disable_failed)
-      //    كانت بتظهر للمستخدم زي ما هي مكتوبة في قاعدة البيانات.
-      var actionLabel = lifecycleActionLabel(l.action);
-      // ⚠️ كان كله في سطر واحد مفصول بـ | فالكلام بيدخل في بعضه. بقى:
-      //    الإجراء، تحته التفاصيل، وتحتهم المنفّذ والتاريخ منفصلين.
-      var meta = '';
-      if (l.performerName) meta += '<span>' + t('by') + ' ' + escHtml(l.performerName) + '</span>';
-      if (l.performedAt) meta += '<span>' + new Date(l.performedAt).toLocaleString() + '</span>';
-      if (l.ipAddress) meta += '<span class="log-ip">IP: ' + escHtml(l.ipAddress) + '</span>';
-
-      html += '<div class="log-entry">' +
-          '<div class="log-icon ' + iconClass + '">' + (l.action === 'disabled' ? '\u2715' : '\u2713') + '</div>' +
-          '<div class="log-details">' +
-            '<div class="log-action">' + escHtml(actionLabel) + '</div>' +
-            (l.details ? '<div class="log-desc">' + escHtml(l.details) + '</div>' : '') +
-            '<div class="log-meta">' + meta + '</div>' +
-          '</div>' +
-        '</div>';
-    });
-    body.innerHTML = html + '</div>';
-  } catch(e) {
-    body.innerHTML = '<p style="color:var(--red);text-align:center;padding:20px">' + t('apiError') + '</p>';
   }
 }
 
@@ -891,7 +845,7 @@ async function submitReview(currentStatus) {
     if (res.status === 401) { localStorage.removeItem('staffToken'); localStorage.removeItem('staffUser'); window.location.replace('/Account/Login'); return; }
     if (!res.ok) {
       var err = await res.json();
-      alert(err.message || t('rdp_msg_updateFailed'));
+      NuhDialog.error(err.message || t('rdp_msg_updateFailed'));
       document.getElementById('submitReviewBtn').disabled = false;
       document.getElementById('submitReviewBtn').textContent = t('rdp_btn_submitReview');
       return;
@@ -902,7 +856,7 @@ async function submitReview(currentStatus) {
     // التأخير عشان رسالة النجاح تبان قبل التحديث.
     setTimeout(function () { loadRequest(); loadUnreadCount(); }, 1200);
   } catch(e) {
-    alert(t('rdp_msg_connectionError'));
+    NuhDialog.error(t('rdp_msg_connectionError'));
     document.getElementById('submitReviewBtn').disabled = false;
     document.getElementById('submitReviewBtn').textContent = t('rdp_btn_submitReview');
   }

@@ -165,24 +165,17 @@ namespace NUH_PORTAL.Services
                 }
             }
 
-            // ⚠️ الشاشة كانت بتقرا الحالة الحقيقية من الدومين (adDetails فوق) وترميها،
-            //    وتعرض القيمة المسجّلة في قاعدة البيانات. فلو حد فعّل أو عطّل الحساب
-            //    من الأكتف دايركتوري مباشرة، النظام يفضل شايف الحالة القديمة للأبد.
-            //    دلوقتي بنصالح على طول ونسجّل إن التغيير جه من خارج النظام — الأكتف
-            //    دايركتوري مش بيقول *مين* عمل الإجراء (الاسم في سجل أحداث الـ DC)،
-            //    فبنسجّل الحقيقة اللي نعرفها بس.
+            // ⚠️ الشاشة كانت تقرأ الحالة الحقيقية من الدليل (adDetails أعلاه) وترميها،
+            //    وتعرض القيمة المسجَّلة في قاعدة البيانات. فلو فُعِّل الحساب أو عُطِّل
+            //    من الدليل مباشرة، يظل النظام يرى الحالة القديمة إلى الأبد.
+            //    المصالحة والتسجيل في ADProvisioningService.ReconcileStatus — قاعدة
+            //    واحدة يشترك فيها هذا المسار والتحديث الجماعي، بعدما كانت مكتوبة
+            //    مرتين بصياغتين متقاربتين تفترقان مع أول تعديل.
             if (adDetails != null)
             {
-                var actualStatus = adDetails.AccountEnabled ? AdStatus.enabled : AdStatus.disabled;
-                if (student.ad_status != actualStatus)
+                if (_adProvisioning.ReconcileStatus(
+                        student, adDetails.AccountEnabled, UnitOfWork.GetCurrentUserId(), "فتح تفاصيل الحساب"))
                 {
-                    var previous = student.ad_status?.ToString() ?? "غير معروفة";
-                    student.ad_status = actualStatus;
-                    student.ad_last_sync_at = DateTime.UtcNow;
-
-                    await AddLifecycleLogAsync(student.Id,
-                        actualStatus == AdStatus.enabled ? "enabled" : "disabled",
-                        $"تغيّرت حالة الحساب من خارج النظام (من {previous} إلى {actualStatus}) — اكتُشف عند فتح الشاشة");
                     await UnitOfWork.SaveAsync();
                 }
             }

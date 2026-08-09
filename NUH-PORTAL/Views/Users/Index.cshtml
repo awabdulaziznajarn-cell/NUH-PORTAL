@@ -10,10 +10,44 @@
   <p>@SharedLocalizer["usr_pageSubtitle"]</p>
 </div>
 
+@* ⚠️ حساب الطالب بيتولّد تلقائيًا أول ما يتحقق برمز الجوال — مش موظف ومحدش
+   بيديره من هنا. خلطه بالموظفين كان بيغرق الشاشة: مع كل طالب بيقدّم صف جديد.
+   التبويبات بتفصلهم بصريًا من غير صفحة ولا صلاحية جديدة.
+   ⚠️ التبويبات فوق البطاقة مش جوّاها — نفس مكان تبويبات شاشة الطلبات بالظبط،
+      وبنفس المكوّن (.tabs / .tab-btn في site.css). قبل كده كان ليها تصميم خاص
+      جوّه البطاقة، فشاشة المستخدمين كانت وحدها مختلفة عن باقي السيستم. *@
+<div class="tabs">
+  <button type="button" class="tab-btn active" id="tabStaff" onclick="switchTab(false)">
+    <span>@SharedLocalizer["usr_pageTitle"]</span>
+    <span class="tab-count" id="cntStaff">-</span>
+  </button>
+  <button type="button" class="tab-btn" id="tabStudents" onclick="switchTab(true)">
+    <span>@SharedLocalizer["usr_tabStudents"]</span>
+    <span class="tab-count" id="cntStudents">-</span>
+  </button>
+
+  @* ⚠️ الملاحظة دي كانت شريطًا كاملًا تحت التبويبات، بيظهر في تبويب الطلاب بس.
+     فكان بيدفع الجدول ٥٨ بكسل لتحت، والتبويب الواحد شكله مختلف عن التاني.
+     بقت أيقونة: نفس المعلومة، صفر مساحة، والتخطيط واحد في التبويبين.
+     ⚠️ برّه الـ button مش جوّاه: عنصر قابل للتركيز جوّه زرار HTML غير صالح،
+        والضغط عليه كان هيبدّل التبويب بدل ما يعرض الملاحظة. *@
+  <span class="hint" tabindex="0" role="note"
+        aria-label="@SharedLocalizer["usr_studentsNote"]">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+    <span class="hint-bubble">@SharedLocalizer["usr_studentsNote"]</span>
+  </span>
+</div>
+
 <div class="card">
-  <div class="lk-toolbar">
-    <input type="text" id="usrSearch" class="usr-search" placeholder="@SharedLocalizer["usr_search"]" oninput="filterUsers()">
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+  <div class="card-header">
+    <div class="card-title" id="usrCardTitle">@SharedLocalizer["usr_pageTitle"]</div>
+    <div class="card-tools">
+      <div class="search-wrap">
+        <input type="text" id="usrSearch" placeholder="@SharedLocalizer["usr_search"]" oninput="filterUsers()">
+        <span class="search-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </span>
+      </div>
       @if (canLdap)
       {
         <button class="btn btn-cancel" type="button" onclick="openLdap()">@SharedLocalizer["usr_addFromDir"]</button>
@@ -25,38 +59,25 @@
     </div>
   </div>
 
-  @* ⚠️ حساب الطالب بيتولّد تلقائيًا أول ما يتحقق برمز الجوال — مش موظف ومحدش
-     بيديره من هنا. خلطه بالموظفين كان بيغرق الشاشة: مع كل طالب بيقدّم صف جديد.
-     التبويبات بتفصلهم بصريًا من غير صفحة ولا صلاحية جديدة. *@
-  <div class="usr-tabs">
-    <button type="button" class="usr-tab active" id="tabStaff" onclick="switchTab(false)">
-      <span>@SharedLocalizer["usr_pageTitle"]</span>
-      <span class="usr-tab-count" id="cntStaff">—</span>
-    </button>
-    <button type="button" class="usr-tab" id="tabStudents" onclick="switchTab(true)">
-      <span>حسابات دخول الطلاب</span>
-      <span class="usr-tab-count" id="cntStudents">—</span>
-    </button>
-  </div>
-
-  <div id="usrStudentsNote" class="usr-note" style="display:none">
-    تُنشأ هذه الحسابات تلقائيًا فور تحقّق الطالب برمز جواله — لا يوجد إنشاء أو تعديل يدوي.
-    الإجراء الوحيد المتاح هنا هو تعطيل الدخول.
-  </div>
-
+  @* ⚠️ العرض هنا مكتوب على كل عمود عمدًا مع .table-fixed (معرّفة في site.css).
+     من غيره كان عرض العمود بيتحسب من المحتوى، فـ«student_966569999999» في
+     تبويب الطلاب بيدفع الأعمدة ١٤٤ بكسل عن مكانها في تبويب الموظفين —
+     فالتبديل بين التبويبين بيبان كأن الشاشة اتغيّرت.
+     الأعمدة المخفية بـ display:none بتخرج من الحساب، فالسبعة الظاهرة في كل
+     تبويب بيجمعوا نفس النِسَب: 56px + 88% + 150px. *@
   <div style="overflow-x:auto">
-    <table>
+    <table class="table-fixed">
       <thead>
         <tr id="usrHeadRow">
-          <th>#</th>
-          <th>@SharedLocalizer["usr_col_username"]</th>
-          <th>@SharedLocalizer["usr_col_fullName"]</th>
-          <th class="col-staff">@SharedLocalizer["usr_col_email"]</th>
-          <th class="col-staff">@SharedLocalizer["usr_col_role"]</th>
-          <th class="col-students" style="display:none">الجوال</th>
-          <th class="col-students" style="display:none">تاريخ الإنشاء</th>
-          <th>@SharedLocalizer["usr_col_status"]</th>
-          <th>@SharedLocalizer["usr_col_actions"]</th>
+          <th style="width:56px">#</th>
+          <th style="width:20%">@SharedLocalizer["usr_col_username"]</th>
+          <th style="width:22%">@SharedLocalizer["usr_col_fullName"]</th>
+          <th class="col-staff" style="width:22%">@SharedLocalizer["usr_col_email"]</th>
+          <th class="col-staff" style="width:14%">@SharedLocalizer["usr_col_role"]</th>
+          <th class="col-students" style="display:none;width:22%">@SharedLocalizer["usr_lbl_mobile"]</th>
+          <th class="col-students" style="display:none;width:14%">@SharedLocalizer["usr_colCreatedAt"]</th>
+          <th style="width:10%">@SharedLocalizer["usr_col_status"]</th>
+          <th style="width:150px">@SharedLocalizer["usr_col_actions"]</th>
         </tr>
       </thead>
       <tbody id="usrBody">
@@ -174,21 +195,8 @@
 
 @section Scripts {
 <style>
-  .lk-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;border-bottom:1px solid var(--gray-100);flex-wrap:wrap}
-  .usr-tabs{display:flex;gap:4px;padding:12px 20px 0;border-bottom:1px solid var(--gray-100)}
-  .usr-tab{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border:none;background:none;
-           font-family:inherit;font-size:13px;font-weight:600;color:var(--gray-500);cursor:pointer;
-           border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s}
-  .usr-tab:hover{color:var(--navy)}
-  .usr-tab.active{color:var(--navy);border-bottom-color:var(--navy)}
-  .usr-tab-count{background:var(--gray-100);color:var(--gray-500);border-radius:999px;padding:1px 8px;font-size:11.5px;font-weight:700}
-  .usr-tab.active .usr-tab-count{background:var(--navy);color:#fff}
-  .usr-note{margin:14px 20px 0;padding:10px 14px;border-radius:8px;background:#EFF6FF;color:#1E40AF;
-            border:1px solid #DBEAFE;font-size:12px;line-height:1.8}
-  .usr-search{flex:1;min-width:220px;max-width:360px;height:40px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:10px;padding:0 14px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;color:var(--navy-dark);outline:none}
-  .usr-search:focus{border-color:var(--navy);background:#fff}
-  .spinner{width:32px;height:32px;border:3px solid var(--gray-200);border-top-color:var(--navy);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto}
-  @@keyframes spin{to{transform:rotate(360deg)}}
+  /* خاص بشاشة المستخدمين فقط — الباقي (البطاقة، التبويبات، نافذة التعديل،
+     الحقول، رسالة التأكيد، مؤشر التحميل) من site.css */
   .action-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:8px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;cursor:pointer;border:none;transition:all .2s}
   .action-edit{background:#eef1f8;color:var(--navy)}
   .action-edit:hover{background:#e0e6f5}
@@ -196,47 +204,22 @@
   .action-toggle:hover{background:#fee2e2}
   .action-on{background:#DCFCE7;color:#0F6E56}
   .action-on:hover{background:#bbf7d0}
-  .row-actions{display:flex;gap:6px;align-items:center}
   .usr-pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:600}
   .usr-pill-on{background:#DCFCE7;color:#0F6E56}
   .usr-pill-off{background:#F1F5F9;color:#64748B}
   .usr-role{display:inline-block;padding:2px 10px;border-radius:6px;font-size:11px;font-weight:600;background:#EEF2FF;color:#3730A3}
   .usr-inactive{opacity:.55}
-  .edit-overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);display:none;align-items:center;justify-content:center;z-index:1000;padding:20px}
-  .edit-overlay.show{display:flex}
-  .edit-modal{background:#fff;border-radius:16px;width:100%;max-width:640px;max-height:92vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden}
-  .edit-modal-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:20px 24px;border-bottom:1px solid var(--gray-100)}
-  .edit-modal-title{font-size:16px;font-weight:700;color:var(--navy-dark)}
-  .edit-modal-sub{font-size:12px;color:var(--gray-500);margin-top:4px}
-  .edit-close{background:var(--gray-100);border:none;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--gray-700);flex-shrink:0}
-  .edit-close:hover{background:#e5e7eb}
-  .edit-modal-body{padding:24px;overflow-y:auto}
-  .e-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-  .e-field{display:flex;flex-direction:column;gap:6px}
-  .e-field label{font-size:13px;font-weight:600;color:var(--gray-700)}
-  .e-field label span{color:#EF4444;margin-right:2px}
-  .e-field input,.e-field select{width:100%;height:44px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:10px;padding:0 14px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;color:var(--navy-dark);outline:none;appearance:none}
-  .e-field input:focus,.e-field select:focus{border-color:var(--navy);background:#fff;box-shadow:0 0 0 3px rgba(27,42,94,.08)}
-  .e-field input.error,.e-field select.error{border-color:#EF4444}
-  .e-field .field-error{font-size:11px;color:#EF4444;font-weight:500;display:none}
-  .e-field .field-error.show{display:block}
-  .edit-modal-actions{display:flex;gap:12px;justify-content:flex-end;padding:18px 24px;border-top:1px solid var(--gray-100)}
-  .edit-modal-actions .btn{padding:0 24px;height:44px;border-radius:10px;font-family:'IBM Plex Sans Arabic',sans-serif;font-weight:700;font-size:14px;cursor:pointer;border:none;display:flex;align-items:center;gap:8px}
-  .edit-modal-actions .btn.loading{opacity:.75;pointer-events:none}
-  .spinner2{width:16px;height:16px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin2 .6s linear infinite;display:none}
-  .btn.loading .spinner2{display:block}
-  .btn.loading .btn-text{display:none}
-  @@keyframes spin2{to{transform:rotate(360deg)}}
-  .toast{position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-90px);background:#0F6E56;color:#fff;padding:14px 24px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:0 8px 32px rgba(0,0,0,.2);z-index:1100;transition:transform .4s cubic-bezier(.16,1,.3,1)}
-  .toast.show{transform:translateX(-50%) translateY(0)}
-  @@media(max-width:640px){.e-grid{grid-template-columns:1fr}}
+  /* ⚠️ .edit-modal-header اتشالت من هنا — كانت مكرّرة في ثلاث شاشات.
+     مكانها الآن site.css مرة واحدة. */
 </style>
 <script src="/i18n.js"></script>
 <script>
   var PERM = { manage: @(canManage ? "true" : "false"), assign: @(canAssign ? "true" : "false"), ldap: @(canLdap ? "true" : "false") };
   var state = { users: [], roles: [] };
 
-  function authHeaders() { var tk = localStorage.getItem('staffToken'); return tk ? { 'Authorization': 'Bearer ' + tk } : {}; }
+  // الجدول وحالاته من NuhTable، والترويسات من NUH.headers في التخطيط — مفيش نسخة محلية.
+  var usrTable = NuhTable.bind('usrBody', 7);
+  var ldapTable = NuhTable.bind('ldapBody', 4);
   var esc = function (v) { return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
 
   function showToast(msg, isError) {
@@ -247,12 +230,17 @@
     setTimeout(function () { el.classList.remove('show'); }, 3500);
   }
 
-  function roleText(r) { return r ? r : '—'; }
+  function roleText(r) { return r ? r : '-'; }
 
   // التبويب الحالي: false = الموظفون، true = حسابات دخول الطلاب
   var showingStudents = false;
 
+  // ⚠️ setLang تستدعي onLanguageChange، وهي مربوطة بـ renderTable. فكانت الصفحة
+  //    ترسم «لا يوجد مستخدمون» قبل أن ينطلق أول نداء أصلًا، ثم تُستبدل بالبيانات
+  //    عند وصولها. المستخدم يرى شاشة فارغة تقول صراحة «لا يوجد» ثم تمتلئ فجأة —
+  //    فأي بطء عادي يبدو كعطل. التفرقة نفسها صارت في NuhTable لكل الشاشات.
   function renderTable() {
+    if (!usrTable.isDone()) return usrTable.loading();
     var q = (document.getElementById('usrSearch').value || '').trim().toLowerCase();
     var rows = state.users.filter(function (u) {
       if (!q) return true;
@@ -280,8 +268,12 @@
       }
 
       var middle = showingStudents
-        ? '<td dir="ltr" style="text-align:start">' + esc(u.mobile || '—') + '</td>' +
-          '<td>' + (u.created_at ? new Date(u.created_at).toLocaleDateString('ar-EG') : '—') + '</td>'
+        // ⚠️ كانت <td dir="ltr" style="text-align:start">. تعيين dir على الخانة
+        //    يقلب معنى start من «يمين» إلى «يسار»، فيهرب الرقم إلى طرف الخانة
+        //    بعيدًا عن عنوان العمود. <bdi> يعزل ترتيب الأرقام وحده وتبقى
+        //    المحاذاة تابعة لاتجاه الصفحة، فيقف الرقم تحت «الجوال» تمامًا.
+        ? '<td><bdi>' + esc(u.mobile || '-') + '</bdi></td>' +
+          '<td>' + (u.created_at ? new Date(u.created_at).toLocaleDateString('ar-EG') : '-') + '</td>'
         : '<td>' + esc(u.email) + '</td>' +
           '<td><span class="usr-role">' + esc(roleText(u.role)) + '</span></td>';
 
@@ -294,37 +286,53 @@
             ? '<span class="usr-pill usr-pill-on">' + t('usr_status_active') + '</span>'
             : '<span class="usr-pill usr-pill-off">' + t('usr_status_inactive') + '</span>') +
         '</td>' +
-        '<td><div class="row-actions">' + (actions || '—') + '</div></td></tr>';
+        '<td><div class="row-actions">' + (actions || '-') + '</div></td></tr>';
     });
 
     document.getElementById('usrBody').innerHTML = body ||
       '<tr><td colspan="' + colCount + '" style="text-align:center;color:var(--gray-500);padding:28px">' + t('usr_noItems') + '</td></tr>';
   }
 
-  function switchTab(students) {
-    if (showingStudents === students) return;
-    showingStudents = students;
-
+  // شكل التبويب المختار — مفصول عن switchTab لأن التهيئة تحتاجه كمان
+  function paintTab(students) {
     document.getElementById('tabStaff').classList.toggle('active', !students);
     document.getElementById('tabStudents').classList.toggle('active', students);
-    document.getElementById('usrStudentsNote').style.display = students ? 'block' : 'none';
+    // عنوان البطاقة يتبع التبويب — البطاقة بقى ليها رأس زي باقي الشاشات
+    document.getElementById('usrCardTitle').textContent =
+      students ? t('usr_tabStudents') : t('usr_pageTitle');
 
     document.querySelectorAll('#usrHeadRow .col-staff').forEach(function (th) { th.style.display = students ? 'none' : ''; });
     document.querySelectorAll('#usrHeadRow .col-students').forEach(function (th) { th.style.display = students ? '' : 'none'; });
+  }
 
-    document.getElementById('usrBody').innerHTML =
-      '<tr><td colspan="7" style="text-align:center;padding:40px"><div class="spinner"></div></td></tr>';
+  function switchTab(students) {
+    if (showingStudents === students) return;
+    showingStudents = students;
+    paintTab(students);
+
+    // ⚠️ التبويب كان في متغيّر في الذاكرة فقط، فأي تحديث للصفحة يرجّعك إلى
+    //    «إدارة المستخدمين» مهما كنت واقفًا في «حسابات دخول الطلاب».
+    //    نكتبه في الرابط: يبقى بعد التحديث، ويعمل مع زر الرجوع، ويمكن نسخ
+    //    الرابط وإرساله لزميل فيفتح على نفس التبويب. (أفضل من التخزين المحلي:
+    //    ذاك يجعل الرابط الواحد يفتح على شاشتين مختلفتين حسب الجهاز.)
+    var u = new URL(window.location.href);
+    if (students) u.searchParams.set('tab', 'students');
+    else u.searchParams.delete('tab');
+    history.replaceState(null, '', u);
+
+    usrTable.reset();
+    renderTable();
     loadUsers();
   }
 
   async function loadCounts() {
     try {
-      var res = await fetch('/api/Users/counts', { headers: authHeaders() });
+      var res = await fetch('/api/Users/counts', { headers: NUH.headers() });
       if (!res.ok) return;
       var c = await res.json();
       document.getElementById('cntStaff').textContent = c.staff;
       document.getElementById('cntStudents').textContent = c.students;
-    } catch (e) { /* صامت — العدّاد مش حاجة حرجة */ }
+    } catch (e) { /* صامت - العدّاد مش حاجة حرجة */ }
   }
 
   function filterUsers() { renderTable(); }
@@ -332,18 +340,19 @@
   async function loadUsers() {
     try {
       var url = '/api/Users' + (showingStudents ? '?studentsOnly=true' : '');
-      var res = await fetch(url, { headers: authHeaders() });
+      var res = await fetch(url, { headers: NUH.headers() });
       if (res.status === 401) { window.location.replace('/Account/Login'); return; }
-      if (!res.ok) { showToast(t('usr_loadError'), true); return; }
+      if (!res.ok) { usrTable.error(t('usr_loadError')); showToast(t('usr_loadError'), true); return; }
       state.users = await res.json();
+      usrTable.done();
       renderTable();
       loadCounts();
-    } catch (e) { showToast(t('usr_loadError'), true); }
+    } catch (e) { usrTable.error(t('usr_loadError')); showToast(t('usr_loadError'), true); }
   }
 
   async function loadRoles() {
     try {
-      var res = await fetch('/api/Users/roles', { headers: authHeaders() });
+      var res = await fetch('/api/Users/roles', { headers: NUH.headers() });
       if (res.ok) state.roles = await res.json();
     } catch (e) { /* صامت */ }
     fillRoleSelect('m_role');
@@ -354,7 +363,7 @@
     var sel = document.getElementById(id); if (!sel) return;
     var cur = sel.value;
     sel.innerHTML = state.roles.map(function (r) {
-      var label = r.description ? (r.name + ' — ' + r.description) : r.name;
+      var label = r.description ? (r.name + ' - ' + r.description) : r.name;
       return '<option value="' + esc(r.name) + '">' + esc(label) + '</option>';
     }).join('');
     if (cur) sel.value = cur;
@@ -398,7 +407,7 @@
     document.getElementById('m_pwd_req').style.display = 'none';
     document.getElementById('m_pwd_label').firstChild.textContent = t('usr_lbl_passwordEdit');
     // على التعديل بنحمّل التفاصيل الكاملة (mobile/department/job_title) من السيرفر
-    fetch('/api/Users/' + id, { headers: authHeaders() }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
+    fetch('/api/Users/' + id, { headers: NUH.headers() }).then(function (r) { return r.ok ? r.json() : null; }).then(function (d) {
       if (!d) return;
       mGet('full_name').value = d.full_name || '';
       mGet('email').value = d.email || '';
@@ -446,7 +455,7 @@
     try {
       var res = await fetch(isEdit ? '/api/Users/' + id : '/api/Users', {
         method: isEdit ? 'PUT' : 'POST',
-        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        headers: Object.assign({ 'Content-Type': 'application/json' }, NUH.headers()),
         body: JSON.stringify(payload)
       });
       if (res.status === 401) { window.location.replace('/Account/Login'); return; }
@@ -466,7 +475,7 @@
     try {
       var res = await fetch('/api/Users/' + id + (activate ? '/activate' : '/deactivate'), {
         method: 'POST',
-        headers: authHeaders()
+        headers: NUH.headers()
       });
       if (res.status === 401) { window.location.replace('/Account/Login'); return; }
       if (res.ok) { loadUsers(); showToast(t('usr_saved')); }
@@ -477,7 +486,7 @@
   // ---------- الإضافة من الدليل ----------
   function openLdap() {
     document.getElementById('ldapQuery').value = '';
-    document.getElementById('ldapBody').innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--gray-500);padding:24px">' + t('usr_ldapHint') + '</td></tr>';
+    ldapTable.rows('', t('usr_ldapHint'));
     document.getElementById('ldapOverlay').classList.add('show');
   }
   function closeLdap() { document.getElementById('ldapOverlay').classList.remove('show'); }
@@ -485,30 +494,30 @@
   async function ldapSearch() {
     var q = document.getElementById('ldapQuery').value.trim();
     if (q.length < 2) { showToast(t('usr_ldapMinChars'), true); return; }
-    document.getElementById('ldapBody').innerHTML = '<tr><td colspan="4" style="text-align:center;padding:24px"><div class="spinner"></div></td></tr>';
+    ldapTable.loading();
     try {
-      var res = await fetch('/api/Users/ldap-search?q=' + encodeURIComponent(q), { headers: authHeaders() });
+      var res = await fetch('/api/Users/ldap-search?q=' + encodeURIComponent(q), { headers: NUH.headers() });
       if (res.status === 401) { window.location.replace('/Account/Login'); return; }
       if (!res.ok) {
         var err = await res.json().catch(function () { return {}; });
-        document.getElementById('ldapBody').innerHTML = '<tr><td colspan="4" style="text-align:center;color:#991B1B;padding:24px">' + esc(err.message || t('usr_ldapError')) + '</td></tr>';
+        ldapTable.error(esc(err.message || t('usr_ldapError')));
         return;
       }
       var list = await res.json();
       if (!list.length) {
-        document.getElementById('ldapBody').innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--gray-500);padding:24px">' + t('usr_ldapNoResults') + '</td></tr>';
+        ldapTable.rows('', t('usr_ldapNoResults'));
         return;
       }
-      document.getElementById('ldapBody').innerHTML = list.map(function (u) {
+      ldapTable.rows(list.map(function (u) {
         return '<tr>' +
           '<td>' + esc(u.displayName) + '</td>' +
           '<td>' + esc(u.samAccountName) + '</td>' +
           '<td>' + esc(u.department) + '</td>' +
           '<td><button class="action-btn action-edit" onclick="addFromLdap(\'' + esc(u.samAccountName) + '\')">' + t('usr_ldapAdd') + '</button></td>' +
           '</tr>';
-      }).join('');
+      }).join(''), t('usr_ldapNoResults'));
     } catch (e) {
-      document.getElementById('ldapBody').innerHTML = '<tr><td colspan="4" style="text-align:center;color:#991B1B;padding:24px">' + t('usr_ldapError') + '</td></tr>';
+      ldapTable.error(t('usr_ldapError'));
     }
   }
 
@@ -517,7 +526,7 @@
     try {
       var res = await fetch('/api/Users/from-ldap', {
         method: 'POST',
-        headers: Object.assign({ 'Content-Type': 'application/json' }, authHeaders()),
+        headers: Object.assign({ 'Content-Type': 'application/json' }, NUH.headers()),
         body: JSON.stringify({ username: sam, role: role })
       });
       if (res.status === 401) { window.location.replace('/Account/Login'); return; }
@@ -536,6 +545,11 @@
 
   window.onLanguageChange = function () { renderTable(); };
   setLang(localStorage.getItem('uiLanguage') || 'ar');
+
+  // استعادة التبويب من الرابط قبل أول نداء، حتى لا يُحمَّل تبويب ثم يُستبدل
+  showingStudents = new URLSearchParams(window.location.search).get('tab') === 'students';
+  paintTab(showingStudents);
+
   loadRoles();
   loadUsers();
 </script>

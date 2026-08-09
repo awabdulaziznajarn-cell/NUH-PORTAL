@@ -6,14 +6,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>طلباتي</title>
 <script src="../i18n.js"></script>
-<style>
-@font-face { font-family:'IBM Plex Sans Arabic'; font-style:normal; font-weight:400; src:url('../fonts/IBMPlexSansArabic-Regular.woff2') format('woff2'); }
-@font-face { font-family:'IBM Plex Sans Arabic'; font-style:normal; font-weight:600; src:url('../fonts/IBMPlexSansArabic-SemiBold.woff2') format('woff2'); }
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-input,select,textarea{font-size:16px;-webkit-appearance:none;appearance:none;border-radius:0}
-button{touch-action:manipulation}
-:root{--navy:#1B2A5E;--navy-dark:#111C42;--navy-light:#2B3E7E;--gold:#C9A84C;--gold-light:#E8C96A;--white:#FFFFFF;--gray-50:#F4F6FB;--gray-100:#EEF1F8;--gray-200:#DDE3F0;--gray-300:#C8CFDF;--gray-500:#8891A8;--gray-700:#4A5270;--green:#0F6E56;--green-light:#E1F5EE;--red:#991B1B;--red-light:#FEF2F2}
-body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);color:var(--navy-dark);min-height:100vh;display:flex;flex-direction:column;align-items:center}
+<link rel="stylesheet" href="../css/portal.css">
+  <link rel="stylesheet" href="../css/portal-touch.css">
+  <style>
+
+
+
+
+
+
+
 .portal-header{text-align:center;padding:28px 16px 0;width:100%;position:relative}
 .portal-header img{width:80px;height:auto;margin-bottom:10px}
 .portal-header h1{font-size:17px;font-weight:800;color:var(--navy-dark)}
@@ -21,11 +23,11 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);col
 [dir="rtl"] .lang-btn{left:12px}
 [dir="ltr"] .lang-btn{right:12px}
 .lang-btn:hover{background:#f4f6fb}
-.content{padding:20px 16px;flex:1;width:100%;max-width:860px}
+.content{max-width:860px}
 .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
 .page-header h2{font-size:20px;font-weight:800;color:var(--navy-dark)}
 .page-header p{font-size:13px;color:var(--gray-500)}
-.card{background:var(--white);border-radius:16px;border:1px solid var(--gray-100);box-shadow:0 2px 8px rgba(27,42,94,0.05);overflow:hidden;transition:box-shadow 0.2s}
+
 .card:hover{box-shadow:0 4px 20px rgba(27,42,94,0.09)}
 table{width:100%;border-collapse:collapse;font-size:13px}
 thead th{background:var(--gray-50);padding:11px 16px;text-align:right;font-size:11px;font-weight:600;color:var(--gray-500);border-bottom:1px solid var(--gray-100);text-transform:uppercase;letter-spacing:0.5px}
@@ -45,15 +47,15 @@ tbody tr:hover{background:var(--gray-50)}
 .tl-dot.active{background:var(--navy);border-color:var(--navy);box-shadow:0 0 0 3px rgba(27,42,94,0.13)}
 .tl-bar{width:14px;height:2px;background:var(--gray-200);flex-shrink:0}
 .tl-bar.done{background:var(--green)}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:8px 16px;border-radius:8px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;border:none;text-decoration:none}
+
 .btn-sm{background:var(--gray-100);color:var(--navy)}
 .btn-sm:hover{background:var(--navy);color:var(--white)}
-.btn-primary{background:var(--navy);color:var(--white)}
-.btn-primary:hover{background:var(--navy-light);transform:translateY(-1px)}
-.btn-outline{background:transparent;border:1.5px solid var(--gray-200);color:var(--gray-700)}
-.btn-outline:hover{border-color:var(--navy);color:var(--navy)}
-.btn-gold{background:var(--gold);color:var(--navy-dark)}
-.btn-gold:hover{background:var(--gold-light)}
+
+
+
+
+
+
 .empty-state{padding:48px;text-align:center;color:var(--gray-500);font-size:14px}
 @media(max-width:768px){.portal-header{padding:20px 16px 0}.portal-header img{width:64px}.portal-header h1{font-size:16px}.content{padding:16px}.card{overflow-x:auto}.page-header h2{font-size:18px}table{min-width:500px}}
 @media(max-width:414px){.page-header h2{font-size:18px}thead th{padding:8px 10px;font-size:10px}tbody td{padding:10px;font-size:12px}.status-badge{font-size:10px;padding:2px 8px}.tl-bar{width:10px}}
@@ -74,11 +76,11 @@ tbody tr:hover{background:var(--gray-50)}
 <p>جميع طلبات التسجيل المقدمة منك</p>
 </div>
 <div style="display:flex;gap:8px">
-<a href="register-phone.html" class="btn btn-primary">تسجيل جديد</a>
-<a href="index.html" class="btn btn-outline">العودة</a>
+<a href="register-phone.html" class="btn btn-sm btn-primary">تسجيل جديد</a>
+<a href="index.html" class="btn btn-sm btn-outline">العودة</a>
 </div>
 </div>
-<div class="card">
+<div class="card card-flush">
 <table>
 <thead><tr><th>رقم الطلب</th><th>الحالة</th><th>تاريخ التقديم</th><th></th><th></th></tr></thead>
 <tbody id="requestsBody">
@@ -171,6 +173,31 @@ function showDetail(number) {
   window.location.href = 'track-request.html';
 }
 loadRequests();
+</script>
+
+<!-- ===== إنهاء الجلسة عند الخمول =====
+     نفس مهلة شاشات الموظفين (Core/SessionPolicy.cs). عند انتهائها تُمسح
+     جلسة الطالب من المتصفح ويعود لبوابة الطلاب برسالة واضحة. -->
+<script src="../js/idle-session.js"></script>
+<script>
+NuhIdle.start({
+  minutes: 10,
+  warnSeconds: 120,
+  showExpiredPanel: true,          // تبقى الرسالة على الشاشة بدل تحويل صامت
+  homeUrl: 'index.html',
+  homeLabel: 'العودة لبوابة الطلاب',
+  pingHeaders: function () {
+    var t = localStorage.getItem('studentToken');
+    return t ? { 'Authorization': 'Bearer ' + t } : {};
+  },
+  // جلسة الطالب في المتصفح — تُمسح عند الانتهاء بأي سبب
+  onSessionEnd: function () {
+    ['studentToken', 'studentUser', 'regMobile', 'lastRequestAt'].forEach(function (k) {
+      try { localStorage.removeItem(k); } catch (e) {}
+    });
+  },
+  onLogout: function () { window.location.replace('index.html'); }
+});
 </script>
 </body>
 </html>

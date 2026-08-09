@@ -8,6 +8,7 @@
 <link rel="icon" href="../favicon.ico" type="image/x-icon">
 <!-- ⚠️ التصميم كله من الملف المشترك. الصفحة دي مالهاش ستايل خاص غير الغلاف. -->
 <link rel="stylesheet" href="../css/portal.css">
+  <link rel="stylesheet" href="../css/portal-touch.css">
 <script src="../i18n.js"></script>
 <style>
   /* غلاف الصفحة الرئيسية بس — باقي المكوّنات من portal.css */
@@ -30,7 +31,7 @@
     <div class="pbar-logo"><img src="../nu-logo.png" alt="جامعة نجران"></div>
     <div class="pbar-titles">
       <b>بوابة السكن الجامعي</b>
-      <span>جامعة نجران — إدارة السكن الجامعي</span>
+      <span>جامعة نجران - إدارة السكن الجامعي</span>
     </div>
     <button class="pbar-lang" id="langBtn" onclick="toggleLang()">English</button>
   </div>
@@ -40,7 +41,7 @@
   <div class="cover-in">
     <div class="rule"></div>
     <h1>بوابة تسجيل السكن الجامعي</h1>
-    <p>قدّم طلب السكن وتابع حالته في أي وقت — من غير مراجعة الإدارة.</p>
+    <p>قدّم طلب السكن وتابع حالته في أي وقت - من غير مراجعة الإدارة.</p>
   </div>
 </section>
 
@@ -84,39 +85,39 @@
   <section class="section">
     <div class="section-head">
       <h2>خطوات التسجيل</h2>
-      <p>طلبك بيعدّي على المراحل دي بالترتيب — وتقدر تتابعه في أي مرحلة</p>
+      <p>طلبك بيعدّي على المراحل دي بالترتيب - وتقدر تتابعه في أي مرحلة</p>
     </div>
 
     <!-- ⚠️ الخطوات كانت 7 أعمدة ثابتة على الشاشة الكبيرة، فالنص بيتزنق ويبقى
          غير مقروء. بقت شبكة بتلف لسطر جديد حسب المساحة (auto-fit في portal.css). -->
-    <div class="steps">
-      <div class="step">
-        <div class="step-n">1</div>
-        <div class="step-t"><b>التحقق من رقم الجوال</b><span>إدخال رقم الجوال واستلام رمز التحقق</span></div>
+    <div class="journey">
+      <div class="journey-step">
+        <div class="journey-num">1</div>
+        <div class="journey-txt"><b>التحقق من رقم الجوال</b><span>إدخال رقم الجوال واستلام رمز التحقق</span></div>
       </div>
-      <div class="step">
-        <div class="step-n">2</div>
-        <div class="step-t"><b>الموافقة على الإقرارات</b><span>الاطلاع على التعهدات والموافقة عليها</span></div>
+      <div class="journey-step">
+        <div class="journey-num">2</div>
+        <div class="journey-txt"><b>الموافقة على الإقرارات</b><span>الاطلاع على التعهدات والموافقة عليها</span></div>
       </div>
-      <div class="step">
-        <div class="step-n">3</div>
-        <div class="step-t"><b>إدخال بيانات الطالب</b><span>تعبئة البيانات الشخصية والأكاديمية</span></div>
+      <div class="journey-step">
+        <div class="journey-num">3</div>
+        <div class="journey-txt"><b>إدخال بيانات الطالب</b><span>تعبئة البيانات الشخصية والأكاديمية</span></div>
       </div>
-      <div class="step">
-        <div class="step-n">4</div>
-        <div class="step-t"><b>مراجعة إدارة الإسكان</b><span>مراجعة الطلب من مشرف السكن الجامعي</span></div>
+      <div class="journey-step">
+        <div class="journey-num">4</div>
+        <div class="journey-txt"><b>مراجعة إدارة الإسكان</b><span>مراجعة الطلب من مشرف السكن الجامعي</span></div>
       </div>
-      <div class="step">
-        <div class="step-n">5</div>
-        <div class="step-t"><b>مراجعة الأمن السيبراني</b><span>التحقق الأمني من البيانات والمعلومات</span></div>
+      <div class="journey-step">
+        <div class="journey-num">5</div>
+        <div class="journey-txt"><b>مراجعة الأمن السيبراني</b><span>التحقق الأمني من البيانات والمعلومات</span></div>
       </div>
-      <div class="step">
-        <div class="step-n">6</div>
-        <div class="step-t"><b>اعتماد الطلب</b><span>الموافقة النهائية على طلب التسجيل</span></div>
+      <div class="journey-step">
+        <div class="journey-num">6</div>
+        <div class="journey-txt"><b>اعتماد الطلب</b><span>الموافقة النهائية على طلب التسجيل</span></div>
       </div>
-      <div class="step">
-        <div class="step-n">7</div>
-        <div class="step-t"><b>استلام الخدمة</b><span>تفعيل حساب الشبكة وتأكيد استلام السكن</span></div>
+      <div class="journey-step">
+        <div class="journey-num">7</div>
+        <div class="journey-txt"><b>استلام الخدمة</b><span>تفعيل حساب الشبكة وتأكيد استلام السكن</span></div>
       </div>
     </div>
   </section>
@@ -125,14 +126,14 @@
     <div class="card">
       <div class="card-head">
         <h3>مقر الخدمة</h3>
-        <p>إدارة السكن الجامعي — جامعة نجران</p>
+        <p>إدارة السكن الجامعي - جامعة نجران</p>
       </div>
       <div class="card-body">
         <div class="rows">
           <div class="row-i">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
             <span class="k">المقر</span>
-            <span class="v">جامعة نجران — مبنى إدارة السكن الجامعي</span>
+            <span class="v">جامعة نجران - مبنى إدارة السكن الجامعي</span>
           </div>
         </div>
         <!-- ⚠️ بيانات التواصل (البريد ورقم الدعم) اتشالت عن قصد:
@@ -156,7 +157,7 @@
   </div>
   <div class="pfoot-line"></div>
   <div class="pfoot-copy">
-    جميع الحقوق محفوظة &copy; 2026 جامعة نجران — عمادة التحول الرقمي ومصادر المعرفة — تقنية المعلومات
+    جميع الحقوق محفوظة &copy; 2026 جامعة نجران - عمادة التحول الرقمي ومصادر المعرفة - تقنية المعلومات
   </div>
 </footer>
 

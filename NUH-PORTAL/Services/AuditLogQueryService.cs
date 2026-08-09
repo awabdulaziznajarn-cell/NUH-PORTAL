@@ -1,6 +1,9 @@
 using MapsterMapper;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Caching.Memory;
 using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
+using NUH_PORTAL.Core;
 using NUH_PORTAL.Core.Exceptions;
 using NUH_PORTAL.Data.Interfaces;
 using NUH_PORTAL.DTOs.AuditLogs;
@@ -28,19 +31,151 @@ namespace NUH_PORTAL.Services
         };
         private static readonly string[] LoginActions = { "login", "login_failed", "logout", "login_admin_fallback", "login_admin_fallback_failed" };
 
+        private readonly UserManager<User> _userManager;
+        private readonly RoleManager<Role> _roleManager;
+        private readonly IMemoryCache _cache;
+        private List<int>? _hiddenActorsCache;
+
         public AuditLogQueryService(
             IRepository<AuditLog> logs,
             IRepository<User> users,
+            UserManager<User> userManager,
+            RoleManager<Role> roleManager,
+            IMemoryCache cache,
             IUnitOfWork unitOfWork,
             IMapper mapper) : base(unitOfWork, mapper)
         {
             _logs = logs;
             _users = users;
+            _userManager = userManager;
+            _roleManager = roleManager;
+            _cache = cache;
+        }
+
+        // ====================================================================
+        //  نطاق الرؤية في سجل العمليات — قاعدة واحدة يمرّ منها كل استعلام.
+        //
+        //  ⚠️ كان السجل مفتوحًا بالكامل لكل من يملك auditLogs.view: مشرف الإسكان
+        //     يرى من الأمن السيبراني اعتمد ومن رفض، والعكس. وهذه ليست تفصيلة
+        //     عرض — إجراءات كل إدارة تخصّها، ومن يراها كلها يجب أن يُمنح ذلك صراحة.
+        //
+        //  القاعدة:
+        //     • مع صلاحية auditLogs.viewAll  → السجل كامل بلا استثناء.
+        //     • بدونها → يُخفى ما نفّذه **موظفو الإدارات الأخرى** فقط.
+        //       ويبقى ظاهرًا: إجراءات إدارتك، وإجراءات الطلاب، وإجراءاتك أنت،
+        //       وإجراءات النظام التي بلا منفّذ (إرسال رمز التحقق مثلًا).
+        //
+        //  ⚠️ الإخفاء بقائمة موظفي الإدارات الأخرى لا بقائمة المسموح بهم: عدد
+        //     الموظفين محدود، أما الطلاب فبالآلاف — فقائمة «المسموح» كانت ستصير
+        //     استعلامًا ضخمًا، وأي حساب جديد يسقط منها بصمت.
+        // ====================================================================
+        // ⚠️ الحساب يمرّ على كل الأدوار ويسأل عن أعضاء كل دور — أي أربعة استعلامات
+        //    إضافية على كل فتحة للشاشة، وقد ظهر ذلك كتأخير محسوس. عضوية الأدوار
+        //    نادرة التغيّر (خمسة موظفين)، فدقيقة تخزين تُلغي التكلفة عمليًا،
+        //    وأقصى تأخير لسريان تغيير في الأدوار دقيقة واحدة — وهو نفس ما تفعله
+        //    PermissionClaimsTransformation بالضبط، فالسلوك متسق لا مفاجئ.
+        private const string ScopeCachePrefix = "auditscope::";
+        private static readonly TimeSpan ScopeCacheFor = TimeSpan.FromSeconds(60);
+
+        private async Task<List<int>> HiddenActorIdsAsync()
+        {
+            if (_hiddenActorsCache != null) return _hiddenActorsCache;
+
+            var myRole = UnitOfWork.GetCurrentUserRole() ?? "";
+            var cacheKey = ScopeCachePrefix + myRole.ToLowerInvariant();
+            if (_cache.TryGetValue(cacheKey, out List<int>? cached) && cached != null)
+            {
+                _hiddenActorsCache = cached;
+                return cached;
+            }
+
+            var hidden = new List<int>();
+
+            var allRoles = _roleManager.Roles.Select(r => r.Name).ToList();
+
+            foreach (var role in allRoles)
+            {
+                if (string.IsNullOrWhiteSpace(role)) continue;
+                if (string.Equals(role, myRole, StringComparison.OrdinalIgnoreCase)) continue;
+                if (string.Equals(role, "user", StringComparison.OrdinalIgnoreCase)) continue;   // الطلاب
+
+                var users = await _userManager.GetUsersInRoleAsync(role);
+                hidden.AddRange(users.Select(u => u.Id));
+            }
+
+            _hiddenActorsCache = hidden.Distinct().ToList();
+            _cache.Set(cacheKey, _hiddenActorsCache, ScopeCacheFor);
+            return _hiddenActorsCache;
+        }
+
+        // كل استعلام في هذا الملف يبدأ من هنا — لا من _logs.Query() مباشرة.
+        //
+        // ⚠️ لماذا شرط مبنيّ يدويًا بدل List.Contains:
+        //    كان الشرط `!hidden.Contains(a.user_id.Value)` وهو أنظف في القراءة،
+        //    لكن EF Core يترجم قائمة مُمرَّرة كوسيط إلى نص JSON في وسيط واحد
+        //    من نوع nvarchar(4000) يفكّه بـ OPENJSON. و OPENJSON بلا إحصائيات،
+        //    فيقدّر المحرّك عدد صفوفه تقديرًا ثابتًا بعيدًا عن الواقع، ويطلب
+        //    على أساسه منحة ذاكرة ضخمة لا يحتاجها.
+        //
+        //    وعلى SQL Server Express — وهو المستخدم هنا — سقف الذاكرة ١.٤ جيجا
+        //    مهما كانت ذاكرة الجهاز، وحوض منح الذاكرة جزء صغير منها. فطلب واحد
+        //    مبالغ فيه يحجز الحوض، وكل استعلام آخر في السيرفر ينتظر عليه
+        //    (RESOURCE_SEMAPHORE) — حتى استعلامات SSMS نفسها. وهذا ما ظهر فعلًا:
+        //    نداءات ترجع في ٣ مللي وأخرى في ٢٥ و٥٠ ثانية، وكلها تنتهي بنجاح،
+        //    ولا جلسة تقفل على أخرى.
+        //
+        //    العدد هنا صغير ومعروف (موظفو الإدارات الأخرى — خمسة تقريبًا)، فبناء
+        //    الشرط بقيم ثابتة يعطي خطة مستقرة بمنحة ذاكرة تافهة. ولو كبر العدد
+        //    يومًا فالمقارنة تظل رخيصة لأن user_id مفهرس.
+        private async Task<IQueryable<AuditLog>> ScopedAsync()
+        {
+            var q = _logs.Query().AsNoTracking();
+            if (UnitOfWork.HasPermission(ApplicationPermissions.ViewAllAuditLogs.Value))
+                return q;
+
+            var hidden = await HiddenActorIdsAsync();
+            if (hidden.Count == 0) return q;
+
+            var me = UnitOfWork.GetCurrentUserId();
+
+            // مرئي = بلا منفّذ (إجراء نظام) أو أنا أو ليس من المخفيين
+            var visible = PredicateOr(hidden, me);
+            return q.Where(visible);
+        }
+
+        // يبني: a => a.user_id == null || a.user_id == me
+        //            || (a.user_id != h1 && a.user_id != h2 && ...)
+        // بقيم ثابتة داخل الشجرة، فلا وسيط قائمة ولا OPENJSON.
+        private static System.Linq.Expressions.Expression<Func<AuditLog, bool>> PredicateOr(
+            List<int> hidden, int me)
+        {
+            var a = System.Linq.Expressions.Expression.Parameter(typeof(AuditLog), "a");
+            var userId = System.Linq.Expressions.Expression.Property(a, nameof(AuditLog.user_id));
+
+            var isNull = System.Linq.Expressions.Expression.Equal(
+                userId, System.Linq.Expressions.Expression.Constant(null, typeof(int?)));
+
+            var isMe = System.Linq.Expressions.Expression.Equal(
+                userId, System.Linq.Expressions.Expression.Constant(me, typeof(int?)));
+
+            System.Linq.Expressions.Expression notHidden =
+                System.Linq.Expressions.Expression.Constant(true);
+
+            foreach (var id in hidden)
+                notHidden = System.Linq.Expressions.Expression.AndAlso(
+                    notHidden,
+                    System.Linq.Expressions.Expression.NotEqual(
+                        userId, System.Linq.Expressions.Expression.Constant(id, typeof(int?))));
+
+            var body = System.Linq.Expressions.Expression.OrElse(
+                System.Linq.Expressions.Expression.OrElse(isNull, isMe), notHidden);
+
+            return System.Linq.Expressions.Expression.Lambda<Func<AuditLog, bool>>(body, a);
         }
 
         public async Task<AuditLogsPageDto> GetLogsAsync(int page, int pageSize, AuditLogFilter filter)
         {
-            var filteredQuery = ApplyFilters(_logs.Query().AsNoTracking(), filter);
+            var filteredQuery = ApplyFilters((await ScopedAsync()), filter);
 
             // استعلام واحد بيجمع العدادات بدل 3 استعلامات COUNT منفصلة
             var actionCounts = await filteredQuery
@@ -93,6 +228,11 @@ namespace NUH_PORTAL.Services
                         ? a.AuditChangeLogs.Select(c => new AuditChangeDto { FieldName = c.FieldName, OldValue = c.OldValue, NewValue = c.NewValue }).ToList()
                         : null
                 })
+                // ⚠️ تحميل مجموعة التغييرات مع كل صف في استعلام واحد ينتج ضربًا
+                //    ديكارتيًا يحذّر منه EF صراحةً في السجل. الضرب ده يكبّر حجم
+                //    النتيجة الوسيطة، ومعاه منحة الذاكرة المطلوبة — على Express
+                //    ده بالظبط اللي بيخنق حوض المنح. استعلامان صغيران أرخص.
+                .AsSplitQuery()
                 .ToListAsync();
 
             return new AuditLogsPageDto
@@ -114,7 +254,7 @@ namespace NUH_PORTAL.Services
 
         public async Task<FileResultDto> ExportLogsAsync(AuditLogFilter filter)
         {
-            var filteredQuery = ApplyFilters(_logs.Query().AsNoTracking(), filter);
+            var filteredQuery = ApplyFilters((await ScopedAsync()), filter);
 
             var logs = await filteredQuery
                 .OrderByDescending(a => a.action_at)
@@ -178,14 +318,14 @@ namespace NUH_PORTAL.Services
             var sevenDaysAgo = now.AddDays(-7).Date;
             var thirtyDaysAgo = now.AddDays(-30).Date;
 
-            var last7Days = await _logs.Query().AsNoTracking()
+            var last7Days = await (await ScopedAsync())
                 .Where(a => a.action_at >= sevenDaysAgo)
                 .GroupBy(a => a.action_at.Date)
                 .Select(g => new DateCountDto { Date = g.Key, Count = g.Count() })
                 .OrderBy(x => x.Date)
                 .ToListAsync();
 
-            var login30 = await _logs.Query().AsNoTracking()
+            var login30 = await (await ScopedAsync())
                 .Where(a => a.action_at >= thirtyDaysAgo &&
                     (a.action == "login" || a.action == "login_failed" || a.action == "logout"))
                 .GroupBy(a => a.action_at.Date)
@@ -193,14 +333,14 @@ namespace NUH_PORTAL.Services
                 .OrderBy(x => x.Date)
                 .ToListAsync();
 
-            var studentOps = await _logs.Query().AsNoTracking()
+            var studentOps = await (await ScopedAsync())
                 .Where(a => a.action_at >= sevenDaysAgo &&
                     (a.action == "create_student" || a.action == "update_student" || a.action == "delete_student"))
                 .GroupBy(a => a.action)
                 .Select(g => new ActionCountDto { Action = g.Key, Count = g.Count() })
                 .ToListAsync();
 
-            var requestOps = await _logs.Query().AsNoTracking()
+            var requestOps = await (await ScopedAsync())
                 .Where(a => a.action_at >= sevenDaysAgo && RequestActions.Contains(a.action!))
                 .GroupBy(a => a.action)
                 .Select(g => new ActionCountDto { Action = g.Key, Count = g.Count() })
@@ -223,19 +363,19 @@ namespace NUH_PORTAL.Services
             var tenMinAgo = now.AddMinutes(-10);
             var thirtyMinAgo = now.AddMinutes(-30);
 
-            var failedLogins = await _logs.Query().AsNoTracking()
+            var failedLogins = await (await ScopedAsync())
                 .Where(a => a.action == "login_failed" && a.action_at >= tenMinAgo)
                 .CountAsync();
             if (failedLogins >= 5)
                 alerts.Add(new AlertDto { Type = "failed_login_explosion", Severity = "high", Count = failedLogins, message_ar = "نشاط تسجيل دخول مشبوه", message_en = "Suspicious Login Activity" });
 
-            var deletes = await _logs.Query().AsNoTracking()
+            var deletes = await (await ScopedAsync())
                 .Where(a => a.action == "delete_student" && a.action_at >= tenMinAgo)
                 .CountAsync();
             if (deletes >= 5)
                 alerts.Add(new AlertDto { Type = "excessive_deletes", Severity = "high", Count = deletes, message_ar = "حذف متكرر للطلاب", message_en = "Excessive Student Deletions" });
 
-            var rejections = await _logs.Query().AsNoTracking()
+            var rejections = await (await ScopedAsync())
                 .Where(a => (a.action == "reject_request" || a.action == "housing_reject_request" || a.action == "cyber_reject_request") && a.action_at >= thirtyMinAgo)
                 .CountAsync();
             if (rejections >= 10)
@@ -246,7 +386,7 @@ namespace NUH_PORTAL.Services
 
         public async Task<string> GetReportHtmlAsync(string? type, int? userId, string? fromDate, string? toDate, string lang)
         {
-            var filteredQuery = ApplyFilters(_logs.Query().AsNoTracking(),
+            var filteredQuery = ApplyFilters((await ScopedAsync()),
                 new AuditLogFilter { UserId = userId, FromDate = fromDate, ToDate = toDate });
 
             if (type == "login")
@@ -310,7 +450,7 @@ tr:nth-child(even){{background:#F4F6FB}}
             }
             // الفوتر كان verbatim من غير $ في الكود القديم فكان بيطبع {DateTime.Now} حرفيًا — اتصلح
             html += $@"</tbody></table>
-<div class='footer'>NUH Housing Portal — {DateTime.Now:yyyy-MM-dd HH:mm}</div>
+<div class='footer'>NUH Housing Portal - {DateTime.Now:yyyy-MM-dd HH:mm}</div>
 </body></html>";
 
             return html;
@@ -324,7 +464,7 @@ tr:nth-child(even){{background:#F4F6FB}}
             var todayStart = ksaDate - ksaOffset;
             var todayEnd = ksaDate.AddDays(1) - ksaOffset;
 
-            var todayQuery = _logs.Query().AsNoTracking()
+            var todayQuery = (await ScopedAsync())
                 .Where(a => a.action_at >= todayStart && a.action_at < todayEnd);
 
             return new TodayStatsDto
@@ -341,7 +481,17 @@ tr:nth-child(even){{background:#F4F6FB}}
 
         public async Task<List<AuditUserOptionDto>> GetUsersAsync()
         {
-            return await _users.Query().AsNoTracking()
+            // ⚠️ قائمة الفلترة تتبع نفس النطاق: بلا viewAll لا تظهر أسماء موظفي
+            //    الإدارات الأخرى أصلًا. إخفاء صفوفهم وإبقاء أسمائهم في الفلتر
+            //    يكشف نصف المعلومة ويجعل الشاشة تبدو معطّلة عند اختيارهم.
+            var hidden = UnitOfWork.HasPermission(ApplicationPermissions.ViewAllAuditLogs.Value)
+                ? new List<int>()
+                : await HiddenActorIdsAsync();
+
+            // نفس سبب ScopedAsync: قائمة كوسيط تعني OPENJSON ومنحة ذاكرة مبالغًا
+            // فيها. العدد صغير، فالتصفية في الذاكرة بعد جلب الموظفين أرخص وأثبت.
+            var hiddenSet = hidden.ToHashSet();
+            var all = await _users.Query().AsNoTracking()
                 .Where(u => u.is_active)
                 .Select(u => new AuditUserOptionDto
                 {
@@ -350,6 +500,8 @@ tr:nth-child(even){{background:#F4F6FB}}
                 })
                 .OrderBy(u => u.Name)
                 .ToListAsync();
+
+            return all.Where(u => !hiddenSet.Contains(u.Id)).ToList();
         }
 
         // ----------------------------- Helpers -----------------------------

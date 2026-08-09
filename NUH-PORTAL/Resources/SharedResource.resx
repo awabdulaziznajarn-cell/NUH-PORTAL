@@ -126,6 +126,54 @@
   <data name="Brand_Title" xml:space="preserve">
     <value>نظام إسكان الطلاب والطالبات</value>
   </data>
+  <data name="hs_actDisableDesc" xml:space="preserve">
+    <value>يمنع الطالب من الدخول إلى شبكة السكن فورًا، مع بقاء الحساب وبياناته كما هي.</value>
+  </data>
+  <data name="hs_actEnableDesc" xml:space="preserve">
+    <value>يعيد للطالب إمكانية الدخول إلى شبكة السكن بالحساب نفسه.</value>
+  </data>
+  <data name="hs_actPwdDesc" xml:space="preserve">
+    <value>يعيّن كلمة مرور جديدة للحساب، وتُسلَّم للطالب بالطريقة المعتمدة.</value>
+  </data>
+  <data name="hs_actRealignDesc" xml:space="preserve">
+    <value>يعيد الحساب إلى موقعه ومجموعته الصحيحة في الدليل ويحدّث بياناته. يُستخدم بعد نقل الطالب بين المباني أو تغيّر كليته.</value>
+  </data>
+  <data name="hs_actSyncDesc" xml:space="preserve">
+    <value>يرسل بيانات السكن الحالية (المبنى والغرفة والمستوى) إلى الدليل دون تغيير موقع الحساب أو مجموعته.</value>
+  </data>
+  <data name="hs_dn" xml:space="preserve">
+    <value>موقع الحساب في الدليل (DN)</value>
+  </data>
+  <data name="hs_groups" xml:space="preserve">
+    <value>المجموعات في الدليل</value>
+  </data>
+  <data name="hs_secActions" xml:space="preserve">
+    <value>إجراءات الحساب</value>
+  </data>
+  <data name="hs_secDirectory" xml:space="preserve">
+    <value>بيانات الحساب في الدليل</value>
+  </data>
+  <data name="hs_techDetails" xml:space="preserve">
+    <value>تفاصيل تقنية</value>
+  </data>
+  <data name="hs_uac" xml:space="preserve">
+    <value>رمز حالة الحساب (UAC)</value>
+  </data>
+  <data name="hs_uacDisabled" xml:space="preserve">
+    <value>حساب عادي معطّل</value>
+  </data>
+  <data name="hs_uacDisabledNoExpire" xml:space="preserve">
+    <value>معطّل — كلمة المرور لا تنتهي</value>
+  </data>
+  <data name="hs_uacNoExpire" xml:space="preserve">
+    <value>مفعّل — كلمة المرور لا تنتهي</value>
+  </data>
+  <data name="hs_uacNormal" xml:space="preserve">
+    <value>حساب عادي مفعّل</value>
+  </data>
+  <data name="hs_upn" xml:space="preserve">
+    <value>اسم الدخول الكامل (UPN)</value>
+  </data>
   <data name="Lang_Switch_ToAr" xml:space="preserve">
     <value>عربي</value>
   </data>
@@ -151,10 +199,10 @@
     <value>لوحة التحكم</value>
   </data>
   <data name="Nav_Housing" xml:space="preserve">
-    <value>إدارة السكن</value>
+    <value>إدارة حسابات السكن</value>
   </data>
   <data name="Nav_RegisterSingle" xml:space="preserve">
-    <value>تسجيل فردي</value>
+    <value>تسجيل طالب فردي</value>
   </data>
   <data name="Nav_Reports" xml:space="preserve">
     <value>التقارير</value>
@@ -192,9 +240,6 @@
   <data name="Page_Bulk" xml:space="preserve">
     <value>التسجيل الجماعي</value>
   </data>
-  <data name="Page_Departure" xml:space="preserve">
-    <value>مغادرة وتحديث حالة الطالب</value>
-  </data>
   <data name="Page_Home" xml:space="preserve">
     <value>لوحة التحكم</value>
   </data>
@@ -231,14 +276,11 @@
   <data name="acceptAndContinue" xml:space="preserve">
     <value>قبول والمتابعة</value>
   </data>
-  <data name="accessDenied" xml:space="preserve">
-    <value>ليس لديك صلاحية الوصول إلى هذه الصفحة</value>
-  </data>
   <data name="accountActions" xml:space="preserve">
     <value>إجراءات الحساب</value>
   </data>
   <data name="accountLifecycle" xml:space="preserve">
-    <value>دورة حياة الحساب</value>
+    <value>سجل إجراءات الحساب</value>
   </data>
   <data name="accountManagement" xml:space="preserve">
     <value>إدارة الحساب</value>
@@ -256,7 +298,7 @@
     <value>تم التفعيل</value>
   </data>
   <data name="actionExtensionAttrsSynced" xml:space="preserve">
-    <value>مزامنة الخصائص الإضافية</value>
+    <value>تحديث بيانات السكن في الدليل</value>
   </data>
   <data name="actionLogin" xml:space="preserve">
     <value>تسجيل دخول</value>
@@ -271,22 +313,16 @@
     <value>إعادة تعيين كلمة المرور</value>
   </data>
   <data name="actionProvisioned" xml:space="preserve">
-    <value>تم التزويد</value>
+    <value>تم انشاء حساب السكن</value>
   </data>
   <data name="actionReason" xml:space="preserve">
     <value>سبب الإجراء</value>
-  </data>
-  <data name="actionReasonError" xml:space="preserve">
-    <value>الرجاء إدخال سبب الإجراء (5 أحرف على الأقل)</value>
-  </data>
-  <data name="actionReasonLabel" xml:space="preserve">
-    <value>سبب الإجراء:</value>
   </data>
   <data name="actionReasonPlaceholder" xml:space="preserve">
     <value>أدخل سبب الإجراء (إلزامي، 5 أحرف على الأقل)</value>
   </data>
   <data name="actionReprovisioned" xml:space="preserve">
-    <value>إعادة تزويد</value>
+    <value>إعادة ضبط الحساب</value>
   </data>
   <data name="actions" xml:space="preserve">
     <value>الإجراءات</value>
@@ -338,9 +374,6 @@
   </data>
   <data name="adUsername" xml:space="preserve">
     <value>اسم المستخدم في AD</value>
-  </data>
-  <data name="adUsernameLabel" xml:space="preserve">
-    <value>اسم المستخدم:</value>
   </data>
   <data name="additionalNotes" xml:space="preserve">
     <value>ملاحظات إضافية</value>
@@ -915,12 +948,6 @@
   <data name="confirmDisableIntro" xml:space="preserve">
     <value>سيتم تعطيل حساب الطالب في شبكة الإسكان.</value>
   </data>
-  <data name="confirmDisableQuestion" xml:space="preserve">
-    <value>هل تريد المتابعة؟</value>
-  </data>
-  <data name="confirmDisableTitle" xml:space="preserve">
-    <value>تحذير</value>
-  </data>
   <data name="confirmDisableYes" xml:space="preserve">
     <value>نعم، تعطيل الحساب</value>
   </data>
@@ -931,13 +958,13 @@
     <value>تأكيد إعادة تعيين كلمة المرور</value>
   </data>
   <data name="confirmReProvision" xml:space="preserve">
-    <value>هل أنت متأكد من إعادة التزويد؟</value>
+    <value>هل تريد إعادة ضبط الحساب في الدليل؟ سيُنقل إلى موقعه ومجموعته الصحيحة وتُحدَّث بياناته.</value>
   </data>
   <data name="confirmRestore" xml:space="preserve">
     <value>هل أنت متأكد من استعادة الطالب؟</value>
   </data>
   <data name="confirmSync" xml:space="preserve">
-    <value>هل أنت متأكد من مزامنة الخصائص؟</value>
+    <value>هل تريد تحديث بيانات السكن في الدليل؟</value>
   </data>
   <data name="connectionError" xml:space="preserve">
     <value>تعذر الاتصال بالخادم، يرجى المحاولة لاحقاً</value>
@@ -1516,7 +1543,7 @@
     <value>غير معروف</value>
   </data>
   <data name="hs_lifecycleLog" xml:space="preserve">
-    <value>سجل دورة الحياة</value>
+    <value>سجل إجراءات الحساب</value>
   </data>
   <data name="hs_manageAccount" xml:space="preserve">
     <value>إدارة الحساب</value>
@@ -1546,10 +1573,10 @@
     <value>تم طلب معلومات إضافية</value>
   </data>
   <data name="lifecycleHistory" xml:space="preserve">
-    <value>سجل دورة الحياة</value>
+    <value>سجل إجراءات الحساب</value>
   </data>
   <data name="lifecycleLog" xml:space="preserve">
-    <value>سجل دورة الحياة</value>
+    <value>سجل إجراءات الحساب</value>
   </data>
   <data name="loading" xml:space="preserve">
     <value>جاري التحميل...</value>
@@ -1755,14 +1782,23 @@
   <data name="rd_retry" xml:space="preserve">
     <value>إعادة المحاولة</value>
   </data>
+  <data name="rep_chartsUnavailable" xml:space="preserve">
+    <value>تعذّر تحميل مكتبة الرسوم البيانية، فلا يمكن عرض الرسم. الأرقام والجداول في الصفحة غير متأثرة.</value>
+  </data>
+  <data name="rep_expBlocked" xml:space="preserve">
+    <value>منع المتصفح فتح نافذة التقرير. اسمح بالنوافذ المنبثقة لهذا الموقع ثم أعد المحاولة.</value>
+  </data>
+  <data name="rep_expEmpty" xml:space="preserve">
+    <value>لا توجد بيانات مطابقة للفلاتر الحالية، فلم يُنشأ ملف.</value>
+  </data>
+  <data name="rep_expFailed" xml:space="preserve">
+    <value>تعذّر إنشاء الملف. تأكد من صلاحيتك لعرض سجل العمليات ثم أعد المحاولة.</value>
+  </data>
   <data name="reProvision" xml:space="preserve">
-    <value>إعادة تزويد</value>
+    <value>إعادة ضبط الحساب</value>
   </data>
   <data name="readyForProvisioning" xml:space="preserve">
     <value>جاهز لإنشاء حساب شبكة السكن</value>
-  </data>
-  <data name="recentActions" xml:space="preserve">
-    <value>آخر الإجراءات</value>
   </data>
   <data name="recentActivity" xml:space="preserve">
     <value>آخر النشاطات</value>
@@ -1936,7 +1972,7 @@
     <value>أدخل الاسم بالإنجليزية</value>
   </data>
   <data name="reg_phPhone" xml:space="preserve">
-    <value>9665</value>
+    <value>5XXXXXXXX</value>
   </data>
   <data name="reg_phRoom" xml:space="preserve">
     <value>مثال: 101</value>
@@ -1975,16 +2011,13 @@
     <value>يجب أن يتكون رقم الهوية من 10 أرقام</value>
   </data>
   <data name="reg_valPhone" xml:space="preserve">
-    <value>يجب أن يبدأ الرقم بـ 9665 ويتكون من 12 رقمًا</value>
+    <value>رقم الجوال يجب أن يبدأ بالرقم 5 ويتكوّن من ٩ أرقام</value>
   </data>
   <data name="reg_valStudentId" xml:space="preserve">
     <value>يجب أن يتكون الرقم الجامعي من 9 أرقام</value>
   </data>
   <data name="registerBulk" xml:space="preserve">
     <value>تسجيل جماعي (Excel)</value>
-  </data>
-  <data name="registerNewStatus" xml:space="preserve">
-    <value>تحديث الحالة الأكاديمية للطالب</value>
   </data>
   <data name="registerStudent" xml:space="preserve">
     <value>تسجيل طالب جديد</value>
@@ -2143,7 +2176,7 @@
     <value>تسجيل جماعي</value>
   </data>
   <data name="req_type_registration" xml:space="preserve">
-    <value>تسجيل فردي</value>
+    <value>تسجيل طالب فردي</value>
   </data>
   <data name="req_type_self_registration" xml:space="preserve">
     <value>تسجيل ذاتي</value>
@@ -2206,7 +2239,7 @@
     <value>مراجعة</value>
   </data>
   <data name="roomNumber" xml:space="preserve">
-    <value>رقم الغرفة الجديدة</value>
+    <value>رقم الغرفة</value>
   </data>
   <data name="roomNumberPlaceholder" xml:space="preserve">
     <value>مثال: 3</value>
@@ -2332,7 +2365,7 @@
     <value>التاريخ</value>
   </data>
   <data name="ss_disableIntro" xml:space="preserve">
-    <value>سيتم تعطيل حساب الطالب في Active Directory.</value>
+    <value>سيتم تعطيل حساب الطالب في شبكة السكن.</value>
   </data>
   <data name="ss_dismissedBadge" xml:space="preserve">
     <value>مفصولون</value>
@@ -2724,35 +2757,8 @@
   <data name="studentStatus" xml:space="preserve">
     <value>حالة الطالب</value>
   </data>
-  <data name="studentStatusActive" xml:space="preserve">
-    <value>نشط</value>
-  </data>
   <data name="studentStatusDesc" xml:space="preserve">
     <value>تسجيل وتحديث الحالة الأكاديمية للطلاب (تخرج، فصل، تحويل)</value>
-  </data>
-  <data name="studentStatusDismissed" xml:space="preserve">
-    <value>فصل من الكلية</value>
-  </data>
-  <data name="studentStatusDismissedDesc" xml:space="preserve">
-    <value>صدر قرار فصل أكاديمي بحق الطالب</value>
-  </data>
-  <data name="studentStatusGraduated" xml:space="preserve">
-    <value>تخرج من الكلية</value>
-  </data>
-  <data name="studentStatusGraduatedDesc" xml:space="preserve">
-    <value>الطالب أكمل متطلبات التخرج بنجاح</value>
-  </data>
-  <data name="studentStatusLeftHousing" xml:space="preserve">
-    <value>غادر الإسكان الجامعي</value>
-  </data>
-  <data name="studentStatusLeftHousingDesc" xml:space="preserve">
-    <value>الطالب غادر السكن الجامعي نهائياً</value>
-  </data>
-  <data name="studentStatusTransferred" xml:space="preserve">
-    <value>تحويل إلى جامعة أخرى</value>
-  </data>
-  <data name="studentStatusTransferredDesc" xml:space="preserve">
-    <value>تم تحويل الطالب إلى جامعة أخرى</value>
   </data>
   <data name="studentUpdated" xml:space="preserve">
     <value>تم تحديث الطالب بنجاح!</value>
@@ -2775,11 +2781,8 @@
   <data name="success" xml:space="preserve">
     <value>نجاح</value>
   </data>
-  <data name="supportingDocument" xml:space="preserve">
-    <value>إرفاق مستند داعم (اختياري)</value>
-  </data>
   <data name="syncAttributes" xml:space="preserve">
-    <value>مزامنة الخصائص</value>
+    <value>تحديث بيانات السكن</value>
   </data>
   <data name="syncedToday" xml:space="preserve">
     <value>المزامنة اليوم</value>
@@ -2850,12 +2853,6 @@
   <data name="unknown" xml:space="preserve">
     <value>غير معروف</value>
   </data>
-  <data name="updateStudentStatus" xml:space="preserve">
-    <value>تحديث حالة الطالب</value>
-  </data>
-  <data name="updateStudentStatusDesc" xml:space="preserve">
-    <value>تسجيل وتحديث الحالة الأكاديمية وبيانات السكن الجامعي للطالب</value>
-  </data>
   <data name="username" xml:space="preserve">
     <value>اسم المستخدم</value>
   </data>
@@ -2920,22 +2917,22 @@
     <value>هذه السنة</value>
   </data>
   <data name="rep_14" xml:space="preserve">
-    <value>إجمالي العمليات</value>
+    <value>إجمالي العمليات اليوم</value>
   </data>
   <data name="rep_15" xml:space="preserve">
-    <value>مستخدمون نشطون</value>
+    <value>مستخدمون نشطون اليوم</value>
   </data>
   <data name="rep_16" xml:space="preserve">
-    <value>عمليات طلاب</value>
+    <value>عمليات الطلاب اليوم</value>
   </data>
   <data name="rep_17" xml:space="preserve">
-    <value>عمليات طلبات</value>
+    <value>عمليات الطلبات اليوم</value>
   </data>
   <data name="rep_18" xml:space="preserve">
-    <value>فاشلة اليوم</value>
+    <value>محاولات دخول فاشلة اليوم</value>
   </data>
   <data name="rep_19" xml:space="preserve">
-    <value>حذف اليوم</value>
+    <value>عمليات حذف اليوم</value>
   </data>
   <data name="rep_20" xml:space="preserve">
     <value>من تاريخ</value>
@@ -3804,6 +3801,12 @@
   <data name="usr_pageTitle" xml:space="preserve">
     <value>إدارة المستخدمين</value>
   </data>
+  <data name="stu_pageSubtitle" xml:space="preserve">
+    <value>عرض وتعديل بيانات الطلاب المسجّلين في السكن</value>
+  </data>
+  <data name="hou_pageSubtitle" xml:space="preserve">
+    <value>متابعة حسابات السكن وربطها بالدليل النشط</value>
+  </data>
   <data name="usr_pageSubtitle" xml:space="preserve">
     <value>إضافة وتعديل المستخدمين وإسناد الأدوار</value>
   </data>
@@ -3814,7 +3817,7 @@
     <value>+ مستخدم جديد</value>
   </data>
   <data name="usr_addFromDir" xml:space="preserve">
-    <value>إضافة من الدليل</value>
+    <value>إضافة من Active Drectory</value>
   </data>
   <data name="usr_col_username" xml:space="preserve">
     <value>اسم المستخدم</value>
@@ -3916,7 +3919,7 @@
     <value>معطّل</value>
   </data>
   <data name="usr_ldapTitle" xml:space="preserve">
-    <value>إضافة من الدليل (Active Directory)</value>
+    <value>إضافة من (Active Directory)</value>
   </data>
   <data name="usr_ldapSub" xml:space="preserve">
     <value>ابحث عن المستخدم في الدليل ثم أضفه بالدور المناسب</value>
@@ -4269,6 +4272,9 @@
   <data name="reg_optSelectFloorFirst" xml:space="preserve">
     <value>اختر الدور أولاً</value>
   </data>
+  <data name="reg_optSelectCollegeFirst" xml:space="preserve">
+    <value>اختر الكلية أولاً</value>
+  </data>
   <data name="reg_optSelectApartment" xml:space="preserve">
     <value>اختر رقم الشقة</value>
   </data>
@@ -4295,5 +4301,194 @@
   </data>
   <data name="att_close" xml:space="preserve">
     <value>إغلاق</value>
+  </data>
+  <data name="dash_needsAction" xml:space="preserve">
+    <value>يحتاج إجراءك</value>
+  </data>
+  <data name="dash_waitHousing" xml:space="preserve">
+    <value>بانتظار مراجعة الإسكان</value>
+  </data>
+  <data name="dash_waitHousingDesc" xml:space="preserve">
+    <value>طلبات لم تُراجَع بعد من إدارة الإسكان</value>
+  </data>
+  <data name="dash_waitCyber" xml:space="preserve">
+    <value>بانتظار مراجعة الأمن السيبراني</value>
+  </data>
+  <data name="dash_waitCyberDesc" xml:space="preserve">
+    <value>طلبات اعتمدتها إدارة الإسكان وأُحيلت إليك</value>
+  </data>
+  <data name="dash_waitHandover" xml:space="preserve">
+    <value>بانتظار التحويل للمراجعة الإلكترونية</value>
+  </data>
+  <data name="dash_waitHandoverDesc" xml:space="preserve">
+    <value>معتمدة من إدارة الإسكان وبانتظار الإحالة</value>
+  </data>
+  <data name="dash_waitProvision" xml:space="preserve">
+    <value>جاهز لإنشاء حساب الشبكة</value>
+  </data>
+  <data name="dash_waitProvisionDesc" xml:space="preserve">
+    <value>الخطوة الأخيرة قبل إغلاق الطلب</value>
+  </data>
+  <data name="dash_overview" xml:space="preserve">
+    <value>نظرة عامة</value>
+  </data>
+  <data name="dash_openRequests" xml:space="preserve">
+    <value>طلبات مفتوحة</value>
+  </data>
+  <data name="dash_adEnabled" xml:space="preserve">
+    <value>حسابات شبكة مفعّلة</value>
+  </data>
+  <data name="dash_adDisabled" xml:space="preserve">
+    <value>حسابات شبكة معطّلة</value>
+  </data>
+  <data name="usr_tabStudents" xml:space="preserve">
+    <value>حسابات دخول الطلاب</value>
+  </data>
+  <data name="usr_colCreatedAt" xml:space="preserve">
+    <value>تاريخ الإنشاء</value>
+  </data>
+  <data name="hm_syncTitle" xml:space="preserve">
+    <value>المزامنة مع Active Directory</value>
+  </data>
+  <data name="hm_syncSubtitle" xml:space="preserve">
+    <value>يقرأ النظام البيانات من الدليل النشط ويحدّث سجلّاته هو فقط — دون إنشاء أو تعطيل أو تعديل أي حساب في الدليل.</value>
+  </data>
+  <data name="hm_refreshTitle" xml:space="preserve">
+    <value>تحديث الحالات من الدومين</value>
+  </data>
+  <data name="hm_refreshDesc" xml:space="preserve">
+    <value>يقرأ حالة الحسابات المرتبطة (مفعّل / معطّل) ويحدّثها في النظام. يُستخدم عند تفعيل حساب أو تعطيله من الدليل النشط مباشرة.</value>
+  </data>
+  <data name="hm_refreshSafe" xml:space="preserve">
+    <value>لا يربط أي حساب جديد</value>
+  </data>
+  <data name="hm_refreshBtn" xml:space="preserve">
+    <value>تشغيل التحديث</value>
+  </data>
+  <data name="hm_linkTitle" xml:space="preserve">
+    <value>ربط الحسابات الجديدة</value>
+  </data>
+  <data name="hm_linkDesc1" xml:space="preserve">
+    <value>يبحث عن حساب كل طالب غير مرتبط باسم</value>
+  </data>
+  <data name="hm_linkDesc2" xml:space="preserve">
+    <value>ويربطه بسجلّه في النظام، مع عرض معاينة كاملة قبل الحفظ.</value>
+  </data>
+  <data name="hm_linkCare" xml:space="preserve">
+    <value>يتطلّب مراجعتك قبل التنفيذ</value>
+  </data>
+  <data name="hm_linkBtn" xml:space="preserve">
+    <value>معاينة وربط</value>
+  </data>
+  <data name="hm_close" xml:space="preserve">
+    <value>إغلاق</value>
+  </data>
+  <data name="hm_cancel" xml:space="preserve">
+    <value>إلغاء</value>
+  </data>
+  <data name="hm_andOthers" xml:space="preserve">
+    <value>وغيرهم</value>
+  </data>
+  <data name="hm_adError" xml:space="preserve">
+    <value>خطأ في الاتصال بالدومين:</value>
+  </data>
+  <data name="hm_serverError" xml:space="preserve">
+    <value>تعذّر الاتصال بالخادم</value>
+  </data>
+  <data name="hm_actionFailed" xml:space="preserve">
+    <value>تعذّر تنفيذ العملية</value>
+  </data>
+  <data name="hm_busyRefresh" xml:space="preserve">
+    <value>جاري التحديث...</value>
+  </data>
+  <data name="hm_busyPreview" xml:space="preserve">
+    <value>جاري المعاينة...</value>
+  </data>
+  <data name="hm_busyLink" xml:space="preserve">
+    <value>جاري الربط...</value>
+  </data>
+  <data name="hm_statScanned" xml:space="preserve">
+    <value>حساب مرتبط تم فحصه</value>
+  </data>
+  <data name="hm_statChanged" xml:space="preserve">
+    <value>تغيّرت حالته</value>
+  </data>
+  <data name="hm_statNotFound" xml:space="preserve">
+    <value>غير موجود في الدليل</value>
+  </data>
+  <data name="hm_statFailed" xml:space="preserve">
+    <value>فشل الاستعلام</value>
+  </data>
+  <data name="hm_secChanged" xml:space="preserve">
+    <value>الحالات التي تم تحديثها</value>
+  </data>
+  <data name="hm_noteChanged" xml:space="preserve">
+    <value>هذه التغييرات نُفِّذت في الدليل النشط من خارج النظام. لا يتيح الاستعلام معرفة منفّذ الإجراء؛ يمكن الرجوع إلى سجل أحداث الأمان على وحدة التحكم بالنطاق.</value>
+  </data>
+  <data name="hm_secOrphan" xml:space="preserve">
+    <value>حسابات مرتبطة وغير موجودة في الدليل</value>
+  </data>
+  <data name="hm_noteOrphan" xml:space="preserve">
+    <value>هذه الحسابات مسجّلة في النظام ولم يعثر عليها الاستعلام. الاحتمال الأرجح أنها حُذفت من الدليل النشط، أو أن الاسم المسجّل غير صحيح.</value>
+  </data>
+  <data name="hm_refreshResult" xml:space="preserve">
+    <value>نتيجة تحديث الحالات من الدليل</value>
+  </data>
+  <data name="hm_refreshFailed" xml:space="preserve">
+    <value>تعذّر التحديث</value>
+  </data>
+  <data name="hm_previewOnly" xml:space="preserve">
+    <value>معاينة فقط —</value>
+  </data>
+  <data name="hm_previewNothingSaved" xml:space="preserve">
+    <value>لم يُحفظ أي تغيير حتى الآن.</value>
+  </data>
+  <data name="hm_statUnlinked" xml:space="preserve">
+    <value>طالب بلا حساب مرتبط</value>
+  </data>
+  <data name="hm_statWillLink" xml:space="preserve">
+    <value>سيتم ربطهم</value>
+  </data>
+  <data name="hm_statNoAccount" xml:space="preserve">
+    <value>بلا حساب في الدليل</value>
+  </data>
+  <data name="hm_secMismatch" xml:space="preserve">
+    <value>أسماء غير متطابقة</value>
+  </data>
+  <data name="hm_noteMismatch" xml:space="preserve">
+    <value>لا توجد أي كلمة مشتركة بين اسم الحساب في الدليل واسم الطالب في النظام، ويرجع ذلك غالبًا إلى رقم جامعي غير صحيح في الملف. أثر الربط الخاطئ لا يظهر فورًا، بل بعد أشهر عند تسجيل «تخرّج» يعطّل حساب شخص آخر. يُرجى مراجعتها قبل الاعتماد.</value>
+  </data>
+  <data name="hm_colSystem" xml:space="preserve">
+    <value>النظام:</value>
+  </data>
+  <data name="hm_colDirectory" xml:space="preserve">
+    <value>الدليل:</value>
+  </data>
+  <data name="hm_secNoAccount" xml:space="preserve">
+    <value>طلاب بلا حساب في الدليل النشط</value>
+  </data>
+  <data name="hm_previewTitle" xml:space="preserve">
+    <value>معاينة ربط الحسابات</value>
+  </data>
+  <data name="hm_previewFailed" xml:space="preserve">
+    <value>تعذّر تنفيذ المعاينة</value>
+  </data>
+  <data name="hm_runLink" xml:space="preserve">
+    <value>تنفيذ الربط</value>
+  </data>
+  <data name="hm_statLinked" xml:space="preserve">
+    <value>تم ربطه</value>
+  </data>
+  <data name="hm_statNoAcc" xml:space="preserve">
+    <value>بلا حساب</value>
+  </data>
+  <data name="hm_linkDone" xml:space="preserve">
+    <value>تم الربط</value>
+  </data>
+  <data name="hm_linkFailed" xml:space="preserve">
+    <value>فشل الربط</value>
+  </data>
+  <data name="rdp_wf_cyberApp" xml:space="preserve">
+    <value>موافقة إدارة الأمن السيبراني</value>
   </data>
 </root>
