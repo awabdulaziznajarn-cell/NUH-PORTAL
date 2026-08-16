@@ -31,16 +31,22 @@ namespace NUH_PORTAL.Core
     public class PermissionClaimsTransformation : IClaimsTransformation
     {
         private readonly RoleManager<Role> _roleManager;
+        private readonly UserManager<User> _userManager;
         private readonly IMemoryCache _cache;
         private static readonly TimeSpan CacheFor = TimeSpan.FromSeconds(60);
 
-        public PermissionClaimsTransformation(RoleManager<Role> roleManager, IMemoryCache cache)
+        public PermissionClaimsTransformation(RoleManager<Role> roleManager, UserManager<User> userManager, IMemoryCache cache)
         {
             _roleManager = roleManager;
+            _userManager = userManager;
             _cache = cache;
         }
 
         public static string CacheKey(string roleName) => $"roleperms::{roleName.ToLowerInvariant()}";
+        private static string ScopeCacheKey(int userId) => $"userscope::{userId}";
+
+        // تُستدعى بعد تعديل قسم الموظف من شاشة المستخدمين حتى يسري فورًا
+        public static void InvalidateScope(IMemoryCache cache, int userId) => cache.Remove(ScopeCacheKey(userId));
 
         // تُستدعى من شاشة الأدوار بعد الحفظ حتى يسري التعديل بلا انتظار
         public static void Invalidate(IMemoryCache cache, string roleName) => cache.Remove(CacheKey(roleName));
@@ -49,6 +55,12 @@ namespace NUH_PORTAL.Core
         {
             if (principal?.Identity is not ClaimsIdentity identity || !identity.IsAuthenticated)
                 return principal!;
+
+            // ⚠️ قسم الموظف (طلاب/طالبات) بيتحمّل هنا مش وقت الدخول — لنفس سبب
+            //    الصلاحيات بالظبط. لو اتحفظ في الكوكي وقت الدخول، المسؤول يغيّر قسم
+            //    المشرفة من الشاشة وما يحصلش حاجة، وتفضل شايفة القسم القديم لحد ما
+            //    تخرج وتدخل — وهي مش عارفة إن ده مطلوب أصلًا.
+            await ApplyGenderScopeAsync(identity, principal);
 
             var roles = principal.FindAll(ClaimTypes.Role)
                                  .Select(c => c.Value)
@@ -74,6 +86,31 @@ namespace NUH_PORTAL.Core
                 identity.AddClaim(new Claim(ClaimConstants.Permission, p));
 
             return principal;
+        }
+
+        private async Task ApplyGenderScopeAsync(ClaimsIdentity identity, ClaimsPrincipal principal)
+        {
+            // idempotent زي الصلاحيات: نمسح القديم الأول وإلا الـ claim بيتكرّر
+            foreach (var c in identity.FindAll(ClaimConstants.ScopeGender).ToList())
+                identity.RemoveClaim(c);
+
+            var idText = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(idText, out var userId) || userId <= 0) return;
+
+            if (!_cache.TryGetValue(ScopeCacheKey(userId), out string? scope))
+            {
+                var user = await _userManager.FindByIdAsync(userId.ToString());
+                scope = user?.scope_gender switch
+                {
+                    Models.Enums.Gender.Male => "male",
+                    Models.Enums.Gender.Female => "female",
+                    _ => ""
+                };
+                _cache.Set(ScopeCacheKey(userId), scope, CacheFor);
+            }
+
+            if (!string.IsNullOrEmpty(scope))
+                identity.AddClaim(new Claim(ClaimConstants.ScopeGender, scope));
         }
 
         private async Task<IReadOnlyCollection<string>> GetRolePermissionsAsync(string roleName)

@@ -35,20 +35,20 @@ input[type="checkbox"]{-webkit-appearance:checkbox;appearance:checkbox}
 
 /* ---------- التوكنز ---------- */
 :root{
-  --navy:#1B2A5E; --navy-dark:#111C42; --navy-light:#2B3E7E;
-  --gold:#C9A84C; --gold-light:#E8C96A;
+  --navy:#166a45; --navy-dark:#104631; --navy-light:#25935f;
+  --gold:#dba102; --gold-light:#f0c33c;
   --white:#fff;
-  --gray-50:#F4F6FB; --gray-100:#EEF1F8; --gray-200:#DDE3F0;
-  --gray-300:#C8CFDF; --gray-500:#8891A8; --gray-700:#4A5270;
-  --green:#0F6E56; --green-light:#E1F5EE;
-  --red:#991B1B; --red-light:#FEF2F2;
-  --amber:#8A6100; --amber-light:#FEF7E6;
-  --blue:#1E40AF; --blue-light:#EFF6FF;
+  --gray-50:#f5f5f6; --gray-100:#eceded; --gray-200:#dcdfe4;
+  --gray-300:#cecfd2; --gray-500:#85888e; --gray-700:#333741;
+  --green:#067647; --green-light:#dff6e7;
+  --red:#b42318; --red-light:#fef3f2;
+  --amber:#93370d; --amber-light:#fffaeb;
+  --blue:#175cd3; --blue-light:#eff4ff;
 
   --r-sm:8px; --r-md:12px; --r-lg:16px; --r-pill:999px;
-  --sh-1:0 1px 3px rgba(27,42,94,.06);
-  --sh-2:0 2px 10px rgba(27,42,94,.07);
-  --sh-3:0 8px 28px rgba(27,42,94,.10);
+  --sh-1:0 1px 3px rgba(16,70,49,.06);
+  --sh-2:0 2px 10px rgba(16,70,49,.07);
+  --sh-3:0 8px 28px rgba(16,70,49,.10);
   --page-max:980px;
 }
 
@@ -64,7 +64,7 @@ body{
    الشريط العلوي — بديل الـ hero الضخم. ثابت في كل صفحات البوابة عشان الطالب
    يعرف إنه لسه جوّه نفس النظام وهو بيتنقل بين الخطوات.
    ============================================================================ */
-.pbar{background:var(--navy-dark);color:#fff;position:sticky;top:0;z-index:50;box-shadow:0 2px 12px rgba(17,28,66,.25)}
+.pbar{background:var(--navy-dark);color:#fff;position:sticky;top:0;z-index:50;box-shadow:0 2px 12px rgba(16,70,49,.25)}
 .pbar-in{max-width:var(--page-max);margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px}
 .pbar-logo{background:#fff;border-radius:10px;padding:5px 9px;display:flex;flex-shrink:0}
 .pbar-logo img{width:30px;height:30px;object-fit:contain}
@@ -89,7 +89,7 @@ body{
 
 /* ---------- الكارت ---------- */
 .card{background:var(--white);border:1px solid var(--gray-100);border-radius:var(--r-lg);
-      box-shadow:0 2px 8px rgba(27,42,94,.05);transition:box-shadow .2s}
+      box-shadow:0 2px 8px rgba(16,70,49,.05);transition:box-shadow .2s}
 /* الحشو مقياس صريح لا جزء من الكارت: مقياسان فقط في البوابة كلها.
    card-flush للكارت الذي يحتضن جدولًا بحوافه. */
 .card-pad-lg{padding:28px}
@@ -129,7 +129,7 @@ body{
 .tile:hover{border-color:var(--navy);box-shadow:var(--sh-3);transform:translateY(-2px)}
 .tile-ico{width:52px;height:52px;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .tile-ico svg{width:24px;height:24px}
-.tile-ico.navy{background:#E8F0FE;color:var(--navy)}
+.tile-ico.navy{background:#d1e0ff;color:var(--navy)}
 .tile-ico.gold{background:var(--amber-light);color:var(--amber)}
 .tile-txt{flex:1;min-width:0}
 .tile-txt b{display:block;font-size:15.5px;font-weight:700;margin-bottom:3px}
@@ -164,16 +164,16 @@ body{
 .step-indicator{display:flex;gap:8px;margin-bottom:24px;justify-content:center}
 .step{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;
       font-size:13px;font-weight:700;background:var(--gray-200);color:var(--gray-500);flex-shrink:0}
-.step.active{background:var(--navy);color:var(--white);box-shadow:0 0 0 4px rgba(27,42,94,.15)}
+.step.active{background:var(--navy);color:var(--white);box-shadow:0 0 0 4px rgba(16,70,49,.15)}
 .step.done{background:var(--green);color:var(--white)}
 
 /* ---------- التنبيهات ---------- */
-/* ⚠️ .alert-info كان بلونين مختلفين: صفحة بألوان مكتوبة بالإيد (#065986) وأخرى
+/* ⚠️ .alert-info كان بلونين مختلفين: صفحة بألوان مكتوبة بالإيد (#175cd3) وأخرى
    بالتوكنز. الفائز نسخة التوكنز — اللون يتبع الهوية بدل رقم مكتوب في مكان واحد. */
 .alert{padding:12px 16px;border-radius:10px;font-size:13px;margin-bottom:16px;display:none}
 .alert-error{background:var(--red-light);color:var(--red);border:1px solid var(--red);display:block}
 .alert-success{background:var(--green-light);color:var(--green);border:1px solid var(--green);display:block}
-.alert-info{background:#EEF3FF;color:var(--navy);border:1px solid #C7D4F5;display:block}
+.alert-info{background:#eff4ff;color:var(--navy);border:1px solid #c6ecd6;display:block}
 
 /* ---------- صفوف معلومات ---------- */
 .rows{display:flex;flex-direction:column;gap:10px}
@@ -192,7 +192,7 @@ body{
   font-family:inherit;font-size:14px;color:var(--navy-dark);background:var(--white);
   transition:border-color .15s,box-shadow .15s;width:100%}
 .field input:focus,.field select:focus,.field textarea:focus{
-  outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(27,42,94,.08)}
+  outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(16,70,49,.08)}
 .field input:disabled,.field select:disabled{background:var(--gray-50);color:var(--gray-500)}
 .field .hint{font-size:11.5px;color:var(--gray-500)}
 .field .err{font-size:11.5px;color:var(--red);display:none}
@@ -230,3 +230,10 @@ body{
   .pbar-in{padding:12px 24px}
   .pbar-titles b{font-size:15px}
 }
+
+/* ---------- انتظار قاموس الترجمة ----------
+   ⚠️ نصّ صفحات البوابة العربي مكتوب في الـ HTML، والقاموس بيتجاب من
+      /api/ui/i18n. فلو الطالب مختار إنجليزي، من غير الإخفاء ده هيشوف الصفحة
+      عربي جزء من الثانية وبعدين تتبدّل قدامه. i18n.js بيشيل الكلاس بعد ما
+      يطبّق الترجمة، وبعد ثانيتين على أي حال لو الشبكة اتأخرت. */
+html.i18n-wait body{visibility:hidden}

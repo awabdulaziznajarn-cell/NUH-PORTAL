@@ -1,0 +1,229 @@
+@model int
+@using System.Text.Json
+@{
+    // ⚠️ شاشة واحدة بوضعين: «تغيير الساكن» و«تعديل البيانات». الحقول واحدة
+    //    في الحالتين، والفرق قسمان يظهران أو يختفيان ونقطة حفظ مختلفة. نسخة
+    //    ثانية من الملف كانت ستعني تنفيذ كل تعديل على الحقول مرتين.
+    var mode = (ViewData["Mode"] as string) ?? "handover";
+    var isEdit = mode == "edit";
+    ViewData["Title"] = SharedLocalizer[isEdit ? "fh_EditTitle" : "fh_HandoverTitle"].Value;
+    var canSync = User.HasClaim("permission", "facultyHousing.syncAd");
+
+    // ⚠️ النموذج مكتوب هنا لا يُبنى من JavaScript: بناؤه في السكربت كان يعني
+    //    تمرير كل تسمية عبر قاموس، وهو التفاف على SharedLocalizer بلا داعٍ.
+    //    السكربت يتولّى المتغيّر فقط: بيانات الوحدة والتحقّق ولوحة الفرق.
+    string L(string k) => SharedLocalizer[k].Value;
+    var keys = new[]
+    {
+        "fh_Loading","fh_Working","fh_Saving","fh_Save","fh_ApplyToAd","fh_SavedPending",
+        "fh_DiffAttr","fh_DiffCurrent","fh_DiffNew","fh_DiffNone","fh_DiffCount",
+        "fh_PushOk","fh_PushFail","fh_HandoverError","fh_Required","fh_SecDiff","fh_UnitsList",
+        "fh_SavedEdit","fh_NoChanges","fh_NoCurrentOccupant",
+        "fh_SelectCollege","fh_SelectCollegeFirst","fh_SelectDepartment"
+    };
+    var fhT = JsonSerializer.Serialize(keys.ToDictionary(k => k, k => L(k)));
+}
+
+@*
+    ⚠️ البطاقات والشبكة والحقول كلها من components.css المشترك
+       (.form-card و .form-grid و .field و .input-wrap) — وهي نفسها المستخدَمة
+       في شاشتَي تسجيل الطالب وتحديث الحالة. أي تنسيق خاص بالنموذج هنا كان
+       سيجعل الشاشة تنحرف عن بقية النظام مع أول تعديل على التصميم العام.
+*@
+<style>
+  /* الخاص بهذه الشاشة وحدها: بادئة رقم الجوال ولوحة الفرق */
+  .fh-phone{display:flex;direction:ltr}
+  .fh-phone .pfx{display:flex;align-items:center;height:46px;padding:0 13px;background:var(--gray-100);
+    border:1.5px solid var(--gray-200);border-inline-end:none;border-radius:10px 0 0 10px;
+    font-size:14px;font-weight:700;color:var(--gray-700);flex-shrink:0}
+  .fh-phone .input-wrap{flex:1;min-width:0}
+  .fh-phone input{border-radius:0 10px 10px 0 !important;text-align:left}
+  .fh-hint{font-size:11.5px;color:var(--gray-500);line-height:1.6}
+  .fh-diff td.attr{font-family:Consolas,monospace;direction:ltr;color:var(--gray-700)}
+  .fh-old{color:var(--red);text-decoration:line-through;opacity:.85}
+  .fh-new{color:var(--green);font-weight:700}
+  .fh-same{color:var(--gray-500)}
+  .fh-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+  @@media(max-width:768px){.form-grid,.form-grid-3{grid-template-columns:1fr}}
+</style>
+
+<div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
+  <div>
+    <h2>@SharedLocalizer[isEdit ? "fh_EditTitle" : "fh_HandoverTitle"]</h2>
+    <p id="fhUnitSub">@SharedLocalizer["fh_Loading"]</p>
+  </div>
+  <a class="btn btn-cancel" href="/FacultyHousing">← @SharedLocalizer["fh_UnitsList"]</a>
+</div>
+
+<div id="fhWrap" style="display:none">
+
+  <!-- بيانات المعاملة — لا تظهر في وضع التعديل: التصحيح ليس طلبًا في إنجاز -->
+  @if (!isEdit)
+  {
+  <div class="form-card">
+    <div class="form-card-header">
+      <div class="form-card-header-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      </div>
+      <div class="form-card-title">@SharedLocalizer["fh_SecRequest"]</div>
+    </div>
+    <div class="form-card-body">
+      <div class="form-grid-3">
+        <div class="field">
+          <label for="hoType">@SharedLocalizer["fh_RequestType"]<span class="req">*</span></label>
+          <div class="input-wrap"><select id="hoType"></select></div>
+        </div>
+        <div class="field">
+          <label for="hoTicket">@SharedLocalizer["fh_TicketNoLabel"]<span class="req">*</span></label>
+          <div class="input-wrap"><input id="hoTicket" type="text" maxlength="20" placeholder="14872" inputmode="numeric"></div>
+          <span class="fh-hint">@SharedLocalizer["fh_TicketHint"]</span>
+        </div>
+        <div class="field">
+          <label for="hoCyber">@SharedLocalizer["fh_CyberDate"]</label>
+          <div class="input-wrap"><input id="hoCyber" type="date"></div>
+          <span class="fh-hint">@SharedLocalizer["fh_CyberHint"]</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- بيانات عضو هيئة التدريس -->
+  <div class="form-card" id="hoNewCard">
+    <div class="form-card-header">
+      <div class="form-card-header-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+      </div>
+      <div class="form-card-title">@SharedLocalizer[isEdit ? "fh_SecEdit" : "fh_SecNew"]</div>
+    </div>
+    <div class="form-card-body">
+      <div class="form-grid">
+        <div class="field full">
+          <label for="hoName">@SharedLocalizer["fh_FullNameAr"]<span class="req">*</span></label>
+          <div class="input-wrap"><input id="hoName" type="text" maxlength="250"></div>
+          <span class="fh-hint">@SharedLocalizer["fh_NameHint"]</span>
+        </div>
+        <div class="field">
+          <label for="hoNid">@SharedLocalizer["fh_ColNationalId"]<span class="req">*</span></label>
+          <div class="input-wrap"><input id="hoNid" type="text" maxlength="10" placeholder="1xxxxxxxxx" inputmode="numeric"></div>
+          <span class="fh-hint">@SharedLocalizer["fh_NationalIdHint"]</span>
+        </div>
+        <div class="field">
+          <label for="hoMobile">@SharedLocalizer["fh_ColMobile"]<span class="req">*</span></label>
+          @* ⚠️ البادئة والتحقّق من مكوّن NuhPhone المشترك (js/phone-field.js)
+             لا من هذه الشاشة. الملف نفسه مكتوب فيه أن نسخ القاعدة في كل شاشة
+             هو ما جعل الصيغ تختلف بين الشاشات سابقًا. *@
+          <div class="fh-phone">
+            <span class="pfx">+966</span>
+            <div class="input-wrap"><input id="hoMobile" type="text" maxlength="9" placeholder="5xxxxxxxx" inputmode="numeric"></div>
+          </div>
+          <span class="fh-hint">@SharedLocalizer["fh_MobileHint"]</span>
+        </div>
+        @* ⚠️ اختيار من قوائم النظام لا نص حر. النص الحر كان يعني أن «كلية
+           الهندسة» و«كليه الهندسه» و«الهندسة» ثلاث قيم مختلفة في الدليل، وأي
+           تقرير عليها يخرج مجزّأً. القائمتان تُملآن من /api/lookups وهما نفس
+           مصدر شاشة تسجيل الطالب — لا نسخة ثانية منه. *@
+        <div class="field">
+          <label for="hoCollege">@SharedLocalizer["fh_College"]</label>
+          <div class="input-wrap">
+            <select id="hoCollege"><option value="">@SharedLocalizer["fh_SelectCollege"]</option></select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="hoDept">@SharedLocalizer["fh_Department"]</label>
+          <div class="input-wrap">
+            <select id="hoDept" disabled><option value="">@SharedLocalizer["fh_SelectCollegeFirst"]</option></select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="hoGender">@SharedLocalizer["fh_Gender"]</label>
+          <div class="input-wrap">
+            <select id="hoGender">
+              <option value="">-</option>
+              <option value="Male">@SharedLocalizer["fh_Male"]</option>
+              <option value="Female">@SharedLocalizer["fh_Female"]</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="hoStart">@SharedLocalizer["fh_StartDate"]<span class="req">*</span></label>
+          <div class="input-wrap"><input id="hoStart" type="date"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- إنهاء سكن العضو الحالي — لا يظهر في وضع التعديل: الساكن لم يتغيّر -->
+  @if (!isEdit)
+  {
+  <div class="form-card" id="hoCloseCard">
+    <div class="form-card-header">
+      <div class="form-card-header-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </div>
+      <div class="form-card-title">@SharedLocalizer["fh_SecClose"]</div>
+    </div>
+    <div class="form-card-body">
+      <div class="form-grid">
+        <div class="field">
+          <label for="hoCurName">@SharedLocalizer["fh_CurrentName"]</label>
+          <div class="input-wrap"><input id="hoCurName" type="text" readonly></div>
+        </div>
+        <div class="field">
+          <label for="hoEnd">@SharedLocalizer["fh_EndDate"]<span class="req">*</span></label>
+          <div class="input-wrap"><input id="hoEnd" type="date"></div>
+        </div>
+        <div class="field">
+          <label for="hoReason">@SharedLocalizer["fh_EndReason"]</label>
+          <div class="input-wrap">
+            <select id="hoReason">
+              <option value="ContractEnded">@SharedLocalizer["fh_ReasonContract"]</option>
+              <option value="Transferred">@SharedLocalizer["fh_ReasonTransfer"]</option>
+              <option value="LeftPermanently">@SharedLocalizer["fh_ReasonLeft"]</option>
+              <option value="Other">@SharedLocalizer["fh_ReasonOther"]</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="hoReasonNote">@SharedLocalizer["fh_ReasonNote"]</label>
+          <div class="input-wrap"><input id="hoReasonNote" type="text" maxlength="500"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  }
+
+  @if (isEdit)
+  {
+    <div class="fh-note">@SharedLocalizer["fh_EditNote"]</div>
+  }
+
+  <div id="hoMsg"></div>
+
+  <div class="fh-actions" id="hoActions">
+    <a class="btn btn-cancel" href="/FacultyHousing">@SharedLocalizer["fh_Cancel"]</a>
+    <button class="btn btn-primary" id="hoSave">@SharedLocalizer["fh_Save"]</button>
+  </div>
+
+  <div id="hoDiff"></div>
+</div>
+
+<div id="fhLoad" class="fh-empty">@SharedLocalizer["fh_Loading"]</div>
+
+@section Scripts {
+  <script>
+    window.FH_T = @Html.Raw(fhT);
+    window.FH_UNIT_ID = @Model;
+    window.FH_MODE = "@mode";
+    window.FH_CAN_SYNC = @canSync.ToString().ToLowerInvariant();
+    window.FH_TYPES = {
+        change: @Html.Raw(JsonSerializer.Serialize(L("fh_TypeChange"))),
+        newSvc: @Html.Raw(JsonSerializer.Serialize(L("fh_TypeNew"))),
+        stop:   @Html.Raw(JsonSerializer.Serialize(L("fh_TypeStop")))
+    };
+  </script>
+  @* محرّك القوائم المشترك — نفس الملف الذي تستخدمه شاشة تسجيل الطالب *@
+  <script src="~/lookups.js" asp-append-version="true"></script>
+  <script src="~/js/phone-field.js" asp-append-version="true"></script>
+  <script src="~/js/faculty-housing-handover.js" asp-append-version="true"></script>
+}

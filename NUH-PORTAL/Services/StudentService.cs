@@ -1,6 +1,7 @@
 using MapsterMapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using NUH_PORTAL.Core;
 using NUH_PORTAL.Common.Pagination;
 using NUH_PORTAL.Core.Exceptions;
 using NUH_PORTAL.Data.Interfaces;
@@ -39,6 +40,16 @@ namespace NUH_PORTAL.Services
             _lifecycle = lifecycle;
             _audit = audit;
             _lookups = lookups;
+        }
+
+        // ⚠️ تقسيم الطلاب/الطالبات بيتطبّق هنا وبس. القاعدة نفسها في UnitOfWork،
+        //    والدالة دي هي البوابة الوحيدة لكل استعلام على الطلاب في الخدمة دي.
+        //    أي استعلام جديد يعدّي من هنا، وإلا بيبقى ثغرة صامتة: مشرفة قسم
+        //    الطالبات تشوف بيانات طلاب ومحدش ياخد باله.
+        private IQueryable<Student> ScopeToGender(IQueryable<Student> query)
+        {
+            var scope = UnitOfWork.GetGenderScope();
+            return scope == null ? query : query.Where(s => s.gender == scope);
         }
 
         public async Task<List<StudentDto>> GetStudentsAsync(bool showDeleted, string? adStatus)
@@ -87,7 +98,7 @@ namespace NUH_PORTAL.Services
 
         private IQueryable<Student> BuildStudentsQuery(bool showDeleted, string? adStatus)
         {
-            var query = _students.Query().AsNoTracking();
+            var query = ScopeToGender(_students.Query().AsNoTracking());
             if (!showDeleted)
                 query = query.Where(s => !s.IsDeleted);
 
@@ -109,12 +120,18 @@ namespace NUH_PORTAL.Services
         public async Task<StudentStatsDto> GetStatsAsync()
         {
             // عدّادات الطلاب (شروط مركّبة) — استعلامات منفصلة
-            var total = await _students.Query().AsNoTracking().CountAsync(s => !s.IsDeleted);
-            var active = await _students.Query().AsNoTracking().CountAsync(s => s.status == StudentState.active && !s.IsDeleted);
-            var left = await _students.Query().AsNoTracking().CountAsync(s => s.status == StudentState.left && !s.IsDeleted);
+            // ⚠️ العدّادات لازم تتفلتر زي الجدول بالظبط. لو الجدول اتقسّم والعدّاد
+            //    لأ، المشرفة تشوف ٤ صفوف فوقهم رقم ١٣ — بيبان كأن الشاشة بتخفي
+            //    بيانات، وده أسوأ من إننا ما نقسّمش أصلًا.
+            var total = await ScopeToGender(_students.Query().AsNoTracking()).CountAsync(s => !s.IsDeleted);
+            var active = await ScopeToGender(_students.Query().AsNoTracking()).CountAsync(s => s.status == StudentState.active && !s.IsDeleted);
+            var left = await ScopeToGender(_students.Query().AsNoTracking()).CountAsync(s => s.status == StudentState.left && !s.IsDeleted);
 
             // كل حالات الطلبات في استعلام GroupBy واحد بدل 8 استعلامات منفصلة
-            var reqCounts = (await _requests.Query().AsNoTracking()
+            var reqScope = UnitOfWork.GetGenderScope();
+            var reqQuery = _requests.Query().AsNoTracking();
+            if (reqScope != null) reqQuery = reqQuery.Where(r => r.StudentGender == reqScope);
+            var reqCounts = (await reqQuery
                     .GroupBy(r => r.Status)
                     .Select(g => new { Status = g.Key, Count = g.Count() })
                     .ToListAsync())
@@ -149,9 +166,13 @@ namespace NUH_PORTAL.Services
             };
         }
 
+        // ⚠️ القراءة المباشرة بالمعرّف لازم تتقيّد بالقسم كمان — وإلا الفلترة في
+        //    القائمة بتبقى إخفاء بصري بس: تغيّر الرقم في الرابط وتوصل لأي طالب.
+        //    و«غير موجود» مقصودة بدل «ممنوع»: مانقولش لحد إن الصف موجود أصلًا.
         public async Task<StudentDto> GetByIdAsync(int id)
         {
-            var student = await _students.GetByIdAsync(id)
+            var student = await ScopeToGender(_students.Query().AsNoTracking())
+                .FirstOrDefaultAsync(s => s.Id == id)
                 ?? throw UserFriendlyException.NotFound("الطالب غير موجود");
             return Mapper.Map<StudentDto>(student);
         }
@@ -165,7 +186,9 @@ namespace NUH_PORTAL.Services
                 return null;
 
             var trimmed = studentNumber.Trim();
-            var student = await _students.Query().AsNoTracking()
+            // شاشتَي «تحديث حالة الطالب» و«نقل السكن» بتناديا هنا بالرقم الجامعي —
+            // فالتقييد لازم يكون هنا كمان، مش في القائمة بس.
+            var student = await ScopeToGender(_students.Query().AsNoTracking())
                 .FirstOrDefaultAsync(s => s.student_id == trimmed && !s.IsDeleted);
 
             return student == null ? null : Mapper.Map<StudentDto>(student);
@@ -176,6 +199,12 @@ namespace NUH_PORTAL.Services
             EnsureNotReadonlyUser();
 
             var errors = Validate(dto.full_name, dto.full_name_english, dto.student_id, dto.national_id, dto.phone, dto.housing_building);
+            // ⚠️ التحقق من الجنس كان في الجافاسكريبت بس (شاشة «تسجيل طالب فردي»).
+            //    يعني أي نداء على الـ API مباشرةً كان بيعدّي بطالب بلا جنس، والطالب
+            //    ده طلبه مايوصلش لا لمشرف ولا لمشرفة. الفحص في المتصفح راحة للمستخدم،
+            //    والفحص هنا هو اللي بيضمن القاعدة فعلًا.
+            if (dto.gender == null)
+                errors.Add("الجنس مطلوب: يحدَّد على أساسه المشرف المسؤول عن الطالب");
             if (await _students.ExistsAsync(s => s.student_id == dto.student_id && !s.IsDeleted))
                 errors.Add("الرقم الجامعي موجود بالفعل");
             if (await _students.ExistsAsync(s => s.national_id == dto.national_id && !s.IsDeleted))
@@ -250,7 +279,7 @@ namespace NUH_PORTAL.Services
                     else if (field == "full_name_english") student.full_name_english = dto.full_name_english;
                     else if (field == "national_id" && !string.IsNullOrEmpty(dto.national_id)) student.national_id = dto.national_id;
                     else if (field == "phone" && !string.IsNullOrEmpty(dto.phone)) student.phone = dto.phone;
-                    else if (field == "gender" && dto.gender != null) student.gender = dto.gender;
+                    else if (field == "gender" && dto.gender != null) student.gender = dto.gender;   // مزامنة الطلبات تحت
                     else if (field == "college" && !string.IsNullOrEmpty(dto.college)) student.college = dto.college;
                     else if (field == "department") student.department = dto.department;
                     else if (field == "academic_level") student.academic_level = dto.academic_level;
@@ -269,6 +298,16 @@ namespace NUH_PORTAL.Services
                 return Mapper.Map<StudentDto>(student);
 
             await _lookups.ApplyAsync(student); // إعادة حساب الـ FK ids بعد تغيّر الأكواد
+
+            // ⚠️ جنس الطالب متكرّر على صفوف طلباته (student_gender) عشان الفلترة
+            //    تشتغل في SQL. فلو اتصلّح هنا لازم يتزامن هناك، وإلا الطالب يظهر
+            //    في قائمة مشرف والطلب بتاعه يفضل في قائمة المشرف التاني للأبد.
+            if (changes.Any(c => c.FieldName == "gender"))
+            {
+                var affected = await _requests.Query().Where(r => r.StudentId == student.Id).ToListAsync();
+                foreach (var r in affected)
+                    r.StudentGender = student.gender;
+            }
 
             try
             {
@@ -366,10 +405,11 @@ namespace NUH_PORTAL.Services
                 errors.Add("الاسم بالعربية: يرجى إدخال الاسم باللغة العربية فقط");
             if (string.IsNullOrEmpty(fullNameEn) || !Regex.IsMatch(fullNameEn, @"^[a-zA-Z\s]+$"))
                 errors.Add("الاسم بالإنجليزية: يرجى إدخال الاسم باللغة الإنجليزية فقط");
-            // الرقم الجامعي في جامعة نجران: ٩ أرقام بالظبط وبيبدأ بـ 4.
-            // كان ^\d{9,10}$ — بيقبل ١٠ أرقام وبيقبل أي بداية.
-            if (string.IsNullOrEmpty(studentId) || !Regex.IsMatch(studentId, @"^4\d{8}$"))
-                errors.Add("الرقم الجامعي: يجب أن يبدأ بالرقم 4 ويتكون من 9 أرقام");
+            // ⚠️ القاعدة في Core/IdentityRules.cs — كانت مكتوبة هنا وفي
+            //    BulkRegistrationService وتفارقتا، فرقم يمرّ من الإكسل ثم
+            //    يرفضه هذا النموذج فلا يمكن تعديل السجل أبدًا.
+            if (!IdentityRules.IsValidStudentId(studentId))
+                errors.Add(IdentityRules.StudentIdError);
             if (string.IsNullOrEmpty(nationalId) || !Regex.IsMatch(nationalId, @"^\d{10}$"))
                 errors.Add("رقم الهوية: يجب أن يتكون رقم الهوية من 10 أرقام");
             if (!string.IsNullOrEmpty(phone) && !Regex.IsMatch(phone, @"^9665\d{8}$"))

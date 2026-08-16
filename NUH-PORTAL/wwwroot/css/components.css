@@ -1,0 +1,228 @@
+/* ============================================================================
+   مكوّنات مشتركة بين واجهة الموظفين (site.css) وبوابة الطالب (portal.css).
+   ⚠️ الكتلتين دول كانوا في site.css بس — فبوابة الطالب ما كانتش شايفاهم:
+      قوائم الاختيار عندها كانت لسه بشكل ويندوز، وعناوين أقسام نموذج التسجيل
+      كانت سطر أبيض بخط تحته بدل الترويسة الزرقاء.
+      المكان ده بيتحمّل في الاتنين، فأي تعديل بيوصل للطرفين مرة واحدة.
+   ============================================================================ */
+
+/* ---------- بطاقة النموذج (form-card) ----------
+   ⚠️ الكتلة دي كانت **مكرّرة حرفًا بحرف في أربع صفحات**: تسجيل طالب جديد،
+      والتسجيل الجماعي، وتحديث حالة الطالب، والمغادرة. فأي تعديل في الشكل كان
+      لازم يتكرر أربع مرات — ولما اتغيّر لون ترويسة .card ما وصلش لها، فبانت
+      شاشة «تسجيل طالب جديد» بيضاء وباقي الشاشات زرقاء.
+      التعريف هنا مرة واحدة، واتشال من الصفحات الأربع. */
+.form-card{background:var(--white);border-radius:16px;border:1px solid var(--gray-100);box-shadow:0 2px 8px rgba(16,70,49,.05);overflow:hidden;margin-bottom:20px}
+.form-card-header{padding:16px 24px;background:#f3fcf6;border-bottom:1px solid #c6ecd6;display:flex;align-items:center;gap:10px}
+/* ⚠️ أيقونة القسم كانت على خلفية gray-100 — تختفي فوق الترويسة الملوّنة. بيضاء بحدّ. */
+.form-card-header-icon{width:36px;height:36px;border-radius:10px;background:var(--white);border:1px solid #c6ecd6;color:var(--navy);display:flex;align-items:center;justify-content:center}
+.form-card-title{font-size:15px;font-weight:700;color:var(--navy)}
+.form-card-body{padding:24px}
+
+/* ---------- قائمة الاختيار (select) ----------
+   ⚠️ عنصر <select> بترسم قائمته المنسدلة **نظام التشغيل** لا الصفحة: خط ويندوز،
+      وحواف حادّة، وسطر مختار بأزرق ويندوز. فشاشة فيها ست قوائم بتبان نصّها من
+      تصميم النظام ونصّها من تصميم ويندوز.
+      الحل في js/select-field.js: العنصر الأصلي بيفضل في الصفحة (فكل الكود
+      القديم وإرسال النموذج شغّالين زي ما هم) لكنه بيتخفي بصريًا، وبنرسم فوقه
+      الواجهة دي. ⚠️ ما نستخدمش display:none — عشان required والتركيز
+      والوصولية يفضلوا شغّالين. */
+.nsel{position:relative;width:100%}
+.nsel-native{position:absolute;inset:0;width:100%;height:100%;opacity:0;pointer-events:none;z-index:-1}
+.nsel-btn{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:10px 14px;min-height:44px;background:var(--gray-50);border:1px solid var(--gray-200);
+  border-radius:10px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;font-weight:600;
+  color:var(--navy-dark);cursor:pointer;text-align:start;transition:border-color .15s,background .15s}
+.nsel-btn:hover{border-color:var(--gray-300);background:var(--white)}
+.nsel-btn:focus-visible{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(16,70,49,.12)}
+.nsel.is-open .nsel-btn{background:var(--white);border-color:var(--navy);box-shadow:0 0 0 3px rgba(16,70,49,.12)}
+.nsel-txt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nsel-txt.is-ph{color:var(--gray-500);font-weight:500}
+.nsel-chev{width:16px;height:16px;flex-shrink:0;color:var(--gray-500);transition:transform .2s}
+.nsel.is-open .nsel-chev{transform:rotate(180deg);color:var(--navy)}
+.nsel-btn:disabled,.nsel-native:disabled+.nsel-btn{opacity:.55;cursor:not-allowed}
+
+/* اللوحة fixed عشان ما تتقصّش جوّه نافذة منبثقة أو حاوية عندها overflow */
+.nsel-panel{position:fixed;z-index:3000;background:var(--white);border:1px solid var(--gray-200);
+  border-radius:12px;box-shadow:0 16px 40px rgba(16,70,49,.18);overflow:hidden;display:flex;flex-direction:column}
+.nsel-search{padding:8px;border-bottom:1px solid var(--gray-100);background:#f3fcf6}
+.nsel-search input{width:100%;padding:8px 12px;border:1px solid var(--gray-200);border-radius:8px;
+  font-family:'IBM Plex Sans Arabic',sans-serif;font-size:13px;color:var(--navy-dark);background:var(--white)}
+.nsel-search input:focus{outline:none;border-color:var(--navy)}
+.nsel-list{overflow-y:auto;padding:6px}
+.nsel-opt{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;
+  border-radius:8px;font-size:13.5px;font-weight:500;color:var(--navy-dark);cursor:pointer}
+.nsel-opt:hover,.nsel-opt.is-active{background:#f3fcf6}
+.nsel-opt.is-sel{background:#dff6e7;color:var(--navy);font-weight:700}
+.nsel-tick{width:15px;height:15px;flex-shrink:0;color:var(--navy);opacity:0}
+.nsel-opt.is-sel .nsel-tick{opacity:1}
+.nsel-empty{padding:18px;text-align:center;font-size:13px;color:var(--gray-500)}
+.nsel-list::-webkit-scrollbar{width:8px}
+.nsel-list::-webkit-scrollbar-thumb{background:var(--gray-200);border-radius:4px}
+.nsel-list::-webkit-scrollbar-thumb:hover{background:var(--gray-300)}
+
+/* ============================================================================
+   حقول النماذج — تعريف واحد لواجهة الموظفين وبوابة الطالب.
+   ⚠️ الكتلة دي كانت مكرّرة: نسخة في «تسجيل طالب فردي»، ونسخة في «تحديث حالة
+      الطالب»، ونسخة (خانة الجوال والاسم) في «قائمة الطلاب»، ونسخة رابعة
+      مختلفة تمامًا في نموذج الطالب بالبوابة (.form-control بدل .input-wrap).
+      النتيجة اللي كانت باينة: نفس النموذج بالظبط شكله مختلف عند الطالب عن
+      عند المشرف — خانات بيضا ضيّقة بدل الرمادية العريضة، وخانة جوال بلا
+      مفتاح +966.
+   ============================================================================ */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.form-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px}
+
+.field{display:flex;flex-direction:column;gap:7px}
+.field label{font-size:13px;font-weight:600;color:var(--gray-700)}
+/* ⚠️ علامة الحقل المطلوب لازم يكون ليها كلاس صريح.
+   القاعدة كانت `.field label span` — أي span جوّه التسمية بياخد الأحمر.
+   أول ما لفّينا نصّ التسمية في span عشان الترجمة (data-i18n)، التسمية
+   كلها بقت حمرا في نموذج الطالب. `.req` بتقول اللي المقصود بالظبط. */
+.field label .req{color:#d92d20;margin-inline-start:2px}
+.field.full{grid-column:1/-1}
+/* الحشو من فراغ الشبكة — أي هامش سفلي موروث بيبوّظ المحاذاة بين العمودين */
+.form-grid .field,.form-grid-3 .field{margin-bottom:0}
+
+.input-wrap{position:relative}
+.input-wrap input,.input-wrap select{width:100%;height:46px;background:var(--gray-50);
+  border:1.5px solid var(--gray-200);border-radius:10px;padding:0 14px;
+  font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;color:var(--navy-dark);
+  transition:all .2s;appearance:none;outline:none}
+.input-wrap input:focus,.input-wrap select:focus{border-color:var(--navy);background:var(--white);
+  box-shadow:0 0 0 3px rgba(16,70,49,.08)}
+.input-wrap input.error,.input-wrap select.error{border-color:#d92d20}
+.input-wrap input[readonly]{background:#eceded;color:var(--gray-500);cursor:not-allowed}
+/* ⚠️ الأيقونة اختيارية. الحشو الافتراضي من غير مساحة محجوزة — أغلب الشاشات
+   مالهاش أيقونات، ولو حجزنا 40px فيها بيبان فراغ كبير جوّه كل خانة.
+   الشاشة اللي فيها أيقونة بتحط with-icon على الغلاف. */
+.input-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--gray-300);pointer-events:none}
+.input-wrap.with-icon input,.input-wrap.with-icon select{padding-left:40px}
+/* ⚠️ القائمة المنسدلة المخصّصة جوّه حقل نموذج: زرارها لازم يبقى بنفس مقاس
+   ولون الخانة النصية اللي جنبه (46 بكسل وخلفية gray-50). من غير القاعدة دي
+   كان الزرار 44 والخانة 46، فالصف يبان مش مستوي. */
+.input-wrap .nsel-btn{height:46px;min-height:46px;background:var(--gray-50);
+  border:1.5px solid var(--gray-200);border-radius:10px;font-weight:500;padding:0 14px}
+.input-wrap .nsel-btn:hover{background:var(--white);border-color:var(--gray-300)}
+.input-wrap .nsel.is-open .nsel-btn,.input-wrap .nsel-btn:focus-visible{background:var(--white);
+  border-color:var(--navy);box-shadow:0 0 0 3px rgba(16,70,49,.08)}
+
+/* الاسم الثلاثي: الأب والجد أعرض لأنه بيشيل كلمتين */
+.name-group{grid-column:1/-1}
+.name-row{display:grid;grid-template-columns:1fr 1.6fr 1fr;gap:12px}
+.name-row>div{display:flex;flex-direction:column;gap:4px}
+.name-row label{font-size:11px;font-weight:500;color:var(--gray-500)}
+.name-row .input-wrap input{padding:0 14px;height:44px}
+
+/* خانة الجوال: مفتاح +966 ثابت والمستخدم يكتب ٩ أرقام تبدأ بـ 5 */
+.phone-wrap{display:flex;align-items:stretch;direction:ltr;background:var(--gray-50);
+  border:1.5px solid var(--gray-200);border-radius:10px;overflow:hidden;transition:all .2s}
+.phone-wrap:focus-within{border-color:var(--navy);background:var(--white);box-shadow:0 0 0 3px rgba(16,70,49,.08)}
+.phone-wrap.ok{border-color:var(--green)}
+.phone-wrap .cc{display:flex;align-items:center;flex-shrink:0;padding:0 13px;background:var(--gray-100);
+  border-right:1.5px solid var(--gray-200);font-size:13.5px;font-weight:700;color:var(--gray-700);
+  letter-spacing:.5px;user-select:none}
+.phone-wrap input{flex:1;min-width:0;height:46px;padding:0 14px;border:none;outline:none;background:transparent;
+  font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;font-weight:600;letter-spacing:1.2px;color:var(--navy-dark)}
+.phone-wrap input::placeholder{font-weight:400;letter-spacing:1px;color:var(--gray-300)}
+
+.field-error{font-size:11px;color:#d92d20;font-weight:500;display:none}
+.field-error.show{display:block}
+
+.form-actions{display:flex;gap:12px;justify-content:flex-end;padding:20px 24px;border-top:1px solid var(--gray-100)}
+.form-actions .btn{padding:0 28px;height:46px;border-radius:10px;font-family:'IBM Plex Sans Arabic',sans-serif;
+  font-size:14px;font-weight:700;cursor:pointer;border:none;transition:all .2s;display:flex;align-items:center;gap:8px}
+.btn-secondary{background:var(--gray-100);color:var(--gray-700)}
+.form-actions .btn.loading{pointer-events:none;opacity:.75}
+.form-actions .btn .spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;
+  border-radius:50%;animation:spin .6s linear infinite;display:none}
+.form-actions .btn.loading .spinner{display:block}
+.form-actions .btn.loading .btn-text{display:none}
+
+@media(max-width:768px){.form-grid,.form-grid-3{grid-template-columns:1fr}}
+@media(max-width:700px){.name-row{grid-template-columns:1fr}}
+
+/* ⚠️ الحركتين دول كانوا في site.css، وبوابة الطالب مبتحمّلوش — فمؤشر الحفظ
+   جوّه الزرار كان بيقف ساكن عندها. مكانهم هنا عشان الطرفين ياخدوا منهم. */
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes spin2{to{transform:rotate(360deg)}}
+
+/* ==========================================================================
+   أزرار إجراءات الصف في الجداول (.row-actions)
+
+   ⚠️ .action-btn كان مكتوبًا بالحرف في أربع شاشات: المستخدمون، الطلاب،
+      الأدوار، والقوائم المرجعية. أما .row-actions — الحاوية اللي بتصفّهم —
+      فكانت متعرّفة في شاشة القوائم المرجعية وحدها، ودي اتمسحت. فباقي
+      الشاشات الـ div بتاعها فضل بلا تخطيط (display:block الافتراضي)،
+      والأزرار بتسيل برّه عرض العمود بدل ما تتصفّ جنب بعض. ده كان سبب إن
+      زرار «حذف» يبان مقصوص في شاشة المستخدمين أول ما بقى تالت زرار.
+
+   ⚠️ القواعد متخصّصة جوّه .row-actions عن قصد: اسم .action-btn مستخدم كمان
+      في لوحة التحكم (مربّعات كبيرة) وشاشة الطلبات (أزرار بمقاسات تانية).
+      من غير التخصيص كنا هنغيّر شكل الشاشتين دول من غير ما ناخد بالنا.
+   ========================================================================== */
+/* في نص العمود عشان ترويسة «إجراءات» تقف فوق الزرار الأوسط بالظبط */
+.row-actions{display:flex;flex-wrap:nowrap;gap:6px;align-items:center;justify-content:center}
+.row-actions .action-btn{display:inline-flex;align-items:center;justify-content:center;gap:4px;
+  padding:6px 12px;border-radius:8px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;
+  font-weight:600;line-height:1;white-space:nowrap;cursor:pointer;border:none;transition:all .2s}
+
+/* سلّم الخطورة: محايد ← تحذير ← خطر.
+   ⚠️ «تعطيل» و«حذف» كانوا الاتنين أحمر بنفس الدرجة وجنب بعض، رغم إن الأول
+      بيترجّع بضغطة والتاني إجراء نادر. اللون هو أول حاجة العين بتقراها في
+      صف الجدول، فلازم يفرّق بينهم قبل ما المستخدم يقرا الكلمة نفسها. */
+.row-actions .action-edit{background:#eceded;color:var(--navy)}
+.row-actions .action-edit:hover{background:#c6ecd6}
+.row-actions .action-restore{background:#eceded;color:var(--navy)}
+.row-actions .action-restore:hover{background:#c6ecd6}
+.row-actions .action-on{background:#dff6e7;color:#067647}
+.row-actions .action-on:hover{background:#a9efc5}
+.row-actions .action-toggle{background:#fef0c7;color:#93370d}
+.row-actions .action-toggle:hover{background:#fedf89}
+.row-actions .action-delete{background:var(--red-light);color:var(--red)}
+.row-actions .action-delete:hover{background:#fee4e2}
+
+/* بادنغ أقل لخانة الإجراءات وحدها — بيدّي الأزرار ١٢ بكسل زيادة من غير ما
+   العمود يتوسّع. قاعدة تحسينية: المتصفح اللي مايعرفش :has() بيتجاهلها
+   والعرض لسه كافي، فمفيش كسر. */
+tbody td:has(> .row-actions){padding-inline:10px}
+
+/* على الشاشات الضيقة الأزرار بتنزل سطرين بدل ما تتقصّ */
+@media(max-width:900px){.row-actions{flex-wrap:wrap}}
+
+/* ============================================================================
+   سكن أعضاء هيئة التدريس - عناصر مشتركة بين شاشاته الثلاث
+   ⚠️ كانت هذه القواعد مكتوبة داخل <style> في كل شاشة على حدة، وبدأت تنحرف
+      فعلًا: .fh-acct كان ١٢٫٥ بكسل في شاشتين و١٣ في الثالثة، و.fh-empty
+      حشوته ٤٤ في واحدة و٤٠ في اثنتين. مكانها هنا فتقرأها الشاشات الثلاث من
+      موضع واحد، وأي شاشة تُضاف لاحقًا تأخذها بلا نسخ.
+   ============================================================================ */
+.fh-seg{display:flex;background:var(--gray-100);border-radius:10px;padding:3px;gap:2px}
+.fh-seg button{font-family:inherit;font-size:12.5px;font-weight:600;padding:6px 14px;border:none;
+               border-radius:8px;background:transparent;color:var(--gray-700);cursor:pointer}
+.fh-seg button.is-on{background:var(--white);color:var(--navy);box-shadow:0 1px 3px rgba(16,70,49,.12)}
+
+.fh-acct{font-family:Consolas,'Courier New',monospace;font-size:12.5px;color:var(--navy);
+         background:var(--gray-50);padding:2px 8px;border-radius:6px;display:inline-block;direction:ltr}
+/* ⚠️ اسم الوحدة في سطر واحد: «برج 1 - شقة 1» كان ينكسر على ثلاثة أسطر
+   فيرتفع الصف ويصعب مسح الجدول بالعين. والعمود يأخذ عرضه من المحتوى. */
+td.fh-unit{white-space:nowrap;font-weight:700;color:var(--navy);width:1%}
+/* ⚠️ من غير text-align: القاعدة العامة في site.css تُوسّط كل خلايا الجدول،
+   وأي override هنا يجعل عمود الأسماء وحده مزاحًا والباقي في الوسط. */
+.fh-name{font-weight:600}
+.fh-muted{color:var(--gray-500);font-weight:500}
+/* أرقام الهوية والجوال - معزولة اتجاهيًا عشان ماتترسمش بالمقلوب في صفحة RTL */
+.fh-num{direction:ltr;unicode-bidi:isolate;display:inline-block;font-variant-numeric:tabular-nums}
+.fh-empty{padding:40px 20px;text-align:center;color:var(--gray-500);font-size:13.5px}
+
+.badge-occupied{background:var(--green-light);color:var(--green)}
+.badge-vacant{background:var(--gray-100);color:var(--gray-700)}
+.badge-oos{background:#fef0c7;color:#93370d}
+.badge-none{background:var(--red-light);color:var(--red)}
+.badge-sync{background:#dff6e7;color:var(--navy)}
+
+.fh-note{border-inline-start:4px solid var(--gold);background:#fffaeb;padding:12px 16px;
+         border-radius:0 10px 10px 0;font-size:12.5px;color:var(--gray-700);line-height:1.8;margin:16px 0}
+.fh-note.red{border-color:var(--red);background:var(--red-light)}
+.fh-note.green{border-color:var(--green);background:var(--green-light)}
+.fh-note b{color:var(--navy)}

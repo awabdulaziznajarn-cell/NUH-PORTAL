@@ -112,9 +112,9 @@ function apiHeaders() {
 function showToast(msg, type) {
   var t = document.createElement('div');
   t.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.15);transition:opacity 0.3s;max-width:400px;text-align:center';
-  t.style.background = type === 'error' ? '#FEF2F2' : type === 'success' ? '#E1F5EE' : '#FEF3C7';
-  t.style.color = type === 'error' ? '#991B1B' : type === 'success' ? '#0F6E56' : '#92400E';
-  t.style.border = '1px solid ' + (type === 'error' ? '#FECACA' : type === 'success' ? '#A7F3D0' : '#FDE68A');
+  t.style.background = type === 'error' ? '#fef3f2' : type === 'success' ? '#dff6e7' : '#fef0c7';
+  t.style.color = type === 'error' ? '#b42318' : type === 'success' ? '#067647' : '#93370d';
+  t.style.border = '1px solid ' + (type === 'error' ? '#fecdca' : type === 'success' ? '#a9efc5' : '#fedf89');
   t.textContent = msg;
   document.body.appendChild(t);
   setTimeout(function() { t.style.opacity = '0'; setTimeout(function() { t.remove(); }, 300); }, 3000);
@@ -416,7 +416,7 @@ function showResetPassword(studentId) {
         '<span class="k">' + t('newPassword') + '</span>' +
         '<input type="password" id="newPwd" autocomplete="new-password" ' +
           'style="width:100%;height:44px;padding:0 12px;border:1.5px solid var(--gray-300);' +
-          'border-radius:10px;font-family:inherit;font-size:14px;background:var(--gray-50,#F7F8FB)" ' +
+          'border-radius:10px;font-family:inherit;font-size:14px;background:var(--gray-50,#f5f5f6)" ' +
           'data-i18n-placeholder="newPasswordPlaceholder">' +
       '</label>' +
       '<p style="font-size:11.5px;color:var(--gray-500);line-height:1.75;margin-top:8px">' +

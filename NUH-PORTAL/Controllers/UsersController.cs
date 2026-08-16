@@ -20,10 +20,11 @@ namespace NUH_PORTAL.Controllers
         // الشاشة تبويبين: الموظفون (الافتراضي) وحسابات دخول الطلاب.
         // حساب الطالب بيتولّد تلقائيًا مع كل تحقق برمز جوال، فعدده بيكبر مع كل
         // طالب بيقدّم — وخلطه بالموظفين بيضيّع الشاشة.
+        // showDeleted=true → تبويب «المحذوفون» (حذف منطقي، الصف لسه موجود)
         [HttpGet]
         [Authorize(Policy = "users.view")]
-        public async Task<IActionResult> GetUsers([FromQuery] bool studentsOnly = false)
-            => Ok(await _service.GetUsersAsync(studentsOnly));
+        public async Task<IActionResult> GetUsers([FromQuery] bool studentsOnly = false, [FromQuery] bool showDeleted = false)
+            => Ok(await _service.GetUsersAsync(studentsOnly, showDeleted));
 
         // GET api/Users/counts — أرقام التبويبات
         [HttpGet("counts")]
@@ -71,6 +72,25 @@ namespace NUH_PORTAL.Controllers
         {
             await _service.SetActiveAsync(id, false);
             return Ok(new { active = false });
+        }
+
+        // DELETE api/Users/{id} — حذف منطقي (صلاحية منفصلة عن users.manage:
+        // التعطيل إجراء يومي، والحذف إجراء نادر وخطير)
+        [HttpDelete("{id:int}")]
+        [Authorize(Policy = "users.delete")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            await _service.DeleteAsync(id);
+            return Ok(new { deleted = true });
+        }
+
+        // POST api/Users/{id}/restore
+        [HttpPost("{id:int}/restore")]
+        [Authorize(Policy = "users.delete")]
+        public async Task<IActionResult> Restore(int id)
+        {
+            await _service.RestoreAsync(id);
+            return Ok(new { restored = true });
         }
 
         // POST api/Users/{id}/role — إسناد دور (صلاحية منفصلة)

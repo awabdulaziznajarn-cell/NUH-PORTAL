@@ -8,7 +8,8 @@ namespace NUH_PORTAL.Services.Interfaces
         // ⚠️ الطلاب بيتعمل لهم حساب تلقائيًا أول ما يتحققوا برمز الجوال — مش موظفين
         //    وماحدش بيديرهم من الشاشة دي، فالشاشة اتقسمت تبويبين:
         //    studentsOnly=false → الموظفين، studentsOnly=true → حسابات الطلاب.
-        Task<List<UserListItemDto>> GetUsersAsync(bool studentsOnly = false);
+        //    وتبويب ثالث للمحذوفين: showDeleted=true بيرجّع المحذوفين بس (موظفين وطلاب).
+        Task<List<UserListItemDto>> GetUsersAsync(bool studentsOnly = false, bool showDeleted = false);
         Task<UserCountsDto> GetCountsAsync();
         Task<UserListItemDto> GetUserAsync(int id);
         Task<UserDetailDto> GetUserDetailAsync(int id);
@@ -17,6 +18,10 @@ namespace NUH_PORTAL.Services.Interfaces
         Task<UserDetailDto> UpdateAsync(int id, UserUpdateDto dto);
         Task SetActiveAsync(int id, bool active);
         Task AssignRoleAsync(int id, string role);
+
+        // حذف منطقي واستعادة — الصف بيفضل في القاعدة عشان سجل الإجراءات
+        Task DeleteAsync(int id);
+        Task RestoreAsync(int id);
 
         Task<List<RoleOptionDto>> GetRolesAsync();
 

@@ -236,7 +236,7 @@ IF NOT EXIST "%publishPath%\%projectName%.dll" (
 )
 
 set "backupPath=%stagingRoot%\_backup-%DATETIME%"
-echo %ESC%[96mBacking up live site  ->  %backupPath%%ESC%[0m
+echo %ESC%[96mBacking up live site  -^>  %backupPath%%ESC%[0m
 mkdir "%backupPath%"
 xcopy "%siteRoot%\*" "%backupPath%\" /E /I /Y /Q >nul
 
@@ -244,7 +244,7 @@ echo %ESC%[96mStopping app pool [!appPoolName!] ...%ESC%[0m
 "%windir%\system32\inetsrv\appcmd.exe" stop apppool /apppool.name:"!appPoolName!"
 powershell -NoProfile -Command "Start-Sleep -Seconds 4"
 
-echo %ESC%[96mCopying app  ->  %siteRoot%%ESC%[0m
+echo %ESC%[96mCopying app  -^>  %siteRoot%%ESC%[0m
 xcopy "%publishPath%\*" "%siteRoot%\" /E /I /Y >nul
 IF ERRORLEVEL 1 (
   echo %ESC%[91mCopy FAILED - the site is still stopped. Restore from %backupPath%.%ESC%[0m
@@ -256,7 +256,12 @@ echo %ESC%[96mStarting app pool [!appPoolName!] ...%ESC%[0m
 powershell -NoProfile -Command "Start-Sleep -Seconds 3"
 
 echo %ESC%[96mHealth check: %healthUrl%%ESC%[0m
-powershell -NoProfile -Command "[Net.ServicePointManager]::ServerCertificateValidationCallback={$true}; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; try{$r=Invoke-WebRequest '%healthUrl%' -UseBasicParsing -TimeoutSec 25; Write-Host ('HTTP '+$r.StatusCode+'  '+$r.Content)}catch{Write-Host ('HEALTH CHECK FAILED: '+$_.Exception.Message)}"
+REM  ⚠️ كان بيستخدم Invoke-WebRequest، وبيفشل دايمًا على السيرفر ده برسالة
+REM     "The underlying connection was closed" — مشكلة في مصافحة TLS من داخل
+REM     .NET Framework، مش في الموقع. curl.exe (المدمج في ويندوز) بيعمل TLS
+REM     بنفسه وبيرجّع الرد سليم. اتأكد بالتجربة على نفس السيرفر.
+curl.exe -k -sS -m 25 "%healthUrl%"
+echo.
 
 REM ---------------------- prune old deploy folders ----------------------
 REM  Every run leaves TWO full copies behind: the publish output

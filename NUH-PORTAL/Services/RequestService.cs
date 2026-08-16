@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using NUH_PORTAL.Common.Pagination;
+using NUH_PORTAL.Core;
 using NUH_PORTAL.Core.Exceptions;
 using NUH_PORTAL.Data.Interfaces;
 using NUH_PORTAL.DTOs.Requests;
@@ -108,6 +109,14 @@ namespace NUH_PORTAL.Services
 
         private IQueryable<Request> ScopeToRole(IQueryable<Request> query)
         {
+            // ⚠️ تقسيم الطلاب/الطالبات قبل أي حاجة تانية: المشرفة تشوف طلبات
+            //    الطالبات بس مهما كانت مرحلتها. الجنس متخزّن على صف الطلب نفسه
+            //    (student_gender) لأن الطلب المعلّق ممكن مايكونش له سجل طالب بعد.
+            //    والفلتر هنا لأن كل استعلامات الطلبات بتعدّي من الدالة دي.
+            var genderScope = UnitOfWork.GetGenderScope();
+            if (genderScope != null)
+                query = query.Where(r => r.StudentGender == genderScope);
+
             var actorId = UnitOfWork.GetCurrentUserId();
             var canHousing = UnitOfWork.HasPermission("requests.reviewHousing");
             var canCyber = UnitOfWork.HasPermission("requests.reviewCyber");
@@ -145,7 +154,7 @@ namespace NUH_PORTAL.Services
         }
 
 
-        public async Task<QueryResult<RequestDto>> GetPagedAsync(QueryParams queryParams, string? status, string? requestType)
+        public async Task<QueryResult<RequestDto>> GetPagedAsync(QueryParams queryParams, string? status, string? requestType, bool mine = false)
         {
             var query = ScopeToRole(_requests.Query().AsNoTracking()
                 .Include(r => r.Student)
@@ -153,14 +162,32 @@ namespace NUH_PORTAL.Services
 
             if (!string.IsNullOrEmpty(status))
             {
-                // "rejected" حالة مجمّعة لتبويب المرفوض — بتجمع رفض الإسكان ورفض الأمن السيبراني
-                if (status == "rejected")
-                    query = query.Where(r => r.Status == "housing_rejected" || r.Status == "cyber_rejected");
-                else
-                    query = query.Where(r => r.Status == status);
+                // ⚠️ التبويب يفلتر بالمرحلة لا بالنص. المرحلة الواحدة لها اسمان
+                //    حسب المسار (تسجيل الطالب / طلب الموظف)، والمقارنة النصّية
+                //    كانت تُسقط نصف الطلبات: من يضغط «مراجعة الأمن السيبراني»
+                //    لا يرى طلب الطالب الواقف في pending_cyber رغم أنه في نفس
+                //    المرحلة تمامًا. الأسماء المكافئة من Core/RequestWorkflow.cs.
+                var wanted = RequestWorkflow.Aliases(status);
+                query = query.Where(r => r.Status != null && wanted.Contains(r.Status));
             }
             if (!string.IsNullOrEmpty(requestType) && Enum.TryParse<RequestType>(requestType, out var rt))
                 query = query.Where(r => r.RequestType == rt);
+
+            // ⚠️ «يحتاج إجراءك»: المراحل التي يملك المستخدم صلاحية التصرّف فيها،
+            //    من Core/RequestWorkflow.cs — نفس المصدر الذي يبني به الخادم شارة
+            //    القائمة الجانبية وتبني به الشاشة أزرار الصفوف. فلا يظهر في التبويب
+            //    صفٌّ بلا زر، ولا يُخفى صفٌّ له زر.
+            if (mine)
+            {
+                var stages = RequestWorkflow.StagesFor(
+                    UnitOfWork.HasPermission("requests.reviewHousing"),
+                    UnitOfWork.HasPermission("requests.reviewCyber"),
+                    UnitOfWork.HasPermission("requests.complete"));
+
+                query = stages.Length == 0
+                    ? query.Where(r => false)
+                    : query.Where(r => r.Status != null && stages.Contains(r.Status));
+            }
 
             var f = queryParams.FilterText?.Trim();
             if (!string.IsNullOrEmpty(f))
@@ -195,7 +222,17 @@ namespace NUH_PORTAL.Services
                 .Select(g => new { Status = g.Key, Count = g.Count() })
                 .ToListAsync();
 
-            int Of(string s) => counts.Where(c => c.Status == s).Sum(c => c.Count);
+            // ⚠️ العدّاد يجمع مسمّيات المرحلة الواحدة معًا. قبل ذلك كان يعدّ
+            //    الاسم الحرفي فقط، فيظهر «مراجعة الأمن السيبراني: ٠» بينما طلب
+            //    الطالب واقف فعلًا في تلك المرحلة باسم pending_cyber — والمجموع
+            //    الكلي يعدّه، فالأرقام لا تجمع إلى الإجمالي ولا تدلّ على شيء.
+            //    الأسماء المكافئة من Core/RequestWorkflow.cs لا مكتوبة هنا.
+            int Of(string s)
+            {
+                var names = RequestWorkflow.Aliases(s);
+                return counts.Where(c => c.Status != null && names.Contains(c.Status, StringComparer.OrdinalIgnoreCase))
+                             .Sum(c => c.Count);
+            }
 
             return new RequestStatsDto
             {
@@ -206,7 +243,7 @@ namespace NUH_PORTAL.Services
                 CyberApproved = Of("cyber_approved"),
                 ReadyForProvisioning = Of("ready_for_provisioning"),
                 Completed = Of("completed"),
-                Rejected = Of("housing_rejected") + Of("cyber_rejected")
+                Rejected = Of("rejected")
             };
         }
 
@@ -347,6 +384,9 @@ namespace NUH_PORTAL.Services
 
             // اللي بيراجع مرحلة الإسكان لما ينشئ الطلب بنفسه → موافقة الإسكان تلقائيًا
             // والتحويل مباشرة للمراجعة الإلكترونية (مالوش معنى يراجع طلب كتبه بإيده).
+            // جنس الطالب بيتخزّن على الطلب وقت الإنشاء — منه بيتحدد المشرف المسؤول
+            request.StudentGender = dupStudent?.gender;
+
             var isHousingCreator = UnitOfWork.HasPermission("requests.reviewHousing");
             // ⚠️ الطلبات اللي بيعملها الموظف كانت بتتخزّن بـ request_number = NULL،
             //    بينما مسار تسجيل الطالب بيولّد رقم. النتيجة: الشاشة كانت بتعرض رقم
@@ -415,20 +455,10 @@ namespace NUH_PORTAL.Services
             var canCyber = UnitOfWork.HasPermission("requests.reviewCyber");
             var canComplete = UnitOfWork.HasPermission("requests.complete");
 
-            // جدول الانتقالات المسموحة: (الحالة الحالية، الحالة الجديدة) → الصلاحية المطلوبة.
-            // كان الجدول بالدور، فأي دور جديد مايقدرش يراجع مهما إدّيته صلاحيات.
-            var allowed = (req.Status, dto.Status) switch
-            {
-                ("submitted", "housing_approved" or "housing_rejected") => canHousing,
-                ("cyber_review", "cyber_approved" or "cyber_rejected") => canCyber,
-                ("ready_for_provisioning", "completed") => canComplete,
-
-                // انتقالات قديمة: الطلبات اللي اتوقفت في المرحلتين الوسيطتين قبل
-                // التوحيد لازم تفضل قابلة للتحريك، وإلا تفضل عالقة للأبد.
-                ("housing_approved", "cyber_review") => canComplete,
-                ("cyber_approved", "ready_for_provisioning") => canCyber || canComplete,
-                _ => false
-            };
+            // ⚠️ جدول الانتقالات كان مكتوبًا هنا وفي شاشتَي الطلبات — ثلاث نسخ
+            //    تفارقت فعلًا. صار تعريفه الوحيد في Core/RequestWorkflow.cs،
+            //    والواجهة تقرأ منه عبر window.__WF. الفحص هنا هو الحقيقي.
+            var allowed = RequestWorkflow.IsAllowed(req.Status, dto.Status, canHousing, canCyber, canComplete);
 
             if (!allowed)
                 throw new UserFriendlyException("هذا الإجراء غير متاح على الطلب في مرحلته الحالية", 400);

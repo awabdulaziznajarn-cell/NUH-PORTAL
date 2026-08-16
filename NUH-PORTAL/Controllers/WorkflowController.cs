@@ -53,9 +53,19 @@ namespace NUH_PORTAL.Controllers
         [HttpPost("{requestId}/request-info")]
         public async Task<IActionResult> RequestMoreInfo(int requestId, [FromBody] WorkflowActionRequest request)
         {
-            await _service.RequestMoreInfoAsync(requestId, request.Notes);
+            await _service.RequestMoreInfoAsync(requestId, request.Notes, request.Fields);
             return Ok(new { message = "تم طلب معلومات إضافية" });
         }
+
+        // GET api/Workflow/editable-fields
+        // ⚠️ القائمة بتتقرا من RegistrationDataMapper.EditableFields — نفس المصدر
+        //    اللي بيحسب فرق التعديلات ويطبّقها على سجل الطالب. لو الواجهة كتبت
+        //    قائمة خاصة بيها، أول ما خانة تتضاف أو تتشال هيبقى عندنا قائمتين
+        //    مختلفتين والمراجع يعلّم على خانة مش موجودة في الفورم.
+        [HttpGet("editable-fields")]
+        public IActionResult GetEditableFields()
+            => Ok(NUH_PORTAL.Services.RegistrationDataMapper.EditableFields
+                    .Select(f => new { key = f.Key, label = f.Label }));
 
         // GET api/Workflow/{requestId}/history
         [HttpGet("{requestId}/history")]

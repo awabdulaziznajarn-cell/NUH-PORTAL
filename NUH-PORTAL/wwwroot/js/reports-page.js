@@ -175,7 +175,7 @@ function renderTable() {
     var rowNum = (currentPage - 1) * currentPageSize + i + 1;
     var bCls = badgeClass(l.action);
     var bLabel = escHtml(translateAction(l.action));
-    return '<tr onclick="openModal(cachedData[' + i + '])"><td style="color:#8891A8">' + rowNum +
+    return '<tr onclick="openModal(cachedData[' + i + '])"><td style="color:#85888e">' + rowNum +
     '</td><td>' + escHtml(l.user?.full_name ?? l.user?.username ?? l.user_id) +
     '</td><td><span class="badge ' + bCls + '">' + bLabel + '</span>' +
     '</td><td>' + escHtml(l.target_table || '') +
@@ -234,7 +234,7 @@ async function loadLogs(page, pageSize) {
     if (cachedChartData) { computeKpi(); computeTopWidgets(); generateExecSummary(); }
   } catch(e) {
     dataLoaded = true;
-    document.getElementById('logTbody').innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-text" style="color:#991B1B">' + t('repj_error_connection') + '</div></div></td></tr>';
+    document.getElementById('logTbody').innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-text" style="color:#b42318">' + t('repj_error_connection') + '</div></div></td></tr>';
   }
 }
 
@@ -305,53 +305,33 @@ async function loadCharts() {
   if (data.last7Days && data.last7Days.length) {
     var labels = data.last7Days.map(function(d) { return d.date.slice(5, 10); });
     var counts = data.last7Days.map(function(d) { return d.count; });
-    renderChart('chartOps7', 'bar', labels, counts, '#1B2A5E');
+    renderChart('chartOps7', 'bar', labels, counts, '#166a45');
   }
   if (data.login30 && data.login30.length) {
     var labels = data.login30.map(function(d) { return d.date.slice(5, 10); });
     var counts = data.login30.map(function(d) { return d.count; });
-    renderChart('chartLogins30', 'line', labels, counts, '#C9A84C');
+    renderChart('chartLogins30', 'line', labels, counts, '#dba102');
   }
   if (data.studentOps && data.studentOps.length) {
     var labels = data.studentOps.map(function(d) { return d.action; });
     var counts = data.studentOps.map(function(d) { return d.count; });
-    var colors = ['#1B2A5E','#C9A84C','#991B1B'];
-    renderChart('chartStudents', 'doughnut', labels, counts, colors);
+    var colors = ['#166a45','#dba102','#b42318'];
+    renderChart('chartStudents', 'doughnut', labels, counts, colors, t('chart_total'));
   }
   if (data.requestOps && data.requestOps.length) {
     var labels = data.requestOps.map(function(d) { return d.action; });
     var counts = data.requestOps.map(function(d) { return d.count; });
-    var colors = ['#0F6E56','#C9A84C','#991B1B'];
-    renderChart('chartRequests', 'doughnut', labels, counts, colors);
+    var colors = ['#067647','#dba102','#b42318'];
+    renderChart('chartRequests', 'doughnut', labels, counts, colors, t('chart_total'));
   }
   if (dataLoaded) { computeKpi(); computeTopWidgets(); generateExecSummary(); }
 }
 
-var chartInstances = {};
-
-function renderChart(id, type, labels, data, bgColors) {
-  if (chartInstances[id]) chartInstances[id].destroy();
-  var ctx = document.getElementById(id).getContext('2d');
-  chartInstances[id] = new Chart(ctx, {
-    type: type,
-    data: {
-      labels: labels,
-      datasets: [{
-        data: data,
-        backgroundColor: bgColors || '#1B2A5E',
-        borderColor: '#1B2A5E',
-        borderWidth: 1.5,
-        tension: 0.3,
-        fill: false
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-    }
-  });
+// ⚠️ الدالة دي كانت مكتوبة هنا وفي لوحة التحكم بنفس السطور بالظبط، وكانت
+//    بتحط محاور على الدونات كمان (فبيظهر جنبها محور رأسي فيه 0 و1 بلا معنى).
+//    بقت في js/chart-theme.js — شكل واحد لكل رسوم النظام.
+function renderChart(id, type, labels, data, bgColors, totalLabel) {
+  return NuhChart.render(id, type, labels, data, bgColors, totalLabel);
 }
 
 async function loadAlerts() {
@@ -363,8 +343,8 @@ async function loadAlerts() {
     return;
   }
   el.innerHTML = data.map(function(a) {
-    var bg = a.severity === 'high' ? '#FEF2F2' : '#FFF7ED';
-    var clr = a.severity === 'high' ? '#991B1B' : '#92400E';
+    var bg = a.severity === 'high' ? '#fef3f2' : '#fffaeb';
+    var clr = a.severity === 'high' ? '#b42318' : '#93370d';
     var lang = document.getElementById('html-root').getAttribute('lang') || 'ar';
     return '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;margin-bottom:8px;border-radius:10px;background:' + bg + ';border:1px solid ' + clr + '20">' +
       '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="' + clr + '" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>' +

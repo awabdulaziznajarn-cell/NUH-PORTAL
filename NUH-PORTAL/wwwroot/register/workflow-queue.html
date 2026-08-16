@@ -10,7 +10,7 @@
 @font-face { font-family:'IBM Plex Sans Arabic'; font-style:normal; font-weight:400; src:url('../fonts/IBMPlexSansArabic-Regular.woff2') format('woff2'); }
 @font-face { font-family:'IBM Plex Sans Arabic'; font-style:normal; font-weight:600; src:url('../fonts/IBMPlexSansArabic-SemiBold.woff2') format('woff2'); }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--navy:#1B2A5E;--navy-dark:#111C42;--navy-light:#2B3E7E;--gold:#C9A84C;--gold-light:#E8C96A;--white:#FFFFFF;--gray-50:#F4F6FB;--gray-100:#EEF1F8;--gray-200:#DDE3F0;--gray-300:#C8CFDF;--gray-500:#8891A8;--gray-700:#4A5270;--green:#0F6E56;--green-light:#E1F5EE;--red:#991B1B;--red-light:#FEF2F2;--sidebar-w:240px}
+:root{--navy:#166a45;--navy-dark:#104631;--navy-light:#25935f;--gold:#dba102;--gold-light:#f0c33c;--white:#FFFFFF;--gray-50:#f5f5f6;--gray-100:#eceded;--gray-200:#dcdfe4;--gray-300:#cecfd2;--gray-500:#85888e;--gray-700:#333741;--green:#067647;--green-light:#dff6e7;--red:#b42318;--red-light:#fef3f2;--sidebar-w:240px}
 body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);color:var(--navy-dark);min-height:100vh;display:flex}
 #sidebar-placeholder{width:var(--sidebar-w);flex-shrink:0}
 .main{flex:1;display:flex;flex-direction:column;height:100vh;overflow-y:auto}
@@ -21,22 +21,22 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);col
 .page-header h2{font-size:22px;font-weight:800;color:var(--navy-dark);margin-bottom:4px}
 .page-header p{font-size:13px;color:var(--gray-500)}
 .stats-row{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
-.stat-pill{background:var(--white);border:1px solid var(--gray-100);border-radius:12px;padding:12px 20px;flex:1;min-width:100px;box-shadow:0 2px 8px rgba(27,42,94,0.05)}
+.stat-pill{background:var(--white);border:1px solid var(--gray-100);border-radius:12px;padding:12px 20px;flex:1;min-width:100px;box-shadow:0 2px 8px rgba(16,70,49,0.05)}
 .stat-pill-num{font-size:24px;font-weight:900;color:var(--navy-dark)}
 .stat-pill-label{font-size:12px;color:var(--gray-500);font-weight:500}
-.card{background:var(--white);border-radius:16px;border:1px solid var(--gray-100);box-shadow:0 2px 8px rgba(27,42,94,0.05);overflow:hidden}
+.card{background:var(--white);border-radius:16px;border:1px solid var(--gray-100);box-shadow:0 2px 8px rgba(16,70,49,0.05);overflow:hidden}
 table{width:100%;border-collapse:collapse;font-size:13px}
 thead th{background:var(--gray-50);padding:11px 16px;text-align:right;font-size:11px;font-weight:600;color:var(--gray-500);border-bottom:1px solid var(--gray-100)}
 tbody td{padding:12px 16px;border-bottom:1px solid var(--gray-100)}
 tbody tr:last-child td{border-bottom:none}
 tbody tr:hover{background:var(--gray-50)}
 .status-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
-.status-pending_supervisor{background:#FFF8E1;color:#B8860B}
-.status-pending_cyber{background:#E3F2FD;color:#1565C0}
-.status-pending_admin{background:#F3E5F5;color:#7B1FA2}
+.status-pending_supervisor{background:#fef0c7;color:#7a5c0b}
+.status-pending_cyber{background:#eff4ff;color:#175cd3}
+.status-pending_admin{background:#f4eefa;color:#80519f}
 .status-approved{background:var(--green-light);color:var(--green)}
 .status-rejected{background:var(--red-light);color:var(--red)}
-.status-need_more_info{background:#FFF3E0;color:#E65100}
+.status-need_more_info{background:#fffaeb;color:#b54708}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:6px 14px;border-radius:8px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;border:none;text-decoration:none}
 .btn-sm{background:var(--navy);color:var(--white)}
 .btn-sm:hover{opacity:0.9}

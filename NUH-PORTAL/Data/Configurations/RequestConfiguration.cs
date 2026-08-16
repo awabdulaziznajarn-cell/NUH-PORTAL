@@ -14,6 +14,9 @@ namespace NUH_PORTAL.Data.Configurations
 
             builder.Property(r => r.RequestType).HasColumnName("request_type").HasConversion(new RequestTypeConverter());
             builder.Property(r => r.StudentId).HasColumnName("student_id");
+            builder.Property(r => r.InfoFields).HasColumnName("info_fields").HasMaxLength(500);
+            builder.Property(r => r.StudentGender).HasColumnName("student_gender")
+                   .HasConversion(new GenderConverter()).HasMaxLength(10);
             builder.Property(r => r.SubmittedBy).HasColumnName("submitted_by");
             builder.Property(r => r.Status).HasColumnName("status");
             builder.Property(r => r.Notes).HasColumnName("notes");

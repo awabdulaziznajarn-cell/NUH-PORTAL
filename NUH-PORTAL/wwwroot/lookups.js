@@ -11,9 +11,20 @@ var Lookups = (function () {
   function headers() { return {}; }
   function escOpt(v) { return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
+  // ⚠️ لغة أسماء القوائم:
+  //    الـ API بيرجّع الاسم العربي أو الإنجليزي حسب ثقافة الطلب، والثقافة
+  //    بتتحدّد من كوكي .AspNetCore.Culture. الطالب مابيعدّيش على شاشة تبديل
+  //    اللغة بتاعة الموظفين، فالكوكي ده مش موجود عنده — يعني أسماء الكليات
+  //    والمباني كانت بترجع عربي حتى لما الطالب مختار إنجليزي.
+  //    بنبعت اللغة صراحةً في الرابط، والكنترولر بيحترمها للطلب ده بس.
+  function withLang(url) {
+    var l = (typeof window !== 'undefined' && window.currentLang === 'en') ? 'en' : 'ar';
+    return url + (url.indexOf('?') < 0 ? '?' : '&') + 'lang=' + l;
+  }
+
   async function fetchList(url) {
     try {
-      var res = await fetch(url, { headers: headers() });
+      var res = await fetch(withLang(url), { headers: headers() });
       if (!res.ok) return [];
       return await res.json();
     } catch (e) { return []; }
@@ -66,10 +77,15 @@ var Lookups = (function () {
     var parent = opts.parent, child = opts.child;
     if (!parent || !child) return { refresh: function () {} };
 
-    function setOnly(text, disabled) {
+    // ⚠️ النص إما جاهز (شاشات الموظفين بتمرّره مترجم من الـ resx وقت الرندر)
+    //    أو مفتاح resx (بوابة الطالب — القاموس بيوصل بعد ما الصفحة تتحمّل).
+    //    في حالة المفتاح بنحط data-i18n على الخيار، فتبديل اللغة بيحدّثه لوحده.
+    function setOnly(textOrKey, disabled, key) {
       child.innerHTML = '';
       var o = document.createElement('option');
-      o.value = ''; o.textContent = text;
+      o.value = '';
+      if (key) { o.setAttribute('data-i18n', key); o.textContent = (typeof t === 'function') ? t(key) : textOrKey; }
+      else { o.textContent = textOrKey; }
       child.appendChild(o);
       child.value = '';
       child.disabled = !!disabled;
@@ -78,14 +94,14 @@ var Lookups = (function () {
     async function apply() {
       var id = selectedId(parent);
       var raw = parent.value;
-      if (!id && !raw) { setOnly(opts.waitText, true); return; }
+      if (!id && !raw) { setOnly(opts.waitText, true, opts.waitKey); return; }
 
-      setOnly(opts.loadingText || opts.chooseText, true);
+      setOnly(opts.loadingText || opts.chooseText, true, opts.chooseKey);
 
       var items = await fetchList(opts.url(id, raw));
       if (!items.length && opts.fallbackUrl) items = await fetchList(opts.fallbackUrl);
 
-      setOnly(opts.chooseText, false);
+      setOnly(opts.chooseText, false, opts.chooseKey);
       fill(child, items, { keep: opts.keep || '' });
       opts.keep = '';                 // القيمة المحفوظة تُستعمل مرة واحدة بس
       child.disabled = false;

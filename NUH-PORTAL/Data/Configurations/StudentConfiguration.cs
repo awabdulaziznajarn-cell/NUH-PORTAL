@@ -16,7 +16,7 @@ namespace NUH_PORTAL.Data.Configurations
             builder.Property(s => s.gender).HasConversion(new GenderConverter()).HasMaxLength(20);
             // ad_status: enum متخزّن كـ "enabled"/"disabled" (نفس القيم — بدون تغيير عمود ولا ترحيل)
             builder.Property(s => s.ad_status).HasConversion(new AdStatusConverter()).HasMaxLength(20);
-            // student_status: enum متخزّن كنص زي ما هو (active/dismissed/graduated/transferred/left_housing)
+            // student_status: enum متخزّن كنص زي ما هو (active/dismissed/graduated/transferred/left_housing/other)
             builder.Property(s => s.student_status).HasConversion(new StudentStatusConverter()).HasMaxLength(30);
             // status: enum متخزّن كنص (active/inactive/left)
             builder.Property(s => s.status).HasConversion(new StudentStateConverter()).HasMaxLength(20);

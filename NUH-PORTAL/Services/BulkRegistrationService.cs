@@ -2,6 +2,7 @@ using MapsterMapper;
 using ClosedXML.Excel;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using NUH_PORTAL.Core;
 using NUH_PORTAL.Core.Exceptions;
 using NUH_PORTAL.Data.Interfaces;
 using NUH_PORTAL.DTOs.Bulk;
@@ -162,9 +163,11 @@ namespace NUH_PORTAL.Services
                 }
 
                 if (string.IsNullOrEmpty(studentId))
-                    AddError("StudentID", "الرقم الجامعي مطلوب - يجب إدخال رقم جامعي مكون من 9-10 أرقام");
-                else if (!Regex.IsMatch(studentId, @"^\d{9,10}$"))
-                    AddError("StudentID", "الرقم الجامعي غير صحيح - يجب أن يتكون من 9 إلى 10 أرقام");
+                    AddError("StudentID", "الرقم الجامعي مطلوب - " + IdentityRules.StudentIdError);
+                // ⚠️ كان ^\d{9,10}$ بينما شدّدت StudentService القاعدة إلى تسعة
+                //    أرقام تبدأ بـ 4. القاعدة الآن واحدة في Core/IdentityRules.cs.
+                else if (!IdentityRules.IsValidStudentId(studentId))
+                    AddError("StudentID", IdentityRules.StudentIdError);
                 else if (existingStudentIds.Contains(studentId))
                     AddError("StudentID", "الرقم الجامعي موجود مسبقاً في النظام - لا يمكن تكرار الرقم الجامعي");
                 else if (processedStudentIds.Contains(studentId))
@@ -190,7 +193,12 @@ namespace NUH_PORTAL.Services
                 else if (!Regex.IsMatch(mobile, @"^9665\d{8}$"))
                     AddError("Mobile", "رقم الجوال غير صحيح - يجب أن يبدأ بـ 9665 ويتكون من 12 رقماً (مثال: 9665XXXXXXXX)");
 
-                if (!string.IsNullOrEmpty(gender) && !GenderHelper.IsValid(gender))
+                // ⚠️ كان اختياريًا. الطالب اللي بيتحمّل بلا جنس مايوصلش لا لمشرف
+                //    قسم الطلاب ولا لمشرفة قسم الطالبات — طلبه بيقع في فراغ ومحدش
+                //    شايفه. الجنس بقى هو اللي بيوجّه الطلب، فبقى إجباريًا.
+                if (string.IsNullOrEmpty(gender))
+                    AddError("Gender", "الجنس مطلوب - يجب إدخال: ذكر أو أنثى (Male / Female). الطلب بيتوجّه لمشرف القسم بناءً عليه");
+                else if (!GenderHelper.IsValid(gender))
                     AddError("Gender", "قيمة الجنس غير صحيحة - القيم المسموح بها: ذكر, أنثى, Male, Female");
 
                 if (!string.IsNullOrEmpty(academicLevel) && !Regex.IsMatch(academicLevel, @"^[1-5]$"))
@@ -363,6 +371,8 @@ namespace NUH_PORTAL.Services
                 {
                     RequestType = RequestType.bulk_req,
                     StudentId = st.Id,
+                    // منه بيتحدد المشرف المسؤول عن الطلب
+                    StudentGender = st.gender,
                     SubmittedBy = actorId,
                     SubmittedAt = DateTime.UtcNow,
                     Status = defaultStatus,

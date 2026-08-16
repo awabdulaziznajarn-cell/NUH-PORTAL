@@ -3,6 +3,7 @@
     var canManage = User.HasClaim("permission", "users.manage");
     var canAssign = User.HasClaim("permission", "roles.assign");
     var canLdap = User.HasClaim("permission", "users.addFromLdap");
+    var canDelete = User.HasClaim("permission", "users.delete");
 }
 
 <div class="page-header">
@@ -17,14 +18,25 @@
       وبنفس المكوّن (.tabs / .tab-btn في site.css). قبل كده كان ليها تصميم خاص
       جوّه البطاقة، فشاشة المستخدمين كانت وحدها مختلفة عن باقي السيستم. *@
 <div class="tabs">
-  <button type="button" class="tab-btn active" id="tabStaff" onclick="switchTab(false)">
+  <button type="button" class="tab-btn active" id="tabStaff" onclick="switchTab('staff')">
     <span>@SharedLocalizer["usr_pageTitle"]</span>
     <span class="tab-count" id="cntStaff">-</span>
   </button>
-  <button type="button" class="tab-btn" id="tabStudents" onclick="switchTab(true)">
+  <button type="button" class="tab-btn" id="tabStudents" onclick="switchTab('students')">
     <span>@SharedLocalizer["usr_tabStudents"]</span>
     <span class="tab-count" id="cntStudents">-</span>
   </button>
+
+  @* الحذف منطقي: الحساب بيختفي ويتمنع من الدخول والصف بيفضل في القاعدة عشان
+     سجل الإجراءات يفضل منسوب لصاحبه. التبويب ده هو مكان الاستعادة.
+     مربوط بصلاحية users.delete — اللي مالوش الصلاحية مايشوفش التبويب أصلًا. *@
+  @if (canDelete)
+  {
+    <button type="button" class="tab-btn" id="tabDeleted" onclick="switchTab('deleted')">
+      <span>@SharedLocalizer["usr_tabDeleted"]</span>
+      <span class="tab-count" id="cntDeleted">-</span>
+    </button>
+  }
 
   @* ⚠️ الملاحظة دي كانت شريطًا كاملًا تحت التبويبات، بيظهر في تبويب الطلاب بس.
      فكان بيدفع الجدول ٥٨ بكسل لتحت، والتبويب الواحد شكله مختلف عن التاني.
@@ -70,14 +82,20 @@
       <thead>
         <tr id="usrHeadRow">
           <th style="width:56px">#</th>
-          <th style="width:20%">@SharedLocalizer["usr_col_username"]</th>
-          <th style="width:22%">@SharedLocalizer["usr_col_fullName"]</th>
-          <th class="col-staff" style="width:22%">@SharedLocalizer["usr_col_email"]</th>
-          <th class="col-staff" style="width:14%">@SharedLocalizer["usr_col_role"]</th>
-          <th class="col-students" style="display:none;width:22%">@SharedLocalizer["usr_lbl_mobile"]</th>
-          <th class="col-students" style="display:none;width:14%">@SharedLocalizer["usr_colCreatedAt"]</th>
+          <th style="width:18%">@SharedLocalizer["usr_col_username"]</th>
+          <th style="width:21%">@SharedLocalizer["usr_col_fullName"]</th>
+          <th class="col-staff" style="width:20%">@SharedLocalizer["usr_col_email"]</th>
+          <th class="col-staff" style="width:13%">@SharedLocalizer["usr_col_role"]</th>
+          <th class="col-students" style="display:none;width:20%">@SharedLocalizer["usr_lbl_mobile"]</th>
+          <th class="col-students" style="display:none;width:13%">@SharedLocalizer["usr_colCreatedAt"]</th>
           <th style="width:10%">@SharedLocalizer["usr_col_status"]</th>
-          <th style="width:150px">@SharedLocalizer["usr_col_actions"]</th>
+          @* ⚠️ ١٥٠ بكسل كانت مظبوطة على زرارين. مع زرار «حذف» التالت بقى
+             العمود أضيق من محتواه فالزرار يتقصّ عند حافة الجدول.
+             ٢٤٠ اتقاسوا في المتصفح على أعرض حالة فعليًا: الأزرار التلاتة في
+             الوضع الإنجليزي (Edit + Deactivate + Delete) = ٢٠٣ بكسل، زائد
+             ٣٢ بادنغ الخانة. العربي محتاج ١٧٠ بس، لكن العمود واحد للاتنين.
+             النِسَب فوق قلّت ٦٪ بالمقابل فعرض الجدول الكلي زي ما هو. *@
+          <th style="width:240px">@SharedLocalizer["usr_col_actions"]</th>
         </tr>
       </thead>
       <tbody id="usrBody">
@@ -101,7 +119,7 @@
       <input type="hidden" id="m_id">
       <div class="e-grid">
         <div class="e-field">
-          <label>@SharedLocalizer["usr_lbl_username"]<span>*</span></label>
+          <label>@SharedLocalizer["usr_lbl_username"]<span class="req">*</span></label>
           <input type="text" id="m_username">
           <span class="field-error" id="m-err-username">@SharedLocalizer["usr_required"]</span>
         </div>
@@ -128,6 +146,18 @@
         <div class="e-field">
           <label>@SharedLocalizer["usr_lbl_role"]</label>
           <select id="m_role"></select>
+        </div>
+        @* القسم صفة الشخص مش صفة الدور: المشرف والمشرفة بنفس دور supervisor
+           وبنفس الصلاحيات، واللي بيفرّق بينهم هو القسم المسؤول عنه كل واحد.
+           والدور اللي فيه صلاحية «الطلاب والطالبات معًا» بيتخطّى الحقل ده أصلًا. *@
+        <div class="e-field">
+          <label>@SharedLocalizer["usr_lbl_scope"]</label>
+          <select id="m_scope_gender">
+            <option value="">@SharedLocalizer["usr_scope_all"]</option>
+            <option value="male">@SharedLocalizer["usr_scope_male"]</option>
+            <option value="female">@SharedLocalizer["usr_scope_female"]</option>
+          </select>
+          <span class="e-hint">@SharedLocalizer["usr_scopeHint"]</span>
         </div>
         <div class="e-field">
           <label id="m_pwd_label">@SharedLocalizer["usr_lbl_password"]<span id="m_pwd_req">*</span></label>
@@ -168,9 +198,15 @@
         <input type="text" id="ldapQuery" style="flex:1" placeholder="@SharedLocalizer["usr_ldapSearchPh"]" onkeyup="if(event.key==='Enter')ldapSearch()">
         <button class="btn btn-primary" type="button" onclick="ldapSearch()">@SharedLocalizer["usr_ldapSearchBtn"]</button>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
         <label style="font-size:13px;font-weight:600;color:var(--gray-700)">@SharedLocalizer["usr_ldapPickRole"]</label>
         <select id="ldapRole" style="max-width:220px"></select>
+        <label style="font-size:13px;font-weight:600;color:var(--gray-700)">@SharedLocalizer["usr_lbl_scope"]</label>
+        <select id="ldapScope" style="max-width:200px">
+          <option value="">@SharedLocalizer["usr_scope_all"]</option>
+          <option value="male">@SharedLocalizer["usr_scope_male"]</option>
+          <option value="female">@SharedLocalizer["usr_scope_female"]</option>
+        </select>
       </div>
       <div style="overflow-x:auto;max-height:340px;overflow-y:auto">
         <table>
@@ -196,25 +232,28 @@
 @section Scripts {
 <style>
   /* خاص بشاشة المستخدمين فقط — الباقي (البطاقة، التبويبات، نافذة التعديل،
-     الحقول، رسالة التأكيد، مؤشر التحميل) من site.css */
-  .action-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:8px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;cursor:pointer;border:none;transition:all .2s}
-  .action-edit{background:#eef1f8;color:var(--navy)}
-  .action-edit:hover{background:#e0e6f5}
-  .action-toggle{background:var(--red-light);color:var(--red)}
-  .action-toggle:hover{background:#fee2e2}
-  .action-on{background:#DCFCE7;color:#0F6E56}
-  .action-on:hover{background:#bbf7d0}
+     الحقول، رسالة التأكيد، مؤشر التحميل) من site.css،
+     وأزرار إجراءات الصف (.row-actions / .action-*) من components.css. */
   .usr-pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:600}
-  .usr-pill-on{background:#DCFCE7;color:#0F6E56}
-  .usr-pill-off{background:#F1F5F9;color:#64748B}
-  .usr-role{display:inline-block;padding:2px 10px;border-radius:6px;font-size:11px;font-weight:600;background:#EEF2FF;color:#3730A3}
+  .usr-pill-on{background:#dff6e7;color:#067647}
+  .usr-pill-off{background:#f5f5f6;color:#61646c}
+  .usr-role{display:inline-block;padding:2px 10px;border-radius:6px;font-size:11px;font-weight:600;background:#eff4ff;color:#1849a9}
+  .usr-pill-del{background:#fee4e2;color:#b42318}
+  /* شارة مصدر الحساب — المسؤول لازم يفرّق بين حساب الجامعة (الباسورد عند الدومين
+     وتصفيره من هنا مالوش معنى) وحساب محلي اتعمل جوّه النظام. */
+  .usr-src{display:inline-block;margin-inline-start:6px;padding:1px 7px;border-radius:5px;font-size:10px;font-weight:700;background:#eff4ff;color:#166a45;vertical-align:middle}
+  /* شارة القسم — بتفرّق مشرف الطلاب عن مشرفة الطالبات وهما بنفس الدور */
+  .usr-scope{display:inline-block;margin-inline-start:6px;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;vertical-align:middle}
+  .usr-scope-male{background:#eff4ff;color:#1849a9}
+  .usr-scope-female{background:#f4eefa;color:#80519f}
+  .e-hint{display:block;margin-top:5px;font-size:11px;color:var(--gray-500);line-height:1.7}
   .usr-inactive{opacity:.55}
   /* ⚠️ .edit-modal-header اتشالت من هنا — كانت مكرّرة في ثلاث شاشات.
      مكانها الآن site.css مرة واحدة. */
 </style>
 <script src="/i18n.js"></script>
 <script>
-  var PERM = { manage: @(canManage ? "true" : "false"), assign: @(canAssign ? "true" : "false"), ldap: @(canLdap ? "true" : "false") };
+  var PERM = { manage: @(canManage ? "true" : "false"), assign: @(canAssign ? "true" : "false"), ldap: @(canLdap ? "true" : "false"), del: @(canDelete ? "true" : "false") };
   var state = { users: [], roles: [] };
 
   // الجدول وحالاته من NuhTable، والترويسات من NUH.headers في التخطيط — مفيش نسخة محلية.
@@ -225,15 +264,28 @@
   function showToast(msg, isError) {
     var el = document.getElementById('toast'); if (!el) return;
     document.getElementById('toast-msg').textContent = msg;
-    el.style.background = isError ? '#991B1B' : '#0F6E56';
+    el.style.background = isError ? '#b42318' : '#067647';
     el.classList.add('show');
     setTimeout(function () { el.classList.remove('show'); }, 3500);
   }
 
   function roleText(r) { return r ? r : '-'; }
 
-  // التبويب الحالي: false = الموظفون، true = حسابات دخول الطلاب
-  var showingStudents = false;
+  // ⚠️ القسم لازم يبان في الجدول: المشرف والمشرفة بنفس الدور بالظبط، فمن غير
+  //    الشارة دي الصفّين شكلهم واحد والمسؤول مش هيعرف مين مسؤول عن إيه.
+  //    فاضي = بلا تقييد، ومابنعرضش شارة عشان مانزحمش الصف بمعلومة مش مميّزة.
+  function scopeBadge(u) {
+    if (u.scope_gender === 'male')
+      return '<span class="usr-scope usr-scope-male">' + t('usr_scope_male') + '</span>';
+    if (u.scope_gender === 'female')
+      return '<span class="usr-scope usr-scope-female">' + t('usr_scope_female') + '</span>';
+    return '';
+  }
+
+  // ⚠️ كان بوليان (موظفين / طلاب). مع تبويب المحذوفين بقى ثلاث حالات، والبوليان
+  //    كان هيتحوّل لشرطين متداخلين في كل مكان يستخدمه. نص واحد أوضح، وكمان هو
+  //    نفس القيمة اللي بتتكتب في الرابط فمفيش تحويل بينهم.
+  var tab = 'staff';   // 'staff' | 'students' | 'deleted'
 
   // ⚠️ setLang تستدعي onLanguageChange، وهي مربوطة بـ renderTable. فكانت الصفحة
   //    ترسم «لا يوجد مستخدمون» قبل أن ينطلق أول نداء أصلًا، ثم تُستبدل بالبيانات
@@ -251,23 +303,35 @@
              (u.role || '').toLowerCase().indexOf(q) !== -1;
     });
 
-    var colCount = showingStudents ? 7 : 7;
+    var colCount = 7;
     var body = '';
 
     rows.forEach(function (u, idx) {
-      // ⚠️ حساب الطالب مالوش «تعديل»: بياناته بتيجي من سجل الطالب نفسه، وتعديلها
-      //    من هنا هيخلّي الاتنين مختلفين. المتاح تعطيل الدخول بس.
       var actions = '';
-      if (PERM.manage) {
-        if (!showingStudents)
-          actions += '<button class="action-btn action-edit" onclick="openEdit(' + u.id + ')">' + t('usr_edit') + '</button>';
-        if (u.is_active)
-          actions += '<button class="action-btn action-toggle" onclick="toggleActive(' + u.id + ',false)">' + t('usr_deactivate') + '</button>';
-        else
-          actions += '<button class="action-btn action-on" onclick="toggleActive(' + u.id + ',true)">' + t('usr_activate') + '</button>';
+      if (tab === 'deleted') {
+        // في تبويب المحذوفين مفيش إلا الاستعادة — التعديل والتفعيل على حساب مقفول
+        // بيدّي إحساس إنه شغّال وهو لأ.
+        if (PERM.del)
+          actions += '<button class="action-btn action-restore" onclick="restoreUser(' + u.id + ')">' + t('usr_restore') + '</button>';
+      } else {
+        // ⚠️ حساب الطالب مالوش «تعديل»: بياناته بتيجي من سجل الطالب نفسه، وتعديلها
+        //    من هنا هيخلّي الاتنين مختلفين. المتاح تعطيل الدخول بس.
+        if (PERM.manage) {
+          if (tab === 'staff')
+            actions += '<button class="action-btn action-edit" onclick="openEdit(' + u.id + ')">' + t('usr_edit') + '</button>';
+          if (u.is_active)
+            actions += '<button class="action-btn action-toggle" onclick="toggleActive(' + u.id + ',false)">' + t('usr_deactivate') + '</button>';
+          else
+            actions += '<button class="action-btn action-on" onclick="toggleActive(' + u.id + ',true)">' + t('usr_activate') + '</button>';
+        }
+        // ⚠️ الحذف في تبويب الموظفين بس. حساب الطالب بيتعمل تلقائيًا مع كل تحقق
+        //    برمز جوال، فحذفه بيرجع لوحده أول ما الطالب يقدّم طلب تاني — زرار
+        //    بيوعد بحاجة النظام نفسه بيلغيها بعد دقيقة.
+        if (PERM.del && tab === 'staff')
+          actions += '<button class="action-btn action-delete" onclick="deleteUser(' + u.id + ')">' + t('usr_delete') + '</button>';
       }
 
-      var middle = showingStudents
+      var middle = tab === 'students'
         // ⚠️ كانت <td dir="ltr" style="text-align:start">. تعيين dir على الخانة
         //    يقلب معنى start من «يمين» إلى «يسار»، فيهرب الرقم إلى طرف الخانة
         //    بعيدًا عن عنوان العمود. <bdi> يعزل ترتيب الأرقام وحده وتبقى
@@ -275,17 +339,26 @@
         ? '<td><bdi>' + esc(u.mobile || '-') + '</bdi></td>' +
           '<td>' + (u.created_at ? new Date(u.created_at).toLocaleDateString('ar-EG') : '-') + '</td>'
         : '<td>' + esc(u.email) + '</td>' +
-          '<td><span class="usr-role">' + esc(roleText(u.role)) + '</span></td>';
+          '<td><span class="usr-role">' + esc(roleText(u.role)) + '</span>' + scopeBadge(u) + '</td>';
+
+      var status = u.is_deleted
+        ? '<span class="usr-pill usr-pill-del" title="' + (u.deleted_at ? esc(new Date(u.deleted_at).toLocaleString('ar-EG')) : '') + '">' + t('usr_status_deleted') + '</span>'
+        : (u.is_active
+            ? '<span class="usr-pill usr-pill-on">' + t('usr_status_active') + '</span>'
+            : '<span class="usr-pill usr-pill-off">' + t('usr_status_inactive') + '</span>');
+
+      // شارة «دومين» جنب الاسم — الحساب ده باسورده عند الدومين مش عندنا، فتصفير
+      // الباسورد من نافذة التعديل مالوش أي أثر عليه. المسؤول لازم يشوف ده من الجدول.
+      var src = u.auth_source === 'ad'
+        ? '<span class="usr-src" title="' + esc(t('usr_srcAdTitle')) + '">' + t('usr_srcAd') + '</span>'
+        : '';
 
       body += '<tr class="' + (u.is_active ? '' : 'usr-inactive') + '">' +
         '<td>' + (idx + 1) + '</td>' +
-        '<td>' + esc(u.username) + '</td>' +
+        '<td>' + esc(u.username) + src + '</td>' +
         '<td>' + esc(u.full_name) + '</td>' +
         middle +
-        '<td>' + (u.is_active
-            ? '<span class="usr-pill usr-pill-on">' + t('usr_status_active') + '</span>'
-            : '<span class="usr-pill usr-pill-off">' + t('usr_status_inactive') + '</span>') +
-        '</td>' +
+        '<td>' + status + '</td>' +
         '<td><div class="row-actions">' + (actions || '-') + '</div></td></tr>';
     });
 
@@ -294,21 +367,26 @@
   }
 
   // شكل التبويب المختار — مفصول عن switchTab لأن التهيئة تحتاجه كمان
-  function paintTab(students) {
-    document.getElementById('tabStaff').classList.toggle('active', !students);
+  function paintTab(which) {
+    var students = which === 'students';
+    document.getElementById('tabStaff').classList.toggle('active', which === 'staff');
     document.getElementById('tabStudents').classList.toggle('active', students);
+    var tdel = document.getElementById('tabDeleted');
+    if (tdel) tdel.classList.toggle('active', which === 'deleted');
     // عنوان البطاقة يتبع التبويب — البطاقة بقى ليها رأس زي باقي الشاشات
     document.getElementById('usrCardTitle').textContent =
-      students ? t('usr_tabStudents') : t('usr_pageTitle');
+      which === 'students' ? t('usr_tabStudents')
+      : which === 'deleted' ? t('usr_tabDeleted')
+      : t('usr_pageTitle');
 
     document.querySelectorAll('#usrHeadRow .col-staff').forEach(function (th) { th.style.display = students ? 'none' : ''; });
     document.querySelectorAll('#usrHeadRow .col-students').forEach(function (th) { th.style.display = students ? '' : 'none'; });
   }
 
-  function switchTab(students) {
-    if (showingStudents === students) return;
-    showingStudents = students;
-    paintTab(students);
+  function switchTab(which) {
+    if (tab === which) return;
+    tab = which;
+    paintTab(which);
 
     // ⚠️ التبويب كان في متغيّر في الذاكرة فقط، فأي تحديث للصفحة يرجّعك إلى
     //    «إدارة المستخدمين» مهما كنت واقفًا في «حسابات دخول الطلاب».
@@ -316,8 +394,8 @@
     //    الرابط وإرساله لزميل فيفتح على نفس التبويب. (أفضل من التخزين المحلي:
     //    ذاك يجعل الرابط الواحد يفتح على شاشتين مختلفتين حسب الجهاز.)
     var u = new URL(window.location.href);
-    if (students) u.searchParams.set('tab', 'students');
-    else u.searchParams.delete('tab');
+    if (which === 'staff') u.searchParams.delete('tab');
+    else u.searchParams.set('tab', which);
     history.replaceState(null, '', u);
 
     usrTable.reset();
@@ -332,6 +410,8 @@
       var c = await res.json();
       document.getElementById('cntStaff').textContent = c.staff;
       document.getElementById('cntStudents').textContent = c.students;
+      var d = document.getElementById('cntDeleted');
+      if (d) d.textContent = c.deleted;
     } catch (e) { /* صامت - العدّاد مش حاجة حرجة */ }
   }
 
@@ -339,7 +419,8 @@
 
   async function loadUsers() {
     try {
-      var url = '/api/Users' + (showingStudents ? '?studentsOnly=true' : '');
+      var url = '/api/Users' +
+        (tab === 'students' ? '?studentsOnly=true' : tab === 'deleted' ? '?showDeleted=true' : '');
       var res = await fetch(url, { headers: NUH.headers() });
       if (res.status === 401) { window.location.replace('/Account/Login'); return; }
       if (!res.ok) { usrTable.error(t('usr_loadError')); showToast(t('usr_loadError'), true); return; }
@@ -382,6 +463,7 @@
     ['username','full_name','email','mobile','department','job_title','password'].forEach(function (f) { mGet(f).value = ''; });
     mGet('username').removeAttribute('readonly');
     mGet('is_active').value = 'true';
+    mGet('scope_gender').value = '';
     if (state.roles.length) mGet('role').value = (state.roles.find(function (r) { return r.name === 'user'; }) ? 'user' : state.roles[0].name);
     document.getElementById('m_pwd_req').style.display = '';
     document.getElementById('m_pwd_label').firstChild.textContent = t('usr_lbl_password');
@@ -403,6 +485,7 @@
     mGet('job_title').value = u.job_title || '';
     mGet('password').value = '';
     mGet('is_active').value = u.is_active ? 'true' : 'false';
+    mGet('scope_gender').value = u.scope_gender || '';
     if (u.role) mGet('role').value = u.role;
     document.getElementById('m_pwd_req').style.display = 'none';
     document.getElementById('m_pwd_label').firstChild.textContent = t('usr_lbl_passwordEdit');
@@ -414,6 +497,7 @@
       mGet('mobile').value = d.mobile || '';
       mGet('department').value = d.department || '';
       mGet('job_title').value = d.job_title || '';
+      mGet('scope_gender').value = d.scope_gender || '';
       if (d.role) mGet('role').value = d.role;
     });
     document.getElementById('usrOverlay').classList.add('show');
@@ -446,6 +530,8 @@
       department: mGet('department').value.trim(),
       job_title: mGet('job_title').value.trim(),
       role: mGet('role').value,
+      // فاضي بيتبعت null مش '' — العمود Gender? في قاعدة البيانات
+      scope_gender: mGet('scope_gender').value || null,
       is_active: mGet('is_active').value === 'true'
     };
     var pwd = mGet('password').value;
@@ -483,6 +569,26 @@
     } catch (e) { showToast(t('usr_saveError'), true); }
   }
 
+  async function deleteUser(id) {
+    if (!await NuhDialog.confirm({ message: t('usr_confirmDelete'), danger: true })) return;
+    try {
+      var res = await fetch('/api/Users/' + id, { method: 'DELETE', headers: NUH.headers() });
+      if (res.status === 401) { window.location.replace('/Account/Login'); return; }
+      if (res.ok) { loadUsers(); showToast(t('usr_deleted')); }
+      else { var err = await res.json().catch(function () { return {}; }); showToast(err.message || t('usr_saveError'), true); }
+    } catch (e) { showToast(t('usr_saveError'), true); }
+  }
+
+  async function restoreUser(id) {
+    if (!await NuhDialog.confirm({ message: t('usr_confirmRestore') })) return;
+    try {
+      var res = await fetch('/api/Users/' + id + '/restore', { method: 'POST', headers: NUH.headers() });
+      if (res.status === 401) { window.location.replace('/Account/Login'); return; }
+      if (res.ok) { loadUsers(); showToast(t('usr_restored')); }
+      else { var err = await res.json().catch(function () { return {}; }); showToast(err.message || t('usr_saveError'), true); }
+    } catch (e) { showToast(t('usr_saveError'), true); }
+  }
+
   // ---------- الإضافة من الدليل ----------
   function openLdap() {
     document.getElementById('ldapQuery').value = '';
@@ -513,7 +619,7 @@
           '<td>' + esc(u.displayName) + '</td>' +
           '<td>' + esc(u.samAccountName) + '</td>' +
           '<td>' + esc(u.department) + '</td>' +
-          '<td><button class="action-btn action-edit" onclick="addFromLdap(\'' + esc(u.samAccountName) + '\')">' + t('usr_ldapAdd') + '</button></td>' +
+          '<td><div class="row-actions"><button class="action-btn action-edit" onclick="addFromLdap(\'' + esc(u.samAccountName) + '\')">' + t('usr_ldapAdd') + '</button></div></td>' +
           '</tr>';
       }).join(''), t('usr_ldapNoResults'));
     } catch (e) {
@@ -523,11 +629,12 @@
 
   async function addFromLdap(sam) {
     var role = document.getElementById('ldapRole').value || 'user';
+    var scope = document.getElementById('ldapScope').value || null;
     try {
       var res = await fetch('/api/Users/from-ldap', {
         method: 'POST',
         headers: Object.assign({ 'Content-Type': 'application/json' }, NUH.headers()),
-        body: JSON.stringify({ username: sam, role: role })
+        body: JSON.stringify({ username: sam, role: role, scope_gender: scope })
       });
       if (res.status === 401) { window.location.replace('/Account/Login'); return; }
       if (res.ok) {
@@ -547,8 +654,12 @@
   setLang(localStorage.getItem('uiLanguage') || 'ar');
 
   // استعادة التبويب من الرابط قبل أول نداء، حتى لا يُحمَّل تبويب ثم يُستبدل
-  showingStudents = new URLSearchParams(window.location.search).get('tab') === 'students';
-  paintTab(showingStudents);
+  var qTab = new URLSearchParams(window.location.search).get('tab');
+  tab = (qTab === 'students' || qTab === 'deleted') ? qTab : 'staff';
+  // ⚠️ تبويب المحذوفين مربوط بصلاحية users.delete. رابط منسوخ من زميل صلاحياته
+  //    أوسع كان هيفتح تبويبًا غير موجود في الشاشة، فيبان الجدول فارغًا بلا سبب.
+  if (tab === 'deleted' && !PERM.del) tab = 'staff';
+  paintTab(tab);
 
   loadRoles();
   loadUsers();

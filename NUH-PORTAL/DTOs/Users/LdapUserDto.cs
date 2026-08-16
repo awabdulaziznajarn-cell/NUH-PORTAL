@@ -1,3 +1,5 @@
+using NUH_PORTAL.Models.Enums;
+
 namespace NUH_PORTAL.DTOs.Users
 {
     // نتيجة بحث في الـ Active Directory (لإضافة مستخدم من الدليل).
@@ -15,5 +17,7 @@ namespace NUH_PORTAL.DTOs.Users
     {
         public string? username { get; set; }
         public string? role { get; set; }
+        // القسم بيتحدد وقت الإضافة زي الدور بالظبط
+        public Gender? scope_gender { get; set; }
     }
 }

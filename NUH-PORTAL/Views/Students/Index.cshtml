@@ -33,6 +33,12 @@
         };
         return key != null ? SharedLocalizer[key].Value : (c ?? "");
     }
+
+    // ⚠️ الوضع الأكاديمي قد يكون فارغًا في سجلات قديمة سجّلها الطالب بنفسه قبل
+    //    أن يضبطه RegistrationFlowService. وبدون هذا الفحص يُركَّب مفتاح ناقص
+    //    «stu_status_» فيظهر اسم المفتاح نصًّا خامًا في الجدول بدل الحالة.
+    private string StudentStatusText(StudentStatus? st)
+        => SharedLocalizer[st == null ? "stu_status_none" : "stu_status_" + st].Value;
 }
 
 @* ⚠️ الشاشتين دول (الطلاب وحسابات السكن) كانوا الوحيدين من غير ترويسة صفحة
@@ -110,7 +116,7 @@
             <td>@s.full_name_english</td>
             <td data-lk="building:@s.housing_building">@s.housing_building</td>
             <td>@s.room_number</td>
-            <td><span>@SharedLocalizer["stu_status_" + s.student_status]</span></td>
+            <td><span>@StudentStatusText(s.student_status)</span></td>
             <td>
               @if (s.status == StudentState.left)
               {
@@ -432,11 +438,13 @@
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   };
 
-  // نص الحالة من القاموس (fallback للقيمة الخام لو مفيش مفتاح)
+  // نص الحالة من القاموس. الحقل الفارغ له مفتاحه الخاص «غير محدد» - نفس
+  // قاعدة الخادم في StudentStatusText أعلاه، فلا يختلف أول تحميل عن إعادة الفلترة.
   function studentStatusText(st) {
+    if (!st) return t('stu_status_none');
     var k = 'stu_status_' + st;
     var v = t(k);
-    return v === k ? (st || '') : v;
+    return v === k ? st : v;
   }
 
   // سطر معلومات الصفحة بصيغة مترجمة مع أرقام

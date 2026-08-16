@@ -48,7 +48,7 @@ namespace NUH_PORTAL.Services.Interfaces
         Task<bool> RejectAsCyberAsync(int requestId, int cyberId, string? notes = null);
         Task<bool> ApproveAsAdminAsync(int requestId, int adminId, string? notes = null);
         Task<bool> RejectAsAdminAsync(int requestId, int adminId, string? notes = null);
-        Task<bool> RequestMoreInfoAsync(int requestId, int reviewerId, string notes, string? fromStage = null);
+        Task<bool> RequestMoreInfoAsync(int requestId, int reviewerId, string notes, string? fromStage = null, string? infoFields = null);
         Task<string?> ResubmitRequestAsync(int requestId, int userId, string? registrationData = null, string? notes = null, string? changesJson = null);
     }
 }

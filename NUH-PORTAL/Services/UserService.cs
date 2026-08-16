@@ -1,6 +1,8 @@
 using MapsterMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
+using NUH_PORTAL.Core;
 using NUH_PORTAL.Core.Exceptions;
 using NUH_PORTAL.Data.Interfaces;
 using NUH_PORTAL.DTOs.Users;
@@ -19,6 +21,7 @@ namespace NUH_PORTAL.Services
         private readonly ActiveDirectoryService _adService;
         private readonly IRepository<AuditLog> _auditLogs;
         private readonly IHttpContextAccessor _http;
+        private readonly IMemoryCache _cache;
 
         public UserService(
             IRepository<User> users,
@@ -27,6 +30,7 @@ namespace NUH_PORTAL.Services
             ActiveDirectoryService adService,
             IRepository<AuditLog> auditLogs,
             IHttpContextAccessor http,
+            IMemoryCache cache,
             IUnitOfWork unitOfWork,
             IMapper mapper) : base(unitOfWork, mapper)
         {
@@ -36,6 +40,7 @@ namespace NUH_PORTAL.Services
             _adService = adService;
             _auditLogs = auditLogs;
             _http = http;
+            _cache = cache;
         }
 
         // ----------------------------- Queries -----------------------------
@@ -45,22 +50,40 @@ namespace NUH_PORTAL.Services
         // «المستخدمون» شاشة إدارة موظفين، مش سجل طلاب.
         private const string StudentRoleName = "user";
 
+        // دور مدير النظام — بنمنع حذف آخر واحد منه عشان النظام مايتقفلش على الكل
+        private const string AdminRoleName = "admin";
+
         public async Task<UserCountsDto> GetCountsAsync()
         {
             var query = _users.Query().AsNoTracking();
-            var students = await query.CountAsync(u => u.UserRoles.Any(ur => ur.Role.Name == StudentRoleName));
-            var total = await query.CountAsync();
 
-            return new UserCountsDto { Students = students, Staff = total - students };
+            // المحذوف بيتشال من عدّاد تبويبه الأصلي وبيتحسب في تبويب المحذوفين،
+            // وإلا مجموع التبويبات يبقى أكبر من عدد الصفوف الظاهرة فعلًا.
+            var deleted = await query.CountAsync(u => u.is_deleted);
+            var live = query.Where(u => !u.is_deleted);
+            var students = await live.CountAsync(u => u.UserRoles.Any(ur => ur.Role.Name == StudentRoleName));
+            var total = await live.CountAsync();
+
+            return new UserCountsDto { Students = students, Staff = total - students, Deleted = deleted };
         }
 
-        public async Task<List<UserListItemDto>> GetUsersAsync(bool studentsOnly = false)
+        public async Task<List<UserListItemDto>> GetUsersAsync(bool studentsOnly = false, bool showDeleted = false)
         {
             var query = _users.Query().AsNoTracking();
 
-            query = studentsOnly
-                ? query.Where(u => u.UserRoles.Any(ur => ur.Role.Name == StudentRoleName))
-                : query.Where(u => !u.UserRoles.Any(ur => ur.Role.Name == StudentRoleName));
+            // تبويب المحذوفين بيعرض كل المحذوفين مع بعض (موظفين وطلاب) — التقسيم
+            // لموظف/طالب مالوش معنى هنا، اللي يهم إنه مقفول ومحتاج قرار استعادة.
+            if (showDeleted)
+            {
+                query = query.Where(u => u.is_deleted);
+            }
+            else
+            {
+                query = query.Where(u => !u.is_deleted);
+                query = studentsOnly
+                    ? query.Where(u => u.UserRoles.Any(ur => ur.Role.Name == StudentRoleName))
+                    : query.Where(u => !u.UserRoles.Any(ur => ur.Role.Name == StudentRoleName));
+            }
 
             return await query
                 .OrderByDescending(u => u.created_at)
@@ -73,7 +96,11 @@ namespace NUH_PORTAL.Services
                     role = u.UserRoles.Select(ur => ur.Role.Name).FirstOrDefault(),
                     mobile = u.mobile,
                     created_at = u.created_at,
-                    is_active = u.is_active
+                    is_active = u.is_active,
+                    is_deleted = u.is_deleted,
+                    deleted_at = u.deleted_at,
+                    auth_source = u.auth_source,
+                    scope_gender = u.scope_gender
                 })
                 .ToListAsync();
         }
@@ -112,6 +139,9 @@ namespace NUH_PORTAL.Services
                     job_title = u.job_title,
                     role = u.UserRoles.Select(ur => ur.Role.Name).FirstOrDefault(),
                     is_active = u.is_active,
+                    is_deleted = u.is_deleted,
+                    auth_source = u.auth_source,
+                    scope_gender = u.scope_gender,
                     created_at = u.created_at
                 })
                 .FirstOrDefaultAsync();
@@ -136,19 +166,26 @@ namespace NUH_PORTAL.Services
             if (string.IsNullOrWhiteSpace(dto.password))
                 throw new UserFriendlyException("كلمة المرور مطلوبة", 400);
 
-            if (await _userManager.FindByNameAsync(dto.username) != null)
-                throw new UserFriendlyException("اسم المستخدم مستخدم بالفعل", 409);
+            // ⚠️ المحذوف صفّه لسه في الجدول، فاسمه لسه محجوز. من غير الرسالة دي
+            //    المسؤول يشوف «الاسم مستخدم بالفعل» وهو مش شايف الحساب في الشاشة.
+            var duplicate = await _userManager.FindByNameAsync(dto.username);
+            if (duplicate != null)
+                throw new UserFriendlyException(duplicate.is_deleted
+                    ? "الحساب موجود ضمن المحذوفين — استعِده من تبويب «المحذوفون» بدل إنشائه من جديد"
+                    : "اسم المستخدم مستخدم بالفعل", 409);
 
             var user = new User
             {
                 UserName = dto.username.Trim(),
                 full_name = dto.full_name,
                 Email = dto.email,
-                mobile = dto.mobile,
+                mobile = NullIfBlank(dto.mobile),
                 department = dto.department,
                 job_title = dto.job_title,
                 is_active = dto.is_active,
-                created_at = DateTime.UtcNow
+                created_at = DateTime.UtcNow,
+                auth_source = "local",
+                scope_gender = dto.scope_gender
             };
 
             var res = await _userManager.CreateAsync(user, dto.password);
@@ -171,10 +208,11 @@ namespace NUH_PORTAL.Services
 
             user.full_name = dto.full_name;
             user.Email = dto.email;
-            user.mobile = dto.mobile;
+            user.mobile = NullIfBlank(dto.mobile);
             user.department = dto.department;
             user.job_title = dto.job_title;
             user.is_active = dto.is_active;
+            user.scope_gender = dto.scope_gender;
 
             var res = await _userManager.UpdateAsync(user);
             if (!res.Succeeded)
@@ -194,6 +232,11 @@ namespace NUH_PORTAL.Services
             await AddAuditAsync("user_updated", user.Id);
             await UnitOfWork.SaveAsync();
 
+            // ⚠️ القسم متخزّن في الـ claims بكاش دقيقة (PermissionClaimsTransformation).
+            //    من غير الإبطال ده المسؤول يغيّر قسم المشرفة ويقولها جرّبي، فتلاقي
+            //    نفس الشاشة القديمة وتفتكر إن التعديل ماحصلش.
+            PermissionClaimsTransformation.InvalidateScope(_cache, user.Id);
+
             return await GetUserDetailAsync(user.Id);
         }
 
@@ -201,6 +244,10 @@ namespace NUH_PORTAL.Services
         {
             var user = await _userManager.FindByIdAsync(id.ToString())
                 ?? throw UserFriendlyException.NotFound("المستخدم غير موجود");
+
+            // الحساب المحذوف بيتستعاد الأول، وبعدها يتفعّل — قرارين منفصلين عن قصد
+            if (user.is_deleted)
+                throw new UserFriendlyException("الحساب محذوف — استعِده أولًا من تبويب «المحذوفون»", 400);
 
             user.is_active = active;
             var res = await _userManager.UpdateAsync(user);
@@ -221,6 +268,73 @@ namespace NUH_PORTAL.Services
 
             await AssignRoleInternalAsync(user, role.Trim().ToLowerInvariant());
             await AddAuditAsync("user_role_assigned", user.Id);
+            await UnitOfWork.SaveAsync();
+        }
+
+        // ⚠️ حذف منطقي: is_deleted = 1 والصف بيفضل مكانه.
+        //    الحذف النهائي كان هيمسح اسم الفاعل من كل سطر في سجل الإجراءات عمله
+        //    الموظف ده (AuditLogs بتربط بالـ id والعلاقة OnDelete: SetNull)، وكمان
+        //    مكانش هيمنعه فعليًا: أول ما يسجّل دخول بالدومين تاني كان SyncAdUserAsync
+        //    هيعمله حساب جديد تلقائي. الحذف المنطقي بيقفل البابين.
+        public async Task DeleteAsync(int id)
+        {
+            var user = await _userManager.FindByIdAsync(id.ToString())
+                ?? throw UserFriendlyException.NotFound("المستخدم غير موجود");
+
+            if (user.is_deleted)
+                throw new UserFriendlyException("الحساب محذوف بالفعل", 400);
+
+            var actorId = UnitOfWork.GetCurrentUserId();
+
+            // من غير الشرط ده المسؤول يقدر يحذف نفسه وهو داخل: الجلسة بتفضل شغّالة
+            // لحد ما تنتهي، وبعدها مايقدرش يدخل — ولا حد يقدر يرجّعه لو كان آخر أدمن.
+            if (actorId == user.Id)
+                throw new UserFriendlyException("لا يمكنك حذف حسابك الشخصي", 400);
+
+            // لازم يفضل حساب مدير نظام نشط واحد على الأقل، وإلا الشاشة تتقفل على الكل
+            var roles = await _userManager.GetRolesAsync(user);
+            if (roles.Any(r => string.Equals(r, AdminRoleName, StringComparison.OrdinalIgnoreCase)))
+            {
+                var otherAdmins = await _users.Query().AsNoTracking()
+                    .CountAsync(u => u.Id != user.Id && !u.is_deleted && u.is_active
+                                  && u.UserRoles.Any(ur => ur.Role.Name == AdminRoleName));
+                if (otherAdmins == 0)
+                    throw new UserFriendlyException("لا يمكن حذف آخر حساب مدير نظام نشط في النظام", 400);
+            }
+
+            user.is_deleted = true;
+            user.is_active = false;
+            user.deleted_at = DateTime.UtcNow;
+            user.deleted_by = actorId > 0 ? actorId : null;
+
+            var res = await _userManager.UpdateAsync(user);
+            if (!res.Succeeded)
+                throw new UserFriendlyException("تعذّر حذف المستخدم: " + IdentityErrors(res), 400);
+
+            await AddAuditAsync("user_deleted", user.Id);
+            await UnitOfWork.SaveAsync();
+        }
+
+        public async Task RestoreAsync(int id)
+        {
+            var user = await _userManager.FindByIdAsync(id.ToString())
+                ?? throw UserFriendlyException.NotFound("المستخدم غير موجود");
+
+            if (!user.is_deleted)
+                throw new UserFriendlyException("الحساب غير محذوف", 400);
+
+            user.is_deleted = false;
+            user.deleted_at = null;
+            user.deleted_by = null;
+            // ⚠️ الاستعادة بترجّع الحساب للقائمة معطّلًا عن قصد. لو رجع نشط على طول
+            //    يبقى ضغطة واحدة بالغلط رجّعت حساب للخدمة من غير ما حد ياخد باله.
+            //    التفعيل قرار تاني بزرار «تفعيل».
+
+            var res = await _userManager.UpdateAsync(user);
+            if (!res.Succeeded)
+                throw new UserFriendlyException("تعذّر استعادة المستخدم: " + IdentityErrors(res), 400);
+
+            await AddAuditAsync("user_restored", user.Id);
             await UnitOfWork.SaveAsync();
         }
 
@@ -251,8 +365,11 @@ namespace NUH_PORTAL.Services
                 throw new UserFriendlyException("اسم الحساب مطلوب", 400);
 
             var sam = dto.username.Trim();
-            if (await _userManager.FindByNameAsync(sam) != null)
-                throw new UserFriendlyException("المستخدم موجود بالفعل في النظام", 409);
+            var duplicate = await _userManager.FindByNameAsync(sam);
+            if (duplicate != null)
+                throw new UserFriendlyException(duplicate.is_deleted
+                    ? "الحساب موجود ضمن المحذوفين — استعِده من تبويب «المحذوفون» بدل إضافته من جديد"
+                    : "المستخدم موجود بالفعل في النظام", 409);
 
             var ad = await _adService.GetUserBySamAccountNameAsync(sam);
             if (!ad.Success)
@@ -267,9 +384,11 @@ namespace NUH_PORTAL.Services
                 Email = AdAttr(ad, "mail"),
                 department = ad.Department,
                 job_title = AdAttr(ad, "title"),
-                mobile = AdAttr(ad, "mobile") ?? AdAttr(ad, "telephoneNumber"),
+                mobile = NullIfBlank(AdAttr(ad, "mobile") ?? AdAttr(ad, "telephoneNumber")),
                 is_active = true,
-                created_at = DateTime.UtcNow
+                created_at = DateTime.UtcNow,
+                auth_source = "ad",
+                scope_gender = dto.scope_gender
             };
 
             // مستخدم AD من غير باسورد محلي — الدخول عبر AD
@@ -299,6 +418,14 @@ namespace NUH_PORTAL.Services
 
             await _userManager.AddToRoleAsync(user, role);
         }
+
+        // ⚠️ الجوال عليه فهرس فريد مُصفّى: UNIQUE WHERE [mobile] IS NOT NULL.
+        //    الفلتر بيستثني NULL بس — والنص الفاضي "" مش NULL، فبيدخل الفهرس
+        //    عادي. يعني تاني موظف يتحفظ وخانة الجوال فاضية بيصطدم بالأول
+        //    ويرجّع خطأ قاعدة بيانات غامض: «القيمة مكرّرة... duplicate key value is ()».
+        //    الواجهة بتبعت "" لما الخانة فاضية، فالتطبيع لازم يحصل هنا: فاضي = NULL.
+        private static string? NullIfBlank(string? v)
+            => string.IsNullOrWhiteSpace(v) ? null : v.Trim();
 
         private static string? AdAttr(ADReadUserResult r, string key)
             => r.AttributesRaw != null && r.AttributesRaw.TryGetValue(key, out var v) && v.Count > 0 ? v[0] : null;

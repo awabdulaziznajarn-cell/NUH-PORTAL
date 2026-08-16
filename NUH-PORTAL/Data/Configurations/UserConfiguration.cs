@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using NUH_PORTAL.Data.Converters;
 using NUH_PORTAL.Models;
 
 namespace NUH_PORTAL.Data.Configurations
@@ -17,6 +18,14 @@ namespace NUH_PORTAL.Data.Configurations
                 .IsUnique()
                 .HasDatabaseName("IX_Users_mobile")
                 .HasFilter("[mobile] IS NOT NULL");
+
+            builder.Property(u => u.auth_source).HasMaxLength(16);
+
+            // نفس المحوّل بتاع جنس الطالب — القيم في القاعدة "male"/"female"
+            builder.Property(u => u.scope_gender).HasConversion(new GenderConverter()).HasMaxLength(10);
+
+            // كل قراءات شاشة المستخدمين بتستثني المحذوفين، فالفهرس ده بيخدمها كلها
+            builder.HasIndex(u => u.is_deleted).HasDatabaseName("IX_Users_is_deleted");
         }
     }
 }

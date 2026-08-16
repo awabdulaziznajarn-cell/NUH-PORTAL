@@ -178,16 +178,16 @@ function injectEditStyles() {
   var st = document.createElement('style');
   st.id = 'rdpEditStyles';
   st.textContent =
-    '.info-field.edited{background:#FFFBF0;border-radius:8px;padding:8px 12px;margin:-8px -4px}' +
-    '[dir="rtl"] .info-field.edited{border-right:3px solid #C9A84C}' +
-    '[dir="ltr"] .info-field.edited{border-left:3px solid #C9A84C}' +
+    '.info-field.edited{background:#fffaeb;border-radius:8px;padding:8px 12px;margin:-8px -4px}' +
+    '[dir="rtl"] .info-field.edited{border-right:3px solid #dba102}' +
+    '[dir="ltr"] .info-field.edited{border-left:3px solid #dba102}' +
     '.info-field.edited .info-value{font-weight:700}' +
     '.edited-tag{display:inline-block;margin-inline-start:6px;padding:1px 7px;border-radius:20px;' +
-      'background:#C9A84C;color:#3A2E08;font-size:10px;font-weight:700;vertical-align:middle}' +
-    '.edited-old{display:block;margin-top:3px;font-size:11.5px;color:#8891A8}' +
-    '.edited-old del{color:#991B1B;text-decoration-thickness:1px}' +
+      'background:#dba102;color:#3a2e08;font-size:10px;font-weight:700;vertical-align:middle}' +
+    '.edited-old{display:block;margin-top:3px;font-size:11.5px;color:#85888e}' +
+    '.edited-old del{color:#b42318;text-decoration-thickness:1px}' +
     '.edits-banner{display:flex;align-items:flex-start;gap:10px;margin:0 0 14px;padding:11px 14px;' +
-      'border-radius:10px;background:#FFFBF0;border:1px solid #EBDCA8;color:#7A5C0B;' +
+      'border-radius:10px;background:#fffaeb;border:1px solid #f0dfa4;color:#7A5C0B;' +
       'font-size:13px;font-weight:600;line-height:1.7}' +
     '.edits-banner svg{flex-shrink:0;margin-top:2px}';
   document.head.appendChild(st);
@@ -234,7 +234,7 @@ function renderRequest(r) {
   document.getElementById('detail-content').style.display = 'block';
   // ماتخترعش رقم طلب — الرقم المصنوع هنا مكانش متخزّن، والطالب كان بيكتبه في
   // صفحة التتبع فمايتلاقاش. الرقم بقى بيتولّد ويتخزّن وقت إنشاء الطلب.
-  var reqNum = r.requestNumber || '-';
+  var reqNum = r.requestNumber || '—';
   var __pt = document.getElementById('pageTitle'); if (__pt) __pt.textContent = t('rdp_pageTitle')+' - '+reqNum;
 
   var s = r.student || {};
@@ -265,12 +265,12 @@ function renderRequest(r) {
       : step.key === 'ready' ? t('rdp_wf_readyHousing')
       : t('rdp_stage_completed');
     var iconSvg = cls==='completed'
-      ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#0F6E56"/><path d="M4.5 8L7 10.5L11.5 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+      ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#067647"/><path d="M4.5 8L7 10.5L11.5 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>'
       : cls==='rejected'
-        ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#DC2626"/><path d="M5.5 5.5L10.5 10.5M10.5 5.5L5.5 10.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>'
+        ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#d92d20"/><path d="M5.5 5.5L10.5 10.5M10.5 5.5L5.5 10.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>'
         : cls==='active'
-          ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="#1B2A5E" stroke="#1B2A5E" stroke-width="2"/><circle cx="8" cy="8" r="3" fill="white"/></svg>'
-          : '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#CBD5E1" stroke-width="1.5" fill="none"/></svg>';
+          ? '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" fill="#166a45" stroke="#166a45" stroke-width="2"/><circle cx="8" cy="8" r="3" fill="white"/></svg>'
+          : '<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="#cecfd2" stroke-width="1.5" fill="none"/></svg>';
     return '<div class="workflow-step'+cls+'"><div class="workflow-circle">'+iconSvg+'</div><div class="workflow-step-label">'+label+'</div></div>';
   }).join('');
 
@@ -359,7 +359,7 @@ function renderRequest(r) {
     var showNotes = e.cls === 'rejected' || e.cls === 'info';
     var notesHtml = '<div class="tl-notes">'+t('rdp_lbl_notes')+' '+(e.notes && showNotes?escHtml(e.notes):t('rdp_msg_noNotes'))+'</div>';
     // اللون البرتقالي للنقطة — مافيش كلاس ليه في site.css فبيتحط هنا مباشرة
-    var dotStyle = e.cls === 'info' ? ' style="border-color:#E65100;background:#E65100"' : '';
+    var dotStyle = e.cls === 'info' ? ' style="border-color:#b54708;background:#b54708"' : '';
     return '<div class="tl-item"><div class="tl-dot '+dotCls+'"'+dotStyle+'></div><div class="tl-content"><div class="tl-title">'+title+'</div>'+userHtml+'<div class="tl-row"><span class="tl-label">'+t('rdp_lbl_date')+'</span><span class="tl-value">'+dateStr+' - '+timeStr+'</span></div>'+notesHtml+'</div></div>';
   }).join('');
   if (!historyHtml) {
@@ -370,7 +370,7 @@ function renderRequest(r) {
   var rejectionNotes = st === 'cyber_rejected' ? r.cyberNotes : (st === 'housing_rejected' ? r.housingNotes : (st === 'rejected' ? r.notes : null));
   var rejectionHtml = rejectionNotes
     ? '<div class="rejection-info">'+
-      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#991B1B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'+
+      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#b42318" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'+
       '<div><div class="rejection-info-label">'+
       t('rdp_lbl_rejectionReason')+'</div><div class="rejection-info-text">'+
       escHtml(rejectionNotes)+'</div></div></div>'
@@ -385,58 +385,61 @@ function renderRequest(r) {
 
   /* --- Review actions --- */
   var reviewHtml = '';
-  // مين يقدر يتصرّف = مرحلة الطلب + صلاحية المستخدم، مش دوره. نفس الجدول
-  // بالظبط مطبّق على السيرفر في WorkflowActionService و RequestService.ReviewAsync.
-  var canActOnStage =
-    ((st === 'pending_supervisor' || st === 'submitted') && can('requests.reviewHousing')) ||
-    ((st === 'pending_cyber' || st === 'cyber_review') && can('requests.reviewCyber')) ||
-    (st === 'housing_approved' && can('requests.complete')) ||
-    (st === 'cyber_approved' && (can('requests.reviewCyber') || can('requests.complete'))) ||
-    (st === 'ready_for_provisioning' && can('requests.complete'));
+  // ⚠️ كل المراحل - المسارين معًا - مصدرها الوحيد window.__WF القادم من
+  //    Core/RequestWorkflow.cs. لا تُكتب هنا حالة ولا انتقال ولا مسار API.
+  //
+  //    وكانت مكتوبة مرتين: مرة سقطت منها «submitted» فطُبع مكان اسم الزر
+  //    «undefined» ولم يفعل الضغط شيئًا، ومرة بقيت فيها مراحل مسار تسجيل
+  //    الطالب (pending_supervisor / pending_cyber) معروفة لهذه الشاشة وحدها
+  //    ومجهولة لشاشة القائمة - فالطلب يُحسب هناك في «يحتاج إجراءك» ثم يظهر
+  //    في الصف بلا زر وبلا تمييز لوني.
+  //
+  //    الوصف وحده يبقى هنا: صياغة تخصّ هذه الشاشة لا معنى لها في جدول الخادم.
+  var wf = NuhWorkflow.forStatus(st);
+  var isSelfRegAction = wf !== null && wf.api === 'workflow';
+  var canActOnStage = NuhWorkflow.canAct(st, can);
 
   if (canActOnStage) {
-    var isSelfRegAction = st === 'pending_supervisor' || st === 'pending_cyber' || st === 'ready_for_provisioning';
-    var actionLabel, actionDesc, nextApproved, showRequestInfo;
+    var actionLabel, actionDesc;
+    var showRequestInfo = wf.allowMoreInfo === true;
     if (isSelfRegAction) {
       if (st === 'pending_supervisor') {
         actionLabel = t('rdp_action_approveRequest');
         actionDesc = t('rdp_actionDesc_approveToCyber');
-        nextApproved = 'pending_cyber';
-        showRequestInfo = true;
       } else if (st === 'pending_cyber') {
         actionLabel = t('rdp_action_approveRequest');
         actionDesc = t('rdp_actionDesc_approveToNetwork');
-        nextApproved = 'ready_for_provisioning';
       } else {
         actionLabel = t('rdp_action_completeRequest');
         actionDesc = t('rdp_actionDesc_approveComplete');
-        nextApproved = 'completed';
       }
-    } else if (st === 'housing_approved') {
-      actionLabel = t('rdp_action_sendToCyber');
-      actionDesc = t('rdp_actionDesc_submitToCyber');
-      nextApproved = 'cyber_review';
-    } else if (st === 'cyber_review') {
-      // مراجع الأمن السيبراني بيشوف صيغة أوضح لدوره؛ الأدمن (اللي عنده إكمال
-      // الطلب كمان) بيشوف الصيغة العامة.
-      var _cyberVoice = can('requests.reviewCyber') && !can('requests.complete');
-      actionLabel = _cyberVoice
-        ? t('rdp_action_approveHousingAccount')
-        : t('rdp_action_agreeRequest');
-      actionDesc = _cyberVoice
-        ? t('rdp_actionDesc_approveNextStage')
-        : t('rdp_actionDesc_approveNextStageShort');
-      nextApproved = 'cyber_approved';
-    } else if (st === 'cyber_approved') {
-      actionLabel = t('rdp_action_markReady');
-      actionDesc = t('rdp_actionDesc_markReady');
-      nextApproved = 'ready_for_provisioning';
-    } else if (st === 'ready_for_provisioning') {
-      actionLabel = t('rdp_action_completeRequest');
-      actionDesc = t('rdp_actionDesc_completeNetwork');
-      nextApproved = 'completed';
+    } else if (wf) {
+      // الاسم من الجدول المشترك. الوصف وحده خاص بهذه الشاشة.
+      actionLabel = t(wf.approveKey);
+      if (st === 'submitted') {
+        // ⚠️ بلا «طلب معلومات إضافية»: هذه المرحلة تمرّ على
+        //    /api/requests/{id}/review وجدول الخادم يسمح لها بالاعتماد
+        //    والرفض فقط. عرض خيار يرفضه الخادم إهدار لوقت المراجع.
+        actionDesc = t('rdp_actionDesc_approveToCyber');
+      } else if (st === 'housing_approved') {
+        actionDesc = t('rdp_actionDesc_submitToCyber');
+      } else if (st === 'cyber_review') {
+        // مراجع الأمن السيبراني بيشوف صيغة أوضح لدوره؛ الأدمن (اللي عنده إكمال
+        // الطلب كمان) بيشوف الصيغة العامة.
+        var _cyberVoice = can('requests.reviewCyber') && !can('requests.complete');
+        actionLabel = _cyberVoice
+          ? t('rdp_action_approveHousingAccount')
+          : t('rdp_action_agreeRequest');
+        actionDesc = _cyberVoice
+          ? t('rdp_actionDesc_approveNextStage')
+          : t('rdp_actionDesc_approveNextStageShort');
+      } else if (st === 'cyber_approved') {
+        actionDesc = t('rdp_actionDesc_markReady');
+      } else {
+        actionDesc = t('rdp_actionDesc_completeNetwork');
+      }
     }
-    var rejectNewStatus = isSelfRegAction ? 'rejected' : (st === 'housing_approved' ? 'housing_rejected' : (st === 'cyber_review' ? 'cyber_rejected' : ''));
+    var rejectNewStatus = wf.rejectTo || '';
     reviewHtml = '<div class="card" id="reviewSection"><div class="card-header">'+
       t('rdp_card_reviewActions')+'</div><div class="card-body">'+
       '<div class="review-actions">'+
@@ -458,6 +461,14 @@ function renderRequest(r) {
           '<div><div class="review-option-text">'+t('rdp_option_needMoreInfo')+'</div>'+
           '<div class="review-option-desc">'+t('rdp_optionDesc_needMoreInfo')+'</div></div>'+
         '</label>' : '')+
+        // ⚠️ الخانات المطلوب تصحيحها — بتظهر مع «طلب معلومات إضافية» بس.
+        //    من غيرها الطالب بيفتح نموذج فيه ١٢ خانة كلها مفتوحة والملاحظة
+        //    بتقوله «صحّح المبنى» — فبيدوّر ويغلط ويغيّر حاجات مش مطلوبة.
+        '<div class="fieldpick-box" id="infoFieldsBox">'+
+          '<label class="fieldpick-title">'+t('rdp_lbl_infoFields')+'</label>'+
+          '<div class="fieldpick-hint">'+t('rdp_hint_infoFields')+'</div>'+
+          '<div class="fieldpick-grid" id="infoFieldsGrid"></div>'+
+        '</div>'+
         '<div class="reject-reason-field" id="rejectReasonField">'+
           '<label id="reasonLabel" style="font-size:13px;font-weight:600;color:var(--navy-dark);margin-bottom:6px;display:block">'+
             t('rdp_lbl_rejectionReasonRequired')+'</label>'+
@@ -617,7 +628,7 @@ function renderRequest(r) {
 
     /* 4b - Completion success message (only for completed/approved) */
     (st === 'completed' || st === 'approved' ? '<div class="card" style="border:2px solid var(--green);background:var(--green-light)"><div class="card-body" style="text-align:center;padding:24px">'+
-      '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'+
+      '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#067647" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'+
       '<h3 style="font-size:18px;color:var(--green);margin-bottom:8px">'+t('rdp_msg_accountCreated')+'</h3>'+
       '<p style="font-size:14px;color:var(--navy-dark)">'+t('rdp_lbl_username')+': <strong dir="ltr" style="display:inline-block;background:var(--white);padding:4px 12px;border-radius:6px;border:1px solid var(--gray-200)">'+escHtml(s.ad_username || '-')+'</strong></p>'+
       '<p style="font-size:12px;color:var(--gray-500);margin-top:8px">'+t('rdp_msg_credentialsSms')+'</p>'+
@@ -655,9 +666,9 @@ async function loadHousingAccount(studentId) {
     card.style.display = 'block';
     var ad = data.adDetails || {};
     var enabled = s.ad_status === 'enabled';
-    var statusBadge = enabled ? '<span style="background:#E1F5EE;color:#0F6E56;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600">' + t('adEnabled') + '</span>'
-      : (s.ad_status === 'disabled' ? '<span style="background:#FEF2F2;color:#991B1B;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600">' + t('adDisabled') + '</span>'
-      : '<span style="background:#F4F6FB;color:#8891A8;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600">' + (s.ad_status || t('adUnknown')) + '</span>');
+    var statusBadge = enabled ? '<span style="background:#dff6e7;color:#067647;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600">' + t('adEnabled') + '</span>'
+      : (s.ad_status === 'disabled' ? '<span style="background:#fef3f2;color:#b42318;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600">' + t('adDisabled') + '</span>'
+      : '<span style="background:#f5f5f6;color:#85888e;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600">' + (s.ad_status || t('adUnknown')) + '</span>');
     // ⚠️ الكلاسات housing-info-grid / housing-info-item مالهاش أي CSS في المشروع،
     //    فالعنوان كان بيلزق في القيمة: "اسم المستخدم في ADh456969999".
     //    بنستخدم info-grid / info-field اللي بتستخدمها باقي بطاقات الصفحة —
@@ -729,6 +740,31 @@ function setReasonTexts(kind) {
   }
 }
 
+// ⚠️ القائمة بتتجاب من السيرفر (RegistrationDataMapper.EditableFields) مش
+//    مكتوبة هنا. لو اتكتبت هنا، أول ما خانة تتضاف أو تتشال من النموذج
+//    هيبقى عندنا قائمتين مختلفتين والمراجع يعلّم على خانة مش موجودة.
+var infoFieldsLoaded = false;
+async function loadInfoFields() {
+  if (infoFieldsLoaded) return;
+  var grid = document.getElementById('infoFieldsGrid');
+  if (!grid) return;
+  try {
+    var r = await fetch('/api/Workflow/editable-fields', { headers: authHeaders() });
+    if (!r.ok) return;
+    var list = await r.json();
+    grid.innerHTML = list.map(function (f) {
+      return '<label class="fieldpick-item"><input type="checkbox" value="' + f.key + '">' +
+             '<span>' + t('rdp_fld_' + f.key) + '</span></label>';
+    }).join('');
+    infoFieldsLoaded = true;
+  } catch (e) { /* صامت — القائمة الفاضية معناها كل الخانات مفتوحة للطالب */ }
+}
+
+function selectedInfoFields() {
+  var boxes = document.querySelectorAll('#infoFieldsGrid input:checked');
+  return Array.prototype.map.call(boxes, function (b) { return b.value; });
+}
+
 function selectApprove() {
   selectedDecision = 'approve';
   var el;
@@ -738,8 +774,17 @@ function selectApprove() {
   document.getElementById('rejectReasonField').classList.remove('visible');
   document.getElementById('rejectReason').classList.remove('error');
   document.getElementById('rejectReasonError').style.display = 'none';
+  toggleInfoFields(false);
   updateReviewSubmitState();
 }
+
+function toggleInfoFields(show) {
+  var box = document.getElementById('infoFieldsBox');
+  if (!box) return;
+  box.classList.toggle('visible', !!show);
+  if (show) loadInfoFields();
+}
+
 function selectReject() {
   selectedDecision = 'reject';
   document.getElementById('optApprove').className = 'review-option';
@@ -748,6 +793,7 @@ function selectReject() {
   if (el = document.getElementById('optReject')) el.className = 'review-option selected-reject';
   setReasonTexts('reject');
   document.getElementById('rejectReasonField').classList.add('visible');
+  toggleInfoFields(false);
   updateReviewSubmitState();
 }
 function selectInfo() {
@@ -761,6 +807,7 @@ function selectInfo() {
   document.getElementById('rejectReasonField').classList.add('visible');
   document.getElementById('rejectReason').classList.remove('error');
   document.getElementById('rejectReasonError').style.display = 'none';
+  toggleInfoFields(true);
   updateReviewSubmitState();
 }
 
@@ -768,29 +815,17 @@ async function submitReview(currentStatus) {
   var lang = document.getElementById('html-root').getAttribute('lang') || 'ar';
   if (!selectedDecision) return;
 
-  var isSelfRegAction = currentStatus === 'pending_supervisor' || currentStatus === 'pending_cyber' || currentStatus === 'ready_for_provisioning';
-  var newStatus, reason = '';
+  // ⚠️ الحالة الهدف ومسار الإرسال من الجدول المشترك (window.__WF) لا من سلسلة
+  //    شروط محلية. السلسلة القديمة هنا كانت النسخة الثالثة من الجدول، وسقطت
+  //    منها «submitted» فكان الضغط على «اعتماد» لا يفعل شيئًا بصمت.
+  var wfSubmit = NuhWorkflow.forStatus(currentStatus);
+  if (!wfSubmit) return;
+  var reason = '';
 
   if (selectedDecision === 'approve') {
-    if (isSelfRegAction) {
-      if (currentStatus === 'pending_supervisor') newStatus = 'pending_cyber';
-      else if (currentStatus === 'pending_cyber') newStatus = 'ready_for_provisioning';
-      else if (currentStatus === 'ready_for_provisioning') newStatus = 'completed';
-      else return;
-    } else if (currentStatus === 'housing_approved') {
-      newStatus = 'cyber_review';
-    } else if (currentStatus === 'cyber_review') {
-      newStatus = 'cyber_approved';
-    } else if (currentStatus === 'cyber_approved') {
-      newStatus = 'ready_for_provisioning';
-    } else if (currentStatus === 'ready_for_provisioning') {
-      newStatus = 'completed';
-    } else {
-      return;
-    }
+    if (!wfSubmit.approveTo) return;
   } else if (selectedDecision === 'request-info') {
-    if (currentStatus !== 'pending_supervisor') return;
-    newStatus = 'need_more_info';
+    if (wfSubmit.allowMoreInfo !== true) return;
     // الملاحظات هي جوهر الإجراء ده — من غيرها الطالب بيستلم "محتاجين معلومات" وبس
     reason = document.getElementById('rejectReason').value.trim();
     if (!reason) {
@@ -799,21 +834,8 @@ async function submitReview(currentStatus) {
       return;
     }
   } else if (selectedDecision === 'reject') {
-    if (isSelfRegAction) {
-      newStatus = 'rejected';
-    } else if (currentStatus === 'housing_approved') {
-      newStatus = 'housing_rejected';
-    } else if (currentStatus === 'cyber_review') {
-      newStatus = 'cyber_rejected';
-    } else {
-      return;
-    }
+    if (!wfSubmit.rejectTo) return;
     reason = document.getElementById('rejectReason').value.trim();
-    if (!reason && isSelfRegAction) {
-      document.getElementById('rejectReason').classList.add('error');
-      document.getElementById('rejectReasonError').style.display = 'block';
-      return;
-    }
     if (!reason) {
       document.getElementById('rejectReason').classList.add('error');
       document.getElementById('rejectReasonError').style.display = 'block';
@@ -827,21 +849,19 @@ async function submitReview(currentStatus) {
   document.getElementById('submitReviewBtn').textContent = t('rdp_btn_submitting');
 
   try {
-    var res;
-    if (isSelfRegAction) {
-      var action = selectedDecision === 'approve' ? 'approve' : (selectedDecision === 'reject' ? 'reject' : 'request-info');
-      res = await fetch('/api/Workflow/' + requestId + '/' + action, {
-        method:'POST',
-        headers: authHeaders({ 'Content-Type': 'application/json' }),
-        body:JSON.stringify({notes:reason})
-      });
-    } else {
-      res = await fetch('/api/requests/' + requestId + '/review', {
-        method:'PUT',
-        headers: authHeaders({ 'Content-Type': 'application/json' }),
-        body:JSON.stringify({status:newStatus, reviewedBy:currentUser.id||1, notes:reason})
-      });
-    }
+    // ⚠️ العنوان والطريقة وجسم الطلب من NuhWorkflow.endpointFor — نفس ما تستعمله
+    //    شاشة القائمة. كان هنا تفريعٌ ثانٍ على المسار، وهو ما جعل الشاشتين
+    //    تعرفان مسارين مختلفين لنفس المرحلة.
+    var ep = NuhWorkflow.endpointFor(
+      requestId, currentStatus, selectedDecision, reason,
+      selectedDecision === 'request-info' ? selectedInfoFields() : null);
+    if (!ep) return;
+
+    var res = await fetch(ep.url, {
+      method: ep.method,
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(ep.body)
+    });
     if (res.status === 401) { localStorage.removeItem('staffToken'); localStorage.removeItem('staffUser'); window.location.replace('/Account/Login'); return; }
     if (!res.ok) {
       var err = await res.json();
@@ -864,14 +884,9 @@ async function submitReview(currentStatus) {
 
 
 
-function showAbout() {
-  var lang = (document.getElementById('html-root')||document.documentElement).getAttribute('lang')||'ar';
-  document.getElementById('aboutSysName').textContent = t('rdp_about_sysName');
-  document.getElementById('aboutBuildDate').textContent = 'Build: 2026-07-01';
-  document.getElementById('aboutModal').classList.add('open');
-}
-function closeAbout() { document.getElementById('aboutModal').classList.remove('open'); }
-document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAbout();});
+// ⚠️ حُذفت نافذة «حول النظام» (showAbout/closeAbout ومستمع Escape). لم يكن لها
+//    مستدعٍ واحد، ولا يوجد في أي صفحة عنصر aboutModal — فكانت كل ضغطة Escape
+//    في هذه الشاشة تقرأ classList من عنصر غير موجود وترمي TypeError.
 
 setLang(localStorage.getItem('uiLanguage')||'ar');
 if (!requestId) { document.getElementById('loading-state').style.display='none'; document.getElementById('error-state').style.display='block'; document.getElementById('error-message').textContent='No request ID specified.'; }

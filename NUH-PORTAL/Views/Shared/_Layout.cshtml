@@ -29,12 +29,29 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>@ViewData["Title"] - @SharedLocalizer["AppTitleSuffix"]</title>
+  @*
+     ⚠️ عنوان التبويب في مكان واحد لكل شاشات النظام: «اسم الصفحة - بوابة السكن
+        الجامعي». والاسم المحدَّد أولًا لا اسم البوابة، لأن المتصفح يقصّ العنوان
+        من آخره عند فتح عدة تبويبات - فلو تقدّم اسم البوابة لظهرت التبويبات كلها
+        بنصّ واحد لا يُفرَّق بينها.
+     ⚠️ والفاصلة لا تُطبع إذا لم تُحدَّد الصفحة عنوانًا، وإلا بدأ العنوان بشرطة
+        معلّقة. الشرط هنا مرة واحدة يغني عن تكراره في كل شاشة.
+     ⚠️ واسم النظام من Brand_Title وحده. كان مكرَّرًا في ستة مفاتيح تحمل القيمة
+        نفسها (AppTitleSuffix و login_brandTitle و appTitle و appTitleShort و
+        pt_trkAppTitle و rdp_about_sysName)، فتغييره كان يستلزم ستّ تعديلات،
+        وأول واحد يُنسى تصير صفحة الدخول تقول اسمًا والقائمة الجانبية اسمًا آخر.
+  *@
+  @{
+      var __pageTitle = ViewData["Title"] as string;
+      var __appTitle = SharedLocalizer["Brand_Title"].Value;
+  }
+  <title>@(string.IsNullOrWhiteSpace(__pageTitle) ? __appTitle : __pageTitle + " - " + __appTitle)</title>
   @* ⚠️ asp-append-version بتضيف بصمة محتوى الملف في الرابط، فالمتصفح يجيب
      النسخة الجديدة أول ما تتغيّر ويفضل مخزّنها لحد ما تتغيّر تاني.
      من غيرها كان لازم Ctrl+Shift+R بعد كل نشر عشان تشوف تعديل التصميم —
      وده مستحيل تطلبه من كل موظف. كل ملفات الجافاسكريبت كانت عليها البصمة
      وده الملف الوحيد اللي كان ناقصها. *@
+  <link rel="stylesheet" href="/css/components.css" asp-append-version="true" />
   <link rel="stylesheet" href="/css/site.css" asp-append-version="true" />
 </head>
 <body class="app-shell">
@@ -101,6 +118,11 @@
     window.__I18N = @Html.Raw(__i18nJson);
     // خريطة القوائم (كود → اسم) — i18n.js بيقرأ منها في collegeName()/deptName()
     window.__LKMAP = @Html.Raw(__lkMapJson);
+    // ⚠️ جدول انتقالات مسار الطلب — تعريفه الوحيد في Core/RequestWorkflow.cs،
+    //    وهو نفسه الذي يتحقق منه الخادم في RequestService.ReviewAsync. كان
+    //    مكتوبًا ثلاث مرات في الواجهة والخادم فتفارق، وضاع زر الاعتماد على
+    //    الطلبات في حالة «مقدَّم». شاشتا الطلبات تقرآن من هنا لا من نسخة محلية.
+    window.__WF = @Html.Raw(NUH_PORTAL.Core.RequestWorkflow.ToJson());
 
     // حاجات مشتركة لكل صفحات الـ MVC — الدور من كليم السيرفر.
     // ⚠️ headers() كانت ترسل staffToken من localStorage في ترويسة Authorization.
@@ -135,6 +157,22 @@
     document.getElementById('dateNow').textContent =
       new Date().toLocaleDateString(__dateLocale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
+    // ⚠️ عنوان الشاشة كان مكتوبًا مرتين فوق بعضهما عند فتح أي صفحة: في الشريط
+    //    العلوي وفي رأس الصفحة. الشريط ثابت (sticky) فعنوانه يفيد بعد التمرير
+    //    وحده - حين يختفي الرأس ويبقى الجدول بلا ما يدلّ على الشاشة. فيُخفى
+    //    العنوان ما دام الرأس ظاهرًا، ويظهر متى غاب. القاعدة هنا في التخطيط
+    //    مرة واحدة، فتسري على كل الشاشات بلا تعديل في أي صفحة.
+    //    وإن كانت الصفحة بلا .page-header يظهر العنوان دائمًا - وإلا اختفى بلا رجعة.
+    (function () {
+      var bar = document.querySelector('.topbar');
+      if (!bar) return;
+      var head = document.querySelector('.content .page-header');
+      if (!head || !window.IntersectionObserver) { bar.classList.add('is-scrolled'); return; }
+      new IntersectionObserver(function (entries) {
+        bar.classList.toggle('is-scrolled', !entries[0].isIntersecting);
+      }, { rootMargin: '-64px 0px 0px 0px' }).observe(head);
+    })();
+
     function escHtml(v) {
       return String(v == null ? '' : v)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -168,7 +206,7 @@
         var data = await res.json();
         list.innerHTML = (data && data.length) ? data.map(function (n) {
           return '<div class="notif-item" onclick="openNotif(' + n.id + ', ' + (n.request_id || 0) + ', this)" data-id="' + n.id + '" style="cursor:pointer">' +
-            '<div class="notif-item-dot" style="background:' + (n.status === 'pending' ? '#1B2A5E' : '#CBD5E1') + '"></div>' +
+            '<div class="notif-item-dot" style="background:' + (n.status === 'pending' ? '#166a45' : '#cecfd2') + '"></div>' +
             '<div>' +
               '<div class="notif-item-text">' + escHtml(n.message) + '</div>' +
               '<div class="notif-item-time">' + new Date(n.sent_at || Date.now()).toLocaleDateString('ar-EG') + '</div>' +
@@ -205,7 +243,7 @@
           headers: Object.assign({ 'Content-Type': 'application/json' }, NUH.headers()),
           body: JSON.stringify([id])
         });
-        el.querySelector('.notif-item-dot').style.background = '#CBD5E1';
+        el.querySelector('.notif-item-dot').style.background = '#cecfd2';
         loadUnreadCount();
       } catch (e) { }
     }
@@ -222,7 +260,7 @@
           headers: Object.assign({ 'Content-Type': 'application/json' }, NUH.headers()),
           body: JSON.stringify(ids)
         });
-        document.querySelectorAll('#notif-dropdown-list .notif-item-dot').forEach(function (d) { d.style.background = '#CBD5E1'; });
+        document.querySelectorAll('#notif-dropdown-list .notif-item-dot').forEach(function (d) { d.style.background = '#cecfd2'; });
         loadUnreadCount();
       } catch (e) { }
     }
@@ -261,6 +299,12 @@
   @* حالات الجداول (تحميل / لا توجد نتائج / خطأ) — تعريف واحد لكل الشاشات.
      ⚠️ لازم قبل قسم Scripts: الشاشات بتنادي NuhTable.bind وقت التحميل لا وقت الحدث. *@
   <script src="/js/table-state.js" asp-append-version="true"></script>
+  @* قراءة جدول انتقالات مسار الطلب من window.__WF أعلاه - تستخدمه شاشتا الطلبات *@
+  <script src="/js/request-workflow.js" asp-append-version="true"></script>
+  @* أسماء إجراءات وحقول سجل العمليات بالعربية - تستخدمها شاشة السجل ونافذة
+     سجل الوحدة في سكن أعضاء هيئة التدريس. قبل قسم Scripts لأن الشاشتين
+     تنادياها وقت الرسم. *@
+  <script src="/js/audit-labels.js" asp-append-version="true"></script>
 
   @* قائمة الاختيار بشكل النظام بدل قائمة نظام التشغيل — بتشتغل تلقائيًا على
      كل <select>. بعد قسم Scripts عمدًا: الشاشات بتبني قوائمها في القسم ده،

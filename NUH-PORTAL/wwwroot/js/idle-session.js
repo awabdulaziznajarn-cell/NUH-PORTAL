@@ -9,6 +9,22 @@
 //  ملف مشترك بين شاشات الموظفين وبوابة الطالب — قاعدة واحدة لا نسختان.
 //  المهلة نفسها تأتي من الخادم (Core/SessionPolicy.cs) فلا يفترق الرقمان.
 // ==========================================================================
+// ⚠️ ترجمة آمنة: الملف ده بيتحمّل في صفحات ممكن ما يكونش i18n.js فيها،
+//    فلو t() مش موجودة أو المفتاح ناقص بنرجع للنص العربي الافتراضي.
+var __IDLE_AR = {
+  pt_idleTitle: 'جلستك على وشك الانتهاء',
+  pt_idleText: 'لم يُسجَّل أي نشاط منذ فترة. سيتم إنهاء الجلسة تلقائيًا خلال',
+  pt_idleStay: 'متابعة الجلسة',
+  pt_idleLogout: 'تسجيل الخروج الآن',
+  pt_idleOverTitle: 'انتهت الجلسة لعدم النشاط',
+  pt_idleOverText: 'تم تسجيل خروجك تلقائيًا حفاظًا على أمان بياناتك.',
+  pt_idleHome: 'العودة للبوابة'
+};
+function tx(k) {
+  if (typeof t === 'function') { var v = t(k); if (v && v !== k) return v; }
+  return __IDLE_AR[k] || k;
+}
+
 var NuhIdle = (function () {
 
   var ACTIVITY_KEY = 'nuhLastActivity';   // مشترك بين التبويبات
@@ -31,25 +47,25 @@ var NuhIdle = (function () {
 
     var css = document.createElement('style');
     css.textContent =
-      '#nuhIdleOverlay{position:fixed;inset:0;background:rgba(17,28,66,.55);z-index:99999;' +
+      '#nuhIdleOverlay{position:fixed;inset:0;background:rgba(16,70,49,.55);z-index:99999;' +
         'display:none;align-items:center;justify-content:center;padding:20px;' +
         'font-family:"IBM Plex Sans Arabic",sans-serif}' +
       '#nuhIdleOverlay.show{display:flex}' +
       '#nuhIdleBox{background:#fff;border-radius:16px;max-width:420px;width:100%;padding:28px 26px;' +
-        'text-align:center;box-shadow:0 20px 60px rgba(17,28,66,.3);direction:rtl}' +
-      '#nuhIdleBox .ic{width:56px;height:56px;border-radius:50%;background:#FFF7E6;color:#B8860B;' +
+        'text-align:center;box-shadow:0 20px 60px rgba(16,70,49,.3);direction:rtl}' +
+      '#nuhIdleBox .ic{width:56px;height:56px;border-radius:50%;background:#fffaeb;color:#7a5c0b;' +
         'display:flex;align-items:center;justify-content:center;margin:0 auto 14px}' +
-      '#nuhIdleBox h3{font-size:17px;font-weight:800;color:#111C42;margin-bottom:8px}' +
-      '#nuhIdleBox p{font-size:13.5px;color:#4A5270;line-height:2;margin-bottom:6px}' +
-      '#nuhIdleCount{display:block;font-size:30px;font-weight:800;color:#991B1B;' +
+      '#nuhIdleBox h3{font-size:17px;font-weight:800;color:#104631;margin-bottom:8px}' +
+      '#nuhIdleBox p{font-size:13.5px;color:#333741;line-height:2;margin-bottom:6px}' +
+      '#nuhIdleCount{display:block;font-size:30px;font-weight:800;color:#b42318;' +
         'direction:ltr;letter-spacing:2px;margin:10px 0 18px;font-variant-numeric:tabular-nums}' +
       '#nuhIdleBox .btns{display:flex;gap:10px}' +
       '#nuhIdleBox button{flex:1;padding:12px;border-radius:10px;border:none;cursor:pointer;' +
         'font-family:inherit;font-size:14px;font-weight:700;transition:all .2s}' +
-      '#nuhIdleStay{background:#1B2A5E;color:#fff}' +
-      '#nuhIdleStay:hover{background:#2B3E7E}' +
-      '#nuhIdleOut{background:#F4F6FB;color:#4A5270;border:1.5px solid #DDE3F0!important}' +
-      '#nuhIdleOut:hover{background:#EEF1F8}';
+      '#nuhIdleStay{background:#166a45;color:#fff}' +
+      '#nuhIdleStay:hover{background:#25935f}' +
+      '#nuhIdleOut{background:#f5f5f6;color:#333741;border:1.5px solid #dcdfe4!important}' +
+      '#nuhIdleOut:hover{background:#eceded}';
     document.head.appendChild(css);
 
     var o = document.createElement('div');
@@ -59,12 +75,14 @@ var NuhIdle = (function () {
         '<div class="ic"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
           'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
           '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>' +
-        '<h3>جلستك على وشك الانتهاء</h3>' +
-        '<p>لم يُسجَّل أي نشاط منذ فترة. سيتم إنهاء الجلسة تلقائيًا خلال</p>' +
+        // ⚠️ النص من قاموس الـ resx — الشاشة دي بتظهر في بوابة الطالب كمان
+        //    وهي بلغتين، فما ينفعش يكون مكتوب عربي هنا.
+        '<h3>' + tx('pt_idleTitle') + '</h3>' +
+        '<p>' + tx('pt_idleText') + '</p>' +
         '<span id="nuhIdleCount">2:00</span>' +
         '<div class="btns">' +
-          '<button id="nuhIdleStay" type="button">متابعة الجلسة</button>' +
-          '<button id="nuhIdleOut" type="button">تسجيل الخروج الآن</button>' +
+          '<button id="nuhIdleStay" type="button">' + tx('pt_idleStay') + '</button>' +
+          '<button id="nuhIdleOut" type="button">' + tx('pt_idleLogout') + '</button>' +
         '</div>' +
       '</div>';
     document.body.appendChild(o);
@@ -111,14 +129,14 @@ var NuhIdle = (function () {
     ensureModal();
     var box = document.getElementById('nuhIdleBox');
     box.innerHTML =
-      '<div class="ic" style="background:#FEF2F2;color:#991B1B">' +
+      '<div class="ic" style="background:#fef3f2;color:#b42318">' +
         '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
         'stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/>' +
         '<line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>' +
-      '<h3>انتهت الجلسة لعدم النشاط</h3>' +
-      '<p style="margin-bottom:18px">تم تسجيل خروجك تلقائيًا حفاظًا على أمان بياناتك.</p>' +
+      '<h3>' + tx('pt_idleOverTitle') + '</h3>' +
+      '<p style="margin-bottom:18px">' + tx('pt_idleOverText') + '</p>' +
       '<div class="btns"><button id="nuhIdleHome" type="button" ' +
-        'style="background:#1B2A5E;color:#fff">' + (cfg.homeLabel || 'العودة للبوابة') + '</button></div>';
+        'style="background:#166a45;color:#fff">' + (cfg.homeLabel || tx('pt_idleHome')) + '</button></div>';
     document.getElementById('nuhIdleOverlay').classList.add('show');
     document.getElementById('nuhIdleHome').addEventListener('click', function () {
       window.location.replace(cfg.homeUrl || '/');

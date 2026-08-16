@@ -5,8 +5,12 @@ using NUH_PORTAL.Services.Interfaces;
 namespace NUH_PORTAL.Controllers
 {
     // كنترولر رفيع — منطق المرفقات في IAttachmentService
-    // مرفقات الطلبات (صور الهويات) = وثائق حسّاسة؛ ليها صلاحية مستقلة عشان
-    // المسؤول يقدر يدّي موظف حق مراجعة الطلب من غير ما يشوف صور الهوية.
+    // مرفقات الطلبات (صور الهويات) = وثائق حسّاسة؛ لحاملي requests.attachments فقط، مش لتوكن الطالب.
+    // ⚠️ كانت "requests.process" — واسم مش موجود في ApplicationPermissions.
+    //    Program.cs بيسجّل policy لكل صلاحية في القائمة بس، فالاسم ده مالوش
+    //    policy، والتفويض كان بيرمي استثناء والرد بيطلع 500. يعني كل مرفقات
+    //    الطلبات (رفع/عرض/تنزيل/حذف) كانت واقفة. الصلاحية المصمّمة لده
+    //    اسمها requests.attachments وكانت معرّفة ومش مستخدمة في أي سطر.
     [Authorize(Policy = "requests.attachments")]
     [Route("api/[controller]")]
     [ApiController]

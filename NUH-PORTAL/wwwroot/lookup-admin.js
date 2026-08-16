@@ -16,7 +16,7 @@
   function showToast(msg, isError) {
     var el = document.getElementById('toast'); if (!el) return;
     document.getElementById('toast-msg').textContent = msg;
-    el.style.background = isError ? '#991B1B' : '#0F6E56';
+    el.style.background = isError ? '#b42318' : '#067647';
     el.classList.add('show');
     setTimeout(function () { el.classList.remove('show'); }, 3500);
   }

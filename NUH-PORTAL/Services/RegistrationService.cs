@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using NUH_PORTAL.Core;
 using NUH_PORTAL.Core.Exceptions;
 using NUH_PORTAL.Data;
 using NUH_PORTAL.Models;
@@ -43,16 +44,9 @@ namespace NUH_PORTAL.Services
             return $"{prefix}{nextSeq:D6}";
         }
 
-        private static string NormalizePhone(string mobile)
-        {
-            if (string.IsNullOrWhiteSpace(mobile)) return mobile;
-            var digits = new string(mobile.Where(char.IsDigit).ToArray());
-            if (digits.Length == 10 && digits.StartsWith("05"))
-                return "9665" + digits[2..];
-            if (digits.Length == 9 && digits.StartsWith("5"))
-                return "966" + digits;
-            return digits;
-        }
+        // ⚠️ حُذفت النسخة المحلية: كانت لا تعرف بادئة 00966 فتُخزّن رقمًا بصيغة
+        //    ويُبحث عنه بصيغة أخرى. القاعدة الوحيدة في Core/IdentityRules.cs.
+        private static string NormalizePhone(string mobile) => IdentityRules.NormalizeMobileOrDigits(mobile);
 
         // ⚠️ الحالات "المفتوحة" لازم تشمل مصطلحات المسارين: مسار تسجيل الطالب
         //    (pending_*) ومسار طلبات الموظف (submitted / cyber_review / cyber_approved).
@@ -465,7 +459,7 @@ namespace NUH_PORTAL.Services
             return true;
         }
 
-        public async Task<bool> RequestMoreInfoAsync(int requestId, int reviewerId, string notes, string? fromStage = null)
+        public async Task<bool> RequestMoreInfoAsync(int requestId, int reviewerId, string notes, string? fromStage = null, string? infoFields = null)
         {
             var request = await _context.Requests.FindAsync(requestId);
             if (request == null)
@@ -474,6 +468,7 @@ namespace NUH_PORTAL.Services
             var currentStage = fromStage ?? request.Status;
             request.Status = "need_more_info";
             request.Notes = notes;
+            request.InfoFields = infoFields;
 
             await _context.SaveChangesAsync();
             await _workflowService.LogTransitionAsync(requestId, currentStage, "need_more_info", reviewerId, notes);
@@ -496,6 +491,10 @@ namespace NUH_PORTAL.Services
             req.Status = targetStage;
             req.ReviewedAt = null;
             req.ReviewedBy = null;
+            // ⚠️ الخانات المطلوبة تخصّ جولة المراجعة اللي خلصت. لو سابناها،
+            //    الجولة الجاية هتفتح للطالب نفس الخانات القديمة بغضّ النظر عن
+            //    اللي المراجع طلبه فعلًا هذه المرة.
+            req.InfoFields = null;
 
             await _context.SaveChangesAsync();
             // الملاحظة بتيجي من طبقة التدفق ومعاها ملخّص التعديلات — من غيرها المراجع

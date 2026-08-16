@@ -122,11 +122,31 @@ if (jwtKey == "#{JWT_SECRET}#")
 // المصادقة نفسها فاضلة على JWT/Cookie تحت؛ Identity بيوفّر UserManager/RoleManager + الهاشر.
 builder.Services.AddIdentityCore<User>(opt =>
 {
-    opt.Password.RequireDigit = false;
-    opt.Password.RequireNonAlphanumeric = false;
-    opt.Password.RequireUppercase = false;
-    opt.Password.RequiredLength = 6;
+    // ⚠️ كانت ٦ أحرف بلا أي شرط — يعني "123456" مقبولة. الحسابات المحلية دي
+    //    مسار احتياطي بيشتغل لما الأكتف دايركتوري ما يردّش، وساعتها هي الحارس
+    //    الوحيد على النظام كله. الشروط دي حد أدنى معقول مش تشديد.
+    opt.Password.RequireDigit = true;
+    opt.Password.RequireNonAlphanumeric = false;   // رمز إجباري بيدفع الناس تكتبها على ورقة
+    opt.Password.RequireUppercase = false;         // لا معنى له مع كلمات المرور العربية/المختلطة
+    opt.Password.RequiredLength = 10;
     opt.User.RequireUniqueEmail = false;
+
+    // ====================================================================
+    //  ⚠️ قفل الحساب — ماكانش موجود خالص.
+    //
+    //     النتيجة اللي كانت قائمة: محاولات تخمين بلا أي حد ولا قفل على
+    //     نموذج دخول الموظفين. ومسار المصادقة كان بيستخدم
+    //     UserManager.CheckPasswordAsync وهي **لا** بتزوّد عدّاد الفشل
+    //     ولا بتفحص القفل — فحتى لو كان مفعّلًا ماكانش هيشتغل.
+    //
+    //     تلات محاولات وربع ساعة: بتوقّف التخمين الآلي عمليًا، وبتسيب مجالًا
+    //     للموظف اللي بيغلط في كلمة مروره من غير ما يتقفل عليه يوم كامل.
+    //     ⚠️ مقايضة مقصودة: القفل بالاسم معناه إن حد يقدر يقفل حساب موظف
+    //        عمدًا. ولذلك القفل قصير ومعاه حد معدل على مستوى الـ IP تحت.
+    // ====================================================================
+    opt.Lockout.AllowedForNewUsers = true;
+    opt.Lockout.MaxFailedAccessAttempts = 3;
+    opt.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
 })
     .AddRoles<Role>()
     .AddEntityFrameworkStores<AppDbContext>()
@@ -188,6 +208,10 @@ builder.Services.AddAuthentication(options =>
         options.Cookie.Name = "NUH.Auth";
         options.Cookie.HttpOnly = true;
         options.Cookie.SameSite = SameSiteMode.Lax;
+        // كوكي الدخول ماتتبعتش إلا على HTTPS. المنصة مربوطة على :80 و:443 والـ :80
+        // بيحوّل على HTTPS، لكن من غير السطر ده أول نداء http قبل التحويل
+        // بيطلّع الكوكي على الشبكة بالنص الواضح وتبقى جلسة كاملة مكشوفة.
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
 
         // نداءات /api لازم ترجع كود حالة، مش صفحة HTML. الافتراضي في مصادقة الكوكي
         // إنها تحوّل على صفحة الدخول، فالـ JS كان بيستلم HTML بدل JSON ويفشل بصمت.
@@ -276,7 +300,11 @@ builder.Services.Configure<IpRateLimitOptions>(options =>
     options.GeneralRules = new List<RateLimitRule>
     {
         // تسجيل الدخول — مكافحة تخمين كلمة المرور
-        new RateLimitRule { Endpoint = "POST:/api/Auth/Login", Period = "1m", Limit = 20 },
+        // ⚠️ القاعدة كانت على /api/Auth/Login بس، ومفيش أي واجهة بتستخدم المسار ده.
+        //    نموذج دخول الموظفين الفعلي بيرسل على POST /Account/Login (Views/Account/Login.cshtml)
+        //    وكان بلا أي حد — يعني الحماية كانت على باب مقفول والباب المفتوح جنبه.
+        new RateLimitRule { Endpoint = "POST:/Account/Login", Period = "1m", Limit = 10 },
+        new RateLimitRule { Endpoint = "POST:/api/Auth/Login", Period = "1m", Limit = 10 },
         // إرسال OTP — مكافحة سبام الرسائل وتعداد الأرقام (الخدمة كمان بتمنع طلب قبل مرور دقيقة)
         new RateLimitRule { Endpoint = "POST:/api/Otp/send", Period = "10m", Limit = 5 },
         // التحقق من OTP — مكافحة التخمين (الخدمة كمان بتقفل بعد 3 محاولات)
@@ -306,19 +334,14 @@ if (adConfig.Port != 636)
     Console.WriteLine("WARNING: ActiveDirectory port is set to {0}. LDAPS (port 636) is required for production security. Port 389 (plain LDAP) has been rejected.", adConfig.Port);
     adConfig.Port = 636;
 }
-if (adConfig.RoleMappings == null || adConfig.RoleMappings.Count == 0)
-{
-    Console.WriteLine("WARNING: No ActiveDirectory RoleMappings configured. Using default mapping (all users get 'User' role).");
-    adConfig.RoleMappings = new List<AdRoleMapping>
-    {
-        new AdRoleMapping { AdGroup = "Housing_Admin", ApplicationRole = "Admin" },
-        new AdRoleMapping { AdGroup = "Housing_Supervisor", ApplicationRole = "Supervisor" }
-    };
-}
 builder.Services.Configure<ActiveDirectoryConfig>(builder.Configuration.GetSection("ActiveDirectory"));
 builder.Services.Configure<ADServiceAccountConfig>(builder.Configuration.GetSection("ADServiceAccount"));
+// سكن أعضاء هيئة التدريس — مسارات الـ OU. في الإعدادات مش في الكود عشان نقل
+// أو تصحيح اسم OU في الدومين يبقى تعديل إعداد، مش build ونشر.
+builder.Services.Configure<FacultyHousingConfig>(builder.Configuration.GetSection("FacultyHousing"));
 builder.Services.AddSingleton<ActiveDirectoryService>();
 builder.Services.AddScoped<ADProvisioningService>();
+builder.Services.AddScoped<FacultyHousingService>();
 builder.Services.AddScoped<OtpService>();
 builder.Services.AddScoped<SmsService>();
 builder.Services.AddScoped<IWorkflowService, WorkflowService>();
@@ -376,6 +399,27 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 
 var app = builder.Build();
 
+// ⚠️ مسح ترويسات عنوان العميل اللي بتجي من برّا — لازم يكون أول حاجة خالص.
+//
+// التطبيق مش ورا أي reverse proxy: IIS مربوط عليه in-process والـ bindings
+// مباشرة (‎:80 و:443)، يعني مفيش حد موثوق بيضيف X-Real-IP أو X-Forwarded-For.
+// ومع كده AspNetCoreRateLimit مضبوط على RealIpHeader = "X-Real-IP" وبيصدّق الترويسة
+// زي ما هي. فأي حد يبعت X-Real-IP بقيمة مختلفة مع كل محاولة يبقى عميل
+// جديد في نظر الحد، وحد الـ 10 محاولات/دقيقة على الدخول يبقى بلا معنى — وكذلك
+// حدود OTP والتتبع والتسجيل الذاتي. بنمسحهم فيبقى المصدر الوحيد للعنوان
+// هو عنوان الاتصال الحقيقي (Connection.RemoteIpAddress) اللي ماينفعش يتزوّر.
+//
+// لو اتحط قدّام المنصة proxy فعلي يوم من الأيام، امسح الـ middleware دي
+// وضيف عنوان الـ proxy في KnownProxies فوق — ماتسيبهمش مفتوحين للكل.
+app.Use(async (ctx, next) =>
+{
+    ctx.Request.Headers.Remove("X-Real-IP");
+    ctx.Request.Headers.Remove("X-Forwarded-For");
+    ctx.Request.Headers.Remove("X-Forwarded-Proto");
+    ctx.Request.Headers.Remove("X-Forwarded-Host");
+    await next();
+});
+
 // ✅ Forwarded Headers — لازم يكون أول Middleware
 app.UseForwardedHeaders();
 
@@ -420,7 +464,7 @@ app.Use(async (context, next) =>
 
     if (total > slowRequestMs)
     {
-        app.Logger.LogWarning("SLOW {Method} {Path} - {Ms:F0} ms",
+        app.Logger.LogWarning("SLOW {Method} {Path} — {Ms:F0} ms",
             context.Request.Method, context.Request.Path.Value, total);
 
         // يُكتب في سجل الأخطاء برسالة عربية. مؤجّل عن مسار الرد فلا يؤخّر المستخدم.
@@ -486,7 +530,7 @@ try
 }
 catch (Exception ex)
 {
-    app.Logger.LogWarning(ex, "Role/permission seeding skipped - run 'dotnet ef database update' first.");
+    app.Logger.LogWarning(ex, "Role/permission seeding skipped — run 'dotnet ef database update' first.");
 }
 
 // ✅ Seed dev users (Development فقط) — للدخول عبر local fallback من غير AD
@@ -549,7 +593,7 @@ try
 }
 catch (Exception ex)
 {
-    app.Logger.LogWarning(ex, "Lookup seeding skipped - run 'dotnet ef database update' first (lookup tables may not exist yet).");
+    app.Logger.LogWarning(ex, "Lookup seeding skipped — run 'dotnet ef database update' first (lookup tables may not exist yet).");
 }
 
 // ====================================================================
@@ -597,12 +641,63 @@ try
 
     if (missing.Count > 0)
         app.Logger.LogWarning(
-            "MISSING UI TEXT - {Count} code(s) appear on screen as raw codes because they have no key in SharedResource.resx: {Keys}",
+            "MISSING UI TEXT — {Count} code(s) appear on screen as raw codes because they have no key in SharedResource.resx: {Keys}",
             missing.Count, string.Join(", ", missing));
 }
 catch (Exception ex)
 {
     app.Logger.LogWarning(ex, "UI text check skipped.");
+}
+
+// ====================================================================
+//  🔐 فحص أسماء الصلاحيات عند الإقلاع.
+//
+//  ⚠️ العيب اللي بيعالجه:
+//     كل [Authorize(Policy = "...")] بيشاور على اسم نصّي، والأسماء دي
+//     بتتسجّل من ApplicationPermissions.All فوق. لو الاسم في الكنترولر
+//     مش موجود في القائمة، ASP.NET بيرمي استثناء وقت الطلب — يعني الشاشة
+//     بترجّع 500 والمستخدم مايعرفش السبب، والمطوّر مايكتشفش غير بالصدفة.
+//
+//     وده حصل فعلًا: "requests.process" و "students.manage" كانوا مكتوبين
+//     في أربع كنترولرات وهما مش من الصلاحيات المعرّفة، فمرفقات الطلبات
+//     وكل عمليات الكتابة على الطلاب كانت واقفة بـ 500 من غير ما حد يلاحظ.
+//
+//     الفحص ده بيقرأ كل سمات التفويض في التجميعة ويقارنها بالقائمة، ويكتب
+//     تحذيرًا واضحًا في السجل لحظة الإقلاع. غلطة الطباعة بتبان في ثانية
+//     بدل ما تفضل مستخبية لشهور.
+// ====================================================================
+try
+{
+    var known = new HashSet<string>(
+        NUH_PORTAL.Core.ApplicationPermissions.All.Select(p => p.Value),
+        StringComparer.Ordinal);
+
+    var unknown = typeof(Program).Assembly.GetTypes()
+        .Where(t => typeof(Microsoft.AspNetCore.Mvc.ControllerBase).IsAssignableFrom(t)
+                 || typeof(Microsoft.AspNetCore.Mvc.Controller).IsAssignableFrom(t))
+        .SelectMany(t => t.GetCustomAttributes(typeof(AuthorizeAttribute), true)
+            .Concat(t.GetMethods().SelectMany(m => m.GetCustomAttributes(typeof(AuthorizeAttribute), true))))
+        .Cast<AuthorizeAttribute>()
+        .Select(a => a.Policy)
+        .Where(pol => !string.IsNullOrWhiteSpace(pol))
+        .Select(pol => pol!)
+        // أسماء مخططات المصادقة مش سياسات صلاحيات
+        .Where(pol => pol != "NUH_Smart")
+        .Distinct(StringComparer.Ordinal)
+        .Where(pol => !known.Contains(pol))
+        .OrderBy(x => x, StringComparer.Ordinal)
+        .ToList();
+
+    if (unknown.Count > 0)
+        app.Logger.LogError(
+            "UNKNOWN AUTHORIZATION POLICY — {Count} policy name(s) used in controllers do not exist in ApplicationPermissions.All. Every endpoint using them returns 500: {Names}",
+            unknown.Count, string.Join(", ", unknown));
+    else
+        app.Logger.LogInformation("Authorization policy check passed — {Count} permissions registered.", known.Count);
+}
+catch (Exception ex)
+{
+    app.Logger.LogWarning(ex, "Authorization policy check skipped.");
 }
 
 // ✅ Security headers — حماية أساسية على مستوى كل الردود

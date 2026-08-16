@@ -32,7 +32,8 @@ namespace NUH_PORTAL.Services
 
         public const long MaxFileSize = 10 * 1024 * 1024;
 
-        private static readonly string[] ValidStatuses = { "graduated", "dismissed", "transferred", "left_housing" };
+        // ⚠️ "other" مضافة هنا كمان — من غيرها الشاشة تبعت القيمة والسيرفر يرفضها.
+        private static readonly string[] ValidStatuses = { "graduated", "dismissed", "transferred", "left_housing", "other" };
 
         // الحالات اللي بتنهي علاقة الطالب بالجامعة — دي اللي مايتكررش.
         // «ترك الإسكان الجامعي» مش منها: الطالب سايب السكن بس ولسه على رأس عمله.
@@ -49,6 +50,7 @@ namespace NUH_PORTAL.Services
             StudentStatus.dismissed => "فصل من الكلية",
             StudentStatus.transferred => "تحويل إلى جامعة أخرى",
             StudentStatus.left_housing => "ترك الإسكان الجامعي",
+            StudentStatus.other => "أخرى",
             _ => st?.ToString() ?? ""
         };
 
@@ -136,6 +138,7 @@ namespace NUH_PORTAL.Services
                 "dismissed" => "فصل من الكلية",
                 "transferred" => "تحويل إلى جامعة أخرى",
                 "left_housing" => "ترك الإسكان الجامعي",
+                "other" => "أخرى",
                 _ => st
             };
 
@@ -155,6 +158,7 @@ namespace NUH_PORTAL.Services
                 "dismissed" => StudentStatus.dismissed,
                 "transferred" => StudentStatus.transferred,
                 "left_housing" => StudentStatus.left_housing,
+                "other" => StudentStatus.other,
                 _ => student.student_status
             };
             student.status = StudentState.left;
@@ -284,13 +288,20 @@ namespace NUH_PORTAL.Services
         // حالة)؛ بقوا اتنين: واحد للطلاب وواحد بيجمّع الإجراءات بـ GROUP BY.
         public async Task<StudentStatusStatsDto> GetStatsAsync()
         {
-            var students = await _students.Query().AsNoTracking()
-                .Where(s => !s.IsDeleted)
+            var scope = UnitOfWork.GetGenderScope();
+
+            var studentsQ = _students.Query().AsNoTracking().Where(s => !s.IsDeleted);
+            if (scope != null) studentsQ = studentsQ.Where(s => s.gender == scope);
+
+            var students = await studentsQ
                 .GroupBy(s => s.student_status)
                 .Select(g => new { Status = g.Key, Count = g.Count() })
                 .ToListAsync();
 
-            var actions = await _actions.Query().AsNoTracking()
+            var actionsQ = _actions.Query().AsNoTracking();
+            if (scope != null) actionsQ = actionsQ.Where(a => a.Student != null && a.Student.gender == scope);
+
+            var actions = await actionsQ
                 .GroupBy(a => a.StatusType)
                 .Select(g => new { Status = g.Key, Count = g.Count() })
                 .ToListAsync();
@@ -310,9 +321,16 @@ namespace NUH_PORTAL.Services
 
         public async Task<List<RecentStatusActionDto>> GetRecentAsync()
         {
-            var list = await _actions.Query().AsNoTracking()
+            var recentScope = UnitOfWork.GetGenderScope();
+            // النوع صريح مش var: Include بيرجّع IIncludableQueryable و Where بيرجّع
+            // IQueryable، فـ var بياخد النوع الضيّق وإعادة الإسناد تحت ماتعدّيش.
+            IQueryable<StudentStatusAction> recentQ = _actions.Query().AsNoTracking()
                 .Include(a => a.Student)
-                .Include(a => a.CreatedByUser)
+                .Include(a => a.CreatedByUser);
+            if (recentScope != null)
+                recentQ = recentQ.Where(a => a.Student != null && a.Student.gender == recentScope);
+
+            var list = await recentQ
                 .OrderByDescending(a => a.CreatedDate)
                 .Take(50)
                 .Select(a => new RecentStatusActionDto

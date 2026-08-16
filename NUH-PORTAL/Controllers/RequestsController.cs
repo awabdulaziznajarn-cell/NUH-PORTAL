@@ -7,9 +7,9 @@ using NUH_PORTAL.Services.Interfaces;
 namespace NUH_PORTAL.Controllers
 {
     // كنترولر رفيع — كل منطق دورة حياة الطلب في IRequestService
-    // القراءة requests.view، والإنشاء requests.create.
-    // أما المراجعة (اعتماد/رفض/إكمال) فالصلاحية المطلوبة بتعتمد على *مرحلة* الطلب،
-    // فالفحص بيتم جوّه RequestService.ReviewAsync مش هنا — نفس الـ endpoint بيخدم كل المراحل.
+    // القراءة requests.view، والإنشاء/التعديل requests.create — عشان توكن OTP (دور user) ميقراش/يعدّلش كل الطلبات.
+    // ⚠️ كان الاسم "requests.process" وهو مش معرّف في ApplicationPermissions،
+    //    فما كانش ليه policy والرد كان 500 على الإنشاء والتعديل.
     [Authorize(Policy = "requests.view")]
     [Route("api/[controller]")]
     [ApiController]
@@ -24,10 +24,10 @@ namespace NUH_PORTAL.Controllers
         public async Task<IActionResult> GetRequests()
             => Ok(await _service.GetAllAsync());
 
-        // GET api/Requests/paged?page=&pageSize=&filterText=&sortBy=&sortAsc=&status=&requestType=
+        // GET api/Requests/paged?page=&pageSize=&filterText=&sortBy=&sortAsc=&status=&requestType=&mine=
         [HttpGet("paged")]
-        public async Task<IActionResult> GetRequestsPaged([FromQuery] QueryParams queryParams, [FromQuery] string? status = null, [FromQuery] string? requestType = null)
-            => Ok(await _service.GetPagedAsync(queryParams, status, requestType));
+        public async Task<IActionResult> GetRequestsPaged([FromQuery] QueryParams queryParams, [FromQuery] string? status = null, [FromQuery] string? requestType = null, [FromQuery] bool mine = false)
+            => Ok(await _service.GetPagedAsync(queryParams, status, requestType, mine));
 
         // GET api/Requests/{id}
         [HttpGet("{id}")]
@@ -50,12 +50,13 @@ namespace NUH_PORTAL.Controllers
         public async Task<IActionResult> CreateRequest([FromBody] RequestCreateDto dto)
             => Ok(await _service.CreateAsync(dto));
 
-        // PUT api/Requests/{id}/review — الصلاحية بتتحدّد من مرحلة الطلب جوّه الـ service
+        // PUT api/Requests/{id}/review
+        [Authorize(Roles = "admin,supervisor,cyber")]
         [HttpPut("{id}/review")]
         public async Task<IActionResult> ReviewRequest(int id, [FromBody] ReviewDto dto)
             => Ok(await _service.ReviewAsync(id, dto));
 
-        // PATCH api/Requests/{id} — ربط الطلب بعملية رفع جماعي
+        // PATCH api/Requests/{id}
         [Authorize(Policy = "requests.create")]
         [HttpPatch("{id}")]
         public async Task<IActionResult> UpdateRequest(int id, [FromBody] UpdateRequestDto dto)

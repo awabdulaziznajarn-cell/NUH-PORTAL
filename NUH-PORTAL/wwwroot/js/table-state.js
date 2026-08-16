@@ -59,7 +59,7 @@ var NuhTable = (function () {
       // فشل النداء — لون مختلف عن «لا توجد نتائج» عمدًا: الاتنين مش نفس الحالة.
       error: function (msg) {
         loaded = true;
-        put(cell(colspan, msg || '', '40px', '#991B1B'));
+        put(cell(colspan, msg || '', '40px', '#b42318'));
       },
 
       // انتهى أول نداء (نجح أو فشل) — بعدها الرسالة الفارغة صادقة.
@@ -71,5 +71,44 @@ var NuhTable = (function () {
     };
   }
 
-  return { bind: bind };
+  // ⚠️ صفّ الترقيم كان مبنيًّا يدويًّا في كل شاشة بستايل مضمّن مختلف — وشاشة
+  //    «تغيير بيانات ساكن وحدة» لم يكن فيها صفّ أصلًا، فكانت تعرض أول ٢٥ وحدة
+  //    فقط من ٢٤٢ بلا أي طريقة للوصول إلى الباقي. هذه هي النسخة الوحيدة.
+  //
+  //    labels: { show, to, of, page, pageOf, prev, next } نصوص مترجمة تمرّرها الشاشة.
+  //    onGo(pageNumber) تُستدعى عند الضغط على السابق/التالي.
+  function pager(elId, data, labels, onGo) {
+    var el = typeof elId === 'string' ? document.getElementById(elId) : elId;
+    if (!el) return;
+
+    var size  = data.pageSize || 25;
+    var page  = data.page || 1;
+    var total = data.total || data.totalCount || 0;
+    var pages = Math.max(1, Math.ceil(total / size));
+    var from  = total === 0 ? 0 : (page - 1) * size + 1;
+    var to    = Math.min(total, page * size);
+    var L     = labels || {};
+
+    function esc(v) {
+      return String(v == null ? '' : v)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    el.innerHTML =
+      '<span>' + esc(L.show) + ' <b>' + from + '</b> ' + esc(L.to) + ' <b>' + to + '</b> ' +
+      esc(L.of) + ' <b>' + total + '</b></span>' +
+      '<span style="display:flex;gap:8px;align-items:center">' +
+        '<button class="btn btn-cancel" data-pg="prev"' + (page <= 1 ? ' disabled' : '') + '>' + esc(L.prev) + '</button>' +
+        '<span>' + esc(L.page) + ' ' + page + ' ' + esc(L.pageOf) + ' ' + pages + '</span>' +
+        '<button class="btn btn-cancel" data-pg="next"' + (page >= pages ? ' disabled' : '') + '>' + esc(L.next) + '</button>' +
+      '</span>';
+
+    var prev = el.querySelector('[data-pg="prev"]');
+    var next = el.querySelector('[data-pg="next"]');
+    if (prev) prev.addEventListener('click', function () { if (page > 1) onGo(page - 1); });
+    if (next) next.addEventListener('click', function () { if (page < pages) onGo(page + 1); });
+  }
+
+  return { bind: bind, pager: pager };
 })();

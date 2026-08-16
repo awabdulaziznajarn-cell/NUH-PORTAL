@@ -14,7 +14,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>@SharedLocalizer["login_submit"] - @SharedLocalizer["login_brandTitle"]</title>
+  <title>@SharedLocalizer["login_submit"] - @SharedLocalizer["Brand_Title"]</title>
   <link rel="stylesheet" href="/css/site.css" />
   <style>
     /* خاص بصفحة الدخول — نفس هوية login.html */
@@ -23,7 +23,7 @@
       background:url('/nni1.jpg') center/cover no-repeat fixed;
       position:relative;
     }
-    body::before{content:'';position:fixed;inset:0;background:linear-gradient(120deg,rgba(17,28,66,.25),rgba(17,28,66,.05) 45%,rgba(17,28,66,.35));}
+    body::before{content:'';position:fixed;inset:0;background:linear-gradient(120deg,rgba(16,70,49,.25),rgba(16,70,49,.05) 45%,rgba(16,70,49,.35));}
     .login-card{
       position:relative;z-index:1;
       background:#fff;border-radius:22px;overflow:hidden;
@@ -35,7 +35,7 @@
     .login-inner{padding:30px 34px 26px;text-align:center}
     .login-toprow{display:flex;justify-content:flex-end;margin-bottom:8px}
     .login-logo{
-      background:#fff;border:1px solid rgba(201,168,76,.25);border-radius:18px;
+      background:#fff;border:1px solid rgba(219,161,2,.25);border-radius:18px;
       box-shadow:0 6px 20px rgba(0,0,0,.08);
       display:inline-block;padding:14px 30px;margin-bottom:18px;
     }
@@ -81,7 +81,7 @@
         </div>
       </div>
       <div class="login-logo"><img src="/nu-logo.png" alt="@__logoAlt"></div>
-      <div class="login-title">@SharedLocalizer["login_brandTitle"]</div>
+      <div class="login-title">@SharedLocalizer["Brand_Title"]</div>
 
       @if (ViewData["Error"] is string err && !string.IsNullOrEmpty(err))
       {

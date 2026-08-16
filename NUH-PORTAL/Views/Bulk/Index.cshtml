@@ -4,9 +4,6 @@
 
 <style>
   /* خاص بصفحة التسجيل الجماعي — الباقي من site.css */
-  .breadcrumb{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--gray-500);margin-bottom:20px}
-  .breadcrumb a{color:var(--navy);text-decoration:none;font-weight:500}
-  .breadcrumb span{color:var(--gray-300)}
   .step-indicator{display:flex;align-items:center;gap:0;margin-bottom:28px}
   .step{display:flex;align-items:center;gap:8px;padding:10px 16px;background:var(--gray-100);font-size:12px;font-weight:600;color:var(--gray-500);position:relative}
   .step:first-child{border-radius:8px 0 0 8px}
@@ -29,7 +26,7 @@
   .btn-row.center{justify-content:center}
   .upload-area{border:2px dashed var(--gray-300);border-radius:16px;padding:48px 24px;text-align:center;cursor:pointer;transition:all .2s}
   .upload-area:hover{border-color:var(--navy);background:var(--gray-50)}
-  .upload-area.dragover{border-color:var(--gold);background:rgba(201,168,76,.06)}
+  .upload-area.dragover{border-color:var(--gold);background:rgba(219,161,2,.06)}
   .upload-icon{font-size:32px;margin-bottom:12px}
   .upload-text{font-size:15px;font-weight:700;color:var(--navy-dark);margin-bottom:4px}
   .upload-hint{font-size:12px;color:var(--gray-500)}
@@ -40,20 +37,19 @@
   .alert{padding:14px 18px;border-radius:12px;font-size:13px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:10px}
   .alert-success{background:var(--green-light);color:var(--green)}
   .alert-error{background:var(--red-light);color:var(--red)}
-  .alert-info{background:#EBF4FF;color:#1A56DB}
+  .alert-info{background:#dff6e7;color:#175cd3}
   .summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
   .summary-card{background:var(--gray-50);border-radius:12px;padding:20px;text-align:center}
   .summary-card-value{font-size:28px;font-weight:800;color:var(--navy-dark)}
   .summary-card-label{font-size:12px;color:var(--gray-500);margin-top:4px}
   .table-wrapper{overflow-x:auto}
-  .error-row{background:#FFF8F8}
+  .error-row{background:#fef3f2}
   .error-msg{color:var(--red);font-size:12px}
   .hidden{display:none!important}
   .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle}
   @@keyframes spin{to{transform:rotate(360deg)}}
 </style>
 
-<div class="breadcrumb"><a href="/Home" >@SharedLocalizer["bulk_breadcrumbHome"]</a><span>/</span><span >@SharedLocalizer["bulk_breadcrumbCurrent"]</span></div>
 <div class="page-header">
   <h2 >@SharedLocalizer["bulk_pageTitle"]</h2>
   <p >@SharedLocalizer["bulk_pageDesc"]</p>

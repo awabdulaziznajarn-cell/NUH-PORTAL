@@ -7,26 +7,28 @@
   var canRequests = Perm("requests.view") || Perm("housing.view");
   var canSystem   = Perm("reports.view") || Perm("auditLogs.view") || Perm("errorLogs.view")
                     || Perm("signInLog.view") || Perm("users.view") || Perm("roles.view");
+  var canFaculty  = Perm("facultyHousing.view");
 
-  // ⚠️ كل المجموعات كانت تُرسَل *مفتوحة* من الخادم، ثم يقفلها الـ JS بعد تحميل
-  //    الصفحة كاملة. وبما أن .nav-group-body عليها transition، كان المستخدم يرى
-  //    المجموعة تنفتح ثم تنطوي أمامه — يبدو كأن أحدًا ضغط عليها.
-  //    الحل من جذره: الخادم يرسل المجموعات مقفولة إلا التي تحتوي الصفحة الحالية.
-  var navPath = (Context.Request.Path.Value ?? "/Home").TrimEnd('/').ToLowerInvariant();
-  if (navPath.Length == 0) { navPath = "/home"; }
-  bool InGroup(params string[] routes) =>
-      routes.Any(r => navPath == r || navPath.StartsWith(r + "/", StringComparison.Ordinal));
-
-  var openStudents = InGroup("/students", "/register", "/bulk", "/studentstatus");
-  var openRequests = InGroup("/requests", "/housing");
-  var openLookups  = InGroup("/colleges", "/departments", "/buildings", "/academiclevels", "/terms");
-  var openSystem   = InGroup("/reports", "/auditlog", "/errorlog", "/signinlog", "/users", "/roles");
+  // ⚠️ مسارات الشاشات لا تُكتب هنا إطلاقًا. كانت كل مجموعة تحمل قائمة مساراتها
+  //    مرة ثانية في هذا الملف (InGroup) بجانب الـ href المكتوب في البند نفسه،
+  //    فأي شاشة تُضاف أو يتغيّر مسارها تحتاج تعديلين، وأي سهو بينهما يظهر
+  //    كمجموعة لا تُفتح أو بندين مضيئين معًا. المصدر الوحيد الآن هو الـ href
+  //    المكتوب في البند: الخادم يرسل كل المجموعات مطويّة، والسكربت أسفل <nav>
+  //    يقارن المسار الحالي بالـ href ويفتح مجموعة البند المطابق - وينفّذ قبل
+  //    أول رسم مع .no-anim، فلا يرى المستخدم أي حركة.
 }
 <style>
   /* السايدبار بطول الشاشة، والقائمة بتعمل scroll جوّاها عشان توصل لكل الشاشات (إعدادات النظام تحت) */
   .sidebar{height:100vh}
-  .sidebar-nav{overflow-y:auto;min-height:0}
-  .sidebar-nav::-webkit-scrollbar{width:6px}
+  /* ⚠️ ::-webkit-scrollbar بتشتغل في كروم وإيدج بس. فايرفوكس بيتجاهلها
+     تمامًا وبيرسم الشريط بعرضه الافتراضي (١٦ بكسل تقريبًا) وبلونه الفاتح —
+     فالسايدبار كان شكله عريض ومقطوع من الجنب في فايرفوكس بس.
+     scrollbar-width و scrollbar-color هما المعياريتين اللي فايرفوكس بيقراهم،
+     ومنطقة المحتوى (.main في site.css) عندها الاتنين أصلاً — عشان كده هي
+     كانت شكلها مظبوط والسايدبار لأ. */
+  .sidebar-nav{overflow-y:auto;min-height:0;
+    scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.22) transparent}
+  .sidebar-nav::-webkit-scrollbar{width:5px}
   .sidebar-nav::-webkit-scrollbar-track{background:transparent}
   .sidebar-nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:3px}
   .sidebar-nav:hover::-webkit-scrollbar-thumb{background:rgba(255,255,255,.3)}
@@ -62,7 +64,7 @@
 
     @if (canStudents)
     {
-    <div class="nav-group @(openStudents ? "" : "collapsed")" data-group="students">
+    <div class="nav-group collapsed" data-group="students">
       <button class="nav-group-header" type="button" onclick="toggleNavGroup(this)">
         <svg class="ng-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
         <span class="ng-title">@SharedLocalizer["Nav_Section_Students"]</span>
@@ -105,7 +107,7 @@
 
     @if (canRequests)
     {
-    <div class="nav-group @(openRequests ? "" : "collapsed")" data-group="requests">
+    <div class="nav-group collapsed" data-group="requests">
       <button class="nav-group-header" type="button" onclick="toggleNavGroup(this)">
         <svg class="ng-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
         <span class="ng-title">@SharedLocalizer["Nav_Section_Requests"]</span>
@@ -118,7 +120,7 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
             <span>@SharedLocalizer["Nav_AllRequests"]</span>
             @* عدد الطلبات المستنية إجراء من المستخدم الحالي — بيتملى من الـ API تحت *@
-            <span id="navRequestsBadge" style="display:none;margin-inline-start:auto;background:#DC2626;color:#fff;font-size:11px;font-weight:700;min-width:20px;height:20px;border-radius:10px;align-items:center;justify-content:center;padding:0 6px;line-height:1"></span>
+            <span id="navRequestsBadge" style="display:none;margin-inline-start:auto;background:#d92d20;color:#fff;font-size:11px;font-weight:700;min-width:20px;height:20px;border-radius:10px;align-items:center;justify-content:center;padding:0 6px;line-height:1"></span>
           </a>
         }
         @if (User.HasClaim("permission", "housing.view"))
@@ -132,9 +134,33 @@
     </div>
     }
 
+    @if (canFaculty)
+    {
+    <div class="nav-group collapsed" data-group="faculty">
+      <button class="nav-group-header" type="button" onclick="toggleNavGroup(this)">
+        <svg class="ng-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-5h6v5"/><path d="M9 10h.01M15 10h.01"/></svg>
+        <span class="ng-title">@SharedLocalizer["Nav_Section_FacultyHousing"]</span>
+        <svg class="ng-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="nav-group-body">
+        <a class="nav-item" href="/FacultyHousing">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="1"/><path d="M9 22v-4h6v4M9 6h.01M15 6h.01M9 10h.01M15 10h.01M9 14h.01M15 14h.01"/></svg>
+          <span>@SharedLocalizer["Nav_FacultyUnits"]</span>
+        </a>
+        @if (Perm("facultyHousing.manage"))
+        {
+          <a class="nav-item" href="/FacultyHousing/Handover">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+            <span>@SharedLocalizer["Nav_FacultyHandover"]</span>
+          </a>
+        }
+      </div>
+    </div>
+    }
+
     @if (User.HasClaim("permission", "lookups.manage"))
     {
-      <div class="nav-group @(openLookups ? "" : "collapsed")" data-group="lookups">
+      <div class="nav-group collapsed" data-group="lookups">
         <button class="nav-group-header" type="button" onclick="toggleNavGroup(this)">
           <svg class="ng-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
           <span class="ng-title">@SharedLocalizer["Nav_Section_Lookups"]</span>
@@ -167,7 +193,7 @@
 
     @if (canSystem)
     {
-    <div class="nav-group @(openSystem ? "" : "collapsed")" data-group="system">
+    <div class="nav-group collapsed" data-group="system">
       <button class="nav-group-header" type="button" onclick="toggleNavGroup(this)">
         <svg class="ng-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         <span class="ng-title">@SharedLocalizer["Nav_Section_System"]</span>
@@ -258,23 +284,49 @@
         g.classList.toggle('collapsed', saved[k] === true);
       });
       var path = (location.pathname || '').replace(/\/+$/, '').toLowerCase(); if (path === '') path = '/home';
+      // ⚠️ العنصر النشط واحد لا أكثر. قاعدة البادئة وحدها كانت تُضيء بندين معًا
+      //    متى كان مسار بند امتدادًا لمسار بند آخر: على /FacultyHousing/Handover
+      //    يطابق «قائمة أعضاء هيئة التدريس» (/FacultyHousing) و«تغيير ساكن وحدة»
+      //    (/FacultyHousing/Handover) في آن واحد. المطابقة الأطول هي الأدق دائمًا،
+      //    فنجمع المرشّحين ثم نُضيء أطولهم وحده. القاعدة هنا لكل بنود القائمة،
+      //    فأي شاشة فرعية تُضاف مستقبلًا تعمل من غير استثناء خاص بها.
+      var bestItem = null, bestLen = -1;
       document.querySelectorAll('.sidebar-nav a.nav-item').forEach(function (a) {
         var href = (a.getAttribute('href') || '').replace(/\/+$/, '').toLowerCase();
         if (!href) return;
-        if (path === href || path.indexOf(href + '/') === 0) {
-          a.classList.add('active');
-          var g = a.closest('.nav-group'); if (g) g.classList.remove('collapsed');
+        if ((path === href || path.indexOf(href + '/') === 0) && href.length > bestLen) {
+          bestLen = href.length; bestItem = a;
         }
       });
+      if (bestItem) {
+        bestItem.classList.add('active');
+        var bg = bestItem.closest('.nav-group'); if (bg) bg.classList.remove('collapsed');
+      }
     }
+    // ⚠️ كل انتقال بين الصفحات بيعيد بناء السايدبار من الصفر، يعني القائمة
+    //    بترجع لأولها. اللي بيختار «المستخدمون» من «إعدادات النظام» — وهي آخر
+    //    مجموعة تحت — كان بيلاقي القائمة رجعت فوق خالص والعنصر اللي لسه مختاره
+    //    مش باين. بنحرّك القائمة بالقدر اللي يخلّي العنصر النشط ظاهر وبس.
+    //    مش scrollIntoView: دي بتحرّك كل العناصر الأب كمان (الصفحة نفسها).
+    function revealActive(nav) {
+      var a = nav.querySelector('a.nav-item.active');
+      if (!a) return;
+      var ar = a.getBoundingClientRect(), nr = nav.getBoundingClientRect();
+      var pad = 12;                                   // فسحة صغيرة فوق/تحت العنصر
+      if (ar.bottom > nr.bottom - pad) nav.scrollTop += ar.bottom - nr.bottom + pad;
+      else if (ar.top < nr.top + pad) nav.scrollTop -= nr.top - ar.top + pad;
+    }
+
     // ⚠️ كان الاسترجاع ينتظر DOMContentLoaded — أي بعد رسم الصفحة كاملة، فيرى
     //    المستخدم الحركة. السكربت هنا بعد <nav> مباشرة، فالعناصر مقروءة بالفعل
     //    ويمكن التنفيذ فورًا قبل أول رسم.
     init();
 
-    // رفع منع الحركة بعد أول رسم — الضغط اليدوي بعدها يتحرك بسلاسة كالمعتاد
     var navEl = document.querySelector('.sidebar-nav');
     if (navEl) {
+      // قبل أول رسم: القائمة تبان من أول لحظة على العنصر النشط، مش بتتحرك بعدين
+      revealActive(navEl);
+      // رفع منع الحركة بعد أول رسم — الضغط اليدوي بعدها يتحرك بسلاسة كالمعتاد
       requestAnimationFrame(function () {
         requestAnimationFrame(function () { navEl.classList.remove('no-anim'); });
       });

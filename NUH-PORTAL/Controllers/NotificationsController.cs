@@ -32,7 +32,7 @@ namespace NUH_PORTAL.Controllers
         [HttpPatch("read")]
         public async Task<IActionResult> MarkAsRead([FromBody] List<int> ids)
         {
-            await _service.MarkAsReadAsync(ids);
+            await _service.MarkAsReadAsync(ids, CurrentRole());
             return Ok();
         }
     }

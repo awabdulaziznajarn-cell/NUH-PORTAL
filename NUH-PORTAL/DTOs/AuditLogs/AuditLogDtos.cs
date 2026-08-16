@@ -11,6 +11,12 @@ namespace NUH_PORTAL.DTOs.AuditLogs
         public string? Search { get; set; }
         public string? SortBy { get; set; }
         public bool SortAsc { get; set; } = false;
+
+        // ⚠️ تصفية على وحدة سكن أعضاء هيئة التدريس بعينها - يفتحها زر «التقرير
+        //    الكامل» من نافذة الوحدة. الترقيم على مرجعين: التصحيح يُقيَّد على
+        //    فترة الإشغال والتسليم على الوحدة، فالتصفية تشمل الاثنين معًا وإلا
+        //    سقط نصف السجل بلا أن يلاحظ أحد.
+        public int? FacultyUnitId { get; set; }
     }
 
     public class AuditChangeDto

@@ -117,14 +117,11 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="AppTitleSuffix" xml:space="preserve">
-    <value>Student Housing System</value>
-  </data>
   <data name="Brand_Sub" xml:space="preserve">
     <value>Najran University</value>
   </data>
   <data name="Brand_Title" xml:space="preserve">
-    <value>Student Housing System</value>
+    <value>University Housing Portal</value>
   </data>
   <data name="hs_actDisableDesc" xml:space="preserve">
     <value>Immediately blocks the student from the housing network. The account and its data are kept.</value>
@@ -398,12 +395,6 @@
   </data>
   <data name="apiError" xml:space="preserve">
     <value>API connection error</value>
-  </data>
-  <data name="appTitle" xml:space="preserve">
-    <value>Students Housing System</value>
-  </data>
-  <data name="appTitleShort" xml:space="preserve">
-    <value>Students Housing System</value>
   </data>
   <data name="apply" xml:space="preserve">
     <value>Apply</value>
@@ -689,12 +680,6 @@
   </data>
   <data name="bulk_back" xml:space="preserve">
     <value>Back</value>
-  </data>
-  <data name="bulk_breadcrumbCurrent" xml:space="preserve">
-    <value>Bulk Registration (Excel)</value>
-  </data>
-  <data name="bulk_breadcrumbHome" xml:space="preserve">
-    <value>Home</value>
   </data>
   <data name="bulk_col_apartment" xml:space="preserve">
     <value>Apartment</value>
@@ -1003,7 +988,7 @@
     <value>Cyber Security Reject</value>
   </data>
   <data name="dashboard" xml:space="preserve">
-    <value>Dashboard</value>
+    <value>Main</value>
   </data>
   <data name="date" xml:space="preserve">
     <value>Date</value>
@@ -1244,9 +1229,6 @@
   </data>
   <data name="home_badge_housingReview" xml:space="preserve">
     <value>Housing Review</value>
-  </data>
-  <data name="home_badge_left" xml:space="preserve">
-    <value>Departures</value>
   </data>
   <data name="home_badge_readyProvision" xml:space="preserve">
     <value>Ready to Create</value>
@@ -1590,9 +1572,6 @@
   <data name="login_back" xml:space="preserve">
     <value>Back to the housing portal</value>
   </data>
-  <data name="login_brandTitle" xml:space="preserve">
-    <value>Student Housing System</value>
-  </data>
   <data name="login_footer" xml:space="preserve">
     <value>Deanship of Digital Transformation &amp; Knowledge Resources - IT - Najran University 2026</value>
   </data>
@@ -1808,12 +1787,6 @@
   </data>
   <data name="refresh" xml:space="preserve">
     <value>Refresh</value>
-  </data>
-  <data name="reg_breadcrumbCurrent" xml:space="preserve">
-    <value>Register New Student</value>
-  </data>
-  <data name="reg_breadcrumbHome" xml:space="preserve">
-    <value>Home</value>
   </data>
   <data name="reg_btnRegister" xml:space="preserve">
     <value>Register New Student</value>
@@ -2099,9 +2072,6 @@
   </data>
   <data name="req_col_type" xml:space="preserve">
     <value>Request Type</value>
-  </data>
-  <data name="req_confirmChangeFmt" xml:space="preserve">
-    <value>Change request status to "{0}"?</value>
   </data>
   <data name="req_lbl_all" xml:space="preserve">
     <value>All</value>
@@ -3333,9 +3303,6 @@
   <data name="rdp_card_reviewHistory" xml:space="preserve">
     <value>Review History</value>
   </data>
-  <data name="rdp_about_sysName" xml:space="preserve">
-    <value>Students Housing System - Najran University</value>
-  </data>
   <data name="repj_action_login" xml:space="preserve">
     <value>Login</value>
   </data>
@@ -3801,12 +3768,6 @@
   <data name="usr_pageTitle" xml:space="preserve">
     <value>User Management</value>
   </data>
-  <data name="stu_pageSubtitle" xml:space="preserve">
-    <value>View and edit the records of students registered in housing</value>
-  </data>
-  <data name="hou_pageSubtitle" xml:space="preserve">
-    <value>Track housing accounts and link them to Active Directory</value>
-  </data>
   <data name="usr_pageSubtitle" xml:space="preserve">
     <value>Add and edit users and assign roles</value>
   </data>
@@ -4188,9 +4149,6 @@
   <data name="Nav_Terms" xml:space="preserve">
     <value>Pledge Terms</value>
   </data>
-  <data name="Nav_Departure" xml:space="preserve">
-    <value>Departure</value>
-  </data>
   <data name="lk_activated" xml:space="preserve">
     <value>Activated</value>
   </data>
@@ -4271,9 +4229,6 @@
   </data>
   <data name="reg_optSelectFloorFirst" xml:space="preserve">
     <value>Select floor first</value>
-  </data>
-  <data name="reg_optSelectCollegeFirst" xml:space="preserve">
-    <value>Select college first</value>
   </data>
   <data name="reg_optSelectApartment" xml:space="preserve">
     <value>Select apartment</value>
@@ -4490,5 +4445,1169 @@
   </data>
   <data name="rdp_wf_cyberApp" xml:space="preserve">
     <value>Cybersecurity approval</value>
+  </data>
+  <data name="reg_optSelectCollegeFirst" xml:space="preserve">
+    <value>Select college first</value>
+  </data>
+  <data name="stu_pageSubtitle" xml:space="preserve">
+    <value>View and edit the records of students registered in housing</value>
+  </data>
+  <data name="hou_pageSubtitle" xml:space="preserve">
+    <value>Track housing accounts and link them to Active Directory</value>
+  </data>
+  <data name="pt_logoAlt" xml:space="preserve">
+    <value>Najran University</value>
+  </data>
+  <data name="pt_langToggle" xml:space="preserve">
+    <value>العربية</value>
+  </data>
+  <data name="pt_backToPortal" xml:space="preserve">
+    <value>Back to the student portal</value>
+  </data>
+  <data name="pt_connError" xml:space="preserve">
+    <value>Could not reach the server</value>
+  </data>
+  <data name="pt_headerTitle" xml:space="preserve">
+    <value>University Housing Registration</value>
+  </data>
+  <data name="pt_formTitle" xml:space="preserve">
+    <value>Registration Form</value>
+  </data>
+  <data name="pt_formSubtitle" xml:space="preserve">
+    <value>Please fill in the following details to register for university housing</value>
+  </data>
+  <data name="pt_lblNameAr" xml:space="preserve">
+    <value>Name in Arabic</value>
+  </data>
+  <data name="pt_errNameAr" xml:space="preserve">
+    <value>Enter your Arabic name in all three fields</value>
+  </data>
+  <data name="pt_errNameEn" xml:space="preserve">
+    <value>Enter your English name in all three fields</value>
+  </data>
+  <data name="pt_valNameMatch" xml:space="preserve">
+    <value>The number of names in "Father &amp; grandfather" must match in Arabic and English</value>
+  </data>
+  <data name="pt_valPhone12" xml:space="preserve">
+    <value>The mobile number must start with 9665 and be 12 digits long</value>
+  </data>
+  <data name="pt_btnSubmit" xml:space="preserve">
+    <value>Submit request</value>
+  </data>
+  <data name="pt_btnSubmitting" xml:space="preserve">
+    <value>Submitting...</value>
+  </data>
+  <data name="pt_btnSaveResubmit" xml:space="preserve">
+    <value>Save and resubmit</value>
+  </data>
+  <data name="pt_editTitle" xml:space="preserve">
+    <value>Edit registration request</value>
+  </data>
+  <data name="pt_msgCannotEdit" xml:space="preserve">
+    <value>This request cannot be edited at the moment</value>
+  </data>
+  <data name="pt_msgResubmitOk" xml:space="preserve">
+    <value>Your request was resubmitted successfully</value>
+  </data>
+  <data name="pt_msgResubmitFail" xml:space="preserve">
+    <value>Resubmission failed</value>
+  </data>
+  <data name="pt_msgSubmitFail" xml:space="preserve">
+    <value>Submission failed</value>
+  </data>
+  <data name="pt_dupWarn" xml:space="preserve">
+    <value>These details are linked to an existing request.</value>
+  </data>
+  <data name="pt_portalTitle" xml:space="preserve">
+    <value>University Housing Portal</value>
+  </data>
+  <data name="pt_univHousingAdmin" xml:space="preserve">
+    <value>Najran University - Housing Administration</value>
+  </data>
+  <data name="pt_back" xml:space="preserve">
+    <value>Back</value>
+  </data>
+  <data name="pt_backHome" xml:space="preserve">
+    <value>Back to home</value>
+  </data>
+  <data name="pt_loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+  <data name="pt_loadFailed" xml:space="preserve">
+    <value>Could not load</value>
+  </data>
+  <data name="pt_trackRequest" xml:space="preserve">
+    <value>Track request</value>
+  </data>
+  <data name="pt_idxHeroTitle" xml:space="preserve">
+    <value>University Housing Registration Portal</value>
+  </data>
+  <data name="pt_idxHeroSub" xml:space="preserve">
+    <value>Submit your housing request and follow its status at any time - without visiting the administration.</value>
+  </data>
+  <data name="pt_idxServices" xml:space="preserve">
+    <value>Online services</value>
+  </data>
+  <data name="pt_idxServicesSub" xml:space="preserve">
+    <value>Choose the service you need</value>
+  </data>
+  <data name="pt_idxNewTitle" xml:space="preserve">
+    <value>Submit a new request</value>
+  </data>
+  <data name="pt_idxNewSub" xml:space="preserve">
+    <value>Start a housing registration request by verifying your mobile number</value>
+  </data>
+  <data name="pt_idxTrackTitle" xml:space="preserve">
+    <value>Track an existing request</value>
+  </data>
+  <data name="pt_idxTrackSub" xml:space="preserve">
+    <value>Check your request status using the request number and the last 4 digits of your mobile</value>
+  </data>
+  <data name="pt_idxStepsTitle" xml:space="preserve">
+    <value>Registration steps</value>
+  </data>
+  <data name="pt_idxStepsSub" xml:space="preserve">
+    <value>Your request goes through these stages in order - you can follow it at any stage</value>
+  </data>
+  <data name="pt_stp1" xml:space="preserve">
+    <value>Mobile number verification</value>
+  </data>
+  <data name="pt_stp1s" xml:space="preserve">
+    <value>Enter your mobile number and receive a verification code</value>
+  </data>
+  <data name="pt_stp2" xml:space="preserve">
+    <value>Accepting the declarations</value>
+  </data>
+  <data name="pt_stp2s" xml:space="preserve">
+    <value>Read the undertakings and accept them</value>
+  </data>
+  <data name="pt_stp3" xml:space="preserve">
+    <value>Entering student details</value>
+  </data>
+  <data name="pt_stp3s" xml:space="preserve">
+    <value>Fill in your personal and academic details</value>
+  </data>
+  <data name="pt_stp4" xml:space="preserve">
+    <value>Housing administration review</value>
+  </data>
+  <data name="pt_stp4s" xml:space="preserve">
+    <value>Your request is reviewed by the housing supervisor</value>
+  </data>
+  <data name="pt_stp5" xml:space="preserve">
+    <value>Cybersecurity review</value>
+  </data>
+  <data name="pt_stp5s" xml:space="preserve">
+    <value>Security verification of your data</value>
+  </data>
+  <data name="pt_stp6" xml:space="preserve">
+    <value>Request approval</value>
+  </data>
+  <data name="pt_stp6s" xml:space="preserve">
+    <value>Final approval of the registration request</value>
+  </data>
+  <data name="pt_stp7" xml:space="preserve">
+    <value>Receiving the service</value>
+  </data>
+  <data name="pt_stp7s" xml:space="preserve">
+    <value>Network account activation and housing handover</value>
+  </data>
+  <data name="pt_idxContactTitle" xml:space="preserve">
+    <value>Service location</value>
+  </data>
+  <data name="pt_idxContactSub" xml:space="preserve">
+    <value>Housing Administration - Najran University</value>
+  </data>
+  <data name="pt_idxLocLabel" xml:space="preserve">
+    <value>Location</value>
+  </data>
+  <data name="pt_idxLocValue" xml:space="preserve">
+    <value>Najran University - Housing Administration building</value>
+  </data>
+  <data name="pt_footUniv" xml:space="preserve">
+    <value>Najran University</value>
+  </data>
+  <data name="pt_footHousing" xml:space="preserve">
+    <value>University housing</value>
+  </data>
+  <data name="pt_footTrack" xml:space="preserve">
+    <value>Track a request</value>
+  </data>
+  <data name="pt_footRights" xml:space="preserve">
+    <value>All rights reserved © 2026 Najran University - Deanship of Digital Transformation and Knowledge Resources - IT</value>
+  </data>
+  <data name="pt_footDeanship" xml:space="preserve">
+    <value>Deanship of Digital Transformation and Knowledge Resources - Najran University 2026</value>
+  </data>
+  <data name="pt_phTitle" xml:space="preserve">
+    <value>Mobile number verification</value>
+  </data>
+  <data name="pt_phSubtitle" xml:space="preserve">
+    <value>Enter your mobile number to receive a verification code</value>
+  </data>
+  <data name="pt_phSendOtp" xml:space="preserve">
+    <value>Send verification code</value>
+  </data>
+  <data name="pt_phSending" xml:space="preserve">
+    <value>Sending...</value>
+  </data>
+  <data name="pt_phStaticNote" xml:space="preserve">
+    <value>SMS delivery is being activated. Use code 123456 for testing.</value>
+  </data>
+  <data name="pt_phOtpLabel" xml:space="preserve">
+    <value>Verification code</value>
+  </data>
+  <data name="pt_phVerify" xml:space="preserve">
+    <value>Verify</value>
+  </data>
+  <data name="pt_phVerifying" xml:space="preserve">
+    <value>Verifying...</value>
+  </data>
+  <data name="pt_phResend" xml:space="preserve">
+    <value>Resend the code</value>
+  </data>
+  <data name="pt_phStart5" xml:space="preserve">
+    <value>The mobile number must start with 5 - no leading zero and no 966</value>
+  </data>
+  <data name="pt_phLen9" xml:space="preserve">
+    <value>The mobile number must be 9 digits long</value>
+  </data>
+  <data name="pt_phInvalid" xml:space="preserve">
+    <value>Please enter a valid 9-digit mobile number starting with 5</value>
+  </data>
+  <data name="pt_phSentFmt" xml:space="preserve">
+    <value>A verification code was sent to +966 {0}</value>
+  </data>
+  <data name="pt_phSendFailed" xml:space="preserve">
+    <value>Sending failed</value>
+  </data>
+  <data name="pt_phCodeShort" xml:space="preserve">
+    <value>Please enter the full verification code</value>
+  </data>
+  <data name="pt_phCodeWrong" xml:space="preserve">
+    <value>Incorrect code</value>
+  </data>
+  <data name="pt_phExpiryFmt" xml:space="preserve">
+    <value>Expires in: {0}</value>
+  </data>
+  <data name="pt_phExpired" xml:space="preserve">
+    <value>The code has expired</value>
+  </data>
+  <data name="pt_phOpenNeedInfoFmt" xml:space="preserve">
+    <value>You have an open request ({0}) that needs additional information - follow it from the tracking page.</value>
+  </data>
+  <data name="pt_phAlreadyFmt" xml:space="preserve">
+    <value>You are already registered for university housing under request {0}. A new request cannot be submitted; please contact the Housing Administration for enquiries.</value>
+  </data>
+  <data name="pt_phOpenFmt" xml:space="preserve">
+    <value>You already have an open request ({0}). A new request cannot be submitted until it is reviewed or rejected; you can follow it from the tracking page, and contact the Housing Administration for enquiries.</value>
+  </data>
+  <data name="pt_phTrackFmt" xml:space="preserve">
+    <value>Track request {0}</value>
+  </data>
+  <data name="pt_decTitle" xml:space="preserve">
+    <value>Undertakings and declaration</value>
+  </data>
+  <data name="pt_decSubtitle" xml:space="preserve">
+    <value>Please read the following undertakings carefully. You cannot submit the request until you accept them.</value>
+  </data>
+  <data name="pt_decH1" xml:space="preserve">
+    <value>Declaration</value>
+  </data>
+  <data name="pt_decH2" xml:space="preserve">
+    <value>University housing policy</value>
+  </data>
+  <data name="pt_decAupLink" xml:space="preserve">
+    <value>📄 View the Acceptable Use Policy (AUP)</value>
+  </data>
+  <data name="pt_decAgree" xml:space="preserve">
+    <value>I confirm that I have read and accept the undertakings above.</value>
+  </data>
+  <data name="pt_decAccept" xml:space="preserve">
+    <value>Accept and continue</value>
+  </data>
+  <data name="pt_decMustAgree" xml:space="preserve">
+    <value>Please accept the undertakings to continue</value>
+  </data>
+  <data name="pt_cnfTitle" xml:space="preserve">
+    <value>Request submitted</value>
+  </data>
+  <data name="pt_cnfHead" xml:space="preserve">
+    <value>Your request was submitted successfully</value>
+  </data>
+  <data name="pt_cnfNumLbl" xml:space="preserve">
+    <value>Your request number</value>
+  </data>
+  <data name="pt_cnfInfo" xml:space="preserve">
+    <value>Your request will be reviewed by the supervisor, then by the Cybersecurity department and the administration.</value>
+  </data>
+  <data name="pt_cnfInfo2" xml:space="preserve">
+    <value>You can follow your request status from the "My requests" page or using the request number.</value>
+  </data>
+  <data name="pt_myRequests" xml:space="preserve">
+    <value>My requests</value>
+  </data>
+  <data name="pt_mrTitle" xml:space="preserve">
+    <value>Student portal</value>
+  </data>
+  <data name="pt_mrHead" xml:space="preserve">
+    <value>Housing registration requests</value>
+  </data>
+  <data name="pt_mrSub" xml:space="preserve">
+    <value>All registration requests you have submitted</value>
+  </data>
+  <data name="pt_mrNew" xml:space="preserve">
+    <value>New registration</value>
+  </data>
+  <data name="pt_mrColNumber" xml:space="preserve">
+    <value>Request number</value>
+  </data>
+  <data name="pt_mrColStatus" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="pt_mrColDate" xml:space="preserve">
+    <value>Submission date</value>
+  </data>
+  <data name="pt_mrEmpty" xml:space="preserve">
+    <value>No requests</value>
+  </data>
+  <data name="pt_mrEditResubmit" xml:space="preserve">
+    <value>Edit and resubmit</value>
+  </data>
+  <data name="pt_mrView" xml:space="preserve">
+    <value>View</value>
+  </data>
+  <data name="pt_stSubmitted" xml:space="preserve">
+    <value>Request submitted</value>
+  </data>
+  <data name="pt_stHousingApproved" xml:space="preserve">
+    <value>Approved by the Housing Administration</value>
+  </data>
+  <data name="pt_stCyberReviewed" xml:space="preserve">
+    <value>Reviewed by Cybersecurity</value>
+  </data>
+  <data name="pt_stProvisioning" xml:space="preserve">
+    <value>Creating the housing network account</value>
+  </data>
+  <data name="pt_stCompleted" xml:space="preserve">
+    <value>Completed</value>
+  </data>
+  <data name="pt_stPendingHousing" xml:space="preserve">
+    <value>Awaiting Housing Administration approval</value>
+  </data>
+  <data name="pt_stPendingCyber" xml:space="preserve">
+    <value>Awaiting Cybersecurity review</value>
+  </data>
+  <data name="pt_stRejected" xml:space="preserve">
+    <value>Rejected</value>
+  </data>
+  <data name="pt_trkTitle" xml:space="preserve">
+    <value>Track request</value>
+  </data>
+  <data name="pt_trkSub" xml:space="preserve">
+    <value>Search for your request using the request number or your mobile number</value>
+  </data>
+  <data name="pt_trkTabNumber" xml:space="preserve">
+    <value>Request number</value>
+  </data>
+  <data name="pt_trkTabMobile" xml:space="preserve">
+    <value>Mobile number</value>
+  </data>
+  <data name="pt_trkNext" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="pt_trkLast4Note" xml:space="preserve">
+    <value>To verify ownership of the request, please enter the &lt;strong&gt;last 4 digits&lt;/strong&gt; of the registered mobile number</value>
+  </data>
+  <data name="pt_trkLast4Label" xml:space="preserve">
+    <value>Last 4 digits of the mobile number</value>
+  </data>
+  <data name="pt_trkSearch" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="pt_trkSearching" xml:space="preserve">
+    <value>Searching...</value>
+  </data>
+  <data name="pt_trkChangeNum" xml:space="preserve">
+    <value>Change request number</value>
+  </data>
+  <data name="pt_trkNewSearch" xml:space="preserve">
+    <value>Search for another request</value>
+  </data>
+  <data name="pt_trkLoadingPath" xml:space="preserve">
+    <value>Loading the request path...</value>
+  </data>
+  <data name="pt_trkStudent" xml:space="preserve">
+    <value>Student</value>
+  </data>
+  <data name="pt_trkSubmitDate" xml:space="preserve">
+    <value>Submission date</value>
+  </data>
+  <data name="pt_trkStages" xml:space="preserve">
+    <value>Request stages</value>
+  </data>
+  <data name="pt_trkRejectReason" xml:space="preserve">
+    <value>Reason for rejection</value>
+  </data>
+  <data name="pt_trkNeedInfo" xml:space="preserve">
+    <value>What needs completing</value>
+  </data>
+  <data name="pt_trkNeedInfoDefault" xml:space="preserve">
+    <value>Please review your request details and complete what is missing.</value>
+  </data>
+  <data name="pt_trkComplete" xml:space="preserve">
+    <value>Complete the request</value>
+  </data>
+  <data name="pt_trkAcctDone" xml:space="preserve">
+    <value>Your housing network account was created successfully</value>
+  </data>
+  <data name="pt_trkAcctUser" xml:space="preserve">
+    <value>Username:</value>
+  </data>
+  <data name="pt_trkAcctSms" xml:space="preserve">
+    <value>Your sign-in details were sent to the mobile number registered in the system.</value>
+  </data>
+  <data name="pt_trkNowReview" xml:space="preserve">
+    <value>Your request is under review</value>
+  </data>
+  <data name="pt_trkNowReviewTxt" xml:space="preserve">
+    <value>Your request has been received and assigned to the responsible officer. You will be contacted once a decision is made.</value>
+  </data>
+  <data name="pt_trkNowHousingOk" xml:space="preserve">
+    <value>The Housing Administration approved your request and the review is continuing. You will be contacted once a decision is made.</value>
+  </data>
+  <data name="pt_trkNowReady" xml:space="preserve">
+    <value>Reviews are complete and your account is being prepared</value>
+  </data>
+  <data name="pt_trkNowReadyTxt" xml:space="preserve">
+    <value>Your request was approved and the housing network account is being prepared. Your sign-in details will arrive by SMS.</value>
+  </data>
+  <data name="pt_decDeclText" xml:space="preserve">
+    <value>I undertake that all the information I have provided in the registration request is correct and complete, and I accept legal responsibility should any of it prove incorrect. I acknowledge that the Housing Administration may reject the request or cancel the registration if any breach of the terms and regulations is established.</value>
+  </data>
+  <data name="pt_decPolicyText" xml:space="preserve">
+    <value>I acknowledge that I have read the university housing policy and commit to all regulations governing university housing, including safeguarding property, following housing rules, and respecting the rights of fellow residents. I acknowledge that breaching these policies may lead to the appropriate formal measures.</value>
+  </data>
+  <data name="pt_trkTooMany" xml:space="preserve">
+    <value>Too many attempts - please wait a minute and try again</value>
+  </data>
+  <data name="pt_serverError" xml:space="preserve">
+    <value>Server error, please try again shortly</value>
+  </data>
+  <data name="pt_stNeedInfo" xml:space="preserve">
+    <value>Awaiting additional information</value>
+  </data>
+  <data name="pt_stNeedInfo2" xml:space="preserve">
+    <value>Additional information required</value>
+  </data>
+  <data name="pt_stAcctCreated" xml:space="preserve">
+    <value>Housing network account created</value>
+  </data>
+  <data name="pt_stCyberApproved" xml:space="preserve">
+    <value>Approved by Cybersecurity</value>
+  </data>
+  <data name="pt_trkEnterNumber" xml:space="preserve">
+    <value>Please enter the request number</value>
+  </data>
+  <data name="pt_trkEnterLast4" xml:space="preserve">
+    <value>Enter the last 4 digits of the mobile number</value>
+  </data>
+  <data name="pt_trkNotFound" xml:space="preserve">
+    <value>The request was not found or the details do not match</value>
+  </data>
+  <data name="pt_trkSearchError" xml:space="preserve">
+    <value>Search error</value>
+  </data>
+  <data name="pt_trkNoneForMobile" xml:space="preserve">
+    <value>No requests are linked to this number</value>
+  </data>
+  <data name="pt_trkOwnerNote" xml:space="preserve">
+    <value>To verify ownership of the request, please enter the last 4 digits of your mobile number</value>
+  </data>
+  <data name="pt_trkNowHousing" xml:space="preserve">
+    <value>Your request is under review by the Housing Administration</value>
+  </data>
+  <data name="pt_idleTitle" xml:space="preserve">
+    <value>Your session is about to end</value>
+  </data>
+  <data name="pt_idleText" xml:space="preserve">
+    <value>No activity has been recorded for a while. The session will end automatically in</value>
+  </data>
+  <data name="pt_idleStay" xml:space="preserve">
+    <value>Stay signed in</value>
+  </data>
+  <data name="pt_idleLogout" xml:space="preserve">
+    <value>Sign out now</value>
+  </data>
+  <data name="pt_idleOverTitle" xml:space="preserve">
+    <value>Your session ended due to inactivity</value>
+  </data>
+  <data name="pt_idleOverText" xml:space="preserve">
+    <value>You were signed out automatically to keep your data secure.</value>
+  </data>
+  <data name="pt_idleHome" xml:space="preserve">
+    <value>Back to the portal</value>
+  </data>
+  <data name="chart_total" xml:space="preserve">
+    <value>Total</value>
+  </data>
+  <data name="Nav_Section_FacultyHousing" xml:space="preserve">
+    <value>Faculty Housing</value>
+  </data>
+  <data name="Nav_FacultyUnits" xml:space="preserve">
+    <value>Faculty members</value>
+  </data>
+  <data name="fh_PageTitle" xml:space="preserve">
+    <value>Faculty Members</value>
+  </data>
+  <data name="fh_PageSub" xml:space="preserve">
+    <value>Faculty members and their housing in towers and villas, with unit status</value>
+  </data>
+  <data name="fh_UnitsList" xml:space="preserve">
+    <value>Units</value>
+  </data>
+  <data name="fh_All" xml:space="preserve">
+    <value>All</value>
+  </data>
+  <data name="fh_Towers" xml:space="preserve">
+    <value>Towers</value>
+  </data>
+  <data name="fh_Villas" xml:space="preserve">
+    <value>Villas</value>
+  </data>
+  <data name="fh_AllStatuses" xml:space="preserve">
+    <value>All statuses</value>
+  </data>
+  <data name="fh_AllTowers" xml:space="preserve">
+    <value>All towers</value>
+  </data>
+  <data name="fh_Tower" xml:space="preserve">
+    <value>Tower</value>
+  </data>
+  <data name="fh_SearchPh" xml:space="preserve">
+    <value>Search: Tower 1 - Apt 3 · Villa 7 · name · ID · mobile</value>
+  </data>
+  <data name="fh_ColUnit" xml:space="preserve">
+    <value>Unit</value>
+  </data>
+  <data name="fh_ColAccount" xml:space="preserve">
+    <value>Domain account</value>
+  </data>
+  <data name="fh_ColOccupant" xml:space="preserve">
+    <value>Faculty member</value>
+  </data>
+  <data name="fh_ColNationalId" xml:space="preserve">
+    <value>National ID</value>
+  </data>
+  <data name="fh_ColMobile" xml:space="preserve">
+    <value>Mobile</value>
+  </data>
+  <data name="fh_ColSince" xml:space="preserve">
+    <value>Resident since</value>
+  </data>
+  <data name="fh_ColStatus" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="fh_ColActions" xml:space="preserve">
+    <value>Actions</value>
+  </data>
+  <data name="fh_StTotal" xml:space="preserve">
+    <value>Total units</value>
+  </data>
+  <data name="fh_StOccupied" xml:space="preserve">
+    <value>Occupied</value>
+  </data>
+  <data name="fh_StVacant" xml:space="preserve">
+    <value>Vacant</value>
+  </data>
+  <data name="fh_StOutOfService" xml:space="preserve">
+    <value>Out of service</value>
+  </data>
+  <data name="fh_StNotExists" xml:space="preserve">
+    <value>Non-existent</value>
+  </data>
+  <data name="fh_StPendingSync" xml:space="preserve">
+    <value>Pending sync</value>
+  </data>
+  <data name="fh_StNameDeviations" xml:space="preserve">
+    <value>Non-standard names</value>
+  </data>
+  <data name="fh_StOuMismatch" xml:space="preserve">
+    <value>OU mismatch</value>
+  </data>
+  <data name="fh_FlagBadName" xml:space="preserve">
+    <value>Non-standard</value>
+  </data>
+  <data name="fh_FlagBadNameTitle" xml:space="preserve">
+    <value>Account name does not match the naming standard</value>
+  </data>
+  <data name="fh_FlagImported" xml:space="preserve">
+    <value>Imported</value>
+  </data>
+  <data name="fh_FlagImportedTitle" xml:space="preserve">
+    <value>Imported record: tenancy start date is approximate</value>
+  </data>
+  <data name="fh_FlagOuMismatch" xml:space="preserve">
+    <value>OU</value>
+  </data>
+  <data name="fh_NoOccupant" xml:space="preserve">
+    <value>No resident</value>
+  </data>
+  <data name="fh_NotAssignable" xml:space="preserve">
+    <value>Not assignable</value>
+  </data>
+  <data name="fh_BtnHistory" xml:space="preserve">
+    <value>History</value>
+  </data>
+  <data name="fh_Loading" xml:space="preserve">
+    <value>Loading…</value>
+  </data>
+  <data name="fh_Working" xml:space="preserve">
+    <value>Working…</value>
+  </data>
+  <data name="fh_Applying" xml:space="preserve">
+    <value>Applying…</value>
+  </data>
+  <data name="fh_NoUnits" xml:space="preserve">
+    <value>No matching units.</value>
+  </data>
+  <data name="fh_NoUnitsHint" xml:space="preserve">
+    <value>If the import has not run yet, start from the Domain Import section below.</value>
+  </data>
+  <data name="fh_LoadError" xml:space="preserve">
+    <value>Could not load units: </value>
+  </data>
+  <data name="fh_HistoryTitle" xml:space="preserve">
+    <value>Unit occupancy history</value>
+  </data>
+  <data name="fh_NoHistory" xml:space="preserve">
+    <value>No occupancy history for this unit yet.</value>
+  </data>
+  <data name="fh_HistoryError" xml:space="preserve">
+    <value>Could not load history: </value>
+  </data>
+  <data name="fh_Period" xml:space="preserve">
+    <value>Tenancy period</value>
+  </data>
+  <data name="fh_UntilNow" xml:space="preserve">
+    <value>present</value>
+  </data>
+  <data name="fh_College" xml:space="preserve">
+    <value>College</value>
+  </data>
+  <data name="fh_Department" xml:space="preserve">
+    <value>Department</value>
+  </data>
+  <data name="fh_TicketNo" xml:space="preserve">
+    <value>Ticket no.</value>
+  </data>
+  <data name="fh_EndReason" xml:space="preserve">
+    <value>Reason for leaving</value>
+  </data>
+  <data name="fh_ExecutedBy" xml:space="preserve">
+    <value>Performed by</value>
+  </data>
+  <data name="fh_CurrentOccupant" xml:space="preserve">
+    <value>Current resident</value>
+  </data>
+  <data name="fh_EndedOccupancy" xml:space="preserve">
+    <value>Tenancy ended</value>
+  </data>
+  <data name="fh_ImportedWarn" xml:space="preserve">
+    <value>Imported from the domain: the start date is approximate. The directory does not retain attribute change history, so earlier residents are unknown.</value>
+  </data>
+  <data name="fh_ImportTitle" xml:space="preserve">
+    <value>Domain import</value>
+  </data>
+  <data name="fh_CheckAccess" xml:space="preserve">
+    <value>Check permissions</value>
+  </data>
+  <data name="fh_PreviewImport" xml:space="preserve">
+    <value>Preview import</value>
+  </data>
+  <data name="fh_ApplyImport" xml:space="preserve">
+    <value>Apply import</value>
+  </data>
+  <data name="fh_ImportNote" xml:space="preserve">
+    <value>&lt;b&gt;Import is a read-only operation; it changes nothing in the domain.&lt;/b&gt; The system reads unit accounts from the organizational units and opens an occupancy record using the name held in &lt;code&gt;description&lt;/code&gt;, &lt;b&gt;only for units that have no open occupancy record&lt;/b&gt;. The import may therefore be repeated safely: it never closes an existing record nor edits its data.&lt;br&gt;For imported records the tenancy start date is &lt;b&gt;the import date&lt;/b&gt;, not the account creation date, because the directory does not retain the resident's move-in date and the account may have been created years ago and held by several residents. These records are marked «Imported» so the date is not later read as verified.</value>
+  </data>
+  <data name="fh_OuNotConfigured" xml:space="preserve">
+    <value>Organizational unit paths are not configured</value>
+  </data>
+  <data name="fh_OuNotConfiguredHint" xml:space="preserve">
+    <value>Review the &lt;code&gt;FacultyHousing&lt;/code&gt; section in the application settings.</value>
+  </data>
+  <data name="fh_ReadOk" xml:space="preserve">
+    <value>Read ✓</value>
+  </data>
+  <data name="fh_ReadFail" xml:space="preserve">
+    <value>Read ✗</value>
+  </data>
+  <data name="fh_ProbedOn" xml:space="preserve">
+    <value>Checked against </value>
+  </data>
+  <data name="fh_AuthComplete" xml:space="preserve">
+    <value>&lt;b&gt;Delegation is complete.&lt;/b&gt; The service account can read every organizational unit and write all five attributes. The import may be run.</value>
+  </data>
+  <data name="fh_AuthIncomplete" xml:space="preserve">
+    <value>&lt;b&gt;Delegation is incomplete.&lt;/b&gt; The service account cannot write the attributes marked in red. This check reads &lt;code&gt;allowedAttributesEffective&lt;/code&gt;, so the result comes from the domain itself without writing any value.</value>
+  </data>
+  <data name="fh_ReadFailed" xml:space="preserve">
+    <value>Read failed; the import was not run.</value>
+  </data>
+  <data name="fh_PartialWarn" xml:space="preserve">
+    <value>A partial import is worse than none: it records some units and appears to succeed, while the rest look as though they do not exist in the domain.</value>
+  </data>
+  <data name="fh_ChipNew" xml:space="preserve">
+    <value>New</value>
+  </data>
+  <data name="fh_ChipUpdated" xml:space="preserve">
+    <value>To update</value>
+  </data>
+  <data name="fh_ChipUnchanged" xml:space="preserve">
+    <value>Unchanged</value>
+  </data>
+  <data name="fh_ChipExcluded" xml:space="preserve">
+    <value>Excluded</value>
+  </data>
+  <data name="fh_ChipDeviations" xml:space="preserve">
+    <value>Non-standard</value>
+  </data>
+  <data name="fh_ChipWithOccupant" xml:space="preserve">
+    <value>With resident</value>
+  </data>
+  <data name="fh_Truncated" xml:space="preserve">
+    <value>The read limit was reached and some units were not read.</value>
+  </data>
+  <data name="fh_TruncatedHint" xml:space="preserve">
+    <value>Increase &lt;code&gt;MaxImportResults&lt;/code&gt; before applying, otherwise the import will be incomplete.</value>
+  </data>
+  <data name="fh_PrevOu" xml:space="preserve">
+    <value>Organizational unit</value>
+  </data>
+  <data name="fh_PrevOccupant" xml:space="preserve">
+    <value>Faculty member in domain</value>
+  </data>
+  <data name="fh_PrevAction" xml:space="preserve">
+    <value>Action</value>
+  </data>
+  <data name="fh_PrevNote" xml:space="preserve">
+    <value>Note</value>
+  </data>
+  <data name="fh_NoUnitsInOu" xml:space="preserve">
+    <value>No units found in these organizational units.</value>
+  </data>
+  <data name="fh_ImportOk" xml:space="preserve">
+    <value>Import completed successfully.</value>
+  </data>
+  <data name="fh_ImportFail" xml:space="preserve">
+    <value>Import failed; no changes were saved.</value>
+  </data>
+  <data name="fh_UnitsCreated" xml:space="preserve">
+    <value>Units recorded</value>
+  </data>
+  <data name="fh_UnitsUpdated" xml:space="preserve">
+    <value>Units updated</value>
+  </data>
+  <data name="fh_OccOpened" xml:space="preserve">
+    <value>Occupancy records opened</value>
+  </data>
+  <data name="fh_ApplyError" xml:space="preserve">
+    <value>Could not apply: </value>
+  </data>
+  <data name="fh_PagerShow" xml:space="preserve">
+    <value>Showing</value>
+  </data>
+  <data name="fh_PagerTo" xml:space="preserve">
+    <value>to</value>
+  </data>
+  <data name="fh_PagerOf" xml:space="preserve">
+    <value>of</value>
+  </data>
+  <data name="fh_Prev" xml:space="preserve">
+    <value>Previous</value>
+  </data>
+  <data name="fh_Next" xml:space="preserve">
+    <value>Next</value>
+  </data>
+  <data name="fh_Page" xml:space="preserve">
+    <value>Page</value>
+  </data>
+  <data name="fh_PageOf" xml:space="preserve">
+    <value>of</value>
+  </data>
+  <data name="fh_HandoverTitle" xml:space="preserve">
+    <value>Change the data of the unit's resident</value>
+  </data>
+  <data name="fh_SecRequest" xml:space="preserve">
+    <value>Request details</value>
+  </data>
+  <data name="fh_SecNew" xml:space="preserve">
+    <value>New faculty member</value>
+  </data>
+  <data name="fh_SecClose" xml:space="preserve">
+    <value>End current tenancy</value>
+  </data>
+  <data name="fh_SecDiff" xml:space="preserve">
+    <value>Review changes before writing to the domain</value>
+  </data>
+  <data name="fh_Unit" xml:space="preserve">
+    <value>Unit</value>
+  </data>
+  <data name="fh_RequestType" xml:space="preserve">
+    <value>Action type</value>
+  </data>
+  <data name="fh_TypeChange" xml:space="preserve">
+    <value>Change resident - new member replacing previous</value>
+  </data>
+  <data name="fh_TypeNew" xml:space="preserve">
+    <value>New service - unit with no recorded resident</value>
+  </data>
+  <data name="fh_TypeStop" xml:space="preserve">
+    <value>Stop service - vacate the unit</value>
+  </data>
+  <data name="fh_TicketNoLabel" xml:space="preserve">
+    <value>Enjaz ticket no.</value>
+  </data>
+  <data name="fh_TicketHint" xml:space="preserve">
+    <value>Digits only, no letters or symbols</value>
+  </data>
+  <data name="fh_CyberDate" xml:space="preserve">
+    <value>Cyber security approval date</value>
+  </data>
+  <data name="fh_CyberHint" xml:space="preserve">
+    <value>University policy: every new account is approved by cyber security first</value>
+  </data>
+  <data name="fh_FullNameAr" xml:space="preserve">
+    <value>Full name (Arabic)</value>
+  </data>
+  <data name="fh_NameHint" xml:space="preserve">
+    <value>Written to the description attribute</value>
+  </data>
+  <data name="fh_Gender" xml:space="preserve">
+    <value>Gender</value>
+  </data>
+  <data name="fh_Male" xml:space="preserve">
+    <value>Male</value>
+  </data>
+  <data name="fh_Female" xml:space="preserve">
+    <value>Female</value>
+  </data>
+  <data name="fh_NationalIdHint" xml:space="preserve">
+    <value>Written to employeeID - starts with 1 or 2</value>
+  </data>
+  <data name="fh_MobileHint" xml:space="preserve">
+    <value>Written to mobile as 9665XXXXXXXX</value>
+  </data>
+  <data name="fh_StartDate" xml:space="preserve">
+    <value>Tenancy start date</value>
+  </data>
+  <data name="fh_EndDate" xml:space="preserve">
+    <value>Departure date</value>
+  </data>
+  <data name="fh_CurrentName" xml:space="preserve">
+    <value>Current resident</value>
+  </data>
+  <data name="fh_ReasonContract" xml:space="preserve">
+    <value>Contract ended</value>
+  </data>
+  <data name="fh_ReasonTransfer" xml:space="preserve">
+    <value>Transferred to another unit</value>
+  </data>
+  <data name="fh_ReasonLeft" xml:space="preserve">
+    <value>Left permanently</value>
+  </data>
+  <data name="fh_ReasonOther" xml:space="preserve">
+    <value>Other reason</value>
+  </data>
+  <data name="fh_ReasonNote" xml:space="preserve">
+    <value>Reason details</value>
+  </data>
+  <data name="fh_Save" xml:space="preserve">
+    <value>Save change</value>
+  </data>
+  <data name="fh_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="fh_ApplyToAd" xml:space="preserve">
+    <value>Apply to domain</value>
+  </data>
+  <data name="fh_Saving" xml:space="preserve">
+    <value>Saving…</value>
+  </data>
+  <data name="fh_SavedPending" xml:space="preserve">
+    <value>The change is saved. Review the edits below, then apply them to the domain.</value>
+  </data>
+  <data name="fh_DiffAttr" xml:space="preserve">
+    <value>Attribute</value>
+  </data>
+  <data name="fh_DiffCurrent" xml:space="preserve">
+    <value>Current value in domain</value>
+  </data>
+  <data name="fh_DiffNew" xml:space="preserve">
+    <value>New value</value>
+  </data>
+  <data name="fh_DiffNone" xml:space="preserve">
+    <value>No changes; the domain matches the system.</value>
+  </data>
+  <data name="fh_DiffCount" xml:space="preserve">
+    <value>attributes will change</value>
+  </data>
+  <data name="fh_PushOk" xml:space="preserve">
+    <value>Written to the domain successfully.</value>
+  </data>
+  <data name="fh_PushFail" xml:space="preserve">
+    <value>Writing to the domain failed. The record is saved and the unit is marked pending sync; you may retry.</value>
+  </data>
+  <data name="fh_BtnRetrySync" xml:space="preserve">
+    <value>Retry sync</value>
+  </data>
+  <data name="fh_HandoverError" xml:space="preserve">
+    <value>Operation failed: </value>
+  </data>
+  <data name="fh_Required" xml:space="preserve">
+    <value>Required</value>
+  </data>
+  <data name="fh_NoCurrentOccupant" xml:space="preserve">
+    <value>This unit has no current resident.</value>
+  </data>
+  <data name="Nav_FacultyHandover" xml:space="preserve">
+    <value>Change the data of the unit's resident</value>
+  </data>
+  <data name="fh_BtnEdit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="fh_EditTitle" xml:space="preserve">
+    <value>Edit faculty member details</value>
+  </data>
+  <data name="fh_SecEdit" xml:space="preserve">
+    <value>Recorded details</value>
+  </data>
+  <data name="fh_SavedEdit" xml:space="preserve">
+    <value>The change is saved. Review the differences below, then apply them to the domain.</value>
+  </data>
+  <data name="fh_EditNote" xml:space="preserve">
+    <value>Correcting the same resident's details without replacing them: no new tenancy record is opened; the existing one is edited. Every change is recorded in the audit log with its old and new value.</value>
+  </data>
+  <data name="fh_NoChanges" xml:space="preserve">
+    <value>No details were changed.</value>
+  </data>
+  <data name="fh_SelectCollege" xml:space="preserve">
+    <value>Select college</value>
+  </data>
+  <data name="fh_SelectCollegeFirst" xml:space="preserve">
+    <value>Select a college first</value>
+  </data>
+  <data name="fh_SelectDepartment" xml:space="preserve">
+    <value>Select department</value>
+  </data>
+  <data name="fh_SelectUnitSub" xml:space="preserve">
+    <value>Find the unit you need, then select it</value>
+  </data>
+  <data name="fh_BtnSelect" xml:space="preserve">
+    <value>Select</value>
+  </data>
+  <data name="rd_pageSubtitle" xml:space="preserve">
+    <value>View the request details, its workflow and attachments</value>
+  </data>
+  <data name="ss_otherDesc" xml:space="preserve">
+    <value>A case not covered above - describe it in the action reason</value>
+  </data>
+  <data name="ss_status_other" xml:space="preserve">
+    <value>Other</value>
+  </data>
+  <data name="stu_status_none" xml:space="preserve">
+    <value>Not specified</value>
+  </data>
+  <data name="stu_status_other" xml:space="preserve">
+    <value>Other</value>
+  </data>
+  <data name="req_lbl_mine" xml:space="preserve">
+    <value>Needs your action</value>
+  </data>
+  <data name="req_act_rejected" xml:space="preserve">
+    <value>Reject Request</value>
+  </data>
+  <data name="req_cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="req_confirmActionFmt" xml:space="preserve">
+    <value>Perform the action "{0}" on this request?</value>
+  </data>
+  <data name="req_rejectReasonPrompt" xml:space="preserve">
+    <value>State the reason for rejection - it is shown to the applicant on the request tracking page</value>
+  </data>
+  <data name="req_rejectReasonRequired" xml:space="preserve">
+    <value>A rejection reason is required</value>
+  </data>
+  <data name="aud_action_faculty_occupant_updated" xml:space="preserve">
+    <value>Occupant data corrected</value>
+  </data>
+  <data name="aud_action_faculty_handover" xml:space="preserve">
+    <value>Unit occupant changed</value>
+  </data>
+  <data name="aud_action_faculty_service_started" xml:space="preserve">
+    <value>Unit service started</value>
+  </data>
+  <data name="aud_action_faculty_service_stopped" xml:space="preserve">
+    <value>Unit service stopped</value>
+  </data>
+  <data name="aud_action_faculty_ad_push" xml:space="preserve">
+    <value>Unit data written to Active Directory</value>
+  </data>
+  <data name="aud_action_faculty_ad_push_failed" xml:space="preserve">
+    <value>Active Directory write failed</value>
+  </data>
+  <data name="aud_action_faculty_import_applied" xml:space="preserve">
+    <value>Housing units import applied</value>
+  </data>
+  <data name="aud_field_full_name" xml:space="preserve">
+    <value>Full name</value>
+  </data>
+  <data name="aud_field_full_name_english" xml:space="preserve">
+    <value>Name in English</value>
+  </data>
+  <data name="aud_field_national_id" xml:space="preserve">
+    <value>National ID</value>
+  </data>
+  <data name="aud_field_phone" xml:space="preserve">
+    <value>Mobile number</value>
+  </data>
+  <data name="aud_field_gender" xml:space="preserve">
+    <value>Gender</value>
+  </data>
+  <data name="aud_field_college" xml:space="preserve">
+    <value>College</value>
+  </data>
+  <data name="aud_field_department" xml:space="preserve">
+    <value>Department</value>
+  </data>
+  <data name="aud_field_academic_level" xml:space="preserve">
+    <value>Academic level</value>
+  </data>
+  <data name="aud_field_housing_building" xml:space="preserve">
+    <value>Building</value>
+  </data>
+  <data name="aud_field_floor_number" xml:space="preserve">
+    <value>Floor</value>
+  </data>
+  <data name="aud_field_room_number" xml:space="preserve">
+    <value>Room number</value>
+  </data>
+  <data name="aud_field_apartment_number" xml:space="preserve">
+    <value>Apartment number</value>
+  </data>
+  <data name="aud_field_status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="aud_field_description" xml:space="preserve">
+    <value>Description (Active Directory)</value>
+  </data>
+  <data name="aud_field_employeeID" xml:space="preserve">
+    <value>Employee ID (Active Directory)</value>
+  </data>
+  <data name="aud_field_mobile" xml:space="preserve">
+    <value>Mobile number</value>
+  </data>
+  <data name="aud_field_company" xml:space="preserve">
+    <value>Company (Active Directory)</value>
+  </data>
+  <data name="aud_field_FullNameAr" xml:space="preserve">
+    <value>Occupant name</value>
+  </data>
+  <data name="aud_field_NationalId" xml:space="preserve">
+    <value>National ID</value>
+  </data>
+  <data name="aud_field_StartDate" xml:space="preserve">
+    <value>Occupancy start date</value>
+  </data>
+  <data name="aud_field_TicketNo" xml:space="preserve">
+    <value>Enjaz ticket number</value>
+  </data>
+  <data name="aud_field_PreviousOccupant" xml:space="preserve">
+    <value>Previous occupant</value>
+  </data>
+  <data name="aud_field_EndReason" xml:space="preserve">
+    <value>Occupancy end reason</value>
+  </data>
+  <data name="aud_field_LastSyncError" xml:space="preserve">
+    <value>Sync failure reason</value>
+  </data>
+  <data name="aud_field_UnitsCreated" xml:space="preserve">
+    <value>Units created</value>
+  </data>
+  <data name="aud_field_UnitsUpdated" xml:space="preserve">
+    <value>Units updated</value>
+  </data>
+  <data name="aud_field_OccupanciesOpened" xml:space="preserve">
+    <value>Occupancies opened</value>
+  </data>
+  <data name="aud_filterFaculty" xml:space="preserve">
+    <value>Faculty Housing</value>
+  </data>
+  <data name="aud_emptyValue" xml:space="preserve">
+    <value>(empty)</value>
+  </data>
+  <data name="fh_TabOccupants" xml:space="preserve">
+    <value>Occupants</value>
+  </data>
+  <data name="fh_TabChanges" xml:space="preserve">
+    <value>Changes</value>
+  </data>
+  <data name="fh_ChgField" xml:space="preserve">
+    <value>Field</value>
+  </data>
+  <data name="fh_ChgOld" xml:space="preserve">
+    <value>Before</value>
+  </data>
+  <data name="fh_ChgNew" xml:space="preserve">
+    <value>After</value>
+  </data>
+  <data name="fh_ChgEmpty" xml:space="preserve">
+    <value>(empty)</value>
+  </data>
+  <data name="fh_NoAuditLog" xml:space="preserve">
+    <value>No recorded operations for this unit</value>
+  </data>
+  <data name="fh_FullReport" xml:space="preserve">
+    <value>Full report and export</value>
+  </data>
+  <data name="aud_lblUnit" xml:space="preserve">
+    <value>Unit</value>
+  </data>
+  <data name="aud_clearUnit" xml:space="preserve">
+    <value>Clear unit filter</value>
+  </data>
+  <data name="aud_xl_no" xml:space="preserve">
+    <value>#</value>
+  </data>
+  <data name="aud_xl_date" xml:space="preserve">
+    <value>Date and time</value>
+  </data>
+  <data name="aud_xl_actor" xml:space="preserve">
+    <value>Performed by</value>
+  </data>
+  <data name="aud_xl_action" xml:space="preserve">
+    <value>Action</value>
+  </data>
+  <data name="aud_xl_target" xml:space="preserve">
+    <value>Record</value>
+  </data>
+  <data name="aud_xl_field" xml:space="preserve">
+    <value>Field</value>
+  </data>
+  <data name="aud_xl_old" xml:space="preserve">
+    <value>Before</value>
+  </data>
+  <data name="aud_xl_new" xml:space="preserve">
+    <value>After</value>
+  </data>
+  <data name="aud_xl_ip" xml:space="preserve">
+    <value>IP address</value>
+  </data>
+  <data name="aud_xl_agent" xml:space="preserve">
+    <value>Browser</value>
+  </data>
+  <data name="aud_xl_truncated" xml:space="preserve">
+    <value>Notice: the export reached the maximum of {0} operations and was truncated. Narrow the date range or filters to retrieve the rest.</value>
   </data>
 </root>

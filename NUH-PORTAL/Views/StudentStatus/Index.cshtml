@@ -19,8 +19,8 @@
 <style>
   /* خاص بصفحة حالة الطالب فقط — الباقي من site.css */
   .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;margin-bottom:24px}
-  .stat-card{background:var(--white);border-radius:14px;padding:16px;border:1px solid var(--gray-100);box-shadow:0 2px 8px rgba(27,42,94,.05);display:flex;flex-direction:column;gap:8px;transition:transform .2s,box-shadow .2s}
-  .stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(27,42,94,.1)}
+  .stat-card{background:var(--white);border-radius:14px;padding:16px;border:1px solid var(--gray-100);box-shadow:0 2px 8px rgba(16,70,49,.05);display:flex;flex-direction:column;gap:8px;transition:transform .2s,box-shadow .2s}
+  .stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(16,70,49,.1)}
   .stat-top{display:flex;align-items:center;justify-content:space-between}
   .stat-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center}
   .stat-num{font-size:26px;font-weight:900;color:var(--navy-dark);line-height:1}
@@ -31,20 +31,10 @@
   .two-col .col-history{min-width:0}
   /* ⚠️ تعريفات .form-card* اتشالت من هنا — كانت مكرّرة حرفيًا في أربع شاشات.
      مكانها الآن wwwroot/css/site.css مرة واحدة، فأي تغيير في الشكل يوصلها كلها. */
-  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
-  .field{display:flex;flex-direction:column;gap:7px}
-  .field.full{grid-column:1/-1}
-  .field label{font-size:13px;font-weight:600;color:var(--gray-700)}
-  .input-wrap{position:relative}
-  .input-wrap input,.input-wrap select{width:100%;height:46px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:10px;padding:0 14px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;color:var(--navy-dark);transition:all .2s;appearance:none;outline:none}
-  .input-wrap input:focus,.input-wrap select:focus{border-color:var(--navy);background:var(--white);box-shadow:0 0 0 3px rgba(27,42,94,.08)}
-  .input-wrap input.error,.input-wrap select.error,textarea.error{border-color:#EF4444}
-  .field-error{font-size:11px;color:#EF4444;font-weight:500;display:none}
-  .field-error.show{display:block}
   .form-actions-btn{padding:0 28px;height:46px;border-radius:10px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;font-weight:700;cursor:pointer;border:none;transition:all .2s;display:flex;align-items:center;gap:8px}
   .status-option{display:flex;align-items:center;gap:12px;padding:12px 16px;border:1.5px solid var(--gray-200);border-radius:10px;cursor:pointer;transition:all .2s;margin-bottom:8px}
   .status-option:hover{border-color:var(--navy-light);background:var(--gray-50)}
-  .status-option.selected{border-color:var(--navy);background:#E6F1FB}
+  .status-option.selected{border-color:var(--navy);background:#eff4ff}
   .status-option input[type=radio]{display:none}
   .status-option-text{font-size:14px;font-weight:600;color:var(--navy-dark)}
   .status-option-desc{font-size:12px;color:var(--gray-500)}
@@ -61,14 +51,15 @@
   .history-item{padding:12px;border-bottom:1px solid var(--gray-100);font-size:13px}
   .history-item:last-child{border-bottom:none}
   .badge-status-active{background:var(--green-light);color:var(--green)}
-  .badge-status-graduated{background:#DBEAFE;color:#1E40AF}
+  .badge-status-graduated{background:#d1e0ff;color:#175cd3}
   .badge-status-dismissed{background:var(--red-light);color:var(--red)}
-  .badge-status-transferred{background:#FFF7ED;color:#92400E}
-  .badge-status-left_housing{background:#F3E8FF;color:#6B21A8}
+  .badge-status-transferred{background:#fffaeb;color:#93370d}
+  .badge-status-left_housing{background:#f4eefa;color:#80519f}
+  .badge-status-other{background:var(--gray-100);color:var(--gray-700)}
   .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
   .modal-overlay.show{display:flex}
   .modal-box{background:var(--white);border-radius:16px;padding:28px;max-width:480px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3)}
-  .modal-icon{width:48px;height:48px;border-radius:12px;background:#FEF2F2;display:flex;align-items:center;justify-content:center;margin-bottom:16px;color:#991B1B}
+  .modal-icon{width:48px;height:48px;border-radius:12px;background:#fef3f2;display:flex;align-items:center;justify-content:center;margin-bottom:16px;color:#b42318}
   .modal-title{font-size:18px;font-weight:800;color:var(--navy-dark);margin-bottom:8px}
   .modal-body{font-size:14px;color:var(--gray-700);line-height:1.6;margin-bottom:16px}
   .modal-body strong{color:var(--navy-dark)}
@@ -80,9 +71,9 @@
   .toast{position:fixed;top:24px;left:50%;transform:translateX(-50%);padding:14px 30px;border-radius:12px;font-size:14px;font-weight:600;z-index:10001;box-shadow:0 10px 30px rgba(0,0,0,.2);opacity:0;transition:opacity .3s;pointer-events:none;max-width:min(680px,92vw);text-align:center;line-height:1.7}
   .toast.show{pointer-events:auto;cursor:pointer}
   .toast.show{opacity:1}
-  .toast-success{background:#0F6E56;color:#fff}
-  .toast-error{background:#991B1B;color:#fff}
-  @@media(max-width:768px){.form-grid{grid-template-columns:1fr}.two-col{grid-template-columns:1fr!important}.stats-grid{grid-template-columns:repeat(2,1fr)}}
+  .toast-success{background:#067647;color:#fff}
+  .toast-error{background:#b42318;color:#fff}
+  @@media(max-width:768px){.two-col{grid-template-columns:1fr!important}.stats-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
 
 <div class="page-header">
@@ -94,8 +85,8 @@
 <div class="stats-grid">
   <div class="stat-card">
     <div class="stat-top">
-      <div class="stat-icon" style="background:#E6F1FB">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <div class="stat-icon" style="background:#eff4ff">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#166a45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
       </div>
     </div>
     <div class="stat-num">@Model.Total</div>
@@ -103,50 +94,50 @@
   </div>
   <div class="stat-card">
     <div class="stat-top">
-      <div class="stat-icon" style="background:#E1F5EE">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F6E56" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <div class="stat-icon" style="background:#dff6e7">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#067647" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       </div>
-      <span class="stat-badge" style="background:#E1F5EE;color:#0F6E56" >@SharedLocalizer["ss_activeBadge"]</span>
+      <span class="stat-badge" style="background:#dff6e7;color:#067647" >@SharedLocalizer["ss_activeBadge"]</span>
     </div>
     <div class="stat-num">@Model.Active</div>
     <div class="stat-label" >@SharedLocalizer["ss_activeLabel"]</div>
   </div>
   <div class="stat-card">
     <div class="stat-top">
-      <div class="stat-icon" style="background:#DBEAFE">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1E40AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+      <div class="stat-icon" style="background:#d1e0ff">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#175cd3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
       </div>
-      <span class="stat-badge" style="background:#DBEAFE;color:#1E40AF" >@SharedLocalizer["ss_graduatedBadge"]</span>
+      <span class="stat-badge" style="background:#d1e0ff;color:#175cd3" >@SharedLocalizer["ss_graduatedBadge"]</span>
     </div>
     <div class="stat-num">@Model.Graduated</div>
     <div class="stat-label" >@SharedLocalizer["ss_graduatedLabel"]</div>
   </div>
   <div class="stat-card">
     <div class="stat-top">
-      <div class="stat-icon" style="background:#FEF2F2">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#991B1B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+      <div class="stat-icon" style="background:#fef3f2">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#b42318" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
       </div>
-      <span class="stat-badge" style="background:#FEF2F2;color:#991B1B" >@SharedLocalizer["ss_dismissedBadge"]</span>
+      <span class="stat-badge" style="background:#fef3f2;color:#b42318" >@SharedLocalizer["ss_dismissedBadge"]</span>
     </div>
     <div class="stat-num">@Model.Dismissed</div>
     <div class="stat-label" >@SharedLocalizer["ss_dismissedLabel"]</div>
   </div>
   <div class="stat-card">
     <div class="stat-top">
-      <div class="stat-icon" style="background:#FFF7ED">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#92400E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <div class="stat-icon" style="background:#fffaeb">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#93370d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
       </div>
-      <span class="stat-badge" style="background:#FFF7ED;color:#92400E" >@SharedLocalizer["ss_transferredBadge"]</span>
+      <span class="stat-badge" style="background:#fffaeb;color:#93370d" >@SharedLocalizer["ss_transferredBadge"]</span>
     </div>
     <div class="stat-num">@Model.Transferred</div>
     <div class="stat-label" >@SharedLocalizer["ss_transferredLabel"]</div>
   </div>
   <div class="stat-card">
     <div class="stat-top">
-      <div class="stat-icon" style="background:#F3E8FF">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B21A8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <div class="stat-icon" style="background:#f4eefa">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#80519f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
       </div>
-      <span class="stat-badge" style="background:#F3E8FF;color:#6B21A8" >@SharedLocalizer["ss_leftHousingBadge"]</span>
+      <span class="stat-badge" style="background:#f4eefa;color:#80519f" >@SharedLocalizer["ss_leftHousingBadge"]</span>
     </div>
     <div class="stat-num">@Model.LeftHousing</div>
     <div class="stat-label" >@SharedLocalizer["ss_leftHousingLabel"]</div>
@@ -159,14 +150,14 @@
     <div class="form-card">
       <div class="form-card-header">
         <div class="form-card-header-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#166a45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
         </div>
         <div class="form-card-title" >@SharedLocalizer["ss_statusFormTitle"]</div>
       </div>
       <div class="form-card-body">
         <div class="form-grid">
           <div class="field full">
-            <label><span >@SharedLocalizer["ss_studentNumber"]</span> <span style="color:#EF4444">*</span></label>
+            <label><span >@SharedLocalizer["ss_studentNumber"]</span> <span style="color:#d92d20">*</span></label>
             <div class="input-wrap">
               <input type="text" id="studentNumber" placeholder='@(SharedLocalizer["ss_studentNumberPlaceholder"].Value)' autocomplete="off">
             </div>
@@ -189,7 +180,7 @@
           </div>
 
           <div class="field full">
-            <label><span >@SharedLocalizer["ss_statusType"]</span> <span style="color:#EF4444">*</span></label>
+            <label><span >@SharedLocalizer["ss_statusType"]</span> <span style="color:#d92d20">*</span></label>
             <div id="statusOptions">
               <div class="status-option" data-value="graduated" onclick="selectStatus(this)">
                 <input type="radio" name="statusType" value="graduated">
@@ -219,12 +210,22 @@
                   <div class="status-option-desc" >@SharedLocalizer["ss_leftHousingDesc"]</div>
                 </div>
               </div>
+              @* ⚠️ «أخرى» مقصود إنها آخر بند: الاختيار الافتراضي لازم يكون البند
+                 المحدّد مش العام، وإلا المشرف ياخد الأسهل ويبقى عندنا نص السجل
+                 «أخرى». وسبب الإجراء إجباري أصلًا فالتفاصيل بتتكتب فيه. *@
+              <div class="status-option" data-value="other" onclick="selectStatus(this)">
+                <input type="radio" name="statusType" value="other">
+                <div>
+                  <div class="status-option-text" >@SharedLocalizer["ss_status_other"]</div>
+                  <div class="status-option-desc" >@SharedLocalizer["ss_otherDesc"]</div>
+                </div>
+              </div>
             </div>
             <div class="field-error" id="statusTypeError" >@SharedLocalizer["ss_statusTypeError"]</div>
           </div>
 
           <div class="field full">
-            <label><span >@SharedLocalizer["ss_actionReason"]</span> <span style="color:#EF4444">*</span></label>
+            <label><span >@SharedLocalizer["ss_actionReason"]</span> <span style="color:#d92d20">*</span></label>
             <div class="input-wrap">
               <textarea id="notes" style="width:100%;height:100px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:10px;padding:12px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;color:var(--navy-dark);direction:inherit;outline:none;resize:vertical;transition:all .2s" placeholder='@(SharedLocalizer["ss_actionReasonPlaceholder"].Value)'></textarea>
             </div>
@@ -276,14 +277,14 @@
     <div class="form-card">
       <div class="form-card-header">
         <div class="form-card-header-icon">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1B2A5E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#166a45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         </div>
         <div class="form-card-title" >@SharedLocalizer["ss_transferFormTitle"]</div>
       </div>
       <div class="form-card-body">
         <div class="form-grid">
           <div class="field full">
-            <label><span >@SharedLocalizer["ss_studentNumber"]</span> <span style="color:#EF4444">*</span></label>
+            <label><span >@SharedLocalizer["ss_studentNumber"]</span> <span style="color:#d92d20">*</span></label>
             <div class="input-wrap">
               <input type="text" id="transferStudentNumber" placeholder='@(SharedLocalizer["ss_studentNumberPlaceholder"].Value)' autocomplete="off">
             </div>
@@ -310,7 +311,7 @@
               <div style="font-size:13px;font-weight:600;color:var(--green);margin-bottom:8px" >@SharedLocalizer["ss_newHousing"]</div>
               <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px">
                 <div class="field" style="gap:4px">
-                  <label><span >@SharedLocalizer["ss_newBuilding"]</span> <span style="color:#EF4444">*</span></label>
+                  <label><span >@SharedLocalizer["ss_newBuilding"]</span> <span style="color:#d92d20">*</span></label>
                   <div class="input-wrap">
                     @* المباني بتتفلتر حسب جنس الطالب بعد ما يتحمّل — نفس قاعدة شاشات التسجيل *@
                     <select id="transferNewBuilding" disabled>
@@ -319,7 +320,7 @@
                   </div>
                 </div>
                 <div class="field" style="gap:4px">
-                  <label><span >@SharedLocalizer["reg_lblFloor"]</span> <span style="color:#EF4444">*</span></label>
+                  <label><span >@SharedLocalizer["reg_lblFloor"]</span> <span style="color:#d92d20">*</span></label>
                   <div class="input-wrap">
                     <select id="transferNewFloor">
                       <option value="" >@SharedLocalizer["reg_optSelectFloor"]</option>
@@ -332,7 +333,7 @@
                   </div>
                 </div>
                 <div class="field" style="gap:4px">
-                  <label><span >@SharedLocalizer["ss_newApartment"]</span> <span style="color:#EF4444">*</span></label>
+                  <label><span >@SharedLocalizer["ss_newApartment"]</span> <span style="color:#d92d20">*</span></label>
                   <div class="input-wrap">
                     @* الشقة بتتولّد من الدور — نفس قاعدة شاشات التسجيل (js/housing-fields.js) *@
                     <select id="transferNewApartment" disabled>
@@ -341,7 +342,7 @@
                   </div>
                 </div>
                 <div class="field" style="gap:4px">
-                  <label><span >@SharedLocalizer["ss_newRoom"]</span> <span style="color:#EF4444">*</span></label>
+                  <label><span >@SharedLocalizer["ss_newRoom"]</span> <span style="color:#d92d20">*</span></label>
                   <div class="input-wrap">
                     <select id="transferNewRoom">
                       <option value="" >@SharedLocalizer["reg_optSelectRoom"]</option>
@@ -353,7 +354,7 @@
           </div>
 
           <div class="field full">
-            <label><span >@SharedLocalizer["ss_transferReason"]</span> <span style="color:#EF4444">*</span></label>
+            <label><span >@SharedLocalizer["ss_transferReason"]</span> <span style="color:#d92d20">*</span></label>
             <div class="input-wrap">
               <select id="transferReason">
                 <option value="" >@SharedLocalizer["ss_selectDefault"]</option>
@@ -368,7 +369,7 @@
           </div>
 
           <div class="field full" id="customReasonField" style="display:none">
-            <label><span >@SharedLocalizer["ss_customReason"]</span> <span style="color:#EF4444">*</span></label>
+            <label><span >@SharedLocalizer["ss_customReason"]</span> <span style="color:#d92d20">*</span></label>
             <div class="input-wrap">
               <textarea id="transferCustomReason" style="width:100%;height:80px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:10px;padding:12px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;color:var(--navy-dark);direction:inherit;outline:none;resize:vertical;transition:all .2s" placeholder='@(SharedLocalizer["ss_customReasonPlaceholder"].Value)'></textarea>
             </div>
@@ -431,14 +432,14 @@
     </div>
     <div class="modal-actions">
       <button class="form-actions-btn" style="background:var(--gray-100);color:var(--gray-700)" onclick="closeConfirmDialog()" >@SharedLocalizer["ss_cancel"]</button>
-      <button class="form-actions-btn" id="confirmYesBtn" onclick="executeSubmit()" style="background:#991B1B;color:#fff" >@SharedLocalizer["ss_confirmDisableYes"]</button>
+      <button class="form-actions-btn" id="confirmYesBtn" onclick="executeSubmit()" style="background:#b42318;color:#fff" >@SharedLocalizer["ss_confirmDisableYes"]</button>
     </div>
   </div>
 </div>
 
 <div class="modal-overlay" id="transferConfirmDialog">
   <div class="modal-box">
-    <div class="modal-icon" style="background:#E1F5EE;color:#0F6E56">
+    <div class="modal-icon" style="background:#dff6e7;color:#067647">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     </div>
     <div class="modal-title" >@SharedLocalizer["ss_transferConfirmTitle"]</div>
@@ -577,7 +578,7 @@
 
       var yesBtn = document.getElementById('confirmYesBtn');
       yesBtn.textContent = hasAdAccount ? t('ss_confirmDisableYes') : t('ss_confirmAction');
-      yesBtn.style.background = hasAdAccount ? '#991B1B' : 'var(--navy)';
+      yesBtn.style.background = hasAdAccount ? '#b42318' : 'var(--navy)';
 
       document.getElementById('confirmDialog').classList.add('show');
 
@@ -780,7 +781,7 @@
     if (!overlay) {
       overlay = document.createElement('div');
       overlay.id = 'attPreviewOverlay';
-      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(15,23,42,.75);z-index:9999;' +
+      overlay.style.cssText = 'position:fixed;inset:0;background:rgba(22,27,38,.75);z-index:9999;' +
         'display:flex;align-items:center;justify-content:center;padding:24px';
       overlay.addEventListener('click', function (ev) { if (ev.target === overlay) closeAttachmentPreview(); });
       document.body.appendChild(overlay);
@@ -997,7 +998,7 @@
       document.getElementById('studentInfoName').textContent = '';
       document.getElementById('studentInfoStatus').textContent = '';
       info.style.display = 'block';
-      info.style.background = '#FEF2F2';
+      info.style.background = '#fef3f2';
     }
   });
 
@@ -1026,7 +1027,7 @@
     } else {
       text.textContent = '✗ ' + t('ss_studentNotFound');
       info.style.display = 'block';
-      info.style.background = '#FEF2F2';
+      info.style.background = '#fef3f2';
       await loadTransferBuildings(null);
     }
     updateTransferBtnState();

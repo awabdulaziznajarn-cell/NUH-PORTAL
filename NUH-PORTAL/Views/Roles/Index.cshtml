@@ -51,7 +51,7 @@
       <input type="hidden" id="m_id">
       <div class="e-grid">
         <div class="e-field">
-          <label>@SharedLocalizer["rol_lbl_name"]<span>*</span></label>
+          <label>@SharedLocalizer["rol_lbl_name"]<span class="req">*</span></label>
           <input type="text" id="m_name">
           <span class="field-error" id="m-err-name">@SharedLocalizer["rol_required"]</span>
         </div>
@@ -81,12 +81,9 @@
 
 @section Scripts {
 <style>
-  .action-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:8px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;cursor:pointer;border:none;transition:all .2s}
-  .action-edit{background:#eef1f8;color:var(--navy)}
-  .action-edit:hover{background:#e0e6f5}
-  .action-delete{background:var(--red-light);color:var(--red)}
-  .action-delete:hover{background:#fee2e2}
-  .rol-name{display:inline-block;padding:2px 10px;border-radius:6px;font-size:12px;font-weight:700;background:#EEF2FF;color:#3730A3}
+  /* ⚠️ أزرار إجراءات الصف (.row-actions / .action-*) اتشالت من هنا —
+     كانت مكرّرة بالحرف في أربع شاشات. مكانها الآن components.css. */
+  .rol-name{display:inline-block;padding:2px 10px;border-radius:6px;font-size:12px;font-weight:700;background:#eff4ff;color:#1849a9}
   .rol-count{display:inline-block;min-width:26px;text-align:center;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:600;background:var(--gray-100);color:var(--gray-700)}
   /* ⚠️ .edit-modal-header اتشالت من هنا — كانت مكرّرة في ثلاث شاشات.
      مكانها الآن site.css مرة واحدة. */
@@ -113,7 +110,7 @@
   function showToast(msg, isError) {
     var el = document.getElementById('toast'); if (!el) return;
     document.getElementById('toast-msg').textContent = msg;
-    el.style.background = isError ? '#991B1B' : '#0F6E56';
+    el.style.background = isError ? '#b42318' : '#067647';
     el.classList.add('show');
     setTimeout(function () { el.classList.remove('show'); }, 3500);
   }

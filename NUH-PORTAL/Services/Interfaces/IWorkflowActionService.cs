@@ -11,7 +11,7 @@ namespace NUH_PORTAL.Services.Interfaces
         Task<int> GetMyQueueCountAsync();
         Task ApproveAsync(int requestId, string? notes);
         Task RejectAsync(int requestId, string? notes);
-        Task RequestMoreInfoAsync(int requestId, string? notes);
+        Task RequestMoreInfoAsync(int requestId, string? notes, List<string>? fields = null);
         Task<List<WorkflowHistoryItemDto>> GetHistoryAsync(int requestId);
     }
 }

@@ -72,16 +72,8 @@ namespace NUH_PORTAL.Services
         // اللاحقة مصدرها StudentLoginIdentity — كانت مكرّرة هنا كثابت مستقل
         private const string StudentEmailSuffix = StudentLoginIdentity.EmailSuffix;
 
-        // نفس منطق NormalizeMobile في RegistrationFlowService و normalizeSaudiMobile في الواجهة.
-        private static string? NormalizeMobile(string? mobile)
-        {
-            if (string.IsNullOrWhiteSpace(mobile)) return null;
-            var d = new string(mobile.Where(char.IsDigit).ToArray());
-            if (d.StartsWith("00966")) d = d[2..];
-            if (d.StartsWith("966")) d = d[3..];
-            if (d.StartsWith("0")) d = d[1..];
-            return d.Length == 9 && d[0] == '5' ? "966" + d : null;
-        }
+        // ⚠️ حُذفت النسخة المحلية — القاعدة الوحيدة في Core/IdentityRules.cs.
+        private static string? NormalizeMobile(string? mobile) => IdentityRules.NormalizeMobile(mobile);
 
         private (string? ip, string ua) ClientInfo()
         {

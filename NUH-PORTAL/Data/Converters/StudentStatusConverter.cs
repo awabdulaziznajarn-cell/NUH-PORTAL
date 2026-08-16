@@ -4,7 +4,7 @@ using NUH_PORTAL.Models.Enums;
 namespace NUH_PORTAL.Data.Converters
 {
     // StudentStatus <-> string: بيخزّن اسم العضو زي ما هو
-    // (active/dismissed/graduated/transferred/left_housing) — بدون تغيير عمود ولا ترحيل.
+    // (active/dismissed/graduated/transferred/left_housing/other) — بدون تغيير عمود ولا ترحيل.
     // مطبّق على عمود nullable — EF بيتولّى الـ null، والقراءة دفاعية (غير معروف → active).
     public class StudentStatusConverter : ValueConverter<StudentStatus, string>
     {
@@ -22,6 +22,7 @@ namespace NUH_PORTAL.Data.Converters
                 case "graduated": return StudentStatus.graduated;
                 case "transferred": return StudentStatus.transferred;
                 case "left_housing": return StudentStatus.left_housing;
+                case "other": return StudentStatus.other;
                 default: return StudentStatus.active;
             }
         }

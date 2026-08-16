@@ -119,9 +119,17 @@ namespace NUH_PORTAL.Services
             return paged;
         }
 
+        // القسم بيتطبّق هنا وفي الإحصائيات وفي فتح حساب طالب واحد — التلاتة
+        // مع بعض. لو القائمة اتفلترت والفتح المباشر لأ، الفصل بيبقى شكلي.
+        private IQueryable<Student> ScopeToGender(IQueryable<Student> query)
+        {
+            var scope = UnitOfWork.GetGenderScope();
+            return scope == null ? query : query.Where(s => s.gender == scope);
+        }
+
         private IQueryable<Student> BuildAccountsQuery(string? status)
         {
-            var query = _students.Query().AsNoTracking()
+            var query = ScopeToGender(_students.Query().AsNoTracking())
                 .Where(s => !s.IsDeleted && s.ad_username != null);
 
             if (!string.IsNullOrEmpty(status))
@@ -140,7 +148,8 @@ namespace NUH_PORTAL.Services
 
         public async Task<HousingAccountDetailsDto> GetDetailsAsync(int studentId)
         {
-            var student = await _students.FindAsync(s => s.Id == studentId && !s.IsDeleted)
+            var student = await ScopeToGender(_students.Query().AsNoTracking())
+                .FirstOrDefaultAsync(s => s.Id == studentId && !s.IsDeleted)
                 ?? throw UserFriendlyException.NotFound("Student not found");
 
             AdAccountDetailsDto? adDetails = null;
@@ -395,7 +404,7 @@ namespace NUH_PORTAL.Services
 
         public async Task<HousingStatsDto> GetHousingStatsAsync()
         {
-            var baseQuery = _students.Query().AsNoTracking().Where(s => !s.IsDeleted && s.ad_username != null);
+            var baseQuery = ScopeToGender(_students.Query().AsNoTracking()).Where(s => !s.IsDeleted && s.ad_username != null);
 
             return new HousingStatsDto
             {
@@ -405,9 +414,9 @@ namespace NUH_PORTAL.Services
                 unknown_status = await baseQuery.CountAsync(s => s.ad_status == null),
                 synced_last_24h = await baseQuery.CountAsync(s => s.ad_last_sync_at != null && s.ad_last_sync_at >= DateTime.UtcNow.AddHours(-24)),
                 not_synced = await baseQuery.CountAsync(s => s.ad_last_sync_at == null),
-                total_students = await _students.Query().AsNoTracking().CountAsync(s => !s.IsDeleted),
+                total_students = await ScopeToGender(_students.Query().AsNoTracking()).CountAsync(s => !s.IsDeleted),
                 with_username = await baseQuery.CountAsync(),
-                without_username = await _students.Query().AsNoTracking().CountAsync(s => !s.IsDeleted && (s.ad_username == null || s.ad_username == ""))
+                without_username = await ScopeToGender(_students.Query().AsNoTracking()).CountAsync(s => !s.IsDeleted && (s.ad_username == null || s.ad_username == ""))
             };
         }
 
@@ -416,7 +425,10 @@ namespace NUH_PORTAL.Services
         // بيجيب الطالب + الـ DN بتاع حسابه في AD أو يرمي الخطأ المناسب
         private async Task<(Student student, string dn)> GetStudentWithAdAccountAsync(int studentId)
         {
-            var student = await _students.GetByIdAsync(studentId);
+            // ⚠️ الدالة دي بوابة كل عمليات الكتابة على حساب الشبكة (تفعيل، تعطيل،
+            //    تصفير باسورد، إعادة إنشاء). لو القائمة اتقيّدت والكتابة لأ، المشرفة
+            //    تقدر تعطّل حساب طالب من القسم التاني بنداء مباشر على الـ API.
+            var student = await ScopeToGender(_students.Query()).FirstOrDefaultAsync(s => s.Id == studentId);
             if (student == null || string.IsNullOrEmpty(student.ad_username))
                 throw new UserFriendlyException("Student has no AD account", 400);
 

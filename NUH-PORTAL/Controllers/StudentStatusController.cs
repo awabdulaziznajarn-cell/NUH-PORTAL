@@ -5,7 +5,9 @@ using NUH_PORTAL.Services.Interfaces;
 namespace NUH_PORTAL.Controllers
 {
     // كنترولر رفيع — منطق حالات المغادرة في IStudentStatusService
-    // القراءة students.view، وتسجيل الإجراء students.changeStatus — مش لتوكن الطالب (OTP).
+    // القراءة students.view، وتسجيل الحالة students.changeStatus — مش لتوكن الطالب (OTP).
+    // ⚠️ كان اسمًا مش معرّف في ApplicationPermissions، فتسجيل التخرّج/الفصل/التحويل
+    //    كان بيرجّع 500. والاسم الصح مستخدم أصلًا جوّه الخدمة نفسها.
     [Authorize(Policy = "students.view")]
     [Route("api/student-status")]
     [ApiController]
@@ -40,16 +42,5 @@ namespace NUH_PORTAL.Controllers
         [HttpGet("{studentId}")]
         public async Task<IActionResult> GetStudentHistory(int studentId)
             => Ok(await _service.GetStudentHistoryAsync(studentId));
-
-        // GET api/student-status/{actionId}/attachment[?download=true]
-        // من غير download بيرجع inline — الصور و PDF بتتعرض في المتصفح.
-        [HttpGet("{actionId}/attachment")]
-        public async Task<IActionResult> GetAttachment(int actionId, [FromQuery] bool download = false)
-        {
-            var file = await _service.GetActionAttachmentAsync(actionId);
-            return download
-                ? PhysicalFile(file.FilePath, file.ContentType, file.OriginalFileName)
-                : PhysicalFile(file.FilePath, file.ContentType);
-        }
     }
 }

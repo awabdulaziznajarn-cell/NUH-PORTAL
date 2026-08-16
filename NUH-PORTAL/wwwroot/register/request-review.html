@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" href="../favicon.ico">
-<title>تتبع الطلب</title>
+<title>مراجعة الطلب - بوابة السكن الجامعي</title>
 <!--
   ============================================================================
   ⚠️ هذه الصفحة كانت شاشة مراجعة *للموظفين* موضوعة داخل مجلد بوابة الطالب،
@@ -25,7 +25,7 @@
     var q = new URLSearchParams(window.location.search);
     var n = q.get('number') || q.get('req');
     if (n) localStorage.setItem('openRequestNumber', n);
-  } catch (e) { /* رابط غير صالح - التحويل يتم على أي حال */ }
+  } catch (e) { /* رابط غير صالح — التحويل يتم على أي حال */ }
   window.location.replace('track-request.html');
 </script>
 </head>

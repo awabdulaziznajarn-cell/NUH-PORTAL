@@ -1,5 +1,6 @@
 using MapsterMapper;
 using Microsoft.EntityFrameworkCore;
+using NUH_PORTAL.Core;
 using NUH_PORTAL.Core.Exceptions;
 using NUH_PORTAL.Data.Interfaces;
 using NUH_PORTAL.DTOs.Workflow;
@@ -81,27 +82,19 @@ namespace NUH_PORTAL.Services
         // المراحل اللي بتقف عند المستخدم الحالي — بتتحدّد بصلاحياته مش بدوره،
         // فمستخدم عنده مراجعة الإسكان والأمن السيبراني الاتنين بيشوف الطابورين.
         // المرحلة ليها اسمين حسب المسار (تسجيل الطالب / طلب الموظف) فبنقبل الاتنين.
-        private static readonly string[] HousingStages = { "pending_supervisor", "submitted" };
-        private static readonly string[] CyberStages = { "pending_cyber", "cyber_review" };
-        private static readonly string[] CompletionStages = { "ready_for_provisioning", "cyber_approved" };
+        // ⚠️ المراحل والصلاحيات صارت في Core/RequestWorkflow.cs — نفس المصدر الذي
+        //    تقرأ منه شاشتا الطلبات وفحص الخادم. كانت هنا ثلاث مصفوفات ودالة
+        //    switch، فاختلفت عن جدول الانتقالات وسقطت «housing_approved» من
+        //    عدّاد الشارة رغم أن لها زر إجراء في الشاشة.
+        private string[] StagesForCurrentUser() => RequestWorkflow.StagesFor(
+            UnitOfWork.HasPermission("requests.reviewHousing"),
+            UnitOfWork.HasPermission("requests.reviewCyber"),
+            UnitOfWork.HasPermission("requests.complete"));
 
-        private string[] StagesForCurrentUser()
-        {
-            var stages = new List<string>();
-            if (UnitOfWork.HasPermission("requests.reviewHousing")) stages.AddRange(HousingStages);
-            if (UnitOfWork.HasPermission("requests.reviewCyber")) stages.AddRange(CyberStages);
-            if (UnitOfWork.HasPermission("requests.complete")) stages.AddRange(CompletionStages);
-            return stages.Distinct().ToArray();
-        }
-
-        // الصلاحية المطلوبة للتصرّف في مرحلة معيّنة. null = مرحلة مقفولة (مكتملة/مرفوضة).
-        private static string? PermissionForStage(string? status) => status switch
-        {
-            "pending_supervisor" or "submitted" => "requests.reviewHousing",
-            "pending_cyber" or "cyber_review" => "requests.reviewCyber",
-            "ready_for_provisioning" or "cyber_approved" or "housing_approved" => "requests.complete",
-            _ => null
-        };
+        // ⚠️ بعض المراحل يجوز التصرّف فيها بأكثر من صلاحية (مثل cyber_approved:
+        //    مراجعة الأمن السيبراني أو إكمال الطلب). كانت الدالة تُرجع واحدة
+        //    فقط، فصاحب الصلاحية الثانية يُمنع من مرحلة يراها في شاشته بزر.
+        private static string[] PermissionsForStage(string? status) => RequestWorkflow.PermissionsForStage(status);
 
         // عدد الطلبات المستنية إجراء من المستخدم الحالي — الرقم اللي بيظهر على
         // «كل الطلبات» في القائمة الجانبية. بيقل لوحده مع كل طلب بيتقفل.
@@ -165,7 +158,7 @@ namespace NUH_PORTAL.Services
             await _audit.LogAsync("workflow_rejected", "Requests", requestId);
         }
 
-        public async Task RequestMoreInfoAsync(int requestId, string? notes)
+        public async Task RequestMoreInfoAsync(int requestId, string? notes, List<string>? fields = null)
         {
             var actorId = RequireActor();
             await RequireStagePermissionAsync(requestId);
@@ -173,7 +166,18 @@ namespace NUH_PORTAL.Services
             if (string.IsNullOrWhiteSpace(notes))
                 throw new UserFriendlyException("الملاحظات مطلوبة لطلب معلومات إضافية", 400);
 
-            var result = await _registration.RequestMoreInfoAsync(requestId, actorId, notes);
+            // ⚠️ الأسماء بتتفلتر بقائمة الخانات المعروفة قبل ما تتخزّن. من غير ده
+            //    أي اسم غلط جاي من الواجهة بيتخزّن ويقفل الطالب على خانة مش موجودة
+            //    في الفورم — فيبقى مقفول على كل حاجة ومش فاهم ليه.
+            //    فاضية = كل الخانات مفتوحة له (وده حال الطلبات القديمة).
+            var cleaned = fields == null ? null : string.Join(",", fields
+                .Where(f => !string.IsNullOrWhiteSpace(f))
+                .Select(f => RegistrationDataMapper.NormalizeFieldKey(f.Trim()))
+                .Where(RegistrationDataMapper.IsEditableField)
+                .Distinct(StringComparer.OrdinalIgnoreCase));
+
+            var result = await _registration.RequestMoreInfoAsync(requestId, actorId, notes, null,
+                string.IsNullOrWhiteSpace(cleaned) ? null : cleaned);
 
             if (!result)
                 throw new UserFriendlyException("لا يمكن طلب معلومات إضافية لهذا الطلب", 400);
@@ -252,11 +256,14 @@ namespace NUH_PORTAL.Services
                 .FirstOrDefaultAsync()
                 ?? throw UserFriendlyException.NotFound("الطلب غير موجود");
 
-            var permission = PermissionForStage(status)
-                ?? throw new UserFriendlyException("الطلب مقفول ولا يقبل إجراءات جديدة", 400);
+            var permissions = PermissionsForStage(status);
+            if (permissions.Length == 0)
+                throw new UserFriendlyException("الطلب مقفول ولا يقبل إجراءات جديدة", 400);
 
-            if (!UnitOfWork.HasPermission(permission))
-                throw UserFriendlyException.Forbidden();
+            // أي صلاحية من صلاحيات المرحلة تكفي — والمختارة هي التي يملكها المستخدم
+            // فعلًا، لأنها هي التي تحدّد الإجراء المنفَّذ في ApproveAsync/RejectAsync.
+            var permission = permissions.FirstOrDefault(p => UnitOfWork.HasPermission(p))
+                ?? throw UserFriendlyException.Forbidden();
 
             return permission;
         }

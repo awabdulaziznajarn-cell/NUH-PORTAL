@@ -249,9 +249,17 @@ namespace NUH_PORTAL.Services
             // وشلنا الفلتر Where(CreatedBy == actorId): كان بيخلّي كل مستخدم يشوف
             // تنقلاته هو بس، فالأدمن كان بيلاقي السجل فاضي تمامًا رغم إنه المفروض
             // يشوف كل حاجة. عمود «بواسطة» بيوضّح مين عمل كل نقل.
-            return await _transfers.Query().AsNoTracking()
+            // سجل النقل بيتقيّد بالقسم زي أي شاشة تانية
+            var scope = UnitOfWork.GetGenderScope();
+            // النوع صريح مش var: Include بيرجّع IIncludableQueryable و Where بيرجّع
+            // IQueryable، فـ var بياخد النوع الضيّق وإعادة الإسناد تحت ماتعدّيش.
+            IQueryable<HousingTransfer> q = _transfers.Query().AsNoTracking()
                 .Include(t => t.Student)
-                .Include(t => t.CreatedByUser)
+                .Include(t => t.CreatedByUser);
+            if (scope != null)
+                q = q.Where(t => t.Student != null && t.Student.gender == scope);
+
+            return await q
                 .OrderByDescending(t => t.CreatedAt)
                 .Take(50)
                 .Select(t => new RecentTransferDto

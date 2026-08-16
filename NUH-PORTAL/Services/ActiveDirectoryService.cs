@@ -2,7 +2,6 @@
 using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using NUH_PORTAL.Models;
 
@@ -13,9 +12,9 @@ namespace NUH_PORTAL.Services
         private readonly ActiveDirectoryConfig _config;
         private readonly ADServiceAccountConfig _serviceAccount;
         private readonly ILogger<ActiveDirectoryService> _logger;
-        private readonly IMemoryCache _cache;
-        private const string GroupCachePrefix = "ad_groups_";
-        private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(5);
+        // ⚠️ IMemoryCache و CacheDuration اتشالوا مع كاش مجموعات الـ AD.
+        //    الكاش ده كان بيتكتب مع كل تسجيل دخول وماحدش بيقرا منه ولا مرة —
+        //    كان بيخدم استنتاج الدور من المجموعات، واستنتاج الدور نفسه اتشال.
         private static readonly TimeSpan CircuitBreakerDuration = TimeSpan.FromSeconds(30);
         private const int MaxRetries = 1;
 
@@ -25,13 +24,11 @@ namespace NUH_PORTAL.Services
         public ActiveDirectoryService(
             IOptions<ActiveDirectoryConfig> config,
             IOptions<ADServiceAccountConfig> serviceAccount,
-            ILogger<ActiveDirectoryService> logger,
-            IMemoryCache cache)
+            ILogger<ActiveDirectoryService> logger)
         {
             _config = config.Value;
             _serviceAccount = serviceAccount.Value;
             _logger = logger;
-            _cache = cache;
         }
 
         public Task<AdAuthResult> AuthenticateAsync(string username, string password, string? clientIp = null)
@@ -143,24 +140,14 @@ _logger.LogInformation(
                 return result;
             }
 
-            var details = GetUserDetailsAndGroups(connection, username);
-            if (details != null)
-            {
-                result.Details = new AdUserDetails
-                {
-                    Username = details.Username,
-                    DisplayName = details.DisplayName,
-                    Email = details.Email,
-                    Department = details.Department,
-                    Mobile = details.Mobile,
-                    JobTitle = details.JobTitle,
-                };
-                result.Role = MapGroupsToRole(details.Groups);
-            }
+            result.Details = GetUserDetails(connection, username);
 
+            // ⚠️ مافيش استنتاج للدور من مجموعات الدليل، فمابنجيبش memberOf هنا خالص.
+            //    الدور بيتحدد من شاشة «إدارة المستخدمين» وبس — والدليل مسؤوليته
+            //    يتأكد من الباسورد ويجيب البيانات الشخصية.
             _logger.LogInformation(
-                "AD login successful for {Username}, role: {Role}, IP: {ClientIp}",
-                username, result.Role, clientIp ?? "unknown");
+                "AD login successful for {Username}, IP: {ClientIp}",
+                username, clientIp ?? "unknown");
 
             return result;
         }
@@ -223,19 +210,19 @@ try
             }
         }
 
-        private AdUserDetailsWithGroups? GetUserDetailsAndGroups(LdapConnection connection, string username)
+        private AdUserDetails? GetUserDetails(LdapConnection connection, string username)
         {
             var baseDn = BuildBaseDn();
             var escapedUsername = EscapeLdapSearchFilter(username);
 
-            _logger.LogInformation("TRACE: LDAP search baseDN: {BaseDn}, filter: (sAMAccountName={EscapedUsername}), scope: Subtree, attrs: displayName,mail,department,mobile,title,memberOf",
+            _logger.LogInformation("TRACE: LDAP search baseDN: {BaseDn}, filter: (sAMAccountName={EscapedUsername}), scope: Subtree, attrs: displayName,mail,department,mobile,title",
                 baseDn, escapedUsername);
 
             var searchRequest = new SearchRequest(
                 baseDn,
                 $"(sAMAccountName={escapedUsername})",
                 SearchScope.Subtree,
-                "displayName", "mail", "department", "mobile", "title", "memberOf"
+                "displayName", "mail", "department", "mobile", "title"
             );
 
             SearchResponse? response;
@@ -259,7 +246,7 @@ try
             _logger.LogInformation("TRACE: LDAP search found entry. Attributes count: {Count}, DN: {DistinguishedName}",
                 entry.Attributes.Count, entry.DistinguishedName ?? "(null)");
 
-            foreach (var attrName in new[] { "displayName", "mail", "department", "mobile", "title", "memberOf" })
+            foreach (var attrName in new[] { "displayName", "mail", "department", "mobile", "title" })
             {
                 var values = entry.Attributes[attrName]?.GetValues(typeof(string));
                 if (values != null)
@@ -269,77 +256,15 @@ try
                     _logger.LogInformation("TRACE:   attr '{Attr}': (not present)", attrName);
             }
 
-            var groups = ExtractGroupNames(entry);
-            _logger.LogInformation("TRACE: Extracted CN group names ({Count}): {Groups}",
-                groups.Count, groups.Count > 0 ? string.Join(", ", groups) : "(none)");
-
-            var cacheKey = $"{GroupCachePrefix}{username}@{_config.Domain}";
-            _cache.Set(cacheKey, groups, new MemoryCacheEntryOptions()
-                .SetSlidingExpiration(CacheDuration)
-                .SetAbsoluteExpiration(TimeSpan.FromHours(1)));
-
-            return new AdUserDetailsWithGroups
+            return new AdUserDetails
             {
                 Username = username,
                 DisplayName = GetAttributeValue(entry, "displayName") ?? username,
                 Email = GetAttributeValue(entry, "mail") ?? $"{username}@{_config.Domain}",
                 Department = GetAttributeValue(entry, "department") ?? string.Empty,
                 Mobile = GetAttributeValue(entry, "mobile") ?? string.Empty,
-                JobTitle = GetAttributeValue(entry, "title") ?? string.Empty,
-                Groups = groups
+                JobTitle = GetAttributeValue(entry, "title") ?? string.Empty
             };
-        }
-
-        private static List<string> ExtractGroupNames(SearchResultEntry entry)
-        {
-            var groups = new List<string>();
-            var memberOfValues = entry.Attributes["memberOf"]?.GetValues(typeof(string));
-            if (memberOfValues == null) return groups;
-
-            foreach (string dn in memberOfValues)
-            {
-                var parts = dn.Split(',');
-                foreach (var part in parts)
-                {
-                    var trimmed = part.Trim();
-                    if (trimmed.StartsWith("CN=", StringComparison.OrdinalIgnoreCase))
-                    {
-                        groups.Add(trimmed[3..]);
-                        break;
-                    }
-                }
-            }
-
-            return groups;
-        }
-
-        private string MapGroupsToRole(List<string> groups)
-        {
-            _logger.LogInformation("TRACE: Role mapping evaluation - checking {Count} mappings against {GroupCount} groups",
-                _config.RoleMappings.Count, groups.Count);
-
-            _logger.LogInformation(
-                "TRACE: User groups = {Groups}",
-                string.Join(", ", groups)
-            );
-
-            foreach (var mapping in _config.RoleMappings)
-            {
-                var contains = groups.Contains(mapping.AdGroup, StringComparer.OrdinalIgnoreCase);
-
-                if (contains)
-                {
-                    _logger.LogInformation(
-                        "AD group match: {AdGroup} -> role {Role}",
-                        mapping.AdGroup,
-                        mapping.ApplicationRole
-                    );
-                    return mapping.ApplicationRole;
-                }
-            }
-
-            _logger.LogInformation("TRACE:   no mapping matched, returning default role 'User'");
-            return "user";
         }
 
         private string BuildBaseDn()
@@ -890,7 +815,12 @@ try
                         "distinguishedName", "sAMAccountName", "userPrincipalName",
                         "displayName", "givenName", "sn", "userAccountControl",
                         "memberOf", "extensionAttribute1", "extensionAttribute2",
-                        "description", "department", "title", "mail", "whenCreated"
+                        "description", "department", "title", "mail", "whenCreated",
+                        // ⚠️ الخصائص التلاتة دي مكانتش مطلوبة في البحث، فكانت بترجع
+                        //    فاضية دايمًا حتى لو ليها قيمة في الدومين. الـ LDAP
+                        //    بيرجّع الخصائص المطلوبة بالاسم بس — مش كل حاجة.
+                        //    سكن أعضاء هيئة التدريس بيقراهم للاستيراد وفحص التطابق.
+                        "employeeID", "mobile", "company"
                     );
 
                     var response = connection.SendRequest(searchRequest) as SearchResponse;
@@ -911,6 +841,9 @@ try
                     result.Surname = GetAttributeValue(entry, "sn") ?? "";
                     result.Description = GetAttributeValue(entry, "description") ?? "";
                     result.Department = GetAttributeValue(entry, "department") ?? "";
+                    result.EmployeeId = GetAttributeValue(entry, "employeeID") ?? "";
+                    result.Mobile = GetAttributeValue(entry, "mobile") ?? "";
+                    result.Company = GetAttributeValue(entry, "company") ?? "";
                     result.ExtensionAttribute1 = GetAttributeValue(entry, "extensionAttribute1") ?? "";
 
                     var uacStr = GetAttributeValue(entry, "userAccountControl") ?? "0";
@@ -1206,14 +1139,27 @@ try
                             continue;
                         }
 
-                        var modifyRequest = new ModifyRequest(
-                            distinguishedName,
-                            DirectoryAttributeOperation.Replace,
-                            key,
-                            kvp.Value ?? ""
-                        );
+                        // ⚠️ الخاصية الفاضية تُحذف ولا تُكتب فارغة. الدليل يرفض
+                        //    Replace بقيمة "" ويردّ بـ «Error in attribute conversion
+                        //    operation»، ويُلغي العملية كلها لا الخاصية وحدها — فخانة
+                        //    واحدة فارغة كانت تُفشل كتابة الخصائص الخمس مجتمعة.
+                        //    الحذف هو المقابل الصحيح للقيمة الفارغة في LDAP.
+                        var isEmpty = string.IsNullOrEmpty(kvp.Value);
+                        var modifyRequest = isEmpty
+                            ? new ModifyRequest(distinguishedName, DirectoryAttributeOperation.Delete, key)
+                            : new ModifyRequest(distinguishedName, DirectoryAttributeOperation.Replace, key, kvp.Value);
 
-                        connection.SendRequest(modifyRequest);
+                        try
+                        {
+                            connection.SendRequest(modifyRequest);
+                        }
+                        catch (DirectoryOperationException ex)
+                            when (isEmpty && ex.Response?.ResultCode == ResultCode.NoSuchAttribute)
+                        {
+                            // ⚠️ الخاصية فارغة أصلًا في الدليل: حذف غير الموجود يردّ
+                            //    بخطأ، والنتيجة المطلوبة متحققة سلفًا. تجاهله هنا وحده
+                            //    — وبشرط isEmpty — حتى لا يبتلع خطأ كتابة حقيقيًا.
+                        }
                     }
 
                     result.Success = true;
@@ -1280,16 +1226,255 @@ try
             });
         }
 
-        private class AdUserDetailsWithGroups
+        // =================================================================
+        //  سكن أعضاء هيئة التدريس — قراءة الوحدات وفحص الصلاحية
+        // =================================================================
+
+        // قراءة كل حسابات المستخدمين اللي جوّه OU معيّنة.
+        //
+        // ⚠️ بصفحات (PageResultRequestControl) مش استعلام واحد. الـ DC بيرجّع
+        //    ١٠٠٠ صف كحد أقصى للطلب الواحد **وبيقطع الباقي من غير أي خطأ** —
+        //    فاستعلام عادي على OU فيها ١٢٠٠ حساب بيرجع ١٠٠٠ ويبان كأنه نجح،
+        //    والـ ٢٠٠ الباقيين بيختفوا بصمت. ده بالظبط نوع الغلط اللي مايتكتشفش
+        //    غير بعد شهور لما حد يسأل «فين الفيلا الفلانية؟».
+        public Task<ADOuUsersResult> SearchOuUsersAsync(string organizationalUnitDn, int maxResults = 2000)
         {
-            public string Username { get; set; } = string.Empty;
-            public string DisplayName { get; set; } = string.Empty;
-            public string Email { get; set; } = string.Empty;
-            public string Department { get; set; } = string.Empty;
-            public string Mobile { get; set; } = string.Empty;
-            public string JobTitle { get; set; } = string.Empty;
-            public List<string> Groups { get; set; } = new();
+            return Task.Run(() =>
+            {
+                var result = new ADOuUsersResult { OrganizationalUnit = organizationalUnitDn };
+
+                if (string.IsNullOrWhiteSpace(organizationalUnitDn))
+                {
+                    result.Error = "OU path is empty.";
+                    return result;
+                }
+
+                try
+                {
+                    using var connection = CreateManagementConnection();
+                    if (connection == null)
+                    {
+                        result.Error = "Service account not configured or bind failed.";
+                        return result;
+                    }
+
+                    // objectCategory=person عشان نستبعد كائنات الكمبيوتر — دي
+                    // بتورّث objectClass=user فبتيجي في النتيجة من غير الفلتر ده
+                    var request = new SearchRequest(
+                        organizationalUnitDn,
+                        "(&(objectClass=user)(objectCategory=person))",
+                        SearchScope.Subtree,
+                        "distinguishedName", "sAMAccountName", "description",
+                        "employeeID", "mobile", "company", "department",
+                        "userAccountControl", "whenCreated");
+
+                    var pageControl = new PageResultRequestControl(500);
+                    request.Controls.Add(pageControl);
+                    // من غيره الـ DC ممكن يرجّع إحالات (referrals) بدل نتائج.
+                    // ⚠️ الاسم الكامل ضروري: SearchOption موجود في
+                    //    System.DirectoryServices.Protocols وفي System.IO كمان،
+                    //    و System.IO بييجي تلقائي مع implicit usings — فالاسم
+                    //    المختصر بيبقى غامض والكومبايلر بيرفضه (CS0104).
+                    request.Controls.Add(new SearchOptionsControl(
+                        System.DirectoryServices.Protocols.SearchOption.DomainScope));
+
+                    while (true)
+                    {
+                        if (connection.SendRequest(request) is not SearchResponse response)
+                            break;
+
+                        foreach (SearchResultEntry entry in response.Entries)
+                        {
+                            var uacStr = GetAttributeValue(entry, "userAccountControl") ?? "0";
+                            int.TryParse(uacStr, out var uac);
+
+                            result.Users.Add(new ADOuUser
+                            {
+                                SamAccountName = GetAttributeValue(entry, "sAMAccountName") ?? "",
+                                DistinguishedName = entry.DistinguishedName,
+                                Description = GetAttributeValue(entry, "description"),
+                                EmployeeId = GetAttributeValue(entry, "employeeID"),
+                                Mobile = GetAttributeValue(entry, "mobile"),
+                                Company = GetAttributeValue(entry, "company"),
+                                Department = GetAttributeValue(entry, "department"),
+                                UserAccountControl = uac,
+                                AccountEnabled = (uac & 2) == 0,
+                                WhenCreated = ParseAdTimestamp(GetAttributeValue(entry, "whenCreated"))
+                            });
+                        }
+
+                        if (result.Users.Count >= maxResults)
+                        {
+                            result.Truncated = true;
+                            break;
+                        }
+
+                        var pageResponse = response.Controls
+                            .OfType<PageResultResponseControl>().FirstOrDefault();
+                        if (pageResponse == null || pageResponse.Cookie.Length == 0)
+                            break;
+
+                        pageControl.Cookie = pageResponse.Cookie;
+                    }
+
+                    result.Success = true;
+                }
+                catch (DirectoryOperationException ex)
+                {
+                    result.Error = $"LDAP error: {ex.Message}";
+                    if (ex.Response != null)
+                        result.ErrorDetails = $"Server error: {ex.Response.ErrorMessage}";
+                    _logger.LogError(ex, "SearchOuUsers failed for {Ou}", organizationalUnitDn);
+                }
+                catch (Exception ex)
+                {
+                    result.Error = ex.Message;
+                    _logger.LogError(ex, "SearchOuUsers failed for {Ou}", organizationalUnitDn);
+                }
+
+                return result;
+            });
         }
+
+        // فحص: حساب الخدمة بيقدر يقرا من الـ OU دي؟ وبيقدر يكتب في أنهي خصائص؟
+        //
+        // ⚠️ الفحص من غير ما نكتب أي حاجة. بنقرا الخاصية المحسوبة
+        //    allowedAttributesEffective — الدومين بيحسبها لكل كائن وبيرجّع فيها
+        //    الخصائص اللي **الحساب المتصل حاليًا** له حق تعديلها فعلًا.
+        //    البديل (نكتب قيمة ونشوف نجحت ولا لأ) معناه إننا بنعدّل بيانات حقيقية
+        //    عشان نختبر، وده مرفوض على بيانات إنتاج.
+        public Task<ADOuAccessResult> CheckOuAccessAsync(string organizationalUnitDn, IEnumerable<string> requiredAttributes)
+        {
+            return Task.Run(() =>
+            {
+                var required = requiredAttributes?.ToList() ?? new List<string>();
+                var result = new ADOuAccessResult { OrganizationalUnit = organizationalUnitDn };
+
+                if (string.IsNullOrWhiteSpace(organizationalUnitDn))
+                {
+                    result.Error = "OU path is empty.";
+                    return result;
+                }
+
+                try
+                {
+                    using var connection = CreateManagementConnection();
+                    if (connection == null)
+                    {
+                        result.Error = "Service account not configured or bind failed.";
+                        return result;
+                    }
+
+                    // (١) الـ OU نفسها موجودة؟
+                    var ouRequest = new SearchRequest(
+                        organizationalUnitDn, "(objectClass=*)", SearchScope.Base, "distinguishedName");
+                    if (connection.SendRequest(ouRequest) is not SearchResponse ouResponse
+                        || ouResponse.Entries.Count == 0)
+                    {
+                        result.Error = "الوحدة التنظيمية مش موجودة أو مفيش صلاحية قراءة عليها.";
+                        return result;
+                    }
+                    result.OuExists = true;
+
+                    // (٢) نقرا حساب واحد جوّاها — ده بيثبت القراءة
+                    var probeRequest = new SearchRequest(
+                        organizationalUnitDn,
+                        "(&(objectClass=user)(objectCategory=person))",
+                        SearchScope.Subtree,
+                        "distinguishedName", "sAMAccountName", "allowedAttributesEffective");
+                    probeRequest.Controls.Add(new PageResultRequestControl(1));
+
+                    if (connection.SendRequest(probeRequest) is not SearchResponse probeResponse
+                        || probeResponse.Entries.Count == 0)
+                    {
+                        result.CanRead = true;
+                        result.Error = "الوحدة التنظيمية مفيهاش حسابات — القراءة شغّالة بس مافيش كائن نختبر عليه الكتابة.";
+                        return result;
+                    }
+
+                    result.CanRead = true;
+                    var probe = probeResponse.Entries[0];
+                    result.ProbedAccount = GetAttributeValue(probe, "sAMAccountName");
+
+                    // (٣) الخصائص اللي حساب الخدمة يقدر يكتبها على الكائن ده
+                    var writable = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    var effective = probe.Attributes["allowedAttributesEffective"]?.GetValues(typeof(string));
+                    if (effective != null)
+                        foreach (string a in effective) writable.Add(a);
+
+                    foreach (var attr in required)
+                        result.AttributeWritable[attr] = writable.Contains(attr);
+
+                    // ⚠️ لو الخاصية دي مارجعتش أصلًا يبقى الحساب مالوش حق كتابة
+                    //    على الكائن ده خالص — مش إن الفحص فشل. نفرّق بين الاتنين
+                    //    عشان الرسالة اللي المستخدم يشوفها تبقى صح.
+                    result.EffectiveAttributesReturned = writable.Count;
+                }
+                catch (DirectoryOperationException ex)
+                {
+                    result.Error = $"LDAP error: {ex.Message}";
+                    if (ex.Response != null)
+                        result.ErrorDetails = $"Server error: {ex.Response.ErrorMessage}";
+                }
+                catch (Exception ex)
+                {
+                    result.Error = ex.Message;
+                }
+
+                return result;
+            });
+        }
+
+        // whenCreated بييجي بصيغة الدومين "20240312091500.0Z". بناخد أول ١٤ خانة
+        // ونقراهم UTC — أبسط وأمتن من محاولة مطابقة الصيغة كلها بكسورها.
+        private static DateTime? ParseAdTimestamp(string? raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw) || raw.Length < 14) return null;
+            return DateTime.TryParseExact(raw[..14], "yyyyMMddHHmmss",
+                System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal,
+                out var dt) ? dt : null;
+        }
+    }
+
+    public class ADOuUser
+    {
+        public string SamAccountName { get; set; } = string.Empty;
+        public string? DistinguishedName { get; set; }
+        public string? Description { get; set; }
+        public string? EmployeeId { get; set; }
+        public string? Mobile { get; set; }
+        public string? Company { get; set; }
+        public string? Department { get; set; }
+        public int UserAccountControl { get; set; }
+        public bool AccountEnabled { get; set; }
+        public DateTime? WhenCreated { get; set; }
+    }
+
+    public class ADOuUsersResult
+    {
+        public bool Success { get; set; }
+        public string OrganizationalUnit { get; set; } = string.Empty;
+        public List<ADOuUser> Users { get; set; } = new();
+        // وصلنا للسقف وفي كمان — بيتعرض كتحذير مش بيعدّي بصمت
+        public bool Truncated { get; set; }
+        public string? Error { get; set; }
+        public string? ErrorDetails { get; set; }
+    }
+
+    public class ADOuAccessResult
+    {
+        public string OrganizationalUnit { get; set; } = string.Empty;
+        public bool OuExists { get; set; }
+        public bool CanRead { get; set; }
+        // اسم الحساب اللي اتفحص عليه — عشان المستخدم يعرف الفحص اتعمل على إيه
+        public string? ProbedAccount { get; set; }
+        public Dictionary<string, bool> AttributeWritable { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+        public int EffectiveAttributesReturned { get; set; }
+        public string? Error { get; set; }
+        public string? ErrorDetails { get; set; }
+
+        public bool AllWritable => AttributeWritable.Count > 0 && AttributeWritable.Values.All(v => v);
     }
 
     public class AdAuthResult
@@ -1297,7 +1482,6 @@ try
         public bool IsAuthenticated { get; set; }
         public bool IsAdAvailable { get; set; } = true;
         public AdUserDetails? Details { get; set; }
-        public string Role { get; set; } = "User";
         public string? ErrorSubCode { get; set; }
     }
 
@@ -1381,6 +1565,10 @@ try
         public bool Success { get; set; }
         public string? Error { get; set; }
         public string? DistinguishedName { get; set; }
+        // employeeID / mobile / company — بيتقروا للاستيراد وفحص التطابق
+        public string? EmployeeId { get; set; }
+        public string? Mobile { get; set; }
+        public string? Company { get; set; }
         public string SamAccountName { get; set; } = string.Empty;
         public string? UserPrincipalName { get; set; }
         public string? DisplayName { get; set; }

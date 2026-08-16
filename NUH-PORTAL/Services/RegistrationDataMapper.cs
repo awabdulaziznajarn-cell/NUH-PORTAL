@@ -40,6 +40,48 @@ namespace NUH_PORTAL.Services
             ("room_number",       "رقم الغرفة")
         };
 
+        // ⚠️ القائمة اللي المراجع بيعلّم منها على الخانات المطلوب تصحيحها.
+        //    مشتقّة من TrackedFields فوق ومترتّبة زي ترتيب نموذج الطالب،
+        //    ومن غير التكرار: mobile و phone نفس الخانة باسمين، ولو ظهروا
+        //    الاتنين في القائمة المراجع هيشوف «رقم الجوال» مرتين ومايعرفش
+        //    الفرق. الترتيب هنا مقصود عشان القائمة تقرا زي الفورم.
+        public static readonly (string Key, string Label)[] EditableFields =
+        {
+            ("full_name",         "الاسم بالعربية"),
+            ("full_name_english", "الاسم بالإنجليزية"),
+            ("national_id",       "رقم الهوية"),
+            ("phone",             "رقم الجوال"),
+            ("gender",            "الجنس"),
+            ("college",           "الكلية"),
+            ("department",        "القسم"),
+            ("academic_level",    "المستوى الدراسي"),
+            ("housing_building",  "رقم المبنى"),
+            ("floor_number",      "الدور"),
+            ("apartment_number",  "رقم الشقة"),
+            ("room_number",       "رقم الغرفة")
+        };
+
+        // mobile و phone نفس الخانة — التطبيع ده بيمنع رفض تعديل مشروع
+        // لمجرد إن المراجع علّم على اسم والفورم بيبعت الاسم التاني.
+        public static string NormalizeFieldKey(string key)
+            => string.Equals(key, "mobile", StringComparison.OrdinalIgnoreCase) ? "phone" : key;
+
+        public static bool IsEditableField(string key)
+        {
+            var k = NormalizeFieldKey(key);
+            foreach (var f in EditableFields)
+                if (string.Equals(f.Key, k, StringComparison.OrdinalIgnoreCase)) return true;
+            return false;
+        }
+
+        public static string LabelOf(string key)
+        {
+            var k = NormalizeFieldKey(key);
+            foreach (var f in EditableFields)
+                if (string.Equals(f.Key, k, StringComparison.OrdinalIgnoreCase)) return f.Label;
+            return k;
+        }
+
         // ------------------------------------------------------------------
         //  قراءة حقل واحد من الـ JSON
         // ------------------------------------------------------------------

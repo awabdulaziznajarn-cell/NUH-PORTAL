@@ -8,9 +8,11 @@ namespace NUH_PORTAL.Controllers
 {
     // كنترولر رفيع: بيوجّه للـ IStudentService بس. كل المنطق + التحقق + الصلاحيات + الـ audit جوه الـ service.
     // الأخطاء بترمى كـ UserFriendlyException وبيترجمها ExceptionHandlingMiddleware لـ JSON { message } بالـ status الصح.
-    // الصلاحيات: القراءة students.view، الإضافة students.create، التعديل students.edit،
-    // والحذف/الاستعادة students.delete — كل إجراء له صلاحيته عشان المسؤول يقدر
-    // يدّي موظف حق التعديل من غير ما يدّيه حق الحذف.
+    // الصلاحيات: القراءة students.view، وكل عملية كتابة بصلاحيتها الخاصة.
+    // ⚠️ الأربعة كانوا باسم واحد مش معرّف في ApplicationPermissions، فما كانش
+    //    ليه policy في Program.cs وكل عمليات الكتابة على الطلاب كانت بترجّع 500.
+    //    وكمان اسم واحد لأربع عمليات مختلفة الخطورة (إنشاء/تعديل/حذف/استعادة)
+    //    مكانش بيسمح تدّي موظف تعديل من غير حذف.
     [Authorize(Policy = "students.view")]
     [Route("api/[controller]")]
     [ApiController]
@@ -36,8 +38,16 @@ namespace NUH_PORTAL.Controllers
             => Ok(await _service.GetStatsAsync());
 
         // GET api/Students/by-number/{studentNumber}
-        // بحث بالرقم الجامعي — بديل تحميل قائمة الطلاب كاملة في المتصفح.
-        // بيرجّع 404 لو مش موجود عشان الواجهة تعرض رسالة واضحة.
+        //
+        // ⚠️ المسار ده كانت شاشة «تحديث حالة الطالب» بتناديه في مكانين (الحالة
+        //    الأكاديمية ونقل السكن)، والدالة GetByStudentNumberAsync موجودة في
+        //    الخدمة من الأول — بس الإجراء ده في الكنترولر ماكانش مكتوب خالص.
+        //    فالنداء كان بيرجّع 404، والشاشة بتفسّر أي رد فاشل على إنه «الطالب
+        //    غير موجود». النتيجة: الرقم الجامعي صح والطالب موجود في قاعدة
+        //    البيانات، ومع ذلك الشاشتين مايشتغلوش أبدًا لأي طالب.
+        //
+        // ⚠️ لازم يفضل قبل [HttpGet("{id}")]: الترتيب هنا مش هو اللي بيحسم
+        //    (المسار ده مقطعين والتاني مقطع واحد) لكن التقارب في القراءة أوضح.
         [HttpGet("by-number/{studentNumber}")]
         public async Task<IActionResult> GetStudentByNumber(string studentNumber)
         {

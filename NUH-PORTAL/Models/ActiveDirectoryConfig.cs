@@ -8,12 +8,12 @@ namespace NUH_PORTAL.Models
         public string DomainController { get; set; } = string.Empty;
         public int Port { get; set; } = 636;
         public bool ValidateCertificate { get; set; } = true;
-        public List<AdRoleMapping> RoleMappings { get; set; } = new();
-    }
 
-    public class AdRoleMapping
-    {
-        public string AdGroup { get; set; } = string.Empty;
-        public string ApplicationRole { get; set; } = "User";
+        // ⚠️ RoleMappings و AdRoleMapping اتشالوا. كانوا بيربطوا مجموعات
+        //    Housing_Admin / Housing_Cyber / Housing_Supervisor / Housing_Users
+        //    بأدوار التطبيق، والمجموعات دي مش متعمولة على الدومين أصلًا فكانت
+        //    النتيجة دايمًا "user". ومع كده كانت بتمسح الدور اللي المسؤول حدّده
+        //    من شاشة إدارة المستخدمين مع كل تسجيل دخول.
+        //    الدور دلوقتي مصدره الشاشة وبس — والدليل للمصادقة والبيانات الشخصية.
     }
 }

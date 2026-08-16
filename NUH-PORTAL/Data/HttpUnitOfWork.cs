@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using NUH_PORTAL.Models.Enums;
 using System.Security.Claims;
 
 namespace NUH_PORTAL.Data
@@ -21,6 +22,12 @@ namespace NUH_PORTAL.Data
                 foreach (var c in user.FindAll(Core.ClaimConstants.Permission))
                     if (!string.IsNullOrWhiteSpace(c.Value))
                         CurrentPermissions.Add(c.Value.Trim());
+
+            // قسم الموظف (طلاب/طالبات) — نفس القصة: بيتحمّل في الـ claims من
+            // PermissionClaimsTransformation مع كل طلب، فمفيش استعلام هنا.
+            var scope = user?.FindFirst(Core.ClaimConstants.ScopeGender)?.Value?.Trim();
+            if (scope == "male") CurrentScopeGender = Gender.Male;
+            else if (scope == "female") CurrentScopeGender = Gender.Female;
         }
     }
 }

@@ -7,7 +7,8 @@ namespace NUH_PORTAL.Services.Interfaces
     public interface IRequestService
     {
         Task<List<RequestDto>> GetAllAsync();
-        Task<QueryResult<RequestDto>> GetPagedAsync(QueryParams queryParams, string? status, string? requestType);
+        // mine = المراحل التي تنتظر إجراءً من المستخدم الحالي (تبويب «يحتاج إجراءك»)
+        Task<QueryResult<RequestDto>> GetPagedAsync(QueryParams queryParams, string? status, string? requestType, bool mine = false);
         Task<RequestStatsDto> GetStatsAsync();
         Task<RequestDetailsDto> GetDetailsAsync(int id);
         Task<List<RequestDto>> GetPendingAsync();

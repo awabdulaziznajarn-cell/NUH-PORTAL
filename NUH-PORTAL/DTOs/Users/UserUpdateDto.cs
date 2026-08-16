@@ -1,3 +1,5 @@
+using NUH_PORTAL.Models.Enums;
+
 namespace NUH_PORTAL.DTOs.Users
 {
     // تعديل مستخدم — اسم المستخدم (UserName) ثابت لأنه مفتاح الدخول.
@@ -12,5 +14,9 @@ namespace NUH_PORTAL.DTOs.Users
         public bool is_active { get; set; }
         public string? role { get; set; }
         public string? password { get; set; }
+
+        // القسم اللي الموظف مسؤول عنه. فاضي = بلا تقييد (والدور اللي فيه
+        // صلاحية students.allGenders بيتخطّى التقييد أصلًا).
+        public Gender? scope_gender { get; set; }
     }
 }

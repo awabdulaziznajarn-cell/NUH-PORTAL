@@ -32,6 +32,11 @@ namespace NUH_PORTAL.Data
         public DbSet<StudentStatusAttachment> StudentStatusAttachments { get; set; }
         public DbSet<HousingTransfer> HousingTransfers { get; set; }
 
+        // سكن أعضاء هيئة التدريس — الوحدة ثابتة (FacultyUnit) والساكن متغيّر
+        // (FacultyOccupancy صف لكل فترة إشغال). منفصلين تمامًا عن سكن الطلاب.
+        public DbSet<FacultyUnit> FacultyUnits { get; set; }
+        public DbSet<FacultyOccupancy> FacultyOccupancies { get; set; }
+
         // قوائم مرجعية (lookups) + بنود التعهّد
         public DbSet<College> Colleges { get; set; }
         public DbSet<Department> Departments { get; set; }

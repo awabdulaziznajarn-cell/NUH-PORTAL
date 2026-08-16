@@ -1,0 +1,360 @@
+@using System.Text.Json
+@{
+    ViewData["Title"] = SharedLocalizer["fh_PageTitle"].Value;
+    var canImport = User.HasClaim("permission", "facultyHousing.import");
+    var canManage = User.HasClaim("permission", "facultyHousing.manage");
+    var canSync   = User.HasClaim("permission", "facultyHousing.syncAd");
+
+    // ⚠️ نصوص الـ JavaScript تُمرَّر من هنا لا تُكتب داخل ملف السكربت: ملف .js
+    //    لا يمر على محرّك Razor فلا يصل إليه SharedLocalizer. وتسلسلها JSON
+    //    ضروري لأن Razor يُرمّز أي نص يطبعه ترميز HTML حتى داخل <script>.
+    string L(string k) => SharedLocalizer[k].Value;
+    var fhT = JsonSerializer.Serialize(new Dictionary<string, string>
+    {
+        ["fh_PageSub"] = L("fh_PageSub"),
+        ["fh_HandoverTitle"] = L("fh_HandoverTitle"),
+        ["fh_SecRequest"] = L("fh_SecRequest"),
+        ["fh_SecNew"] = L("fh_SecNew"),
+        ["fh_SecClose"] = L("fh_SecClose"),
+        ["fh_SecDiff"] = L("fh_SecDiff"),
+        ["fh_Unit"] = L("fh_Unit"),
+        ["fh_RequestType"] = L("fh_RequestType"),
+        ["fh_TypeChange"] = L("fh_TypeChange"),
+        ["fh_TypeNew"] = L("fh_TypeNew"),
+        ["fh_TypeStop"] = L("fh_TypeStop"),
+        ["fh_TicketNoLabel"] = L("fh_TicketNoLabel"),
+        ["fh_TicketHint"] = L("fh_TicketHint"),
+        ["fh_CyberDate"] = L("fh_CyberDate"),
+        ["fh_CyberHint"] = L("fh_CyberHint"),
+        ["fh_FullNameAr"] = L("fh_FullNameAr"),
+        ["fh_NameHint"] = L("fh_NameHint"),
+        ["fh_Gender"] = L("fh_Gender"),
+        ["fh_Male"] = L("fh_Male"),
+        ["fh_Female"] = L("fh_Female"),
+        ["fh_NationalIdHint"] = L("fh_NationalIdHint"),
+        ["fh_MobileHint"] = L("fh_MobileHint"),
+        ["fh_StartDate"] = L("fh_StartDate"),
+        ["fh_EndDate"] = L("fh_EndDate"),
+        ["fh_CurrentName"] = L("fh_CurrentName"),
+        ["fh_ReasonContract"] = L("fh_ReasonContract"),
+        ["fh_ReasonTransfer"] = L("fh_ReasonTransfer"),
+        ["fh_ReasonLeft"] = L("fh_ReasonLeft"),
+        ["fh_ReasonOther"] = L("fh_ReasonOther"),
+        ["fh_ReasonNote"] = L("fh_ReasonNote"),
+        ["fh_Save"] = L("fh_Save"),
+        ["fh_Cancel"] = L("fh_Cancel"),
+        ["fh_ApplyToAd"] = L("fh_ApplyToAd"),
+        ["fh_Saving"] = L("fh_Saving"),
+        ["fh_SavedPending"] = L("fh_SavedPending"),
+        ["fh_DiffAttr"] = L("fh_DiffAttr"),
+        ["fh_DiffCurrent"] = L("fh_DiffCurrent"),
+        ["fh_DiffNew"] = L("fh_DiffNew"),
+        ["fh_DiffNone"] = L("fh_DiffNone"),
+        ["fh_DiffCount"] = L("fh_DiffCount"),
+        ["fh_PushOk"] = L("fh_PushOk"),
+        ["fh_PushFail"] = L("fh_PushFail"),
+        ["fh_BtnRetrySync"] = L("fh_BtnRetrySync"),
+        ["fh_HandoverError"] = L("fh_HandoverError"),
+        ["fh_Required"] = L("fh_Required"),
+        ["fh_NoCurrentOccupant"] = L("fh_NoCurrentOccupant"),
+        ["fh_UnitsList"] = L("fh_UnitsList"),
+        ["fh_All"] = L("fh_All"),
+        ["fh_Towers"] = L("fh_Towers"),
+        ["fh_Villas"] = L("fh_Villas"),
+        ["fh_AllStatuses"] = L("fh_AllStatuses"),
+        ["fh_AllTowers"] = L("fh_AllTowers"),
+        ["fh_Tower"] = L("fh_Tower"),
+        ["fh_SearchPh"] = L("fh_SearchPh"),
+        ["fh_ColUnit"] = L("fh_ColUnit"),
+        ["fh_ColAccount"] = L("fh_ColAccount"),
+        ["fh_ColOccupant"] = L("fh_ColOccupant"),
+        ["fh_ColNationalId"] = L("fh_ColNationalId"),
+        ["fh_ColMobile"] = L("fh_ColMobile"),
+        ["fh_ColSince"] = L("fh_ColSince"),
+        ["fh_ColStatus"] = L("fh_ColStatus"),
+        ["fh_ColActions"] = L("fh_ColActions"),
+        ["fh_StTotal"] = L("fh_StTotal"),
+        ["fh_StOccupied"] = L("fh_StOccupied"),
+        ["fh_StVacant"] = L("fh_StVacant"),
+        ["fh_StOutOfService"] = L("fh_StOutOfService"),
+        ["fh_StNotExists"] = L("fh_StNotExists"),
+        ["fh_StPendingSync"] = L("fh_StPendingSync"),
+        ["fh_StNameDeviations"] = L("fh_StNameDeviations"),
+        ["fh_StOuMismatch"] = L("fh_StOuMismatch"),
+        ["fh_FlagBadName"] = L("fh_FlagBadName"),
+        ["fh_FlagBadNameTitle"] = L("fh_FlagBadNameTitle"),
+        ["fh_FlagImported"] = L("fh_FlagImported"),
+        ["fh_FlagImportedTitle"] = L("fh_FlagImportedTitle"),
+        ["fh_FlagOuMismatch"] = L("fh_FlagOuMismatch"),
+        ["fh_NoOccupant"] = L("fh_NoOccupant"),
+        ["fh_NotAssignable"] = L("fh_NotAssignable"),
+        ["fh_BtnHistory"] = L("fh_BtnHistory"),
+        ["fh_BtnEdit"] = L("fh_BtnEdit"),
+        ["fh_Loading"] = L("fh_Loading"),
+        ["fh_Working"] = L("fh_Working"),
+        ["fh_Applying"] = L("fh_Applying"),
+        ["fh_NoUnits"] = L("fh_NoUnits"),
+        ["fh_NoUnitsHint"] = L("fh_NoUnitsHint"),
+        ["fh_LoadError"] = L("fh_LoadError"),
+        ["fh_HistoryTitle"] = L("fh_HistoryTitle"),
+        ["fh_TabOccupants"] = L("fh_TabOccupants"),
+        ["fh_TabChanges"] = L("fh_TabChanges"),
+        ["fh_FullReport"] = L("fh_FullReport"),
+        ["fh_NoAuditLog"] = L("fh_NoAuditLog"),
+        ["fh_ChgField"] = L("fh_ChgField"),
+        ["fh_ChgOld"] = L("fh_ChgOld"),
+        ["fh_ChgNew"] = L("fh_ChgNew"),
+        ["fh_ChgEmpty"] = L("fh_ChgEmpty"),
+        ["fh_NoHistory"] = L("fh_NoHistory"),
+        ["fh_HistoryError"] = L("fh_HistoryError"),
+        ["fh_Period"] = L("fh_Period"),
+        ["fh_UntilNow"] = L("fh_UntilNow"),
+        ["fh_College"] = L("fh_College"),
+        ["fh_Department"] = L("fh_Department"),
+        ["fh_TicketNo"] = L("fh_TicketNo"),
+        ["fh_EndReason"] = L("fh_EndReason"),
+        ["fh_ExecutedBy"] = L("fh_ExecutedBy"),
+        ["fh_CurrentOccupant"] = L("fh_CurrentOccupant"),
+        ["fh_EndedOccupancy"] = L("fh_EndedOccupancy"),
+        ["fh_ImportedWarn"] = L("fh_ImportedWarn"),
+        ["fh_ImportTitle"] = L("fh_ImportTitle"),
+        ["fh_CheckAccess"] = L("fh_CheckAccess"),
+        ["fh_PreviewImport"] = L("fh_PreviewImport"),
+        ["fh_ApplyImport"] = L("fh_ApplyImport"),
+        ["fh_ImportNote"] = L("fh_ImportNote"),
+        ["fh_OuNotConfigured"] = L("fh_OuNotConfigured"),
+        ["fh_OuNotConfiguredHint"] = L("fh_OuNotConfiguredHint"),
+        ["fh_ReadOk"] = L("fh_ReadOk"),
+        ["fh_ReadFail"] = L("fh_ReadFail"),
+        ["fh_ProbedOn"] = L("fh_ProbedOn"),
+        ["fh_AuthComplete"] = L("fh_AuthComplete"),
+        ["fh_AuthIncomplete"] = L("fh_AuthIncomplete"),
+        ["fh_ReadFailed"] = L("fh_ReadFailed"),
+        ["fh_PartialWarn"] = L("fh_PartialWarn"),
+        ["fh_ChipNew"] = L("fh_ChipNew"),
+        ["fh_ChipUpdated"] = L("fh_ChipUpdated"),
+        ["fh_ChipUnchanged"] = L("fh_ChipUnchanged"),
+        ["fh_ChipExcluded"] = L("fh_ChipExcluded"),
+        ["fh_ChipDeviations"] = L("fh_ChipDeviations"),
+        ["fh_ChipWithOccupant"] = L("fh_ChipWithOccupant"),
+        ["fh_Truncated"] = L("fh_Truncated"),
+        ["fh_TruncatedHint"] = L("fh_TruncatedHint"),
+        ["fh_PrevOu"] = L("fh_PrevOu"),
+        ["fh_PrevOccupant"] = L("fh_PrevOccupant"),
+        ["fh_PrevAction"] = L("fh_PrevAction"),
+        ["fh_PrevNote"] = L("fh_PrevNote"),
+        ["fh_NoUnitsInOu"] = L("fh_NoUnitsInOu"),
+        ["fh_ImportOk"] = L("fh_ImportOk"),
+        ["fh_ImportFail"] = L("fh_ImportFail"),
+        ["fh_UnitsCreated"] = L("fh_UnitsCreated"),
+        ["fh_UnitsUpdated"] = L("fh_UnitsUpdated"),
+        ["fh_OccOpened"] = L("fh_OccOpened"),
+        ["fh_ApplyError"] = L("fh_ApplyError"),
+        ["fh_PagerShow"] = L("fh_PagerShow"),
+        ["fh_PagerTo"] = L("fh_PagerTo"),
+        ["fh_PagerOf"] = L("fh_PagerOf"),
+        ["fh_Prev"] = L("fh_Prev"),
+        ["fh_Next"] = L("fh_Next"),
+        ["fh_Page"] = L("fh_Page"),
+        ["fh_PageOf"] = L("fh_PageOf"),
+    });
+}
+<style>
+  /* خاص بشاشة سكن أعضاء هيئة التدريس — الباقي من site.css و components.css */
+  .fh-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:22px}
+  .fh-stat{background:var(--white);border-radius:14px;padding:15px 18px;border:1px solid var(--gray-100);
+           box-shadow:0 2px 8px rgba(16,70,49,.05);display:flex;flex-direction:column;gap:5px;
+           cursor:pointer;transition:transform .18s,box-shadow .18s,border-color .18s}
+  .fh-stat:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(16,70,49,.1)}
+  .fh-stat.is-on{border-color:var(--gold);box-shadow:0 0 0 3px rgba(219,161,2,.18)}
+  .fh-stat-num{font-size:25px;font-weight:900;color:var(--navy-dark);line-height:1}
+  .fh-stat-label{font-size:11.5px;color:var(--gray-500);font-weight:500}
+  .fh-stat.ok .fh-stat-num{color:var(--green)}
+  .fh-stat.warn .fh-stat-num{color:#93370d}
+  .fh-stat.bad .fh-stat-num{color:var(--red)}
+
+  .fh-flag{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;
+           padding:2px 8px;border-radius:20px;background:#fef0c7;color:#93370d;white-space:nowrap}
+
+  /* الاستيراد */
+  .fh-imp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-bottom:16px}
+  .fh-ou{border:1px solid var(--gray-200);border-radius:12px;padding:13px 15px;background:var(--gray-50)}
+  .fh-ou.ok{border-color:#a9efc5;background:#f3fcf6}
+  .fh-ou.bad{border-color:#fda29b;background:var(--red-light)}
+  .fh-ou-title{font-size:13px;font-weight:700;color:var(--navy-dark);margin-bottom:6px;
+               display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .fh-ou-dn{font-family:Consolas,monospace;font-size:10.5px;color:var(--gray-500);
+            direction:ltr;text-align:left;word-break:break-all;margin-bottom:8px}
+  .fh-attrs{display:flex;flex-wrap:wrap;gap:5px}
+  .fh-attr{font-family:Consolas,monospace;font-size:10.5px;padding:2px 7px;border-radius:6px;direction:ltr}
+  .fh-attr.y{background:var(--green-light);color:var(--green)}
+  .fh-attr.n{background:var(--red-light);color:var(--red)}
+
+  /* سجل الوحدة */
+  .tl{position:relative;padding-inline-start:26px}
+  .tl::before{content:'';position:absolute;inset-inline-start:7px;top:6px;bottom:6px;width:2px;background:var(--gray-200)}
+  .tl-item{position:relative;padding-bottom:20px}
+  .tl-item:last-child{padding-bottom:0}
+  .tl-dot{position:absolute;inset-inline-start:-26px;top:3px;width:16px;height:16px;border-radius:50%;
+          background:var(--gray-300);border:3px solid var(--white);box-shadow:0 0 0 2px var(--gray-200)}
+  .tl-item.now .tl-dot{background:var(--green);box-shadow:0 0 0 2px var(--green)}
+  .tl-card{background:var(--white);border:1px solid var(--gray-100);border-radius:12px;padding:12px 15px}
+  .tl-item.now .tl-card{border-color:#a9efc5;background:#f3fcf6}
+  .tl-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:5px}
+  .tl-top b{font-size:14px;color:var(--navy-dark)}
+  /* صفوف بيانات الشاغل: عنوان ثابت + قيمة، بدل فقرة نصّ متصلة */
+  .oc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:4px 18px;margin-top:8px}
+  .oc-row{display:flex;align-items:baseline;gap:8px;padding:3px 0;min-width:0}
+  .oc-k{font-size:11.5px;color:var(--gray-500);font-weight:600;flex-shrink:0;min-width:76px}
+  .oc-v{font-size:12.5px;color:var(--navy-dark);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .oc-warn{margin-top:10px;padding:8px 12px;border-radius:8px;background:#fffaeb;
+           border-inline-start:3px solid var(--gold);font-size:11.5px;color:#93370d;line-height:1.7}
+  /* تبويبا نافذة السجل + جدول التعديلات */
+  .fh-tabs{display:flex;gap:6px;padding:0 20px;border-bottom:1px solid var(--gray-100);background:var(--white)}
+  .fh-tab{border:none;background:none;padding:11px 14px;font-family:inherit;font-size:13px;font-weight:600;
+    color:var(--gray-500);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+  .fh-tab:hover{color:var(--navy)}
+  .fh-tab.active{color:var(--navy);border-bottom-color:var(--navy)}
+  .fh-tabnum{display:inline-block;min-width:18px;padding:0 5px;border-radius:9px;background:var(--gray-100);
+    color:var(--gray-700);font-size:11px;font-weight:700;line-height:18px;text-align:center}
+  .fh-tab.active .fh-tabnum{background:var(--green-light);color:var(--green)}
+  .fh-tab-rep{margin-inline-start:auto;align-self:center;background:var(--navy);color:#fff;font-size:12px;
+    font-weight:700;padding:6px 13px;border-radius:8px;text-decoration:none;margin-bottom:6px}
+  .fh-tab-rep:hover{background:var(--navy-dark);color:#fff}
+  .ch-item{border:1px solid var(--gray-100);border-radius:12px;padding:12px 15px;margin-bottom:12px;background:var(--white)}
+  .ch-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:9px}
+  .ch-act{font-size:13.5px;font-weight:700;color:var(--navy-dark)}
+  .ch-meta{font-size:11.5px;color:var(--gray-500)}
+  .ch-tbl{width:100%;border-collapse:collapse;font-size:12px}
+  .ch-tbl th{padding:5px 8px;text-align:start;font-weight:600;background:var(--gray-50);color:var(--gray-700);font-size:11.5px}
+  .ch-tbl td{padding:5px 8px;border-top:1px solid var(--gray-100);vertical-align:top}
+  .ch-old{color:var(--red);text-decoration:line-through}
+  .ch-new{color:var(--green);font-weight:600}
+  .tl-meta{font-size:12px;color:var(--gray-500);line-height:1.95}
+  .tl-meta code{font-family:Consolas,monospace;background:var(--gray-50);padding:1px 6px;
+                border-radius:5px;direction:ltr;display:inline-block}
+
+  .fh-modal{background:var(--white);border-radius:16px;width:760px;max-width:94vw;max-height:88vh;
+            display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden}
+  .fh-modal-head{padding:16px 20px;background:#f3fcf6;border-bottom:1px solid #c6ecd6;
+                 display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .fh-modal-body{padding:20px;overflow-y:auto;scrollbar-width:thin}
+  .fh-x{background:none;border:none;cursor:pointer;color:var(--gray-500);font-size:22px;line-height:1;padding:0 4px}
+
+  @@media(max-width:900px){ .fh-modal{width:96vw} }
+</style>
+
+<div class="page-header">
+  <h2>@SharedLocalizer["fh_PageTitle"]</h2>
+  <p>@SharedLocalizer["fh_PageSub"]</p>
+</div>
+
+<div class="fh-stats" id="fhStats"></div>
+<div id="fhMsg"></div>
+
+<div class="card" style="margin-bottom:20px">
+  <div class="card-header">
+    <div class="card-title">@SharedLocalizer["fh_UnitsList"]</div>
+    <div class="card-tools">
+      <div class="fh-seg" id="fhTypeSeg">
+        <button class="is-on" data-type="">@SharedLocalizer["fh_All"]</button>
+        <button data-type="tower">@SharedLocalizer["fh_Towers"]</button>
+        <button data-type="villa">@SharedLocalizer["fh_Villas"]</button>
+      </div>
+      <select id="fhStatus">
+        <option value="">@SharedLocalizer["fh_AllStatuses"]</option>
+        <option value="occupied">@SharedLocalizer["fh_StOccupied"]</option>
+        <option value="vacant">@SharedLocalizer["fh_StVacant"]</option>
+        <option value="out_of_service">@SharedLocalizer["fh_StOutOfService"]</option>
+        <option value="not_exists">@SharedLocalizer["fh_StNotExists"]</option>
+        <option value="pending_sync">@SharedLocalizer["fh_StPendingSync"]</option>
+      </select>
+      <select id="fhTower">
+        <option value="">@SharedLocalizer["fh_AllTowers"]</option>
+      </select>
+      <div class="search-wrap">
+        <input type="text" id="fhSearch" placeholder="@SharedLocalizer["fh_SearchPh"]">
+      </div>
+    </div>
+  </div>
+  <div style="overflow-x:auto">
+    <table id="fhTable">
+      <thead>
+        <tr>
+          <th>@SharedLocalizer["fh_ColUnit"]</th>
+          <th>@SharedLocalizer["fh_ColAccount"]</th>
+          <th>@SharedLocalizer["fh_ColOccupant"]</th>
+          <th>@SharedLocalizer["fh_ColNationalId"]</th>
+          <th>@SharedLocalizer["fh_ColMobile"]</th>
+          <th>@SharedLocalizer["fh_ColSince"]</th>
+          <th>@SharedLocalizer["fh_ColStatus"]</th>
+          <th>@SharedLocalizer["fh_ColActions"]</th>
+        </tr>
+      </thead>
+      <tbody id="fhBody">
+        <tr><td colspan="8" class="fh-empty">@SharedLocalizer["fh_Loading"]</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div id="fhPager" class="table-pager"></div>
+</div>
+
+@if (canImport)
+{
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">@SharedLocalizer["fh_ImportTitle"]</div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-cancel" id="fhCheckBtn">@SharedLocalizer["fh_CheckAccess"]</button>
+      <button class="btn btn-primary" id="fhPreviewBtn">@SharedLocalizer["fh_PreviewImport"]</button>
+    </div>
+  </div>
+  <div class="card-body">
+    <div class="fh-note">@Html.Raw(SharedLocalizer["fh_ImportNote"].Value)
+    </div>
+
+    <div id="fhAccess"></div>
+    <div id="fhPreview"></div>
+  </div>
+</div>
+}
+
+
+<!-- سجل الوحدة -->
+<div class="modal-overlay" id="fhHistoryOverlay">
+  <div class="fh-modal">
+    <div class="fh-modal-head">
+      <div>
+        <div class="card-title" id="fhHistTitle">@SharedLocalizer["fh_HistoryTitle"]</div>
+        <div style="font-size:12px;color:var(--gray-500);margin-top:2px" id="fhHistSub"></div>
+      </div>
+      <button class="fh-x" onclick="fhCloseHistory()" aria-label="إغلاق">&times;</button>
+    </div>
+    @* ⚠️ تبويبان لا شاشتان: السكّان يجيب «من يسكن ومنذ متى»، والتعديلات تجيب
+       «من غيّر وماذا كانت القيمة قبل». الأول كان موجودًا وحده، فبقي الثاني
+       مكتوبًا في قاعدة البيانات بلا سبيل لقراءته إلا باستعلام مباشر. *@
+    <div class="fh-tabs">
+      <button class="fh-tab active" id="fhTabOcc" onclick="fhHistTab('occ')">@SharedLocalizer["fh_TabOccupants"]</button>
+      <button class="fh-tab" id="fhTabChg" onclick="fhHistTab('chg')">@SharedLocalizer["fh_TabChanges"] <span class="fh-tabnum" id="fhChgCount">0</span></button>
+      @* ⚠️ لا نبني شاشة تقرير ثالثة. الزر يفتح «سجل العمليات» - وهو المكان
+         الذي فيه التصدير والفلاتر أصلًا - مصفّى مسبقًا على هذه الوحدة وحدها.
+         يظهر لمن يملك صلاحية عرض السجل فقط، وإلا فتح صفحة ممنوعة. *@
+      @if (User.HasClaim("permission", "auditLogs.view"))
+      {
+        <a class="fh-tab-rep" id="fhFullReport" href="#">⬇ @SharedLocalizer["fh_FullReport"]</a>
+      }
+    </div>
+    <div class="fh-modal-body" id="fhHistBody"></div>
+    <div class="fh-modal-body" id="fhChgBody" style="display:none"></div>
+  </div>
+</div>
+
+@section Scripts {
+  <script>
+    window.FH_T = @Html.Raw(fhT);
+    // ⚠️ الصلاحيات تُمرَّر للواجهة لإخفاء ما لا يملكه المستخدم فقط.
+    //    الحماية الفعلية على نقاط الـ API نفسها: إخفاء زر لا يمنع طلبًا.
+    window.FH_CAN = { manage: @canManage.ToString().ToLowerInvariant(), sync: @canSync.ToString().ToLowerInvariant() };
+  </script>
+  <script src="~/js/faculty-housing-page.js" asp-append-version="true"></script>
+}

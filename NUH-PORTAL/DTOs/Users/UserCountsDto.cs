@@ -5,5 +5,7 @@ namespace NUH_PORTAL.DTOs.Users
     {
         public int Staff { get; set; }
         public int Students { get; set; }
+        // تبويب ثالث: الحسابات المحذوفة (حذف منطقي) — منها بتتعمل الاستعادة
+        public int Deleted { get; set; }
     }
 }

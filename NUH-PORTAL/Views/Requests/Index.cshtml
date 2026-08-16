@@ -6,30 +6,48 @@
     var canReviewHousing = User.HasClaim("permission", "requests.reviewHousing");
     var canReviewCyber = User.HasClaim("permission", "requests.reviewCyber");
     var canComplete = User.HasClaim("permission", "requests.complete");
+
+    // ⚠️ الرسم الأول من الخادم كان نسخة رابعة من جدول الانتقالات: سلسلة
+    //    if/else مكتوبة بالحالات، بلا مراحل مسار تسجيل الطالب وبلا تمييز الصف.
+    //    فمن يفتح الشاشة يرى صفحة أولى بلا تمييز ولا أزرار، ثم تتغيّر أمامه
+    //    عندما يعيد الجافاسكربت الرسم. الآن يقرأ نفس Core/RequestWorkflow.cs.
+    Func<string, bool> hasPerm = p =>
+        (p == "requests.reviewHousing" && canReviewHousing) ||
+        (p == "requests.reviewCyber" && canReviewCyber) ||
+        (p == "requests.complete" && canComplete);
 }
 
 <style>
   /* خاص بصفحة الطلبات فقط — الباقي من site.css */
   .stats-row{flex-wrap:wrap}
   .stats-row .stat-pill{min-width:120px}
-  .badge-submitted{background:#FFF7ED;color:#92400E}
-  .badge-housing_approved{background:#E0F2FE;color:#0369A1}
+  .badge-submitted{background:#fffaeb;color:#93370d}
+  .badge-housing_approved{background:#eff4ff;color:#175cd3}
   .badge-housing_rejected{background:var(--red-light);color:var(--red)}
-  .badge-cyber_review{background:#F3E8FF;color:#6B21A8}
+  .badge-cyber_review{background:#f4eefa;color:#80519f}
   .badge-cyber_approved{background:var(--green-light);color:var(--green)}
   .badge-cyber_rejected{background:var(--red-light);color:var(--red)}
-  .badge-ready_for_provisioning{background:#FFF7ED;color:#92400E}
+  .badge-ready_for_provisioning{background:#fffaeb;color:#93370d}
   .badge-completed{background:var(--green-light);color:var(--green)}
-  .badge-pending_supervisor{background:#FFF8E1;color:#B8860B}
-  .badge-pending_cyber{background:#E3F2FD;color:#1565C0}
-  .badge-need_more_info{background:#FFF3E0;color:#E65100}
+  .badge-pending_supervisor{background:#fef0c7;color:#7a5c0b}
+  .badge-pending_cyber{background:#eff4ff;color:#175cd3}
+  .badge-need_more_info{background:#fffaeb;color:#b54708}
   .badge-approved{background:var(--green-light);color:var(--green)}
   .badge-rejected{background:var(--red-light);color:var(--red)}
   .action-btn{padding:4px 12px;border-radius:8px;border:none;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;font-weight:600;cursor:pointer;margin:0 2px;transition:opacity .2s}
   .action-btn:hover{opacity:.8}
   .btn-approve{background:var(--green-light);color:var(--green)}
   .btn-reject{background:var(--red-light);color:var(--red)}
-  .btn-cyber{background:#F3E8FF;color:#6B21A8}
+  .btn-cyber{background:#f4eefa;color:#80519f}
+
+  /* ⚠️ الصف الذي ينتظر إجراءً من المستخدم الحالي. الشرط هو نفسه الذي يبني به
+     actionsFor أزرار الصف (NuhWorkflow.canAct)، فيستحيل أن يظهر صف مميّز بلا
+     زر أو العكس. اللون خفيف عمدًا: التمييز للالتقاط بالعين لا للتنبيه. */
+  tr.row-mine{background:#f3fcf6}
+  tr.row-mine:hover{background:#e9f8ef}
+  tr.row-mine td:first-child{position:relative}
+  tr.row-mine td:first-child::before{content:'';position:absolute;inset-inline-start:0;
+    top:0;bottom:0;width:4px;background:var(--gold)}
 </style>
 
 <div class="page-header">
@@ -51,7 +69,10 @@
 
 @* ===== التبويبات — بتفلتر عبر /api/Requests/paged ===== *@
 <div class="tabs">
-  <button class="tab-btn active" onclick="switchTab('all', this)" >@SharedLocalizer["req_lbl_all"]</button>
+  @* ⚠️ يظهر أولًا ويكون الافتراضي متى كان فيه طلبات: من يفتح الشاشة يريد عمله
+     المفتوح لا الأرشيف. الفلترة على الخادم بالمراحل التي يملك صلاحيتها. *@
+  <button class="tab-btn" id="tabMine" onclick="switchTab('mine', this)">@SharedLocalizer["req_lbl_mine"] <span class="tab-count" id="mineCount">0</span></button>
+  <button class="tab-btn active" id="tabAll" onclick="switchTab('all', this)" >@SharedLocalizer["req_lbl_all"]</button>
   <button class="tab-btn" onclick="switchTab('submitted', this)" >@SharedLocalizer["req_lbl_submitted"]</button>
   <button class="tab-btn" onclick="switchTab('housing_approved', this)" >@SharedLocalizer["req_lbl_housingApproved"]</button>
   <button class="tab-btn" onclick="switchTab('cyber_review', this)" >@SharedLocalizer["req_lbl_cyberReview"]</button>
@@ -66,7 +87,7 @@
     <table>
       <thead>
         <tr>
-          <th>#</th>
+          <th class="col-code">#</th>
           <th >@SharedLocalizer["req_col_type"]</th>
           <th >@SharedLocalizer["req_col_student"]</th>
           <th class="sortable" onclick="sortByColumn('submittedat')">@SharedLocalizer["req_col_date"]<span class="sort-ind" id="sort-submittedat"></span></th>
@@ -83,35 +104,23 @@
         @foreach (var r in Model.Page.Items)
         {
           var s = (r.Status ?? "").ToLowerInvariant();
-          <tr style="cursor:pointer" onclick="location.href='/Requests/Details/@r.Id'">
-            <td style="color:var(--gray-500)">@ReqNum(r.RequestNumber, r.RequestType?.ToString(), r.Id)</td>
+          var wf = NUH_PORTAL.Core.RequestWorkflow.Find(s);
+          var canAct = wf != null && wf.Permissions.Any(p => hasPerm(p));
+          <tr class="@(canAct ? "row-mine" : "")" style="cursor:pointer" onclick="location.href='/Requests/Details/@r.Id'">
+            <td class="col-code" style="color:var(--gray-500)">@ReqNum(r.RequestNumber, r.RequestType?.ToString(), r.Id)</td>
             <td><span>@SharedLocalizer["req_type_" + (r.RequestType?.ToString() ?? "")]</span></td>
             <td>@(r.Student?.full_name ?? r.StudentId.ToString())</td>
             <td><span data-dt="@DateTime.SpecifyKind(r.SubmittedAt, DateTimeKind.Utc).ToString("o")">@r.SubmittedAt.ToString("yyyy/MM/dd")</span></td>
             <td><span class="badge badge-@s">@SharedLocalizer["req_badge_" + s]</span></td>
             <td><span>@SharedLocalizer["req_stage_" + s]</span></td>
             <td>
-              @if (s == "submitted" && canReviewHousing)
+              @if (canAct && wf != null)
               {
-                <button class="action-btn btn-approve" onclick="event.stopPropagation(); reviewRequest(@r.Id, 'housing_approved')" >@SharedLocalizer["req_act_housing_approved"]</button>
-                <button class="action-btn btn-reject" onclick="event.stopPropagation(); reviewRequest(@r.Id, 'housing_rejected')" >@SharedLocalizer["req_act_housing_rejected"]</button>
-              }
-              else if (s == "housing_approved" && canComplete)
-              {
-                <button class="action-btn btn-cyber" onclick="event.stopPropagation(); reviewRequest(@r.Id, 'cyber_review')" >@SharedLocalizer["req_act_cyber_review"]</button>
-              }
-              else if (s == "cyber_review" && canReviewCyber)
-              {
-                <button class="action-btn btn-approve" onclick="event.stopPropagation(); reviewRequest(@r.Id, 'cyber_approved')" >@SharedLocalizer["req_act_cyber_approved"]</button>
-                <button class="action-btn btn-reject" onclick="event.stopPropagation(); reviewRequest(@r.Id, 'cyber_rejected')" >@SharedLocalizer["req_act_cyber_rejected"]</button>
-              }
-              else if (s == "cyber_approved" && (canReviewCyber || canComplete))
-              {
-                <button class="action-btn btn-cyber" onclick="event.stopPropagation(); reviewRequest(@r.Id, 'ready_for_provisioning')" >@SharedLocalizer["req_act_ready_for_provisioning"]</button>
-              }
-              else if (s == "ready_for_provisioning" && canComplete)
-              {
-                <button class="action-btn btn-approve" onclick="event.stopPropagation(); reviewRequest(@r.Id, 'completed')" >@SharedLocalizer["req_act_completed"]</button>
+                <button class="action-btn @(wf.RejectTo != null ? "btn-approve" : "btn-cyber")" onclick="event.stopPropagation(); reviewRequest(@r.Id, '@s', 'approve')">@SharedLocalizer[wf.ApproveKey]</button>
+                if (wf.RejectTo != null)
+                {
+                  <button class="action-btn btn-reject" onclick="event.stopPropagation(); reviewRequest(@r.Id, '@s', 'reject')">@SharedLocalizer[wf.RejectKey!]</button>
+                }
               }
             </td>
           </tr>
@@ -182,31 +191,39 @@
     return r.requestNumber || '-';
   }
 
+  // ⚠️ لا جدول انتقالات هنا. كان مكتوبًا في هذه الدالة وفي شاشة التفاصيل وفي
+  //    الخادم — ثلاث نسخ تفارقت. المصدر الآن Core/RequestWorkflow.cs يصل عبر
+  //    window.__WF، ونقرأ منه بـ NuhWorkflow. أي مرحلة جديدة تظهر هنا وحدها.
+  function hasPerm(p) {
+    if (p === 'requests.reviewHousing') return CAN_REVIEW_HOUSING;
+    if (p === 'requests.reviewCyber') return CAN_REVIEW_CYBER;
+    if (p === 'requests.complete') return CAN_COMPLETE;
+    return false;
+  }
+
   function actionsFor(s, id) {
+    var wf = NuhWorkflow.forStatus(s);
+    if (!wf || !NuhWorkflow.canAct(s, hasPerm)) return '';
+
     var stop = 'event.stopPropagation(); ';
-    if (s === 'submitted' && CAN_REVIEW_HOUSING) {
-      return '<button class="action-btn btn-approve" onclick="' + stop + 'reviewRequest(' + id + ', \'housing_approved\')">' + t('req_act_housing_approved') + '</button>' +
-             '<button class="action-btn btn-reject" onclick="' + stop + 'reviewRequest(' + id + ', \'housing_rejected\')">' + t('req_act_housing_rejected') + '</button>';
+    // زر الاعتماد يأخذ لون «سيبراني» في المراحل الوسيطة التي لا رفض فيها،
+    // تمييزًا لها عن قرار الاعتماد النهائي.
+    var approveClass = wf.rejectTo ? 'btn-approve' : 'btn-cyber';
+    // ⚠️ نمرّر الحالة الحالية والقرار لا الحالة الهدف: المسار الذي يُرسَل إليه
+    //    القرار يختلف بين المسارين، و NuhWorkflow.endpointFor هو من يعرفه.
+    var html = '<button class="action-btn ' + approveClass + '" onclick="' + stop +
+               'reviewRequest(' + id + ', \'' + s + '\', \'approve\')">' + t(wf.approveKey) + '</button>';
+    if (wf.rejectTo) {
+      html += '<button class="action-btn btn-reject" onclick="' + stop +
+              'reviewRequest(' + id + ', \'' + s + '\', \'reject\')">' + t(wf.rejectKey) + '</button>';
     }
-    if (s === 'housing_approved' && CAN_COMPLETE) {
-      return '<button class="action-btn btn-cyber" onclick="' + stop + 'reviewRequest(' + id + ', \'cyber_review\')">' + t('req_act_cyber_review') + '</button>';
-    }
-    if (s === 'cyber_review' && CAN_REVIEW_CYBER) {
-      return '<button class="action-btn btn-approve" onclick="' + stop + 'reviewRequest(' + id + ', \'cyber_approved\')">' + t('req_act_cyber_approved') + '</button>' +
-             '<button class="action-btn btn-reject" onclick="' + stop + 'reviewRequest(' + id + ', \'cyber_rejected\')">' + t('req_act_cyber_rejected') + '</button>';
-    }
-    if (s === 'cyber_approved' && (CAN_REVIEW_CYBER || CAN_COMPLETE)) {
-      return '<button class="action-btn btn-cyber" onclick="' + stop + 'reviewRequest(' + id + ', \'ready_for_provisioning\')">' + t('req_act_ready_for_provisioning') + '</button>';
-    }
-    if (s === 'ready_for_provisioning' && CAN_COMPLETE) {
-      return '<button class="action-btn btn-approve" onclick="' + stop + 'reviewRequest(' + id + ', \'completed\')">' + t('req_act_completed') + '</button>';
-    }
-    return '';
+    return html;
   }
 
   async function loadPage() {
     var url = '/api/Requests/paged?page=' + state.page + '&pageSize=' + state.pageSize;
-    if (state.status !== 'all') url += '&status=' + encodeURIComponent(state.status);
+    if (state.status === 'mine') url += '&mine=true';
+    else if (state.status !== 'all') url += '&status=' + encodeURIComponent(state.status);
     if (state.sortBy) url += '&sortBy=' + encodeURIComponent(state.sortBy) + '&sortAsc=' + state.sortAsc;
     var res = await fetch(url, { headers: NUH.headers() });
     if (res.status === 401) { window.location.replace('/Account/Login'); return; }
@@ -218,8 +235,10 @@
     var rows = '';
     (data.items || []).forEach(function (r) {
       var s = (r.status || '').toLowerCase();
-      rows += '<tr style="cursor:pointer" onclick="location.href=\'/Requests/Details/' + r.id + '\'">' +
-        '<td style="color:var(--gray-500)">' + reqNum(r) + '</td>' +
+      // نفس شرط ظهور الأزرار بالضبط — مصدر واحد لا شرطان
+      var mineCls = NuhWorkflow.canAct(s, hasPerm) ? ' row-mine' : '';
+      rows += '<tr class="' + mineCls.trim() + '" style="cursor:pointer" onclick="location.href=\'/Requests/Details/' + r.id + '\'">' +
+        '<td class="col-code" style="color:var(--gray-500)">' + reqNum(r) + '</td>' +
         '<td>' + escHtml(typeText(r.requestType)) + '</td>' +
         '<td>' + escHtml((r.student && r.student.full_name) || r.studentId || '') + '</td>' +
         '<td>' + (r.submittedAt ? new Date(r.submittedAt).toLocaleDateString('ar-EG') : '-') + '</td>' +
@@ -262,6 +281,22 @@
     loadPage();
   }
 
+  // ⚠️ العدّاد من نفس نقطة النهاية التي تغذّي شارة القائمة الجانبية، فلا يختلف
+  //    الرقمان. وإن كان صفرًا يبقى تبويب «الكل» هو الافتراضي.
+  async function initMineTab() {
+    try {
+      var res = await fetch('/api/Workflow/queue/my-count', { headers: NUH.headers() });
+      if (!res.ok) return;
+      var n = await res.json();
+      var count = (typeof n === 'number') ? n : (n && n.count) || 0;
+      document.getElementById('mineCount').textContent = count;
+      if (count > 0) {
+        document.getElementById('tabAll').classList.remove('active');
+        switchTab('mine', document.getElementById('tabMine'));
+      }
+    } catch (e) { /* العدّاد تحسين لا شرط — الشاشة تعمل بدونه */ }
+  }
+
   function switchTab(status, btn) {
     document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.remove('active'); });
     btn.classList.add('active');
@@ -270,15 +305,36 @@
     loadPage();
   }
 
-  async function reviewRequest(id, newStatus) {
-    var label = badgeText(newStatus);
-    if (!await NuhDialog.confirm({ message: t('req_confirmChangeFmt').replace('{0}', label) })) return;
+  // ⚠️ الرفض من هذه الشاشة يطلب السبب. من غيره كان الطالب يفتح صفحة التتبع
+  //    فيجد «مرفوض» بلا سطر واحد يقول له لماذا ولا ما الذي يصلحه — وصفحة
+  //    التفاصيل تُلزم بالسبب فعلًا، فكان الفرق بين الشاشتين هو الفارق بين
+  //    رفض مفهوم ورفض صامت.
+  async function reviewRequest(id, status, decision) {
+    var label = t(NuhWorkflow.labelKey(status, decision));
+    var notes = '';
+
+    if (decision === 'reject') {
+      notes = await NuhDialog.prompt({
+        title: label,
+        message: t('req_rejectReasonPrompt'),
+        confirmLabel: label,
+        cancelLabel: t('req_cancel')
+      });
+      if (notes === null) return;
+      notes = notes.trim();
+      if (!notes) { NuhDialog.error(t('req_rejectReasonRequired')); return; }
+    } else {
+      if (!await NuhDialog.confirm({ message: t('req_confirmActionFmt').replace('{0}', label) })) return;
+    }
+
+    var ep = NuhWorkflow.endpointFor(id, status, decision, notes);
+    if (!ep) return;
+
     try {
-      var res = await fetch('/api/requests/' + id + '/review', {
-        method: 'PUT',
+      var res = await fetch(ep.url, {
+        method: ep.method,
         headers: Object.assign({ 'Content-Type': 'application/json' }, NUH.headers()),
-        // الهوية من الجلسة على السيرفر — الواجهة ما بتبعتش مين اللي راجع.
-        body: JSON.stringify({ status: newStatus, notes: '' })
+        body: JSON.stringify(ep.body)
       });
       if (!res.ok) {
         var err = await res.json().catch(function () { return {}; });
@@ -295,5 +351,6 @@
   setLang(localStorage.getItem('uiLanguage') || 'ar');
   updatePagerButtons();
   updateSortIndicators();
+  initMineTab();
 </script>
 }

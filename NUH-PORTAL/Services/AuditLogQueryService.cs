@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Caching.Memory;
 using ClosedXML.Excel;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Localization;
 using NUH_PORTAL.Core;
+using NUH_PORTAL.Data;
 using NUH_PORTAL.Core.Exceptions;
 using NUH_PORTAL.Data.Interfaces;
 using NUH_PORTAL.DTOs.AuditLogs;
@@ -21,6 +23,16 @@ namespace NUH_PORTAL.Services
         private readonly IRepository<AuditLog> _logs;
         private readonly IRepository<User> _users;
 
+        // ⚠️ السياق مباشرةً لأمرين لا يخدمهما مستودع AuditLog: ربط سجل الوحدة
+        //    بفترات إشغالها، وترجمة رقم السجل إلى اسم وحدة مفهوم في التقرير.
+        private readonly AppDbContext _db;
+
+        // ⚠️ نصوص الإجراءات والحقول من نفس ملف SharedResource.resx الذي تقرأ منه
+        //    الشاشتان عبر NuhAudit. لو كُتبت هنا مرة ثانية لتفارق ما يُقرأ على
+        //    الشاشة عمّا يُصدَّر في التقرير - وهو أسوأ أنواع التفارق، لأنه لا
+        //    يظهر إلا حين يقارن أحدهم الورقة بالشاشة.
+        private readonly IStringLocalizer<SharedResource> _t;
+
         private static readonly string[] StudentActions = { "create_student", "update_student", "delete_student", "checkout_student" };
         private static readonly string[] RequestActions =
         {
@@ -30,6 +42,16 @@ namespace NUH_PORTAL.Services
             "cyber_approve_request", "cyber_reject_request"
         };
         private static readonly string[] LoginActions = { "login", "login_failed", "logout", "login_admin_fallback", "login_admin_fallback_failed" };
+
+        // ⚠️ سكن أعضاء هيئة التدريس: بياناته تُكتب في الدليل النشط، وكان سجله
+        //    بلا فلتر - فالبحث عن «من عدّل هذه الوحدة» يعني تصفّح السجل كله
+        //    صفحةً صفحة. الإجراءات هنا هي التي تكتبها FacultyHousingService.
+        private static readonly string[] FacultyActions =
+        {
+            "faculty_occupant_updated", "faculty_handover",
+            "faculty_service_started", "faculty_service_stopped",
+            "faculty_ad_push", "faculty_ad_push_failed", "faculty_import_applied"
+        };
 
         private readonly UserManager<User> _userManager;
         private readonly RoleManager<Role> _roleManager;
@@ -42,6 +64,8 @@ namespace NUH_PORTAL.Services
             UserManager<User> userManager,
             RoleManager<Role> roleManager,
             IMemoryCache cache,
+            AppDbContext db,
+            IStringLocalizer<SharedResource> t,
             IUnitOfWork unitOfWork,
             IMapper mapper) : base(unitOfWork, mapper)
         {
@@ -50,7 +74,28 @@ namespace NUH_PORTAL.Services
             _userManager = userManager;
             _roleManager = roleManager;
             _cache = cache;
+            _db = db;
+            _t = t;
         }
+
+        // ====================================================================
+        //  الاسم المعروض للإجراء أو الحقل - نفس قاعدة NuhAudit في الواجهة.
+        //
+        //  ⚠️ المفتاح يُصغَّر قبل البحث لأن MSBuild يعدّ «aud_field_Status» و
+        //     «aud_field_status» مفتاحًا مكررًا فيُهمل أحدهما (تحذير MSB3568)،
+        //     وأسماء الحقول تصل من قاعدة البيانات بالصيغتين: «national_id» من
+        //     سجلات الطلاب و«NationalId» من سكن أعضاء هيئة التدريس.
+        //  ⚠️ والمفتاح المفقود يُرجع الاسم الخام لا المفتاح: نصٌّ ناقص في التقرير
+        //     أهون من «aud_field_Xyz» في خانة يقرأها مسؤول.
+        private string Label(string prefix, string? name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return "";
+            var v = _t[prefix + name.ToLowerInvariant()];
+            return (v.ResourceNotFound || string.IsNullOrEmpty(v.Value)) ? name : v.Value;
+        }
+
+        private string ActionLabel(string? a) => Label("aud_action_", a);
+        private string FieldLabel(string? f) => Label("aud_field_", f);
 
         // ====================================================================
         //  نطاق الرؤية في سجل العمليات — قاعدة واحدة يمرّ منها كل استعلام.
@@ -175,7 +220,7 @@ namespace NUH_PORTAL.Services
 
         public async Task<AuditLogsPageDto> GetLogsAsync(int page, int pageSize, AuditLogFilter filter)
         {
-            var filteredQuery = ApplyFilters((await ScopedAsync()), filter);
+            var filteredQuery = await ApplyAllFiltersAsync((await ScopedAsync()), filter);
 
             // استعلام واحد بيجمع العدادات بدل 3 استعلامات COUNT منفصلة
             var actionCounts = await filteredQuery
@@ -254,10 +299,17 @@ namespace NUH_PORTAL.Services
 
         public async Task<FileResultDto> ExportLogsAsync(AuditLogFilter filter)
         {
-            var filteredQuery = ApplyFilters((await ScopedAsync()), filter);
+            var filteredQuery = await ApplyAllFiltersAsync((await ScopedAsync()), filter);
+
+            // ⚠️ سقف صريح على عدد العمليات المُصدَّرة. بلا سقف يستطيع مستخدم
+            //    واحد أن يطلب مئات الآلاف من الصفوف فيستهلك ذاكرة الخادم.
+            //    وإن بلغه التصدير، يُكتب ذلك في الملف نفسه سطرًا أحمر - فالقصّ
+            //    الصامت أخطر من عدم التصدير: الورقة تبدو كاملة وهي ناقصة.
+            const int MaxRows = 20000;
 
             var logs = await filteredQuery
                 .OrderByDescending(a => a.action_at)
+                .Take(MaxRows + 1)
                 .Select(a => new
                 {
                     a.Id,
@@ -267,39 +319,129 @@ namespace NUH_PORTAL.Services
                     a.target_id,
                     a.action_at,
                     a.ip_address,
-                    a.user_agent
+                    a.user_agent,
+                    changes = a.AuditChangeLogs!
+                        .Select(c => new { c.FieldName, c.OldValue, c.NewValue }).ToList()
                 })
+                .AsSplitQuery()
                 .ToListAsync();
 
-            using var wb = new XLWorkbook();
-            var ws = wb.Worksheets.Add("AuditLogs");
+            var truncated = logs.Count > MaxRows;
+            if (truncated) logs = logs.Take(MaxRows).ToList();
 
-            var headers = new[] { "#", "User", "Action", "Table", "Target ID", "Date", "IP Address", "User Agent" };
+            // ====================================================================
+            //  رقم السجل → اسم مفهوم.
+            //
+            //  ⚠️ عمود «Target ID» كان يطبع الرقم ٢٠ ولا شيء غيره. من يقرأ تقرير
+            //     مساءلة لا يعرف أي وحدة هي، ولا سبيل له إلى معرفتها من الورقة.
+            //     نترجم سجلات سكن أعضاء هيئة التدريس إلى اسم الوحدة «برج 2 - شقة 4».
+            //     وما عداها يبقى «الجدول #الرقم» - أصدق من رقم عارٍ.
+            // ====================================================================
+            var unitIds = logs.Where(l => l.target_table == "FacultyUnits" && l.target_id > 0)
+                              .Select(l => l.target_id).Distinct().ToList();
+            var occIds = logs.Where(l => l.target_table == "FacultyOccupancies")
+                             .Select(l => l.target_id).Distinct().ToList();
+
+            var occToUnit = occIds.Count == 0
+                ? new Dictionary<int, int>()
+                : await _db.FacultyOccupancies.AsNoTracking()
+                    .Where(o => occIds.Contains(o.Id))
+                    .ToDictionaryAsync(o => o.Id, o => o.UnitId);
+
+            var allUnitIds = unitIds.Concat(occToUnit.Values).Distinct().ToList();
+            var unitNames = allUnitIds.Count == 0
+                ? new Dictionary<int, string>()
+                : (await _db.FacultyUnits.AsNoTracking()
+                    .Where(u => allUnitIds.Contains(u.Id))
+                    .ToListAsync())
+                    .ToDictionary(u => u.Id, u => u.DisplayNameAr);
+
+            string TargetName(string? table, int id)
+            {
+                if (table == "FacultyUnits" && unitNames.TryGetValue(id, out var n1)) return n1;
+                if (table == "FacultyOccupancies"
+                    && occToUnit.TryGetValue(id, out var uid)
+                    && unitNames.TryGetValue(uid, out var n2)) return n2;
+                return string.IsNullOrEmpty(table) ? id.ToString() : table + " #" + id;
+            }
+
+            using var wb = new XLWorkbook();
+            var ws = wb.Worksheets.Add("سجل العمليات");
+
+            var headers = new[]
+            {
+                _t["aud_xl_no"].Value, _t["aud_xl_date"].Value, _t["aud_xl_actor"].Value,
+                _t["aud_xl_action"].Value, _t["aud_xl_target"].Value, _t["aud_xl_field"].Value,
+                _t["aud_xl_old"].Value, _t["aud_xl_new"].Value,
+                _t["aud_xl_ip"].Value, _t["aud_xl_agent"].Value
+            };
             for (int i = 0; i < headers.Length; i++)
             {
-                ws.Cell(1, i + 1).Value = headers[i];
-                ws.Cell(1, i + 1).Style.Font.Bold = true;
-                ws.Cell(1, i + 1).Style.Fill.BackgroundColor = XLColor.Navy;
-                ws.Cell(1, i + 1).Style.Font.FontColor = XLColor.White;
-                ws.Cell(1, i + 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                var c = ws.Cell(1, i + 1);
+                c.Value = headers[i];
+                c.Style.Font.Bold = true;
+                c.Style.Fill.BackgroundColor = XLColor.FromHtml("#104631");
+                c.Style.Font.FontColor = XLColor.White;
+                c.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
             }
 
-            for (int i = 0; i < logs.Count; i++)
+            // ====================================================================
+            //  سطر لكل حقل لا لكل عملية.
+            //
+            //  ⚠️ كان سطرًا واحدًا لكل عملية بلا أي عمود يقول ماذا تغيّر - فالتقرير
+            //     يقول «فلان عدّل شيئًا ما» ولا يقول ماذا ولا ما كانت القيمة قبله،
+            //     وهو بالضبط ما يُطلب التقرير من أجله.
+            //     والتفكيك سطرًا لكل حقل يجعل الملف قابلًا للفرز والتصفية في
+            //     إكسل: «كل تعديلات رقم الهوية في أغسطس» تصير ضغطتين.
+            //     والعملية بلا حقول (تسجيل دخول مثلًا) تبقى سطرًا واحدًا كما كانت.
+            // ====================================================================
+            var emptyText = _t["aud_emptyValue"].Value;
+            int row = 2, seq = 1;
+
+            foreach (var l in logs)
             {
-                var l = logs[i];
-                ws.Cell(i + 2, 1).Value = i + 1;
-                ws.Cell(i + 2, 2).Value = l.user_name ?? "";
-                ws.Cell(i + 2, 3).Value = l.action ?? "";
-                ws.Cell(i + 2, 4).Value = l.target_table ?? "";
-                ws.Cell(i + 2, 5).Value = l.target_id;
-                ws.Cell(i + 2, 6).Value = l.action_at.ToString("yyyy-MM-dd HH:mm:ss");
-                ws.Cell(i + 2, 7).Value = l.ip_address ?? "";
-                ws.Cell(i + 2, 8).Value = l.user_agent ?? "";
+                var target = TargetName(l.target_table, l.target_id);
+                var actionText = ActionLabel(l.action);
+                var when = l.action_at.ToString("yyyy-MM-dd HH:mm:ss");
+
+                // العملية بلا حقول (تسجيل دخول مثلًا) تبقى سطرًا واحدًا بخانات فارغة
+                var fields = new List<(string? Name, string? Old, string? New)>();
+                foreach (var c in l.changes) fields.Add((c.FieldName, c.OldValue, c.NewValue));
+                if (fields.Count == 0) fields.Add((null, null, null));
+
+                foreach (var f in fields)
+                {
+                    ws.Cell(row, 1).Value = seq++;
+                    ws.Cell(row, 2).Value = when;
+                    ws.Cell(row, 3).Value = l.user_name ?? "";
+                    ws.Cell(row, 4).Value = actionText;
+                    ws.Cell(row, 5).Value = target;
+                    ws.Cell(row, 6).Value = FieldLabel(f.Name);
+                    ws.Cell(row, 7).Value = f.Name == null ? "" : (string.IsNullOrEmpty(f.Old) ? emptyText : f.Old);
+                    ws.Cell(row, 8).Value = f.Name == null ? "" : (string.IsNullOrEmpty(f.New) ? emptyText : f.New);
+                    ws.Cell(row, 9).Value = l.ip_address ?? "";
+                    ws.Cell(row, 10).Value = l.user_agent ?? "";
+
+                    // ⚠️ نصًّا لا رقمًا: أرقام الهوية والجوال تبدأ بأصفار أو تتجاوز
+                    //    ١٥ رقمًا، فإكسل يحوّلها إلى صيغة أسّية أو يبتلع صفرها.
+                    ws.Cell(row, 7).Style.NumberFormat.Format = "@";
+                    ws.Cell(row, 8).Style.NumberFormat.Format = "@";
+                    row++;
+                }
             }
 
-            ws.RangeUsed()?.SetAutoFilter();
+            ws.Range(1, 1, Math.Max(1, row - 1), headers.Length).SetAutoFilter();
             ws.SheetView.FreezeRows(1);
             ws.Columns().AdjustToContents();
+            ws.Column(10).Width = 28;   // متصفح المستخدم نصّ طويل - لا يُمدّد الورقة
+
+            if (truncated)
+            {
+                var warn = ws.Cell(row + 1, 1);
+                warn.Value = string.Format(_t["aud_xl_truncated"].Value, MaxRows);
+                warn.Style.Font.Bold = true;
+                warn.Style.Font.FontColor = XLColor.FromHtml("#b42318");
+            }
 
             using var stream = new MemoryStream();
             wb.SaveAs(stream);
@@ -307,7 +449,9 @@ namespace NUH_PORTAL.Services
             return new FileResultDto
             {
                 Content = stream.ToArray(),
-                FileName = $"AuditLogs_{DateTime.Now:yyyyMMdd_HHmm}.xlsx",
+                FileName = filter.FacultyUnitId.HasValue
+                    ? $"FacultyHousing_Unit{filter.FacultyUnitId}_{DateTime.Now:yyyyMMdd_HHmm}.xlsx"
+                    : $"AuditLogs_{DateTime.Now:yyyyMMdd_HHmm}.xlsx",
                 ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             };
         }
@@ -423,22 +567,22 @@ namespace NUH_PORTAL.Services
 <html lang='{lang}' dir='{(lang == "ar" ? "rtl" : "ltr")}'>
 <head><meta charset='UTF-8'><title>{title}</title>
 <style>
-body{{font-family:'Segoe UI',Tahoma,sans-serif;margin:40px;color:#1B2A5E}}
-h1{{color:#1B2A5E;border-bottom:3px solid #C9A84C;padding-bottom:10px}}
+body{{font-family:'Segoe UI',Tahoma,sans-serif;margin:40px;color:#104631}}
+h1{{color:#166a45;border-bottom:3px solid #dba102;padding-bottom:10px}}
 .header{{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px}}
-.logo{{font-size:24px;font-weight:800;color:#1B2A5E}}
+.logo{{font-size:24px;font-weight:800;color:#166a45}}
 table{{width:100%;border-collapse:collapse;margin-top:20px}}
-th{{background:#1B2A5E;color:#fff;padding:10px 12px;text-align:{(lang == "ar" ? "right" : "left")};font-size:13px}}
-td{{padding:8px 12px;border-bottom:1px solid #DDE3F0;font-size:12px}}
-tr:nth-child(even){{background:#F4F6FB}}
-.footer{{margin-top:30px;font-size:11px;color:#8891A8;text-align:center;border-top:1px solid #DDE3F0;padding-top:15px}}
-.print-btn{{background:#1B2A5E;color:#fff;border:none;padding:10px 24px;border-radius:6px;cursor:pointer;font-size:14px;margin-bottom:20px}}
+th{{background:#166a45;color:#fff;padding:10px 12px;text-align:{(lang == "ar" ? "right" : "left")};font-size:13px}}
+td{{padding:8px 12px;border-bottom:1px solid #dcdfe4;font-size:12px}}
+tr:nth-child(even){{background:#f5f5f6}}
+.footer{{margin-top:30px;font-size:11px;color:#85888e;text-align:center;border-top:1px solid #dcdfe4;padding-top:15px}}
+.print-btn{{background:#166a45;color:#fff;border:none;padding:10px 24px;border-radius:6px;cursor:pointer;font-size:14px;margin-bottom:20px}}
 @media print{{.print-btn{{display:none}}}}
 </style></head>
 <body>
 <div class='header'><div class='logo'>🏠 NUH Portal</div><div>{DateTime.Now:yyyy-MM-dd HH:mm}</div></div>
 <h1>{title}</h1>
-<p style='color:#8891A8;margin-bottom:20px'>{(lang == "ar" ? "إجمالي السجلات" : "Total Records")}: {logs.Count}</p>
+<p style='color:#85888e;margin-bottom:20px'>{(lang == "ar" ? "إجمالي السجلات" : "Total Records")}: {logs.Count}</p>
 <button class='print-btn' onclick='window.print()'>{(lang == "ar" ? "طباعة / PDF" : "Print / PDF")}</button>
 <table><thead><tr>
 <th>#</th><th>{(lang == "ar" ? "المستخدم" : "User")}</th><th>{(lang == "ar" ? "الإجراء" : "Action")}</th><th>{(lang == "ar" ? "الجدول" : "Table")}</th><th>{(lang == "ar" ? "التاريخ" : "Date")}</th><th>IP</th>
@@ -506,6 +650,37 @@ tr:nth-child(even){{background:#F4F6FB}}
 
         // ----------------------------- Helpers -----------------------------
 
+        // ====================================================================
+        //  التصفية الكاملة = الفلاتر العامة + تصفية وحدة السكن.
+        //
+        //  ⚠️ تصفية الوحدة تحتاج استعلامًا (فترات إشغالها) فلا تصلح داخل الدالة
+        //     الساكنة أدناه. وكل من يفلتر يجب أن يمرّ من هنا لا من هناك، وإلا
+        //     خرج التصدير بنطاق يخالف ما يراه المستخدم على الشاشة.
+        // ====================================================================
+        private async Task<IQueryable<AuditLog>> ApplyAllFiltersAsync(IQueryable<AuditLog> query, AuditLogFilter f)
+        {
+            query = ApplyFilters(query, f);
+
+            if (f.FacultyUnitId.HasValue)
+            {
+                var unitId = f.FacultyUnitId.Value;
+
+                // ⚠️ المرجعان معًا: التصحيح مُقيَّد على فترة الإشغال والتسليم
+                //    والكتابة في الدليل مُقيَّدة على الوحدة. قراءة أحدهما تُسقط
+                //    نصف السجل بلا أثر ظاهر.
+                var occIds = await _db.FacultyOccupancies.AsNoTracking()
+                    .Where(o => o.UnitId == unitId)
+                    .Select(o => o.Id)
+                    .ToListAsync();
+
+                query = query.Where(a =>
+                    (a.target_table == "FacultyUnits" && a.target_id == unitId)
+                    || (a.target_table == "FacultyOccupancies" && occIds.Contains(a.target_id)));
+            }
+
+            return query;
+        }
+
         private static IQueryable<AuditLog> ApplyFilters(IQueryable<AuditLog> query, AuditLogFilter f)
         {
             if (f.UserId.HasValue)
@@ -524,6 +699,7 @@ tr:nth-child(even){{background:#F4F6FB}}
                     "password" => new[] { "set_password" },
                     "logout" => new[] { "logout" },
                     "ad" => new[] { "user_created_ad", "user_updated_ad" },
+                    "faculty" => FacultyActions,
                     _ => Array.Empty<string>()
                 };
                 if (actions.Length > 0)

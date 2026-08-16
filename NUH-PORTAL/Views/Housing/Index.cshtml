@@ -59,15 +59,14 @@
         font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;
         transition:background .15s,border-color .15s,box-shadow .15s;white-space:nowrap}
   .tbtn svg{width:15px;height:15px;flex-shrink:0;opacity:.85}
-  .tbtn:hover{background:var(--gray-50,#F7F8FB);border-color:var(--gray-300);box-shadow:0 1px 3px rgba(27,42,94,.07)}
+  .tbtn:hover{background:var(--gray-50,#f5f5f6);border-color:var(--gray-300);box-shadow:0 1px 3px rgba(16,70,49,.07)}
   .tbtn:active{transform:translateY(1px)}
   .tbtn:disabled{opacity:.55;cursor:default;box-shadow:none;transform:none}
   /* الزر الأساسي: الإجراء اللي بيغيّر بيانات فعلاً */
   .tbtn.primary{background:var(--navy);border-color:var(--navy);color:#fff}
-  .tbtn.primary:hover{background:var(--navy-dark,#16244f);border-color:var(--navy-dark,#16244f)}
+  .tbtn.primary:hover{background:var(--navy-dark,#104631);border-color:var(--navy-dark,#104631)}
   .tbtn.icon-only{padding:8px 10px}
   .tbtn.is-busy svg{animation:spin 1s linear infinite}
-  .card-tools select{padding:8px 12px;border:1px solid var(--gray-300);border-radius:8px;font-family:inherit;font-size:13px;background:var(--white)}
   .hbtn{padding:8px 16px;border:none;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
   .btn-outline{background:transparent;border:1px solid var(--gray-300);color:var(--gray-700)}
   .btn-outline:hover{background:var(--gray-50)}
@@ -91,7 +90,7 @@
   .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;display:none;align-items:center;justify-content:center}
   .modal-overlay.show{display:flex}
   .modal{background:var(--white);border-radius:16px;width:90%;max-width:700px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 48px rgba(0,0,0,.2)}
-  .modal-header{padding:16px 20px;background:#EEF2FB;border-bottom:1px solid #DCE4F5;display:flex;align-items:center;justify-content:space-between}
+  .modal-header{padding:16px 20px;background:#f3fcf6;border-bottom:1px solid #c6ecd6;display:flex;align-items:center;justify-content:space-between}
   .modal-header h3{font-size:16px;font-weight:700}
   .modal-close{background:none;border:none;font-size:24px;cursor:pointer;color:var(--gray-500);padding:4px}
   .modal-body{padding:20px}
@@ -106,7 +105,7 @@
   .log-icon{flex-shrink:0;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;background:var(--gray-100);color:var(--gray-500)}
   .log-icon.created,.log-icon.enabled,.log-icon.reprovisioned{background:var(--green-light);color:var(--green)}
   .log-icon.disabled{background:var(--red-light);color:var(--red)}
-  .log-icon.password_reset{background:#FEF7E6;color:#8A6100}
+  .log-icon.password_reset{background:#fffaeb;color:#7a5c0b}
   .log-details{flex:1;min-width:0}
   .log-action{font-size:13.5px;font-weight:700;color:var(--navy);margin-bottom:3px}
   .log-desc{font-size:12.5px;color:var(--gray-700);line-height:1.75;margin-bottom:5px;word-break:break-word}
@@ -121,10 +120,10 @@
         فوق الجدول: كل إجراء ليه عنوان وسطر بيقول بيعمل إيه بالظبط.
      ============================================================================ */
   .sync-panel{background:var(--white);border:1px solid var(--gray-100);border-radius:14px;
-              box-shadow:0 2px 8px rgba(27,42,94,.05);margin-bottom:20px;overflow:hidden}
+              box-shadow:0 2px 8px rgba(16,70,49,.05);margin-bottom:20px;overflow:hidden}
   /* نفس ترويسة الأقسام في باقي النظام — أزرق فاتح وخط فاصل بنفس الدرجة */
-  .sync-panel-head{display:flex;align-items:center;gap:11px;padding:15px 20px;background:#EEF2FB;border-bottom:1px solid #DCE4F5}
-  .sync-panel-head .ic{width:34px;height:34px;border-radius:10px;background:var(--white);border:1px solid #D8E0F2;color:var(--navy);
+  .sync-panel-head{display:flex;align-items:center;gap:11px;padding:15px 20px;background:#f3fcf6;border-bottom:1px solid #c6ecd6}
+  .sync-panel-head .ic{width:34px;height:34px;border-radius:10px;background:var(--white);border:1px solid #c6ecd6;color:var(--navy);
                        display:flex;align-items:center;justify-content:center;flex-shrink:0}
   .sync-panel-head .ic svg{width:17px;height:17px}
   .sync-panel-head h3{font-size:14.5px;font-weight:700;color:var(--navy-dark);line-height:1.4}
@@ -133,42 +132,42 @@
   @@media(min-width:860px){ .sync-actions{grid-template-columns:1fr 1fr} }
   .sync-action{border:1px solid var(--gray-200);border-radius:12px;padding:16px 17px;
                display:flex;flex-direction:column;gap:9px;transition:border-color .15s,box-shadow .15s}
-  .sync-action:hover{border-color:var(--gray-300);box-shadow:0 2px 10px rgba(27,42,94,.06)}
-  .sync-action.accent{border-color:rgba(27,42,94,.22);background:linear-gradient(180deg,#FBFCFF,#fff)}
+  .sync-action:hover{border-color:var(--gray-300);box-shadow:0 2px 10px rgba(16,70,49,.06)}
+  .sync-action.accent{border-color:rgba(16,70,49,.22);background:linear-gradient(180deg,#fcfcfd,#fff)}
   .sync-action b{font-size:13.5px;font-weight:700;color:var(--navy-dark);display:flex;align-items:center;gap:7px}
   .sync-action b svg{width:15px;height:15px;flex-shrink:0;opacity:.8}
   .sync-action p{font-size:11.5px;color:var(--gray-500);line-height:1.75;flex:1;margin:0}
   .sync-action .safe{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;
                      padding:2px 9px;border-radius:999px;background:var(--green-light);color:var(--green);align-self:flex-start}
-  .sync-action .care{background:var(--amber-light,#FEF7E6);color:#8A6100}
+  .sync-action .care{background:var(--amber-light,#fffaeb);color:#7a5c0b}
   .sbtn{display:inline-flex;align-items:center;justify-content:center;gap:8px;align-self:flex-start;
         padding:9px 18px;border-radius:9px;border:1px solid var(--gray-200);background:var(--white);
         color:var(--navy);font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;
         transition:background .15s,border-color .15s,box-shadow .15s}
   .sbtn svg{width:14px;height:14px;flex-shrink:0}
-  .sbtn:hover{background:var(--gray-50,#F7F8FB);border-color:var(--gray-300);box-shadow:0 1px 4px rgba(27,42,94,.08)}
+  .sbtn:hover{background:var(--gray-50,#f5f5f6);border-color:var(--gray-300);box-shadow:0 1px 4px rgba(16,70,49,.08)}
   .sbtn.primary{background:var(--navy);border-color:var(--navy);color:#fff}
-  .sbtn.primary:hover{background:var(--navy-dark,#111C42);border-color:var(--navy-dark,#111C42)}
+  .sbtn.primary:hover{background:var(--navy-dark,#104631);border-color:var(--navy-dark,#104631)}
   .sbtn:disabled{opacity:.55;cursor:default;box-shadow:none}
   .sbtn.is-busy svg{animation:spin 1s linear infinite}
 
   /* نتيجة المزامنة — بدل نافذة alert() بتاعة المتصفح */
   .sync-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:18px}
-  .sync-stat{background:var(--gray-50,#F7F8FB);border:1px solid var(--gray-100);border-radius:10px;padding:12px 14px}
+  .sync-stat{background:var(--gray-50,#f5f5f6);border:1px solid var(--gray-100);border-radius:10px;padding:12px 14px}
   .sync-stat .v{font-size:22px;font-weight:700;color:var(--navy);line-height:1.2}
   .sync-stat .l{font-size:11.5px;color:var(--gray-500);margin-top:2px}
   .sync-stat.warn .v{color:var(--red)}
   .sync-section{margin-top:18px}
   .sync-section h4{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px}
   .sync-note{font-size:12px;line-height:1.8;padding:10px 12px;border-radius:8px;margin-bottom:10px}
-  .sync-note.info{background:#EFF6FF;color:#1E40AF;border:1px solid #DBEAFE}
-  .sync-note.danger{background:#FEF2F2;color:#991B1B;border:1px solid #FECACA}
+  .sync-note.info{background:#eff4ff;color:#175cd3;border:1px solid #d1e0ff}
+  .sync-note.danger{background:#fef3f2;color:#b42318;border:1px solid #fecdca}
   .sync-list{max-height:220px;overflow-y:auto;border:1px solid var(--gray-100);border-radius:8px}
   .sync-list .row{display:flex;flex-wrap:wrap;gap:4px 12px;padding:9px 12px;font-size:12.5px;border-bottom:1px solid var(--gray-100)}
   .sync-list .row:last-child{border-bottom:none}
   .sync-list .row .id{font-weight:700;color:var(--navy);direction:ltr}
   .sync-list .row .muted{color:var(--gray-500)}
-  .sync-list .more{padding:8px 12px;font-size:12px;color:var(--gray-500);background:var(--gray-50,#F7F8FB)}
+  .sync-list .more{padding:8px 12px;font-size:12px;color:var(--gray-500);background:var(--gray-50,#f5f5f6)}
   .group-tag{display:inline-block;background:var(--gray-100);border-radius:6px;padding:2px 8px;font-size:11px;margin:2px;direction:ltr}
 
   /* ============================================================================
@@ -183,11 +182,11 @@
         font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;
         transition:background .15s,border-color .15s,box-shadow .15s}
   .abtn svg{width:13px;height:13px;flex-shrink:0;opacity:.75}
-  .abtn:hover{background:var(--gray-50,#F7F8FB);border-color:var(--gray-300);box-shadow:0 1px 3px rgba(27,42,94,.07)}
+  .abtn:hover{background:var(--gray-50,#f5f5f6);border-color:var(--gray-300);box-shadow:0 1px 3px rgba(16,70,49,.07)}
   .abtn:active{transform:translateY(1px)}
   .abtn.primary{background:var(--navy);border-color:var(--navy);color:#fff}
   .abtn.primary svg{opacity:1}
-  .abtn.primary:hover{background:var(--navy-dark,#111C42);border-color:var(--navy-dark,#111C42)}
+  .abtn.primary:hover{background:var(--navy-dark,#104631);border-color:var(--navy-dark,#104631)}
 
   /* ============================================================================
      نافذة «إدارة الحساب»
@@ -199,8 +198,8 @@
         لوحة المزامنة فوق الجدول حتى لا تبدو الشاشتان من نظامين.
      ============================================================================ */
   .acct-head{display:flex;align-items:center;gap:14px;padding:15px 16px;border:1px solid var(--gray-100);
-             border-radius:14px;background:linear-gradient(180deg,#FBFCFF,#fff);margin-bottom:22px}
-  .acct-head .av{width:46px;height:46px;border-radius:12px;background:#E8F0FE;color:var(--navy);
+             border-radius:14px;background:linear-gradient(180deg,#fcfcfd,#fff);margin-bottom:22px}
+  .acct-head .av{width:46px;height:46px;border-radius:12px;background:#d1e0ff;color:var(--navy);
                  display:flex;align-items:center;justify-content:center;flex-shrink:0}
   .acct-head .av svg{width:22px;height:22px}
   .acct-head .who{flex:1;min-width:0;display:flex;flex-direction:column}
@@ -221,13 +220,13 @@
   .acct-f.wide{grid-column:1/-1}
   .acct-mono{display:block;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
              font-size:11.5px;font-weight:500;line-height:1.85;color:var(--gray-700);
-             background:var(--gray-50,#F7F8FB);border:1px solid var(--gray-100);
+             background:var(--gray-50,#f5f5f6);border:1px solid var(--gray-100);
              border-radius:8px;padding:8px 10px;word-break:break-all}
 
   /* التفاصيل التقنية مطويّة: يحتاجها الفني عند العطل، ولا تزاحم الموظف يوميًا */
   .acct-tech{margin-top:14px;border:1px solid var(--gray-100);border-radius:10px;overflow:hidden}
   .acct-tech summary{cursor:pointer;list-style:none;padding:9px 12px;font-size:12px;font-weight:600;
-                     color:var(--gray-700);background:var(--gray-50,#F7F8FB);user-select:none}
+                     color:var(--gray-700);background:var(--gray-50,#f5f5f6);user-select:none}
   .acct-tech summary::-webkit-details-marker{display:none}
   .acct-tech summary::before{content:'+';display:inline-block;width:15px;font-weight:700;color:var(--gray-500)}
   .acct-tech[open] summary::before{content:'\2212'}
@@ -236,14 +235,14 @@
   .acct-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
   .acct-action{min-width:0;border:1px solid var(--gray-200);border-radius:12px;padding:14px 15px;
                display:flex;flex-direction:column;gap:9px;transition:border-color .15s,box-shadow .15s}
-  .acct-action:hover{border-color:var(--gray-300);box-shadow:0 2px 10px rgba(27,42,94,.06)}
+  .acct-action:hover{border-color:var(--gray-300);box-shadow:0 2px 10px rgba(16,70,49,.06)}
   .acct-action p{font-size:11.5px;color:var(--gray-500);line-height:1.75;margin:0;flex:1}
   .acct-action .sbtn{align-self:flex-start;white-space:nowrap}
   .acct-action .sbtn.danger{background:var(--red);border-color:var(--red);color:#fff}
-  .acct-action .sbtn.danger:hover{background:#7F1616;border-color:#7F1616}
+  .acct-action .sbtn.danger:hover{background:#912018;border-color:#912018}
   .acct-action .sbtn.ok{background:var(--green);border-color:var(--green);color:#fff}
-  .acct-action .sbtn.ok:hover{background:#0B5A46;border-color:#0B5A46}
-  .acct-action.warn{border-color:#F3D2D2;background:linear-gradient(180deg,#FFFBFB,#fff)}
+  .acct-action .sbtn.ok:hover{background:#054f30;border-color:#054f30}
+  .acct-action.warn{border-color:#fecdca;background:linear-gradient(180deg,#fef3f2,#fff)}
   .acct-empty{padding:22px;text-align:center;color:var(--gray-500);font-size:13px;
               border:1px dashed var(--gray-200);border-radius:12px}
 </style>

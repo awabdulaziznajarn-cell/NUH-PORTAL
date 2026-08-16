@@ -25,6 +25,12 @@ namespace NUH_PORTAL.Services
 
         private const string I18nKeyPrefix = "ui.i18n.";
         private const string LookupKeyPrefix = "ui.lookups.";
+        private const string PortalKeyPrefix = "ui.portal.";
+
+        // مفاتيح بوابة الطالب: pt_ للنصوص الخاصة بالبوابة، و reg_ / lk_ مشتركة مع
+        // شاشة تسجيل طالب فردي عند الموظف — مصدر واحد للنص في الشاشتين.
+        private static readonly string[] PortalPrefixes =
+            { "pt_", "reg_", "lk_", "Page_", "Brand", "Lang", "AppTitle", "appTitle" };
 
         private readonly IMemoryCache _cache;
         private readonly IStringLocalizer<SharedResource> _localizer;
@@ -65,6 +71,40 @@ namespace NUH_PORTAL.Services
             // من غير انتهاء صلاحية: الموارد متجمّعة في الـ DLL ومبتتغيّرش وقت التشغيل.
             // Size مش مستخدم لأن IMemoryCache هنا من غير SizeLimit.
             _cache.Set(key, json);
+            return json;
+        }
+
+        public async Task<string> GetPortalBootstrapJsonAsync()
+        {
+            var key = PortalKeyPrefix + CultureKey;
+            if (_cache.TryGetValue<string>(key, out var cached) && cached != null)
+                return cached;
+
+            string i18n;
+            try
+            {
+                var dict = new Dictionary<string, string>();
+                foreach (var s in _localizer.GetAllStrings(true))
+                {
+                    foreach (var p in PortalPrefixes)
+                    {
+                        if (s.Name.StartsWith(p, StringComparison.Ordinal)) { dict[s.Name] = s.Value; break; }
+                    }
+                }
+                i18n = JsonSerializer.Serialize(dict, JsonOpts);
+            }
+            catch
+            {
+                i18n = "{}";
+            }
+
+            var json = "{\"i18n\":" + i18n + ",\"lookups\":" + await GetLookupMapJsonAsync() + "}";
+
+            // ستين ثانية زي خريطة القوائم — الجزء المتغيّر الوحيد جوّاه هو القوائم.
+            _cache.Set(key, json, new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(60)
+            });
             return json;
         }
 

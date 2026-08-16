@@ -28,6 +28,18 @@ namespace NUH_PORTAL.Models
         public string? RequestNumber { get; set; }
         public string? RegistrationData { get; set; }
 
+        // ⚠️ جنس الطالب متكرّر هنا عن قصد، مش نُسخ زيادة بلا داعي.
+        //    طلب التسجيل الذاتي بيتقدّم و student_id فيه صفر لحد ما يتعتمد —
+        //    بيانات الطالب ساعتها نص JSON في RegistrationData. والـ JSON مايتفلترش
+        //    في SQL. فمن غير العمود ده مافيش طريقة نوجّه الطلب المعلّق للمشرف
+        //    المسؤول عن قسمه، وهو بالظبط الطلب اللي محتاج التوجيه.
+        public Gender? StudentGender { get; set; }
+
+        // ⚠️ الخانات اللي المراجع طلب من الطالب يصلّحها — مفاتيحها مفصولة بفاصلة.
+        //    فاضي = كل الخانات مفتوحة (ده حال الطلبات المرجّعة قبل الميزة دي).
+        //    بيتفضّى مع كل إعادة تقديم: الجولة الجاية ليها طلبها هي.
+        public string? InfoFields { get; set; }
+
         public Student? Student { get; set; }
     }
 }

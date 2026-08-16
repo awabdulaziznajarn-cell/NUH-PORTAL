@@ -1,5 +1,6 @@
 using MapsterMapper;
 using Microsoft.EntityFrameworkCore;
+using NUH_PORTAL.Core;
 using NUH_PORTAL.Core.Exceptions;
 using NUH_PORTAL.Data.Interfaces;
 using NUH_PORTAL.DTOs.Tracking;
@@ -31,6 +32,26 @@ namespace NUH_PORTAL.Services
             _workflow = workflow;
         }
 
+        // ====================================================================
+        //  ⚠️ إخفاء جزئي للاسم في الردود العامة.
+        //
+        //     شاشة تتبع الطلب متاحة بلا تسجيل دخول، وفيها بحث برقم الجوال بلا
+        //     عامل تحقق. الاسم الكامل في الرد كان بيحوّل «رقم جوال مجهول» إلى
+        //     «فلان الفلاني، ساكن في السكن الجامعي، وطلبه في المرحلة كذا» —
+        //     يعني أداة لربط الأرقام بالهويات لأي حد بيجرّب أرقام.
+        //
+        //     أول حرف من كل كلمة كافٍ تمامًا لصاحب الطلب إنه يتعرّف على اسمه،
+        //     وغير كافٍ لمن يجمع هويات.
+        // ====================================================================
+        private static string? MaskName(string? name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return name;
+
+            var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            return string.Join(' ', parts.Select(p =>
+                p.Length <= 1 ? p : p[0] + new string('*', Math.Min(p.Length - 1, 4))));
+        }
+
         public async Task<List<TrackedRequestDto>> TrackByMobileAsync(string mobile)
         {
             if (string.IsNullOrWhiteSpace(mobile))
@@ -46,7 +67,7 @@ namespace NUH_PORTAL.Services
             if (studentIds.Count == 0)
                 throw UserFriendlyException.NotFound("لا توجد طلبات مرتبطة بهذا الرقم");
 
-            return await _requests.Query().AsNoTracking()
+            var list = await _requests.Query().AsNoTracking()
                 .Include(r => r.Student)
                 // ⚠️ لازم النوعين: الطالب لما يسجّل بنفسه بيتعمل self_registration،
                 //    ولما المشرف يسجّله بيتعمل housing. الاتنين طلب سكن لنفس الطالب
@@ -60,9 +81,12 @@ namespace NUH_PORTAL.Services
                     RequestNumber = r.RequestNumber,
                     Status = r.Status,
                     SubmittedAt = r.SubmittedAt,
-                    StudentName = r.Student!.full_name
+                    StudentName = r.Student!.full_name   // بيتخفي بعد الجلب — EF مايترجمش MaskName لـ SQL
                 })
                 .ToListAsync();
+
+            foreach (var r in list) r.StudentName = MaskName(r.StudentName);
+            return list;
         }
 
         public async Task<TrackingDetailsDto> TrackByNumberAsync(string requestNumber, string? last4)
@@ -116,8 +140,7 @@ namespace NUH_PORTAL.Services
                 RequestNumber = request.RequestNumber,
                 Status = request.Status,
                 SubmittedAt = request.SubmittedAt,
-                StudentName = request.Student?.full_name,
-                AdUsername = request.Student?.ad_username,
+                StudentName = MaskName(request.Student?.full_name),
                 History = items
             };
         }
@@ -204,15 +227,7 @@ namespace NUH_PORTAL.Services
         // ----------------------------- Helpers -----------------------------
 
         // 05XXXXXXXX أو 5XXXXXXXX → 9665XXXXXXXX (نفس منطق الكنترولر القديم)
-        private static string NormalizePhone(string mobile)
-        {
-            if (string.IsNullOrWhiteSpace(mobile)) return mobile;
-            var digits = new string(mobile.Where(char.IsDigit).ToArray());
-            if (digits.Length == 10 && digits.StartsWith("05"))
-                return "9665" + digits[2..];
-            if (digits.Length == 9 && digits.StartsWith("5"))
-                return "966" + digits;
-            return digits;
-        }
+        // ⚠️ حُذفت النسخة المحلية — القاعدة الوحيدة في Core/IdentityRules.cs.
+        private static string NormalizePhone(string mobile) => IdentityRules.NormalizeMobileOrDigits(mobile);
     }
 }

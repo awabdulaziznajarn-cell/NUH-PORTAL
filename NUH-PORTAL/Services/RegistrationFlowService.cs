@@ -67,15 +67,8 @@ namespace NUH_PORTAL.Services
         // الـ OTP وده اللي بيتخزّن في Users.mobile. من غير التطبيع ده أي مقارنة بين
         // الاتنين بتفشل، وتحقق الملكية تحت كان هيرفض صاحب الطلب نفسه.
         // نفس منطق normalizeSaudiMobile في register-form.html بالحرف.
-        private static string? NormalizeMobile(string? mobile)
-        {
-            if (string.IsNullOrWhiteSpace(mobile)) return null;
-            var d = new string(mobile.Where(char.IsDigit).ToArray());
-            if (d.StartsWith("00966")) d = d[2..];
-            if (d.StartsWith("966")) d = d[3..];
-            if (d.StartsWith("0")) d = d[1..];
-            return d.Length == 9 && d[0] == '5' ? "966" + d : null;
-        }
+        // ⚠️ حُذفت النسخة المحلية — القاعدة الوحيدة في Core/IdentityRules.cs.
+        private static string? NormalizeMobile(string? mobile) => IdentityRules.NormalizeMobile(mobile);
 
         private int RequireActor()
         {
@@ -83,6 +76,57 @@ namespace NUH_PORTAL.Services
             if (actorId == 0)
                 throw new UserFriendlyException("غير مصرح", 401);
             return actorId;
+        }
+
+        // ====================================================================
+        //  ملكية الطلب — القاعدة الوحيدة، وكل مسار بيلمس طلب بيعدّي منها.
+        //
+        //  ⚠️ الفحص ده كان مكتوب جوّه GetMyRequestDetailAsync بس. باقي المسارات
+        //     اللي بتاخد requestId من العميل كانت بتتحقق إن الطلب *موجود* وخلاص:
+        //
+        //       • ResubmitAsync      → أي طالب يعيد تقديم طلب أي طالب تاني،
+        //                              والبيانات الجديدة بتتكتب فوق سجل الضحية.
+        //       • AcceptDeclarations → توقيع تعهّد قانوني على طلب حد تاني،
+        //                              والـ IP المسجّل في الإقرار بيبقى بتاع المهاجم.
+        //
+        //     ورقم الطلب عدد متسلسل، يعني التجربة بالترتيب سهلة.
+        //
+        //  ⚠️ الملكية بتتحدد بطريقتين مش واحدة: SubmittedBy لما الطالب يقدّم
+        //     بنفسه، والمطابقة بالجوال لما المشرف يقدّم نيابةً عنه (ساعتها
+        //     SubmittedBy حساب المشرف مش الطالب). لو اكتفينا بالأولى، الطالب
+        //     اللي سجّله المشرف مش هيقدر يكمّل طلبه.
+        //
+        //  الموظفون بيعدّوا — صلاحياتهم متفحوصة على مستوى الكنترولر.
+        //  وبنرمي "غير موجود" مش "ممنوع": مانأكّدش وجود الطلب أصلًا.
+        // ====================================================================
+        private async Task EnsureOwnsRequestAsync(int actorId, Request? request)
+        {
+            if (request == null)
+                throw UserFriendlyException.NotFound("الطلب غير موجود");
+
+            if (IsStaffRole(UnitOfWork.GetCurrentUserRole()))
+                return;
+
+            if (request.SubmittedBy == actorId)
+                return;
+
+            var myMobile = await _users.Query().AsNoTracking()
+                .Where(u => u.Id == actorId)
+                .Select(u => u.mobile)
+                .FirstOrDefaultAsync();
+
+            var studentPhone = request.StudentId == 0 ? null : await _students.Query().AsNoTracking()
+                .Where(st => st.Id == request.StudentId)
+                .Select(st => st.phone)
+                .FirstOrDefaultAsync();
+
+            var myMobileNorm = NormalizeMobile(myMobile);
+            var owns = studentPhone != null &&
+                       ((!string.IsNullOrWhiteSpace(myMobile) && studentPhone == myMobile) ||
+                        (myMobileNorm != null && studentPhone == myMobileNorm));
+
+            if (!owns)
+                throw UserFriendlyException.NotFound("الطلب غير موجود");
         }
 
         public async Task<StartRegistrationResultDto> StartAsync(StartRegistrationRequest request)
@@ -102,6 +146,12 @@ namespace NUH_PORTAL.Services
                 {
                     student_id = request.StudentId,
                     status = StudentState.active,   // الطالب لا يحدّد حالة سكنه
+                    // ⚠️ الوضع الأكاديمي كان يُترك فارغًا في هذا المسار وحده، بينما
+                    //    يضبطه StudentService (تسجيل فردي) و BulkRegistrationService
+                    //    (رفع إكسل). فالطالب المسجَّل ذاتيًا يظهر في قائمة الطلاب
+                    //    بعمود «الوضع الأكاديمي» فارغًا، وتعرض الشاشة مفتاح الترجمة
+                    //    الناقص نصًّا خامًا. المسارات الثلاثة الآن تبدأ من الحالة نفسها.
+                    student_status = StudentStatus.active,
                     created_at = DateTime.UtcNow,
                     created_by = actorId
                 };
@@ -165,8 +215,8 @@ namespace NUH_PORTAL.Services
         {
             var actorId = RequireActor();
 
-            _ = await _requests.GetByIdAsync(requestId)
-                ?? throw UserFriendlyException.NotFound("الطلب غير موجود");
+            var declRequest = await _requests.GetByIdAsync(requestId);
+            await EnsureOwnsRequestAsync(actorId, declRequest);
 
             var (ip, ua) = ClientInfo();
 
@@ -263,26 +313,12 @@ namespace NUH_PORTAL.Services
             //    الـ id في الرابط كان بيرجّع بيانات طالب تاني كاملة (رقم الهوية والجوال).
             //    الموظفين بيوصلوا عادي؛ الطالب لازم يكون صاحب الطلب.
             //    بنرجّع "غير موجود" مش "ممنوع" عشان مانأكّدش وجود الطلب أصلاً.
-            var actorId = RequireActor();
+            //    الفحص نفسه اللي بتستخدمه إعادة التقديم والإقرارات — قاعدة واحدة.
+            await EnsureOwnsRequestAsync(RequireActor(), request);
+
+            // ⚠️ محتاجينها تحت كمان: ملاحظات المراجعة واسم الموظف بيظهروا للموظف
+            //    بس، والطالب بيشوف سبب الرفض والمطلوب استكماله فقط.
             var isStaff = IsStaffRole(UnitOfWork.GetCurrentUserRole());
-            if (!isStaff)
-            {
-                var owns = request.SubmittedBy == actorId;
-                if (!owns)
-                {
-                    var myMobile = await _users.Query().AsNoTracking()
-                        .Where(u => u.Id == actorId)
-                        .Select(u => u.mobile)
-                        .FirstOrDefaultAsync();
-                    var myMobileNorm = NormalizeMobile(myMobile);
-                    var studentPhone = request.Student?.phone;
-                    owns = studentPhone != null &&
-                           ((!string.IsNullOrWhiteSpace(myMobile) && studentPhone == myMobile) ||
-                            (myMobileNorm != null && studentPhone == myMobileNorm));
-                }
-                if (!owns)
-                    throw UserFriendlyException.NotFound("الطلب غير موجود");
-            }
 
             var history = await _workflow.GetHistoryAsync(requestId);
 
@@ -297,6 +333,11 @@ namespace NUH_PORTAL.Services
                 SubmittedAt = request.SubmittedAt,
                 ReviewedAt = request.ReviewedAt,
                 Notes = request.Notes,
+                // الخانات اللي المراجع طلب تصحيحها. فاضية = كل الخانات مفتوحة —
+                // وده حال أي طلب اترجّع قبل ما الميزة دي تتعمل.
+                InfoFields = string.IsNullOrWhiteSpace(request.InfoFields)
+                    ? new List<string>()
+                    : request.InfoFields.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList(),
                 Student = request.Student == null ? null : new MyRequestStudentDto
                 {
                     student_id = request.Student.student_id,
@@ -343,16 +384,59 @@ namespace NUH_PORTAL.Services
         {
             var actorId = RequireActor();
 
+            // ⚠️ الملكية الأول: من غيرها كان أي طالب يعيد تقديم طلب أي طالب تاني
+            //    والبيانات الجديدة تتكتب فوق سجل الضحية.
+            await EnsureOwnsRequestAsync(actorId, await _requests.GetByIdAsync(requestId));
+
             // البيانات القديمة لازم تتقرا قبل ما إعادة التقديم تكتب فوقها
             var before = await _requests.Query().AsNoTracking()
                 .Where(r => r.Id == requestId)
-                .Select(r => new { r.RegistrationData, r.StudentId })
+                .Select(r => new { r.RegistrationData, r.StudentId, r.InfoFields })
                 .FirstOrDefaultAsync();
 
             // مقارنة واحدة تنتج النص المقروء والـ JSON المنظّم معًا
             var changes = RegistrationDataMapper.Compare(before?.RegistrationData, request.RegistrationData);
+
+            // ================================================================
+            //  ⚠️ قفل الخانات لازم يكون هنا، مش في المتصفح.
+            //
+            //  إعادة التقديم بتكتب RegistrationData بالكامل بأي حاجة العميل
+            //  يبعتها. يعني طالب اترجّعله الطلب عشان «رقم المبنى» كان يقدر
+            //  يغيّر رقم هويته أو اسمه ويعيد التقديم — والمراجع يشوف الطلب
+            //  راجع ويوافق عليه وهو مش واخد باله إن الهوية اتغيّرت بعد ما
+            //  راجعها. القفل في الواجهة ديكور: أي حد يفتح أدوات المطوّر بيعدّيه.
+            //
+            //  القاعدة: المراجع حدد خانات؟ اللي برّاها مايتغيّرش. ماحددش؟
+            //  كل حاجة مفتوحة (سلوك الطلبات القديمة زي ما هو).
+            // ================================================================
+            var allowed = string.IsNullOrWhiteSpace(before?.InfoFields)
+                ? null
+                : before!.InfoFields!.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                    .Select(RegistrationDataMapper.NormalizeFieldKey)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            if (allowed != null)
+            {
+                var blocked = changes
+                    .Where(c => !allowed.Contains(RegistrationDataMapper.NormalizeFieldKey(c.Field)))
+                    .Select(c => RegistrationDataMapper.LabelOf(c.Field))
+                    .Distinct()
+                    .ToList();
+
+                if (blocked.Count > 0)
+                    throw new UserFriendlyException(
+                        "لا يمكن تعديل: " + string.Join("، ", blocked) +
+                        ". المطلوب تصحيحه فقط: " +
+                        string.Join("، ", allowed.Select(RegistrationDataMapper.LabelOf)) + ".", 400);
+            }
+
             var summary = RegistrationDataMapper.BuildChangeSummary(changes);
             var changesJson = RegistrationDataMapper.SerializeChanges(changes);
+
+            // ملاحظة الطالب بتتضاف لملخّص التعديلات فبتوصل للمراجع في سجل المسار
+            if (!string.IsNullOrWhiteSpace(request.StudentNote))
+                summary = (string.IsNullOrWhiteSpace(summary) ? "" : summary + " — ")
+                        + "ملاحظة الطالب: " + request.StudentNote.Trim();
 
             var result = await _registration.ResubmitRequestAsync(
                 requestId, actorId, request.RegistrationData, summary, changesJson);

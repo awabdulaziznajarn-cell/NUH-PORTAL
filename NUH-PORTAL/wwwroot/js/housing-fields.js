@@ -42,14 +42,18 @@
   // بيملأ الـ select ويحافظ على القيمة الحالية *فقط* لو لسه ضمن الخيارات الجديدة.
   // القيم القديمة الخارجة عن الترقيم (زي 101 و201) بتتشال عمدًا — المستخدم لازم
   // يختار من جديد بدل ما يتحفظ رقم مش موجود في المبنى.
-  function fillSelect(sel, values, placeholder, disabled) {
+  // ⚠️ placeholder ممكن يكون نص جاهز (شاشات الموظفين بتمرّره مترجم من الـ resx
+  //    وقت الرندر) أو مفتاح resx (بوابة الطالب — القاموس بيوصل بعد التحميل).
+  //    مع المفتاح بنحط data-i18n على الخيار، فتبديل اللغة بيحدّثه لوحده.
+  function fillSelect(sel, values, placeholder, disabled, phKey) {
     if (!sel) return;
     var previous = sel.value;
     sel.innerHTML = '';
 
     var ph = document.createElement('option');
     ph.value = '';
-    ph.textContent = placeholder || '';
+    if (phKey) { ph.setAttribute('data-i18n', phKey); ph.textContent = (typeof t === 'function') ? t(phKey) : (placeholder || ''); }
+    else { ph.textContent = placeholder || ''; }
     sel.appendChild(ph);
 
     values.forEach(function (v) {
@@ -66,12 +70,14 @@
   /* ربط الخانات ببعض.
      opts = {
        floor, apartment, room   : ids الخانات (أي واحدة ممكن تتساب)
-       labels: { floorFirst, selectApartment, selectRoom }
+       labels:    { floorFirst, selectApartment, selectRoom }   نصوص جاهزة، أو
+       labelKeys: { floorFirst, selectApartment, selectRoom }   مفاتيح resx
      }
      بيرجّع دالة refresh() تنفع تتنادى بعد ما تتحط قيم برمجيًا (شاشات التعديل). */
   function attach(opts) {
     opts = opts || {};
     var labels = opts.labels || {};
+    var keys = opts.labelKeys || {};   // بديل labels لما النص لسه ماوصلش
     var fEl = el(opts.floor), aEl = el(opts.apartment), rEl = el(opts.room);
 
     function syncApartments() {
@@ -79,19 +85,19 @@
       var floor = fEl ? fEl.value : '';
       if (!floor) {
         // من غير دور مفيش شقق — القائمة تتفضّى وتتقفل بدل ما تعرض كل الأرقام
-        fillSelect(aEl, [], labels.floorFirst || '', true);
+        fillSelect(aEl, [], labels.floorFirst || '', true, keys.floorFirst);
         return;
       }
-      fillSelect(aEl, apartmentsFor(floor), labels.selectApartment || '', false);
+      fillSelect(aEl, apartmentsFor(floor), labels.selectApartment || '', false, keys.selectApartment);
     }
 
-    if (rEl) fillSelect(rEl, rooms(), labels.selectRoom || '', false);
+    if (rEl) fillSelect(rEl, rooms(), labels.selectRoom || '', false, keys.selectRoom);
     syncApartments();
 
     if (fEl) fEl.addEventListener('change', syncApartments);
 
     return function refresh() {
-      if (rEl) fillSelect(rEl, rooms(), labels.selectRoom || '', false);
+      if (rEl) fillSelect(rEl, rooms(), labels.selectRoom || '', false, keys.selectRoom);
       syncApartments();
     };
   }

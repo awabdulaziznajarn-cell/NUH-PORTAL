@@ -6,6 +6,6 @@ namespace NUH_PORTAL.Services.Interfaces
     {
         Task<List<NotificationDto>> GetNotificationsAsync(string? role);
         Task<int> GetUnreadCountAsync(string? role);
-        Task MarkAsReadAsync(List<int> ids);
+        Task MarkAsReadAsync(List<int> ids, string? role);
     }
 }

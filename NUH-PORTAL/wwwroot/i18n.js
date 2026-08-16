@@ -86,6 +86,11 @@ function __baseSetLang(l) {
   document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) { el.placeholder = t(el.dataset.i18nPlaceholder); });
   document.querySelectorAll('[data-i18n-value]').forEach(function (el) { el.value = t(el.dataset.i18nValue); });
   document.querySelectorAll('[data-i18n-title]').forEach(function (el) { el.title = t(el.dataset.i18nTitle); });
+  document.querySelectorAll('[data-i18n-alt]').forEach(function (el) { el.alt = t(el.dataset.i18nAlt); });
+  // ⚠️ نص فيه وسوم (زي <strong>) — النص في الـ resx نفسه ومصدره موثوق (ملفاتنا)،
+  //    مش مدخلات مستخدم، فـ innerHTML هنا مافيهاش خطر حقن.
+  document.querySelectorAll('[data-i18n-html]').forEach(function (el) { el.innerHTML = t(el.dataset.i18nHtml); });
+  document.querySelectorAll('[data-i18n-aria]').forEach(function (el) { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
 
   var d = document.getElementById('dateNow');
   if (d) {
@@ -101,19 +106,112 @@ function __baseSetLang(l) {
       var u = JSON.parse(localStorage.getItem('staffUser') || localStorage.getItem('studentUser') || '{}');
       sidebarName.textContent = u.full_name || u.username || '';
       if (sidebarRole) sidebarRole.textContent = u.role || '';
-    } catch (e) { /* بيانات تخزين تالفة - تجاهل */ }
+    } catch (e) { /* بيانات تخزين تالفة — تجاهل */ }
   }
 }
 
 var onLanguageChange = null;
 
-function setLang(l) {
+// ==========================================================================
+//  بوابة الطالب: القاموس بيتجاب من نقطة نهاية بدل ما يتحقن من اللياوت.
+//
+//  ⚠️ صفحات البوابة (wwwroot/register/*.html) ملفات HTML ثابتة — مبتعدّيش على
+//     _Layout.cshtml، فـ window.__I18N ما كانش موجود عندها أصلًا. فـ t() كانت
+//     بترجّع المفتاح نفسه، وأي عنصر [data-i18n] ما كانش بيتترجم. النتيجة اللي
+//     كان الطالب شايفها: زرار «English» بيقلب اتجاه الصفحة وخلاص.
+//
+//     دلوقتي بنجيب نفس القاموس من نفس ملفات الـ resx عبر /api/ui/i18n —
+//     فالنص مكتوب مرة واحدة ويخدم شاشة الموظف وصفحة الطالب.
+// ==========================================================================
+var __i18nRemote = false;      // الصفحة دي محتاجة تجيب القاموس؟
+var __i18nDictLang = null;     // لغة القاموس المحمّل حاليًا
+
+function __i18nFetch(lang) {
+  return fetch('/api/ui/i18n?lang=' + encodeURIComponent(lang), { credentials: 'same-origin' })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (d) {
+      if (!d) return;
+      window.__I18N = d.i18n || {};
+      window.__LKMAP = d.lookups || {};
+      __i18nDictLang = lang;
+    })
+    .catch(function () {
+      // الشبكة وقعت: الصفحة تفضل بنصها العربي المكتوب في الـ HTML بدل ما تفضى
+    });
+}
+
+function __applyLang(l) {
   try { __baseSetLang(l); } catch (e) { console.warn('__baseSetLang error:', e); }
+  try { upgradeLookupCells(); } catch (e) { }
   if (typeof onLanguageChange === 'function') { try { onLanguageChange(currentLang); } catch (e) { console.warn('onLanguageChange error:', e); } }
 }
 
-// لصفحات الدخول القديمة
+function setLang(l) {
+  var want = (l === 'en') ? 'en' : 'ar';
+
+  // شاشات الموظفين: القاموس محقون من اللياوت وتبديل اللغة بيتم على السيرفر.
+  // ما نلمسش تخزين المتصفح هنا عشان ما نخالفش ثقافة الطلب.
+  if (!__i18nRemote) { __applyLang(want); return; }
+
+  try { localStorage.setItem('uiLanguage', want); } catch (e) { }
+  if (__i18nDictLang === want) { __applyLang(want); return; }
+  __i18nFetch(want).then(function () { __applyLang(want); });
+}
+
+// تشغيل البوابة: بيحصل مرة واحدة أول ما الملف يتحمّل (وهو في <head>)
+(function () {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+  if (window.__I18N) { __i18nDictLang = currentLang; return; }   // شاشة موظف
+  __i18nRemote = true;
+
+  var root = document.documentElement;
+  var want = 'ar';
+  try { want = (localStorage.getItem('uiLanguage') === 'en') ? 'en' : 'ar'; } catch (e) { }
+
+  // ⚠️ اللغة والاتجاه بيتظبطوا فورًا، من غير انتظار القاموس. السبب: أي كود
+  //    بيقرا currentLang وقت التحميل — زي lookups.js لما بيبعت lang= في
+  //    الرابط — كان بيشوفها 'ar' دايمًا لأن ملف الـ HTML ثابت ومكتوب فيه
+  //    lang="ar". فالنصوص كانت بتتترجم إنجليزي وأسماء الكليات ترجع عربي.
+  currentLang = want;
+  root.setAttribute('lang', want);
+  root.setAttribute('dir', want === 'ar' ? 'rtl' : 'ltr');
+
+  // ⚠️ النص العربي مكتوب في الـ HTML نفسه، فالعربي مافيهوش وميض ولا انتظار.
+  //    الإنجليزي بس هو اللي محتاج القاموس — من غير الإخفاء ده الطالب هيشوف
+  //    الصفحة عربي وبعدين تتبدّل قدامه.
+  if (want === 'en') {
+    root.classList.add('i18n-wait');
+    // شبكة بطيئة ماينفعش تسيب الصفحة بيضا — بعد ثانيتين تظهر زي ما هي
+    setTimeout(function () { root.classList.remove('i18n-wait'); }, 2000);
+  }
+
+  __i18nFetch(want).then(function () {
+    function go() {
+      try { __applyLang(want); } catch (e) { }
+      root.classList.remove('i18n-wait');
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go);
+    else go();
+  });
+})();
+
+// ⚠️ اسم الصفحة يُلتقط مرة واحدة عند التحميل قبل أي تبديل للغة. الدالة تحته
+//    كانت تكتب اسم البوابة فوق العنوان دائمًا، فصفحات بوابة الطالب الثماني
+//    كانت تظهر في المتصفح بعنوان واحد لا يُفرَّق بينها: «طلباتي» و«نموذج
+//    التسجيل» و«تتبع الطلب» كلها تبويبات متطابقة.
+var __pageTitle = (function () {
+  var first = (document.title || '').split(' - ')[0].trim();
+  return first;
+})();
+
+// توحيد عنوان التبويب في بوابة الطالب مع بقية النظام: «اسم الصفحة - اسم البوابة».
+// ⚠️ اسم البوابة من Brand_Title وحده — نفس المفتاح الذي تقرأ منه القائمة
+//    الجانبية وصفحة الدخول وعنوان التبويب في شاشات الموظفين. كان لكل موضع
+//    مفتاحه الخاص بالقيمة نفسها، فتغيير الاسم كان يستلزم تعديل ستة مفاتيح.
 function applyLang(l) {
   setLang(l);
-  document.title = t('appTitle');
+  var brand = t('Brand_Title');
+  document.title = (__pageTitle && __pageTitle !== brand)
+    ? __pageTitle + ' - ' + brand
+    : brand;
 }

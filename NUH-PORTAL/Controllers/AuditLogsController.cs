@@ -28,7 +28,8 @@ namespace NUH_PORTAL.Controllers
             [FromQuery] string? toDate = null,
             [FromQuery] string? search = null,
             [FromQuery] string? sortBy = null,
-            [FromQuery] bool sortAsc = false)
+            [FromQuery] bool sortAsc = false,
+            [FromQuery] int? facultyUnitId = null)
             => Ok(await _service.GetLogsAsync(page, pageSize, new AuditLogFilter
             {
                 UserId = userId,
@@ -38,7 +39,8 @@ namespace NUH_PORTAL.Controllers
                 ToDate = toDate,
                 Search = search,
                 SortBy = sortBy,
-                SortAsc = sortAsc
+                SortAsc = sortAsc,
+                FacultyUnitId = facultyUnitId
             }));
 
         // GET api/AuditLogs/export
@@ -50,7 +52,8 @@ namespace NUH_PORTAL.Controllers
             [FromQuery] string? action = null,
             [FromQuery] string? fromDate = null,
             [FromQuery] string? toDate = null,
-            [FromQuery] string? search = null)
+            [FromQuery] string? search = null,
+            [FromQuery] int? facultyUnitId = null)
         {
             var file = await _service.ExportLogsAsync(new AuditLogFilter
             {
@@ -59,7 +62,8 @@ namespace NUH_PORTAL.Controllers
                 Action = action,
                 FromDate = fromDate,
                 ToDate = toDate,
-                Search = search
+                Search = search,
+                FacultyUnitId = facultyUnitId
             });
             return File(file.Content, file.ContentType, file.FileName);
         }

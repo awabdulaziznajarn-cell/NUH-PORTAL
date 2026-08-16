@@ -7,16 +7,22 @@
   .filter-group input[type=text]{min-width:180px}
   .export-btn{padding:8px 16px;background:var(--green);color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;height:37px;align-self:end}
   .export-btn:hover{background:var(--navy)}
+  .unit-chip{display:inline-flex;align-items:center;gap:4px;background:var(--green-light);color:var(--green);
+    border:1px solid #a9efc5;border-radius:20px;padding:5px 8px 5px 14px;font-size:12.5px;font-weight:600}
+  .unit-chip b{color:var(--navy-dark)}
+  .unit-chip button{border:none;background:rgba(6,118,71,.12);color:var(--green);width:20px;height:20px;
+    border-radius:50%;font-size:15px;line-height:1;cursor:pointer;margin-inline-start:4px}
+  .unit-chip button:hover{background:rgba(6,118,71,.25)}
   .stats-bar{display:flex;flex-wrap:wrap;gap:24px;margin-bottom:16px;padding:12px 20px;background:var(--gray-50);border-radius:10px;font-size:13px}
   .stat-item{display:flex;align-items:center;gap:6px}
   .stat-label{color:var(--gray-500);font-weight:500}
   .stat-value{color:var(--navy-dark);font-weight:700}
   .badge-green{background:var(--green-light);color:var(--green)}
-  .badge-blue{background:#E6F1FB;color:#1B2A5E}
+  .badge-blue{background:#eff4ff;color:#166a45}
   .badge-red{background:var(--red-light);color:var(--red)}
-  .badge-orange{background:#FFF7ED;color:#92400E}
-  .badge-purple{background:#F3E8FF;color:#6B21A8}
-  .badge-darkred{background:#FEF2F2;color:#7F1D1D}
+  .badge-orange{background:#fffaeb;color:#93370d}
+  .badge-purple{background:#f4eefa;color:#80519f}
+  .badge-darkred{background:#fef3f2;color:#912018}
   .empty-state{text-align:center;padding:60px 20px;color:var(--gray-500)}
   .empty-state .empty-icon{font-size:48px;margin-bottom:12px}
   .empty-state .empty-text{font-size:14px}
@@ -59,6 +65,17 @@
     <input type="text" id="searchBox" placeholder="">
   </div>
   <button class="export-btn" id="exportBtn">⬇ <span >@SharedLocalizer["aud_exportBtn"]</span></button>
+</div>
+
+@* ⚠️ التصفية على وحدة سكن لا تظهر في أي خانة من خانات الفلاتر - تأتي من رابط
+   «التقرير الكامل» في نافذة الوحدة. فلو لم تُعرض شريحة صريحة، رأى المستخدم
+   جدولًا ناقصًا ولا شيء على الشاشة يفسّر نقصه. الشريحة تقول ما هو المطبَّق،
+   وزرّها يرفعه. *@
+<div id="unitChipWrap" style="display:none;margin:-6px 0 14px">
+  <span class="unit-chip">
+    <span >@SharedLocalizer["aud_lblUnit"]</span>:&nbsp;<b id="unitChipName"></b>
+    <button type="button" id="unitChipClear" title="@SharedLocalizer["aud_clearUnit"]">&times;</button>
+  </span>
 </div>
 
 <div class="stats-bar" id="statsBar">
@@ -129,12 +146,10 @@
 @section Scripts {
 <script src="/i18n.js"></script>
 <script>
-  // نص الإجراء من القاموس (fallback للقيمة الخام لو مفيش مفتاح)
-  function translateAction(a) {
-    var k = 'aud_action_' + a;
-    var v = t(k);
-    return v === k ? (a || '') : v;
-  }
+  // ⚠️ اسم الإجراء من NuhAudit لا من سلسلة هنا: نافذة سجل الوحدة في سكن أعضاء
+  //    هيئة التدريس تعرض الأسماء نفسها، فلو تُرجمت في الملفين لتُرجمت في
+  //    أحدهما وبقيت خامة في الآخر عند إضافة أي إجراء جديد.
+  function translateAction(a) { return NuhAudit.actionText(a); }
 
   function badgeClass(action) {
     var map = {
@@ -185,8 +200,43 @@
     { value: 'request', i18n: 'aud_filterRequest' },
     { value: 'password', i18n: 'aud_filterPassword' },
     { value: 'logout', i18n: 'aud_filterLogout' },
-    { value: 'ad', i18n: 'aud_filterAd' }
+    { value: 'ad', i18n: 'aud_filterAd' },
+    { value: 'faculty', i18n: 'aud_filterFaculty' }
   ];
+
+  // ==========================================================================
+  //  التصفية على وحدة سكن - تأتي من الرابط لا من خانة فلترة.
+  //
+  //  ⚠️ الرقم وحده هو ما يُصفّى به على الخادم. الاسم في الرابط للعرض فقط ويُكتب
+  //     بـ textContent لا innerHTML - نصٌّ قادم من عنوان الصفحة لا يُحقن في
+  //     الصفحة كـ HTML مهما بدا بريئًا.
+  // ==========================================================================
+  var unitFilter = (function () {
+    var q = new URLSearchParams(window.location.search);
+    var id = parseInt(q.get('unit'), 10);
+    return {
+      id: (id > 0 ? id : null),
+      name: q.get('unitName') || '',
+      group: q.get('group') || ''
+    };
+  })();
+
+  function renderUnitChip() {
+    var wrap = document.getElementById('unitChipWrap');
+    if (!wrap) return;
+    if (!unitFilter.id) { wrap.style.display = 'none'; return; }
+    document.getElementById('unitChipName').textContent = unitFilter.name || ('#' + unitFilter.id);
+    wrap.style.display = '';
+  }
+
+  function clearUnitFilter() {
+    unitFilter.id = null;
+    unitFilter.name = '';
+    renderUnitChip();
+    // ننظّف العنوان أيضًا وإلا عاد الفلتر مع أول تحديث للصفحة
+    history.replaceState(null, '', window.location.pathname);
+    loadLogs(1, currentPageSize);
+  }
 
   var currentPage = 1;
   var currentPageSize = 50;
@@ -243,6 +293,7 @@
     if (f.fromDate) url += '&fromDate=' + encodeURIComponent(f.fromDate);
     if (f.toDate) url += '&toDate=' + encodeURIComponent(f.toDate);
     if (f.search) url += '&search=' + encodeURIComponent(f.search);
+    if (unitFilter.id) url += '&facultyUnitId=' + unitFilter.id;
     if (currentSortBy) url += '&sortBy=' + encodeURIComponent(currentSortBy) + '&sortAsc=' + currentSortAsc;
     return url;
   }
@@ -303,9 +354,11 @@
         '</th><th style="padding:6px 8px;text-align:start;font-weight:600">' + t('aud_changeOldValue') +
         '</th><th style="padding:6px 8px;text-align:start;font-weight:600">' + t('aud_changeNewValue') + '</th></tr>' +
         record.changes.map(function (c) {
-          return '<tr style="border-bottom:1px solid var(--gray-100)"><td style="padding:6px 8px;font-weight:500">' + escHtml(c.fieldName) +
-            '</td><td style="padding:6px 8px;color:var(--red)">' + escHtml(c.oldValue || '-') +
-            '</td><td style="padding:6px 8px;color:var(--green)">' + escHtml(c.newValue || '-') + '</td></tr>';
+          // ⚠️ اسم الحقل كان يُطبع خامًا: «NationalId» و«Mobile» في شاشة عربية.
+          //    من يُطلب منه تقرير مساءلة كان يقرأ أسماء أعمدة قاعدة بيانات.
+          return '<tr style="border-bottom:1px solid var(--gray-100)"><td style="padding:6px 8px;font-weight:500">' + escHtml(NuhAudit.fieldText(c.fieldName)) +
+            '</td><td style="padding:6px 8px;color:var(--red)">' + escHtml(NuhAudit.valueText(c.oldValue)) +
+            '</td><td style="padding:6px 8px;color:var(--green)">' + escHtml(NuhAudit.valueText(c.newValue)) + '</td></tr>';
         }).join('') + '</table>';
     } else {
       changesDiv.style.display = 'none';
@@ -356,7 +409,7 @@
     } catch (e) {
       dataLoaded = true;
       document.getElementById('log-tbody').innerHTML =
-        '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-text" style="color:#991B1B">' + t('aud_serverError') + '</div></div></td></tr>';
+        '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-text" style="color:#b42318">' + t('aud_serverError') + '</div></div></td></tr>';
     }
   }
 
@@ -414,6 +467,8 @@
       if (f.fromDate) qs.push('fromDate=' + encodeURIComponent(f.fromDate));
       if (f.toDate) qs.push('toDate=' + encodeURIComponent(f.toDate));
       if (f.search) qs.push('search=' + encodeURIComponent(f.search));
+      // ⚠️ نفس نطاق الشاشة بالضبط: تصديرٌ يخالف ما يُعرض تقريرٌ كاذب.
+      if (unitFilter.id) qs.push('facultyUnitId=' + unitFilter.id);
       if (qs.length) url += '?' + qs.join('&');
 
       var res = await fetch(url, { headers: NUH.headers() });
@@ -459,6 +514,14 @@
 
   rebuildActionFilter();
   restoreFilters();
+  // ⚠️ بعد restoreFilters لا قبلها: القادم من الرابط يقصد شيئًا بعينه الآن،
+  //    فلا يصحّ أن يدهسه اختيارٌ محفوظ من زيارة سابقة.
+  if (unitFilter.group) {
+    var af = document.getElementById('actionFilter');
+    if (af) { af.value = unitFilter.group; if (window.NuhSelect && NuhSelect.refresh) NuhSelect.refresh(af); }
+  }
+  renderUnitChip();
+  document.getElementById('unitChipClear').addEventListener('click', clearUnitFilter);
   setLang(localStorage.getItem('uiLanguage') || 'ar');
   updateSortIndicators();
   if (!useServerFirstPage()) loadLogs(1, currentPageSize);

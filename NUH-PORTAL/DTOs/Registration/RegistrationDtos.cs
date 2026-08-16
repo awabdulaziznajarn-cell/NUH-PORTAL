@@ -37,6 +37,10 @@ namespace NUH_PORTAL.DTOs.Registration
     public class ResubmitRequest
     {
         public string? RegistrationData { get; set; }
+
+        // ⚠️ مخرج الطالب لو المراجع علّم على خانة غلط. من غيره الطالب بيبقى
+        //    مقفول على خانات مش هي المشكلة ومفيش طريقة يوصّل بيها ده.
+        public string? StudentNote { get; set; }
     }
 
     public class StartRegistrationResultDto
@@ -78,6 +82,10 @@ namespace NUH_PORTAL.DTOs.Registration
         public DateTime SubmittedAt { get; set; }
         public DateTime? ReviewedAt { get; set; }
         public string? Notes { get; set; }
+
+        // الخانات اللي المراجع طلب تصحيحها — الباقي بيتقفل في نموذج الطالب.
+        // فاضية = كل الخانات مفتوحة.
+        public List<string> InfoFields { get; set; } = new();
         public MyRequestStudentDto? Student { get; set; }
         public List<NUH_PORTAL.DTOs.Workflow.WorkflowHistoryItemDto> History { get; set; } = new();
     }

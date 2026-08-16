@@ -89,7 +89,9 @@ var NuhSelect = (function () {
                 '</div>';
         shown++;
       }
-      if (!shown) html = '<div class="nsel-empty">لا توجد نتائج</div>';
+      // ⚠️ كان النص عربي ثابت — والبوابة بتشتغل بلغتين
+      if (!shown) html = '<div class="nsel-empty">' +
+        (document.documentElement.lang === 'en' ? 'No results' : 'لا توجد نتائج') + '</div>';
       list.innerHTML = html;
       active = -1;
     }
@@ -104,9 +106,21 @@ var NuhSelect = (function () {
       var below = window.innerHeight - r.bottom;
       var h = Math.min(panel.scrollHeight, 300);
       var up = below < h + 12 && r.top > below;
-      panel.style.width = r.width + 'px';
+
+      // ⚠️ اللوحة كانت تأخذ عرض الحقل بالضبط. والحقل قد يكون ضيّقًا لأن جاره
+      //    في شريط الفلاتر تمدّد - فتصير القائمة شريطًا عرضه ٤٠ بكسل يتكسّر
+      //    فيه «Osama Eltokhy (NUH)» إلى ثلاثة أسطر بحرف أو حرفين في السطر.
+      //    الحقل يقبل القصّ بثلاث نقاط، أما القائمة فوظيفتها أن تُقرأ.
+      //    حدٌّ أدنى ٢٠٠ بكسل، وحدٌّ أعلى هو عرض الشاشة ناقص هامش.
+      var w = Math.min(Math.max(r.width, 200), window.innerWidth - 16);
+
+      // ⚠️ وبعد التوسيع قد تخرج اللوحة عن حافة الشاشة - وهو ما يحدث كثيرًا في
+      //    الاتجاه من اليمين لليسار لأن الحقل يقع قرب الحافة اليمنى.
+      var left = Math.max(8, Math.min(r.left, window.innerWidth - w - 8));
+
+      panel.style.width = w + 'px';
       panel.style.insetInlineStart = 'auto';
-      panel.style.left = r.left + 'px';
+      panel.style.left = left + 'px';
       panel.style.top = up ? (r.top - h - 6) + 'px' : (r.bottom + 6) + 'px';
       panel.style.maxHeight = h + 'px';
     }

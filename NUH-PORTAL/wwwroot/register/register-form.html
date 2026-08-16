@@ -4,7 +4,7 @@
 <link rel="icon" href="../favicon.ico">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>نموذج التسجيل</title>
+<title>نموذج التسجيل - بوابة السكن الجامعي</title>
 <script src="../i18n.js"></script>
 <script src="../js/housing-fields.js"></script>
 <script src="../lookups.js"></script>
@@ -22,34 +22,34 @@
 .portal-header{text-align:center;padding:28px 16px 0;width:100%;position:relative}
 .portal-header img{width:80px;height:auto;margin-bottom:10px}
 .portal-header h1{font-size:17px;font-weight:800;color:var(--navy-dark)}
-.lang-btn{position:absolute;top:12px;background:#fff;border:1px solid #e2e6ef;border-radius:6px;padding:6px 14px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;z-index:10}
+.lang-btn{position:absolute;top:12px;background:#fff;border:1px solid #dcdfe4;border-radius:6px;padding:6px 14px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;z-index:10}
 [dir="rtl"] .lang-btn{left:12px}
 [dir="ltr"] .lang-btn{right:12px}
-.lang-btn:hover{background:#f4f6fb}
+.lang-btn:hover{background:#f5f5f6}
 .content{max-width:640px}
 
-.card:hover{box-shadow:0 4px 20px rgba(27,42,94,0.09)}
+.card:hover{box-shadow:0 4px 20px rgba(16,70,49,0.09)}
 
 
 
 
 .field{margin-bottom:16px}
 .field label{display:block;font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:6px}
-.field label span{color:#EF4444;margin-right:2px}
+.field label span{color:#d92d20;margin-right:2px}
 .form-control{width:100%;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:10px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;transition:border-color 0.2s;height:48px}
-.form-control:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(27,42,94,0.1)}
-.form-control.error{border-color:#EF4444}
+.form-control:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(16,70,49,0.1)}
+.form-control.error{border-color:#d92d20}
 .form-control:disabled{background:var(--gray-100);color:var(--gray-500);cursor:not-allowed}
 select.form-control{appearance:auto}
-.field-error{font-size:11px;color:#EF4444;font-weight:500;display:none;margin-top:4px}
+.field-error{font-size:11px;color:#d92d20;font-weight:500;display:none;margin-top:4px}
 .field-error.show{display:block}
 /* تنبيه التكرار المبكر: يخصّ خانتين معًا (الرقم الجامعي + الهوية) فمكانه تحتهما
    على عرض الصف كله، مش تحت خانة واحدة. */
 .dup-warn{display:none;grid-column:1/-1;margin-top:-4px;padding:11px 14px;border-radius:10px;
-          background:#FEF3C7;border:1px solid #FCD34D;color:#92400E;font-size:12.5px;
+          background:#fef0c7;border:1px solid #f0c33c;color:#93370d;font-size:12.5px;
           font-weight:600;line-height:1.8}
 .dup-warn.show{display:block}
-.form-control.dup{border-color:#F59E0B;background:#FFFBEB}
+.form-control.dup{border-color:#dba102;background:#fffaeb}
 .form-section{margin-bottom:24px}
 .form-section-title{font-size:15px;font-weight:700;color:var(--navy-dark);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--gray-100)}
 .form-row{display:flex;gap:12px}
@@ -57,7 +57,7 @@ select.form-control{appearance:auto}
 .form-row .field.wide{flex:1.7}
 .name-group{margin-bottom:18px}
 .name-group>.group-label{display:block;font-size:13px;font-weight:700;color:var(--navy-dark);margin-bottom:8px}
-.name-group>.group-label span{color:#EF4444;margin-right:2px}
+.name-group>.group-label span{color:#d92d20;margin-right:2px}
 .name-group .field{margin-bottom:12px}
 .name-group .field label{font-size:12px;font-weight:500;color:var(--gray-500)}
 .form-control[dir="ltr"]{direction:ltr;text-align:left}
@@ -83,8 +83,8 @@ select.form-control{appearance:auto}
 <div class="content">
 <div class="card card-pad-lg">
 <div class="step-indicator">
-<div class="step done"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#0F6E56"/><path d="M4.5 8L7 10.5L11.5 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-<div class="step done"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#0F6E56"/><path d="M4.5 8L7 10.5L11.5 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+<div class="step done"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#067647"/><path d="M4.5 8L7 10.5L11.5 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+<div class="step done"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#067647"/><path d="M4.5 8L7 10.5L11.5 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
 <div class="step active">3</div>
 <div class="step">4</div>
 </div>
@@ -204,7 +204,7 @@ select.form-control{appearance:auto}
 <label>اسم المستخدم</label>
 <!-- اسم مستخدم الشبكة بيتولّد تلقائيًا من الرقم الجامعي (h + الرقم) — للعرض فقط -->
 <input type="text" id="ad_username" class="form-control" readonly tabindex="-1"
-       style="background:#F1F5F9;color:#64748B;cursor:not-allowed">
+       style="background:#f5f5f6;color:#61646c;cursor:not-allowed">
 </div>
 </div>
 </div>
