@@ -31,9 +31,8 @@ namespace NUH_PORTAL.Data
             // بإيد المسؤول مايتحسبش "فاضي" فيترجّع للافتراضي.
             await UpgradeRolePermissionsAsync(roleManager, logger);
 
-            // admin بياخد كل الصلاحيات دايمًا — أي صلاحية جديدة بتتضاف للنظام لازم
-            // توصله من غير تدخل، وإلا الشاشة الجديدة تفضل مقفولة على الكل.
-            await AssignRolePermissionsAsync(roleManager, "admin", ApplicationPermissions.All.Select(p => p.Value).ToArray());
+            // admin: الصلاحيات **الجديدة** بس (شوف GrantNewPermissionsToAdminAsync).
+            await GrantNewPermissionsToAdminAsync(roleManager, logger);
 
             // ⚠️ باقي الأدوار: الافتراضي بيتزرع أول مرة بس (لما الدور يبقى بلا أي صلاحية).
             //    قبل كده كل إعادة تشغيل كانت بترجّع الصلاحيات اللي المسؤول شالها بإيده
@@ -41,13 +40,13 @@ namespace NUH_PORTAL.Data
             await SeedDefaultsIfEmptyAsync(roleManager, "supervisor", new[]
             {
                 "students.view", "students.create", "students.bulkImport", "students.edit", "students.changeStatus",
-                "requests.view", "requests.create", "requests.attachments", "requests.reviewHousing",
+                "requests.view", "requests.create", "requests.reviewHousing",
                 "housing.view", "housing.transfer",
                 "lookups.manage", "auditLogs.view", "reports.view"
             }, logger);
             await SeedDefaultsIfEmptyAsync(roleManager, "cyber", new[]
             {
-                "requests.view", "requests.attachments", "requests.reviewCyber",
+                "requests.view", "requests.reviewCyber",
                 "housing.view", "auditLogs.view", "errorLogs.view"
             }, logger);
             // دور الطالب (OTP) — بدون صلاحيات موظفين. كان requests.view وده كان بيخلّي توكن الطالب
@@ -88,12 +87,12 @@ namespace NUH_PORTAL.Data
             ("students.manage", "admin") => new[] { "students.create", "students.bulkImport", "students.edit", "students.delete", "students.changeStatus", "students.overrideStatus" },
             ("students.manage", _) => new[] { "students.create", "students.bulkImport", "students.edit", "students.changeStatus" },
 
-            ("requests.process", "admin") => new[] { "requests.create", "requests.attachments", "requests.reviewHousing", "requests.reviewCyber", "requests.complete" },
-            ("requests.process", "supervisor") => new[] { "requests.create", "requests.attachments", "requests.reviewHousing" },
-            ("requests.process", "cyber") => new[] { "requests.attachments", "requests.reviewCyber" },
+            ("requests.process", "admin") => new[] { "requests.create", "requests.reviewHousing", "requests.reviewCyber", "requests.complete" },
+            ("requests.process", "supervisor") => new[] { "requests.create", "requests.reviewHousing" },
+            ("requests.process", "cyber") => new[] { "requests.reviewCyber" },
             // دور مخصّص: بناخد المجموعة الآمنة بس وبنحذّر في السجل — الأفضل إن
             // المسؤول يحدّد بنفسه مرحلة المراجعة اللي الدور ده مسؤول عنها.
-            ("requests.process", _) => new[] { "requests.create", "requests.attachments" },
+            ("requests.process", _) => new[] { "requests.create" },
 
             ("housing.manage", "admin") => new[] { "housing.transfer", "housing.manageAccounts", "housing.syncAd" },
             ("housing.manage", _) => new[] { "housing.transfer" },
@@ -151,6 +150,88 @@ namespace NUH_PORTAL.Data
                 }
 
                 await roleManager.AddClaimAsync(role, new Claim(SchemaClaimType, SchemaVersion));
+            }
+        }
+
+        // ====================================================================
+        //  صلاحيات دور admin.
+        //
+        //  ⚠️ الغلط اللي كان هنا: السطر كان
+        //        AssignRolePermissionsAsync(roleManager, "admin", ApplicationPermissions.All)
+        //     يعني **كل** الصلاحيات بتترجّع لـ admin مع كل إقلاع للتطبيق.
+        //     والميثود دي بتتنادى من Program.cs في كل البيئات، والإقلاع مش
+        //     بيحصل مع النشر بس: IIS بيعيد تدوير الـ application pool لوحده
+        //     (بعد خمول، وكل ٢٩ ساعة افتراضيًّا). فمدير النظام بيشيل صلاحية
+        //     من شاشة الأدوار، ويلاقيها رجعت «لوحدها» بعد شوية بلا أي أثر
+        //     ولا سبب ظاهر.
+        //
+        //  ⚠️ ونفس العطل ده كان مكتشَف ومتصلَّح لباقي الأدوار: supervisor و
+        //     cyber بياخدوا الافتراضي أول مرة بس (SeedDefaultsIfEmptyAsync)،
+        //     والتعليق فوقها بيقول الكلام ده بالنص. admin بس هو اللي كان
+        //     مستثنى — والاستثناء كان له سبب حقيقي مش مجرد سهو:
+        //
+        //         لو صلاحية جديدة اتضافت في نسخة أحدث، ومحدش مداهاش لحد،
+        //         الشاشة الجديدة بتفضل مقفولة على **الكل** بما فيهم مدير
+        //         النظام نفسه — فمفيش حد يقدر يفتحها لأي حد.
+        //
+        //  الحل إن الـ seeder يفرّق بين «صلاحية جديدة على النظام» و«صلاحية
+        //  اتشالت بإيد». الفرق ده مش موجود في البيانات (الاتنين = مفتاح في
+        //  الكود مش موجود على الدور)، فبنسجّله: علامة على الدور فيها المفاتيح
+        //  اللي الـ seeder شافها قبل كده. الجديد = اللي مش في العلامة.
+        //
+        //  ⚠️ أول تشغيل بعد التعديل ده: مفيش علامة لسه. لو admin عنده صلاحيات
+        //     فعلًا، يبقى ده نظام شغّال — بنسجّل المفاتيح الحالية كلها على إنها
+        //     «اتعرضت» و**ما نمنحش حاجة**، وإلا كنا هنرجّع اللي المسؤول شاله
+        //     مرة أخيرة وهو بالظبط اللي بنصلّحه. أما لو admin بلا أي صلاحية،
+        //     يبقى تنصيب جديد وبياخد الكل.
+        // ====================================================================
+        private static async Task GrantNewPermissionsToAdminAsync(RoleManager<Role> roleManager, ILogger? logger)
+        {
+            var role = await roleManager.FindByNameAsync("admin");
+            if (role == null) return;
+
+            var claims  = await roleManager.GetClaimsAsync(role);
+            var granted = claims.Where(c => c.Type == ClaimConstants.Permission).Select(c => c.Value).ToHashSet();
+            var marker  = claims.FirstOrDefault(c => c.Type == ClaimConstants.SeededPermissions);
+
+            var all = ApplicationPermissions.All.Select(p => p.Value).ToArray();
+
+            HashSet<string> known;
+            if (marker != null)
+            {
+                known = marker.Value.Split(',', StringSplitOptions.RemoveEmptyEntries).ToHashSet();
+            }
+            else if (granted.Count > 0)
+            {
+                // نظام شغّال بلا علامة — كل المفاتيح الحالية تُعتبر «اتعرضت»
+                known = all.ToHashSet();
+                logger?.LogInformation(
+                    "Role admin: first run with seed marker. Treating the {Count} existing permission keys as already offered; nothing re-granted.",
+                    all.Length);
+            }
+            else
+            {
+                // تنصيب جديد: الدور فاضي تمامًا
+                known = new HashSet<string>();
+            }
+
+            var fresh = all.Where(p => !known.Contains(p)).ToArray();
+            if (fresh.Length > 0)
+            {
+                await AssignRolePermissionsAsync(roleManager, "admin", fresh);
+                // Warning مش Information: منح صلاحية من غير ما حد يطلبها حدث
+                // يستاهل يتشاف في السجل، مش سطر روتيني.
+                logger?.LogWarning("Role admin: granted {Count} newly added permission(s): {Permissions}",
+                    fresh.Length, string.Join(", ", fresh));
+            }
+
+            // ⚠️ العلامة بتتحدّث دايمًا حتى لو مفيش جديد: لازم تعكس مفاتيح
+            //    النسخة الحالية بالظبط، وإلا مفتاح اتشال من الكود يفضل محسوب.
+            var updated = string.Join(',', all.OrderBy(p => p, StringComparer.Ordinal));
+            if (marker == null || marker.Value != updated)
+            {
+                if (marker != null) await roleManager.RemoveClaimAsync(role, marker);
+                await roleManager.AddClaimAsync(role, new Claim(ClaimConstants.SeededPermissions, updated));
             }
         }
 

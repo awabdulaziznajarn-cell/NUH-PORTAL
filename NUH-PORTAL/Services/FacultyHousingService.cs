@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Options;
 using NUH_PORTAL.Core;
@@ -26,6 +26,12 @@ namespace NUH_PORTAL.Services
         //    سبب، وكسرنا أي حاجة بتعرف الوحدة من اسمها.
         public static readonly string[] ManagedAttributes =
             { "description", "employeeID", "mobile", "company", "department" };
+
+        // ⚠️ خصائص اسم الكائن — مطلوبة للنقل بين الأقسام لا للاستيراد.
+        //    النقل في الدليل عملية ModifyDN بتلمس اسم الكائن، فمنح مقصور على
+        //    الخمس خصائص فوق بيخلّي النقل يترفض بـ Access is denied بينما
+        //    كل حاجة تانية شغّالة. اتكشفت من معاملة واقعة على الإنتاج.
+        public static readonly string[] RdnAttributes = { "cn", "name" };
 
         private readonly AppDbContext _db;
         private readonly ActiveDirectoryService _ad;
@@ -63,16 +69,20 @@ namespace NUH_PORTAL.Services
             dto.Configured = labelled.Count > 0;
             if (!dto.Configured) return dto;
 
-            foreach (var (label, ou) in labelled)
+            foreach (var (labelKey, ou) in labelled)
             {
-                var res = await _ad.CheckOuAccessAsync(ou, ManagedAttributes);
+                var res = await _ad.CheckOuAccessAsync(ou, ManagedAttributes, RdnAttributes);
                 dto.Ous.Add(new OuAccessDto
                 {
-                    Label = label,
+                    LabelKey = labelKey,
+                    OuName = OuLeafName(ou),
                     OrganizationalUnit = ou,
                     OuExists = res.OuExists,
                     CanRead = res.CanRead,
                     AllWritable = res.AllWritable,
+                    CanCreateUser = res.CanCreateUser,
+                    CanWriteRdn = res.CanWriteRdn,
+                    RdnAttributeWritable = new Dictionary<string, bool>(res.RdnAttributeWritable),
                     ProbedAccount = res.ProbedAccount,
                     AttributeWritable = new Dictionary<string, bool>(res.AttributeWritable),
                     Error = res.Error
@@ -80,18 +90,60 @@ namespace NUH_PORTAL.Services
             }
 
             dto.AllOk = dto.Ous.Count > 0 && dto.Ous.All(o => o.CanRead && o.AllWritable);
+
+            // ⚠️ الفحص ده على الأقسام المقسّمة بالجنس بس: هي الوحيدة اللي
+            //    بيحصل نقل بينها. «الفلل» لو وحدة واحدة مختلطة مافيش نقل
+            //    أصلًا، فصلاحية الإنشاء فيها مالهاش علاقة بالموضوع.
+            var gendered = new[] { _config.TowersMaleOu, _config.TowersFemaleOu,
+                                   _config.VillasMaleOu, _config.VillasFemaleOu }
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var o in dto.Ous)
+                o.IsGendered = gendered.Contains(o.OrganizationalUnit);
+
+            var genderedRows = dto.Ous.Where(o => o.IsGendered).ToList();
+
+            dto.HasGenderedOus = genderedRows.Count > 0;
+            dto.MoveCreateOk = genderedRows.Count > 0 && genderedRows.All(o => o.CanCreateUser == true);
+            dto.MoveRdnOk    = genderedRows.Count > 0 && genderedRows.All(o => o.CanWriteRdn);
+
             return dto;
         }
 
-        private List<(string Label, string Ou)> LabelledOus()
+        // ⚠️ «أعضاء / عضوات هيئة التدريس» لا «الطلاب / الطالبات». الشاشة دي
+        //    كلها سكن أعضاء هيئة التدريس، والأبراج دي مالهاش أي علاقة بسكن
+        //    الطلاب - ده OU تاني خالص في الدومين وليه شاشته (إدارة حسابات
+        //    الإسكان). الاسم الغلط كان بيخلّي اللي بيقرا الفحص يفتكر إنه بيبصّ
+        //    على وحدات الطلاب، فيدوّر على مشكلة في المكان الغلط.
+        //    ⚠️ MALE/FEMALE في اسم الـ OU معناها جنس **عضو هيئة التدريس**
+        //       الساكن، مش مرحلة دراسية.
+        // ⚠️ ما يعود هنا مفتاحُ ترجمة لا نصٌّ مقروء. كان النصّ العربي مكتوبًا
+        //    في هذا الملف مباشرةً، فكان اسم الوحدة التنظيمية يظهر بالعربية
+        //    حتى والبوابة تعمل بالإنجليزية، ولم يكن تعديله ممكنًا من ملفات
+        //    الموارد — وهو أول مكان يقصده من أراد تغيير نصٍّ ظاهر.
+        //    الترجمة تتمّ في الواجهة عبر FH_T، كما في بقية نصوص هذه الشاشة.
+        private List<(string LabelKey, string Ou)> LabelledOus()
         {
             var list = new List<(string, string)>();
-            if (!string.IsNullOrWhiteSpace(_config.TowersMaleOu)) list.Add(("الأبراج - قسم الطلاب", _config.TowersMaleOu));
-            if (!string.IsNullOrWhiteSpace(_config.TowersFemaleOu)) list.Add(("الأبراج - قسم الطالبات", _config.TowersFemaleOu));
-            if (!string.IsNullOrWhiteSpace(_config.VillasOu)) list.Add(("الفلل", _config.VillasOu));
-            if (!string.IsNullOrWhiteSpace(_config.VillasMaleOu)) list.Add(("الفلل - قسم الطلاب", _config.VillasMaleOu!));
-            if (!string.IsNullOrWhiteSpace(_config.VillasFemaleOu)) list.Add(("الفلل - قسم الطالبات", _config.VillasFemaleOu!));
+            if (!string.IsNullOrWhiteSpace(_config.TowersMaleOu)) list.Add(("fh_OuTowersMale", _config.TowersMaleOu));
+            if (!string.IsNullOrWhiteSpace(_config.TowersFemaleOu)) list.Add(("fh_OuTowersFemale", _config.TowersFemaleOu));
+            if (!string.IsNullOrWhiteSpace(_config.VillasOu)) list.Add(("fh_OuVillas", _config.VillasOu));
+            if (!string.IsNullOrWhiteSpace(_config.VillasMaleOu)) list.Add(("fh_OuVillasMale", _config.VillasMaleOu!));
+            if (!string.IsNullOrWhiteSpace(_config.VillasFemaleOu)) list.Add(("fh_OuVillasFemale", _config.VillasFemaleOu!));
             return list;
+        }
+
+        // ⚠️ الاسم التقني للوحدة التنظيمية كما هو في الدليل (MALE / FEMALE /
+        //    Villas)، مُشتقًّا من المسار لا مكتوبًا بجانب الاسم العربي. لو
+        //    كُتب بالإيد ثم غُيّرت الإعدادات، لبقي الاسم التقني يشير إلى قسم
+        //    آخر — والشاشة تُقرأ حينها على أنها تصف الدليل وهي تصف نفسها.
+        private static string OuLeafName(string? dn)
+        {
+            if (string.IsNullOrWhiteSpace(dn)) return string.Empty;
+            var first = dn.Split(',')[0];
+            var eq = first.IndexOf('=');
+            return eq >= 0 && eq + 1 < first.Length ? first[(eq + 1)..].Trim() : first.Trim();
         }
 
         // =============================================================
@@ -112,12 +164,15 @@ namespace NUH_PORTAL.Services
             var existing = await _db.FacultyUnits.AsNoTracking()
                 .ToDictionaryAsync(u => u.AdAccount, StringComparer.OrdinalIgnoreCase);
 
-            foreach (var (label, ou) in labelled)
+            foreach (var (labelKey, ou) in labelled)
             {
+                var ouName = OuLeafName(ou);
                 var res = await _ad.SearchOuUsersAsync(ou, _config.MaxImportResults);
                 if (!res.Success)
                 {
-                    dto.Errors.Add($"{label}: {res.Error}");
+                    // ⚠️ الاسم التقني لا مفتاح الترجمة: هذا السطر نصٌّ جاهز
+                    //    يُعرض كما هو، ولا تمرّ عليه ترجمة الواجهة.
+                    dto.Errors.Add($"{ouName}: {res.Error}");
                     continue;
                 }
                 if (res.Truncated) dto.Truncated = true;
@@ -135,39 +190,51 @@ namespace NUH_PORTAL.Services
                         {
                             AdAccount = u.SamAccountName,
                             DistinguishedName = u.DistinguishedName,
-                            OrganizationalUnit = label,
+                            OrganizationalUnitKey = labelKey,
+                            OuName = ouName,
                             Action = ImportRowAction.Ignored,
-                            ActionLabel = "مُستبعَد",
                             DisplayName = u.SamAccountName,
                             Description = u.Description,
                             AccountEnabled = u.AccountEnabled,
-                            IgnoreReason = "الاسم لا يطابق صيغة وحدات السكن (برج أو فيلا)"
+                            IgnoreReasonKey = "fh_ImpIgnNameMismatch"
                         });
                         dto.IgnoredCount++;
                         continue;
                     }
 
                     existing.TryGetValue(u.SamAccountName, out var known);
+
+                    // ⚠️ نفس الشروط اللي بتحدّد «Changed» بتتجمّع هنا - مش شرط
+                    //    تاني منفصل. لو اتفارقوا، الجدول هيقول «سيتم تحديثها»
+                    //    وسطر السبب يقول «لا تغيير».
+                    // ⚠️ مفاتيح موارد لا نصوص عربية: الجدول ده بيتعرض في واجهة
+                    //    ليها لغتان، ونصّ مكتوب هنا بيفضل عربي مهما اتبدّلت
+                    //    اللغة، وتعديل صياغته بيتطلّب فتح ملف الخدمة بدل ملف
+                    //    الموارد اللي كل النصوص التانية فيه.
+                    var diffs = new List<string>();
+                    if (known != null)
+                    {
+                        if (known.AdDistinguishedName != u.DistinguishedName)
+                            diffs.Add("fh_ImpChgOuMoved");
+                        if (known.AdAccountEnabled != u.AccountEnabled)
+                            diffs.Add(u.AccountEnabled ? "fh_ImpChgAdEnabled" : "fh_ImpChgAdDisabled");
+                        if (known.NameMatchesStandard != parsed.MatchesStandard)
+                            diffs.Add(parsed.MatchesStandard
+                                ? "fh_ImpChgNameOk"
+                                : "fh_ImpChgNameBad");
+                    }
+
                     var action = known == null
                         ? ImportRowAction.New
-                        : (known.AdDistinguishedName != u.DistinguishedName
-                           || known.AdAccountEnabled != u.AccountEnabled
-                           || known.NameMatchesStandard != parsed.MatchesStandard)
-                            ? ImportRowAction.Changed
-                            : ImportRowAction.Unchanged;
+                        : diffs.Count > 0 ? ImportRowAction.Changed : ImportRowAction.Unchanged;
 
                     dto.Rows.Add(new ImportRowDto
                     {
                         AdAccount = u.SamAccountName,
                         DistinguishedName = u.DistinguishedName,
-                        OrganizationalUnit = label,
+                        OrganizationalUnitKey = labelKey,
+                        OuName = ouName,
                         Action = action,
-                        ActionLabel = action switch
-                        {
-                            ImportRowAction.New => "جديدة - ستُسجَّل",
-                            ImportRowAction.Changed => "مسجّلة - سيتم تحديثها",
-                            _ => "مسجّلة - دون تغيير"
-                        },
                         UnitType = parsed.UnitType,
                         TowerNo = parsed.TowerNo,
                         ApartmentNo = parsed.ApartmentNo,
@@ -177,6 +244,7 @@ namespace NUH_PORTAL.Services
                             : $"برج {parsed.TowerNo} - شقة {parsed.ApartmentNo}",
                         NameMatchesStandard = parsed.MatchesStandard,
                         Deviation = parsed.Deviation,
+                        ChangeNoteKeys = diffs,
                         Description = u.Description,
                         EmployeeId = u.EmployeeId,
                         Mobile = u.Mobile,
@@ -325,8 +393,9 @@ namespace NUH_PORTAL.Services
         // =============================================================
         public async Task<FacultyUnitsPageDto> GetUnitsAsync(
             string? type = null, string? status = null, string? search = null,
-            bool onlyDeviations = false, bool onlyNeedsConfirm = false,
-            int? tower = null, int page = 1, int pageSize = 50)
+            bool onlyDeviations = false, bool onlyNeedsConfirm = false, bool onlyOuMismatch = false,
+            int? tower = null, int page = 1, int pageSize = 50,
+            string? sortBy = null, bool sortAsc = false)
         {
             var q = _db.FacultyUnits.AsNoTracking()
                 .Select(u => new
@@ -354,6 +423,22 @@ namespace NUH_PORTAL.Services
 
             if (onlyDeviations) q = q.Where(x => !x.Unit.NameMatchesStandard);
 
+            // ============================================================
+            //  فلتر «وحدة تنظيمية غير مطابقة».
+            //
+            //  ⚠️ الشرط ده هو **نفس** شرط CheckOuGender اللي بيرسم الشارة على
+            //     الصف وبيحسب رقم الكارت - بس مكتوب بلغة SQL عشان الفلترة
+            //     تحصل قبل التقسيم لصفحات. لو فلترنا في الذاكرة بعد Take(50)
+            //     كنا هنفلتر الصفحة لا القائمة.
+            //
+            //  ⚠️ و«OU=MALE,» مش بتطابق «OU=FEMALE,» رغم إن MALE جوّه FEMALE:
+            //     البادئة «OU=» هي اللي بتمنع ده. من غيرها كل وحدة بنات كانت
+            //     هتتحسب وحدة بنين كمان.
+            if (onlyOuMismatch)
+                q = q.Where(x => x.Current != null && x.Unit.AdDistinguishedName != null &&
+                    ((x.Unit.AdDistinguishedName.Contains("OU=MALE,") && x.Current.Gender == Gender.Female) ||
+                     (x.Unit.AdDistinguishedName.Contains("OU=FEMALE,") && x.Current.Gender == Gender.Male)));
+
             // ⚠️ فلتر البرج بدل قائمة مسطّحة بـ٢٤٢ صف. القايمة الكاملة مالهاش
             //    معنى بصري: المستخدم بيدوّر على برج معيّن مش بيتصفّح الكل.
             if (tower.HasValue)
@@ -377,7 +462,7 @@ namespace NUH_PORTAL.Services
                 //    مكتوبًا أمامه في العمود الأول - يبحث بالهوية فيجد، وبالاسم
                 //    المعروض فلا يجد شيئًا، ولا سبب ظاهر للفرق.
                 //    نُحلّل النصّ إلى أرقام ونطابقها على الأعمدة الحقيقية.
-                var (pt, pa, pv) = ParseUnitSearch(s);
+                var (pt, pa, pv, ptype) = ParseUnitSearch(s);
 
                 if (pt.HasValue || pa.HasValue || pv.HasValue)
                 {
@@ -390,6 +475,12 @@ namespace NUH_PORTAL.Services
                         || x.Unit.AdAccount.Contains(s)
                         || (x.Current != null && x.Current.FullNameAr.Contains(s)));
                 }
+                else if (ptype.HasValue)
+                {
+                    // كلمة النوع وحدها بلا رقم - «فيلا» تعرض الفلل كلها
+                    var wantedType = ptype.Value;
+                    q = q.Where(x => x.Unit.UnitType == wantedType);
+                }
                 else
                 {
                     q = q.Where(x => x.Unit.AdAccount.Contains(s)
@@ -401,11 +492,40 @@ namespace NUH_PORTAL.Services
 
             var total = await q.CountAsync();
 
+            // ⚠️ الترتيب على الخادم لا في المتصفح: الجدول مقسّم صفحات (٢٤٢ وحدة)،
+            //    والترتيب في المتصفح بيرتّب الصفحة اللي قدامك بس — فأول اسم
+            //    أبجديًّا في صفحة ٢ ممكن يسبق آخر اسم في صفحة ١.
+            //
+            // ⚠️ الافتراضي هو الترتيب الطبيعي للوحدات (نوع ← برج ← شقة/فيلا)،
+            //    مش أبجدي ولا زمني: اللي بيفتح الشاشة بيدوّر على وحدة برقمها،
+            //    والترتيب ده هو اللي بيخلّي «برج ٣ شقة ٢» جنب «برج ٣ شقة ٣».
+            //
+            // ⚠️ وبيانات الساكن كلها من x.Current اللي ممكن تكون null (وحدة
+            //    شاغرة). الفحص الصريح != null مكتوب عشان الشرط يبان في الكود
+            //    زي ما هو في قاعدة البيانات — الوحدات الشاغرة بتتجمّع في طرف
+            //    واحد، وده الصح: هي فعلًا مجموعة واحدة.
+            q = (sortBy?.ToLowerInvariant(), sortAsc) switch
+            {
+                ("unit", false)        => q.OrderByDescending(x => x.Unit.UnitType)
+                                           .ThenByDescending(x => x.Unit.TowerNo ?? 0)
+                                           .ThenByDescending(x => x.Unit.ApartmentNo ?? x.Unit.VillaNo ?? 0),
+                ("ad_account", true)   => q.OrderBy(x => x.Unit.AdAccount),
+                ("ad_account", false)  => q.OrderByDescending(x => x.Unit.AdAccount),
+                ("occupant", true)     => q.OrderBy(x => x.Current != null ? x.Current.FullNameAr : null),
+                ("occupant", false)    => q.OrderByDescending(x => x.Current != null ? x.Current.FullNameAr : null),
+                ("national_id", true)  => q.OrderBy(x => x.Current != null ? x.Current.NationalId : null),
+                ("national_id", false) => q.OrderByDescending(x => x.Current != null ? x.Current.NationalId : null),
+                ("since", true)        => q.OrderBy(x => x.Current != null ? x.Current.StartDate : (DateTime?)null),
+                ("since", false)       => q.OrderByDescending(x => x.Current != null ? x.Current.StartDate : (DateTime?)null),
+                ("status", true)       => q.OrderBy(x => x.Unit.Status),
+                ("status", false)      => q.OrderByDescending(x => x.Unit.Status),
+                _                      => q.OrderBy(x => x.Unit.UnitType)
+                                           .ThenBy(x => x.Unit.TowerNo ?? 0)
+                                           .ThenBy(x => x.Unit.ApartmentNo ?? x.Unit.VillaNo ?? 0)
+                                           .ThenBy(x => x.Unit.AdAccount)
+            };
+
             var rows = await q
-                .OrderBy(x => x.Unit.UnitType)
-                .ThenBy(x => x.Unit.TowerNo ?? 0)
-                .ThenBy(x => x.Unit.ApartmentNo ?? x.Unit.VillaNo ?? 0)
-                .ThenBy(x => x.Unit.AdAccount)
                 .Skip(Math.Max(0, page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
@@ -453,6 +573,34 @@ namespace NUH_PORTAL.Services
 
             await FillCountersAsync(dto, confirmCutoff);
             return dto;
+        }
+
+        // =============================================================
+        //  أرقام لوحة التحكم — أربعة عدّادات لا أكتر
+        // =============================================================
+        // ⚠️ ليه منفصلة عن FillCountersAsync: دي بتعمل عشر استعلامات وواحد
+        //    منهم بيقرا صفوفًا ويحسب في الذاكرة (OuMismatches). لوحة التحكم
+        //    بتتفتح مع كل دخول، فما ينفعش تدفع تمن عدّادات شاشة مالهاش دعوة
+        //    بيها. الأربعة دول أربع CountAsync بسيطة.
+        // ⚠️ والتعريفات هي **نفسها** المستعملة في شاشة الوحدات بالحرف
+        //    (Active + إشغال مفتوح/مقفول)، فالرقم في اللوحة والرقم في الشاشة
+        //    مايفارقوش.
+        public async Task<FacultyDashboardStatsDto> GetDashboardStatsAsync()
+        {
+            var occupied = await _db.FacultyUnits.CountAsync(u =>
+                u.Status == FacultyUnitStatus.Active && u.Occupancies.Any(o => o.EndDate == null));
+            var vacant = await _db.FacultyUnits.CountAsync(u =>
+                u.Status == FacultyUnitStatus.Active && !u.Occupancies.Any(o => o.EndDate == null));
+
+            return new FacultyDashboardStatsDto
+            {
+                // الوحدة في الخدمة إما مشغولة أو شاغرة — مفيش حالة تالتة،
+                // فالمجموع هو عدد الوحدات القابلة للتسكين بلا استعلام زيادة.
+                ActiveUnits = occupied + vacant,
+                Vacant = vacant,
+                OutOfService = await _db.FacultyUnits.CountAsync(u => u.Status == FacultyUnitStatus.OutOfService),
+                PendingSync = await _db.FacultyUnits.CountAsync(u => u.SyncState != FacultyUnitSyncState.Synced)
+            };
         }
 
         private async Task FillCountersAsync(FacultyUnitsPageDto dto, DateTime confirmCutoff)
@@ -622,6 +770,20 @@ namespace NUH_PORTAL.Services
             var current = unit.Occupancies.FirstOrDefault(o => o.EndDate == null);
             var closing = dto.RequestType != FacultyRequestType.NewService;
             var opening = dto.RequestType != FacultyRequestType.StopService;
+
+            // ⚠️ «سبب آخر» لازم معاه بيان، والأسباب التانية مايتخزنش معاها بيان.
+            //    الواجهة بتقفل الخانة وبتمسحها، بس الـ API نفسه مفتوح لأي
+            //    عميل - والقاعدة اللي في الواجهة بس مش قاعدة.
+            if (closing)
+            {
+                if (dto.EndReason == OccupancyEndReason.Other && string.IsNullOrWhiteSpace(dto.EndReasonNote))
+                    throw new UserFriendlyException("بيان السبب مطلوب عند اختيار «سبب آخر»", 400);
+
+                // الأسباب التلاتة التانية بتشرح نفسها - أي بيان معاها بيتشال
+                // عشان مايبقاش عندنا صفوف سببها واضح وبيانها بيقول حاجة تانية.
+                if (dto.EndReason != OccupancyEndReason.Other)
+                    dto.EndReasonNote = null;
+            }
 
             if (opening)
             {
@@ -871,6 +1033,34 @@ namespace NUH_PORTAL.Services
                 WillChange = false, Note = "لا يتغيّر - اسم الوحدة"
             });
 
+            // ⚠️ النقل بين الـ OU بيبان في الفرق زي أي تغيير تاني، وقبل الكتابة.
+            //    ده مش تعديل خانة - ده نقل كائن في الدليل بيغيّر السياسات
+            //    والصلاحيات المطبّقة عليه. اللي بيدوس «كتابة» لازم يكون شايفه.
+            var move = ResolveOuMove(unit, current?.Gender, dto.DistinguishedName);
+            if (move.Needed)
+            {
+                dto.Lines.Add(new AdDiffLineDto
+                {
+                    Attribute = "OU",
+                    CurrentValue = ParentOu(dto.DistinguishedName),
+                    NewValue = move.TargetOu,
+                    WillChange = true,
+                    Note = move.Note
+                });
+                dto.ChangeCount++;
+            }
+            else if (move.Note != null)
+            {
+                dto.Lines.Add(new AdDiffLineDto
+                {
+                    Attribute = "OU",
+                    CurrentValue = ParentOu(dto.DistinguishedName),
+                    NewValue = ParentOu(dto.DistinguishedName),
+                    WillChange = false,
+                    Note = move.Note
+                });
+            }
+
             return dto;
         }
 
@@ -883,16 +1073,52 @@ namespace NUH_PORTAL.Services
 
             var current = unit.Occupancies.FirstOrDefault(o => o.EndDate == null);
 
-            var dn = unit.AdDistinguishedName;
-            if (string.IsNullOrWhiteSpace(dn))
+            // ============================================================
+            //  الـ DN بيتقرا من الدومين **في كل مرة** لا بيتاخد من المحفوظ.
+            //
+            //  ⚠️ الشرط هنا كان `if (string.IsNullOrWhiteSpace(dn))` - يعني
+            //     بنقرا من الدومين لما يكون المحفوظ **فاضي** بس. والتعليق
+            //     اللي كان فوقه بيقول السبب الصح («الـ DN ممكن يكون اتغيّر لو
+            //     الحساب اتنقل لـ OU تانية») - بس الشرط كان بيعمل العكس:
+            //     الحالة الوحيدة اللي الـ DN مايكونش فيها بايت هي لما يكون
+            //     فاضي أصلًا.
+            //
+            //     النتيجة اللي حصلت فعلًا: الحساب اتنقل (بإيدنا أو بإيد إدارة
+            //     الدومين)، والمحفوظ عندنا فضل على المسار القديم، فالكتابة
+            //     رجعت «The object does not exist ... best match: OU=MALE».
+            //
+            //  ⚠️ الـ DN بيانات **الدليل** بيملكها لا إحنا: أي حد يحرّك الحساب
+            //     من Active Directory Users and Computers بيبطّل المحفوظ عندنا
+            //     من غير ما يعدّي علينا. فاسم الحساب (sAMAccountName) هو
+            //     المعرّف الثابت، والمسار قيمة بتتقرا وقت الاستعمال.
+            //
+            //  ⚠️ وde قراءة واحدة زيادة لكل كتابة - وشاشة الفرق بتعملها أصلًا
+            //     (BuildAdDiffAsync). كانت الشاشة بتقرا الواقع والكتابة بتشتغل
+            //     على المحفوظ، فالمستخدم يشوف فرقًا صح وتفشل الكتابة اللي بعده.
+            // ============================================================
+            var read = await _ad.GetUserBySamAccountNameAsync(unit.AdAccount);
+            if (!read.Success || string.IsNullOrWhiteSpace(read.DistinguishedName))
+                return await FailSync(unit, read.Error ?? "الحساب غير موجود في الـAD");
+
+            var dn = read.DistinguishedName;
+
+            // ⚠️ القراءة دي أحدث ما عندنا عن الحساب، فبنجدّد بيها حالة
+            //    التعطيل. من غير كده الشارة في القائمة بتفضل على آخر قيمة
+            //    كتبها الاستيراد، فحساب اتعطّل بعده يفضل شكله شغّال لحد
+            //    استيراد جاي - والشارة اللي بتتأخّر أسوأ من شارة مش موجودة.
+            unit.AdAccountEnabled = read.AccountEnabled;
+
+            // المسار اتغيّر من ورانا؟ نسجّله - نقل الحساب بره النظام معلومة
+            // ليها قيمة في المراجعة، ومش المفروض تعدّي بصمت.
+            if (!string.Equals(unit.AdDistinguishedName, dn, StringComparison.OrdinalIgnoreCase))
             {
-                // ⚠️ الـ DN ممكن يكون اتغيّر لو الحساب اتنقل لـ OU تانية. بنقراه
-                //    من الدومين بدل ما نعتمد على المحفوظ ونفشل بـ object not found.
-                var read = await _ad.GetUserBySamAccountNameAsync(unit.AdAccount);
-                if (!read.Success)
-                    return await FailSync(unit, read.Error ?? "الحساب غير موجود في الدومين");
-                dn = read.DistinguishedName;
+                var oldDn = unit.AdDistinguishedName;
                 unit.AdDistinguishedName = dn;
+                await _audit.LogAsync("faculty_ad_dn_drift", "FacultyUnits", unit.Id,
+                    new List<AuditChangeLog>
+                    {
+                        new() { FieldName = "distinguishedName", OldValue = oldDn, NewValue = dn }
+                    });
             }
 
             var attrs = new Dictionary<string, string>
@@ -906,7 +1132,38 @@ namespace NUH_PORTAL.Services
 
             var res = await _ad.SetUserExtensionAttributesAsync(dn!, attrs);
             if (!res.Success)
-                return await FailSync(unit, res.Error ?? "رفض الدومين عملية الكتابة");
+                return await FailSync(unit, res.Error ?? "رفض الـAD عملية الكتابة");
+
+            // ============================================================
+            //  النقل بين OU البنين والبنات — بعد الكتابة لا قبلها.
+            //
+            //  ⚠️ الترتيب مقصود: MoveTo بيغيّر الـ DN، فلو نقلنا الأول كان
+            //     لازم نقرا الـ DN الجديد من الدومين قبل ما نكتب - نداء زيادة
+            //     وفرصة إن الكتابة تفشل على مسار قديم. الكتابة على الـ DN
+            //     اللي إحنا متأكدين منه، وبعدها النقل.
+            //
+            //  ⚠️ وفشل النقل بيخلّي الوحدة Failed حتى لو الخانات اتكتبت:
+            //     حساب بالبيانات الجديدة وهو قاعد في قسم غلط أخطر من حساب
+            //     ما اتحدّثش - لأنه شكله سليم في كل الشاشات.
+            // ============================================================
+            string? movedTo = null;
+            var move = ResolveOuMove(unit, current?.Gender, dn);
+            if (move.Needed)
+            {
+                var mv = await _ad.MoveUserAsync(dn!, move.TargetOu!);
+                if (!mv.Success)
+                    return await FailSync(unit,
+                        $"تم تحديث البيانات، لكن نقل الحساب إلى {move.TargetOu} فشل: {mv.Error}");
+
+                movedTo = move.TargetOu;
+                unit.AdDistinguishedName = mv.NewDistinguishedName ?? unit.AdDistinguishedName;
+
+                await _audit.LogAsync("faculty_ad_ou_move", "FacultyUnits", unit.Id,
+                    new List<AuditChangeLog>
+                    {
+                        new() { FieldName = "distinguishedName", OldValue = dn, NewValue = mv.NewDistinguishedName }
+                    });
+            }
 
             unit.SyncState = FacultyUnitSyncState.Synced;
             unit.LastSyncedAt = DateTime.UtcNow;
@@ -925,7 +1182,25 @@ namespace NUH_PORTAL.Services
                 }).ToList());
             await _uow.SaveAsync();
 
-            return new AdPushResultDto { Success = true, AttributesWritten = attrs.Count, SyncState = FacultyUnitSyncState.Synced };
+            return new AdPushResultDto
+            {
+                Success = true,
+                AttributesWritten = attrs.Count,
+                MovedToOu = movedTo,
+                SyncState = FacultyUnitSyncState.Synced
+            };
+        }
+
+        // الأب المباشر لأي DN — للعرض في شاشة الفرق بس.
+        // ⚠️ مش بتتستخدم في أي مقارنة ولا في بناء مسار النقل: مسار النقل جاي
+        //    من الإعدادات كامل (TargetOuFor)، والمقارنة بتتعمل بـ CheckOuGender.
+        //    فلو DN فيه فاصلة متهرّبة (CN=Ali\, Ahmed) أسوأ نتيجة إن السطر
+        //    المعروض يطلع مقصوص - مايترتّبش عليه نقل غلط.
+        private static string? ParentOu(string? dn)
+        {
+            if (string.IsNullOrWhiteSpace(dn)) return null;
+            var i = dn.IndexOf(',');
+            return i > 0 && i < dn.Length - 1 ? dn[(i + 1)..].Trim() : dn;
         }
 
         private async Task<AdPushResultDto> FailSync(FacultyUnit unit, string error)
@@ -966,6 +1241,13 @@ namespace NUH_PORTAL.Services
         private static readonly Regex RxApt   = new(@"(?:شقه|شقق)\s*(\d{1,4})", RegexOptions.Compiled);
         private static readonly Regex RxVilla = new(@"(?:فيلا|فيله|فله|فلل)\s*(\d{1,4})", RegexOptions.Compiled);
         private static readonly Regex RxPair  = new(@"^(\d{1,3})\s*[-/\\_ ]\s*(\d{1,4})$", RegexOptions.Compiled);
+        // ⚠️ كلمة النوع وحدها بلا رقم. المستخدم يكتب «فيلا» منتظرًا الفلل كلها،
+        //    وكان النصّ يسقط إلى البحث النصّي فيُقارن بحساب الدومين واسم الساكن
+        //    والهوية والجوال - ولا شيء منها يحوي كلمة «فيلا»، فيرى جدولًا فارغًا
+        //    ويظن أن لا فلل في النظام.
+        private static readonly Regex RxTowerWord = new(@"(?:^|\s)(?:برج|ابراج|بروج)(?:\s|$)", RegexOptions.Compiled);
+        private static readonly Regex RxAptWord   = new(@"(?:^|\s)(?:شقه|شقق)(?:\s|$)", RegexOptions.Compiled);
+        private static readonly Regex RxVillaWord = new(@"(?:^|\s)(?:فيلا|فيله|فله|فلل)(?:\s|$)", RegexOptions.Compiled);
         private static readonly Regex RxSpaces = new(@"\s+", RegexOptions.Compiled);
 
         public static string NormalizeArabicSearch(string? raw)
@@ -992,10 +1274,10 @@ namespace NUH_PORTAL.Services
             return RxSpaces.Replace(sb.ToString(), " ").Trim();
         }
 
-        public static (int? Tower, int? Apartment, int? Villa) ParseUnitSearch(string? raw)
+        public static (int? Tower, int? Apartment, int? Villa, FacultyUnitType? Type) ParseUnitSearch(string? raw)
         {
             var s = NormalizeArabicSearch(raw);
-            if (s.Length == 0) return (null, null, null);
+            if (s.Length == 0) return (null, null, null, null);
 
             int? t = null, a = null, v = null;
 
@@ -1015,7 +1297,16 @@ namespace NUH_PORTAL.Services
                 }
             }
 
-            return (t, a, v);
+            // كلمة النوع وحدها: «فيلا» → الفلل كلها، و«برج» أو «شقة» → الأبراج كلها
+            // (الشقق وحدات أبراج). تُقرأ فقط حين لا يوجد رقم، فلا تزاحم البحث الدقيق.
+            FacultyUnitType? type = null;
+            if (!t.HasValue && !a.HasValue && !v.HasValue)
+            {
+                if (RxVillaWord.IsMatch(s)) type = FacultyUnitType.Villa;
+                else if (RxTowerWord.IsMatch(s) || RxAptWord.IsMatch(s)) type = FacultyUnitType.Tower;
+            }
+
+            return (t, a, v, type);
         }
 
         // ⚠️ رقم معاملة إنجاز أرقام فقط بلا أي حروف أو فواصل. التحقق هنا لأن
@@ -1044,19 +1335,18 @@ namespace NUH_PORTAL.Services
                 ?? throw new UserFriendlyException(IdentityRules.MobileError, 400);
         }
 
-        // ⚠️ الهوية السعودية بتبدأ بـ 1 والإقامة بـ 2، والجوال بيبدأ بـ 05.
-        //    مفيش تداخل بينهم، فالفحص ده مابيرفضش رقم صحيح أبدًا.
-        //    الفحص موجود لأن الدومين فيه 135 حساب مكتوب في employeeID بتاعهم
-        //    رقم الجوال بدل الهوية - بيانات موروثة. الفحص بيمنع تكرارها.
+        // ⚠️ القاعدة كانت مكتوبة هنا، وهي أقوى نسخة في النظام — والباقي كان
+        //    بيقبل أي عشرة أرقام. اتنقلت لـ Core/IdentityRules عشان الكل ياخدها،
+        //    والتفاصيل في تعليقها هناك.
         public static string? ValidateNationalId(string? raw)
         {
             if (string.IsNullOrWhiteSpace(raw)) return null;
             var d = new string(raw.Where(char.IsDigit).ToArray());
 
-            if (d.StartsWith("05") || d.StartsWith("9665"))
-                throw new UserFriendlyException("القيمة المُدخلة رقم جوال وليست رقم هوية. رقم الهوية يبدأ بالرقم 1، والإقامة بالرقم 2.", 400);
-            if (d.Length != 10 || (d[0] != '1' && d[0] != '2'))
-                throw new UserFriendlyException("رقم الهوية يجب أن يتكوّن من 10 أرقام وأن يبدأ بالرقم 1 (هوية وطنية) أو 2 (إقامة)", 400);
+            if (IdentityRules.LooksLikeMobile(d))
+                throw new UserFriendlyException(IdentityRules.NationalIdIsMobileError, 400);
+            if (!IdentityRules.IsValidNationalId(d))
+                throw new UserFriendlyException(IdentityRules.NationalIdError, 400);
 
             return d;
         }
@@ -1064,8 +1354,41 @@ namespace NUH_PORTAL.Services
         // ⚠️ الحساب في OU بنين والساكن دكتورة (أو العكس)؟
         //    القراءة من الـ DN المحفوظ — بيتحدّث مع كل مزامنة فبيعكس الواقع.
         //    الفلل مالهاش توقّع لأن الـ OU بتاعتها مش مقسّمة أصلًا.
-        //    ⚠️ ده عدّاد وبس: النظام مابينقلش الحساب. النقل محتاج صلاحية حذف
-        //    وإنشاء كائنات، والقرار مؤجّل لحد ما الرقم نفسه يقوله.
+        //    ⚠️ الدالة دي بتكتشف التعارض وبس - النقل نفسه في ResolveOuMove
+        //    وبيتنفّذ مع الكتابة في الدومين (PushToAdAsync). التعليق هنا كان
+        //    لسه بيقول «النظام مابينقلش الحساب» بعد ما النقل اتنفّذ فعلًا،
+        //    وتعليق بيكدب أسوأ من تعليق مش موجود.
+        // ============================================================================
+        //  نقل الحساب بين OU البنين وOU البنات لمّا جنس الشاغل يتغيّر.
+        //
+        //  ⚠️ الحالة اللي بتحصل فعلًا: bu6ap20 كان ساكنه عضو هيئة تدريس فحسابه
+        //     في OU=MALE. جت معاملة بعضوة هيئة تدريس، فاتغيّرت بيانات الحساب
+        //     (الاسم والهوية والجوال) بس الحساب فضل مكانه في OU البنين. تقسيم
+        //     الـ OU في الدومين مش تنظيم على ورق - عليه صلاحيات وسياسات
+        //     مجموعة، فحساب في القسم الغلط معناه شاغل بصلاحيات مش بتاعته.
+        //
+        //  ⚠️ والقرار مبني على CheckOuGender نفسها اللي بتحسب «التعارض» في
+        //     الجدول ولوحة التحكم - مش على مقارنة تانية. لو اتفارقوا، الشاشة
+        //     هتقول «فيه تعارض» والنقل يقول «مافيش» أو العكس.
+        //
+        //  ⚠️ بنرجّع null لو التقسيم مش معمول لنوع الوحدة (الفلل ممكن تبقى OU
+        //     واحدة مختلطة) أو لو ناحية من الاتنين مش مضبوطة في الإعدادات.
+        //     نقل لمسار فاضي بيودّي الحساب لجذر الدومين - أسوأ بكتير من إنه
+        //     يفضل مكانه ويتصلّح بالإيد.
+        // ============================================================================
+        private (bool Needed, string? TargetOu, string? Note) ResolveOuMove(
+            FacultyUnit unit, Gender? gender, string? dn)
+        {
+            var check = CheckOuGender(dn, gender);
+            if (!check.Mismatch) return (false, null, null);
+
+            var target = _config.TargetOuFor(unit.UnitType, gender);
+            if (string.IsNullOrWhiteSpace(target))
+                return (false, null, "الحساب في القسم الغلط، لكن مسار القسم الصحيح غير مضبوط في الإعدادات - النقل يحتاج تدخّلًا يدويًّا");
+
+            return (true, target, check.Note);
+        }
+
         private static (bool Mismatch, string? Note) CheckOuGender(string? dn, Gender? occupantGender)
         {
             if (occupantGender == null || string.IsNullOrWhiteSpace(dn)) return (false, null);
@@ -1074,10 +1397,13 @@ namespace NUH_PORTAL.Services
             var inFemale = dn.Contains("OU=FEMALE,", StringComparison.OrdinalIgnoreCase);
             if (!inMale && !inFemale) return (false, null);
 
+            // ⚠️ «قسم عضوات / أعضاء هيئة التدريس» لا «وحدة الطالبات / الطلاب»:
+            //    نفس الغلط اللي كان في أسماء الوحدات التنظيمية فوق - النصّ ده
+            //    بيتعرض في tooltip الشارة على صف الجدول.
             if (inFemale && occupantGender == Gender.Male)
-                return (true, "الحساب ضمن وحدة الطالبات وشاغله عضو هيئة تدريس");
+                return (true, "الحساب في قسم عضوات هيئة التدريس وشاغله عضو هيئة تدريس");
             if (inMale && occupantGender == Gender.Female)
-                return (true, "الحساب ضمن وحدة الطلاب وشاغلته عضوة هيئة تدريس");
+                return (true, "الحساب في قسم أعضاء هيئة التدريس وشاغلته عضوة هيئة تدريس");
 
             return (false, null);
         }

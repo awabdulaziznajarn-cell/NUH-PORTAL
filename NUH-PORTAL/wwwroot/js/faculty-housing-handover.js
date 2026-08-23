@@ -55,12 +55,8 @@
     return window.NuhPhone && NuhPhone.normalize ? NuhPhone.normalize(v) : v;
   }
 
-  function esc(s) {
-    if (s === null || s === undefined) return '';
-    return String(s).replace(/[&<>"']/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-    });
-  }
+  // تهريب HTML — التعريف الوحيد في /js/esc.js
+  function esc(s) { return escHtml(s); }
 
   // ⚠️ المخزَّن 966XXXXXXXXX والحقل يعرض ٩ أرقام تبدأ بـ 5 خلف البادئة +966.
   //    القديم مخزَّن 05XXXXXXXX، فيُعرض بعد إزالة الصفر - ومجرّد الحفظ يحوّله
@@ -138,6 +134,10 @@
     el('fhUnitSub').innerHTML =
       esc(u.displayName) + ' &nbsp;·&nbsp; <span class="fh-acct">' + esc(u.adAccount) + '</span>';
 
+    // ⚠️ نفس d.changes اللي جت في الاستجابة دي - مافيش نداء تاني. الخادم
+    //    بيرجّع سجل العمليات مع بيانات الوحدة في طلب واحد أصلًا.
+    paintLastChange(d);
+
     // ⚠️ الخيارات المعروضة تتبع حالة الوحدة: وحدة بلا شاغل لا يصحّ عليها
     //    «تغيير الشاغل»، ووحدة مشغولة لا يصحّ عليها «خدمة جديدة». عرض خيار
     //    لا يقبله الخادم يعني رسالة خطأ بعد ملء النموذج كاملًا.
@@ -173,6 +173,10 @@
       if (hasOccupant) el('hoCurName').value = u.occupantName || '';
 
       on('hoType', 'change', syncSections);
+      // ⚠️ NuhSelect بيطلق change على الـ select الأصلي بنفسه (select-field.js)،
+      //    فالربط ده شغّال مع القائمة المزخرفة زي العادية بالظبط.
+      on('hoReason', 'change', syncReasonNote);
+      syncReasonNote();
       syncSections();
       initLookups('', '');
     }
@@ -201,9 +205,55 @@
     if (card) card.style.display = stop ? 'none' : '';
   }
 
+  // ============================================================================
+  //  ربط «بيان السبب» بـ «سبب آخر».
+  //
+  //  ⚠️ بنمسح المكتوب لمّا المستخدم يخرج من «سبب آخر»، مش بنقفل الخانة وبس.
+  //     لو سبناه: حد يكتب بيان، يغيّر رأيه ويختار «انتهاء التعاقد»، فيتحفظ
+  //     صف سببه «انتهاء التعاقد» وبيانه كلام عن سبب تاني خالص - والخانة
+  //     مقفولة فمش شايف اللي هيتبعت.
+  //
+  //  ⚠️ والحقل بيتقفل بـ disabled: ده بيمنع الكتابة **وبيمنع الإرسال** كمان
+  //     لو حد وصل له بالكيبورد.
+  // ============================================================================
+  function syncReasonNote() {
+    var sel = el('hoReason'), note = el('hoReasonNote');
+    if (!sel || !note) return;
+    var isOther = sel.value === 'Other';
+    note.disabled = !isOther;
+    if (!isOther) { note.value = ''; note.classList.remove('error'); }
+    var req = el('hoReasonNoteReq');
+    if (req) req.style.display = isOther ? '' : 'none';
+    var hint = el('hoReasonNoteHint');
+    if (hint) hint.style.display = isOther ? 'none' : '';
+  }
+
+  // ==========================================================================
+  //  سطر «آخر تعديل» — الرسم في js/faculty-audit-log.js المشترك.
+  //
+  //  ⚠️ العنوان الفرعي للنافذة اسم الوحدة لا رقمها: اللي بيفتح السجل عايز
+  //     يتأكد إنه بيبصّ على «برج ٦ - شقة ٢٠»، ورقم الصف في قاعدة البيانات
+  //     مايقولش له حاجة.
+  // ==========================================================================
+  function paintLastChange(d) {
+    var u = (d && d.unit) || {};
+    var sub = [u.displayName, u.adAccount].filter(Boolean).join('  ·  ');
+    NuhFacultyLog.mount('hoLastChg', (d && d.changes) || [], sub);
+  }
+
+  // ⚠️ بعد الحفظ بنعيد جلب الوحدة عشان السطر يشمل العملية اللي اتعملت للتوّ.
+  //    من غير كده السطر بيفضل بيقول «آخر تعديل» بتاع اللي قبلك - وإنت لسه
+  //    حافظ دلوقتي، وde أسوأ من إنه مايظهرش خالص.
+  function refreshLastChange() {
+    fetch('/api/FacultyHousing/units/' + UNIT, { credentials: 'same-origin' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (d) { if (d) paintLastChange(d); })
+      .catch(function () { /* السطر يفضل على قيمته القديمة - مش مبرّر لرسالة خطأ */ });
+  }
+
   // ---------- التحقّق ثم الحفظ ----------
   function markBad(ids) {
-    ['hoTicket', 'hoName', 'hoNid', 'hoMobile', 'hoStart', 'hoEnd'].forEach(function (k) {
+    ['hoTicket', 'hoName', 'hoNid', 'hoMobile', 'hoStart', 'hoEnd', 'hoReasonNote'].forEach(function (k) {
       var e = el(k);
       if (e) e.classList.toggle('error', ids.indexOf(k) >= 0);
     });
@@ -212,9 +262,15 @@
   function submit() {
     var type = IS_EDIT ? 'ChangeOccupant' : val('hoType');
     var stop = !IS_EDIT && type === 'StopService';
+    // قسم «إنهاء الإشغال» بيظهر في كل الأنواع ما عدا «خدمة جديدة»
+    var closing = !IS_EDIT && type !== 'NewService';
     var bad = [];
 
     if (!IS_EDIT && !val('hoTicket')) bad.push('hoTicket');
+    // ⚠️ «سبب آخر» من غير بيان = صف في السجل بيقول «السبب مش واحد من التلاتة»
+    //    وبس. الخانة اللي بتتفتح مخصوص للحالة دي لازم تتملى فيها.
+    if (!IS_EDIT && closing && val('hoReason') === 'Other' && !val('hoReasonNote'))
+      bad.push('hoReasonNote');
     if (!stop) {
       if (!val('hoName')) bad.push('hoName');
       if (val('hoNid').length !== 10) bad.push('hoNid');
@@ -231,7 +287,6 @@
     var body = {
       requestType: type,
       ticketNo: IS_EDIT ? null : val('hoTicket'),
-      cyberApprovedAt: IS_EDIT ? null : (val('hoCyber') || null),
       fullNameAr: stop ? null : val('hoName'),
       gender: val('hoGender') || null,
       nationalId: stop ? null : val('hoNid'),
@@ -269,6 +324,7 @@
         //    أن يكون تسليمًا جديدًا لا كتابة فوق سجل قائم.
         el('hoActions').style.display = 'none';
         disableForm();
+        refreshLastChange();
         loadDiff();
       })
       .catch(function (e) {
@@ -294,11 +350,30 @@
       .then(function (d) {
         if (d.error) { box.innerHTML = '<div class="fh-note red">' + esc(d.error) + '</div>'; return; }
 
+        // ⚠️ الملاحظة بقت **تحت** القيمة الجديدة لا بدلها. كان مكتوب
+        //    (l.note || l.newValue): أي سطر ليه ملاحظة كانت القيمة الجديدة
+        //    بتختفي وراها. وde بان مع سطر الـ OU: الملاحظة بتقول إن فيه
+        //    تعارض، والمسار اللي الحساب هيتنقل له - وهو اللي المسؤول محتاج
+        //    يشوفه قبل ما يوافق - مكانش بيظهر خالص.
+        // ⚠️ ومسارات الـ DN بتتلفّ في <bdi dir="ltr">: نصّ لاتيني فيه فواصل
+        //    جوّه خانة عربية بيتقلب ترتيبه (OU=MALE,DC=nuh بتبان مقلوبة).
         var rows = d.lines.map(function (l) {
+          var isDn = l.attribute === 'OU';
+          function cell(v) {
+            if (!v) return '-';
+            if (!isDn) return esc(v);
+            // ⚠️ المعروض أول جزء من المسار (OU=FEMALE) والمسار الكامل في
+            //    title. المسار كامل ٥٦ حرفًا، والجزء اللي بيفرق بين القديم
+            //    والجديد كلمة واحدة في أوّله - عرض الاتنين كاملين كان بيخلّي
+            //    العين تقارن سطرين متطابقين تقريبًا عشان تلاقي الفرق.
+            var head = String(v).split(',')[0];
+            return '<bdi dir="ltr" class="fh-dn" title="' + esc(v) + '">' + esc(head) + '</bdi>';
+          }
+          var note = l.note ? '<span class="fh-diffnote">' + esc(l.note) + '</span>' : '';
           return '<tr><td class="attr">' + esc(l.attribute) + '</td>' +
-            '<td class="' + (l.willChange ? 'fh-old' : 'fh-same') + '">' + esc(l.currentValue || '-') + '</td>' +
+            '<td class="' + (l.willChange ? 'fh-old' : 'fh-same') + '">' + cell(l.currentValue) + '</td>' +
             '<td class="' + (l.willChange ? 'fh-new' : 'fh-same') + '">' +
-              esc(l.note || l.newValue || '-') + '</td></tr>';
+              cell(l.newValue) + note + '</td></tr>';
         }).join('');
 
         box.innerHTML =
@@ -347,9 +422,16 @@
         el('hoDiff').innerHTML =
           '<div class="fh-note ' + (d.success ? 'green' : 'red') + '">' +
           esc(d.success ? T('fh_PushOk') : T('fh_PushFail')) +
+          // ⚠️ النقل بين الـ OU بيتقال صريح: ده تغيير في مكان الحساب في
+          //    الدليل مش خانة، والمسؤول لازم يعرف إنه حصل عشان يقدر يراجعه.
+          (d.movedToOu
+            ? '<br>' + esc(T('fh_PushMoved')) + ' <bdi dir="ltr" class="fh-dn">' + esc(d.movedToOu) + '</bdi>'
+            : '') +
           (d.error ? '<br>' + esc(d.error) : '') + '</div>' +
           '<div class="fh-actions"><a class="btn btn-primary" href="/FacultyHousing">' +
           esc(T('fh_UnitsList')) + '</a></div>';
+        // الكتابة في الدومين عملية في السجل زي غيرها - والنقل بين الـ OU معاها
+        refreshLastChange();
       })
       .catch(function (e) {
         el('hoDiff').innerHTML =

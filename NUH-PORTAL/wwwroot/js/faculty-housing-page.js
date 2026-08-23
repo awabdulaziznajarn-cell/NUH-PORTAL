@@ -11,40 +11,59 @@
   // ⚠️ onlyNeedsConfirm اتشال: الكارت اللي كان بيفعّله اتشال، فما بقاش له
   //    مصدر في الواجهة. المعامل نفسه لسه في الـ API وهيتستخدم مع شاشة «تأكيد
   //    الإشغال» — بس حالة مالهاش من يغيّرها بتضلّل أي حد يقرا الكود بعدها.
-  var state = { type: '', status: '', search: '', onlyDeviations: false, tower: '', page: 1 };
+  // ==========================================================================
+  //  حالة الشاشة في الرابط - NuhUrl في js/url-state.js.
+  //
+  //  ⚠️ الشاشة دي فيها ستّ فلاتر وصفّ الإجراءات فيها **رابط حقيقي** يخرج
+  //     منها (/FacultyHousing/Edit/{id}). يعني الدورة الطبيعية هي: فلتر →
+  //     دوّر → افتح وحدة → عدّل → ارجع. والرجوع كان بيمسح الستّة ويرجّعك
+  //     لأول الشاشة، فتعيد الفلترة من الأول مع كل وحدة.
+  //  ⚠️ القيم المسموحة مكتوبة صراحةً: ?status=<script> بيتحط في القائمة
+  //     المنسدلة لو اتقبل زي ما هو، وأي قيمة غلط بتخلّي الجدول يطلع فاضي
+  //     بلا سبب ظاهر.
+  // ==========================================================================
+  var TYPES = ['', 'tower', 'villa'];
+  var STATUSES = ['', 'occupied', 'vacant', 'out_of_service', 'not_exists', 'pending_sync'];
+
+  var state = {
+    type: NuhUrl.one('type', TYPES, ''),
+    status: NuhUrl.one('status', STATUSES, ''),
+    search: NuhUrl.get('q', ''),
+    onlyDeviations: NuhUrl.bool('dev', false),
+    onlyOuMismatch: NuhUrl.bool('ou', false),
+    tower: NuhUrl.get('tower', ''),
+    page: NuhUrl.int('page', 1, 1)
+  };
+  var STATE_DEFAULTS = { type: '', status: '', q: '', dev: '', ou: '', tower: '', page: 1, sort: '', asc: '' };
+
+  function syncUrl() {
+    NuhUrl.sync({
+      type: state.type, status: state.status, q: state.search,
+      dev: state.onlyDeviations ? '1' : '', ou: state.onlyOuMismatch ? '1' : '',
+      tower: state.tower, page: state.page,
+      sort: fhSort.by(), asc: fhSort.by() ? (fhSort.asc() ? '1' : '0') : ''
+    }, STATE_DEFAULTS);
+  }
+
   var towersFilled = false;
   var searchTimer = null;
 
   // ---------- أدوات ----------
-  function esc(s) {
-    if (s === null || s === undefined) return '';
-    return String(s).replace(/[&<>"']/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-    });
-  }
+  // تهريب HTML — التعريف الوحيد في /js/esc.js
+  function esc(s) { return escHtml(s); }
 
   // ⚠️ التاريخ بيتعرض ميلادي مختصر بأرقام لاتينية زي باقي شاشات النظام.
   //    الوقت مش بيتعرض: تاريخ بداية السكن معناه اليوم، والساعة بتضيّق العمود
   //    وبتوحي بدقة مش موجودة أصلًا في البيانات المستوردة.
-  function fmtDate(v) {
-    if (!v) return '-';
-    var d = new Date(v);
-    if (isNaN(d.getTime())) return '-';
-    var p = function (n) { return (n < 10 ? '0' : '') + n; };
-    return d.getFullYear() + '/' + p(d.getMonth() + 1) + '/' + p(d.getDate());
-  }
+  // شكل التاريخ من NuhFmt — التعريف الوحيد في /js/date-format.js
+  // ⚠️ كانت بترتيب مقلوب (2026/08/18) عكس باقي النظام (18/08/2026).
+  function fmtDate(v) { return NuhFmt.date(v); }
 
   // ⚠️ الوقت يظهر في سجل الإشغال دون عمود الجدول. في القائمة الوقت ضجيج:
   //    التاريخ وحده يكفي لمعرفة منذ متى. أما في السجل فهو دليل على إجراء —
   //    «مين نفّذ ومتى» بالساعة والدقيقة، وهو ما يُسأل عنه عند المراجعة.
   //    وبنظام ٢٤ ساعة لا ص/م: صيغة واحدة لا تختلف بين العربية والإنجليزية.
-  function fmtDateTime(v) {
-    if (!v) return '-';
-    var d = new Date(v);
-    if (isNaN(d.getTime())) return '-';
-    var p = function (n) { return (n < 10 ? '0' : '') + n; };
-    return fmtDate(v) + ' - ' + p(d.getHours()) + ':' + p(d.getMinutes());
-  }
+  function fmtDateTime(v) { return NuhFmt.dateTime(v); }
 
   // ⚠️ الهوية والجوال بيتعرضوا مقنّعين في القائمة. دي بيانات شخصية بتتعرض على
   //    شاشة مفتوحة، والقيمة الكاملة موجودة في سجل الوحدة لمن يفتحه — يعني
@@ -105,9 +124,11 @@
     ];
 
     document.getElementById('fhStats').innerHTML = cards.map(function (c) {
-      var on = c.k === 'deviations'
-            ? state.onlyDeviations
-            : (!!c.k && c.k !== 'ouMismatch' && state.status === c.k);
+      // ⚠️ الكارتين دول فلترهم مستقلّ عن حالة الوحدة، فتمييزهم بيتقرا من
+      //    الحالة بتاعتهم لا من state.status.
+      var on = c.k === 'deviations' ? state.onlyDeviations
+             : c.k === 'ouMismatch' ? state.onlyOuMismatch
+             : (!!c.k && state.status === c.k);
       return '<div class="fh-stat ' + c.cls + (on ? ' is-on' : '') + '" data-k="' + c.k + '">' +
              '<div class="fh-stat-num">' + (c.num || 0) + '</div>' +
              '<div class="fh-stat-label">' + c.label + '</div></div>';
@@ -117,7 +138,6 @@
     Array.prototype.forEach.call(document.querySelectorAll('.fh-stat'), function (el) {
       el.addEventListener('click', function () {
         var k = el.getAttribute('data-k');
-        if (k === 'ouMismatch') return;            // عدّاد للعرض — الفلتر عليه غير مضاف بعد
 
         // ⚠️ الفلاتر متنافية: أي اختيار يلغي اللي قبله. من غير كده بيجتمع
         //    فلترين — «أسماء مخالفة» مع «بانتظار المزامنة» مثلًا — فيبان
@@ -128,12 +148,19 @@
         //    صفحة ٣ فيلاقي الجدول فاضي والنتايج في صفحة مش هيوصلها.
         var prevStatus = state.status;
         var prevDeviations = state.onlyDeviations;
+        var prevOu = state.onlyOuMismatch;
 
         state.page = 1;
         state.status = '';
         state.onlyDeviations = false;
+        state.onlyOuMismatch = false;
 
+        // ⚠️ كارت «وحدة تنظيمية غير مطابقة» كان بيرجع من غير ما يعمل حاجة:
+        //    شكله زي باقي الكروت (مؤشّر يد وحركة عند المرور) فالمستخدم بيدوس
+        //    ومحصلش. بقى فلتر زي إخواته - والوحدات اللي بيعدّها هي اللي
+        //    حساباتها محتاجة تتنقل بين قسمَي الدليل.
         if (k === 'deviations') state.onlyDeviations = !prevDeviations;
+        else if (k === 'ouMismatch') state.onlyOuMismatch = !prevOu;
         else state.status = (prevStatus === k) ? '' : k;
 
         document.getElementById('fhStatus').value = state.status;
@@ -156,6 +183,14 @@
       if (!u.nameMatchesStandard) flags += ' <span class="fh-flag" title="' + esc(T('fh_FlagBadNameTitle')) + '">' + esc(T('fh_FlagBadName')) + '</span>';
       if (u.ouGenderMismatch) flags += ' <span class="fh-flag" title="' + esc(u.ouGenderMismatchNote) + '">' + esc(T('fh_FlagOuMismatch')) + '</span>';
       if (u.occupantImported) flags += ' <span class="fh-flag" title="' + esc(T('fh_FlagImportedTitle')) + '">' + esc(T('fh_FlagImported')) + '</span>';
+      // ⚠️ حساب مُعطَّل في الدليل كان بيبان في القائمة زيّه زيّ الشغّال
+      //    بالظبط. النظام بيعرف الحالة وبيخزّنها من كل مزامنة، وكانت
+      //    بتتعرض في المقارنة بالدليل بس - يعني تشوفها لو فتحت المقارنة،
+      //    مش وإنت بتتفرّج على الوحدة نفسها.
+      // ⚠️ === false لا !u.adAccountEnabled: القيمة الغايبة (undefined) معناها
+      //    ماقريناهاش، لا «مُعطَّل» - وشارة حمرا على وحدة سليمة أسوأ من
+      //    غياب الشارة.
+      if (u.adAccountEnabled === false) flags += ' <span class="fh-flag fh-flag-off" title="' + esc(T('fh_FlagAdDisabledTitle')) + '">' + esc(T('fh_FlagAdDisabled')) + '</span>';
 
       var occupant = u.occupantName
         ? '<span>' + esc(u.occupantName) + '</span>'
@@ -174,7 +209,17 @@
         '<td><div class="row-actions">' +
           (can('manage') && !isUnassignable(u) && u.occupancyId
             ? '<a class="action-btn action-edit" href="/FacultyHousing/Edit/' + u.id + '">' + esc(T('fh_BtnEdit')) + '</a>' : '') +
-          (can('sync') && !isEnum(u.syncState, 'synced', 1)
+          // ⚠️ الزرّ ظاهر دائمًا للمخوَّل، مش مربوط بشارة خطأ. كان مربوط
+          //    بحالة المزامنة وشارة «وحدة تنظيمية غير مطابقة»، والاتنين
+          //    بيتحسبوا من المسار المخزَّن **عندنا** لا من الدليل. فلما
+          //    اتنقل حساب في الدليل من برّه النظام، فضلت قاعدة بياناتنا
+          //    فاكراه في مكانه القديم، فقال «كل حاجة متزامنة» وخبّى الزرّ -
+          //    بالظبط في اللحظة اللي كان محتاج فيها. زرّ بيختفي لما البيانات
+          //    اللي بيتحسب منها تبقى هي نفسها الغلط مش زرّ.
+          // ⚠️ والتشغيل بلا ضرر: العملية قراءة من الدليل ثم كتابة نفس القيم،
+          //    فتكرارها مالوش أثر. وبتتقيّد بـ can('sync') زي ما كانت.
+          // ⚠️ وبيختفي لو مافيش حساب دومين أصلًا - مافيش حاجة تتزامن معاها.
+          (can('sync') && u.adAccount
             ? '<button class="action-btn action-toggle" data-sync="' + u.id + '">' + esc(T('fh_BtnRetrySync')) + '</button>' : '') +
           '<button class="action-btn action-edit" data-hist="' + u.id + '">' + esc(T('fh_BtnHistory')) + '</button>' +
         '</div></td></tr>';
@@ -198,6 +243,18 @@
       return '<option value="' + t + '">' + esc(T('fh_Tower')) + ' ' + t + '</option>';
     }).join(''));
     towersFilled = true;
+
+    // ⚠️ البرج المختار بيتظبط هنا لا وقت التهيئة: القائمة بتتملّى من رد
+    //    الخادم، فأي قيمة تتحط قبل كده بتتلغي مع أول رسم. والمقارنة بتضمن
+    //    إن برج اتشال من النظام مايسيبش القائمة على قيمة مش موجودة.
+    if (state.tower) {
+      if (towers.indexOf(state.tower) > -1 || towers.indexOf(Number(state.tower)) > -1) {
+        sel.value = state.tower;
+        if (window.NuhSelect && NuhSelect.enhance) NuhSelect.enhance(sel.parentNode || document);
+      } else {
+        state.tower = '';
+      }
+    }
   }
 
   // ⚠️ البناء من NuhTable.pager - النسخة الوحيدة لصفّ الترقيم في النظام.
@@ -210,16 +267,23 @@
     }, function (p) { state.page = p; load(); });
   }
 
+  // ترتيب الأعمدة من نسخة واحدة في النظام — NuhTable.sort. الأعمدة معرّفة
+  // بـ data-sort على الـ <th>، والخادم هو اللي بيرتّب (الجدول مقسّم صفحات).
+  var fhSort = NuhTable.sort('fhTable', function () { state.page = 1; load(); },
+    { by: NuhUrl.get('sort', ''), asc: NuhUrl.get('asc', '1') === '1' });
+
   function load() {
+    syncUrl();
     var qs = new URLSearchParams();
     if (state.type) qs.set('type', state.type);
     if (state.status) qs.set('status', state.status);
     if (state.search) qs.set('search', state.search);
     if (state.onlyDeviations) qs.set('onlyDeviations', 'true');
+    if (state.onlyOuMismatch) qs.set('onlyOuMismatch', 'true');
     if (state.tower) qs.set('tower', state.tower);
     qs.set('page', state.page);
 
-    fetch('/api/FacultyHousing/units?' + qs.toString(), { credentials: 'same-origin' })
+    fetch('/api/FacultyHousing/units?' + qs.toString() + fhSort.qs(), { credentials: 'same-origin' })
       .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(function (d) { renderStats(d); renderTowers(d.towers); renderRows(d.items); renderPager(d); })
       .catch(function (e) {
@@ -318,37 +382,15 @@
   //     تعرض الأسماء نفسها، فلو كُتبت في الملفين لتُرجمت في أحدهما وبقيت خامة
   //     في الآخر.
   // ==========================================================================
+  // ⚠️ الرسم نفسه اتنقل لـ js/faculty-audit-log.js: شاشة «تغيير بيانات
+  //    ساكن» بقت بتعرض نفس السجل، ونسختين من دالة الرسم كانوا هيفترقوا عند
+  //    أول تعديل على شكل البند. الدالة دي بقت بتملا مكانها في الشاشة دي بس.
   function renderChanges(list) {
+    list = list || [];
     var body = document.getElementById('fhChgBody');
     var num = document.getElementById('fhChgCount');
     if (num) num.textContent = list.length;
-    if (!body) return;
-
-    if (!list.length) {
-      body.innerHTML = '<div class="fh-empty">' + esc(T('fh_NoAuditLog')) + '</div>';
-      return;
-    }
-
-    body.innerHTML = list.map(function (a) {
-      var rows = (a.fields || []).map(function (f) {
-        return '<tr><td>' + esc(NuhAudit.fieldText(f.fieldName)) + '</td>' +
-               '<td class="ch-old">' + esc(f.oldValue == null || f.oldValue === '' ? T('fh_ChgEmpty') : f.oldValue) + '</td>' +
-               '<td class="ch-new">' + esc(f.newValue == null || f.newValue === '' ? T('fh_ChgEmpty') : f.newValue) + '</td></tr>';
-      }).join('');
-
-      var meta = fmtDateTime(a.actionAt) +
-                 (a.actorName ? ' &nbsp;·&nbsp; ' + esc(a.actorName) : '') +
-                 (a.ipAddress ? ' &nbsp;·&nbsp; <span style="direction:ltr;display:inline-block">' + esc(a.ipAddress) + '</span>' : '');
-
-      return '<div class="ch-item">' +
-        '<div class="ch-top"><span class="ch-act">' + esc(NuhAudit.actionText(a.action)) + '</span>' +
-        '<span class="ch-meta">' + meta + '</span></div>' +
-        (rows
-          ? '<table class="ch-tbl"><tr><th>' + esc(T('fh_ChgField')) + '</th><th>' +
-            esc(T('fh_ChgOld')) + '</th><th>' + esc(T('fh_ChgNew')) + '</th></tr>' + rows + '</table>'
-          : '') +
-      '</div>';
-    }).join('');
+    if (body) body.innerHTML = NuhFacultyLog.items(list);
   }
 
   // تبديل تبويبَي نافذة السجل
@@ -406,40 +448,118 @@
   };
 
   // ---------- فحص الصلاحية ----------
+  // ==========================================================================
+  //  نتيجة فحص الصلاحيات: خلاصة في سطر، ثم جدول صفٌّ لكل وحدة تنظيمية.
+  //
+  //  ⚠️ كانت النتيجة ثلاث بطاقات متفاوتة الطول تليها فقرتان شارحتان، فيقرأ
+  //     المستخدم التفاصيل قبل الحكم، ويخرج بلا إجابة عن سؤاله الوحيد: هل
+  //     التفويض كافٍ أم لا. الحكم الآن أوّل ما يُقرأ، والتفاصيل خلف زرّ.
+  //
+  //  ⚠️ ونصّ المعالجة (dsacls) لا يظهر إلا عند وجود نقص فعلي. عرضه دائمًا
+  //     يجعل الشاشة السليمة تبدو كأنها تطلب تدخّلًا.
+  // ==========================================================================
+  function accMark(v) {
+    return v ? '<span class="fh-acc-y">&#10003;</span>' : '<span class="fh-acc-n">&#10007;</span>';
+  }
+
   function renderAccess(d) {
     var box = document.getElementById('fhAccess');
+    document.getElementById('fhPreview').innerHTML = '';
     if (!d.configured) {
       box.innerHTML = '<div class="fh-note red"><b>' + esc(T('fh_OuNotConfigured')) + '</b> - ' + T('fh_OuNotConfiguredHint') + '</div>';
       return;
     }
 
-    var cards = d.ous.map(function (o) {
-      var cls = o.canRead && o.allWritable ? 'ok' : 'bad';
-      var attrs = Object.keys(o.attributeWritable || {}).map(function (k) {
-        return '<span class="fh-attr ' + (o.attributeWritable[k] ? 'y' : 'n') + '">' + esc(k) + '</span>';
-      }).join('');
+    var ous = d.ous || [];
 
-      return '<div class="fh-ou ' + cls + '">' +
-        '<div class="fh-ou-title"><span>' + esc(o.label) + '</span>' +
-        (o.canRead ? '<span class="badge badge-occupied">' + esc(T('fh_ReadOk')) + '</span>'
-                   : '<span class="badge badge-none">' + esc(T('fh_ReadFail')) + '</span>') + '</div>' +
-        '<div class="fh-ou-dn">' + esc(o.organizationalUnit) + '</div>' +
-        (attrs ? '<div class="fh-attrs">' + attrs + '</div>' : '') +
-        (o.probedAccount ? '<div style="font-size:11px;color:var(--gray-500);margin-top:7px">'
-          + esc(T('fh_ProbedOn')) + '<span class="fh-acct">' + esc(o.probedAccount) + '</span></div>' : '') +
-        (o.error ? '<div style="font-size:11.5px;color:var(--red);margin-top:7px">' + esc(o.error) + '</div>' : '') +
+    var rows = ous.map(function (o) {
+      var attrs = Object.keys(o.attributeWritable || {});
+      var okAttrs = attrs.filter(function (k) { return o.attributeWritable[k]; }).length;
+      // ⚠️ النقل يخصّ الأقسام المقسّمة بالجنس وحدها؛ «الفلل» مختلطة فلا نقل
+      //    منها ولا إليها، وخانتها تُترك شرطة لا «مرفوض».
+      var moveIn  = o.isGendered ? accMark(o.canCreateUser === true) : '<span class="fh-acc-na">&mdash;</span>';
+      var moveRdn = o.isGendered ? accMark(o.canWriteRdn === true)   : '<span class="fh-acc-na">&mdash;</span>';
+      var bad = !o.canRead || !o.allWritable ||
+                (o.isGendered && (o.canCreateUser !== true || o.canWriteRdn !== true));
+
+      return '<tr' + (bad ? ' class="bad"' : '') + '>' +
+        '<td>' + esc(T(o.labelKey)) +
+          (o.ouName ? '<span class="fh-ouname">' + esc(o.ouName) + '</span>' : '') +
+          (o.isGendered ? '' : ' <span class="fh-muted" style="font-size:11px">(' + esc(T('fh_AccNotSplit')) + ')</span>') +
+        '</td>' +
+        '<td>' + accMark(o.canRead) + '</td>' +
+        '<td class="fh-acc-cnt' + (okAttrs === attrs.length ? '' : ' fh-acc-n') + '">' +
+          okAttrs + ' / ' + attrs.length + '</td>' +
+        '<td>' + moveIn + '</td>' +
+        '<td>' + moveRdn + '</td>' +
+        '</tr>';
+    }).join('');
+
+    // ⚠️ حكم واحد لا حكمان: الشاشة كانت تعرض «التفويض مكتمل» بالأخضر ثم نقص
+    //    النقل بالكهرماني تحته، فيُقرأ الأول ويُهمل الثاني. الترتيب هنا:
+    //    نقص القراءة/الكتابة يمنع كل شيء، ثم نقص النقل، ثم السلامة.
+    var moveBad = d.hasGenderedOus && (!d.moveCreateOk || !d.moveRdnOk);
+    var vTitle, vSub, vCls;
+    if (!d.allOk)      { vCls = 'bad'; vTitle = T('fh_AuthIncomplete');  vSub = T('fh_AuthIncompleteSub'); }
+    else if (moveBad)  { vCls = 'bad'; vTitle = T('fh_MoveVerdictBad');  vSub = T('fh_MoveVerdictBadSub'); }
+    else               { vCls = 'ok';  vTitle = T('fh_AuthComplete');    vSub = T('fh_AuthCompleteSub'); }
+
+    var fix = '';
+    if (d.hasGenderedOus) {
+      if (!d.moveCreateOk)   fix = '<div class="fh-note red" style="margin-top:12px">' + T('fh_MoveAuthNo') + '</div>';
+      else if (!d.moveRdnOk) fix = '<div class="fh-note red" style="margin-top:12px">' + T('fh_MoveAuthNoRdn') + '</div>';
+      // ⚠️ التحفّظ على الحذف يبقى معروضًا حتى في الحالة السليمة: الفحص لا
+      //    يشمله، وإخفاؤه يجعل «مكتمل» وعدًا لا يملك النظام إثباته.
+      else fix = '<div class="fh-note" style="margin-top:12px">' + T('fh_MoveAuthPartial') + '</div>';
+    }
+
+    var details = ous.map(function (o) {
+      var chips = function (map) {
+        return Object.keys(map || {}).map(function (k) {
+          return '<span class="fh-attr ' + (map[k] ? 'y' : 'n') + '">' + esc(k) + '</span>';
+        }).join(' ');
+      };
+      return '<div class="fh-det-box">' +
+        '<b>' + esc(T(o.labelKey)) + '</b> &nbsp;<span class="fh-ou-dn" style="display:inline;margin:0">' +
+          esc(o.organizationalUnit) + '</span><br>' +
+        esc(T('fh_AccAttrs')) + ': ' + chips(o.attributeWritable) +
+        (o.isGendered ? ' &nbsp;·&nbsp; ' + esc(T('fh_AccRdn')) + ': ' + chips(o.rdnAttributeWritable) : '') +
+        (o.probedAccount ? ' &nbsp;·&nbsp; ' + esc(T('fh_ProbedOn')) +
+          '<span class="fh-acct">' + esc(o.probedAccount) + '</span>' : '') +
+        (o.error ? '<br><span style="color:var(--red)">' + esc(o.error) + '</span>' : '') +
         '</div>';
     }).join('');
 
-    box.innerHTML = '<div class="fh-imp-grid">' + cards + '</div>' +
-      (d.allOk
-        ? '<div class="fh-note green">' + T('fh_AuthComplete') + '</div>'
-        : '<div class="fh-note red">' + T('fh_AuthIncomplete') + '</div>');
+    box.innerHTML =
+      '<div class="fh-verdict ' + vCls + '"><span class="fh-vic">' +
+        (vCls === 'ok' ? '&#10003;' : '&#10007;') + '</span>' +
+        esc(vTitle) + ' <span class="fh-vsub">&mdash; ' + esc(vSub) + '</span></div>' +
+      '<table class="fh-acc"><thead><tr>' +
+        '<th>' + esc(T('fh_PrevOu')) + '</th>' +
+        '<th>' + esc(T('fh_AccRead')) + '</th>' +
+        '<th>' + esc(T('fh_AccWrite')) + '</th>' +
+        '<th>' + esc(T('fh_AccMoveIn')) + '</th>' +
+        '<th>' + esc(T('fh_AccRdn')) + '</th>' +
+      '</tr></thead><tbody>' + rows + '</tbody></table>' +
+      fix +
+      '<button type="button" class="fh-det-btn" id="fhAccDet" aria-expanded="false">' +
+        esc(T('fh_AccDetails')) + ' &#9662;</button>' +
+      '<div id="fhAccDetBox" hidden>' + details + '</div>';
+
+    var db = document.getElementById('fhAccDet');
+    db.addEventListener('click', function () {
+      var bx = document.getElementById('fhAccDetBox');
+      var open = bx.hasAttribute('hidden');
+      if (open) bx.removeAttribute('hidden'); else bx.setAttribute('hidden', '');
+      db.setAttribute('aria-expanded', open ? 'true' : 'false');
+      db.innerHTML = esc(T('fh_AccDetails')) + (open ? ' &#9652;' : ' &#9662;');
+    });
   }
 
   // ---------- معاينة الاستيراد ----------
   function renderPreview(d) {
     var box = document.getElementById('fhPreview');
+    document.getElementById('fhAccess').innerHTML = '';
 
     if (d.errors && d.errors.length) {
       box.innerHTML = '<div class="fh-note red"><b>' + esc(T('fh_ReadFailed')) + '</b><br>'
@@ -448,37 +568,121 @@
       return;
     }
 
-    var chips = [
-      [T('fh_ChipNew'), d.newCount], [T('fh_ChipUpdated'), d.changedCount], [T('fh_ChipUnchanged'), d.unchangedCount],
-      [T('fh_ChipExcluded'), d.ignoredCount], [T('fh_ChipDeviations'), d.deviationCount], [T('fh_ChipWithOccupant'), d.withOccupantCount]
-    ].map(function (c) {
-      return '<span class="badge badge-sync" style="margin-inline-end:6px">' + c[0] + ': ' + (c[1] || 0) + '</span>';
-    }).join('');
+    // ============================================================
+    //  الشرائح بقت فلاتر لا أرقام.
+    //
+    //  ⚠️ «ستُحدَّث: 1» جنب جدول فيه ٢٤٢ صف بتقول إن فيه وحدة واحدة هتتغيّر
+    //     وماتقولش أنهي واحدة. اللي بيراجع المعاينة قبل ما يوافق كان لازم
+    //     يمرّ على الصفوف كلها بعينه يدوّر عليها - وde مش مراجعة، ده بحث.
+    //     دلوقتي الرقم نفسه زرّ: تدوس عليه فالجدول يفضّى إلا منها.
+    //
+    //  ⚠️ الفلترة في المتصفح لا بنداء تاني: الصفوف كلها وصلت مع المعاينة
+    //     أصلًا، ونداء تاني كان هيقرا الدومين من جديد فيمكن يرجّع نتيجة
+    //     مختلفة عن اللي المستخدم بيبصّ عليها.
+    // ============================================================
+    // ⚠️ isEnum لا (r.action === 4): الخادم مسجّل JsonStringEnumConverter
+    //    (Program.cs)، يعني الـ enum بيوصل **نصًّا** («Ignored») لا رقمًا.
+    //    المقارنة بالرقم بترجّع false دايمًا - الشريحة بتقول «مُستبعَدة: 1»
+    //    (العدّاد محسوب في الخادم فهو صح) والجدول يطلع فاضي.
+    //    ⚠️ ونفس الغلط كان موجود قبل التعديل ده في تلوين الصف المستبعَد
+    //       (r.action === 4 ? opacity) - عدّى من غير ما حد ياخد باله لأنه
+    //       بيخفّت لون صف بس. isEnum موجودة في الملف ده أصلًا لنفس السبب.
+    var CHIPS = [
+      { k: 'new',  label: T('fh_ChipNew'),        n: d.newCount,        f: function (r) { return isEnum(r.action, 'new', 1); } },
+      { k: 'chg',  label: T('fh_ChipUpdated'),    n: d.changedCount,    f: function (r) { return isEnum(r.action, 'changed', 3); } },
+      { k: 'same', label: T('fh_ChipUnchanged'),  n: d.unchangedCount,  f: function (r) { return isEnum(r.action, 'unchanged', 2); } },
+      { k: 'ign',  label: T('fh_ChipExcluded'),   n: d.ignoredCount,    f: function (r) { return isEnum(r.action, 'ignored', 4); } },
+      { k: 'dev',  label: T('fh_ChipDeviations'), n: d.deviationCount,  f: function (r) { return !!r.deviation; } },
+      { k: 'occ',  label: T('fh_ChipWithOccupant'), n: d.withOccupantCount, f: function (r) { return !!r.description; } }
+    ];
+    var pvFilter = '';
 
-    var rows = d.rows.map(function (r) {
-      var cls = r.action === 4 ? 'style="opacity:.6"' : '';
-      return '<tr ' + cls + '>' +
-        '<td style="font-weight:700">' + esc(r.displayName) + '</td>' +
-        '<td><span class="fh-acct">' + esc(r.adAccount) + '</span></td>' +
-        '<td style="font-size:11.5px">' + esc(r.organizationalUnit) + '</td>' +
-        '<td class="fh-name">' + (r.description ? esc(r.description) : '<span class="fh-muted">-</span>') + '</td>' +
-        '<td style="font-size:12px">' + esc(r.actionLabel) + '</td>' +
-        '<td style="font-size:11.5px;color:#93370d">' + (r.deviation ? esc(r.deviation) : (r.ignoreReason ? esc(r.ignoreReason) : '')) + '</td>' +
-        '</tr>';
-    }).join('');
+    function chipsHtml() {
+      return CHIPS.map(function (c) {
+        // ⚠️ الشريحة اللي عدّادها صفر مش قابلة للضغط: فلتر بيدّي جدول فاضي
+        //    بيخلّي المستخدم يفتكر إن الشاشة بايظة.
+        var dead = !(c.n || 0);
+        return '<button type="button" class="fh-pvchip' + (pvFilter === c.k ? ' is-on' : '') +
+          (dead ? ' is-dead' : '') + '"' + (dead ? ' disabled' : '') +
+          ' data-chip="' + c.k + '">' + esc(c.label) + ': ' + (c.n || 0) + '</button>';
+      }).join('');
+    }
+
+    // ⚠️ نصّ الإجراء بيتبني هنا من قيمة enum جاية من الخادم، مش بيتقرا من
+    //    حقل نصّ الخادم كان بيرسمه. الخادم بيرجّع الحالة، والواجهة بترسمها
+    //    باللغة المعروضة - فتبديل اللغة بيغيّرها، وتعديل صياغتها بيتعمل في
+    //    ملف الموارد مع باقي نصوص الشاشة.
+    function impActionText(a) {
+      return isEnum(a, 'new', 1) ? T('fh_ImpActNew')
+           : isEnum(a, 'changed', 3) ? T('fh_ImpActChanged')
+           : isEnum(a, 'ignored', 4) ? T('fh_ImpActIgnored')
+           : T('fh_ImpActUnchanged');
+    }
+
+    function rowsHtml() {
+      var sel = CHIPS.filter(function (c) { return c.k === pvFilter; })[0];
+      var list = sel ? d.rows.filter(sel.f) : d.rows;
+      if (!list.length) return '<tr><td colspan="6" class="fh-empty">' + esc(T('fh_NoUnitsInOu')) + '</td></tr>';
+
+      return list.map(function (r) {
+        // ⚠️ لون الصف من الإجراء: الجديد أخضر واللي هيتغيّر كهرماني والمستبعَد
+        //    باهت. الفرق بيتقرا من مسح الجدول بالعين من غير قراءة كل خانة.
+        var cls = isEnum(r.action, 'new', 1) ? 'fh-pv-new'
+                : isEnum(r.action, 'changed', 3) ? 'fh-pv-chg'
+                : isEnum(r.action, 'ignored', 4) ? 'fh-pv-ign' : '';
+        // الملاحظة: سبب التغيير أولًا - هو اللي المستخدم محتاجه عشان يوافق.
+        // ⚠️ الأسباب بتوصل كمفاتيح موارد وبتتجمّع هنا. و r.deviation نصّ
+        //    وصفي جاي من محلّل الأسماء (مش مفتاح)، فبيتعرض كما هو.
+        var note = (r.changeNoteKeys && r.changeNoteKeys.length)
+          ? r.changeNoteKeys.map(function (k) { return T(k); }).join(' · ')
+          : (r.deviation || (r.ignoreReasonKey ? T(r.ignoreReasonKey) : ''));
+        return '<tr class="' + cls + '">' +
+          '<td style="font-weight:700">' + esc(r.displayName) + '</td>' +
+          '<td><span class="fh-acct">' + esc(r.adAccount) + '</span></td>' +
+          '<td style="font-size:11.5px">' + esc(T(r.organizationalUnitKey)) +
+            (r.ouName ? '<span class="fh-ouname">' + esc(r.ouName) + '</span>' : '') + '</td>' +
+          '<td class="fh-name">' + (r.description ? esc(r.description) : '<span class="fh-muted">-</span>') + '</td>' +
+          '<td style="font-size:12px">' + esc(impActionText(r.action)) + '</td>' +
+          '<td style="font-size:11.5px;color:#93370d">' + esc(note) + '</td>' +
+          '</tr>';
+      }).join('');
+    }
 
     box.innerHTML =
       (d.truncated
         ? '<div class="fh-note red"><b>' + esc(T('fh_Truncated')) + '</b> ' + T('fh_TruncatedHint') + '</div>'
         : '') +
-      '<div style="margin-bottom:12px">' + chips + '</div>' +
+      // ⚠️ سطر واحد بدل أربع فقرات: الشرح يُقرأ مرّة أو مرّتين في عمر النظام،
+      //    والجدول يُقرأ في كل مرّة. من أراده يفتحه.
+      '<div class="fh-shortnote">' + esc(T('fh_ImportNoteShort')) +
+        '<button type="button" id="fhNoteMore" aria-expanded="false">' + esc(T('fh_HowItWorks')) + '</button></div>' +
+      '<div class="fh-note" id="fhNoteFull" hidden>' + T('fh_ImportNote') + '</div>' +
+      '<div class="fh-pvchips" id="fhPvChips">' + chipsHtml() + '</div>' +
       '<div style="max-height:420px;overflow:auto;border:1px solid var(--gray-200);border-radius:12px">' +
       '<table><thead><tr><th>' + esc(T('fh_ColUnit')) + '</th><th>' + esc(T('fh_ColAccount')) + '</th><th>' + esc(T('fh_PrevOu')) + '</th>' +
       '<th>' + esc(T('fh_PrevOccupant')) + '</th><th>' + esc(T('fh_PrevAction')) + '</th><th>' + esc(T('fh_PrevNote')) + '</th></tr></thead>' +
-      '<tbody>' + (rows || '<tr><td colspan="6" class="fh-empty">' + esc(T('fh_NoUnitsInOu')) + '</td></tr>') +
-      '</tbody></table></div>' +
+      '<tbody id="fhPvBody">' + rowsHtml() + '</tbody></table></div>' +
       '<div style="display:flex;justify-content:flex-end;gap:10px;margin-top:14px">' +
       '<button class="btn btn-primary" id="fhApplyBtn">' + esc(T('fh_ApplyImport')) + '</button></div>';
+
+    // ⚠️ الضغط على الشريحة المختارة تاني بيلغي الفلتر - نفس سلوك كروت
+    //    الإحصائيات فوق، عشان الشاشة تتصرّف بطريقة واحدة.
+    var nm = document.getElementById('fhNoteMore');
+    if (nm) nm.addEventListener('click', function () {
+      var full = document.getElementById('fhNoteFull');
+      var open = full.hasAttribute('hidden');
+      if (open) full.removeAttribute('hidden'); else full.setAttribute('hidden', '');
+      nm.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+
+    document.getElementById('fhPvChips').addEventListener('click', function (ev) {
+      var b = ev.target.closest && ev.target.closest('[data-chip]');
+      if (!b || b.disabled) return;
+      var k = b.getAttribute('data-chip');
+      pvFilter = (pvFilter === k) ? '' : k;
+      document.getElementById('fhPvChips').innerHTML = chipsHtml();
+      document.getElementById('fhPvBody').innerHTML = rowsHtml();
+    });
 
     var applyBtn = document.getElementById('fhApplyBtn');
     if (applyBtn) applyBtn.addEventListener('click', applyImport);
@@ -509,15 +713,33 @@
       });
   }
 
-  function busy(btn, fn, url) {
+  // ⚠️ اللوحة تُفتح قبل الطلب لا بعده: الضغط على زرّ لا يعقبه أثر ظاهر
+  //    لثوانٍ يُقرأ على أنه ضغط لم يُسجَّل، فيُعاد الضغط.
+  function syncPanel(open) {
+    var p = document.getElementById('fhSyncPanel');
+    var x = document.getElementById('fhSyncClose');
+    if (!p) return;
+    if (open) { p.removeAttribute('hidden'); if (x) x.removeAttribute('hidden'); }
+    else {
+      p.setAttribute('hidden', '');
+      if (x) x.setAttribute('hidden', '');
+      document.getElementById('fhAccess').innerHTML = '';
+      document.getElementById('fhPreview').innerHTML = '';
+    }
+  }
+
+  function busy(btn, fn, url, targetId) {
     var original = btn.textContent;
     btn.disabled = true;
     btn.textContent = T('fh_Working');
+    syncPanel(true);
     fetch(url, { credentials: 'same-origin' })
       .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(fn)
       .catch(function (e) {
-        document.getElementById('fhAccess').innerHTML =
+        // ⚠️ الخطأ يُكتب في قسم الزرّ الذي أُطلق منه، لا في قسم الفحص دائمًا:
+        //    خطأُ مقارنةٍ يظهر تحت «فحص الصلاحيات» يُقرأ على أن الصلاحيات هي العطب.
+        document.getElementById(targetId || 'fhAccess').innerHTML =
           '<div class="fh-note red">' + esc(T('fh_ApplyError')) + esc(e.message) + '</div>';
       })
       .finally(function () { btn.disabled = false; btn.textContent = original; });
@@ -545,6 +767,7 @@
     document.getElementById('fhStatus').addEventListener('change', function (e) {
       state.status = e.target.value;
       state.onlyDeviations = false;
+      state.onlyOuMismatch = false;
       state.page = 1;
       load();
     });
@@ -559,13 +782,16 @@
 
     var checkBtn = document.getElementById('fhCheckBtn');
     if (checkBtn) checkBtn.addEventListener('click', function () {
-      busy(checkBtn, renderAccess, '/api/FacultyHousing/access-check');
+      busy(checkBtn, renderAccess, '/api/FacultyHousing/access-check', 'fhAccess');
     });
 
     var prevBtn = document.getElementById('fhPreviewBtn');
     if (prevBtn) prevBtn.addEventListener('click', function () {
-      busy(prevBtn, renderPreview, '/api/FacultyHousing/import/preview');
+      busy(prevBtn, renderPreview, '/api/FacultyHousing/import/preview', 'fhPreview');
     });
+
+    var syncX = document.getElementById('fhSyncClose');
+    if (syncX) syncX.addEventListener('click', function () { syncPanel(false); });
 
     document.getElementById('fhHistoryOverlay').addEventListener('click', function (e) {
       if (e.target === this) window.fhCloseHistory();
@@ -573,6 +799,20 @@
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape') window.fhCloseHistory();
     });
+
+    // ⚠️ الخانات الظاهرة لازم توصف اللي معروض: جدول مفلتر وخاناته فاضية
+    //    بيتقري كأنه كل الوحدات - وهو جزء منها.
+    (function initFromUrl() {
+      Array.prototype.forEach.call(document.querySelectorAll('#fhTypeSeg button'), function (b) {
+        b.classList.toggle('is-on', b.getAttribute('data-type') === state.type);
+      });
+      var st = document.getElementById('fhStatus');
+      if (st) st.value = state.status;
+      var sr = document.getElementById('fhSearch');
+      if (sr) sr.value = state.search;
+      // ⚠️ قائمة الأبراج بتتملّى من رد الخادم، فقيمتها بتتظبط في renderTowers
+      //    لا هنا - لو ظبطناها دلوقتي هتترمي مع أول رسم للقائمة.
+    })();
 
     load();
   });

@@ -38,7 +38,10 @@ namespace NUH_PORTAL.Core
         // نص مؤقت يظهر ريثما يرتبط سجل الطالب. ليس اسمًا.
         public const string ProvisionalName = "طالب";
 
-        private const string Prefix = "student_";
+        // ⚠️ عامة عن قصد: شاشة «المستخدمون» بتفرز حسابات دخول الطلاب بالبادئة
+        //    دي. لو اتنسخت هناك بقى عندنا تعريفان لحساب الطالب، وأول تعديل
+        //    هنا بيخلّي الشاشة تفرز غلط بصمت.
+        public const string Prefix = "student_";
 
         // أرقام فقط — رقم الجوال يصل بصيغ مختلفة (+966… / 966… / مسافات)
         private static string DigitsOnly(string? v) =>

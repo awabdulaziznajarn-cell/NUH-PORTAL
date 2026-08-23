@@ -10,7 +10,9 @@ namespace NUH_PORTAL.Services.Interfaces
         // تسجيل إجراء حالة — بصلاحية students.changeStatus
         Task<StudentStatusResultDto> CreateStatusActionAsync(string studentNumber, string statusType, string notes, IFormFile? file);
         Task<StudentStatusStatsDto> GetStatsAsync();
-        Task<List<RecentStatusActionDto>> GetRecentAsync();
+        // ⚠️ skip بدل سقف ثابت: كانت تُرجع ٥٠ صفًّا وتتوقّف بلا أن تخبر أحدًا،
+        //    فالقائمة تبدو كاملة وهي ليست كذلك.
+        Task<List<RecentStatusActionDto>> GetRecentAsync(int skip = 0);
         Task<List<StudentStatusActionDto>> GetStudentHistoryAsync(int studentId);
         Task<DownloadFileDto> GetActionAttachmentAsync(int actionId);
     }

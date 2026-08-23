@@ -1,8 +1,8 @@
 using MapsterMapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using NUH_PORTAL.Core;
 using NUH_PORTAL.Common.Pagination;
+using NUH_PORTAL.Core;
 using NUH_PORTAL.Core.Exceptions;
 using NUH_PORTAL.Data.Interfaces;
 using NUH_PORTAL.DTOs.Students;
@@ -23,8 +23,15 @@ namespace NUH_PORTAL.Services
         private readonly IAuditService _audit;
         private readonly ILookupResolver _lookups;
 
-        private static readonly HashSet<string> ValidBuildings =
-            new() { "40", "41", "42", "43", "65", "66", "67", "68", "69", "70" };
+        // ⚠️ كانت هنا قائمة مباني مكتوبة بالإيد:
+        //       { "40","41","42","43","65","66","67","68","69","70" }
+        //    والمباني **جدول مُدار** من شاشة القوائم المرجعية. فالمدير يضيف
+        //    مبنى ٧١، يلاقيه في القايمة المنسدلة في شاشة التسجيل (لأنها بتقرا
+        //    من الجدول)، يختاره، ويضغط حفظ - فيترفض برسالة «رقم المبنى غير
+        //    صحيح، القيم المسموح بها: ٤٠،٤١...». يعني النظام بيعرض له خيارًا
+        //    ويرفضه هو نفسه، ومفيش أي طريقة يفهم منها السبب.
+        //
+        //    الفحص بقى بيقرا من نفس الجدول اللي القايمة بتقرا منه.
 
         public StudentService(
             IRepository<Student> students,
@@ -40,16 +47,6 @@ namespace NUH_PORTAL.Services
             _lifecycle = lifecycle;
             _audit = audit;
             _lookups = lookups;
-        }
-
-        // ⚠️ تقسيم الطلاب/الطالبات بيتطبّق هنا وبس. القاعدة نفسها في UnitOfWork،
-        //    والدالة دي هي البوابة الوحيدة لكل استعلام على الطلاب في الخدمة دي.
-        //    أي استعلام جديد يعدّي من هنا، وإلا بيبقى ثغرة صامتة: مشرفة قسم
-        //    الطالبات تشوف بيانات طلاب ومحدش ياخد باله.
-        private IQueryable<Student> ScopeToGender(IQueryable<Student> query)
-        {
-            var scope = UnitOfWork.GetGenderScope();
-            return scope == null ? query : query.Where(s => s.gender == scope);
         }
 
         public async Task<List<StudentDto>> GetStudentsAsync(bool showDeleted, string? adStatus)
@@ -96,9 +93,35 @@ namespace NUH_PORTAL.Services
             return result.Map<Student, StudentDto>(Mapper);
         }
 
+        // ====================================================================
+        //  عدد الساكنين في كل مبنى — لرسم الصفحة الرئيسية عند المشرف.
+        //
+        //  ⚠️ يمرّ بـ BuildStudentsQuery لا باستعلام مستقلّ: القاعدة التي تخفي
+        //     المحذوفين وتفصل الطلاب عن الطالبات مكتوبة هناك مرة واحدة. لو
+        //     كُتب هنا استعلام ثانٍ لرأت المشرفة عدد الطلاب في مباني الطلاب،
+        //     وهو نفس التسريب الذي أُغلق في قوائم الطلاب.
+        //
+        //  ⚠️ والتجميع على الخادم لا في المتصفح: جلب كل الطلاب لعدّهم في
+        //     الواجهة يعني نقل السجلّ كاملًا لرسم فيه أربعة أعمدة.
+        // ====================================================================
+        public async Task<List<BuildingCountDto>> GetCountByBuildingAsync()
+        {
+            return await BuildStudentsQuery(false, null)
+                .Where(s => s.housing_building != null && s.housing_building != "")
+                .GroupBy(s => s.housing_building!)
+                .Select(g => new BuildingCountDto { Building = g.Key, Count = g.Count() })
+                .OrderByDescending(x => x.Count)
+                .ThenBy(x => x.Building)
+                .ToListAsync();
+        }
+
         private IQueryable<Student> BuildStudentsQuery(bool showDeleted, string? adStatus)
         {
-            var query = ScopeToGender(_students.Query().AsNoTracking());
+            // ⚠️ تقسيم الطلاب/الطالبات - كان غائبًا عن قوائم الطلاب كلّها، فترى
+            //    المشرفة أسماء الطلاب وأرقام هوياتهم وجوالاتهم وسكنهم. القاعدة
+            //    في Core/GenderScope.cs، هي نفسها التي تفلتر بها شاشة الطلبات.
+            var query = _students.Query().AsNoTracking()
+                .ForGender(UnitOfWork.GetGenderScope());
             if (!showDeleted)
                 query = query.Where(s => !s.IsDeleted);
 
@@ -119,26 +142,42 @@ namespace NUH_PORTAL.Services
 
         public async Task<StudentStatsDto> GetStatsAsync()
         {
+            // ⚠️ عدّادات لوحة التحكم كانت بلا تقسيم: «إجمالي الطلاب» و«يحتاج
+            //    إجراءك» تُحسب على النظام كلّه، فيرى المشرف أرقامًا تشمل القسم
+            //    الآخر - ولا سبيل له إلى معرفة أن الرقم ليس رقمه.
+            var scope = UnitOfWork.GetGenderScope();
+
             // عدّادات الطلاب (شروط مركّبة) — استعلامات منفصلة
-            // ⚠️ العدّادات لازم تتفلتر زي الجدول بالظبط. لو الجدول اتقسّم والعدّاد
-            //    لأ، المشرفة تشوف ٤ صفوف فوقهم رقم ١٣ — بيبان كأن الشاشة بتخفي
-            //    بيانات، وده أسوأ من إننا ما نقسّمش أصلًا.
-            var total = await ScopeToGender(_students.Query().AsNoTracking()).CountAsync(s => !s.IsDeleted);
-            var active = await ScopeToGender(_students.Query().AsNoTracking()).CountAsync(s => s.status == StudentState.active && !s.IsDeleted);
-            var left = await ScopeToGender(_students.Query().AsNoTracking()).CountAsync(s => s.status == StudentState.left && !s.IsDeleted);
+            var students = _students.Query().AsNoTracking().ForGender(scope);
+            var total = await students.CountAsync(s => !s.IsDeleted);
+            var active = await students.CountAsync(s => s.status == StudentState.active && !s.IsDeleted);
+            var left = await students.CountAsync(s => s.status == StudentState.left && !s.IsDeleted);
+            // ⚠️ نفس شرط total بالحرف (غير المحذوفين) عشان male + female = total.
+            //    والاتنين ماشيين على ForGender زي كل حاجة هنا: المشرف بيشوف
+            //    قسمه في العدّاد والتاني صفر — وده صحيح لا ناقص.
+            var male = await students.CountAsync(s => s.gender == Gender.Male && !s.IsDeleted);
+            var female = await students.CountAsync(s => s.gender == Gender.Female && !s.IsDeleted);
 
             // كل حالات الطلبات في استعلام GroupBy واحد بدل 8 استعلامات منفصلة
-            var reqScope = UnitOfWork.GetGenderScope();
-            var reqQuery = _requests.Query().AsNoTracking();
-            if (reqScope != null) reqQuery = reqQuery.Where(r => r.StudentGender == reqScope);
-            var reqCounts = (await reqQuery
+            var reqCounts = (await _requests.Query().AsNoTracking()
+                    .ForGender(scope)
                     .GroupBy(r => r.Status)
                     .Select(g => new { Status = g.Key, Count = g.Count() })
                     .ToListAsync())
                 .Where(x => x.Status != null)
                 .ToDictionary(x => x.Status!, x => x.Count);
 
-            int Req(string status) => reqCounts.TryGetValue(status, out var c) ? c : 0;
+            // ⚠️ العدّاد بيجمع مسمّيات المرحلة الواحدة من RequestWorkflow.Aliases —
+            //    نفس دالة Of في RequestService بالحرف. كانت مكتوبة هنا بالإيد
+            //    (Req("submitted") + Req("pending_supervisor") وهكذا)، يعني نفس
+            //    القاعدة في مكانين: شاشة الطلبات بتقرا من الجدول ولوحة التحكم
+            //    بتقرا من قايمة مكتوبة. أي مرحلة جديدة كانت هتظهر في شاشة
+            //    وتختفي من التانية، والفرق ما بيبانش غير لو حد قارن الرقمين.
+            int Req(string status)
+            {
+                var names = RequestWorkflow.Aliases(status);
+                return names.Sum(n => reqCounts.TryGetValue(n, out var c) ? c : 0);
+            }
 
             // ⚠️ النظام فيه مسارين بمصطلحات مختلفة لنفس المراحل:
             //    طلبات الموظفين  : submitted / cyber_review / cyber_approved / completed
@@ -146,32 +185,40 @@ namespace NUH_PORTAL.Services
             // العدّادات كانت بتقرا مصطلحات الموظفين بس، فطلب الطالب اللي مستني
             // المشرف مكانش بيتعدّ خالص — المشرف يشوف «مفيش طلبات مستنية إجراء منك»
             // وفي نفس الوقت الطلب ظاهر في «آخر الطلبات» بحالة «بانتظار الإسكان».
-            // المرحلة واحدة والإجراء المطلوب واحد، فبنجمّعهم في نفس العدّاد.
-            // ملاحظة: need_more_info و rejected العامة مش مجمّعين هنا عن قصد —
-            // need_more_info الكرة فيها عند الطالب مش عند المشرف، و rejected
-            // مابتقولش الرفض جه من الإسكان ولا من السيبراني فمينفعش نحطها في واحد فيهم.
+            // التجميع بقى من RequestWorkflow.Aliases فوق، مش بجمع مكتوب هنا.
+            //
+            // ⚠️ و«rejected» بقى ليه عدّاد: كان التعليق القديم بيقول إنها مستثناة
+            //    عن قصد لأنها مابتقولش الرفض جه منين — وده صحيح كوصف، لكن نتيجته
+            //    إن الطلب المرفوض من مسار الطالب مكانش بيتعدّ في **أي** خانة.
+            //    شاشة الطلبات بتعدّه في تبويب «مرفوض» من أول يوم، فالرقمان كانا
+            //    بيختلفا. العدّاد هنا بيجمع الرفض من المسارين زي التبويب بالظبط.
             return new StudentStatsDto
             {
                 total = total,
+                male = male,
+                female = female,
                 active = active,
                 left = left,
-                submitted = Req("submitted") + Req("pending_supervisor"),
+                submitted = Req("submitted"),
                 housing_approved = Req("housing_approved"),
                 housing_rejected = Req("housing_rejected"),
-                cyber_review = Req("cyber_review") + Req("pending_cyber"),
+                cyber_review = Req("cyber_review"),
                 cyber_approved = Req("cyber_approved"),
                 cyber_rejected = Req("cyber_rejected"),
                 ready_for_provisioning = Req("ready_for_provisioning"),
-                completed = Req("completed") + Req("approved"),
+                completed = Req("completed"),
+                // ⚠️ الرفض من المسارين مجمّعًا — نفس تبويب «مرفوض» في شاشة الطلبات.
+                rejected = Req("rejected"),
             };
         }
 
-        // ⚠️ القراءة المباشرة بالمعرّف لازم تتقيّد بالقسم كمان — وإلا الفلترة في
-        //    القائمة بتبقى إخفاء بصري بس: تغيّر الرقم في الرابط وتوصل لأي طالب.
-        //    و«غير موجود» مقصودة بدل «ممنوع»: مانقولش لحد إن الصف موجود أصلًا.
         public async Task<StudentDto> GetByIdAsync(int id)
         {
-            var student = await ScopeToGender(_students.Query().AsNoTracking())
+            // ⚠️ Scoped بدل _students.GetByIdAsync: الأخيرة بتتجاهل تقسيم
+            //    القسم، فمشرف قسم كان بيقرا ويعدّل سجل من القسم التاني بالمعرّف.
+            //    «غير موجود» لا «ممنوع» عن قصد: الرد ما يقولش إن السجل موجود
+            //    في قسم تاني.
+            var student = await Scoped(_students.Query()).AsNoTracking()
                 .FirstOrDefaultAsync(s => s.Id == id)
                 ?? throw UserFriendlyException.NotFound("الطالب غير موجود");
             return Mapper.Map<StudentDto>(student);
@@ -186,9 +233,7 @@ namespace NUH_PORTAL.Services
                 return null;
 
             var trimmed = studentNumber.Trim();
-            // شاشتَي «تحديث حالة الطالب» و«نقل السكن» بتناديا هنا بالرقم الجامعي —
-            // فالتقييد لازم يكون هنا كمان، مش في القائمة بس.
-            var student = await ScopeToGender(_students.Query().AsNoTracking())
+            var student = await Scoped(_students.Query()).AsNoTracking()
                 .FirstOrDefaultAsync(s => s.student_id == trimmed && !s.IsDeleted);
 
             return student == null ? null : Mapper.Map<StudentDto>(student);
@@ -198,13 +243,20 @@ namespace NUH_PORTAL.Services
         {
             EnsureNotReadonlyUser();
 
+            // ⚠️ الجنس بياخده من قسم الموظف مش من الفورم. الشاشة بتحدّد الخانة
+            //    تلقائيًا وتقفلها، لكن القفل ده راحة للمستخدم مش حراسة — نداء
+            //    واحد بالـ API كان بينشئ طالبة تحت قسم الطلاب، فتختفي عن مشرف
+            //    الطلاب (خرجت عن نطاقه) وعن المشرفة (سجل اتعمل غلط أصلًا).
+            //    القاعدة نفسها في Core/GenderScope.cs.
+            var gender = GenderScope.Resolve(UnitOfWork.GetGenderScope(), dto.gender);
+
             var errors = Validate(dto.full_name, dto.full_name_english, dto.student_id, dto.national_id, dto.phone, dto.housing_building);
-            // ⚠️ التحقق من الجنس كان في الجافاسكريبت بس (شاشة «تسجيل طالب فردي»).
-            //    يعني أي نداء على الـ API مباشرةً كان بيعدّي بطالب بلا جنس، والطالب
-            //    ده طلبه مايوصلش لا لمشرف ولا لمشرفة. الفحص في المتصفح راحة للمستخدم،
-            //    والفحص هنا هو اللي بيضمن القاعدة فعلًا.
-            if (dto.gender == null)
-                errors.Add("الجنس مطلوب: يحدَّد على أساسه المشرف المسؤول عن الطالب");
+            await AddBuildingErrorAsync(dto.housing_building, errors);
+            // ⚠️ الطالب بلا جنس ما بيوصلش لا لمشرف قسم الطلاب ولا لمشرفة قسم
+            //    الطالبات — نفس السبب اللي خلّى الخانة إجبارية في رفع الإكسل.
+            //    عمليًا ده بيخصّ الأدمن وحده، لأن أي مشرف بياخد جنسه من قسمه.
+            if (gender == null)
+                errors.Add("الجنس مطلوب - الطلب بيتوجّه لمشرف القسم بناءً عليه");
             if (await _students.ExistsAsync(s => s.student_id == dto.student_id && !s.IsDeleted))
                 errors.Add("الرقم الجامعي موجود بالفعل");
             if (await _students.ExistsAsync(s => s.national_id == dto.national_id && !s.IsDeleted))
@@ -217,7 +269,10 @@ namespace NUH_PORTAL.Services
             student.status ??= StudentState.active;
             student.student_status ??= StudentStatus.active;
             student.created_by = UnitOfWork.GetCurrentUserId();
-            // gender اتحوّل لـ enum وبيتطبّع في الـ JsonConverter وقت الاستقبال — مفيش تطبيع يدوي محتاج هنا
+            // بعد الـ Mapper عن قصد: القيمة المفروضة فوق هي اللي بتتخزّن، مش
+            // اللي جاية من الـ dto. (التطبيع لـ enum بيحصل في الـ JsonConverter
+            // وقت الاستقبال — مفيش تطبيع يدوي محتاج هنا.)
+            student.gender = gender;
             await _lookups.ApplyAsync(student); // FK ids من الأكواد (dual-write)
 
             try
@@ -239,12 +294,27 @@ namespace NUH_PORTAL.Services
         {
             EnsureNotReadonlyUser();
 
-            var student = await _students.GetByIdAsync(id)
+            // ⚠️ Scoped بدل _students.GetByIdAsync: الأخيرة بتتجاهل تقسيم
+            //    القسم، فمشرف قسم كان بيقرا ويعدّل سجل من القسم التاني بالمعرّف.
+            //    «غير موجود» لا «ممنوع» عن قصد: الرد ما يقولش إن السجل موجود
+            //    في قسم تاني.
+            var student = await Scoped(_students.Query())
+                .FirstOrDefaultAsync(s => s.Id == id)
                 ?? throw UserFriendlyException.NotFound("الطالب غير موجود");
 
             var errors = Validate(dto.full_name, dto.full_name_english, dto.student_id, dto.national_id, dto.phone, dto.housing_building);
+            await AddBuildingErrorAsync(dto.housing_building, errors);
             if (errors.Count > 0)
                 throw new UserFriendlyException(string.Join(" | ", errors), 400);
+
+            // ⚠️ تغيير جنس طالب قائم = نقله لقسم تاني، فيختفي من قائمة اللي
+            //    بيتابعه ويظهر لواحد ما يعرفوش. مسموح لمن نطاقه «القسمين»
+            //    (الأدمن) وحده. ومشرف القسم أصلًا ما بيوصلش لسجل من القسم
+            //    التاني — فالحالة الوحيدة الممكنة عنده هي إخراج طالب من قسمه.
+            //    القاعدة في Core/GenderScope.cs.
+            if (dto.gender != null && dto.gender != student.gender
+                && !GenderScope.CanWrite(UnitOfWork.GetGenderScope(), dto.gender))
+                throw new UserFriendlyException("تغيير الجنس غير متاح - القسم بيتحدد من إدارة النظام", 403);
 
             // تفرّد رقم الهوية عند التعديل — مع استثناء الطالب نفسه.
             // (كان ناقص: التعديل ماكانش بيتأكد إن رقم الهوية مش مستخدم لطالب تاني — بق بيسمح بالتكرار.)
@@ -279,7 +349,7 @@ namespace NUH_PORTAL.Services
                     else if (field == "full_name_english") student.full_name_english = dto.full_name_english;
                     else if (field == "national_id" && !string.IsNullOrEmpty(dto.national_id)) student.national_id = dto.national_id;
                     else if (field == "phone" && !string.IsNullOrEmpty(dto.phone)) student.phone = dto.phone;
-                    else if (field == "gender" && dto.gender != null) student.gender = dto.gender;   // مزامنة الطلبات تحت
+                    else if (field == "gender" && dto.gender != null) student.gender = dto.gender;
                     else if (field == "college" && !string.IsNullOrEmpty(dto.college)) student.college = dto.college;
                     else if (field == "department") student.department = dto.department;
                     else if (field == "academic_level") student.academic_level = dto.academic_level;
@@ -299,16 +369,6 @@ namespace NUH_PORTAL.Services
 
             await _lookups.ApplyAsync(student); // إعادة حساب الـ FK ids بعد تغيّر الأكواد
 
-            // ⚠️ جنس الطالب متكرّر على صفوف طلباته (student_gender) عشان الفلترة
-            //    تشتغل في SQL. فلو اتصلّح هنا لازم يتزامن هناك، وإلا الطالب يظهر
-            //    في قائمة مشرف والطلب بتاعه يفضل في قائمة المشرف التاني للأبد.
-            if (changes.Any(c => c.FieldName == "gender"))
-            {
-                var affected = await _requests.Query().Where(r => r.StudentId == student.Id).ToListAsync();
-                foreach (var r in affected)
-                    r.StudentGender = student.gender;
-            }
-
             try
             {
                 await UnitOfWork.SaveAsync();
@@ -327,7 +387,8 @@ namespace NUH_PORTAL.Services
         {
             EnsureCanDelete("غير مسموح لك بحذف الطالب. يرجى التواصل مع مسؤول النظام.");
 
-            var student = await _students.GetByIdAsync(id)
+            var student = await Scoped(_students.Query())
+                .FirstOrDefaultAsync(s => s.Id == id)
                 ?? throw UserFriendlyException.NotFound("الطالب غير موجود");
             if (student.IsDeleted)
                 throw new UserFriendlyException("الطالب محذوف بالفعل", 400);
@@ -345,7 +406,8 @@ namespace NUH_PORTAL.Services
         {
             EnsureCanDelete("غير مسموح لك باستعادة الطالب. يرجى التواصل مع مسؤول النظام.");
 
-            var student = await _students.GetByIdAsync(id)
+            var student = await Scoped(_students.Query())
+                .FirstOrDefaultAsync(s => s.Id == id)
                 ?? throw UserFriendlyException.NotFound("الطالب غير موجود");
             if (!student.IsDeleted)
                 throw new UserFriendlyException("الطالب غير محذوف", 400);
@@ -363,6 +425,14 @@ namespace NUH_PORTAL.Services
 
         public async Task<List<LifecycleLogDto>> GetLifecycleAsync(int id)
         {
+            // ⚠️ سجل دورة الحياة مالوش عمود جنس — القسم قسم صاحبه. فبنتأكد إن
+            //    الطالب نفسه داخل نطاق المستخدم قبل ما نرجّع أي سطر، وإلا بقى
+            //    السجل بابًا خلفيًّا لقراءة نشاط طالب من القسم التاني.
+            var inScope = await Scoped(_students.Query()).AsNoTracking()
+                .AnyAsync(s => s.Id == id);
+            if (!inScope)
+                throw UserFriendlyException.NotFound("الطالب غير موجود");
+
             return await _lifecycle.Query().AsNoTracking()
                 .Where(l => l.StudentId == id)
                 .OrderByDescending(l => l.PerformedAt)
@@ -398,6 +468,13 @@ namespace NUH_PORTAL.Services
                 throw UserFriendlyException.Forbidden(message);
         }
 
+        // فحص المبنى من ILookupResolver - التعريف الوحيد (الشرح في الواجهة).
+        private async Task AddBuildingErrorAsync(string? housingBuilding, List<string> errors)
+        {
+            var err = await _lookups.BuildingCodeErrorAsync(housingBuilding);
+            if (err != null) errors.Add(err);
+        }
+
         private static List<string> Validate(string? fullName, string? fullNameEn, string? studentId, string? nationalId, string? phone, string? housingBuilding)
         {
             var errors = new List<string>();
@@ -405,17 +482,20 @@ namespace NUH_PORTAL.Services
                 errors.Add("الاسم بالعربية: يرجى إدخال الاسم باللغة العربية فقط");
             if (string.IsNullOrEmpty(fullNameEn) || !Regex.IsMatch(fullNameEn, @"^[a-zA-Z\s]+$"))
                 errors.Add("الاسم بالإنجليزية: يرجى إدخال الاسم باللغة الإنجليزية فقط");
-            // ⚠️ القاعدة في Core/IdentityRules.cs — كانت مكتوبة هنا وفي
-            //    BulkRegistrationService وتفارقتا، فرقم يمرّ من الإكسل ثم
-            //    يرفضه هذا النموذج فلا يمكن تعديل السجل أبدًا.
+            // الرقم الجامعي في جامعة نجران: ٩ أرقام بالظبط وبيبدأ بـ 4.
+            // كان ^\d{9,10}$ — بيقبل ١٠ أرقام وبيقبل أي بداية.
+            // ⚠️ الأنماط والرسائل من Core/IdentityRules — كانت مكتوبة هنا بالإيد،
+            //    ونسخة الهوية هنا كانت **أضعف** من نسخة سكن أعضاء هيئة التدريس
+            //    (أي عشرة أرقام مقابل عشرة تبدأ بـ ١ أو ٢). فرقم جوال في خانة
+            //    الهوية كان بيترفض في شاشة ويتقبل في شاشة تانية.
             if (!IdentityRules.IsValidStudentId(studentId))
                 errors.Add(IdentityRules.StudentIdError);
-            if (string.IsNullOrEmpty(nationalId) || !Regex.IsMatch(nationalId, @"^\d{10}$"))
-                errors.Add("رقم الهوية: يجب أن يتكون رقم الهوية من 10 أرقام");
-            if (!string.IsNullOrEmpty(phone) && !Regex.IsMatch(phone, @"^9665\d{8}$"))
-                errors.Add("رقم الجوال: يجب أن يبدأ الرقم بـ 9665 ويتكون من 12 رقمًا");
-            if (!string.IsNullOrEmpty(housingBuilding) && !ValidBuildings.Contains(housingBuilding))
-                errors.Add("رقم المبنى السكني غير صحيح - القيم المسموح بها: 40,41,42,43,65,66,67,68,69,70");
+            if (IdentityRules.LooksLikeMobile(nationalId))
+                errors.Add(IdentityRules.NationalIdIsMobileError);
+            else if (!IdentityRules.IsValidNationalId(nationalId))
+                errors.Add(IdentityRules.NationalIdError);
+            if (!string.IsNullOrEmpty(phone) && !Regex.IsMatch(phone, IdentityRules.StoredMobilePattern))
+                errors.Add(IdentityRules.MobileError);
             return errors;
         }
     }

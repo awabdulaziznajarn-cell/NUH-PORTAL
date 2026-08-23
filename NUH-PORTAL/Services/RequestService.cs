@@ -25,6 +25,7 @@ namespace NUH_PORTAL.Services
         private readonly IAuditService _audit;
         private readonly IRegistrationService _registration;   // لتوليد رقم الطلب بنفس تسلسل مسار الطالب
         private readonly IWorkflowService _workflow;           // سجل المراحل (WorkflowHistory)
+        private readonly IPledgeService _pledge;               // وثيقة التعهّد (نفس مصدر بوابة الطالب)
         private readonly IHttpContextAccessor _http;
         private readonly ILogger<RequestService> _logger;
 
@@ -37,6 +38,7 @@ namespace NUH_PORTAL.Services
             IAuditService audit,
             IRegistrationService registration,
             IWorkflowService workflow,
+            IPledgeService pledge,
             IHttpContextAccessor http,
             ILogger<RequestService> logger,
             IUnitOfWork unitOfWork,
@@ -50,6 +52,7 @@ namespace NUH_PORTAL.Services
             _audit = audit;
             _registration = registration;
             _workflow = workflow;
+            _pledge = pledge;
             _http = http;
             _logger = logger;
         }
@@ -112,10 +115,15 @@ namespace NUH_PORTAL.Services
             // ⚠️ تقسيم الطلاب/الطالبات قبل أي حاجة تانية: المشرفة تشوف طلبات
             //    الطالبات بس مهما كانت مرحلتها. الجنس متخزّن على صف الطلب نفسه
             //    (student_gender) لأن الطلب المعلّق ممكن مايكونش له سجل طالب بعد.
-            //    والفلتر هنا لأن كل استعلامات الطلبات بتعدّي من الدالة دي.
-            var genderScope = UnitOfWork.GetGenderScope();
-            if (genderScope != null)
-                query = query.Where(r => r.StudentGender == genderScope);
+            //    والفلتر هنا عشان كل استعلامات الطلبات تعدّي من الدالة دي.
+            //    ⚠️ الادّعاء ده ماكانش صحيحًا: أربعة مواضع كانت بتجيب الطلب
+            //       بالمعرّف مباشرة من غير ما تعدّي هنا (التفاصيل / المراجعة /
+            //       ربط الطلب الجماعي / قائمة المعلّقة) — فمشرف قسم كان يقرا
+            //       ويراجع طلب طالب من القسم التاني بالمعرّف. اتوصّلوا كلهم.
+            // ⚠️ القاعدة في Core/GenderScope.cs - تُستعمل هنا وفي طوابير سير العمل
+            //    وقوائم الطلاب وعدّادات لوحة التحكم. كتابتها هنا وحدها هو ما جعل
+            //    الشاشات الأخرى بلا تقسيم أصلًا.
+            query = query.ForGender(UnitOfWork.GetGenderScope());
 
             var actorId = UnitOfWork.GetCurrentUserId();
             var canHousing = UnitOfWork.HasPermission("requests.reviewHousing");
@@ -154,7 +162,32 @@ namespace NUH_PORTAL.Services
         }
 
 
-        public async Task<QueryResult<RequestDto>> GetPagedAsync(QueryParams queryParams, string? status, string? requestType, bool mine = false)
+        // ====================================================================
+        //  ⚠️ تطبيع نص البحث قبل المقارنة.
+        //
+        //     الطالب ينسخ رقم طلبه من شاشة التتبع فيأتي بالأرقام العربية
+        //     «٢٠٢٦-٠٠٠٠١٦»، والعمود مخزَّن بأرقام لاتينية - فالمقارنة تفشل
+        //     بلا أن يفهم أحد لماذا. وعلامة # تُحذف لأن ترويسة العمود تعرضها
+        //     فيكتبها المستخدم معها.
+        // ====================================================================
+        private static string? NormalizeSearch(string? raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) return null;
+
+            var sb = new System.Text.StringBuilder(raw.Length);
+            foreach (var ch in raw.Trim())
+            {
+                if (ch == '#') continue;
+                if (ch >= '\u0660' && ch <= '\u0669') sb.Append((char)('0' + (ch - '\u0660')));        // ٠-٩ عربية
+                else if (ch >= '\u06F0' && ch <= '\u06F9') sb.Append((char)('0' + (ch - '\u06F0')));   // ۰-۹ فارسية
+                else sb.Append(ch);
+            }
+
+            var s = sb.ToString().Trim();
+            return s.Length == 0 ? null : s;
+        }
+
+        public async Task<QueryResult<RequestDto>> GetPagedAsync(QueryParams queryParams, string? status, string? requestType, bool mine = false, DateTime? from = null, DateTime? to = null, bool openOnly = false)
         {
             var query = ScopeToRole(_requests.Query().AsNoTracking()
                 .Include(r => r.Student)
@@ -189,7 +222,34 @@ namespace NUH_PORTAL.Services
                     : query.Where(r => r.Status != null && stages.Contains(r.Status));
             }
 
-            var f = queryParams.FilterText?.Trim();
+            // ⚠️ المفتوحة وحدها: المراحل من RequestWorkflow.OpenStatuses لا قائمة
+            //    مكتوبة هنا - وإلا صار للنظام مصدران لمعنى «طلب مفتوح».
+            if (openOnly)
+            {
+                var open = RequestWorkflow.OpenStatuses;
+                query = query.Where(r => r.Status != null && open.Contains(r.Status));
+            }
+
+            // ⚠️ مدى تاريخ التقديم. الحدود تُحسب في KsaTime لأن العمود بتوقيت UTC
+            //    والمستخدم يختار تاريخًا بتوقيت السعودية - بلا الإزاحة كان طلبٌ
+            //    قُدِّم بعد منتصف الليل يُحسب على اليوم السابق فيغيب عن النتيجة.
+            if (from.HasValue)
+            {
+                var fromUtc = KsaTime.StartOfDayUtc(from.Value);
+                query = query.Where(r => r.SubmittedAt >= fromUtc);
+            }
+            if (to.HasValue)
+            {
+                var toUtc = KsaTime.EndOfDayUtc(to.Value);
+                query = query.Where(r => r.SubmittedAt < toUtc);
+            }
+
+            // ⚠️ خانة بحث واحدة تقارن بالحقول الثلاثة معًا - لا قائمة تختار منها
+            //    الحقل أولًا. سبب ذلك عملي: الوضع الخاطئ في قائمة كهذه يعطي
+            //    «لا نتائج» بلا تفسير، فيظن المستخدم أن الطلب غير موجود.
+            // ⚠️ والحقول هي نفسها المذكورة في نصّ الخانة (req_searchPh) بالضبط:
+            //    بحثٌ يطابق حقلًا لا تذكره الشاشة يجعل النتيجة تبدو عشوائية.
+            var f = NormalizeSearch(queryParams.FilterText);
             if (!string.IsNullOrEmpty(f))
             {
                 query = query.Where(r =>
@@ -243,14 +303,15 @@ namespace NUH_PORTAL.Services
                 CyberApproved = Of("cyber_approved"),
                 ReadyForProvisioning = Of("ready_for_provisioning"),
                 Completed = Of("completed"),
-                Rejected = Of("rejected")
+                Rejected = Of("rejected"),
+                NeedMoreInfo = Of("need_more_info")
             };
         }
 
         public async Task<RequestDetailsDto> GetDetailsAsync(int id)
         {
-            var request = await _requests.Query().AsNoTracking()
-                .Include(r => r.Student)
+            var request = await ScopeToRole(_requests.Query().AsNoTracking()
+                    .Include(r => r.Student))
                 .FirstOrDefaultAsync(r => r.Id == id)
                 ?? throw UserFriendlyException.NotFound("الطلب غير موجود");
 
@@ -294,7 +355,12 @@ namespace NUH_PORTAL.Services
                 CompletedBy = request.CompletedBy,
                 BulkRequestId = request.BulkRequestId,
                 RequestedByRole = request.RequestedByRole,
-                Student = Mapper.Map<NUH_PORTAL.DTOs.Students.StudentDto>(request.Student),
+                // ⚠️ الطلب ممكن يكون بلا سجل طالب (طلب تسجيل ذاتي معلّق قبل ما
+                //    يتعمل السجل)، والتمرير الفاضي للـ Mapper كان بيحذّر ويقع
+                //    وقت التشغيل. الفاضي بيفضل فاضي.
+                Student = request.Student == null
+                    ? null
+                    : Mapper.Map<NUH_PORTAL.DTOs.Students.StudentDto>(request.Student),
                 SubmittedByName = NameOf(request.SubmittedBy),
                 HousingReviewedByName = NameOf(request.HousingReviewedBy),
                 CyberReviewedByName = NameOf(request.CyberReviewedBy),
@@ -314,6 +380,10 @@ namespace NUH_PORTAL.Services
                     }).ToList();
                 dto.StudentEditedAt = changedAt;
             }
+
+            // التعهّد الموثّق — من Services/PledgeService (نفس المصدر اللي
+            // بتقرا منه صفحة الإقرار في بوابة الطالب).
+            dto.Pledge = await _pledge.GetForRequestAsync(id);
 
             RedactNotesForRole(dto, request);
             return dto;
@@ -337,8 +407,10 @@ namespace NUH_PORTAL.Services
                   && !UnitOfWork.HasPermission("requests.reviewHousing")))
                 return;
 
-            var rejected = string.Equals(dto.Status, "rejected", StringComparison.OrdinalIgnoreCase)
-                        || string.Equals(dto.Status, "housing_rejected", StringComparison.OrdinalIgnoreCase);
+            // ⚠️ كانت مكتوبة بالإيد وناقصة cyber_rejected. ما ظهرش أثرها لأن
+            //    الشرط تحت بيطلب CyberReviewedAt == null والرفض السيبراني بيملاها
+            //    أصلًا — يعني الغلط كان مستني تعديل في الشرط التاني عشان يبان.
+            var rejected = RequestWorkflow.IsRejected(dto.Status);
 
             // CyberReviewedAt != null معناها إن الأمن السيبراني كان طرفًا في الطلب فعلاً،
             // ساعتها بيشوف كل حاجة عادي.
@@ -347,14 +419,6 @@ namespace NUH_PORTAL.Services
                 dto.Notes = null;
                 dto.HousingNotes = null;
             }
-        }
-
-        public async Task<List<RequestDto>> GetPendingAsync()
-        {
-            var list = await _requests.Query().AsNoTracking()
-                .Where(r => r.Status == "submitted")
-                .ToListAsync();
-            return Mapper.Map<List<RequestDto>>(list);
         }
 
         public async Task<RequestDto> CreateAsync(RequestCreateDto dto)
@@ -392,8 +456,10 @@ namespace NUH_PORTAL.Services
             //    بينما مسار تسجيل الطالب بيولّد رقم. النتيجة: الشاشة كانت بتعرض رقم
             //    محسوب من رقم الصف وقت العرض، والطالب يكتبه في التتبع فمايتلاقاش —
             //    لأنه ماكانش متخزّن أصلاً. بنولّده هنا بنفس التسلسل المشترك.
-            if (string.IsNullOrWhiteSpace(request.RequestNumber))
-                request.RequestNumber = await _registration.GenerateRequestNumberAsync();
+            // ⚠️ الرقم بيتولّد هنا، وبيتحفظ تحت — وبين الاتنين ممكن حد تاني
+            //    ياخده. التوليد بقى جوّه RequestNumberRetry مع الحفظ، فلو
+            //    اتصادم بيولّد غيره ويعيد بدل ما الموظف ياخد خطأ ٥٠٠.
+            var needsNumber = string.IsNullOrWhiteSpace(request.RequestNumber);
 
             request.Status = isHousingCreator ? "cyber_review" : "submitted";
             request.SubmittedBy = actorId > 0 ? actorId : null;
@@ -411,7 +477,17 @@ namespace NUH_PORTAL.Services
             try
             {
                 await _requests.AddAsync(request);
-                await UnitOfWork.SaveAsync();
+                if (needsNumber)
+                {
+                    await RequestNumberRetry.RunAsync(
+                        generate: () => _registration.GenerateRequestNumberAsync(),
+                        assign: n => request.RequestNumber = n,
+                        save: () => UnitOfWork.SaveAsync());
+                }
+                else
+                {
+                    await UnitOfWork.SaveAsync();
+                }
             }
             catch (DbUpdateException ex) when (ex.InnerException is SqlException sqlEx)
             {
@@ -445,7 +521,11 @@ namespace NUH_PORTAL.Services
 
         public async Task<RequestDto> ReviewAsync(int id, ReviewDto dto)
         {
-            var req = await _requests.GetByIdAsync(id)
+            // ⚠️ ScopeToRole لا GetByIdAsync: الأخيرة بتتجاهل القسم، فمشرفة كانت
+            //    تقدر تعتمد أو ترفض طلب طالب مش من قسمها بالمعرّف. الفحص بعدها
+            //    على الصلاحية بس، وما كانش بيسأل عن القسم إطلاقًا.
+            var req = await ScopeToRole(_requests.Query())
+                .FirstOrDefaultAsync(r => r.Id == id)
                 ?? throw UserFriendlyException.NotFound("الطلب غير موجود");
 
             var actorId = UnitOfWork.GetCurrentUserId();
@@ -622,7 +702,8 @@ namespace NUH_PORTAL.Services
 
         public async Task<RequestDto> UpdateBulkIdAsync(int id, UpdateRequestDto dto)
         {
-            var req = await _requests.GetByIdAsync(id)
+            var req = await ScopeToRole(_requests.Query())
+                .FirstOrDefaultAsync(r => r.Id == id)
                 ?? throw UserFriendlyException.NotFound("الطلب غير موجود");
 
             if (dto.BulkRequestId.HasValue)

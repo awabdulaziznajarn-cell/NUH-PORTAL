@@ -1,4 +1,4 @@
-using MapsterMapper;
+﻿using MapsterMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -45,13 +45,32 @@ namespace NUH_PORTAL.Services
 
         // ----------------------------- Queries -----------------------------
 
-        // اسم دور الطالب. حسابات الطلاب بتتولّد تلقائيًا في OtpFlowService عند
-        // التحقق برمز الجوال، فعددها بيكبر مع كل طالب بيقدّم طلب — وشاشة
-        // «المستخدمون» شاشة إدارة موظفين، مش سجل طلاب.
-        private const string StudentRoleName = "user";
+        // ⚠️ حساب دخول الطالب بيتعرف **باسم المستخدم** لا بالدور.
+        //
+        //    كان التقسيم: «عنده دور user ← طالب». وده غلط من أصله — دور "user"
+        //    دور قراءة فقط لأي موظف ومالوش علاقة بالطلاب. فكان أي موظف
+        //    قراءة-فقط يقع في تبويب حسابات الطلاب، وكذلك أي حساب يتضاف من
+        //    الدليل من غير ما المضيف يختار له دورًا (الافتراضي "user").
+        //    وده اللي حصل مع fhalharthi.nuh.
+        //
+        //    كل حساب دخول طالب اسمه بيتولّد في StudentLoginIdentity بالشكل
+        //    "student_" + الرقم الجامعي أو الجوال. فالبادئة هي العلامة الوحيدة
+        //    المؤكّدة، ومصدرها الثابت هناك لا نسخة مكتوبة هنا.
+        //
+        //    ⚠️ Expression لا دالة bool: EF لازم يترجمه لـ SQL، وإلا اتنفّذ في
+        //       الذاكرة على كل صفوف الجدول.
+        private static readonly System.Linq.Expressions.Expression<Func<User, bool>> IsStudentAccount =
+            u => u.UserName != null && u.UserName.StartsWith(StudentLoginIdentity.Prefix);
 
         // دور مدير النظام — بنمنع حذف آخر واحد منه عشان النظام مايتقفلش على الكل
         private const string AdminRoleName = "admin";
+
+        // نفي IsStudentAccount مبنيّ منه لا مكتوب بالإيد — فأي تعديل في تعريف
+        // الطالب بينعكس على التبويبين معًا ومستحيل يفترقا.
+        private static readonly System.Linq.Expressions.Expression<Func<User, bool>> NotStudentAccount =
+            System.Linq.Expressions.Expression.Lambda<Func<User, bool>>(
+                System.Linq.Expressions.Expression.Not(IsStudentAccount.Body),
+                IsStudentAccount.Parameters);
 
         public async Task<UserCountsDto> GetCountsAsync()
         {
@@ -61,7 +80,7 @@ namespace NUH_PORTAL.Services
             // وإلا مجموع التبويبات يبقى أكبر من عدد الصفوف الظاهرة فعلًا.
             var deleted = await query.CountAsync(u => u.is_deleted);
             var live = query.Where(u => !u.is_deleted);
-            var students = await live.CountAsync(u => u.UserRoles.Any(ur => ur.Role.Name == StudentRoleName));
+            var students = await live.CountAsync(IsStudentAccount);
             var total = await live.CountAsync();
 
             return new UserCountsDto { Students = students, Staff = total - students, Deleted = deleted };
@@ -80,10 +99,17 @@ namespace NUH_PORTAL.Services
             else
             {
                 query = query.Where(u => !u.is_deleted);
+                // ⚠️ النفي هنا لازم يكون على نفس التعبير بالحرف، وإلا حساب
+                //    يقع في التبويبين أو ما يظهرش في أي تبويب.
                 query = studentsOnly
-                    ? query.Where(u => u.UserRoles.Any(ur => ur.Role.Name == StudentRoleName))
-                    : query.Where(u => !u.UserRoles.Any(ur => ur.Role.Name == StudentRoleName));
+                    ? query.Where(IsStudentAccount)
+                    : query.Where(NotStudentAccount);
             }
+
+            // ⚠️ متغيّر محلّي لا DateTimeOffset.UtcNow جوّه الـ Select:
+            //    كده الوقت بيتبعت كـ parameter لـ SQL بدل ما EF تحاول
+            //    تترجمه، والصفوف كلها بتتقارن بنفس اللحظة بالظبط.
+            var now = DateTimeOffset.UtcNow;
 
             return await query
                 .OrderByDescending(u => u.created_at)
@@ -97,6 +123,11 @@ namespace NUH_PORTAL.Services
                     mobile = u.mobile,
                     created_at = u.created_at,
                     is_active = u.is_active,
+                    // ⚠️ القفل ده بتاع Identity (LockoutEnd) لا is_active بتاعنا.
+                    //    الشاشة محتاجة تفرّق بينهم عشان المسؤول يبطّل يعطّل
+                    //    ويفعّل حساب مقفول ويستغرب إنه لسه مش بيدخل.
+                    is_locked = u.LockoutEnd != null && u.LockoutEnd > now,
+                    lockout_end = u.LockoutEnd,
                     is_deleted = u.is_deleted,
                     deleted_at = u.deleted_at,
                     auth_source = u.auth_source,
@@ -171,8 +202,13 @@ namespace NUH_PORTAL.Services
             var duplicate = await _userManager.FindByNameAsync(dto.username);
             if (duplicate != null)
                 throw new UserFriendlyException(duplicate.is_deleted
-                    ? "الحساب موجود ضمن المحذوفين — استعِده من تبويب «المحذوفون» بدل إنشائه من جديد"
+                    ? "الحساب موجود ضمن المحذوفين - استعِده من تبويب «المحذوفون» بدل إنشائه من جديد"
                     : "اسم المستخدم مستخدم بالفعل", 409);
+
+            // ⚠️ الحراسة قبل الإنشاء لا بعده: لو اترفض منح الدور بعد ما الحساب
+            //    اتعمل، هنبقى سبنا مستخدمًا بلا دور في القاعدة.
+            var newUserRole = string.IsNullOrWhiteSpace(dto.role) ? DefaultRoleName : dto.role.Trim().ToLowerInvariant();
+            await GuardRoleGrantAsync(newUserRole, null, 0);
 
             var user = new User
             {
@@ -192,8 +228,7 @@ namespace NUH_PORTAL.Services
             if (!res.Succeeded)
                 throw new UserFriendlyException("تعذّر إنشاء المستخدم: " + IdentityErrors(res), 400);
 
-            var role = string.IsNullOrWhiteSpace(dto.role) ? "user" : dto.role.Trim().ToLowerInvariant();
-            await AssignRoleInternalAsync(user, role);
+            await AssignRoleInternalAsync(user, newUserRole);
 
             await AddAuditAsync("user_created", user.Id);
             await UnitOfWork.SaveAsync();
@@ -205,6 +240,34 @@ namespace NUH_PORTAL.Services
         {
             var user = await _userManager.FindByIdAsync(id.ToString())
                 ?? throw UserFriendlyException.NotFound("المستخدم غير موجود");
+
+            // ================= الحراسة قبل أي كتابة =================
+            // ⚠️ الترتيب مقصود: لو الطلب هيترفض، ما ينفعش يكون الاسم والقسم
+            //    اتغيّروا فعلًا والدور بس هو اللي اترفض - فنبقى سبنا الصف نُصّه
+            //    متعدّل. الفحص كله بيتم قبل أول UpdateAsync.
+            var newRole = string.IsNullOrWhiteSpace(dto.role) ? null : dto.role.Trim().ToLowerInvariant();
+            // ⚠️ بنمسك القيمة نفسها لا علامة bool: المحلّل مش بيقدر يتتبّع فحص
+            //    الـ null عبر متغيّر منطقي، فكان بيطلّع تحذير CS8604 على
+            //    ResetPasswordAsync. المتغيّر ده بيحلّها من غير معامل قمع (!)
+            //    - والقمع كان هيخفي التحذير من غير ما يضمن الشرط فعلًا.
+            var newPassword = string.IsNullOrWhiteSpace(dto.password) ? null : dto.password;
+
+            string? currentRole = null;
+            var roleChanging = false;
+
+            if (newRole != null || newPassword != null)
+            {
+                currentRole = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
+                roleChanging = newRole != null
+                    && !string.Equals(newRole, currentRole, StringComparison.OrdinalIgnoreCase);
+
+                if (roleChanging || newPassword != null)
+                    await GuardPrivilegedTargetAsync(user);
+
+                if (roleChanging)
+                    await GuardRoleGrantAsync(newRole!, currentRole, user.Id);
+            }
+            // ========================================================
 
             user.full_name = dto.full_name;
             user.Email = dto.email;
@@ -218,13 +281,16 @@ namespace NUH_PORTAL.Services
             if (!res.Succeeded)
                 throw new UserFriendlyException("تعذّر تعديل المستخدم: " + IdentityErrors(res), 400);
 
-            if (!string.IsNullOrWhiteSpace(dto.role))
-                await AssignRoleInternalAsync(user, dto.role.Trim().ToLowerInvariant());
+            // ⚠️ بنكتب الدور لما يتغيّر بس. قبل كده كان بيُعاد إسناده مع كل حفظ
+            //    (إزالة ثم إضافة) حتى لو هو نفسه - كتابتان بلا داعٍ في كل تعديل
+            //    اسم، وسطر تدقيق مضلّل.
+            if (roleChanging)
+                await AssignRoleInternalAsync(user, newRole!);
 
-            if (!string.IsNullOrWhiteSpace(dto.password))
+            if (newPassword != null)
             {
                 var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-                var pwdRes = await _userManager.ResetPasswordAsync(user, token, dto.password);
+                var pwdRes = await _userManager.ResetPasswordAsync(user, token, newPassword);
                 if (!pwdRes.Succeeded)
                     throw new UserFriendlyException("تعذّر تعيين كلمة المرور: " + IdentityErrors(pwdRes), 400);
             }
@@ -232,10 +298,11 @@ namespace NUH_PORTAL.Services
             await AddAuditAsync("user_updated", user.Id);
             await UnitOfWork.SaveAsync();
 
-            // ⚠️ القسم متخزّن في الـ claims بكاش دقيقة (PermissionClaimsTransformation).
-            //    من غير الإبطال ده المسؤول يغيّر قسم المشرفة ويقولها جرّبي، فتلاقي
-            //    نفس الشاشة القديمة وتفتكر إن التعديل ماحصلش.
-            PermissionClaimsTransformation.InvalidateScope(_cache, user.Id);
+            // ⚠️ حالة الحساب وقسمه متخزّنين في الـ claims بكاش دقيقة
+            //    (PermissionClaimsTransformation). من غير الإبطال ده المسؤول يغيّر
+            //    قسم المشرفة ويقولها جرّبي، فتلاقي نفس الشاشة القديمة وتفتكر إن
+            //    التعديل ماحصلش. والتعديل هنا بيغيّر is_active كمان (dto.is_active).
+            PermissionClaimsTransformation.InvalidateUser(_cache, user.Id);
 
             return await GetUserDetailAsync(user.Id);
         }
@@ -247,7 +314,7 @@ namespace NUH_PORTAL.Services
 
             // الحساب المحذوف بيتستعاد الأول، وبعدها يتفعّل — قرارين منفصلين عن قصد
             if (user.is_deleted)
-                throw new UserFriendlyException("الحساب محذوف — استعِده أولًا من تبويب «المحذوفون»", 400);
+                throw new UserFriendlyException("الحساب محذوف - استعِده أولًا من تبويب «المحذوفون»", 400);
 
             user.is_active = active;
             var res = await _userManager.UpdateAsync(user);
@@ -255,6 +322,47 @@ namespace NUH_PORTAL.Services
                 throw new UserFriendlyException("تعذّر تحديث حالة المستخدم: " + IdentityErrors(res), 400);
 
             await AddAuditAsync(active ? "user_activated" : "user_deactivated", user.Id);
+            await UnitOfWork.SaveAsync();
+
+            // ⚠️ الإبطال ده هو اللي بيخلّي «إيقاف» يعني إيقاف. من غيره الموظف
+            //    الموقوف يفضل شغّال بكامل صلاحياته لحد ما الكاش ينتهي — والأهم
+            //    إن الفحص نفسه (PermissionClaimsTransformation) بيقرا من الكاش،
+            //    فبدونه الإيقاف بياخد لحد دقيقة يسري. الحالة دي بالذات (نهاية
+            //    تعاقد، نقل، حادثة أمنية) مالهاش دقيقة تستنّاها.
+            PermissionClaimsTransformation.InvalidateUser(_cache, user.Id);
+        }
+
+        // ============================================================================
+        //  فكّ قفل الحساب بعد محاولات الدخول الفاشلة.
+        //
+        //  ⚠️ ليه ده إجراء منفصل عن «تفعيل»: القفل بيتكتب في عمودين من عند
+        //     Identity (LockoutEnd و AccessFailedCount)، والتفعيل بيكتب في
+        //     عمود is_active بتاعنا. المسؤول كان بيعطّل الحساب ويفعّله تاني
+        //     وبيستغرب إن المستخدم لسه مش قادر يدخل - لأن الحاجتين مالهمش
+        //     علاقة ببعض خالص.
+        //
+        //  ⚠️ وبنصفّر AccessFailedCount مع LockoutEnd: لو صفّرنا التاريخ بس،
+        //     العدّاد بيفضل على ٣ فأول محاولة فاشلة جاية بتقفل الحساب من
+        //     تاني على طول - والمستخدم يفتكر إن الفكّ ما اشتغلش.
+        //
+        //  ⚠️ ومفيش InvalidateUser هنا: القفل بيتفحص وقت تسجيل الدخول
+        //     (Services/AuthService)، مش من كاش الصلاحيات. الحساب المقفول
+        //     مالوش جلسة شغّالة يتبطّل كاشها أصلًا.
+        // ============================================================================
+        public async Task UnlockAsync(int id)
+        {
+            var user = await _userManager.FindByIdAsync(id.ToString())
+                ?? throw UserFriendlyException.NotFound("المستخدم غير موجود");
+
+            var res = await _userManager.SetLockoutEndDateAsync(user, null);
+            if (!res.Succeeded)
+                throw new UserFriendlyException("تعذّر فكّ قفل الحساب: " + IdentityErrors(res), 400);
+
+            res = await _userManager.ResetAccessFailedCountAsync(user);
+            if (!res.Succeeded)
+                throw new UserFriendlyException("تعذّر تصفير عدّاد المحاولات: " + IdentityErrors(res), 400);
+
+            await AddAuditAsync("user_unlocked", user.Id);
             await UnitOfWork.SaveAsync();
         }
 
@@ -266,7 +374,19 @@ namespace NUH_PORTAL.Services
             var user = await _userManager.FindByIdAsync(id.ToString())
                 ?? throw UserFriendlyException.NotFound("المستخدم غير موجود");
 
-            await AssignRoleInternalAsync(user, role.Trim().ToLowerInvariant());
+            // ⚠️ نفس حرّاس UpdateAsync: النقطة دي محميّة بـ roles.assign أصلًا،
+            //    لكن الصلاحية وحدها ما بتمنعش صاحبها من ترقية نفسه ولا من منح
+            //    دور مدير النظام - والحارس هو اللي بيمنع الاتنين.
+            var normalized = role.Trim().ToLowerInvariant();
+            var currentRole = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
+
+            if (!string.Equals(normalized, currentRole, StringComparison.OrdinalIgnoreCase))
+            {
+                await GuardPrivilegedTargetAsync(user);
+                await GuardRoleGrantAsync(normalized, currentRole, user.Id);
+            }
+
+            await AssignRoleInternalAsync(user, normalized);
             await AddAuditAsync("user_role_assigned", user.Id);
             await UnitOfWork.SaveAsync();
         }
@@ -313,6 +433,9 @@ namespace NUH_PORTAL.Services
 
             await AddAuditAsync("user_deleted", user.Id);
             await UnitOfWork.SaveAsync();
+
+            // الحذف زي الإيقاف بالظبط: لازم يقطع الجلسة القائمة فورًا لا بعد دقيقة
+            PermissionClaimsTransformation.InvalidateUser(_cache, user.Id);
         }
 
         public async Task RestoreAsync(int id)
@@ -336,6 +459,10 @@ namespace NUH_PORTAL.Services
 
             await AddAuditAsync("user_restored", user.Id);
             await UnitOfWork.SaveAsync();
+
+            // ⚠️ الاستعادة كمان: الحساب بيرجع معطّلًا، والكاش لو فضل شايله بحالته
+            //    القديمة يبقى فيه فرق بين اللي في الشاشة واللي بيتطبّق فعلًا.
+            PermissionClaimsTransformation.InvalidateUser(_cache, user.Id);
         }
 
         // ----------------------------- LDAP -----------------------------
@@ -347,7 +474,7 @@ namespace NUH_PORTAL.Services
 
             var res = await _adService.SearchUsersAsync(query.Trim(), 25);
             if (!res.Success)
-                throw new UserFriendlyException(res.Error ?? "تعذّر الاتصال بالدليل (Active Directory)", 400);
+                throw new UserFriendlyException(res.Error ?? "تعذّر الاتصال بالـAD", 400);
 
             return res.Users.Select(u => new LdapUserSearchItemDto
             {
@@ -368,12 +495,17 @@ namespace NUH_PORTAL.Services
             var duplicate = await _userManager.FindByNameAsync(sam);
             if (duplicate != null)
                 throw new UserFriendlyException(duplicate.is_deleted
-                    ? "الحساب موجود ضمن المحذوفين — استعِده من تبويب «المحذوفون» بدل إضافته من جديد"
+                    ? "الحساب موجود ضمن المحذوفين - استعِده من تبويب «المحذوفون» بدل إضافته من جديد"
                     : "المستخدم موجود بالفعل في النظام", 409);
+
+            // ⚠️ نفس الحارس: النقطة دي محميّة بـ users.addFromLdap، وهي لا تعني
+            //    إسناد الأدوار. من غير السطر ده كانت بتقبل role:"admin" مباشرة.
+            var ldapUserRole = string.IsNullOrWhiteSpace(dto.role) ? DefaultRoleName : dto.role.Trim().ToLowerInvariant();
+            await GuardRoleGrantAsync(ldapUserRole, null, 0);
 
             var ad = await _adService.GetUserBySamAccountNameAsync(sam);
             if (!ad.Success)
-                throw new UserFriendlyException(ad.Error ?? "تعذّر إيجاد المستخدم في الدليل", 400);
+                throw new UserFriendlyException(ad.Error ?? "تعذّر إيجاد المستخدم في الـAD", 400);
 
             var user = new User
             {
@@ -394,10 +526,9 @@ namespace NUH_PORTAL.Services
             // مستخدم AD من غير باسورد محلي — الدخول عبر AD
             var res = await _userManager.CreateAsync(user);
             if (!res.Succeeded)
-                throw new UserFriendlyException("تعذّر إضافة المستخدم من الدليل: " + IdentityErrors(res), 400);
+                throw new UserFriendlyException("تعذّر إضافة المستخدم من الـAD: " + IdentityErrors(res), 400);
 
-            var role = string.IsNullOrWhiteSpace(dto.role) ? "user" : dto.role.Trim().ToLowerInvariant();
-            await AssignRoleInternalAsync(user, role);
+            await AssignRoleInternalAsync(user, ldapUserRole);
 
             await AddAuditAsync("user_added_from_ldap", user.Id);
             await UnitOfWork.SaveAsync();
@@ -407,10 +538,88 @@ namespace NUH_PORTAL.Services
 
         // ----------------------------- Helpers -----------------------------
 
+        // ====================================================================
+        //  حرّاس ترقية الصلاحيات
+        //
+        //  ⚠️ الثغرة اللي بيقفلها الكود ده: PUT /api/Users/{id} كان محميًّا
+        //     بـ users.manage وحدها - وهي صلاحية إدارية عادية - وUpdateAsync
+        //     كان بيطبّق منها **الدور** و**كلمة المرور** بلا أي فحص إضافي.
+        //     فموظف معه users.manage بس كان يقدر:
+        //       (أ) ينادي الـ PUT على حسابه هو بـ role:"admin" فيبقى مدير نظام،
+        //       (ب) أو يضبط كلمة مرور أي حساب مدير ويدخل بيه.
+        //     مع إن تغيير الدور له صلاحية منفصلة (roles.assign) على
+        //     POST /{id}/role - فالـ PUT كان بيتخطّاها من غير ما حد ياخد باله.
+        //
+        //  الحرّاس دول بيتنادوا من **كل** مسار بيمنح دورًا أو يضبط كلمة مرور
+        //  (Update و AssignRole و Create و AddFromLdap) عشان ما يفضلش باب
+        //  خلفي في واحد منهم.
+        // ====================================================================
+
+        // الدور الافتراضي للحساب الجديد (قراءة فقط) - إنشاؤه جزء من users.manage
+        private const string DefaultRoleName = "user";
+
+        // من الـ claims زي أي سياسة - PermissionClaimsTransformation بتحمّلها كل طلب
+        private bool ActorCanAssignRoles =>
+            _http.HttpContext?.User?.HasClaim(ClaimConstants.Permission, "roles.assign") == true;
+
+        // ⚠️ من القاعدة لا من التوكن: دور الفاعل ممكن يكون اتغيّر بعد ما دخل،
+        //    والقرار ده أخطر من إنه يعتمد على نسخة قديمة محفوظة في الكوكي.
+        private async Task<bool> ActorIsAdminAsync()
+        {
+            var actorId = UnitOfWork.GetCurrentUserId();
+            if (actorId <= 0) return false;
+            var actor = await _userManager.FindByIdAsync(actorId.ToString());
+            return actor != null && await _userManager.IsInRoleAsync(actor, AdminRoleName);
+        }
+
+        // حساب مدير النظام لا يُمسّ دوره ولا كلمة مروره إلا من مدير نظام آخر
+        private async Task GuardPrivilegedTargetAsync(User target)
+        {
+            var targetRoles = await _userManager.GetRolesAsync(target);
+            var targetIsAdmin = targetRoles.Any(r => string.Equals(r, AdminRoleName, StringComparison.OrdinalIgnoreCase));
+
+            if (targetIsAdmin && !await ActorIsAdminAsync())
+                throw new UserFriendlyException(
+                    "تعديل دور حساب مدير النظام أو كلمة مروره لا يتم إلا من مدير نظام", 403);
+        }
+
+        // حارس منح الدور. currentRole = الدور الحالي (null للحساب الجديد)،
+        // targetUserId = 0 للحساب الجديد لأنه لا يمكن أن يكون الفاعل نفسه.
+        private async Task GuardRoleGrantAsync(string requestedRole, string? currentRole, int targetUserId)
+        {
+            // ⚠️ نفس الدور ⇒ مافيش قرار امتيازات أصلًا. الشرط ده ضروري لأن شاشة
+            //    المستخدمين بتبعت الدور في **كل** حفظ، فبدونه أي تعديل لاسم أو
+            //    جوال كان هيتطلب roles.assign ويكسر الاستعمال العادي لـ users.manage.
+            if (string.Equals(requestedRole, currentRole, StringComparison.OrdinalIgnoreCase))
+                return;
+
+            // حساب جديد بالدور الافتراضي: ده «إضافة موظف» وهي ضمن users.manage
+            var isNewWithDefaultRole = currentRole == null
+                && string.Equals(requestedRole, DefaultRoleName, StringComparison.OrdinalIgnoreCase);
+
+            if (!isNewWithDefaultRole && !ActorCanAssignRoles)
+                throw new UserFriendlyException(
+                    "تغيير دور المستخدم يحتاج صلاحية «إسناد الأدوار»", 403);
+
+            // ⚠️ ولا حتى من معه roles.assign يرفّع نفسه: الترقية لازم تيجي من
+            //    شخص تاني، وإلا الصلاحية دي وحدها بتساوي مدير نظام.
+            var actorId = UnitOfWork.GetCurrentUserId();
+            if (targetUserId > 0 && actorId > 0 && actorId == targetUserId)
+                throw new UserFriendlyException("لا يمكنك تغيير دور حسابك الشخصي", 403);
+
+            // منح أعلى دور في النظام لا يكون إلا ممن يملكه
+            if (string.Equals(requestedRole, AdminRoleName, StringComparison.OrdinalIgnoreCase)
+                && !await ActorIsAdminAsync())
+                throw new UserFriendlyException("منح دور مدير النظام لا يتم إلا من مدير نظام", 403);
+        }
+
         private async Task AssignRoleInternalAsync(User user, string role)
         {
+            // ⚠️ كان بينشئ الدور لو مش موجود، فقيمة نصية جاية من العميل كانت
+            //    بتصنع أدوارًا جديدة في قاعدة البيانات - دور بلا صلاحيات ومحدش
+            //    طالبه. الأدوار تُنشأ من شاشة «الأدوار والصلاحيات» وحدها.
             if (!await _roleManager.RoleExistsAsync(role))
-                await _roleManager.CreateAsync(new Role(role) { Description = role });
+                throw new UserFriendlyException($"الدور «{role}» غير موجود", 400);
 
             var current = await _userManager.GetRolesAsync(user);
             if (current.Count > 0)

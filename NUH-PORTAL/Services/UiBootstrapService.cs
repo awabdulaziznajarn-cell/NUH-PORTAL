@@ -98,7 +98,13 @@ namespace NUH_PORTAL.Services
                 i18n = "{}";
             }
 
-            var json = "{\"i18n\":" + i18n + ",\"lookups\":" + await GetLookupMapJsonAsync() + "}";
+            // ⚠️ جدول مسار الطلب مع القاموس في نفس الرد: صفحات البوابة كانت
+            //    كاتبة أسماء المراحل بنفسها، وصفحة «طلباتي» كانت ناقصة ستّ
+            //    حالات فتطبع للطالب كود قاعدة البيانات زي cyber_review.
+            //    الإسقاط المختصر (بلا صلاحيات ولا مسارات) - Core/RequestWorkflow.
+            var json = "{\"i18n\":" + i18n
+                     + ",\"lookups\":" + await GetLookupMapJsonAsync()
+                     + ",\"workflow\":" + NUH_PORTAL.Core.RequestWorkflow.ToPortalJson() + "}";
 
             // ستين ثانية زي خريطة القوائم — الجزء المتغيّر الوحيد جوّاه هو القوائم.
             _cache.Set(key, json, new MemoryCacheEntryOptions

@@ -28,14 +28,43 @@ var NuhSelect = (function () {
   var OPEN = null;                 // القائمة المفتوحة حاليًا (واحدة بحد أقصى)
   var SEARCH_MIN = 8;              // خانة البحث تظهر لما الخيارات تزيد عن كده
 
-  function esc(v) {
-    return String(v == null ? '' : v)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  // تهريب HTML — التعريف الوحيد في /js/esc.js
+  function esc(v) { return escHtml(v); }
+
+  // النصوص من Resources/*.resx عبر i18n.js — نفس أسلوب js/date-field.js.
+  // النصّ المكتوب هنا شبكة أمان لو الشاشة ماحمّلتش i18n، مش مصدر تاني.
+  function tr(key, ar, en) {
+    if (typeof tf === 'function') return tf(key, ar, en);
+    return (document.documentElement.getAttribute('lang') === 'en') ? en : ar;
   }
 
-  // الخيار الأول بنص زي «اختر الكلية» وقيمة فاضية = نص إرشادي لا اختيار
-  function isPlaceholder(opt) { return opt.value === '' || opt.disabled; }
+  // ⚠️ الخيار ذو القيمة الفاضية — والغلط اللي كان هنا:
+  //
+  //    الملف ده كان بيخفي أي <option value=""> من القائمة، على أساس إنه نص
+  //    إرشادي زي «اختر الكلية» ومش اختيار حقيقي. ودي صح في نماذج الإدخال،
+  //    وغلط تمامًا في الفلاتر: الفلتر بيستخدم نفس القيمة الفاضية بمعنى
+  //    **«الكل»** — وده اختيار حقيقي جدًا.
+  //
+  //    النتيجة اللي كانت باينة للمستخدم: في «إدارة حسابات السكن» يختار
+  //    «مفعل» وبعدها ما يقدرش يرجّع كل الحسابات، لأن صفّ «الكل» موجود في
+  //    الـ Razor لكن مش بيتعرض. ونفس العطل كان في تسعة فلاتر: سجل العمليات،
+  //    التقارير، سجل تسجيل الدخول، نطاق الجنس و LDAP في المستخدمين،
+  //    والحالة والبرج في سكن أعضاء هيئة التدريس وشاشة اختيار الوحدة.
+  //
+  //    ما ينفعش نفرّق بينهم بالـ required: مفيش ولا قائمة في النظام كله
+  //    فيها الوسم ده — التحقق كله مكتوب بجافاسكريبت.
+  //
+  //    فالخيار الفاضي بقى **بيظهر دايمًا** بشكل باهت ومائل يقول إنه مش قيمة.
+  //    وده أصلًا سلوك <select> العادي اللي إحنا بنرسم فوقه: كان ينفع ترجّع
+  //    الحقل فاضي، فالتحسين ما يصحّش يبقى أقل قدرة من العنصر اللي بيغطّيه.
+  //    والتحقق عند الحفظ هو اللي بيرفض الفاضي — زي ما كان بالظبط.
+  //
+  //    والقاعدة هنا في مكان واحد: أي فلتر جديد يتكتب بكرة يشتغل صح بلا وسم
+  //    ولا تعديل في شاشته.
+  function isPlaceholder(opt) { return opt.value === ''; }
+
+  // الخيار المعطّل مش قابل للاختيار أصلًا — ده الوحيد اللي بيتشال من القائمة
+  function isHidden(opt) { return opt.disabled; }
 
   function build(sel) {
     if (sel.__nuhSelect) return sel.__nuhSelect;
@@ -63,6 +92,35 @@ var NuhSelect = (function () {
     wrap.appendChild(btn);
     sel.classList.add('nsel-native');
 
+    // ======================================================================
+    //  الوصول: الزر هو الحقل، والقائمة الأصلية مخفية
+    //
+    //  ⚠️ العنصر الأصلي كان لسه في ترتيب Tab وهو غير مرئي (opacity:0):
+    //     الموظف يدوس Tab فيقف على قائمة مش شايفها، وبعدين تاني على الزر
+    //     الظاهر - وقفتين لحقل واحد، وقارئ الشاشة يقرا الحقل مرتين.
+    //  ⚠️ واسم الزر لازم يبقى «الكلية: هندسة» لا «هندسة» لوحدها، عشان كده
+    //     aria-labelledby بيجمع التسمية + النصّ المختار.
+    //  ⚠️ والدوس على التسمية بيروح للزر الظاهر لا للقائمة المخفية - غير كده
+    //     التركيز بيروح لعنصر مالوش شكل على الشاشة.
+    // ======================================================================
+    sel.setAttribute('tabindex', '-1');
+    sel.setAttribute('aria-hidden', 'true');
+    btn.setAttribute('role', 'combobox');
+    btn.setAttribute('aria-haspopup', 'listbox');
+    btn.setAttribute('aria-expanded', 'false');
+    if (sel.id) {
+      try {
+        var txtEl = btn.querySelector('.nsel-txt');
+        txtEl.id = 'nsel-txt-' + sel.id;
+        var lbl = document.querySelector('label[for="' + sel.id + '"]');
+        if (lbl) {
+          if (!lbl.id) lbl.id = 'nsel-lbl-' + sel.id;
+          btn.setAttribute('aria-labelledby', lbl.id + ' ' + txtEl.id);
+          lbl.addEventListener('click', function (e) { e.preventDefault(); btn.focus(); });
+        }
+      } catch (e) { }
+    }
+
     var panel = null, list = null, search = null, active = -1;
 
     function label() {
@@ -78,9 +136,10 @@ var NuhSelect = (function () {
       var html = '', shown = 0;
       for (var i = 0; i < sel.options.length; i++) {
         var o = sel.options[i];
-        if (isPlaceholder(o) && sel.options.length > 1) continue;   // النص الإرشادي مش خيار
+        if (isHidden(o)) continue;                                  // معطّل = مش قابل للاختيار
         if (q && o.text.toLowerCase().indexOf(q) === -1) continue;
         html += '<div class="nsel-opt' + (i === sel.selectedIndex ? ' is-sel' : '') +
+                (isPlaceholder(o) ? ' is-ph' : '') +
                 '" data-i="' + i + '" role="option">' +
                   '<span>' + esc(o.text) + '</span>' +
                   '<svg class="nsel-tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
@@ -89,9 +148,9 @@ var NuhSelect = (function () {
                 '</div>';
         shown++;
       }
-      // ⚠️ كان النص عربي ثابت — والبوابة بتشتغل بلغتين
+      // ⚠️ النصّ من Resources/*.resx زي أي نصّ تاني - كان مكتوب بالحرف هنا.
       if (!shown) html = '<div class="nsel-empty">' +
-        (document.documentElement.lang === 'en' ? 'No results' : 'لا توجد نتائج') + '</div>';
+        esc(tr('nsel_noResults', 'لا توجد نتائج', 'No results')) + '</div>';
       list.innerHTML = html;
       active = -1;
     }
@@ -133,7 +192,9 @@ var NuhSelect = (function () {
       panel.setAttribute('dir', document.documentElement.getAttribute('dir') || 'rtl');
       var withSearch = sel.options.length > SEARCH_MIN;
       panel.innerHTML =
-        (withSearch ? '<div class="nsel-search"><input type="text" autocomplete="off" placeholder="بحث..."></div>' : '') +
+        (withSearch ? '<div class="nsel-search"><input type="text" autocomplete="off" aria-label="' +
+            esc(tr('nsel_search', 'بحث', 'Search')) + '" placeholder="' +
+            esc(tr('nsel_searchPlaceholder', 'بحث...', 'Search...')) + '"></div>' : '') +
         '<div class="nsel-list" role="listbox"></div>';
       document.body.appendChild(panel);
       list = panel.querySelector('.nsel-list');
@@ -141,6 +202,7 @@ var NuhSelect = (function () {
       rows('');
       place();
       wrap.classList.add('is-open');
+      btn.setAttribute('aria-expanded', 'true');
       OPEN = { close: close, place: place, panel: panel, btn: btn };
 
       if (search) { search.addEventListener('input', function () { rows(search.value); }); search.focus(); }
@@ -158,6 +220,7 @@ var NuhSelect = (function () {
       if (panel && panel.parentNode) panel.parentNode.removeChild(panel);
       panel = null; list = null; search = null; active = -1;
       wrap.classList.remove('is-open');
+      btn.setAttribute('aria-expanded', 'false');
       if (OPEN && OPEN.btn === btn) OPEN = null;
     }
 

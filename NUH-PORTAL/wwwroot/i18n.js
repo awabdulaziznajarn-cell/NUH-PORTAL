@@ -19,6 +19,18 @@ function t(key) {
   return (d[key] != null) ? d[key] : key;
 }
 
+// ⚠️ نصّ احتياطي مكتوب في مكان النداء لو المفتاح لسه ماتضافش للـ resx.
+//    اتنقلت هنا من request-details-page.js لأن أكتر من شاشة بقت تستخدمها
+//    (وثيقة التعهّد بتتعرض في شاشتين) - ونسختين من نفس الدالة بيفترقوا.
+//    القاعدة: المفتاح هو الأصل، والنصّ هنا شبكة أمان لحد ما يتضاف.
+function tf(key, arText, enText) {
+  var v = t(key);
+  if (v !== key) return v;
+  var root = document.getElementById('html-root');
+  var lng = root ? (root.getAttribute('lang') || 'ar') : 'ar';
+  return lng === 'en' ? enText : arText;
+}
+
 // أكواد الكليات/الأقسام (زي ما بيتخزّنوا من فورم التسجيل) → مفاتيح reg_*.
 // لو القيمة كود معروف بنترجمه، وأي حاجة تانية (نص عربي جاهز) بترجع زي ما هي.
 var COLLEGE_KEYS = { engineering: 'reg_collegeEngineering', medicine: 'reg_collegeMedicine', cs: 'reg_collegeCS', science: 'reg_collegeScience', business: 'reg_collegeBusiness', arts: 'reg_collegeArts', education: 'reg_collegeEducation', pharmacy: 'reg_collegePharmacy' };
@@ -96,8 +108,13 @@ function __baseSetLang(l) {
   if (d) {
     var now = new Date();
     d.textContent = currentLang === 'ar'
-      ? now.toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
-      : now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      // ⚠️ تالت نسخة من ترويسة التاريخ (التخطيط + reports-page + هنا).
+      //    الفحص على NuhFmt لأن الملف ده بيتحمّل في صفحات بوابة الطالب كمان
+      //    واللي منها ما بيحمّلش date-format.js.
+      ? (typeof NuhFmt !== 'undefined' ? NuhFmt.dateFull(now)
+          : now.toLocaleDateString('ar-EG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }))
+      : (typeof NuhFmt !== 'undefined' ? NuhFmt.dateFull(now)
+          : now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
   }
   var sidebarName = document.getElementById('sidebar-user-name');
   var sidebarRole = document.getElementById('sidebar-user-role');
@@ -126,6 +143,20 @@ var onLanguageChange = null;
 var __i18nRemote = false;      // الصفحة دي محتاجة تجيب القاموس؟
 var __i18nDictLang = null;     // لغة القاموس المحمّل حاليًا
 
+// ==========================================================================
+//  __i18nReady — وعد بيتحقّق لما القاموس وجدول المسار يبقوا جاهزين.
+//
+//  ⚠️ صفحات البوابة بتجيب القاموس بـ fetch، يعني وقت ما سكربت الصفحة بيشتغل
+//     ممكن يكون لسه مجاش. الصفحة اللي بترسم صفوف فيها نصوص مترجمة لازم
+//     تستنّاه، وإلا بترسم بالمفاتيح الخام (req_badge_submitted) لأن t()
+//     بترجّع المفتاح لما ما يلاقيهوش.
+//  ⚠️ وفي شاشات الموظفين بيتحقّق فورًا: القاموس محقون من اللياوت قبل أي
+//     سكربت، فمفيش انتظار أصلًا.
+// ==========================================================================
+var __i18nReadyResolve = null;
+var __i18nReady = new Promise(function (res) { __i18nReadyResolve = res; });
+if (typeof window !== 'undefined') window.__i18nReady = __i18nReady;
+
 function __i18nFetch(lang) {
   return fetch('/api/ui/i18n?lang=' + encodeURIComponent(lang), { credentials: 'same-origin' })
     .then(function (r) { return r.ok ? r.json() : null; })
@@ -133,6 +164,11 @@ function __i18nFetch(lang) {
       if (!d) return;
       window.__I18N = d.i18n || {};
       window.__LKMAP = d.lookups || {};
+      // ⚠️ جدول مسار الطلب - نفس المصدر اللي شاشات الموظفين بتقرا منه
+      //    (Core/RequestWorkflow.cs). من غيره كانت صفحات البوابة بتكتب
+      //    أسماء المراحل بنفسها وتفارق الخادم. js/request-workflow.js
+      //    بيقرا من window.__WF بالظبط زي شاشات الموظفين.
+      if (d.workflow) window.__WF = d.workflow;
       __i18nDictLang = lang;
     })
     .catch(function () {
@@ -143,6 +179,10 @@ function __i18nFetch(lang) {
 function __applyLang(l) {
   try { __baseSetLang(l); } catch (e) { console.warn('__baseSetLang error:', e); }
   try { upgradeLookupCells(); } catch (e) { }
+  // ⚠️ عنوان التبويب كان بيتحدّث في applyLang وحدها - وهي مربوطة بزرّ تبديل
+  //    اللغة بس. يعني الطالب اللي لغته إنجليزي محفوظة بيفتح الصفحة فيلاقي
+  //    كل حاجة إنجليزي وعنوان التبويب لوحده عربي.
+  try { __applyTitle(); } catch (e) { }
   if (typeof onLanguageChange === 'function') { try { onLanguageChange(currentLang); } catch (e) { console.warn('onLanguageChange error:', e); } }
 }
 
@@ -161,7 +201,11 @@ function setLang(l) {
 // تشغيل البوابة: بيحصل مرة واحدة أول ما الملف يتحمّل (وهو في <head>)
 (function () {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
-  if (window.__I18N) { __i18nDictLang = currentLang; return; }   // شاشة موظف
+  if (window.__I18N) {                                            // شاشة موظف
+    __i18nDictLang = currentLang;
+    if (__i18nReadyResolve) __i18nReadyResolve();
+    return;
+  }
   __i18nRemote = true;
 
   var root = document.documentElement;
@@ -186,6 +230,7 @@ function setLang(l) {
   }
 
   __i18nFetch(want).then(function () {
+    if (__i18nReadyResolve) __i18nReadyResolve();
     function go() {
       try { __applyLang(want); } catch (e) { }
       root.classList.remove('i18n-wait');
@@ -208,10 +253,20 @@ var __pageTitle = (function () {
 // ⚠️ اسم البوابة من Brand_Title وحده — نفس المفتاح الذي تقرأ منه القائمة
 //    الجانبية وصفحة الدخول وعنوان التبويب في شاشات الموظفين. كان لكل موضع
 //    مفتاحه الخاص بالقيمة نفسها، فتغيير الاسم كان يستلزم تعديل ستة مفاتيح.
+// ⚠️ اسم الصفحة من مفتاح ترجمة لا من النصّ المكتوب في <title>: النصّ ده ثابت
+//    عربي في ملف الـ HTML، فبعد التبديل للإنجليزي كان عنوان التبويب بيفضل
+//    «طلباتي - University Housing Portal» - نصّين بلغتين في سطر واحد.
+//    المفتاح بيتكتب على <html data-title-key="...">.
+function __applyTitle() {
+  var brand = t('Brand_Title');
+  var root = document.getElementById('html-root') || document.documentElement;
+  var key = root ? root.getAttribute('data-title-key') : null;
+  var name = __pageTitle;
+  if (key) { var v = t(key); if (v !== key) name = v; }   // المفتاح ناقص؟ نرجع للنصّ
+  document.title = (name && name !== brand) ? name + ' - ' + brand : brand;
+}
+
 function applyLang(l) {
   setLang(l);
-  var brand = t('Brand_Title');
-  document.title = (__pageTitle && __pageTitle !== brand)
-    ? __pageTitle + ' - ' + brand
-    : brand;
+  __applyTitle();
 }

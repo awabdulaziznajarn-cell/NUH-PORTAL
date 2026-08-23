@@ -1,3 +1,4 @@
+using NUH_PORTAL.DTOs.FacultyHousing;
 using NUH_PORTAL.DTOs.Requests;
 using NUH_PORTAL.DTOs.Students;
 using NUH_PORTAL.DTOs.StudentStatus;
@@ -12,5 +13,11 @@ namespace NUH_PORTAL.ViewModels
         public StudentStatusStatsDto StatusStats { get; set; } = new();
         public List<StudentDto> LatestStudents { get; set; } = new();
         public List<RequestDto> LatestRequests { get; set; } = new();
+
+        // ⚠️ null معناها «المستخدم مالوش صلاحية facultyHousing.view»، مش
+        //    «مفيش وحدات». الشاشة بتقرا من الفرق ده: null = ما نعرضش الكروت
+        //    خالص، وصفر = نعرضها بصفر. لو كانت DTO فاضية بدل null كان
+        //    المستخدم اللي مالوش صلاحية هيشوف «٠ وحدات» ويفتكرها حقيقة.
+        public FacultyDashboardStatsDto? FacultyStats { get; set; }
     }
 }

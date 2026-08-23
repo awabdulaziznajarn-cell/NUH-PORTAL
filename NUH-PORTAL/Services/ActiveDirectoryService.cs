@@ -169,12 +169,23 @@ _logger.LogInformation(
             return connection;
         }
 
-        private bool ValidateServerCertificate(LdapConnection conn, X509Certificate cert)
+        // ⚠️ cert بتيجي nullable من VerifyServerCertificate — الخادم ممكن ما
+        //    يقدّمش شهادة أصلًا. التوقيع كان بياخدها non-nullable، فالمحلّل
+        //    بيحذّر والكود كان هيقع بـ NullReference جوّه X509Certificate2(cert).
+        private bool ValidateServerCertificate(LdapConnection conn, X509Certificate? cert)
         {
             if (!_config.ValidateCertificate)
             {
                 _logger.LogInformation("TRACE: Certificate validation skipped (ValidateCertificate=false)");
                 return true;
+            }
+
+            // مفيش شهادة والتحقق مطلوب = رفض. الاتجاه الآمن إننا نرفض الاتصال
+            // مش إننا نعدّيه لأن مفيش حاجة نفحصها.
+            if (cert == null)
+            {
+                _logger.LogWarning("Certificate validation failed: the server presented no certificate");
+                return false;
             }
 
             
@@ -736,6 +747,19 @@ try
                     result.DistinguishedName = groupDistinguishedName;
                 }
                 catch (DirectoryOperationException ex)
+                    when (ex.Response?.ResultCode == ResultCode.EntryAlreadyExists
+                          || ex.Response?.ResultCode == ResultCode.AttributeOrValueExists)
+                {
+                    // ⚠️ العضوية موجودة أصلًا = الهدف متحقّق، مش خطأ.
+                    //    الدالة دي معناها «تأكّد إنه في المجموعة» لا «ضيفه»،
+                    //    والفرق ظهر عمليًّا: طالبة حسابها موجود وعضويتها موجودة
+                    //    رجّعت ENTRY_EXISTS فوقع إكمال الطلب — والطلب فضل واقف
+                    //    مع إن كل المطلوب كان متعمول بالفعل.
+                    result.Success = true;
+                    result.DistinguishedName = groupDistinguishedName;
+                    result.Error = null;
+                }
+                catch (DirectoryOperationException ex)
                 {
                     result.Success = false;
                     result.Error = $"LDAP error: {ex.Message}";
@@ -816,6 +840,7 @@ try
                         "displayName", "givenName", "sn", "userAccountControl",
                         "memberOf", "extensionAttribute1", "extensionAttribute2",
                         "description", "department", "title", "mail", "whenCreated",
+                        "lastLogonTimestamp",
                         // ⚠️ الخصائص التلاتة دي مكانتش مطلوبة في البحث، فكانت بترجع
                         //    فاضية دايمًا حتى لو ليها قيمة في الدومين. الـ LDAP
                         //    بيرجّع الخصائص المطلوبة بالاسم بس — مش كل حاجة.
@@ -850,6 +875,16 @@ try
                     int.TryParse(uacStr, out var uac);
                     result.UserAccountControl = uac;
                     result.AccountEnabled = (uac & 2) == 0;
+
+                    // ⚠️ صيغة مختلفة عن whenCreated: دي FILETIME رقم طويل
+                    //    (عدد فترات ١٠٠ نانوثانية من ١٦٠١) مش نص تاريخ.
+                    //    والصفر معناه «ما دخلش ولا مرة» لا «١٦٠١».
+                    var llStr = GetAttributeValue(entry, "lastLogonTimestamp");
+                    if (long.TryParse(llStr, out var ll) && ll > 0)
+                    {
+                        try { result.LastLogonAt = DateTime.FromFileTimeUtc(ll); }
+                        catch { /* قيمة خارج المدى - نسيبها فاضية */ }
+                    }
 
                     var groups = new List<string>();
                     var memberOfValues = entry.Attributes["memberOf"]?.GetValues(typeof(string));
@@ -1343,11 +1378,17 @@ try
         //    الخصائص اللي **الحساب المتصل حاليًا** له حق تعديلها فعلًا.
         //    البديل (نكتب قيمة ونشوف نجحت ولا لأ) معناه إننا بنعدّل بيانات حقيقية
         //    عشان نختبر، وده مرفوض على بيانات إنتاج.
-        public Task<ADOuAccessResult> CheckOuAccessAsync(string organizationalUnitDn, IEnumerable<string> requiredAttributes)
+        // ⚠️ قائمتان لا واحدة: الأولى خصائص البيانات اللي البوابة بتكتبها
+        //    (الاستيراد والتحديث)، والتانية خصائص اسم الكائن اللي النقل بين
+        //    الوحدات محتاجها. لو خلطناهم، نقص في خاصية اسم بيخلّي الفحص يقول
+        //    إن **الاستيراد** معطّل - وهو شغّال.
+        public Task<ADOuAccessResult> CheckOuAccessAsync(string organizationalUnitDn,
+            IEnumerable<string> requiredAttributes, IEnumerable<string>? rdnAttributes = null)
         {
             return Task.Run(() =>
             {
                 var required = requiredAttributes?.ToList() ?? new List<string>();
+                var rdnAttrs = rdnAttributes?.ToList() ?? new List<string>();
                 var result = new ADOuAccessResult { OrganizationalUnit = organizationalUnitDn };
 
                 if (string.IsNullOrWhiteSpace(organizationalUnitDn))
@@ -1366,8 +1407,15 @@ try
                     }
 
                     // (١) الـ OU نفسها موجودة؟
+                    // ⚠️ allowedChildClassesEffective خاصية **محسوبة** بيرجّعها
+                    //    الدومين حسب صلاحيات الحساب اللي بيسأل: بتقول أنهي أنواع
+                    //    كائنات الحساب ده يقدر ينشئها جوّه الحاوية دي. يعني
+                    //    بنسأل الدومين نفسه بدل ما نخمّن من قراءة الـ ACL
+                    //    وحساب العضويات بإيدنا. (نفس أسلوب allowedAttributesEffective
+                    //    اللي الفحص بيستعمله للكتابة على الخصائص.)
                     var ouRequest = new SearchRequest(
-                        organizationalUnitDn, "(objectClass=*)", SearchScope.Base, "distinguishedName");
+                        organizationalUnitDn, "(objectClass=*)", SearchScope.Base,
+                        "distinguishedName", "allowedChildClassesEffective");
                     if (connection.SendRequest(ouRequest) is not SearchResponse ouResponse
                         || ouResponse.Entries.Count == 0)
                     {
@@ -1375,6 +1423,22 @@ try
                         return result;
                     }
                     result.OuExists = true;
+
+                    // ⚠️ ده نص الفحص لا كله: نقل كائن في الدومين محتاج
+                    //    «إنشاء» في الوحدة الهدف **و«حذف» من الوحدة المصدر**،
+                    //    والتانية مالهاش خاصية محسوبة نسألها. فلو رجعت false
+                    //    يبقى النقل **مرفوض قطعًا**، ولو رجعت true يبقى نصّه
+                    //    مضمون. بنقول ده صريح في الشاشة بدل ما نوحي بضمان
+                    //    مش عندنا.
+                    var childClasses = ouResponse.Entries[0]
+                        .Attributes["allowedChildClassesEffective"]?.GetValues(typeof(string));
+                    if (childClasses != null)
+                    {
+                        foreach (string c in childClasses)
+                            if (string.Equals(c, "user", StringComparison.OrdinalIgnoreCase))
+                            { result.CanCreateUser = true; break; }
+                        result.CanCreateUser ??= false;
+                    }
 
                     // (٢) نقرا حساب واحد جوّاها — ده بيثبت القراءة
                     var probeRequest = new SearchRequest(
@@ -1388,7 +1452,7 @@ try
                         || probeResponse.Entries.Count == 0)
                     {
                         result.CanRead = true;
-                        result.Error = "الوحدة التنظيمية مفيهاش حسابات — القراءة شغّالة بس مافيش كائن نختبر عليه الكتابة.";
+                        result.Error = "الوحدة التنظيمية مفيهاش حسابات - القراءة شغّالة بس مافيش كائن نختبر عليه الكتابة.";
                         return result;
                     }
 
@@ -1404,6 +1468,14 @@ try
 
                     foreach (var attr in required)
                         result.AttributeWritable[attr] = writable.Contains(attr);
+
+                    // ⚠️ خصائص اسم الكائن (cn / name): النقل في الدليل عملية
+                    //    ModifyDN بتلمس اسم الكائن، فلازم صلاحية كتابة عليه.
+                    //    ده كان الشرط التالت المنسي - المنح كان مقصورًا على
+                    //    الخمس خصائص، فالنقل كان بيترفض بـ Access is denied
+                    //    والفحص بيقول «التفويض مكتمل».
+                    foreach (var attr in rdnAttrs)
+                        result.RdnAttributeWritable[attr] = writable.Contains(attr);
 
                     // ⚠️ لو الخاصية دي مارجعتش أصلًا يبقى الحساب مالوش حق كتابة
                     //    على الكائن ده خالص — مش إن الفحص فشل. نفرّق بين الاتنين
@@ -1471,6 +1543,17 @@ try
         public string? ProbedAccount { get; set; }
         public Dictionary<string, bool> AttributeWritable { get; set; } = new(StringComparer.OrdinalIgnoreCase);
         public int EffectiveAttributesReturned { get; set; }
+        // إنشاء كائن user جوّه الوحدة دي — نص صلاحية النقل إليها.
+        // null يعني الدومين ما رجّعش الخاصية المحسوبة أصلًا (مش «مرفوض»).
+        public bool? CanCreateUser { get; set; }
+
+        // الكتابة على اسم الكائن (cn / name)
+        public Dictionary<string, bool> RdnAttributeWritable { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
+        // ⚠️ «أي واحدة» لا «كلهم»: الدليل بيفحص خاصية الـ RDN، وهي cn لكائن
+        //    المستخدم و name بتعكسها. منح واحدة فيهم بيكفي عمليًّا، فاشتراط
+        //    الاتنين كان هيقول «مرفوض» على تفويض شغّال.
+        public bool CanWriteRdn => RdnAttributeWritable.Count > 0 && RdnAttributeWritable.Values.Any(v => v);
         public string? Error { get; set; }
         public string? ErrorDetails { get; set; }
 
@@ -1579,6 +1662,11 @@ try
         public string? ExtensionAttribute1 { get; set; }
         public int UserAccountControl { get; set; }
         public bool AccountEnabled { get; set; }
+        // ⚠️ آخر دخول للشبكة. الدومين بيحدّثها كل ٩-١٤ يوم عشان ما يتقلش عليه
+        //    بالتزامن، فدقّتها ±أسبوع — بتجاوب على «الحساب بيتستخدم؟» لا على
+        //    «متصل دلوقتي؟». وفيه lastLogon أدق بس مش متزامنة بين وحدات التحكّم
+        //    (لازم نسأل كل وحدة وناخد الأكبر) — مش مستاهلة الحمل ده هنا.
+        public DateTime? LastLogonAt { get; set; }
         public List<string>? MemberOf { get; set; }
         public Dictionary<string, List<string>>? AttributesRaw { get; set; }
     }

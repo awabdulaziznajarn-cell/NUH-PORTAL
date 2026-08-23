@@ -13,7 +13,7 @@
 .log-icon { flex-shrink:0; width:34px; height:34px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; background:var(--gray-100); color:var(--gray-500); }
 .log-icon.enabled { background:var(--green-light); color:var(--green); }
 .log-icon.disabled { background:var(--red-light); color:var(--red); }
-.log-icon.password_reset { background:#fffaeb; color:#7a5c0b; }
+.log-icon.password_reset { background:#fffaeb; color:var(--gold-dark); }
 .log-details { flex:1; min-width:0; }
 .log-action { font-size:13.5px; font-weight:700; color:var(--navy); margin-bottom:3px; }
 .log-desc { font-size:12.5px; color:var(--gray-700); line-height:1.75; margin-bottom:5px; word-break:break-word; }
@@ -24,26 +24,20 @@
 /* عنوان القسم (أيقونة + نص) يبدأ من جهة البداية (يمين في العربية) بدل ما النص يتزاح للطرف */
 .card-header { justify-content:flex-start; gap:10px; }
 .card-header svg { flex-shrink:0; }
-.card-body { padding:20px; }
-.info-grid { display:grid; grid-template-columns:1fr 1fr; gap:0; }
-.info-field { display:flex; flex-direction:column; padding:10px 12px; border-bottom:1px solid var(--gray-100); font-size:14px; border-radius:4px; margin:0 -4px; transition:background 0.15s; }
-.info-field:hover { background:var(--gray-50); }
-.info-field:nth-last-child(-n+2):nth-child(odd) { border-bottom:none; }
-.info-field:last-child, .info-field:nth-last-child(2):nth-child(even) { border-bottom:none; }
-.info-label { font-weight:600; color:var(--gray-500); font-size:11px; margin-bottom:2px; }
-.info-value { color:var(--navy-dark); font-weight:600; font-size:14px; }
-@@media(max-width:640px){.info-grid{grid-template-columns:1fr}.info-field{border-bottom:1px solid var(--gray-100)}.info-field:nth-last-child(-n+2):nth-child(odd){border-bottom:1px solid var(--gray-100)}.info-field:last-child{border-bottom:none}}
+/* ⚠️ .card-body اتنقلت لـ css/components.css - كانت مكتوبة في شاشتين. */
+/* ⚠️ شبكة البيانات (.info-*) اتنقلت لـ css/components.css - بقت مستخدمة في شاشتين. */
 .badge-submitted { background:#fffaeb; color:#93370d; }
 .badge-housing_approved { background:#eff4ff; color:#175cd3; }
 .badge-housing_rejected { background:var(--red-light); color:var(--red); }
-.badge-cyber_review { background:#f4eefa; color:#80519f; }
+.badge-cyber_review { background:var(--purple-light); color:var(--purple); }
 .badge-cyber_approved { background:var(--green-light); color:var(--green); }
 .badge-cyber_rejected { background:var(--red-light); color:var(--red); }
 .badge-ready_for_provisioning { background:#fffaeb; color:#93370d; }
 .badge-completed { background:var(--green-light); color:var(--green); }
-.badge-pending_supervisor { background:#fef0c7; color:#7a5c0b; }
-.badge-pending_cyber { background:#eff4ff; color:#175cd3; }
-.badge-pending_admin { background:#f4eefa; color:#80519f; }
+/* ⚠️ .badge-pending_supervisor و .badge-pending_cyber اتشالوا — نفس مرحلة
+   submitted و cyber_review بمسمّى المسار التاني، وكانوا بلونين مختلفين
+   لنفس الموقف. الصنف بقى بيتبني من RequestWorkflow.Canonical. */
+.badge-pending_admin { background:var(--purple-light); color:var(--purple); }
 .badge-need_more_info { background:#fffaeb; color:#b54708; }
 .badge-approved { background:var(--green-light); color:var(--green); }
 .badge-rejected { background:var(--red-light); color:var(--red); }
@@ -90,10 +84,8 @@
 .submit-review-btn { padding:12px 28px; background:var(--navy); color:var(--white); border:none; border-radius:10px; font-family:'IBM Plex Sans Arabic',sans-serif; font-size:14px; font-weight:600; cursor:pointer; transition:all 0.2s; box-shadow:0 2px 8px rgba(16,70,49,0.2); }
 .submit-review-btn:hover { opacity:0.92; transform:translateY(-1px); box-shadow:0 4px 12px rgba(16,70,49,0.3); }
 .submit-review-btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; box-shadow:none; }
-.rejection-info { background:var(--red-light); border:1px solid #fecdca; border-radius:12px; padding:16px; margin-top:16px; display:flex; align-items:flex-start; gap:10px; }
-.rejection-info svg { flex-shrink:0; margin-top:1px; }
-.rejection-info-label { font-size:12px; font-weight:600; color:var(--red); margin-bottom:4px; }
-.rejection-info-text { font-size:13px; color:var(--navy-dark); font-weight:500; }
+/* ⚠️ .rejection-info اتشال — كان تصميم تالت لصندوق الملاحظة/السبب.
+   التعريف الوحيد .note-block في css/components.css، والشاشة بتحمّله من التخطيط. */
 .workflow-bar { display:flex; align-items:flex-start; justify-content:space-around; padding:12px 0 4px; position:relative; overflow:visible; }
 .workflow-bar::before { content:''; position:absolute; top:22px; left:30px; right:30px; height:3px; background:var(--gray-200); z-index:0; border-radius:2px; }
 .workflow-step { display:flex; flex-direction:column; align-items:center; position:relative; z-index:1; flex:0 1 auto; text-align:center; padding:0 4px; }
@@ -135,5 +127,8 @@
 <script>window.NUH_PERMS = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
     User.FindAll("permission").Select(c => c.Value).ToArray()));</script>
 <script src="/i18n.js"></script>
+@* ⚠️ وثيقة التعهّد (العرض + الطباعة) - مشتركة مع شاشة «ملف الطالب».
+   لازم تتحمّل قبل سكربت الشاشة لأن الشاشة بتناديها وقت الرندر. *@
+<script src="/js/pledge-doc.js" asp-append-version="true"></script>
 <script src="/js/request-details-page.js"></script>
 }

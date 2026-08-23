@@ -1,9 +1,14 @@
-@* السايدبار الموحد — قوائم parent/child بتتفتح وتتقفل (accordion). النصوص من SharedResource (.resx). *@
+﻿@* السايدبار الموحد — قوائم parent/child بتتفتح وتتقفل (accordion). النصوص من SharedResource (.resx). *@
+@* ⚠️ الشاشة اللي شرطها *مركّب* (أكتر من صلاحية) بنسأل عنها نظام الصلاحيات
+   نفسه بدل ما نعيد كتابة الشرط هنا. الشاشة اللي شرطها صلاحية واحدة بتفضل
+   HasClaim عادي — لأن الفحص ده *هو* السياسة نفسها فمفيش نسختين يفارقوا. *@
+@inject IAuthorizationService Authz
 @{
   // إخفاء عنوان المجموعة نفسه لو المستخدم مالوش أي شاشة جوّاها — عشان مايظهرش قسم فاضي
   bool Perm(string p) => User.HasClaim("permission", p);
   var canStudents = Perm("students.view") || Perm("students.create")
-                    || Perm("students.bulkImport") || Perm("students.changeStatus");
+                    || Perm("students.bulkImport") || Perm("students.changeStatus")
+                    || Perm("students.investigate");
   var canRequests = Perm("requests.view") || Perm("housing.view");
   var canSystem   = Perm("reports.view") || Perm("auditLogs.view") || Perm("errorLogs.view")
                     || Perm("signInLog.view") || Perm("users.view") || Perm("roles.view");
@@ -49,11 +54,13 @@
 </style>
 <aside class="sidebar">
   <div class="sidebar-logo">
-    <div class="sidebar-logo-image-container">
-      <img src="/nu-logo.png" alt="@SharedLocalizer["Brand_Sub"]">
-    </div>
+    @* ⚠️ الشعار رابط للرئيسية — كان <div> عليه حركة عند المرور وهو مش قابل
+       للضغط أصلًا. و«جامعة نجران» اتشالت من تحت العنوان لأنها مطبوعة جوّه
+       الصورة نفسها؛ فضلت في alt عشان قارئ الشاشة والصور اللي ما تحمّلش. *@
+    <a class="sidebar-logo-image-container" href="/Home" title="@SharedLocalizer["Brand_Title"]">
+      <img src="/nu-logo.svg" alt="@SharedLocalizer["Brand_Sub"]">
+    </a>
     <div class="sidebar-logo-title">@SharedLocalizer["Brand_Title"]</div>
-    <div class="sidebar-logo-sub">@SharedLocalizer["Brand_Sub"]</div>
   </div>
 
   <nav class="sidebar-nav no-anim">
@@ -90,6 +97,15 @@
           <a class="nav-item" href="/Bulk">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 11 9 11 11 13 11 13 12 10 12 10 9"/></svg>
             <span>@SharedLocalizer["Nav_BulkExcel"]</span>
+          </a>
+        }
+        @* ⚠️ صلاحية مستقلة: الشاشة دي بتجمّع كل بيانات الطالب في صفحة واحدة،
+           فمابتظهرش لمجرد إن الموظف بيشوف الطلاب. الشرح في ApplicationPermissions. *@
+        @if (User.HasClaim("permission", "students.investigate"))
+        {
+          <a class="nav-item" href="/StudentFile">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><circle cx="11.5" cy="14.5" r="2.5"/><path d="M15 18l-1.6-1.6"/></svg>
+            <span>@SharedLocalizer["Nav_StudentFile"]</span>
           </a>
         }
         @if (User.HasClaim("permission", "students.changeStatus"))
@@ -200,7 +216,9 @@
         <svg class="ng-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
       <div class="nav-group-body">
-        @if (User.HasClaim("permission", "reports.view"))
+        @* نفس سياسة ReportsController بالحرف — مش نسخة منها. لو الشرط اتغيّر
+           في Program.cs، القائمة بتتغيّر معاه من غير ما حد يفتكر يعدّلها. *@
+        @if ((await Authz.AuthorizeAsync(User, "reports.page")).Succeeded)
         {
           <a class="nav-item" href="/Reports">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
@@ -247,6 +265,11 @@
     }
   </nav>
 
+  @* ⚠️ نفس مفتاح Brand_Copyright اللي بتستعمله بوابة الطالب وصفحة الدخول.
+     كتابة النصّ هنا بالإيد كانت هتخلّي تعديله في ملف الترجمة يوصل لصفحتين
+     ويسيب التالتة - وde حصل فعلًا مع نصّ التذييل قبل كده. *@
+  <div class="sidebar-foot">@SharedLocalizer["Brand_Copyright"]</div>
+
   @* ⚠️ بطاقة المستخدم وزر «تسجيل الخروج» انتقلا إلى طرف الشريط العلوي
      (Views/Shared/_Layout.cshtml). لا تُعِدهما هنا: نموذج الخروج يجب أن
      يبقى في مكان واحد فقط، وإلا صار في الصفحة نموذجان بنفس الإجراء. *@
@@ -255,18 +278,42 @@
 <script>
   // فتح/قفل مجموعات السايدبار (accordion) — مع حفظ الحالة وتفعيل المجموعة اللي فيها الصفحة الحالية
   (function () {
-    function persist() {
+    // ⚠️ رقم ٢ في اسم المفتاح مقصود. المنطق القديم كان بيحفظ حالة **كل**
+    //    المجموعات مع أي ضغطة، فكانت المجموعات اللي النظام بيفتحها لوحده
+    //    تتسجّل مفتوحة واحدة ورا التانية لحد ما القائمة كلها تتفرد.
+    //    إصلاح المنطق لوحده مكانش كفاية: الحالة الغلط **متخزّنة أصلًا** في
+    //    متصفّح كل مستخدم، والكود الجديد كان هيقراها زي ما هي. تغيير اسم
+    //    المفتاح بيخلّي المحفوظ القديم يتجاهَل، فالكل يبدأ من نضيف من غير
+    //    ما حد يمسح حاجة بإيده.
+    var NAV_KEY = 'navGroups2';
+    // ⚠️ بنحفظ **المجموعة اللي المستخدم لمسها بس** — مش حالة كل المجموعات.
+    //
+    //    الغلط اللي كان هنا: الدالة كانت بتمشي على كل المجموعات وتحفظ حالتها
+    //    الحالية مع أي ضغطة. وتحت في init() فيه سطر بيفتح **إجباريًّا**
+    //    المجموعة اللي فيها الصفحة المفتوحة (عشان البند النشط يبان) — والفتح
+    //    ده مش اختيار المستخدم.
+    //
+    //    فكانت النتيجة تتراكم كده:
+    //      • تفتح /FacultyHousing → init بتفتح «سكن أعضاء هيئة التدريس»
+    //      • تدوس على «القوائم المرجعية» عشان تفتحها → persist بتحفظ **الاتنين**
+    //        مفتوحين، مع إنك فتحت واحدة بس
+    //      • تكرّرها على شاشات تانية → كل مجموعة بتتسجّل مفتوحة واحدة ورا التانية
+    //      • تروح للرئيسية تلاقي القائمة كلها مفرودة
+    //
+    //    عشان كده كانت بتبان بعد ما تفتح «القوائم المرجعية» أو «إعدادات النظام»
+    //    بالذات: دول آخر مجموعتين، فالتراكم بيبقى واضح عندهم.
+    function persist(group) {
       try {
+        var k = group.getAttribute('data-group'); if (!k) return;
         var st = {};
-        document.querySelectorAll('.sidebar-nav .nav-group').forEach(function (g) {
-          var k = g.getAttribute('data-group'); if (k) st[k] = g.classList.contains('collapsed');
-        });
-        sessionStorage.setItem('navGroups', JSON.stringify(st));
+        try { st = JSON.parse(sessionStorage.getItem(NAV_KEY) || '{}'); } catch (e) { }
+        st[k] = group.classList.contains('collapsed');
+        sessionStorage.setItem(NAV_KEY, JSON.stringify(st));
       } catch (e) { }
     }
     window.toggleNavGroup = function (btn) {
       var g = btn.closest('.nav-group'); if (!g) return;
-      g.classList.toggle('collapsed'); persist();
+      g.classList.toggle('collapsed'); persist(g);
     };
     function init() {
       // ⚠️ sessionStorage لا localStorage: حالة المجموعات تخصّ جلسة العمل الحالية.
@@ -275,7 +322,7 @@
       //    فيرى الأقسام الرئيسية أولًا، وما يفتحه يبقى مفتوحًا حتى نهاية جلسته.
       //    (صفحة الدخول تمسحها أيضًا، لتغطية الخروج والدخول في نفس التبويب.)
       var saved = {};
-      try { saved = JSON.parse(sessionStorage.getItem('navGroups') || '{}'); } catch (e) { }
+      try { saved = JSON.parse(sessionStorage.getItem(NAV_KEY) || '{}'); } catch (e) { }
       // الحالة المحفوظة تُطبَّق في الاتجاهين: مقفولة *ومفتوحة*. الاكتفاء بإضافة
       // collapsed كان يعني أن اختيار المستخدم بفتح مجموعة يضيع مع كل صفحة.
       document.querySelectorAll('.sidebar-nav .nav-group').forEach(function (g) {
@@ -300,6 +347,8 @@
       });
       if (bestItem) {
         bestItem.classList.add('active');
+        // ⚠️ الفتح ده عرض مؤقّت عشان البند النشط يبان — **مش** اختيار المستخدم،
+        //    فما بيتحفظش. persist بتتنادى من الضغط اليدوي بس.
         var bg = bestItem.closest('.nav-group'); if (bg) bg.classList.remove('collapsed');
       }
     }
@@ -308,11 +357,44 @@
     //    مجموعة تحت — كان بيلاقي القائمة رجعت فوق خالص والعنصر اللي لسه مختاره
     //    مش باين. بنحرّك القائمة بالقدر اللي يخلّي العنصر النشط ظاهر وبس.
     //    مش scrollIntoView: دي بتحرّك كل العناصر الأب كمان (الصفحة نفسها).
+    //    ⚠️ ولم تكن تعمل أصلًا: .sidebar-nav لم يكن لها overflow-y، فلم تكن
+    //       حاوية تمرير، و scrollTop عليها لا يفعل شيئًا. والشريط نفسه كان
+    //       min-height:100vh وهو position:fixed، فينمو خارج الشاشة ويصير ما
+    //       تحته غير قابل للوصول إطلاقًا. أُصلح الاثنان في site.css.
     function revealActive(nav) {
       var a = nav.querySelector('a.nav-item.active');
       if (!a) return;
-      var ar = a.getBoundingClientRect(), nr = nav.getBoundingClientRect();
+
+      var max = nav.scrollHeight - nav.clientHeight;
+      if (max <= 0) return;                           // القائمة كلها ظاهرة
+
       var pad = 12;                                   // فسحة صغيرة فوق/تحت العنصر
+      var nr = nav.getBoundingClientRect(), ar = a.getBoundingClientRect();
+
+      // ⚠️ الموضع يُحسب من حدود العنصر لا من offsetTop: العنصر الأب في التموضع
+      //    هو .sidebar (position:fixed) لا .sidebar-nav، فـ offsetTop يشمل
+      //    الشعار وما قبله ويعطي رقمًا لا معنى له هنا.
+      var top = ar.top - nr.top + nav.scrollTop;
+      var bot = top + a.offsetHeight;
+
+      // ⚠️ البند ظاهر بالكامل أصلًا؟ مانلمسش التمرير خالص.
+      //    ده كان ناقص، والنتيجة كانت باينة للمستخدم: تكون واقف في «إدارة
+      //    حسابات السكن» وشايف «قائمة أعضاء هيئة التدريس» قدامك في القائمة،
+      //    تدوس عليها — فالقائمة تقفز لآخرها ويختفي نص البنود اللي فوق،
+      //    مع إن اللي دوست عليه كان ظاهر من الأصل. القفزة كانت من الشرط
+      //    اللي تحت («البند في آخر شاشة → انزل للنهاية») وهو بيتنفّذ من
+      //    غير ما حد يسأل الأول: هو محتاج تمرير أصلًا ولا لأ؟
+      if (ar.top >= nr.top + pad && ar.bottom <= nr.bottom - pad) return;
+
+      // ⚠️ العنصر في آخر شاشة من القائمة: ننزل إلى النهاية بدل الحدّ الأدنى.
+      //    الحدّ الأدنى يُظهر العنصر ملتصقًا بالحافة السفلى وما بعده مخفيّ -
+      //    فمن يفتح «سجل الدخول والخروج» لا يرى «المستخدمون» و«الأدوار
+      //    والصلاحيات» تحته ويظنّهما غير موجودين.
+      if (top >= max + pad && bot <= max + nav.clientHeight - pad) {
+        nav.scrollTop = max;
+        return;
+      }
+
       if (ar.bottom > nr.bottom - pad) nav.scrollTop += ar.bottom - nr.bottom + pad;
       else if (ar.top < nr.top + pad) nav.scrollTop -= nr.top - ar.top + pad;
     }

@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NUH_PORTAL.Services.Interfaces;
 
@@ -22,8 +22,10 @@ namespace NUH_PORTAL.Controllers
             [FromQuery] int pageSize = 50,
             [FromQuery] string? search = null,
             [FromQuery] string? fromDate = null,
-            [FromQuery] string? toDate = null)
-            => Ok(await _service.GetErrorLogsAsync(page, pageSize, search, fromDate, toDate));
+            [FromQuery] string? toDate = null,
+            [FromQuery] string? sortBy = null,
+            [FromQuery] bool sortAsc = false)
+            => Ok(await _service.GetErrorLogsAsync(page, pageSize, search, fromDate, toDate, sortBy, sortAsc));
 
         // GET api/logs/errors/{id}
         [HttpGet("errors/{id:int}")]
@@ -40,7 +42,9 @@ namespace NUH_PORTAL.Controllers
             [FromQuery] string? eventType = null,
             [FromQuery] string? search = null,
             [FromQuery] string? fromDate = null,
-            [FromQuery] string? toDate = null)
-            => Ok(await _service.GetSignInLogsAsync(page, pageSize, eventType, search, fromDate, toDate));
+            [FromQuery] string? toDate = null,
+            [FromQuery] string? sortBy = null,
+            [FromQuery] bool sortAsc = false)
+            => Ok(await _service.GetSignInLogsAsync(page, pageSize, eventType, search, fromDate, toDate, sortBy, sortAsc));
     }
 }

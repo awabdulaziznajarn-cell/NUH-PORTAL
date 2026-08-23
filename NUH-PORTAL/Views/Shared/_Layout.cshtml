@@ -29,30 +29,21 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  @*
-     ⚠️ عنوان التبويب في مكان واحد لكل شاشات النظام: «اسم الصفحة - بوابة السكن
-        الجامعي». والاسم المحدَّد أولًا لا اسم البوابة، لأن المتصفح يقصّ العنوان
-        من آخره عند فتح عدة تبويبات - فلو تقدّم اسم البوابة لظهرت التبويبات كلها
-        بنصّ واحد لا يُفرَّق بينها.
-     ⚠️ والفاصلة لا تُطبع إذا لم تُحدَّد الصفحة عنوانًا، وإلا بدأ العنوان بشرطة
-        معلّقة. الشرط هنا مرة واحدة يغني عن تكراره في كل شاشة.
-     ⚠️ واسم النظام من Brand_Title وحده. كان مكرَّرًا في ستة مفاتيح تحمل القيمة
-        نفسها (AppTitleSuffix و login_brandTitle و appTitle و appTitleShort و
-        pt_trkAppTitle و rdp_about_sysName)، فتغييره كان يستلزم ستّ تعديلات،
-        وأول واحد يُنسى تصير صفحة الدخول تقول اسمًا والقائمة الجانبية اسمًا آخر.
-  *@
-  @{
-      var __pageTitle = ViewData["Title"] as string;
-      var __appTitle = SharedLocalizer["Brand_Title"].Value;
-  }
-  <title>@(string.IsNullOrWhiteSpace(__pageTitle) ? __appTitle : __pageTitle + " - " + __appTitle)</title>
+  <title>@ViewData["Title"] - @SharedLocalizer["AppTitleSuffix"]</title>
   @* ⚠️ asp-append-version بتضيف بصمة محتوى الملف في الرابط، فالمتصفح يجيب
      النسخة الجديدة أول ما تتغيّر ويفضل مخزّنها لحد ما تتغيّر تاني.
      من غيرها كان لازم Ctrl+Shift+R بعد كل نشر عشان تشوف تعديل التصميم —
      وده مستحيل تطلبه من كل موظف. كل ملفات الجافاسكريبت كانت عليها البصمة
      وده الملف الوحيد اللي كان ناقصها. *@
-  <link rel="stylesheet" href="/css/components.css" asp-append-version="true" />
   <link rel="stylesheet" href="/css/site.css" asp-append-version="true" />
+  @* ⚠️ components.css لازم يتحمّل بعد site.css — فيه ستايلات المكوّنات المشتركة
+     (بطاقة النموذج .form-card / شبكة الحقول .form-grid / الحقل .field /
+     أزرار إجراءات الصف .action-* / القائمة المنسدلة المخصّصة .nsel-*).
+     الستايلات دي كانت مكرّرة بالحرف جوه الشاشات واتنقلت هنا، لكن الربط اتضاف
+     في register-form.html بس واتنسي في الـ Layout — فكل شاشات الموظفين فقدت
+     تنسيقها: القوائم المنسدلة بتظهر مرتين (المخصّصة + الأصلية اللي .nsel-native
+     بتخفيها)، وأزرار تعديل/حذف بتبان نصًّا عاريًا، والنماذج بتتفكّك. *@
+  <link rel="stylesheet" href="/css/components.css" asp-append-version="true" />
 </head>
 <body class="app-shell">
   <partial name="_Sidebar" />
@@ -61,10 +52,14 @@
     <div class="topbar">
       <div class="topbar-title">@ViewData["Title"]</div>
       <div class="topbar-right">
-        <div class="lang-toggle" role="group" aria-label="Language">
-          <a class="lang-btn @(__isAr ? "active" : "")" href="/Culture/Set?culture=ar&amp;returnUrl=@__returnUrl">ع</a>
-          <a class="lang-btn @(!__isAr ? "active" : "")" href="/Culture/Set?culture=en&amp;returnUrl=@__returnUrl">EN</a>
-        </div>
+        @* ⚠️ زرّ واحد بيوَدّي للّغة التانية، بدل قطعتين (ع | EN) واحدة مضيّئة.
+           السبب توحيد لا تجميل: نفس الوظيفة كان ليها تلات أشكال في النظام -
+           القطعتان هنا، وزرّ واحد في بوابة الطالب، وشكل تالت في صفحة الدخول.
+           والقطعتان أسوأهم قراءةً: المستخدم لازم يفهم إن المضيّء هو الحالي
+           وإن التاني هو اللي هيروح له، بدل ما يقرا اسم اللغة ويدوس.
+           والنصّ من pt_langToggle: قيمته في الملف العربي «English» وفي
+           الإنجليزي «العربية» - يعني دايمًا اسم اللغة اللي رايح لها. *@
+        <a class="topbar-lang" href="/Culture/Set?culture=@(__isAr ? "en" : "ar")&amp;returnUrl=@__returnUrl">@SharedLocalizer["pt_langToggle"]</a>
         <div class="topbar-date" id="dateNow"></div>
         <div class="notif-wrapper">
           <button class="notif-btn" type="button" onclick="toggleNotifDropdown(event)">
@@ -113,16 +108,43 @@
     </div>
   </div>
 
+  @* تهريب HTML (escHtml) — التعريف الوحيد في النظام.
+     ⚠️ أول سكربت خالص عن قصد: السكربت اللي تحته بينادي escHtml وقت التحميل
+        (جرس الإشعارات)، وباقي الملفات المشتركة بتناديه وقت بناء الصفوف. *@
+  <script src="/js/esc.js" asp-append-version="true"></script>
+
+  @* شكل التاريخ في كل الواجهة (NuhFmt) — التعريف الوحيد في js/date-format.js.
+     ⚠️ بدري كده عن قصد: شاشات بتنادي NuhFmt وقت التحميل لا وقت الحدث، وحقل
+        التاريخ (date-field.js) بيقرا منه كمان. *@
+  <script src="/js/date-format.js" asp-append-version="true"></script>
+
+  @* حالة الشاشة في الرابط (NuhUrl) — التعريف الوحيد في js/url-state.js.
+     ⚠️ قبل قسم Scripts عن قصد: الشاشات بتقرا الحالة من الرابط **وهي**
+        بتتهيّأ، يعني قبل أول نداء للـ API لا بعده. *@
+  <script src="/js/url-state.js" asp-append-version="true"></script>
+
+  @* قواعد الرقم الجامعي والهوية والجوال (NuhId) — **متولّدة** من
+     Core/IdentityRules.cs عن طريق UiController، مش ملف ثابت.
+     ⚠️ مفيش asp-append-version هنا: ده راوت مش ملف على القرص. تحديث
+        القاعدة بيوصل بالـ ETag اللي الراوت بيرجّعه. *@
+  <script src="/js/nuh-id.js"></script>
+
   <script>
     // قاموس الترجمة كامل (مصدره ملفات .resx) — المصدر الوحيد لنصوص الـ JS الديناميكية عبر t()
     window.__I18N = @Html.Raw(__i18nJson);
     // خريطة القوائم (كود → اسم) — i18n.js بيقرأ منها في collegeName()/deptName()
     window.__LKMAP = @Html.Raw(__lkMapJson);
-    // ⚠️ جدول انتقالات مسار الطلب — تعريفه الوحيد في Core/RequestWorkflow.cs،
-    //    وهو نفسه الذي يتحقق منه الخادم في RequestService.ReviewAsync. كان
-    //    مكتوبًا ثلاث مرات في الواجهة والخادم فتفارق، وضاع زر الاعتماد على
-    //    الطلبات في حالة «مقدَّم». شاشتا الطلبات تقرآن من هنا لا من نسخة محلية.
+    // ⚠️ جدول انتقالات مسار الطلب — تعريفه الوحيد Core/RequestWorkflow.cs.
+    //    js/request-workflow.js يقرأ منه، وكان السطر ده ناقص أصلًا: فالملف
+    //    بيقرا مصفوفة فاضية، و NuhWorkflow.forStatus بيرجع null دايمًا.
+    //    النتيجة إن صفوف شاشة الطلبات المرسومة بالجافاسكربت (بعد تبديل تبويب
+    //    أو بحث أو تغيير صفحة) كانت بتطلع بلا أزرار إجراء وبلا تمييز للصف،
+    //    بينما أول رسمة من السيرفر بتطلع صح — فالأزرار «تختفي» بعد أول ضغطة.
     window.__WF = @Html.Raw(NUH_PORTAL.Core.RequestWorkflow.ToJson());
+    @* مجموعات إجراءات السجل (أي إجراء يخصّ الطلاب/الطلبات) — تعريفها الوحيد
+       Core/AuditActionGroups.cs. شاشة التقارير بتقرا منها بدل ما تكتب القوائم
+       بنفسها، وإلا كانت نسخة تفترق أول ما يتضاف إجراء جديد. *@
+    window.__AUDIT_GROUPS = @Html.Raw(NUH_PORTAL.Core.AuditActionGroups.ToJson());
 
     // حاجات مشتركة لكل صفحات الـ MVC — الدور من كليم السيرفر.
     // ⚠️ headers() كانت ترسل staffToken من localStorage في ترويسة Authorization.
@@ -133,6 +155,31 @@
     //    الدالة باقية (ترجع {}) لأن شاشات كثيرة تدمجها بـ Object.assign.
     var NUH = {
       role: '@(User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "")',
+      // ⚠️ اسم الإدارة في ترويسة الوثائق المطبوعة. بيتحسب هنا في السيرفر لا
+      //    في الجافاسكريبت: الأدوار كليمات على الكوكي، والواجهة ماتقراهاش.
+      //    والترتيب مقصود - الأدمن عنده صلاحيات المشرف والسيبراني كلها، فلو
+      //    الفحص كان بالصلاحية بدل الدور كان هيطلع «إدارة الإسكان» على ورقة
+      //    طالعة من تقنية المعلومات.
+      @* ⚠️ الأسماء من Resources/SharedResource لا مكتوبة هنا. كانت مكتوبة في
+         السطر ده بالإيد، والنتيجة إن اللي عايز يعدّل اسم إدارة بيدوّر عليه
+         في ملف الترجمة **وما يلاقيهوش** - وde حصل فعلًا. أسماء الجهات الرسمية
+         بتتغيّر (إدارة تبقى عمادة، وقسم يتنقل)، فمكانها ملف النصوص.
+
+         ⚠️ والقيمة **عربية في الملفين** (ar و en) عن قصد: الوثيقة المطبوعة
+         عربية دايمًا مهما كانت لغة الواجهة - البنود المُلزِمة عربية والبصمة
+         محسوبة عليها (الشرح الكامل في js/pledge-doc.js). لو الملف الإنجليزي
+         شايل ترجمة، موظف واجهته إنجليزي كان هيطلّع ورقة عربية بترويسة
+         إنجليزية. القيمة واحدة، فاللغة مابتفرقش.
+
+         ⚠️ و Html.Raw + JsonSerializer لا '@(...)' العادية: رازر بيعمل ترميز
+         HTML لأي @(...)، فالعربي بيتحوّل لكيانات (&#x625;...) جوّه نصّ
+         جافاسكريبت، وبعدين escHtml في pledge-doc.js بتحوّل الـ & لـ &amp;
+         والكيان بيظهر على الورقة نصًّا خامًا - وde حصل فعلًا. JsonSerializer
+         بيطلّع نصّ جافاسكريبت سليم بحروف حقيقية، وHtml.Raw بيمنع الترميز. *@
+      printDept: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+          (User.IsInRole("admin") ? SharedLocalizer["doc_deptIT"]
+          : User.IsInRole("cyber") ? SharedLocalizer["doc_deptCyber"]
+          : SharedLocalizer["doc_deptHousing"]).Value)),
       token: function () { return ''; },
       headers: function () { return {}; }
     };
@@ -153,31 +200,9 @@
       notifError: '@(SharedLocalizer["Notif_LoadError"].Value)'
     };
 
-    var __dateLocale = '@__lang' === 'ar' ? 'ar-EG' : 'en-US';
-    document.getElementById('dateNow').textContent =
-      new Date().toLocaleDateString(__dateLocale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-
-    // ⚠️ عنوان الشاشة كان مكتوبًا مرتين فوق بعضهما عند فتح أي صفحة: في الشريط
-    //    العلوي وفي رأس الصفحة. الشريط ثابت (sticky) فعنوانه يفيد بعد التمرير
-    //    وحده - حين يختفي الرأس ويبقى الجدول بلا ما يدلّ على الشاشة. فيُخفى
-    //    العنوان ما دام الرأس ظاهرًا، ويظهر متى غاب. القاعدة هنا في التخطيط
-    //    مرة واحدة، فتسري على كل الشاشات بلا تعديل في أي صفحة.
-    //    وإن كانت الصفحة بلا .page-header يظهر العنوان دائمًا - وإلا اختفى بلا رجعة.
-    (function () {
-      var bar = document.querySelector('.topbar');
-      if (!bar) return;
-      var head = document.querySelector('.content .page-header');
-      if (!head || !window.IntersectionObserver) { bar.classList.add('is-scrolled'); return; }
-      new IntersectionObserver(function (entries) {
-        bar.classList.toggle('is-scrolled', !entries[0].isIntersecting);
-      }, { rootMargin: '-64px 0px 0px 0px' }).observe(head);
-    })();
-
-    function escHtml(v) {
-      return String(v == null ? '' : v)
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-    }
+    // ⚠️ كانت ar-EG بأرقام عربية-هندية (٢٠٢٦) بينما كل أرقام النظام لاتينية.
+    //    NuhFmt هو نفس المصدر اللي بترسم منه الجداول وحقول التاريخ.
+    document.getElementById('dateNow').textContent = NuhFmt.dateFull(new Date());
 
     // ===== جرس الإشعارات (موحّد في كل الصفحات) =====
     async function loadUnreadCount() {
@@ -206,10 +231,10 @@
         var data = await res.json();
         list.innerHTML = (data && data.length) ? data.map(function (n) {
           return '<div class="notif-item" onclick="openNotif(' + n.id + ', ' + (n.request_id || 0) + ', this)" data-id="' + n.id + '" style="cursor:pointer">' +
-            '<div class="notif-item-dot" style="background:' + (n.status === 'pending' ? '#166a45' : '#cecfd2') + '"></div>' +
+            '<div class="notif-item-dot" style="background:' + (n.status === 'pending' ? '#1B2A5E' : '#CBD5E1') + '"></div>' +
             '<div>' +
               '<div class="notif-item-text">' + escHtml(n.message) + '</div>' +
-              '<div class="notif-item-time">' + new Date(n.sent_at || Date.now()).toLocaleDateString('ar-EG') + '</div>' +
+              '<div class="notif-item-time">' + NuhFmt.date(n.sent_at || Date.now()) + '</div>' +
             '</div>' +
           '</div>';
         }).join('') : '<div class="notif-empty">' + NUH_I18N.notifEmpty + '</div>';
@@ -243,7 +268,7 @@
           headers: Object.assign({ 'Content-Type': 'application/json' }, NUH.headers()),
           body: JSON.stringify([id])
         });
-        el.querySelector('.notif-item-dot').style.background = '#cecfd2';
+        el.querySelector('.notif-item-dot').style.background = '#CBD5E1';
         loadUnreadCount();
       } catch (e) { }
     }
@@ -260,7 +285,7 @@
           headers: Object.assign({ 'Content-Type': 'application/json' }, NUH.headers()),
           body: JSON.stringify(ids)
         });
-        document.querySelectorAll('#notif-dropdown-list .notif-item-dot').forEach(function (d) { d.style.background = '#cecfd2'; });
+        document.querySelectorAll('#notif-dropdown-list .notif-item-dot').forEach(function (d) { d.style.background = '#CBD5E1'; });
         loadUnreadCount();
       } catch (e) { }
     }
@@ -299,11 +324,25 @@
   @* حالات الجداول (تحميل / لا توجد نتائج / خطأ) — تعريف واحد لكل الشاشات.
      ⚠️ لازم قبل قسم Scripts: الشاشات بتنادي NuhTable.bind وقت التحميل لا وقت الحدث. *@
   <script src="/js/table-state.js" asp-append-version="true"></script>
-  @* قراءة جدول انتقالات مسار الطلب من window.__WF أعلاه - تستخدمه شاشتا الطلبات *@
+
+  @* مفتاح التفعيل/التعطيل المشترك (NuhSwitch) — نفس سبب table-state.js: الشاشات
+     بتناديه وقت بناء صفوف الجدول لا وقت الحدث، فلازم قبل قسم Scripts.
+     ⚠️ الملف كان اتعمل ومحدّش بيحمّله: فـ NuhSwitch كان undefined، و
+     NuhSwitch.cell() جوّه بناء الصف كان بيرمي استثناء في نص renderTable —
+     فالرأس بيتكتب والجسم لأ. ده سبب إن القوائم المرجعية وشاشة المستخدمين
+     كانت بترجع الداتا 200 من الـ API وتفضل الجداول فاضية. *@
+  <script src="/js/switch-field.js" asp-append-version="true"></script>
+
+  @* منطق مراحل الطلب (NuhWorkflow) — بتستخدمه الرئيسية وشاشة الطلبات، وبيقرأ
+     خريطة المراحل المكتوبة فوق في نفس الـ Layout. كان هو كمان مش متحمَّل. *@
   <script src="/js/request-workflow.js" asp-append-version="true"></script>
-  @* أسماء إجراءات وحقول سجل العمليات بالعربية - تستخدمها شاشة السجل ونافذة
-     سجل الوحدة في سكن أعضاء هيئة التدريس. قبل قسم Scripts لأن الشاشتين
-     تنادياها وقت الرسم. *@
+
+  @* مسمّيات الإجراءات والحقول في السجلات (NuhAudit) — رابع ملف من نفس النوع.
+     كان متحمَّل في شاشة «سجل العمليات» وحدها، بينما faculty-housing-page.js
+     بينادي NuhAudit.actionText/fieldText كمان — فنافذة «سجل إشغال الوحدة» في
+     سكن أعضاء هيئة التدريس كانت بترمي «NuhAudit is not defined» وتفضل فاضية.
+     مكانه هنا لا في الشاشتين: التحميل في شاشة والاستدعاء في تانية هو بالظبط
+     اللي وقّعنا في switch-field و request-workflow قبل كده. *@
   <script src="/js/audit-labels.js" asp-append-version="true"></script>
 
   @* قائمة الاختيار بشكل النظام بدل قائمة نظام التشغيل — بتشتغل تلقائيًا على
@@ -312,6 +351,12 @@
 
   @await RenderSectionAsync("Scripts", required: false)
   <script src="/js/select-field.js" asp-append-version="true"></script>
+
+  @* حقل التاريخ بشكل النظام بدل تقويم ويندوز (NuhDate) — نفس سبب
+     select-field.js بالظبط، وبيشتغل تلقائيًا على كل <input type="date">.
+     ⚠️ بعد قسم Scripts زيّه: الشاشات اللي بتبني حقول بالجافاسكريبت بتنادي
+        NuhDate.enhance بنفسها. *@
+  <script src="/js/date-field.js" asp-append-version="true"></script>
 
   @* ===== إنهاء الجلسة عند الخمول =====
      المهلة تأتي من Core/SessionPolicy.cs — نفس الرقم الذي يفحص به الخادم.

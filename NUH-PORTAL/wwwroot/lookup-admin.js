@@ -5,13 +5,28 @@
   var state = { items: [], colleges: [] };
   var LANG = 'ar';
 
-  function esc(v) { return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
+  // تهريب HTML — التعريف الوحيد في /js/esc.js
+  function esc(v) { return escHtml(v); }
   function authHeaders() { var tk = localStorage.getItem('staffToken'); return tk ? { 'Authorization': 'Bearer ' + tk } : {}; }
   function apiList() { return CFG.apiBase; }
   function apiItem(id) { return CFG.apiBase + '/' + id; }
   function mGet(id) { return document.getElementById('m_' + id); }
 
   var COL_LABEL = { code: 'lk_col_code', arName: 'lk_col_arName', enName: 'lk_col_enName', gender: 'lk_col_gender', college: 'lk_col_college', order: 'lk_col_order', active: 'lk_col_active', arText: 'lk_col_arText', enText: 'lk_col_enText' };
+
+  // ==========================================================================
+  //  حالات الجدول (تحميل / لا نتائج / خطأ) - NuhTable في js/table-state.js.
+  //
+  //  ⚠️ الخمس شاشات دي (المباني والأقسام والكليات والمستويات وبنود التعهّد)
+  //     ماكانش عندها ولا حالة واحدة منهم: النداء يفشل فتفضل البطاقة **فاضية
+  //     تمامًا** - من غير حتى رأس الجدول - ويظهر إشعار بيختفي بعد ٣٫٥ ثانية.
+  //     اللي الموظف بيشوفه بعد التلات ثواني دي: شاشة بيضا بتقول إن مفيش
+  //     مباني في النظام. وهو دخل يضيف مبنى.
+  //  ⚠️ ورأس الجدول بقى بيترسم **قبل** النداء: العمود الفاضي مع مؤشّر تحميل
+  //     بيقول «الشاشة شغالة وبتجيب»، والبطاقة البيضا بتقول «مفيش حاجة هنا».
+  // ==========================================================================
+  var lkTable = null;
+  function colCount() { return (CFG && CFG.cols ? CFG.cols.length : 0) + 2; }
 
   function showToast(msg, isError) {
     var el = document.getElementById('toast'); if (!el) return;
@@ -21,11 +36,11 @@
     setTimeout(function () { el.classList.remove('show'); }, 3500);
   }
 
-  function genderText(g) { if (g === 'male') return t('reg_optMale'); if (g === 'female') return t('reg_optFemale'); return '—'; }
+  function genderText(g) { if (g === 'male') return t('reg_optMale'); if (g === 'female') return t('reg_optFemale'); return '-'; }
   function collegeNameById(id) {
-    if (id == null) return '—';
+    if (id == null) return '-';
     for (var i = 0; i < state.colleges.length; i++) { if (state.colleges[i].id === id) return LANG === 'en' ? state.colleges[i].enName : state.colleges[i].arName; }
-    return '—';
+    return '-';
   }
 
   function cellValue(it, col) {
@@ -38,15 +53,26 @@
       case 'gender': return genderText(it.gender);
       case 'college': return esc(collegeNameById(it.collegeId));
       case 'order': return esc(it.displayOrder);
-      case 'active': return '<label class="lk-switch" title="' + (it.isActive ? t('lk_active_yes') : t('lk_active_no')) + '"><input type="checkbox"' + (it.isActive ? ' checked' : '') + ' onchange="LookupAdmin.toggleActive(' + it.id + ')"><span class="lk-slider"></span></label>';
+      // المفتاح والكلمة معًا - المكوّن المشترك .nsw في css/site.css
+      case 'active': return NuhSwitch.cell(it.isActive, 'LookupAdmin.toggleActive(' + it.id + ')',
+                                           t('lk_active_yes'), t('lk_active_no'));
       default: return '';
     }
   }
 
+  function renderHead() {
+    var cols = CFG.cols;
+    document.getElementById('lkHead').innerHTML =
+      '<tr><th>#</th>' + cols.map(function (c) { return '<th>' + t(COL_LABEL[c]) + '</th>'; }).join('') +
+      '<th>' + t('lk_col_actions') + '</th></tr>';
+  }
+
   function renderTable() {
     var cols = CFG.cols;
-    var head = '<tr><th>#</th>' + cols.map(function (c) { return '<th>' + t(COL_LABEL[c]) + '</th>'; }).join('') + '<th>' + t('lk_col_actions') + '</th></tr>';
-    document.getElementById('lkHead').innerHTML = head;
+    renderHead();
+
+    // لسه بنحمّل - الرسالة الفارغة دلوقتي كذب
+    if (lkTable && !lkTable.isDone()) return lkTable.loading();
 
     var body = '';
     state.items.forEach(function (it, idx) {
@@ -58,18 +84,33 @@
           '<button class="action-btn action-delete" onclick="LookupAdmin.delItem(' + it.id + ')">' + t('lk_delete') + '</button>' +
         '</div></td></tr>';
     });
-    document.getElementById('lkBody').innerHTML = body ||
-      '<tr><td colspan="' + (cols.length + 2) + '" style="text-align:center;color:var(--gray-500);padding:28px">' + t('lk_noItems') + '</td></tr>';
+    lkTable.rows(body, t('lk_noItems'));
   }
 
   function loadList() {
     var titleEl = document.getElementById('lkListTitle');
     if (titleEl) titleEl.textContent = t(CFG.titleKey);
+
+    // ⚠️ الرأس والمؤشّر قبل النداء لا بعده - الشرح فوق عند lkTable
+    renderHead();
+    lkTable.reset();
+    lkTable.loading();
+
+    // ⚠️ الفشل بقى **في مكان الجدول** لا في إشعار بيختفي: الإشعار بيروح بعد
+    //    ٣٫٥ ثانية وبيسيب شاشة تتقري كأن القائمة فاضية فعلًا، والموظف ممكن
+    //    يكون مبصّش في اللحظة دي أصلًا. ومعاه زرّ إعادة محاولة عشان مايضطرش
+    //    يعمل تحديث للصفحة كلها.
+    function fail() { lkTable.error(t('lk_loadError'), loadList, t('lk_retry')); }
+
     return fetch(apiList(), { headers: authHeaders() }).then(function (res) {
       if (res.status === 401) { localStorage.removeItem('staffToken'); window.location.replace('/Account/Login'); return; }
-      if (!res.ok) { showToast(t('lk_loadError'), true); return; }
-      return res.json().then(function (data) { state.items = data; renderTable(); });
-    }).catch(function () { showToast(t('lk_loadError'), true); });
+      if (!res.ok) { fail(); return; }
+      return res.json().then(function (data) {
+        state.items = data;
+        lkTable.done();
+        renderTable();
+      });
+    }).catch(fail);
   }
 
   function ensureColleges() {
@@ -197,17 +238,38 @@
     }).catch(function () { renderTable(); showToast(t('lk_loadError'), true); });
   }
 
+  // اسم العنصر للعرض في رسالة التأكيد - حسب لغة الواجهة، وبفولباك للكود
+  // عشان صفوف القوائم اللي مالهاش اسم إنجليزي.
+  function itemLabel(it) {
+    if (!it) return '';
+    var en = it.enName || it.enText, ar = it.arName || it.arText;
+    return String((LANG === 'en' ? (en || ar) : (ar || en)) || it.code || '').trim();
+  }
+
   function delItem(id) {
-    if (!confirm(t('lk_confirmDelete'))) return;
-    fetch(apiItem(id), { method: 'DELETE', headers: authHeaders() }).then(function (res) {
-      if (res.status === 401) { localStorage.removeItem('staffToken'); window.location.replace('/Account/Login'); return; }
-      if (res.ok) { loadList(); showToast(t('lk_deleted')); }
-      else { return res.json().catch(function () { return {}; }).then(function (err) { showToast(err.message || t('lk_saveError'), true); }); }
-    }).catch(function () { showToast(t('lk_loadError'), true); });
+    var it = state.items.filter(function (x) { return x.id === id; })[0];
+    var name = itemLabel(it);
+
+    // ⚠️ حوار النظام لا confirm() المتصفح: متصفحات بتعرض «امنع هذه الصفحة من
+    //    إنشاء حوارات»، وأول ما الموظف يعلّمها بيرجع confirm() false على طول
+    //    فيدوس حذف ومايحصلش حاجة ولا تظهر رسالة. الشرح في js/dialog.js
+    NuhDialog.confirm({
+      message: name ? t('lk_confirmDeleteNamed').replace('{0}', name) : t('lk_confirmDelete'),
+      danger: true,
+      confirmLabel: t('lk_delete')
+    }).then(function (ok) {
+      if (!ok) return;
+      return fetch(apiItem(id), { method: 'DELETE', headers: authHeaders() }).then(function (res) {
+        if (res.status === 401) { localStorage.removeItem('staffToken'); window.location.replace('/Account/Login'); return; }
+        if (res.ok) { loadList(); showToast(t('lk_deleted')); }
+        else { return res.json().catch(function () { return {}; }).then(function (err) { showToast(err.message || t('lk_saveError'), true); }); }
+      }).catch(function () { showToast(t('lk_loadError'), true); });
+    });
   }
 
   function init(cfg) {
     CFG = cfg;
+    lkTable = NuhTable.bind('lkBody', colCount());
     LANG = ((document.getElementById('html-root') || document.documentElement).getAttribute('lang') === 'en') ? 'en' : 'ar';
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeModal(); });
     window.onLanguageChange = function () { LANG = (document.documentElement.getAttribute('lang') === 'en') ? 'en' : 'ar'; renderTable(); };

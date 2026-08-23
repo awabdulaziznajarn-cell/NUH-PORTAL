@@ -8,7 +8,7 @@ namespace NUH_PORTAL.Services.Interfaces
     public interface ISupervisorHousingTransferService
     {
         Task<TransferResultDto> CreateTransferAsync(string studentNumber, string newBuilding, string newFloor, string newApartment, string newRoom, string reason, string? customReason, IFormFile? file);
-        Task<List<RecentTransferDto>> GetRecentAsync();
+        Task<List<RecentTransferDto>> GetRecentAsync(int skip = 0);
         Task<DownloadFileDto> GetAttachmentAsync(int transferId);
     }
 }

@@ -27,9 +27,6 @@ namespace NUH_PORTAL.Services.Interfaces
     public interface IRegistrationService
     {
         Task<string> GenerateRequestNumberAsync();
-        Task<bool> CheckDuplicateByMobileAsync(string mobile, int? excludeRequestId = null);
-        Task<bool> CheckDuplicateByStudentIdAsync(string studentId, int? excludeRequestId = null);
-
         // بيرجّع رقم أول طلب مفتوح يطابق أي من: الرقم الجامعي / رقم الهوية / رقم الجوال،
         // أو null لو مفيش. بيرجّع الرقم مش true/false عشان الرسالة تقول للطالب
         // "عندك طلب رقم كذا" بدل رفض مجهول.

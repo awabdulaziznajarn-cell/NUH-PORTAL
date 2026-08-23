@@ -20,13 +20,53 @@
 var NuhChart = (function () {
 
   var FONT = "'IBM Plex Sans Arabic', sans-serif";
+
+  // ⚠️ الرسم بيتحطّ على <canvas>، والـ canvas **مابيفهمش** var(--navy):
+  //    دي قيمة CSS بتتحلّ وقت رسم الصفحة، والكانفاس بيرسم بالبكسل. فأي لون
+  //    هنا لازم يكون نصّ لون حقيقي.
+  //
+  //    فبدل ما نكتب الألوان بالإيد (وكانت مكتوبة كده فعلًا — نسخة تانية من
+  //    هوية الجامعة جوّه ملف رسوم)، بنقراها من نفس التوكنز اللي في
+  //    css/base.css وقت التحميل، والقيمة المكتوبة جنبها احتياطي لو التوكن
+  //    مالقيناش. يعني لو الأخضر اتغيّر في base.css، الرسوم بتتغيّر معاه.
+  function tok(name, fallback) {
+    try {
+      var v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+      return v || fallback;
+    } catch (e) { return fallback; }
+  }
+
   var C = {
-    navy: '#166a45', navyDark: '#104631', navyLight: '#25935f', gold: '#dba102', goldLight: '#f0c33c',
-    green: '#067647', red: '#b42318', gray200: '#dcdfe4', gray500: '#85888e', gray700: '#333741'
+    navy:      tok('--navy',       '#166a45'),
+    navyDark:  tok('--navy-dark',  '#104631'),
+    navyLight: tok('--navy-light', '#25935f'),
+    gold:      tok('--gold',       '#dba102'),
+    goldLight: tok('--gold-light', '#f0c33c'),
+    green:     tok('--green',      '#067647'),
+    red:       tok('--red',        '#b42318'),
+    purple:    tok('--purple',     '#80519f'),
+    blue:      tok('--blue',       '#175cd3'),
+    gray200:   tok('--gray-200',   '#dcdfe4'),
+    gray500:   tok('--gray-500',   '#85888e'),
+    gray700:   tok('--gray-700',   '#333741')
   };
 
-  // لوحة ألوان الشرائح — بترتيب ثابت عشان نفس التصنيف ياخد نفس اللون كل مرة
-  var PALETTE = [C.navy, C.gold, C.green, '#80519f', '#175cd3', C.red, '#b54708', C.navyLight];
+  // ==========================================================================
+  //  لوحة ألوان الشرائح — بترتيب ثابت عشان نفس التصنيف ياخد نفس اللون كل مرة.
+  //
+  //  ⚠️ الترتيب اتغيّر بعد ما اتقاس بمقياس فرق اللون (ΔE): الأحمر #b42318
+  //     والبنّي #b54708 كانوا **جنب بعض** وفرقهم ٦٫١ - يعني أي رسمة فيها ستّ
+  //     تصنيفات أو أكتر، السادس والسابع بيطلعوا بلون واحد عمليًا حتى لواحد
+  //     شايف الألوان عادي. والترتيب الجديد أسوأ جارين فيه ٨٫٤ (عمى ألوان)
+  //     و٢٣٫٩ (رؤية عادية).
+  //
+  //  ⚠️ ولا لون اتغيّر - الترتيب بس. الألوان هي هي من base.css.
+  //
+  //  ⚠️ والذهبي تباينه على الأبيض ٢٫٢٥:١، وده مقبول للشريحة **بشرط** إن
+  //     اسمها ورقمها مكتوبين جنبها (وسيلة الإيضاح موجودة في كل رسمة).
+  //     لو اتشالت وسيلة الإيضاح يومًا، الذهبي لازم يتغيّر.
+  // ==========================================================================
+  var PALETTE = [C.navy, C.gold, C.purple, C.green, C.blue, '#b54708', C.navyLight, C.red];
 
   function ready() { return typeof Chart !== 'undefined'; }
 
@@ -67,24 +107,33 @@ var NuhChart = (function () {
       if (chart.config.type !== 'doughnut') return;
       var ds = chart.data.datasets[0];
       if (!ds) return;
-      var total = (ds.data || []).reduce(function (a, b) { return a + (Number(b) || 0); }, 0);
       var m = chart.getDatasetMeta(0);
       if (!m || !m.data || !m.data[0]) return;
+
+      // ⚠️ الوسط بيعرض المجموع افتراضيًا، ويقبل قيمة مخصّصة (نسبة مثلًا).
+      //    من غير ده كانت شاشة الرئيسية مضطرة تكتب إضافة خاصة بيها لرسم
+      //    النسبة في الوسط - نسخة تانية من نفس الكود بفرق سطر واحد.
+      var ctr = chart.options.__center;
+      var value = ctr && ctr.value != null
+        ? String(ctr.value)
+        : String((ds.data || []).reduce(function (a, b) { return a + (Number(b) || 0); }, 0));
+      var label = (ctr && ctr.label != null) ? ctr.label : (chart.options.__totalLabel || '');
+
       var x = m.data[0].x, y = m.data[0].y;
       var g = chart.ctx;
       g.save();
       g.textAlign = 'center'; g.textBaseline = 'middle';
       g.fillStyle = C.navyDark || '#104631';
       g.font = '700 20px ' + FONT;
-      g.fillText(String(total), x, y - 2);
+      g.fillText(value, x, y - 2);
       g.font = '500 10px ' + FONT;
       g.fillStyle = C.gray500;
-      g.fillText(chart.options.__totalLabel || '', x, y + 15);
+      g.fillText(label, x, y + 15);
       g.restore();
     }
   };
 
-  function optionsFor(type, totalLabel) {
+  function optionsFor(type, totalLabel, opts) {
     var base = {
       responsive: true,
       maintainAspectRatio: false,
@@ -98,10 +147,14 @@ var NuhChart = (function () {
     if (type === 'doughnut') {
       // ⚠️ بلا scales عن قصد — الدونات مالهاش محاور، والنسخة القديمة كانت
       //    بتحط محور رأسي فيه 0 و1 جنب الرسمة.
-      base.cutout = '68%';
+      base.cutout = (opts && opts.cutout) || '68%';
       base.__totalLabel = totalLabel || '';
+      base.__center = (opts && opts.center) || null;
+      // ⚠️ في شاشات بتبني وسيلة إيضاح بالـ HTML تحت الرسمة (عشان تعرض العدد
+      //    جنب الاسم، وده الكانفاس مابيعملهوش). من غير الخيار ده كانت
+      //    هتطلع وسيلتان: واحدة مرسومة وواحدة مكتوبة.
       base.plugins.legend = {
-        display: true, position: 'bottom',
+        display: !(opts && opts.legend === false), position: 'bottom',
         labels: {
           usePointStyle: true, pointStyle: 'circle', boxWidth: 8, boxHeight: 8,
           padding: 12, font: { family: FONT, size: 11.5 }, color: C.gray700
@@ -122,8 +175,36 @@ var NuhChart = (function () {
       return base;
     }
 
+    var o = opts || {};
+
+    // ======================================================================
+    //  أعمدة أفقية.
+    //
+    //  ⚠️ لما تكون التسميات نصًّا عربيًا (أسماء مبانٍ مثلًا) الأعمدة الرأسية
+    //     بتقلب الاسم أو تقصّه تحت العمود. الأفقي بيدّي الاسم سطرًا كاملًا.
+    //  ⚠️ وكان مكتوبًا بالإيد في شاشة الرئيسية بمحاور وإضافة أرقام خاصة بيها -
+    //     نسخة تالتة من نفس الرسمة. بقى خيارًا في المكوّن.
+    // ======================================================================
+    if (o.horizontal) {
+      base.indexAxis = 'y';
+      base.layout = { padding: { left: 26, right: 26 } };
+      base.scales = {
+        x: { display: false, beginAtZero: true, grace: '16%' },
+        y: { border: { display: false }, grid: { display: false },
+             ticks: { color: C.gray500, font: { family: FONT, size: 12 } } }
+      };
+      base.plugins.tooltip = {
+        rtl: (document.documentElement.getAttribute('dir') !== 'ltr'),
+        callbacks: { label: function (ctx) { return ' ' + ctx.formattedValue; } }
+      };
+      return base;
+    }
+
+    // مساحة فوق أعلى عمود عشان الرقم اللي فوقه ما يتقصّش عند حافة الرسمة
+    if (o.valueLabels) base.layout = { padding: { top: 18 } };
+
     base.scales = {
-      y: {
+      y: o.hideY ? { display: false, beginAtZero: true, grace: '18%' } : {
         beginAtZero: true,
         border: { display: false },
         // شبكة أفقية خفيفة ومتقطّعة: بتساعد على قراءة القيمة من غير ما تزاحم البيانات
@@ -144,8 +225,9 @@ var NuhChart = (function () {
     return base;
   }
 
-  function datasetFor(type, data, color) {
+  function datasetFor(type, data, color, opts) {
     var c = color || C.navy;
+    var o = opts || {};
 
     if (type === 'doughnut') {
       return {
@@ -179,9 +261,15 @@ var NuhChart = (function () {
     }
 
     // bar
+    // ⚠️ التدرّج للأعمدة الرأسية بس. في الأفقي التدرّج بيمشي من فوق لتحت
+    //    **عبر الرسمة كلها**، فالعمود الأول بيطلع غامق والأخير فاتح - يعني
+    //    الدرجة بتتغيّر حسب **ترتيب الصفّ** وتتقري كأنها بتعني حاجة، وهي
+    //    مابتعنيش. اللون الصلب هو الصحيح هنا.
     return {
       data: data,
-      backgroundColor: function (x) { return gradient(x.chart.ctx, x.chart.chartArea, c, hexA(c, .55)); },
+      backgroundColor: o.horizontal
+        ? c
+        : function (x) { return gradient(x.chart.ctx, x.chart.chartArea, c, hexA(c, .55)); },
       hoverBackgroundColor: c,
       borderRadius: 6,
       borderSkipped: false,
@@ -196,19 +284,68 @@ var NuhChart = (function () {
   /* render(id, type, labels, data, color)
      color: نص واحد للأعمدة والخطوط، أو مصفوفة ألوان للدونات (اختياري).
      totalLabel: نص صغير تحت الإجمالي في نُص الدونات (اختياري). */
-  function render(id, type, labels, data, color, totalLabel) {
+  // ==========================================================================
+  //  الأرقام فوق الأعمدة.
+  //  ⚠️ كان مكتوب جوّه Views/Home/Index.cshtml — ومعاه رسمة Chart.js كاملة
+  //     بألوانها ومحاورها وخطّها، مع إن نفس الملف مكتوب في تعليقه إن دالة
+  //     الرسم اتوحّدت هنا. فكانت رسمة لوحة التحكم الوحيدة اللي بتتعدّى على
+  //     NuhChart، ولونها كان أخضر فاتح تاني مالوش علاقة بباقي رسوم النظام.
+  // ==========================================================================
+  var valueLabels = {
+    id: 'nuhValueLabels',
+    afterDatasetsDraw: function (chart) {
+      // ⚠️ العلامة بتتقرا من options مش من خاصية على الكائن: Chart.js بيرسم
+      //    أول رسمة **جوّه** المُنشئ، يعني قبل ما أي سطر بعد new Chart(...)
+      //    يشتغل. فلو العلامة اتحطّت بعده، أول رسم بيعدّي بلا أرقام وما
+      //    بتظهرش غير مع أول تغيير حجم.
+      var on = chart.options && chart.options.plugins && chart.options.plugins.nuhValueLabels;
+      if (chart.config.type !== 'bar' || !on) return;
+      var g = chart.ctx, m = chart.getDatasetMeta(0);
+      // ⚠️ الأفقي بيكتب الرقم **جنب** طرف العمود لا فوقه - فوقه كان هيقع
+      //    على العمود اللي تحته.
+      var horiz = chart.options && chart.options.indexAxis === 'y';
+      g.save();
+      g.textAlign = horiz ? 'left' : 'center';
+      g.textBaseline = horiz ? 'middle' : 'bottom';
+      g.font = "700 12px " + FONT;
+      g.fillStyle = C.gray700;
+      (m.data || []).forEach(function (bar, i) {
+        var v = chart.data.datasets[0].data[i];
+        if (v == null) return;
+        if (horiz) g.fillText(String(v), bar.x + 8, bar.y);
+        else g.fillText(String(v), bar.x, bar.y - 6);
+      });
+      g.restore();
+    }
+  };
+
+  // opts (اختيارية):
+  //   valueLabels → الرقم مكتوب فوق كل عمود (أو جنبه في الأفقي)
+  //   hideY       → إخفاء المحور الرأسي (مع الأرقام فوق الأعمدة المحور بيكرّر
+  //                 نفس المعلومة مرتين)
+  //   horizontal  → أعمدة أفقية (للتسميات النصّية الطويلة)
+  //   legend:false→ إطفاء وسيلة إيضاح الدونات المرسومة (لما الشاشة بتبنيها HTML)
+  //   center      → { value, label } نصّ وسط الدونات بدل المجموع
+  //   cutout      → سُمك حلقة الدونات
+  function render(id, type, labels, data, color, totalLabel, opts) {
     if (!ready()) return null;
     applyDefaults();
     var el = document.getElementById(id);
     if (!el) return null;
     if (instances[id]) instances[id].destroy();
-    instances[id] = new Chart(el.getContext('2d'), {
+    var o = opts || {};
+    var options = optionsFor(type, totalLabel, o);
+    options.plugins = options.plugins || {};
+    options.plugins.nuhValueLabels = !!o.valueLabels;
+
+    var chart = new Chart(el.getContext('2d'), {
       type: type,
-      data: { labels: labels, datasets: [datasetFor(type, data, color)] },
-      options: optionsFor(type, totalLabel),
-      plugins: [centerTotal]
+      data: { labels: labels, datasets: [datasetFor(type, data, color, o)] },
+      options: options,
+      plugins: [centerTotal, valueLabels]
     });
-    return instances[id];
+    instances[id] = chart;
+    return chart;
   }
 
   function destroyAll() {

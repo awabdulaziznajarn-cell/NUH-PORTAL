@@ -32,6 +32,32 @@ namespace NUH_PORTAL.Models
         //    هنا بيخلّي التجاوز يبان كتحذير بدل ما يعدّي ناقص من غير ما حد يعرف.
         public int MaxImportResults { get; set; } = 2000;
 
+        // ====================================================================
+        //  الـ OU اللي المفروض الحساب يقعد فيها حسب نوع الوحدة وجنس شاغلها.
+        //
+        //  ⚠️ بترجّع null لمّا القسم مايكونش متقسّم أصلًا - مش لمّا يكون
+        //     الإعداد ناقص بالغلط. الفلل مثلًا ممكن تبقى OU واحدة مختلطة، وفي
+        //     الحالة دي مافيش «مكان صح» و«مكان غلط» فمافيش نقل. وnull هنا
+        //     معناها «سيبه مكانه» لا «مش عارف» - النداهة بتفرّق.
+        //
+        //  ⚠️ ولو نوع متقسّم وناحية واحدة بس مضبوطة (بنين موجود وبنات فاضي)،
+        //     بترجّع null كمان: النقل لـ OU فاضية بيبوّظ الـ DN ويودّي الحساب
+        //     لجذر الدومين. الإعداد الناقص بيتقفل عليه هنا لا بيتنفّذ نصّه.
+        // ====================================================================
+        public string? TargetOuFor(Enums.FacultyUnitType unitType, Enums.Gender? gender)
+        {
+            if (gender == null) return null;
+
+            var (male, female) = unitType == Enums.FacultyUnitType.Villa
+                ? (VillasMaleOu, VillasFemaleOu)
+                : (TowersMaleOu, TowersFemaleOu);
+
+            if (string.IsNullOrWhiteSpace(male) || string.IsNullOrWhiteSpace(female))
+                return null;
+
+            return gender == Enums.Gender.Female ? female : male;
+        }
+
         // كل الـ OU اللي بيتقرا منها — مصدر واحد بدل ما كل خدمة تركّب القائمة
         public IEnumerable<string> AllOus()
         {

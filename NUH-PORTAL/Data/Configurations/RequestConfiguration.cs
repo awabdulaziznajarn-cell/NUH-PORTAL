@@ -38,6 +38,10 @@ namespace NUH_PORTAL.Data.Configurations
             builder.Property(r => r.RequestNumber).HasColumnName("request_number");
             builder.Property(r => r.RegistrationData).HasColumnName("registration_data");
 
+            // IsRowVersion: العمود بيتولّد ويتحدّث من SQL Server، و EF بيقارنه
+            // في شرط الـ UPDATE. شوف التعليق على الخاصية في Models/Request.cs.
+            builder.Property(r => r.RowVersion).IsRowVersion().HasColumnName("row_version");
+
             // فهارس العدّادات والطوابير (dashboard/queues بتفلتر بالحالة والنوع)
             builder.HasIndex(r => r.Status)
                 .HasDatabaseName("IX_Requests_status");

@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using NUH_PORTAL.Core.Exceptions;
 using NUH_PORTAL.DTOs.Logs;
 using NUH_PORTAL.Models;
@@ -19,7 +19,7 @@ namespace NUH_PORTAL.Services
             _signIns = signIns;
         }
 
-        public async Task<PagedResult<ErrorLogItemDto>> GetErrorLogsAsync(int page, int pageSize, string? search, string? fromDate, string? toDate)
+        public async Task<PagedResult<ErrorLogItemDto>> GetErrorLogsAsync(int page, int pageSize, string? search, string? fromDate, string? toDate, string? sortBy = null, bool sortAsc = false)
         {
             if (page < 1) page = 1;
             if (pageSize < 1 || pageSize > 500) pageSize = 50;
@@ -38,8 +38,31 @@ namespace NUH_PORTAL.Services
             if (DateTime.TryParse(fromDate, out var from)) q = q.Where(e => e.occurred_at >= from);
             if (DateTime.TryParse(toDate, out var to)) q = q.Where(e => e.occurred_at <= to);
 
+            // ⚠️ الترتيب على الخادم لا في المتصفح: الجدول مقسّم صفحات، والترتيب في
+            //    المتصفح بيرتّب الصفحة اللي قدامك بس — فأقدم خطأ في صفحة ٢ ممكن
+            //    يسبق أحدث خطأ في صفحة ١ والمستخدم فاكر إنه شايف ترتيبًا صحيحًا.
+            //
+            // ⚠️ الافتراضي بيفضل «الأحدث أولًا» زي ما كان بالظبط: السجل بيتفتح
+            //    عشان تشوف اللي حصل دلوقتي، مش عشان تقرا من الأول أبجديًّا.
+            //
+            // ⚠️ مفيش عمود للرسالة هنا عن قصد: نصّ طويل حرّ، وترتيبه أبجديًّا
+            //    مالوش أي معنى تشغيلي.
+            q = (sortBy?.ToLowerInvariant(), sortAsc) switch
+            {
+                ("occurred_at", true)    => q.OrderBy(e => e.occurred_at),
+                ("exception_type", true) => q.OrderBy(e => e.exception_type),
+                ("exception_type", false)=> q.OrderByDescending(e => e.exception_type),
+                ("request_path", true)   => q.OrderBy(e => e.request_path),
+                ("request_path", false)  => q.OrderByDescending(e => e.request_path),
+                ("status_code", true)    => q.OrderBy(e => e.status_code),
+                ("status_code", false)   => q.OrderByDescending(e => e.status_code),
+                ("username", true)       => q.OrderBy(e => e.username),
+                ("username", false)      => q.OrderByDescending(e => e.username),
+                _                        => q.OrderByDescending(e => e.occurred_at)
+            };
+
             var total = await q.CountAsync();
-            var items = await q.OrderByDescending(e => e.occurred_at)
+            var items = await q
                 .Skip((page - 1) * pageSize).Take(pageSize)
                 .Select(e => new ErrorLogItemDto
                 {
@@ -90,7 +113,7 @@ namespace NUH_PORTAL.Services
             return dto ?? throw UserFriendlyException.NotFound("السجل غير موجود");
         }
 
-        public async Task<PagedResult<SignInLogItemDto>> GetSignInLogsAsync(int page, int pageSize, string? eventType, string? search, string? fromDate, string? toDate)
+        public async Task<PagedResult<SignInLogItemDto>> GetSignInLogsAsync(int page, int pageSize, string? eventType, string? search, string? fromDate, string? toDate, string? sortBy = null, bool sortAsc = false)
         {
             if (page < 1) page = 1;
             if (pageSize < 1 || pageSize > 500) pageSize = 50;
@@ -111,8 +134,29 @@ namespace NUH_PORTAL.Services
             if (DateTime.TryParse(fromDate, out var from)) q = q.Where(s => s.occurred_at >= from);
             if (DateTime.TryParse(toDate, out var to)) q = q.Where(s => s.occurred_at <= to);
 
+            // نفس منطق سجل الأخطاء: الترتيب على الخادم، والافتراضي الأحدث أولًا.
+            // ⚠️ الاسم الكامل بيترتّب من s.User.full_name لا من نسخة محفوظة: السجل
+            //    بيخزّن اسم المستخدم المُدخَل بس، والاسم بييجي من جدول المستخدمين.
+            //    ومحاولات الدخول الفاشلة بأسماء مش موجودة أصلًا بتبقى بلا اسم،
+            //    فبتتجمّع مع بعض في طرف الترتيب — وده الصح: هي فعلًا مجموعة واحدة.
+            q = (sortBy?.ToLowerInvariant(), sortAsc) switch
+            {
+                ("occurred_at", true) => q.OrderBy(x => x.occurred_at),
+                ("username", true)    => q.OrderBy(x => x.username),
+                ("username", false)   => q.OrderByDescending(x => x.username),
+                ("full_name", true)   => q.OrderBy(x => x.User != null ? x.User.full_name : null),
+                ("full_name", false)  => q.OrderByDescending(x => x.User != null ? x.User.full_name : null),
+                ("event_type", true)  => q.OrderBy(x => x.event_type),
+                ("event_type", false) => q.OrderByDescending(x => x.event_type),
+                ("method", true)      => q.OrderBy(x => x.method),
+                ("method", false)     => q.OrderByDescending(x => x.method),
+                ("success", true)     => q.OrderBy(x => x.success),
+                ("success", false)    => q.OrderByDescending(x => x.success),
+                _                     => q.OrderByDescending(x => x.occurred_at)
+            };
+
             var total = await q.CountAsync();
-            var items = await q.OrderByDescending(s => s.occurred_at)
+            var items = await q
                 .Skip((page - 1) * pageSize).Take(pageSize)
                 .Select(s => new SignInLogItemDto
                 {

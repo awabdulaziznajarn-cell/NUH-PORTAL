@@ -1,11 +1,19 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" id="html-root">
+<html lang="ar" dir="rtl" id="html-root" data-title-key="pt_decPageTitle">
 <head>
 <link rel="icon" href="../favicon.ico">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>الإقرار والتعهد - بوابة السكن الجامعي</title>
+<title>الإقرار والتعهد - بوابة الإسكان الجامعي</title>
+<!-- تهريب HTML (escHtml) - التعريف الوحيد في النظام.
+     ⚠️ الصفحة دي مش بتمرّ على التخطيط، فلازم تحمّله بنفسها وقبل
+        أي ملف بيناديه. -->
+<script src="../js/esc.js"></script>
 <script src="../i18n.js"></script>
+<!-- جملة الإقرار وقاعدة مطابقتها — متولّدة من Core/PledgeRules.cs.
+     ⚠️ نفس الملف اللي الخادم بيرفض بيه، فمستحيل الشاشة تقبل جملة الخادم
+        يرفضها ولا العكس. -->
+<script src="../js/nuh-pledge.js"></script>
 <link rel="stylesheet" href="../css/portal.css">
   <link rel="stylesheet" href="../css/portal-touch.css">
   <style>
@@ -17,13 +25,6 @@
 
 
 
-.portal-header{text-align:center;padding:28px 16px 0;width:100%;position:relative}
-.portal-header img{width:80px;height:auto;margin-bottom:10px}
-.portal-header h1{font-size:17px;font-weight:800;color:var(--navy-dark)}
-.lang-btn{position:absolute;top:12px;background:#fff;border:1px solid #dcdfe4;border-radius:6px;padding:6px 14px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;z-index:10}
-[dir="rtl"] .lang-btn{left:12px}
-[dir="ltr"] .lang-btn{right:12px}
-.lang-btn:hover{background:#f5f5f6}
 .content{max-width:640px}
 
 .card:hover{box-shadow:0 4px 20px rgba(16,70,49,0.09)}
@@ -43,20 +44,71 @@
 .declaration-box{border:1.5px solid var(--gray-200);border-radius:12px;padding:20px;margin-bottom:16px;max-height:300px;overflow-y:auto;-webkit-overflow-scrolling:touch;font-size:13px;line-height:1.8;background:var(--gray-50);border-right:3px solid var(--navy)}
 [dir="ltr"] .declaration-box{border-right:1.5px solid var(--gray-200);border-left:3px solid var(--navy)}
 .checkbox-group{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;padding:14px;border:1.5px solid var(--gray-200);border-radius:10px;transition:all 0.2s;cursor:pointer}
-.checkbox-group:hover{border-color:var(--navy);background:var(--gray-50)}
+.checkbox-group:hover{border-color:var(--navy);background:var(--row-hover)}
 .checkbox-group input[type="checkbox"]{width:18px;height:18px;margin-top:3px;accent-color:var(--navy);cursor:pointer}
 .checkbox-group label{font-size:13px;color:var(--gray-700);cursor:pointer;flex:1}
-@media(max-width:768px){.portal-header{padding:20px 16px 0}.portal-header img{width:64px}.portal-header h1{font-size:16px}.content{padding:16px}.card{padding:20px}.step-indicator{gap:6px}.step{width:30px;height:30px;font-size:12px}.declaration-box{max-height:200px;padding:16px}}
+
+/* ===== بصمة البنود =====
+   ⚠️ ظاهرة للطالب عن قصد مش مخبّية في قاعدة البيانات: البصمة دي هي نفسها
+      المتخزّنة مع تعهّده، فلو حصل خلاف بعد سنة يقدر يقارن. وعرضها كمان
+      بيقول للطالب إن اللي قدّامه نصّ مجمّد مش صفحة بتتغيّر. */
+.pledge-stamp{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  background:var(--tint);border:1px solid var(--gray-200);border-radius:10px;
+  padding:10px 14px;margin-bottom:16px;font-size:12px;color:var(--gray-700)}
+.pledge-stamp .lbl{font-weight:700;color:var(--navy-dark);white-space:nowrap}
+/* ⚠️ direction:ltr على البصمة نفسها: نصّ سُداسي عشري لاتيني جوّه صفحة عربية
+   بينعكس ترتيبه بصريًّا من غيرها، فالطالب يقارن مقطعين مش متطابقين شكلًا
+   وهما نفس القيمة. */
+.pledge-stamp code{direction:ltr;unicode-bidi:isolate;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:12px;letter-spacing:.5px;color:var(--navy);background:var(--white);
+  border:1px solid var(--gray-200);border-radius:6px;padding:3px 8px}
+.pledge-stamp .ver{margin-inline-start:auto;font-weight:600;color:var(--gray-500)}
+/* ⚠️ لازمة: display:flex فوق بيغلب [hidden] بتاع المتصفح، فمن غير السطر
+   ده الشريط بيبان فاضي قبل ما البنود توصل. */
+.pledge-stamp[hidden]{display:none}
+
+/* ===== خانة الإقرار المكتوب ===== */
+.type-box{border:1.5px solid var(--gray-200);border-radius:12px;padding:16px;margin-bottom:16px}
+.type-box.is-ok{border-color:var(--green);background:var(--green-light)}
+.type-box.is-bad{border-color:var(--red)}
+.type-box h4{font-size:13px;font-weight:700;color:var(--navy-dark);margin-bottom:4px}
+.type-box .why{font-size:12px;color:var(--gray-500);margin-bottom:10px;line-height:1.7}
+/* الجملة المطلوبة — معروضة بوضوح عشان الطالب ينقلها بعينه لا من ذاكرته. */
+.type-target{background:var(--white);border:1px dashed var(--navy);border-radius:8px;
+  padding:11px 14px;font-size:14px;font-weight:700;color:var(--navy-dark);
+  margin-bottom:10px;line-height:1.8;user-select:none}
+.type-box input{width:100%;padding:12px 14px;border:1.5px solid var(--gray-200);
+  border-radius:10px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;
+  color:var(--navy-dark);background:var(--white)}
+.type-box input:focus{outline:none;border-color:var(--navy)}
+.type-box.is-ok input{border-color:var(--green)}
+.type-box.is-bad input{border-color:var(--red)}
+/* شريط تقدّم رفيع — بيتحرّك مع الكتابة، فالطالب يعرف إنه ماشي صح قبل ما يخلّص. */
+.type-bar{height:3px;border-radius:2px;background:var(--gray-100);margin-top:10px;overflow:hidden}
+.type-bar i{display:block;height:100%;width:0;border-radius:2px;background:var(--navy);
+  transition:width .18s ease,background .18s ease}
+.type-box.is-bad .type-bar i{background:var(--red)}
+.type-box.is-ok .type-bar i{background:var(--green)}
+.type-msg{font-size:12px;font-weight:600;margin-top:8px;min-height:16px}
+.type-msg.ok{color:var(--green)}
+.type-msg.bad{color:var(--red)}
+.type-msg.hint{color:var(--gray-500)}
+@media(max-width:768px){.content{padding:16px}.card{padding:20px}.step-indicator{gap:6px}.step{width:30px;height:30px;font-size:12px}.declaration-box{max-height:200px;padding:16px}}
 @media(max-width:414px){.card{border-radius:12px}.step{width:28px;height:28px;font-size:11px}.step-indicator{gap:4px}}
-@media(max-width:375px){.content{padding:12px}.card{padding:16px;border-radius:10px}.btn{padding:10px 16px}.step{width:26px;height:26px;font-size:10px}.checkbox-group{padding:10px}.checkbox-group label{font-size:12px}.portal-header{padding:16px 12px 0}.portal-header img{width:56px}.portal-header h1{font-size:15px}}
+@media(max-width:375px){.content{padding:12px}.card{padding:16px;border-radius:10px}.btn{padding:10px 16px}.step{width:26px;height:26px;font-size:10px}.checkbox-group{padding:10px}.checkbox-group label{font-size:12px}}
 @media(max-width:320px){.card{padding:14px}.btn{font-size:13px;padding:8px 14px}}
 </style>
 </head>
 <body>
 <div class="portal-header">
-<img src="../nu-logo.png" alt="جامعة نجران">
-<h1>تسجيل الإسكان الجامعي</h1>
-<button class="lang-btn" id="langBtn" onclick="toggleLang()">English</button>
+<img src="../nu-logo.svg" alt="جامعة نجران" data-i18n-alt="Brand_Sub">
+<h1 data-i18n="Brand_Title">بوابة الإسكان الجامعي</h1>
+<!-- ⚠️ data-i18n لا نصّ ثابت: الزرّ كان مكتوب فيه «English» بالإيد، فالطالب
+     اللي بدّل للإنجليزي كان بيلاقي صفحة إنجليزي وزرّ بيعرض عليه «English»
+     تاني - مفيش طريق راجع ظاهر للعربي. المفتاح pt_langToggle قيمته في
+     الملف العربي «English» وفي الإنجليزي «العربية»، يعني نصّه دايمًا اسم
+     اللغة اللي المستخدم رايح لها. -->
+<button class="lang-btn" id="langBtn" type="button" onclick="toggleLang()" data-i18n="pt_langToggle">English</button>
 </div>
 <div class="content">
 <div class="card card-pad-lg">
@@ -68,26 +120,44 @@
 </div>
 <h2 style="font-size:18px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;gap:8px">
 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
-التعهدات والإقرار</h2>
-<p style="font-size:13px;color:var(--gray-500);margin-bottom:20px">يرجى قراءة التعهدات التالية بعناية. لن تتمكّن من إرسال الطلب إلا بعد الموافقة عليها.</p>
+<span data-i18n="pt_decTitle">التعهدات والإقرار</span></h2>
+<p style="font-size:13px;color:var(--gray-500);margin-bottom:20px" data-i18n="pt_decSubtitle">يرجى قراءة التعهدات التالية بعناية. لن تتمكّن من إرسال الطلب إلا بعد الموافقة عليها.</p>
 <div id="alertMessage" class="alert"></div>
+<!-- ⚠️ فاضي عن قصد: البنود بتيجي من /api/Registration/pledge وهي نفسها اللي
+     بتتجمّد في التعهّد. أي نصّ ثابت هنا معناه إن الطالب ممكن يوافق على
+     كلام مش هو اللي هيتخزّن. لو ما جاش، الزرار بيفضل مقفول. -->
 <div class="declaration-box" id="declBox">
-<h3 style="font-size:14px;font-weight:700;margin-bottom:8px">الإقرار</h3>
-<p>أتعهد بأن جميع البيانات التي قمت بتقديمها في طلب التسجيل صحيحة وكاملة، وأتحمل المسؤولية القانونية في حال تبين عدم صحة أي من هذه البيانات. وأقر بأن إدارة الإسكان الجامعي يحق لها رفض الطلب أو إلغاء التسجيل في حال ثبوت مخالفة للشروط واللوائح.</p>
-<h3 style="font-size:14px;font-weight:700;margin:16px 0 8px">سياسة الإسكان الجامعي</h3>
-<p>أقر باطلاعي على سياسة الإسكان الجامعي والتزم بجميع الأنظمة واللوائح المنظمة للسكن الجامعي، بما في ذلك المحافظة على الممتلكات، الالتزام بقواعد السكن، واحترام حقوق الزملاء. كما أقر بأن مخالفة هذه السياسات قد تؤدي إلى اتخاذ الإجراءات النظامية المناسبة.</p>
+<p style="color:var(--gray-500);font-size:13px" data-i18n="pt_decLoadingTerms">جارٍ تحميل البنود…</p>
 </div>
-<a href="../policy.pdf" target="_blank" class="aup-link">📄 عرض سياسة الاستخدام المقبول (AUP)</a>
+<div class="pledge-stamp" id="pledgeStamp" hidden>
+<span class="lbl" data-i18n="pt_decHashLabel">بصمة البنود</span>
+<code id="stampHash">-</code>
+<span class="ver" id="stampVer"></span>
+</div>
+<a href="../policy.pdf" target="_blank" class="aup-link" data-i18n="pt_decAupLink">📄 عرض سياسة الاستخدام المقبول (AUP)</a>
 <div class="checkbox-group">
 <input type="checkbox" id="agreeCheck">
-<label for="agreeCheck">أقرّ بأني قرأت التعهدات أعلاه وأوافق عليها.</label>
+<label for="agreeCheck" data-i18n="pt_decAgree">أقرّ بأني قرأت التعهدات أعلاه وأوافق عليها.</label>
 </div>
-<button id="acceptBtn" class="btn btn-block btn-primary" onclick="acceptDeclarations()" disabled>قبول والمتابعة</button>
+<div class="type-box" id="typeBox">
+<h4 data-i18n="pt_decTypedTitle">الإقرار المكتوب</h4>
+<p class="why" data-i18n="pt_decTypedWhy">اكتب الجملة التالية بخط يدك - العلامة وحدها لا تكفي لتوثيق التعهد.</p>
+<div class="type-target" id="typeTarget"></div>
+<input id="typedConfirm" type="text" maxlength="200" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="اكتب الجملة هنا" data-i18n-placeholder="pt_decTypedPlaceholder" aria-describedby="typeMsg">
+<div class="type-bar"><i id="typeBar"></i></div>
+<div class="type-msg hint" id="typeMsg"></div>
+</div>
+<button id="acceptBtn" class="btn btn-block btn-primary" onclick="acceptDeclarations()" disabled data-i18n="pt_decAccept">قبول والمتابعة</button>
 </div>
 </div>
 <script>
 setLang(localStorage.getItem('uiLanguage') || 'ar');
-function toggleLang() { applyLang(window.currentLang === 'ar' ? 'en' : 'ar'); }
+// ⚠️ البنود بتتعرض من جافاسكريبت مش من data-i18n، فـ applyLang مابتلمسهاش.
+//    من غير إعادة الرسم دي الطالب بيقلب اللغة والبنود تفضل بالعربي.
+function toggleLang() {
+  applyLang(window.currentLang === 'ar' ? 'en' : 'ar');
+  if (typeof renderTerms === 'function') renderTerms();
+}
 
 let token = localStorage.getItem('studentToken');
 
@@ -97,51 +167,157 @@ function showAlert(msg, type) {
   el.className = 'alert alert-' + type;
 }
 
+// ============================================================================
+//  التعهّد — بنود مجمَّدة وإقرار مكتوب.
+//
+//  ⚠️ الشاشة دي كانت بتكتب declAccepted='true' في تخزين المتصفح وتعدّي، ومحدش
+//     بيقرا القيمة دي بعد كده. يعني جدول StudentDeclarations كان بيفضل فاضي
+//     مهما اتقدّم طلبات — والتعهّد كان شكلًا بلا سجل.
+//
+//  ⚠️ ومكانش ينفع تنادي الـ API هنا أصلًا: الطلب لسه ماتخلقش (الترتيب: جوال ←
+//     إقرار ← نموذج ← تقديم)، ومفيش requestId. فالتعهّد بيتخزّن هنا في تخزين
+//     المتصفح لخطوة واحدة بس، وبيتبعت **مع** الطلب في نفس النداء — الشرح في
+//     DTOs/Registration/RegistrationDtos.cs.
+//
+//  ⚠️ وكل الفحص اللي هنا **تسهيل** مش حماية. الحارس الحقيقي في
+//     RegistrationFlowService.SavePledgeAsync: بيبني البنود ويحسب البصمة
+//     ويقارن الجملة بنفسه، ويرفض الطلب كله لو حاجة مش مظبوطة.
+// ============================================================================
+var PLEDGE = null;   // وثيقة البنود من الخادم (النصّ + البصمة)
+
+function typedInput()  { return document.getElementById('typedConfirm'); }
+
+// حالة خانة الكتابة: بتتحدّث مع كل حرف.
+function syncTyped() {
+  var inp = typedInput();
+  var box = document.getElementById('typeBox');
+  var bar = document.getElementById('typeBar');
+  var msg = document.getElementById('typeMsg');
+  if (!inp || !box) return false;
+
+  var v = inp.value;
+  var ok = NuhPledge.matches(v);
+  var onTrack = NuhPledge.isPrefix(v);
+  var pct = Math.round(NuhPledge.progress(v) * 100);
+
+  box.classList.toggle('is-ok', ok);
+  box.classList.toggle('is-bad', !ok && !onTrack);
+  if (bar) bar.style.width = (ok ? 100 : pct) + '%';
+
+  if (msg) {
+    if (ok)            { msg.className = 'type-msg ok';   msg.textContent = t('pt_decMatch'); }
+    else if (!v.trim()){ msg.className = 'type-msg hint'; msg.textContent = ''; }
+    else if (onTrack)  { msg.className = 'type-msg hint'; msg.textContent = t('pt_decKeepGoingMsg'); }
+    else               { msg.className = 'type-msg bad';  msg.textContent = t('pt_decNoMatch'); }
+  }
+  return ok;
+}
+
 async function acceptDeclarations() {
   var agree = document.getElementById('agreeCheck').checked;
-  if (!agree) { showAlert('يرجى الموافقة على التعهدات للمتابعة', 'error'); return; }
-  localStorage.setItem('declAccepted', 'true');
-  localStorage.setItem('policyAccepted', 'true');
+  if (!agree) { showAlert(t('pt_decMustAgree'), 'error'); return; }
+  if (!syncTyped()) {
+    showAlert(NuhPledge.MSG.sentence, 'error');
+    var inp = typedInput(); if (inp) inp.focus();
+    return;
+  }
+  if (!PLEDGE || !PLEDGE.hash) { showAlert(NuhPledge.MSG.noTerms, 'error'); return; }
+
+  // ⚠️ البصمة بتتخزّن مع الجملة: التقديم بيبعتها، والخادم بيقارنها ببصمته هو.
+  //    لو المدير عدّل البنود بين اللحظتين، الطلب بيترفض برسالة «اقرأ من جديد»
+  //    بدل ما يتسجّل تعهّد على نصّ الطالب ماشافهوش.
+  try {
+    localStorage.setItem('declAccepted', 'true');
+    localStorage.setItem('policyAccepted', 'true');
+    localStorage.setItem('pledgeTyped', typedInput().value.trim());
+    localStorage.setItem('pledgeHash', PLEDGE.hash);
+  } catch (e) { }
   window.location.href = 'register-form.html';
 }
 
-// زرار "قبول والمتابعة" يفضل مقفول لحد ما الطالب يعلّم على مربع الإقرار.
-// التحقق جوه acceptDeclarations() سايبينه زي ما هو كشبكة أمان — القفل ده
-// في الواجهة بس، وأي حد يقدر يشيله من أدوات المطوّر.
+// زرار "قبول والمتابعة": مقفول لحد ما الطالب يعلّم **ويكتب** الجملة.
 (function () {
   var chk = document.getElementById('agreeCheck');
   var btn = document.getElementById('acceptBtn');
+  var inp = typedInput();
   if (!chk || !btn) return;
-  function syncAcceptBtn() {
-    btn.disabled = !chk.checked;
-    // لو كان ظهر تنبيه "يرجى الموافقة" قبل كده، يختفي أول ما يوافق
+  function sync() {
+    var typedOk = syncTyped();
+    btn.disabled = !(chk.checked && typedOk);
     if (chk.checked) {
       var el = document.getElementById('alertMessage');
       if (el) el.className = 'alert';
     }
   }
-  chk.addEventListener('change', syncAcceptBtn);
-  // الحالة الابتدائية — مهمة كمان لأن المتصفح بيفتكر آخر قيمة للـ checkbox
-  // لما ترجع بزرار Back، فالزرار لازم يتزامن معاها مش يفضل مقفول غلط.
-  syncAcceptBtn();
+  chk.addEventListener('change', sync);
+  if (inp) {
+    inp.addEventListener('input', sync);
+    // ⚠️ اللصق مقفول: الجملة المكتوبة معناها فعل إرادي من الطالب، ونسخة
+    //    ملصوقة من الشاشة بتلغي المعنى ده. القفل في المتصفح بس — الخادم
+    //    مايقدرش يفرّق بين مكتوب وملصوق، فده حدّ في التجربة لا حماية.
+    ['paste', 'drop'].forEach(function (ev) {
+      inp.addEventListener(ev, function (e) {
+        e.preventDefault();
+        var m = document.getElementById('typeMsg');
+        if (m) { m.className = 'type-msg bad'; m.textContent = t('pt_decNoPaste'); }
+      });
+    });
+  }
+  // الحالة الابتدائية — المتصفح بيفتكر آخر قيمة للخانات لما ترجع بزرار Back.
+  sync();
 })();
 
-// بنود التعهّد من قاعدة البيانات (المدير بيديرها من شاشة /Lookups) — بديل النص الثابت.
-// لو الـ API رجّع بنود بنعرضها؛ وإلا بيفضل النص الثابت زي ما هو (fallback آمن قبل الميجريشن).
-function escDecl(v){ return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+// ============================================================================
+//  بنود التعهّد من الخادم — من /api/Registration/pledge لا من /api/lookups/terms.
+//
+//  ⚠️ الفرق مش شكلي: مسار القوائم بيرجّع لغة واحدة حسب الطلب وبلا بصمة، وده
+//     بيرجّع اللغتين مع النصّ العربي المجمَّد وبصمته. فالطالب بالإنجليزية بيشوف
+//     الترجمة والبصمة تفضل واحدة — الشرح في Core/PledgeRules.cs.
+//
+//  ⚠️ ومفيش نصّ ثابت احتياطي هنا: لو البنود مش متاحة، الزرار بيفضل مقفول.
+//     نصّ مكتوب في الصفحة معناه إن الطالب ممكن يوافق على بنود مش هي اللي
+//     هتتخزّن في تعهّده.
+// ============================================================================
+function escDecl(v) { return escHtml(v); }
+
+function renderTerms() {
+  var box = document.getElementById('declBox');
+  if (!box || !PLEDGE) return;
+  var ar = (window.currentLang !== 'en');
+  var html = '<ol style="padding-inline-start:20px;margin:0;line-height:1.9">';
+  PLEDGE.items.forEach(function (it) {
+    html += '<li style="margin-bottom:8px">' + escDecl(ar ? it.ar : it.en) + '</li>';
+  });
+  html += '</ol>';
+  box.innerHTML = html;
+}
+
 async function loadPledgeTerms() {
+  var btn = document.getElementById('acceptBtn');
   try {
-    var res = await fetch('/api/lookups/terms');
-    if (!res.ok) return;
-    var terms = await res.json();
-    if (!terms || !terms.length) return;
-    var box = document.getElementById('declBox');
-    if (!box) return;
-    var html = '<ol style="padding-inline-start:20px;margin:0;line-height:1.9">';
-    terms.forEach(function (tm) { html += '<li style="margin-bottom:8px">' + escDecl(tm.text) + '</li>'; });
-    html += '</ol>';
-    box.innerHTML = html;
-  } catch (e) { /* سيب النص الثابت */ }
+    var res = await fetch('/api/Registration/pledge');
+    if (!res.ok) throw new Error('pledge');
+    var doc = await res.json();
+    if (!doc || !doc.items || !doc.items.length) throw new Error('empty');
+    PLEDGE = doc;
+
+    renderTerms();
+
+    // الجملة المطلوبة من الخادم كمان — مش مكتوبة في الصفحة.
+    var target = document.getElementById('typeTarget');
+    if (target) target.textContent = doc.requiredSentence || NuhPledge.SENTENCE;
+
+    // البصمة معروضة في مجموعات رباعية — أسهل في المقارنة بالعين.
+    var stamp = document.getElementById('pledgeStamp');
+    var code  = document.getElementById('stampHash');
+    var ver   = document.getElementById('stampVer');
+    if (code) code.textContent = String(doc.hash).slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
+    if (ver)  ver.textContent = t('pt_decVersion') + ' ' + doc.version + ' · ' + doc.items.length + ' ' + t('pt_decTermsCount');
+    if (stamp) stamp.hidden = false;
+  } catch (e) {
+    if (btn) btn.disabled = true;
+    showAlert(NuhPledge.MSG.noTerms, 'error');
+  }
 }
 loadPledgeTerms();
 </script>
@@ -156,14 +332,18 @@ NuhIdle.start({
   warnSeconds: 120,
   showExpiredPanel: true,          // تبقى الرسالة على الشاشة بدل تحويل صامت
   homeUrl: 'index.html',
-  homeLabel: 'العودة لبوابة الطلاب',
+  // ⚠️ مفتاح لا t('...'): السطر ده بيتنفّذ وقت تحليل السكربت، والقاموس
+  //    لسه بيتجاب بـ fetch - فـ t() كانت بترجّع «pt_backToPortal» نفسها
+  //    وتتكتب على الزرّ. NuhIdle بقت هي اللي بتترجم وقت العرض.
+  homeLabelKey: 'pt_backToPortal',
   pingHeaders: function () {
     var t = localStorage.getItem('studentToken');
     return t ? { 'Authorization': 'Bearer ' + t } : {};
   },
   // جلسة الطالب في المتصفح — تُمسح عند الانتهاء بأي سبب
   onSessionEnd: function () {
-    ['studentToken', 'studentUser', 'regMobile', 'lastRequestAt'].forEach(function (k) {
+    ['studentToken', 'studentUser', 'regMobile', 'lastRequestAt',
+     'declAccepted', 'policyAccepted', 'pledgeTyped', 'pledgeHash'].forEach(function (k) {
       try { localStorage.removeItem(k); } catch (e) {}
     });
   },

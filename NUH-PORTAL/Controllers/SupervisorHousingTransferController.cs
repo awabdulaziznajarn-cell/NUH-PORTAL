@@ -35,12 +35,18 @@ namespace NUH_PORTAL.Controllers
 
         // GET api/supervisor/housing-transfer/recent
         [HttpGet("recent")]
-        public async Task<IActionResult> GetRecent()
-            => Ok(await _service.GetRecentAsync());
+        public async Task<IActionResult> GetRecent([FromQuery] int skip = 0)
+            => Ok(await _service.GetRecentAsync(skip));
 
         // GET api/supervisor/housing-transfer/{id}/attachment[?download=true]
         // من غير download بيرجع inline — يعني الصور و PDF بتتعرض في المتصفح
         // بدل ما تتنزّل على طول.
+        // ⚠️ ممنوع تخزينه في أي كاش. الرد ده نتيجة *قرار صلاحية* يخصّ
+        //    المستخدم الحالي، والمتصفح بيتعامل معاه كملف عادي فبيخزّنه
+        //    بالرابط — فنفس الرابط بيتفتح تاني من الكاش من غير ما يوصل
+        //    للسيرفر أصلًا، فالفحص ما بيتنفّذش. ده مش سيناريو نظري:
+        //    كان بيخلّي اختبار «مشرف القسم التاني» يبان ناجح وهو مش ناجح.
+        [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
         [HttpGet("{id}/attachment")]
         public async Task<IActionResult> GetAttachment(int id, [FromQuery] bool download = false)
         {

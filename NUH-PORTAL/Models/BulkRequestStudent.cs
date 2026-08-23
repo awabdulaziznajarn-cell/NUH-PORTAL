@@ -16,6 +16,10 @@ namespace NUH_PORTAL.Models
         public string? AcademicLevel { get; set; }
         public string? Gender { get; set; }
         public string? BuildingNumber { get; set; }
+        // ⚠️ الدور كان ناقص من الأرشيف وحده. السكن عندنا مبنى/دور/شقة/غرفة،
+        //    وسجل الطالب والقالب والمعاينة كلهم بياخدوه — الجدول ده وحده كان
+        //    بيضيّعه، فأي رجوع للملف المرفوع بعد كده بيلاقي الدور فاضي.
+        public string? FloorNumber { get; set; }
         public string? ApartmentNumber { get; set; }
         public string? RoomNumber { get; set; }
         public bool IsValid { get; set; } = true;

@@ -74,6 +74,18 @@ namespace NUH_PORTAL.Controllers
             return Ok(new { active = false });
         }
 
+        // POST api/Users/{id}/unlock — فكّ قفل الدخول بعد المحاولات الفاشلة
+        // ⚠️ نفس صلاحية «التعطيل/التفعيل» (users.manage) لا صلاحية الحذف:
+        //    ده إجراء دعم يومي - المستخدم غلط في كلمة السر تلات مرات - مش
+        //    إجراء خطير. والمسؤول اللي بيقدر يعطّل حساب يقدر يفكّ قفله.
+        [HttpPost("{id:int}/unlock")]
+        [Authorize(Policy = "users.manage")]
+        public async Task<IActionResult> Unlock(int id)
+        {
+            await _service.UnlockAsync(id);
+            return Ok(new { unlocked = true });
+        }
+
         // DELETE api/Users/{id} — حذف منطقي (صلاحية منفصلة عن users.manage:
         // التعطيل إجراء يومي، والحذف إجراء نادر وخطير)
         [HttpDelete("{id:int}")]

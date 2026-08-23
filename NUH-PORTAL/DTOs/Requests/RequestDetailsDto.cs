@@ -34,6 +34,14 @@ namespace NUH_PORTAL.DTOs.Requests
         public string? ReadyForProvisioningByName { get; set; }
         public string? CompletedByName { get; set; }
 
+        // ====================================================================
+        //  التعهّد الموثّق — البنود المجمَّدة والجملة المكتوبة بخطّ الطالب.
+        //
+        //  ⚠️ null معناها إن الطلب اتقدّم قبل تفعيل توثيق التعهّد، والشاشة
+        //     بتقول كده صراحةً بدل ما تعرض بطاقة فاضية.
+        // ====================================================================
+        public NUH_PORTAL.DTOs.Registration.PledgeRecordDto? Pledge { get; set; }
+
         // آخر تعديل أجراه الطالب بعد «بحاجة معلومات إضافية».
         // فارغة إذا لم يُعِد الطالب التقديم — الشاشة تعلّم الحقول الواردة هنا.
         public List<StudentEditDto> StudentEdits { get; set; } = new();

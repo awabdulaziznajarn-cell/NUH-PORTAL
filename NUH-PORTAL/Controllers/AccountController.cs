@@ -33,6 +33,30 @@ namespace NUH_PORTAL.Controllers
             _permissions = permissions;
         }
 
+        // ====================================================================
+        //  ⚠️ returnUrl جاي من الرابط — يعني من أي حد، مش من النظام.
+        //     من غير الفحص ده الرابط ده يشتغل:
+        //
+        //        https://housing.nuh.edu.sa/Account/Login?returnUrl=https://<موقع-غريب>
+        //
+        //     الضحية بتشوف دومين الجامعة الحقيقي وصفحة الدخول الحقيقية، وبتدخل
+        //     ببياناتها صح — وبعد نجاح الدخول النظام بنفسه بيرمي متصفحها على
+        //     الموقع الغريب (صفحة دخول مقلّدة في العادة، بتقول «الجلسة انتهت،
+        //     ادخل تاني»). مفيش أي علامة تخلّيها تشك: الرابط اللي وصلها كان
+        //     دومينّا فعلًا.
+        //
+        //     وكان الفرق بين المسارين إن GET بيستخدم LocalRedirect (بتتحقّق
+        //     وترمي استثناء)، وPOST بيحطّ الرابط في BridgeJson وصفحة LoginBridge
+        //     بتنفّذه بـ location.replace بلا أي فحص — فالثغرة كانت في المسار
+        //     اللي بيحصل بعد إدخال كلمة السر بالظبط.
+        //
+        //     Url.IsLocalUrl بترفض أي رابط مطلق أو بروتوكول أو //host وبتقبل
+        //     المسارات الداخلية بس — نفس القاعدة المستعملة في CultureController.
+        //     ومكتوبة هنا مرة واحدة عشان المسارين ما يفترقوش تاني.
+        // ====================================================================
+        private string SafeReturnUrl(string? returnUrl)
+            => !string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl) ? returnUrl : DefaultRedirect;
+
         // GET /Account/Login
         [AllowAnonymous]
         [HttpGet("Login")]
@@ -40,9 +64,12 @@ namespace NUH_PORTAL.Controllers
         {
             var existing = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             if (existing.Succeeded)
-                return LocalRedirect(string.IsNullOrEmpty(returnUrl) ? DefaultRedirect : returnUrl);
+                return LocalRedirect(SafeReturnUrl(returnUrl));
 
-            ViewData["ReturnUrl"] = returnUrl;
+            // ⚠️ الفحص هنا كمان لا عند التحويل بس: القيمة دي بتترسم في حقل مخفي
+            //    في النموذج وبترجع لينا مع POST. تنضيفها عند الدخول أنضف من
+            //    الاعتماد على إن الفحص التاني هيمسكها.
+            ViewData["ReturnUrl"] = SafeReturnUrl(returnUrl);
             return View();
         }
 
@@ -55,7 +82,11 @@ namespace NUH_PORTAL.Controllers
         //  والمستخدم بيشوف ده كأنه "بيدخل ويطلع على طول"، فبيدوّر في اتجاه
         //  الجلسات والكوكي، والمشكلة أصلاً في الصلاحيات.
         //  هنا بنوقف اللوب ونعرض السبب الحقيقي: الدور وعدد صلاحياته.
-        [Authorize]
+        //  ⚠️ Policy = "signedIn" لا [Authorize] مجرّد: السياسة الافتراضية بقت
+        //     بتطلب علامة «الحساب نشط»، والموظف الموقوف مالوش. ولو الصفحة دي
+        //     رفضته، الرفض بيحوّله عليها هي نفسها — نفس اللوب المشروح فوق
+        //     بالظبط، بس بسبب تاني.
+        [Authorize(Policy = "signedIn")]
         [HttpGet("Denied")]
         public async Task<IActionResult> Denied()
         {
@@ -120,7 +151,9 @@ namespace NUH_PORTAL.Controllers
                         full_name = user.full_name,
                         role = roles.FirstOrDefault() ?? "user"
                     },
-                    redirect = string.IsNullOrEmpty(returnUrl) ? DefaultRedirect : returnUrl
+                    // ⚠️ SafeReturnUrl لا القيمة الخام: LoginBridge بتنفّذ القيمة دي
+                    //    بـ location.replace من غير أي فحص من ناحيتها.
+                    redirect = SafeReturnUrl(returnUrl)
                 };
                 ViewData["BridgeJson"] = System.Text.Json.JsonSerializer.Serialize(bridge);
                 return View("LoginBridge");
@@ -128,14 +161,17 @@ namespace NUH_PORTAL.Controllers
             catch (UserFriendlyException ex)
             {
                 ViewData["Error"] = ex.Message;
-                ViewData["ReturnUrl"] = returnUrl;
+                ViewData["ReturnUrl"] = SafeReturnUrl(returnUrl);
                 return View();
             }
         }
 
         // POST /Account/Logout
         [HttpPost("Logout")]
-        [Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme)]
+        // ⚠️ Policy = "signedIn" عن قصد: الموظف الموقوف لازم يقدر يخرج ويمسح
+        //    الكوكي بنفسه. لو السياسة الافتراضية طبّقت عليه، الخروج نفسه كان
+        //    هيترفض ويفضل عالق في شاشة الرفض لحد ما يقفل المتصفح.
+        [Authorize(Policy = "signedIn", AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme)]
         public async Task<IActionResult> Logout()
         {
             // اخرج (امسح كوكي الجلسة) الأول — ده الأهم. سجل الإجراء best-effort:

@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NUH_PORTAL.DTOs.FacultyHousing;
 using NUH_PORTAL.Services;
@@ -27,11 +27,14 @@ namespace NUH_PORTAL.Controllers
             [FromQuery] string? status = null,
             [FromQuery] string? search = null,
             [FromQuery] bool onlyDeviations = false,
+            [FromQuery] bool onlyOuMismatch = false,
             [FromQuery] bool onlyNeedsConfirm = false,
             [FromQuery] int? tower = null,
             [FromQuery] int page = 1,
-            [FromQuery] int pageSize = 50)
-            => Ok(await _service.GetUnitsAsync(type, status, search, onlyDeviations, onlyNeedsConfirm, tower, page, pageSize));
+            [FromQuery] int pageSize = 50,
+            [FromQuery] string? sortBy = null,
+            [FromQuery] bool sortAsc = false)
+            => Ok(await _service.GetUnitsAsync(type, status, search, onlyDeviations, onlyNeedsConfirm, onlyOuMismatch, tower, page, pageSize, sortBy, sortAsc));
 
         // GET api/FacultyHousing/units/12 — بيانات الوحدة + كل سجل الإشغال
         [HttpGet("units/{id:int}")]

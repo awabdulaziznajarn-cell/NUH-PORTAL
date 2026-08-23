@@ -14,8 +14,14 @@ REM  What it does, in order:
 REM    1) dotnet publish  ->  D:\Deploy\NUH-PORTAL-<stamp>-<env>\app
 REM    2) verifies the publish output (config present, secrets absent)
 REM    3) optional: builds efbundle.exe for EF migrations
-REM    4) optional: backs up the live site, stops the app pool,
-REM       copies app\* over D:\Publish, starts the app pool again
+REM    4) optional: backs up the live site, drops app_offline.htm in
+REM       D:\Publish, copies app\* over it, then removes app_offline.htm
+REM
+REM  الخطوة 4 كانت بتوقّف الـ app pool. ساعتها IIS بيردّ 503 من نفسه بصفحته
+REM  البيضاء "Service Unavailable" قبل ما التطبيق يشتغل، فمفيش أي طريقة
+REM  نعرض بيها صفحة صيانة بشكل النظام. app_offline.htm بيحلّ الاتنين مرة
+REM  واحدة: بيقفل التطبيق بهدوء (فتنفتح ملفات الـ DLL للنسخ) وبيرجّع محتوى
+REM  الصفحة دي لأي طلب بحالة 503 لحد ما نمسحها.
 REM
 REM  The copy in step 4 does NOT delete existing files, so the live
 REM  folders  keys\  and  logs\  survive a deploy. That is intentional:
@@ -39,6 +45,11 @@ set stagingRoot=D:\Deploy
 
 REM Live IIS site physical path
 set siteRoot=D:\Publish
+
+REM  صفحة الصيانة الرسمية. الأصل هنا، والسكربت بينسخها لجذر النشر قبل ما
+REM  يبدأ النسخ وبيمسحها بعده. متعمَّد إنها برّه مجلد المشروع عشان
+REM  dotnet publish ما يشيلهاش معاه للنشر بالغلط.
+set maintenancePage=%MainProjectPath%\_maintenance\app_offline.htm
 
 REM Fallback IIS application pool name, used only if auto-detection below fails.
 REM Do not rely on this being right - it was wrong once already. The script asks
@@ -240,19 +251,77 @@ echo %ESC%[96mBacking up live site  -^>  %backupPath%%ESC%[0m
 mkdir "%backupPath%"
 xcopy "%siteRoot%\*" "%backupPath%\" /E /I /Y /Q >nul
 
-echo %ESC%[96mStopping app pool [!appPoolName!] ...%ESC%[0m
-"%windir%\system32\inetsrv\appcmd.exe" stop apppool /apppool.name:"!appPoolName!"
-powershell -NoProfile -Command "Start-Sleep -Seconds 4"
-
-echo %ESC%[96mCopying app  -^>  %siteRoot%%ESC%[0m
-xcopy "%publishPath%\*" "%siteRoot%\" /E /I /Y >nul
-IF ERRORLEVEL 1 (
-  echo %ESC%[91mCopy FAILED - the site is still stopped. Restore from %backupPath%.%ESC%[0m
-  GOTO SkipDeploy
+REM  ---- تحويل الموقع لوضع الصيانة ----
+REM  لو الصفحة مش موجودة لأي سبب، بنرجع للسلوك القديم (إيقاف الـ app pool)
+REM  بدل ما ننسخ فوق موقع شغّال — النسخ ساعتها بيفشل على ملفات DLL مقفولة.
+set "usedOfflinePage=0"
+IF EXIST "%maintenancePage%" (
+  echo %ESC%[96mTaking site offline  -^>  %siteRoot%\app_offline.htm%ESC%[0m
+  copy /Y "%maintenancePage%" "%siteRoot%\app_offline.htm" >nul
+  IF NOT ERRORLEVEL 1 set "usedOfflinePage=1"
+)
+IF "!usedOfflinePage!" EQU "1" (
+  REM  مهلة عشان التطبيق يقفل ويسيب ملفاته قبل النسخ
+  powershell -NoProfile -Command "Start-Sleep -Seconds 5"
+) ELSE (
+  echo %ESC%[93mMaintenance page not found at %maintenancePage%%ESC%[0m
+  echo %ESC%[93mFalling back to stopping the app pool - users will see the bare IIS 503.%ESC%[0m
+  echo %ESC%[96mStopping app pool [!appPoolName!] ...%ESC%[0m
+  "%windir%\system32\inetsrv\appcmd.exe" stop apppool /apppool.name:"!appPoolName!"
+  powershell -NoProfile -Command "Start-Sleep -Seconds 4"
 )
 
-echo %ESC%[96mStarting app pool [!appPoolName!] ...%ESC%[0m
-"%windir%\system32\inetsrv\appcmd.exe" start apppool /apppool.name:"!appPoolName!"
+set "poolStoppedForRetry=0"
+echo %ESC%[96mCopying app  -^>  %siteRoot%%ESC%[0m
+xcopy "%publishPath%\*" "%siteRoot%\" /E /I /Y >nul
+IF NOT ERRORLEVEL 1 GOTO CopyDone
+
+REM  ---- محاولة تانية بإيقاف الـ app pool ----
+REM  ⚠️ صفحة الصيانة لوحدها بتخلّي ASP.NET Core يقفل التطبيق ويسيب ملفاته،
+REM     وده بيكفي في الحالة العادية. لكن أحيانًا بيفضل هاندل مفتوح على ملف
+REM     (ماسح فيروسات بيقراه، أو w3wp اتأخر في الإغلاق) فالنسخ بيفشل.
+REM  ⚠️ وكان السكربت وقتها بيقف ويسيب الموقع مطفي بنصف نشر مستنّي تدخّل يدوي.
+REM     دلوقتي بيوقف الـ pool - وده بيقفل العملية بالقوة ويفكّ أي قفل - ويعيد
+REM     النسخ مرة واحدة. الزائر بيشوف صفحة IIS البيضا في الثواني دي بدل صفحة
+REM     الصيانة، وده أرخص من موقع واقف لحد ما حد ياخد باله.
+REM  ⚠️ والمنطق هنا مسطّح بـ GOTO عن قصد لا IF متداخلة. السبب إن قراءة نتيجة
+REM     أمر جوّه قوس في batch فخّ معروف: %ERRORLEVEL% بتتبدّل وقت **قراءة**
+REM     الكتلة كلها لا وقت تنفيذ السطر، فبترجع قيمة قديمة. (الشكل
+REM     IF ERRORLEVEL n سليم جوّه القوس، لكن التفرقة بين الشكلين رفيعة
+REM     والباج بيبقى صامت.) والمسار ده بيتنفّذ يوم ما النشر يفشل - يعني
+REM     أسوأ يوم عشان نكتشف فيه إن الشرط كان بيتقري غلط.
+echo %ESC%[93mCopy failed - a file is still locked. Stopping app pool and retrying once...%ESC%[0m
+"%windir%\system32\inetsrv\appcmd.exe" stop apppool /apppool.name:"!appPoolName!"
+set "poolStoppedForRetry=1"
+powershell -NoProfile -Command "Start-Sleep -Seconds 4"
+xcopy "%publishPath%\*" "%siteRoot%\" /E /I /Y >nul
+IF NOT ERRORLEVEL 1 GOTO CopyDone
+
+REM  متعمَّد: مابنشيلش صفحة الصيانة هنا. الموقع نصّه منسوخ، فإظهاره بنصف
+REM  نشر أسوأ من إبقائه على صفحة صيانة مفهومة لحد ما تتصرّف.
+echo %ESC%[91mCopy FAILED twice - the site is still offline.%ESC%[0m
+echo %ESC%[91mRestore from %backupPath%%ESC%[0m
+REM  الرسالة مشروطة: في المسار الاحتياطي مافيش app_offline.htm أصلًا، وتوجيه
+REM  حد يمسح ملف مش موجود وسط عطل بيضيّع وقت في اللحظة الغلط.
+IF "!usedOfflinePage!" EQU "1" echo %ESC%[91mthen delete %siteRoot%\app_offline.htm to bring the site back.%ESC%[0m
+echo %ESC%[91mNOTE: the app pool [!appPoolName!] is STOPPED - start it after you restore.%ESC%[0m
+GOTO SkipDeploy
+
+:CopyDone
+IF "!usedOfflinePage!" EQU "1" (
+  echo %ESC%[96mBringing site back online  -^>  removing app_offline.htm%ESC%[0m
+  del /F /Q "%siteRoot%\app_offline.htm" >nul 2>&1
+)
+REM  ⚠️ الـ pool بيترجع لو السكربت وقّفه - سواء في المسار الاحتياطي من الأول
+REM     (صفحة الصيانة مش موجودة) أو في المحاولة التانية فوق. الشرطان منفصلان
+REM     عن قصد: ممكن نكون استعملنا صفحة الصيانة **و** وقّفنا الـ pool في
+REM     المحاولة التانية، وساعتها لازم نمسح الصفحة **و** نشغّل الـ pool.
+IF "!usedOfflinePage!" NEQ "1" set "poolStoppedForRetry=1"
+IF "!poolStoppedForRetry!" EQU "1" (
+  echo %ESC%[96mStarting app pool [!appPoolName!] ...%ESC%[0m
+  "%windir%\system32\inetsrv\appcmd.exe" start apppool /apppool.name:"!appPoolName!"
+)
+
 powershell -NoProfile -Command "Start-Sleep -Seconds 3"
 
 echo %ESC%[96mHealth check: %healthUrl%%ESC%[0m
@@ -299,10 +368,14 @@ echo   app\           -^> the deployable application
 echo   server-files\  -^> SQL scripts, efbundle.exe, deployment guide
 echo.
 echo %ESC%[96mIf you answered N to the deploy question, do it manually:%ESC%[0m
-echo   1^) "%%windir%%\system32\inetsrv\appcmd.exe" stop apppool /apppool.name:"!appPoolName!"
-echo   2^) xcopy "%publishPath%\*" "%siteRoot%\" /E /I /Y
-echo   3^) "%%windir%%\system32\inetsrv\appcmd.exe" start apppool /apppool.name:"!appPoolName!"
+echo   1^) copy /Y "%maintenancePage%" "%siteRoot%\app_offline.htm"      ^(site goes offline^)
+echo   2^) wait ~5 seconds, then: xcopy "%publishPath%\*" "%siteRoot%\" /E /I /Y
+echo   3^) del "%siteRoot%\app_offline.htm"                                ^(site comes back^)
 echo   4^) verify: %healthUrl%
+echo.
+echo %ESC%[96mTo put the site under maintenance at any other time:%ESC%[0m
+echo   copy /Y "%maintenancePage%" "%siteRoot%\app_offline.htm"     ^(offline^)
+echo   del "%siteRoot%\app_offline.htm"                             ^(online^)
 echo.
 IF EXIST "%packagePath%" %SystemRoot%\explorer.exe "%packagePath%"
 

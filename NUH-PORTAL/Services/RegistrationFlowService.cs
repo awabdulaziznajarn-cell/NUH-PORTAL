@@ -20,6 +20,7 @@ namespace NUH_PORTAL.Services
         private readonly IRepository<User> _users;
         private readonly IRepository<Request> _requests;
         private readonly IRepository<StudentDeclaration> _declarations;
+        private readonly IPledgeService _pledge;
         private readonly IRegistrationService _registration;
         private readonly IWorkflowService _workflow;
         private readonly IHttpContextAccessor _http;
@@ -31,6 +32,7 @@ namespace NUH_PORTAL.Services
             IRepository<User> users,
             IRepository<Request> requests,
             IRepository<StudentDeclaration> declarations,
+            IPledgeService pledge,
             IRegistrationService registration,
             IWorkflowService workflow,
             IHttpContextAccessor http,
@@ -43,6 +45,7 @@ namespace NUH_PORTAL.Services
             _users = users;
             _requests = requests;
             _declarations = declarations;
+            _pledge = pledge;
             _registration = registration;
             _workflow = workflow;
             _http = http;
@@ -136,6 +139,46 @@ namespace NUH_PORTAL.Services
             // نص واحد للـ JSON يُستخدم في التحويل وفي الأرشيف معًا
             var registrationDataJson = RegistrationDataMapper.Serialize(request.RegistrationData);
 
+            var mobile = RegistrationDataMapper.Read(registrationDataJson, "mobile")
+                         ?? RegistrationDataMapper.Read(registrationDataJson, "phone");
+            var nationalId = RegistrationDataMapper.Read(registrationDataJson, "national_id");
+
+            // ================================================================
+            //  الفحوص قبل إنشاء سجل الطالب — الترتيب ده مش تفصيلة.
+            //
+            //  ⚠️ كان سجل الطالب بيتحفظ *الأول*، وبعده تيجي فحوص التكرار وترمي
+            //     ٤٠٠. والنتيجة صفّ طالب يتيم: اتحفظ ومفيش طلب مربوط بيه، ومحدش
+            //     بيحذفه. ورقم الهوية عليه فهرس فريد — يعني **صاحب الهوية
+            //     الحقيقي بقى مستحيل يتسجّل بعد كده**، وكل محاولة بترجع «رقم
+            //     الهوية موجود بالفعل» وهو مش موجود في أي طلب.
+            //
+            //  ⚠️ والفحوص دي ماكانتش محتاجة السجل أصلًا: بتاخد الرقم الجامعي
+            //     ورقم الهوية والجوال من الحمولة مباشرة. فترتيبهم بعد الحفظ
+            //     ماكانش له سبب — كان سهو.
+            // ================================================================
+
+            // فحص واحد يغطّي الرقم الجامعي ورقم الهوية ورقم الجوال، ويرجّع رقم الطلب
+            // المتعارض عشان الرسالة تكون مفيدة: الطالب يعرف يتابع طلبه بدل ما يحاول تاني.
+            // ⚠️ الفحص يغطّي الثلاثة معًا: الرقم الجامعي، رقم الهوية، رقم الجوال.
+            //    من غير كده كان الطالب يقدر يقدّم طلبًا ثانيًا بجوال مختلف وبنفس
+            //    رقم الهوية أو الرقم الجامعي — والنتيجة سجلّان لنفس الشخص.
+            var existing = await _registration.FindOpenRequestNumberAsync(request.StudentId, nationalId, mobile);
+            if (existing != null)
+                throw new UserFriendlyException(DuplicateMessage(existing, isOpen: true), 400);
+
+            // الطالب المسجَّل بالفعل (طلب مكتمل وسكنه ساري) لا يقدّم طلبًا جديدًا.
+            // الحالة النهائية (مغادرة/تخرّج/تحويل) تفتح له التسجيل تلقائيًا.
+            var housed = await _registration.FindActiveHousingRequestNumberAsync(request.StudentId, nationalId, mobile);
+            if (housed != null)
+                throw new UserFriendlyException(DuplicateMessage(housed, isOpen: false), 400);
+
+            // ⚠️ ومعاملة واحدة تلفّ الباقي: إنشاء الطالب وتوليد رقم الطلب وإنشاء
+            //    الطلب. الترتيب فوق شال أشهر سبب لليُتم، والمعاملة بتقفل الباقي —
+            //    تصادم في رقم الطلب، أو انقطاع في النص. يا الاتنين يا ولا واحد.
+            using var transaction = await UnitOfWork.BeginTransactionAsync();
+            try
+            {
+
             var student = await _students.FindAsync(s => s.student_id == request.StudentId);
             if (student == null)
             {
@@ -176,25 +219,6 @@ namespace NUH_PORTAL.Services
             if (actor != null && actorMobile != null && actorMobile == NormalizeMobile(student.phone))
                 await StudentLoginIdentity.SyncAsync(_userManager, actor, student, actorMobile);
 
-            var mobile = RegistrationDataMapper.Read(registrationDataJson, "mobile")
-                         ?? RegistrationDataMapper.Read(registrationDataJson, "phone");
-            var nationalId = RegistrationDataMapper.Read(registrationDataJson, "national_id");
-
-            // فحص واحد يغطّي الرقم الجامعي ورقم الهوية ورقم الجوال، ويرجّع رقم الطلب
-            // المتعارض عشان الرسالة تكون مفيدة: الطالب يعرف يتابع طلبه بدل ما يحاول تاني.
-            // ⚠️ الفحص يغطّي الثلاثة معًا: الرقم الجامعي، رقم الهوية، رقم الجوال.
-            //    من غير كده كان الطالب يقدر يقدّم طلبًا ثانيًا بجوال مختلف وبنفس
-            //    رقم الهوية أو الرقم الجامعي — والنتيجة سجلّان لنفس الشخص.
-            var existing = await _registration.FindOpenRequestNumberAsync(request.StudentId, nationalId, mobile);
-            if (existing != null)
-                throw new UserFriendlyException(DuplicateMessage(existing, isOpen: true), 400);
-
-            // الطالب المسجَّل بالفعل (طلب مكتمل وسكنه ساري) لا يقدّم طلبًا جديدًا.
-            // الحالة النهائية (مغادرة/تخرّج/تحويل) تفتح له التسجيل تلقائيًا.
-            var housed = await _registration.FindActiveHousingRequestNumberAsync(request.StudentId, nationalId, mobile);
-            if (housed != null)
-                throw new UserFriendlyException(DuplicateMessage(housed, isOpen: false), 400);
-
             var requestNumber = await _registration.GenerateRequestNumberAsync();
 
             var newRequest = await _registration.CreateRegistrationRequestAsync(
@@ -203,29 +227,81 @@ namespace NUH_PORTAL.Services
             var (ip, ua) = ClientInfo();
             await _workflow.LogAuditAsync(actorId, "registration_created", "Requests", newRequest.Id, ip, ua);
 
+            // ⚠️ التعهّد جوّه نفس المعاملة. لو الجملة مش مطابقة أو البنود
+            //    اتغيّرت، الاستثناء بيطلع من هنا فالمعاملة بترجع بالكامل —
+            //    يعني مفيش طلب اتخلق بلا تعهّد، ولا سجل طالب اتساب وراه.
+            //    الشرح الكامل في Core/PledgeRules.cs و DTOs/Registration.
+            await SavePledgeAsync(newRequest.Id, request.Pledge, actorId, ip, ua);
+
+            await transaction.CommitAsync();
+
             return new StartRegistrationResultDto
             {
                 Message = "تم تقديم طلب التسجيل بنجاح",
                 RequestId = newRequest.Id,
                 RequestNumber = newRequest.RequestNumber
             };
+
+            }
+            catch
+            {
+                // أي فشل بعد هنا = مفيش سجل طالب متسيّب وراه.
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
-        public async Task AcceptDeclarationsAsync(int requestId, AcceptDeclarationsRequest request)
+        // ⚠️ تفويض لا نسخة: البناء نفسه في Services/PledgeService.cs عشان
+        //    شاشة تفاصيل الطلب تقرا من نفس المكان. موجودة هنا لأن الواجهة
+        //    بتناديها على /api/Registration/pledge وده مسار التسجيل.
+        public Task<PledgeDocumentDto> GetPledgeDocumentAsync() => _pledge.GetDocumentAsync();
+
+        // ====================================================================
+        //  حفظ التعهّد — المسار الوحيد اللي بيكتب في StudentDeclarations.
+        //
+        //  ⚠️ كل اللي بيتاخد من العميل هنا: علامتَي الموافقة والجملة المكتوبة
+        //     والبصمة اللي كان شايفها. النصّ والبصمة والنسخة بيتبنوا على
+        //     الخادم من الجدول — العميل ماعندوش أي طريقة يقول بيها «وافقت
+        //     على بنود غير دي».
+        //
+        //  ⚠️ والرفض هنا بيرمي UserFriendlyException وسط المعاملة، يعني
+        //     الطلب كله بيترجع. تعهّد مرفوض = مفيش طلب أصلًا، مش طلب بلا
+        //     تعهّد.
+        // ====================================================================
+        private async Task SavePledgeAsync(
+            int requestId, AcceptDeclarationsRequest? pledge, int actorId, string? ip, string ua)
         {
-            var actorId = RequireActor();
+            if (pledge == null || !pledge.DeclarationAccepted || !pledge.PolicyAccepted)
+                throw new UserFriendlyException(PledgeRules.NotAcceptedError, 400);
 
-            var declRequest = await _requests.GetByIdAsync(requestId);
-            await EnsureOwnsRequestAsync(actorId, declRequest);
+            // ⚠️ الفحص ده على الخادم مش زيادة على فحص الواجهة: أي حد يقدر يبعت
+            //    الطلب من غير ما يفتح الصفحة أصلًا.
+            if (!PledgeRules.SentenceMatches(pledge.TypedConfirmation))
+                throw new UserFriendlyException(PledgeRules.SentenceError, 400);
 
-            var (ip, ua) = ClientInfo();
+            var doc = await _pledge.GetDocumentAsync();
+
+            // بنود فاضية = مفيش تعهّد أصلًا. نرفض بدل ما نخزّن موافقة على لا شيء.
+            if (doc.Items.Count == 0)
+                throw new UserFriendlyException(PledgeRules.NoTermsError, 503);
+
+            // ⚠️ البصمة اللي الطالب شافها لازم تساوي اللي الخادم بناها دلوقتي.
+            //    غير كده يبقى المدير عدّل البنود وهو بيملا الطلب — فنوقّفه
+            //    ونقوله يقرا من جديد، لا نسجّل موافقته على نصّ ماشافهوش.
+            if (!string.IsNullOrWhiteSpace(pledge.TermsHash) &&
+                !string.Equals(pledge.TermsHash, doc.Hash, StringComparison.OrdinalIgnoreCase))
+                throw new UserFriendlyException(PledgeRules.TermsChangedError, 409);
 
             var declaration = new StudentDeclaration
             {
                 RequestId = requestId,
-                DeclarationAccepted = request.DeclarationAccepted,
-                PolicyAccepted = request.PolicyAccepted,
-                PolicyVersion = request.PolicyVersion ?? "1.0",
+                DeclarationAccepted = true,
+                PolicyAccepted = true,
+                PolicyVersion = doc.Version,
+                TermsText = doc.Text,
+                TermsHash = doc.Hash,
+                // كما كتبها بالحرف — التطبيع كان للمقارنة بس.
+                TypedConfirmation = pledge.TypedConfirmation!.Trim(),
                 AcceptedDate = DateTime.UtcNow,
                 IPAddress = ip,
                 UserAgent = ua
@@ -235,6 +311,30 @@ namespace NUH_PORTAL.Services
             await UnitOfWork.SaveAsync();
 
             await _workflow.LogAuditAsync(actorId, "declaration_accepted", "StudentDeclarations", declaration.Id, ip, ua);
+        }
+
+        // ====================================================================
+        //  المسار المنفصل: تعهّد على طلب قائم.
+        //
+        //  ⚠️ باقي موجود مع إن التسجيل الذاتي بقى بيبعت التعهّد مع /start:
+        //     الطلب اللي بيقدّمه المشرف نيابةً عن الطالب بيتعمل من شاشة تانية،
+        //     والطالب بيوقّع تعهّده بعدين. المنطق واحد — نفس SavePledgeAsync.
+        //
+        //  ⚠️ ومفيش تعهّدين لطلب واحد: التاني بيترفض بدل ما يتراكم في الجدول
+        //     فمحدش يعرف أنهي واحد هو المعتمد.
+        // ====================================================================
+        public async Task AcceptDeclarationsAsync(int requestId, AcceptDeclarationsRequest request)
+        {
+            var actorId = RequireActor();
+
+            var declRequest = await _requests.GetByIdAsync(requestId);
+            await EnsureOwnsRequestAsync(actorId, declRequest);
+
+            if (await _declarations.Query().AsNoTracking().AnyAsync(d => d.RequestId == requestId))
+                throw new UserFriendlyException("تم توقيع التعهّد لهذا الطلب من قبل.", 409);
+
+            var (ip, ua) = ClientInfo();
+            await SavePledgeAsync(requestId, request, actorId, ip, ua);
         }
 
         public async Task<List<MyRequestListItemDto>> GetMyRequestsAsync(string? mobile)
@@ -409,6 +509,19 @@ namespace NUH_PORTAL.Services
             //  القاعدة: المراجع حدد خانات؟ اللي برّاها مايتغيّرش. ماحددش؟
             //  كل حاجة مفتوحة (سلوك الطلبات القديمة زي ما هو).
             // ================================================================
+            // ⚠️ قفل دائم لا يتبع اختيار المراجع: الرقم الجامعي هوية الطلب.
+            //    الفحص اللي تحته بيشتغل بس لو المراجع حدد خانات — والطلبات
+            //    المرجّعة قبل ميزة التحديد InfoFields فيها فاضية، فكل خاناتها
+            //    مفتوحة ومنها الرقم الجامعي. طالب يغيّره ساعتها يبقى الطلب
+            //    اتراجع لواحد واترجّع باسم واحد تاني.
+            var idChange = changes.FirstOrDefault(c =>
+                string.Equals(RegistrationDataMapper.NormalizeFieldKey(c.Field), "student_id",
+                              StringComparison.OrdinalIgnoreCase));
+            if (idChange != null)
+                throw new UserFriendlyException(
+                    "لا يمكن تعديل الرقم الجامعي بعد تقديم الطلب. " +
+                    "لو الرقم غير صحيح، قدّم طلبًا جديدًا بالرقم الصحيح.", 400);
+
             var allowed = string.IsNullOrWhiteSpace(before?.InfoFields)
                 ? null
                 : before!.InfoFields!.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
@@ -435,7 +548,7 @@ namespace NUH_PORTAL.Services
 
             // ملاحظة الطالب بتتضاف لملخّص التعديلات فبتوصل للمراجع في سجل المسار
             if (!string.IsNullOrWhiteSpace(request.StudentNote))
-                summary = (string.IsNullOrWhiteSpace(summary) ? "" : summary + " — ")
+                summary = (string.IsNullOrWhiteSpace(summary) ? "" : summary + " - ")
                         + "ملاحظة الطالب: " + request.StudentNote.Trim();
 
             var result = await _registration.ResubmitRequestAsync(

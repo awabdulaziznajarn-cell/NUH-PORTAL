@@ -19,30 +19,49 @@
 
 <style>
   /* خاص بصفحة الطلبات فقط — الباقي من site.css */
-  .stats-row{flex-wrap:wrap}
-  .stats-row .stat-pill{min-width:120px}
   .badge-submitted{background:#fffaeb;color:#93370d}
   .badge-housing_approved{background:#eff4ff;color:#175cd3}
   .badge-housing_rejected{background:var(--red-light);color:var(--red)}
-  .badge-cyber_review{background:#f4eefa;color:#80519f}
+  .badge-cyber_review{background:var(--purple-light);color:var(--purple)}
   .badge-cyber_approved{background:var(--green-light);color:var(--green)}
   .badge-cyber_rejected{background:var(--red-light);color:var(--red)}
   .badge-ready_for_provisioning{background:#fffaeb;color:#93370d}
   .badge-completed{background:var(--green-light);color:var(--green)}
-  .badge-pending_supervisor{background:#fef0c7;color:#7a5c0b}
-  .badge-pending_cyber{background:#eff4ff;color:#175cd3}
+  /* ⚠️ .badge-pending_supervisor و .badge-pending_cyber اتشالوا: هما نفس
+     مرحلة submitted و cyber_review بمسمّى المسار التاني، وكانوا بلونين
+     مختلفين لنفس الموقف. الصنف بقى بيتبني من Canonical. */
   .badge-need_more_info{background:#fffaeb;color:#b54708}
   .badge-approved{background:var(--green-light);color:var(--green)}
   .badge-rejected{background:var(--red-light);color:var(--red)}
-  .action-btn{padding:4px 12px;border-radius:8px;border:none;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;font-weight:600;cursor:pointer;margin:0 2px;transition:opacity .2s}
-  .action-btn:hover{opacity:.8}
-  .btn-approve{background:var(--green-light);color:var(--green)}
-  .btn-reject{background:var(--red-light);color:var(--red)}
-  .btn-cyber{background:#f4eefa;color:#80519f}
 
-  /* ⚠️ الصف الذي ينتظر إجراءً من المستخدم الحالي. الشرط هو نفسه الذي يبني به
-     actionsFor أزرار الصف (NuhWorkflow.canAct)، فيستحيل أن يظهر صف مميّز بلا
-     زر أو العكس. اللون خفيف عمدًا: التمييز للالتقاط بالعين لا للتنبيه. */
+  /* ⚠️ مدى التاريخ بجانب خانة البحث داخل ترويسة البطاقة نفسها، لا في صفٍّ
+     إضافي فوقها: التبويبات سبعة فوق الجدول أصلًا. خانة البحث نفسها مكوّن
+     مشترك (.search-wrap في site.css) تستعمله شاشات الطلاب والمستخدمين
+     وسكن أعضاء هيئة التدريس - القواعد هنا للتاريخ وحده. لو احتاجتها شاشة
+     ثانية فمكانها site.css لا هنا. */
+  .req-dates{display:flex;align-items:center;gap:6px}
+  .req-dates span{font-size:12px;color:var(--gray-500);white-space:nowrap}
+  .req-dates input{padding:7px 10px;border:1px solid #c6ecd6;border-radius:20px;
+    font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12.5px;background:var(--white);color:var(--navy-dark)}
+  .req-dates input:focus{outline:none;border-color:var(--gold-ink)}
+  .req-clear{display:none;font-size:12px;font-weight:600;color:var(--navy);background:var(--white);
+    border:1px solid #c6ecd6;border-radius:20px;padding:6px 14px;cursor:pointer;
+    font-family:'IBM Plex Sans Arabic',sans-serif}
+  .req-clear.show{display:inline-block}
+  .req-clear:hover{background:#dff6e7}
+  /* ⚠️ css/site.css بيحجز 150px لآخر عمود في **كل** جداول النظام - قاعدة
+     اتكتبت وقت ما آخر عمود كان دايمًا أزرار إجراء. بعد شيل عمود «الإجراء»
+     بقى آخر عمود هنا «المرحلة الحالية»، ونصوصه أطول من كده («جاهز لإنشاء
+     حساب شبكة الإسكان»)، فكان هيتلفّ على سطرين في عمود ضيّق. الإلغاء محلّي
+     للجدول ده وحده - القاعدة العامة سايبة زي ما هي لباقي الشاشات. */
+  #reqTable thead th:last-child, #reqTable tbody td:last-child{width:auto;min-width:190px}
+  @@media(max-width:1100px){.card-header{flex-wrap:wrap;gap:10px}.card-tools{width:100%}}
+
+  /* ⚠️ الصف الذي ينتظر إجراءً من المستخدم الحالي (NuhWorkflow.canAct).
+     كان بجانبه زرّا اعتماد/رفض في عمود «الإجراء»، فبعد أن أُزيل العمود صار
+     هذا التمييز هو الإشارة الوحيدة التي تقول للموظف «هذا الصف ينتظرك».
+     اللون خفيف عمدًا: التمييز للالتقاط بالعين لا للتنبيه، والشريط الذهبي
+     على حافة الصف هو ما يُلتقط أولًا. */
   tr.row-mine{background:#f3fcf6}
   tr.row-mine:hover{background:#e9f8ef}
   tr.row-mine td:first-child{position:relative}
@@ -55,51 +74,89 @@
   <p >@SharedLocalizer["req_pageSubtitle"]</p>
 </div>
 
-@* ===== العدادات — من السيرفر ===== *@
-<div class="stats-row">
-  <div class="stat-pill"><div class="stat-pill-num">@Model.Stats.Total</div><div class="stat-pill-label" >@SharedLocalizer["req_lbl_all"]</div></div>
-  <div class="stat-pill"><div class="stat-pill-num">@Model.Stats.Submitted</div><div class="stat-pill-label" >@SharedLocalizer["req_lbl_submitted"]</div></div>
-  <div class="stat-pill"><div class="stat-pill-num">@Model.Stats.HousingApproved</div><div class="stat-pill-label" >@SharedLocalizer["req_lbl_housingApproved"]</div></div>
-  <div class="stat-pill"><div class="stat-pill-num">@Model.Stats.CyberReview</div><div class="stat-pill-label" >@SharedLocalizer["req_lbl_cyberReview"]</div></div>
-  <div class="stat-pill"><div class="stat-pill-num">@Model.Stats.CyberApproved</div><div class="stat-pill-label" >@SharedLocalizer["req_lbl_cyberApproved"]</div></div>
-  <div class="stat-pill"><div class="stat-pill-num">@Model.Stats.ReadyForProvisioning</div><div class="stat-pill-label" >@SharedLocalizer["req_lbl_readyForProvisioning"]</div></div>
-  <div class="stat-pill"><div class="stat-pill-num">@Model.Stats.Completed</div><div class="stat-pill-label" >@SharedLocalizer["req_lbl_completed"]</div></div>
-  <div class="stat-pill"><div class="stat-pill-num">@Model.Stats.Rejected</div><div class="stat-pill-label" >@SharedLocalizer["req_lbl_rejected"]</div></div>
-</div>
+@* ===== التبويبات - صفٌّ واحد، والعدد داخل التبويب =====
+   ⚠️ كان فوقها صفُّ ثماني بطاقات يعرض الأرقام نفسها: صفٌّ يُقرأ وصفٌّ يُضغط
+      والمعلومة واحدة. الرقم الآن في التبويب نفسه، أي في المكان الذي يُضغط -
+      لا في صفٍّ فوقه يقول الرقم ثم يبحث المستخدم عن زرّه.
 
-@* ===== التبويبات — بتفلتر عبر /api/Requests/paged ===== *@
+   ⚠️ وحُذف تبويبا «موافقة إدارة الإسكان» (housing_approved) و«معتمد»
+      (cyber_approved): لا يقف فيهما طلب لحظة واحدة، فموافقة الإسكان تنقله إلى
+      الأمن السيبراني في اللحظة نفسها وموافقة السيبراني تنقله إلى «جاهز لإنشاء
+      الحساب» (RequestService.ReviewAsync: effectiveStatus). كانا صفرًا دائمًا.
+      ومعالجة الحالتين باقية في جدول الانتقالات كشبكة أمان لأي صفّ قديم.
+
+   ⚠️ وأُضيف «بيانات ناقصة»: الطلب المُعاد إلى الطالب لم يكن له تبويب، فيختفي
+      إلا تحت «الكل». هو الحالة الوحيدة التي كانت تخفي عملًا حقيقيًّا.
+
+   ⚠️ والتبويبات تتبع صلاحية من ينظر: مراجع الأمن السيبراني لا يعمل شيئًا في
+      «مقدم»، فوجوده عنده ضجيج يخفي تبويباته الحقيقية. *@
 <div class="tabs">
-  @* ⚠️ يظهر أولًا ويكون الافتراضي متى كان فيه طلبات: من يفتح الشاشة يريد عمله
-     المفتوح لا الأرشيف. الفلترة على الخادم بالمراحل التي يملك صلاحيتها. *@
-  <button class="tab-btn" id="tabMine" onclick="switchTab('mine', this)">@SharedLocalizer["req_lbl_mine"] <span class="tab-count" id="mineCount">0</span></button>
-  <button class="tab-btn active" id="tabAll" onclick="switchTab('all', this)" >@SharedLocalizer["req_lbl_all"]</button>
-  <button class="tab-btn" onclick="switchTab('submitted', this)" >@SharedLocalizer["req_lbl_submitted"]</button>
-  <button class="tab-btn" onclick="switchTab('housing_approved', this)" >@SharedLocalizer["req_lbl_housingApproved"]</button>
-  <button class="tab-btn" onclick="switchTab('cyber_review', this)" >@SharedLocalizer["req_lbl_cyberReview"]</button>
-  <button class="tab-btn" onclick="switchTab('cyber_approved', this)" >@SharedLocalizer["req_lbl_cyberApproved"]</button>
-  <button class="tab-btn" onclick="switchTab('ready_for_provisioning', this)" >@SharedLocalizer["req_lbl_readyForProvisioning"]</button>
-  <button class="tab-btn" onclick="switchTab('completed', this)" >@SharedLocalizer["req_lbl_completed"]</button>
-  <button class="tab-btn" onclick="switchTab('rejected', this)" >@SharedLocalizer["req_lbl_rejected"]</button>
+  @* «الكل» أولًا، و«يحتاج إجراءك» يُفتح تلقائيًّا متى كان فيه عمل.
+     ⚠️ data-tab مش زينة: الرجوع بيعيد بناء الشاشة من الرابط، وبيحتاج
+        يلاقي زرّ التبويب باسمه لا بترتيبه - والترتيب بيتغيّر حسب صلاحيات
+        اللي فاتح الشاشة (تبويبات بتختفي)، فالرقم مايصلحش مفتاحًا. *@
+  <button class="tab-btn active" id="tabAll" data-tab="all" onclick="switchTab('all', this)">@SharedLocalizer["req_lbl_all"] <span class="tab-count @(Model.Stats.Total == 0 ? "zero" : "")">@Model.Stats.Total</span></button>
+  <button class="tab-btn" id="tabMine" data-tab="mine" onclick="switchTab('mine', this)">@SharedLocalizer["req_lbl_mine"] <span class="tab-count zero" id="mineCount">0</span></button>
+
+  @if (canReviewHousing || canComplete)
+  {
+    <button class="tab-btn" data-tab="submitted" onclick="switchTab('submitted', this)">@SharedLocalizer["req_lbl_submitted"] <span class="tab-count @(Model.Stats.Submitted == 0 ? "zero" : "")">@Model.Stats.Submitted</span></button>
+  }
+  @if (canReviewCyber || canComplete)
+  {
+    <button class="tab-btn" data-tab="cyber_review" onclick="switchTab('cyber_review', this)">@SharedLocalizer["req_lbl_cyberReview"] <span class="tab-count @(Model.Stats.CyberReview == 0 ? "zero" : "")">@Model.Stats.CyberReview</span></button>
+  }
+  @if (canComplete)
+  {
+    <button class="tab-btn" data-tab="ready_for_provisioning" onclick="switchTab('ready_for_provisioning', this)">@SharedLocalizer["req_lbl_readyForProvisioning"] <span class="tab-count @(Model.Stats.ReadyForProvisioning == 0 ? "zero" : "")">@Model.Stats.ReadyForProvisioning</span></button>
+  }
+  @if (canReviewHousing || canComplete)
+  {
+    @* من طلب استكمال البيانات هو من ينتظر عودتها *@
+    <button class="tab-btn" data-tab="need_more_info" onclick="switchTab('need_more_info', this)">@SharedLocalizer["req_lbl_needMoreInfo"] <span class="tab-count @(Model.Stats.NeedMoreInfo == 0 ? "zero" : "")">@Model.Stats.NeedMoreInfo</span></button>
+  }
+
+  <button class="tab-btn" data-tab="completed" onclick="switchTab('completed', this)">@SharedLocalizer["req_lbl_completed"] <span class="tab-count @(Model.Stats.Completed == 0 ? "zero" : "")">@Model.Stats.Completed</span></button>
+  <button class="tab-btn" data-tab="rejected" onclick="switchTab('rejected', this)">@SharedLocalizer["req_lbl_rejected"] <span class="tab-count @(Model.Stats.Rejected == 0 ? "zero" : "")">@Model.Stats.Rejected</span></button>
 </div>
 
 <div class="card">
+  @* ⚠️ البحث على الخادم لا في الصفحة المعروضة: الجدول مقسّم صفحاتٍ، فبحثٌ
+     في المتصفح كان سيقارن العشرين صفًّا الظاهرة وحدها ويقول «لا نتائج»
+     عن طلبٍ موجود في الصفحة التالية. *@
+  <div class="card-header">
+    <div >@SharedLocalizer["req_cardTitle"]</div>
+    <div class="card-tools">
+      <button type="button" class="req-clear" id="clearFilters" onclick="clearFilters()" >@SharedLocalizer["req_clearFilters"]</button>
+      <div class="req-dates">
+        <span >@SharedLocalizer["req_lblFrom"]</span>
+        <input type="date" id="fromDate">
+        <span >@SharedLocalizer["req_lblTo"]</span>
+        <input type="date" id="toDate">
+      </div>
+      <div class="search-wrap">
+        <input type="text" id="searchBox" placeholder='@(SharedLocalizer["req_searchPh"].Value)'>
+        <span class="search-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </span>
+      </div>
+    </div>
+  </div>
   <div style="overflow-x:auto">
-    <table>
+    <table id="reqTable">
       <thead>
         <tr>
           <th class="col-code">#</th>
           <th >@SharedLocalizer["req_col_type"]</th>
           <th >@SharedLocalizer["req_col_student"]</th>
-          <th class="sortable" onclick="sortByColumn('submittedat')">@SharedLocalizer["req_col_date"]<span class="sort-ind" id="sort-submittedat"></span></th>
-          <th class="sortable" onclick="sortByColumn('status')">@SharedLocalizer["req_col_status"]<span class="sort-ind" id="sort-status"></span></th>
-          <th >@SharedLocalizer["req_col_stage"]</th>
-          <th >@SharedLocalizer["req_col_action"]</th>
+          <th data-sort="submittedat">@SharedLocalizer["req_col_date"]</th>
+          <th data-sort="status">@SharedLocalizer["req_col_status"]</th>
         </tr>
       </thead>
       <tbody id="requests-tbody">
         @if (Model.Page.Items.Count == 0)
         {
-          <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--gray-500)" >@SharedLocalizer["req_noRequests"]</td></tr>
+          <tr><td colspan="5" style="text-align:center;padding:40px;color:var(--gray-500)" >@SharedLocalizer["req_noRequests"]</td></tr>
         }
         @foreach (var r in Model.Page.Items)
         {
@@ -111,31 +168,29 @@
             <td><span>@SharedLocalizer["req_type_" + (r.RequestType?.ToString() ?? "")]</span></td>
             <td>@(r.Student?.full_name ?? r.StudentId.ToString())</td>
             <td><span data-dt="@DateTime.SpecifyKind(r.SubmittedAt, DateTimeKind.Utc).ToString("o")">@r.SubmittedAt.ToString("yyyy/MM/dd")</span></td>
-            <td><span class="badge badge-@s">@SharedLocalizer["req_badge_" + s]</span></td>
-            <td><span>@SharedLocalizer["req_stage_" + s]</span></td>
-            <td>
-              @if (canAct && wf != null)
-              {
-                <button class="action-btn @(wf.RejectTo != null ? "btn-approve" : "btn-cyber")" onclick="event.stopPropagation(); reviewRequest(@r.Id, '@s', 'approve')">@SharedLocalizer[wf.ApproveKey]</button>
-                if (wf.RejectTo != null)
-                {
-                  <button class="action-btn btn-reject" onclick="event.stopPropagation(); reviewRequest(@r.Id, '@s', 'reject')">@SharedLocalizer[wf.RejectKey!]</button>
-                }
-              }
-            </td>
+            @* ⚠️ الاسم واللون من RequestWorkflow.Canonical لا من الحالة الخام:
+               pending_cyber و cyber_review مرحلة واحدة، وكانوا بيظهروا في نفس
+               الجدول بنصّين ولونين.
+               ⚠️ وعمود واحد لا عمودين: كان في «الحالة» و«المرحلة الحالية»
+                  جنب بعض، والاتنين مبنيّين من **نفس** Canonical(s) - واحد
+                  بمفتاح req_badge_ والتاني req_stage_. يعني مستحيل يختلفوا،
+                  و«مكتمل/مكتمل» و«مرفوض/مرفوض» كانوا نصًّا واحدًا مكرّرًا حرفيًّا.
+               ⚠️ والباقي هو نصّ req_stage_ جوّه شارة req_badge_ الملوّنة:
+                  اللون للمسح السريع بالعين، والنصّ الطويل بيقول أي مكتب.
+                  العكس كان بيضيّع معلومة - تلات حالات رفض مختلفة كانت
+                  بتتعرض كلها «مرفوض»، فالموظف مايعرفش مين رفض غير لما يفتح. *@
+            @{ var cs = NUH_PORTAL.Core.RequestWorkflow.Canonical(s); }
+            <td><span class="badge badge-@cs">@SharedLocalizer[NUH_PORTAL.Core.RequestWorkflow.StageKey(s)]</span></td>
           </tr>
         }
       </tbody>
     </table>
   </div>
 
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-top:1px solid var(--gray-100)">
-    <div style="font-size:12px;color:var(--gray-500)" id="pageInfo"></div>
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-cancel" id="prevBtn" onclick="changePage(-1)" >@SharedLocalizer["req_prev"]</button>
-      <button class="btn btn-cancel" id="nextBtn" onclick="changePage(1)" >@SharedLocalizer["req_next"]</button>
-    </div>
-  </div>
+  @* ⚠️ صفّ الترقيم من NuhTable.pager - النسخة الوحيدة في النظام
+     (wwwroot/js/table-state.js). كان مبنيًّا هنا بالإيد بستايل مضمّن، وبشكل
+     تالت مختلف عن سجل العمليات وعن إسكان أعضاء هيئة التدريس. *@
+  <div id="reqPager" class="in-card"></div>
 </div>
 
 @functions {
@@ -157,33 +212,85 @@
   var CAN_REVIEW_CYBER = @(canReviewCyber ? "true" : "false");
   var CAN_COMPLETE = @(canComplete ? "true" : "false");
 
-  // حالة الصفحة (أول صفحة جاهزة من السيرفر)
+  // ==========================================================================
+  //  حالة الشاشة - مصدرها الرابط لا القيم الافتراضية.
+  //
+  //  ⚠️ الشاشة دي أسوأ حالة في النظام: الدوس على الصفّ **هو** الخروج منها.
+  //     الموظف يفتح «مكتمل» ويبحث ويروح صفحة ٣ ويدوس على طلب، وأول ما يرجع
+  //     يلاقي نفسه في «يحتاج إجراءك» صفحة ١ بلا بحث. كل مرة.
+  //
+  //     الحالة بقت في الرابط (NuhUrl في js/url-state.js)، فالرجوع بيرجّع
+  //     الرابط بحالته والشاشة بتتبني منه. والرابط بقى يتبعت كمان.
+  //
+  //  ⚠️ التبويبات المسموحة مكتوبة هنا لأنها **أسماء تبويبات الشاشة** لا
+  //     حالات الطلب: 'all' و'mine' مالهمش وجود في جدول الخادم أصلًا.
+  // ==========================================================================
+  var TABS = ['all', 'mine', 'submitted', 'cyber_review', 'ready_for_provisioning',
+              'need_more_info', 'completed', 'rejected'];
+
+  var urlTab = NuhUrl.one('tab', TABS, '');
+
   var state = {
-    page: @Model.Page.Page,
+    page: NuhUrl.int('page', @Model.Page.Page, 1),
     pageSize: @Model.Page.PageSize,
     totalPages: @Model.Page.TotalPages,
     total: @Model.Page.TotalCount,
-    status: 'all',
-    sortBy: '',
-    sortAsc: false
+    status: urlTab || 'all',
+    filter: NuhUrl.get('q', ''),
+    from: NuhUrl.date('from'),
+    to: NuhUrl.date('to')
   };
+
+  // ⚠️ «الرابط فيه حالة» لا «الرابط فيه تبويب»: لو الموظف كان على صفحة ٢ من
+  //    تبويب «الكل» فالرابط بيبقى ?page=2 بلا tab (لأن 'all' افتراضي وبيتشال).
+  //    لو الفحص كان على التبويب وحده كان الرجوع هيحمّل صفحة ٢ صح وبعدين
+  //    initMineTab تخطفه لتبويب «يحتاج إجراءك» قدام عينه.
+  var hasUrlState = !!(urlTab || state.page > 1 || state.filter || state.from ||
+                       state.to || NuhUrl.get('sort', ''));
+
+  // الافتراضيات - أي قيمة مساوية ليها بتتشال من الرابط بدل ما تتكتب فيه
+  var STATE_DEFAULTS = { tab: 'all', page: 1, q: '', from: '', to: '', sort: '', asc: '' };
+
+  function syncUrl() {
+    NuhUrl.sync({
+      tab:  state.status,
+      page: state.page,
+      q:    state.filter,
+      from: state.from,
+      to:   state.to,
+      sort: reqSort.by(),
+      asc:  reqSort.by() ? (reqSort.asc() ? '1' : '0') : ''
+    }, STATE_DEFAULTS);
+  }
 
   document.querySelectorAll('[data-dt]').forEach(function (el) {
     var d = new Date(el.dataset.dt);
-    if (!isNaN(d)) el.textContent = d.toLocaleDateString('ar-EG');
+    if (!isNaN(d)) el.textContent = NuhFmt.date(d);
   });
 
   // نصوص الحالة/النوع من القاموس (fallback للقيمة الخام لو مفيش مفتاح)
   function typeText(ty) { var k = 'req_type_' + ty; var v = t(k); return v === k ? (ty || '-') : v; }
-  function badgeText(s) { var k = 'req_badge_' + s; var v = t(k); return v === k ? (s || '') : v; }
-  function stageText(s) { var k = 'req_stage_' + s; var v = t(k); return v === k ? (s || '') : v; }
+  // ⚠️ المفتاح من NuhWorkflow لا مبني هنا — نفس RequestWorkflow.Canonical على
+  //    الخادم، عشان الصف المرسوم من الخادم والصف المعاد رسمه هنا ما يختلفوش.
+  // ⚠️ badgeText اتشالت من هنا بس مفاتيح req_badge_* **لسه شغّالة**: شاشة
+  //    ملف الطالب (js/student-file-page.js) بتقرا منها. اتأكدت قبل ما
+  //    أشيلها - كنت هشيل المفاتيح كمان وكانت الشاشة دي هتطلع بمفاتيح خام.
+  function stageText(s) { var k = NuhWorkflow.stageKey(s); var v = t(k); return v === k ? (s || '') : v; }
 
-  // سطر معلومات الصفحة بصيغة مترجمة مع أرقام
-  function renderPageInfo() {
-    var el = document.getElementById('pageInfo');
-    if (!el) return;
-    el.textContent = t('req_pageInfoFmt')
-      .replace('{0}', state.page).replace('{1}', state.totalPages || 1).replace('{2}', state.total);
+  // ⚠️ صفّ الترقيم كامل (السطر + الزرّين + حالة التعطيل) من نسخة واحدة:
+  //    NuhTable.pager في wwwroot/js/table-state.js. كان مقسومًا هنا على
+  //    دالّتين (renderPageInfo لسطر المعلومات، وupdatePagerButtons لتعطيل
+  //    الزرّين) وكان لازم تنادي الاتنين مع بعض وإلا الزرّ يفضل شغّال على صفحة
+  //    مش موجودة.
+  function renderPager() {
+    NuhTable.pager('reqPager',
+      { page: state.page, pageSize: state.pageSize, total: state.total, totalPages: state.totalPages || 1 },
+      {
+        summary: t('req_pageInfoFmt')
+          .replace('{0}', state.page).replace('{1}', state.totalPages || 1).replace('{2}', state.total),
+        prev: t('req_prev'), next: t('req_next')
+      },
+      function (p) { state.page = p; loadPage(); });
   }
 
   // ماتخترعش رقم — راجع التعليق على ReqNum فوق
@@ -201,34 +308,46 @@
     return false;
   }
 
-  function actionsFor(s, id) {
-    var wf = NuhWorkflow.forStatus(s);
-    if (!wf || !NuhWorkflow.canAct(s, hasPerm)) return '';
-
-    var stop = 'event.stopPropagation(); ';
-    // زر الاعتماد يأخذ لون «سيبراني» في المراحل الوسيطة التي لا رفض فيها،
-    // تمييزًا لها عن قرار الاعتماد النهائي.
-    var approveClass = wf.rejectTo ? 'btn-approve' : 'btn-cyber';
-    // ⚠️ نمرّر الحالة الحالية والقرار لا الحالة الهدف: المسار الذي يُرسَل إليه
-    //    القرار يختلف بين المسارين، و NuhWorkflow.endpointFor هو من يعرفه.
-    var html = '<button class="action-btn ' + approveClass + '" onclick="' + stop +
-               'reviewRequest(' + id + ', \'' + s + '\', \'approve\')">' + t(wf.approveKey) + '</button>';
-    if (wf.rejectTo) {
-      html += '<button class="action-btn btn-reject" onclick="' + stop +
-              'reviewRequest(' + id + ', \'' + s + '\', \'reject\')">' + t(wf.rejectKey) + '</button>';
-    }
-    return html;
-  }
+  // ⚠️ اتشالت من هنا دالتان: actionsFor (بتبني أزرار الاعتماد/الرفض في
+  //    الصف) و reviewRequest (بتبعت القرار للخادم). عمود «الإجراء» اتشال من
+  //    الجدول، فمابقاش فيه حاجة بتناديهم.
+  //
+  //    والسبب مش تنظيف شكل: القرار من الجدول كان بيتاخد على سطر واحد فيه
+  //    رقم الطلب واسم الطالب والمرحلة - من غير بيانات الطالب ولا مرفقاته
+  //    ولا سجل مراحله. الاعتماد والرفض قرارات نهائية بتغيّر مسار الطلب،
+  //    وماينفعش تتاخد من قائمة. القرار دلوقتي في شاشة التفاصيل وحدها،
+  //    واللي عايز يقرّر لازم يفتح الطلب ويشوفه الأول.
+  //
+  //    ⚠️ وتمييز الصفوف (tr.row-mine) باقٍ - بل بقى أهم: بعد ما الأزرار
+  //       اتشالت، هو الإشارة الوحيدة اللي بتقول للموظف «الصف ده مستنّي منك».
 
   async function loadPage() {
+    // الرابط بيتحدّث قبل النداء: لو النداء فشل الحالة تفضل في الرابط والموظف
+    // يقدر يعيد المحاولة على نفس الفلتر بدل ما يعيد ضبطه.
+    syncUrl();
     var url = '/api/Requests/paged?page=' + state.page + '&pageSize=' + state.pageSize;
     if (state.status === 'mine') url += '&mine=true';
     else if (state.status !== 'all') url += '&status=' + encodeURIComponent(state.status);
-    if (state.sortBy) url += '&sortBy=' + encodeURIComponent(state.sortBy) + '&sortAsc=' + state.sortAsc;
-    var res = await fetch(url, { headers: NUH.headers() });
+    url += reqSort.qs();
+    // الأرقام العربية وعلامة # تُطبَّع على الخادم (RequestService.NormalizeSearch)
+    if (state.filter) url += '&filterText=' + encodeURIComponent(state.filter);
+    if (state.from) url += '&from=' + encodeURIComponent(state.from);
+    if (state.to) url += '&to=' + encodeURIComponent(state.to);
+    var res, data;
+    try {
+      res = await fetch(url, { headers: NUH.headers() });
+    } catch (e) {
+      // ⚠️ انقطاع الشبكة كان بيرمي استثناء مالوش ماسك: الدالة بتقف والصفوف
+      //    القديمة بتفضل معروضة كأنها نتيجة الفلتر الجديد.
+      return showLoadError(t('req_loadErrorNet'));
+    }
     if (res.status === 401) { window.location.replace('/Account/Login'); return; }
-    if (!res.ok) return;
-    var data = await res.json();
+    // ⚠️ كان `if (!res.ok) return;` - يعني الموظف يضغط على فلتر أو صفحة
+    //    فمايحصلش أي حاجة: الصفوف القديمة مكانها، والفلتر مضيّ في الشكل،
+    //    وهو فاكر إن دي النتيجة. الخطأ الصامت أسوأ من الخطأ الظاهر لأنه
+    //    بيدّي بيانات غلط بثقة.
+    if (!res.ok) return showLoadError(t('req_loadErrorFmt').replace('{0}', res.status));
+    data = await res.json();
     state.totalPages = data.totalPages;
     state.total = data.totalCount;
 
@@ -241,45 +360,29 @@
         '<td class="col-code" style="color:var(--gray-500)">' + reqNum(r) + '</td>' +
         '<td>' + escHtml(typeText(r.requestType)) + '</td>' +
         '<td>' + escHtml((r.student && r.student.full_name) || r.studentId || '') + '</td>' +
-        '<td>' + (r.submittedAt ? new Date(r.submittedAt).toLocaleDateString('ar-EG') : '-') + '</td>' +
-        '<td><span class="badge badge-' + s + '">' + badgeText(s) + '</span></td>' +
-        '<td>' + escHtml(stageText(s)) + '</td>' +
-        '<td>' + actionsFor(s, r.id) + '</td>' +
+        '<td>' + NuhFmt.date(r.submittedAt) + '</td>' +
+        '<td><span class="badge badge-' + NuhWorkflow.canonical(s) + '">' + escHtml(stageText(s)) + '</span></td>' +
       '</tr>';
     });
+    // ⚠️ رسالتان لا واحدة: «لا توجد طلبات» أمام بحثٍ مكتوب تُقرأ كأن النظام
+    //    فارغ، بينما المقصود أن البحث لم يطابق شيئًا.
+    var emptyKey = (state.filter || state.from || state.to) ? 'req_noResults' : 'req_noRequests';
     document.getElementById('requests-tbody').innerHTML = rows ||
-      '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--gray-500)">' + t('req_noRequests') + '</td></tr>';
-    renderPageInfo();
-    updatePagerButtons();
+      '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--gray-500)">' + t(emptyKey) + '</td></tr>';
+    renderPager();
   }
 
-  function updatePagerButtons() {
-    document.getElementById('prevBtn').disabled = state.page <= 1;
-    document.getElementById('nextBtn').disabled = state.page >= state.totalPages;
-  }
+  // رسالة عطل مكان الصفوف - بزرار إعادة محاولة.
+  // صفّ الخطأ + زرّ إعادة المحاولة من NuhTable - كان مكتوبًا هنا بستايل
+  // مضمّن، ونسخة تانية منه حرفًا بحرف في شاشة الطلاب.
+  var reqTable = NuhTable.bind('requests-tbody', 7);
+  function showLoadError(msg) { reqTable.error(msg, loadPage, t('req_retry')); }
 
-  // ترتيب الأعمدة: أول ضغطة تصاعدي، وتكرار الضغط يعكس الاتجاه
-  function sortByColumn(field) {
-    if (state.sortBy === field) { state.sortAsc = !state.sortAsc; }
-    else { state.sortBy = field; state.sortAsc = true; }
-    state.page = 1;
-    updateSortIndicators();
-    loadPage();
-  }
-
-  function updateSortIndicators() {
-    ['submittedat', 'status'].forEach(function (f) {
-      var el = document.getElementById('sort-' + f);
-      if (el) el.textContent = (state.sortBy === f) ? (state.sortAsc ? ' ▲' : ' ▼') : '';
-    });
-  }
-
-  function changePage(delta) {
-    var next = state.page + delta;
-    if (next < 1 || (state.totalPages && next > state.totalPages)) return;
-    state.page = next;
-    loadPage();
-  }
+  // ترتيب الأعمدة كامل من نسخة واحدة في النظام - NuhTable.sort.
+  // ⚠️ الترتيب المبدئي من الرابط: من غيره الرجوع كان بيرجّع التبويب والبحث
+  //    صح ويسيب الجدول مرتّب بترتيب تاني - وده أوقع في اللبس من ضياعهم كلهم.
+  var reqSort = NuhTable.sort('reqTable', function () { state.page = 1; loadPage(); },
+    { by: NuhUrl.get('sort', ''), asc: NuhUrl.get('asc', '1') === '1' });
 
   // ⚠️ العدّاد من نفس نقطة النهاية التي تغذّي شارة القائمة الجانبية، فلا يختلف
   //    الرقمان. وإن كان صفرًا يبقى تبويب «الكل» هو الافتراضي.
@@ -289,12 +392,57 @@
       if (!res.ok) return;
       var n = await res.json();
       var count = (typeof n === 'number') ? n : (n && n.count) || 0;
-      document.getElementById('mineCount').textContent = count;
-      if (count > 0) {
+      var mc = document.getElementById('mineCount');
+      mc.textContent = count;
+      mc.classList.toggle('zero', count === 0);
+      // ⚠️ الفتح على «يحتاج إجراءك» راحة عند الدخول العادي، ومصيبة عند
+      //    الرجوع: الموظف كان راجع من طلب فتحه من تبويب «مكتمل» فيتحوّل
+      //    لتبويب تاني قدام عينه. فلو الرابط فيه تبويب صريح فهو صاحب القرار.
+      if (count > 0 && !hasUrlState) {
         document.getElementById('tabAll').classList.remove('active');
         switchTab('mine', document.getElementById('tabMine'));
       }
     } catch (e) { /* العدّاد تحسين لا شرط — الشاشة تعمل بدونه */ }
+  }
+
+  // ⚠️ تأخير 350ms: المستخدم يكتب رقم الطلب رقمًا رقمًا، ونداء مع كل ضغطة
+  //    يعني أحد عشر نداءً لرقمٍ واحد - نفس القيمة المستعملة في شاشة الطلاب.
+  var searchTimer = null;
+  document.getElementById('searchBox').addEventListener('input', function (e) {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(function () {
+      state.filter = e.target.value.trim();
+      state.page = 1;
+      updateClearBtn();
+      loadPage();
+    }, 350);
+  });
+
+  ['fromDate', 'toDate'].forEach(function (id) {
+    document.getElementById(id).addEventListener('change', function () {
+      state.from = document.getElementById('fromDate').value;
+      state.to = document.getElementById('toDate').value;
+      state.page = 1;
+      updateClearBtn();
+      loadPage();
+    });
+  });
+
+  // ⚠️ زر المسح يظهر فقط متى كان هناك ما يُمسح. الزر الدائم يشغل مكانًا
+  //    ويوحي بأن على الشاشة فلترًا مطبَّقًا دائمًا.
+  function updateClearBtn() {
+    var on = !!(state.filter || state.from || state.to);
+    document.getElementById('clearFilters').classList.toggle('show', on);
+  }
+
+  function clearFilters() {
+    document.getElementById('searchBox').value = '';
+    document.getElementById('fromDate').value = '';
+    document.getElementById('toDate').value = '';
+    state.filter = ''; state.from = ''; state.to = '';
+    state.page = 1;
+    updateClearBtn();
+    loadPage();
   }
 
   function switchTab(status, btn) {
@@ -309,48 +457,36 @@
   //    فيجد «مرفوض» بلا سطر واحد يقول له لماذا ولا ما الذي يصلحه — وصفحة
   //    التفاصيل تُلزم بالسبب فعلًا، فكان الفرق بين الشاشتين هو الفارق بين
   //    رفض مفهوم ورفض صامت.
-  async function reviewRequest(id, status, decision) {
-    var label = t(NuhWorkflow.labelKey(status, decision));
-    var notes = '';
-
-    if (decision === 'reject') {
-      notes = await NuhDialog.prompt({
-        title: label,
-        message: t('req_rejectReasonPrompt'),
-        confirmLabel: label,
-        cancelLabel: t('req_cancel')
-      });
-      if (notes === null) return;
-      notes = notes.trim();
-      if (!notes) { NuhDialog.error(t('req_rejectReasonRequired')); return; }
-    } else {
-      if (!await NuhDialog.confirm({ message: t('req_confirmActionFmt').replace('{0}', label) })) return;
-    }
-
-    var ep = NuhWorkflow.endpointFor(id, status, decision, notes);
-    if (!ep) return;
-
-    try {
-      var res = await fetch(ep.url, {
-        method: ep.method,
-        headers: Object.assign({ 'Content-Type': 'application/json' }, NUH.headers()),
-        body: JSON.stringify(ep.body)
-      });
-      if (!res.ok) {
-        var err = await res.json().catch(function () { return {}; });
-        NuhDialog.error(err.message || t('req_updateFailed'));
-        return;
-      }
-      // إعادة تحميل الصفحة علشان العدادات وأول صفحة يتحدّثوا من السيرفر
-      location.reload();
-    } catch (e) { }
-  }
 
   // اللغة تتبع ثقافة السيرفر — setLang بيترجم كل عناصر الترجمة وبيستدعي onLanguageChange
-  window.onLanguageChange = function () { renderPageInfo(); };
+  window.onLanguageChange = function () { renderPager(); };
   setLang(localStorage.getItem('uiLanguage') || 'ar');
-  updatePagerButtons();
-  updateSortIndicators();
+
+  // ==========================================================================
+  //  إعادة بناء الشاشة من الرابط.
+  //
+  //  ⚠️ مش بس المتغيّرات: خانة البحث وحقلَي التاريخ والتبويب المضيّ لازم
+  //     يوصفوا نفس اللي معروض. شاشة بتعرض نتيجة مفلترة وخاناتها فاضية
+  //     بتخلّي الموظف يفتكر إن دي كل الطلبات - وهو شايف جزء منها.
+  //  ⚠️ وإعادة التحميل بتتم مرة واحدة بس ولو الرابط فيه فعلًا حالة: أول
+  //     صفحة مرسومة من الخادم خلاص، ونداء تاني بنفس القيم شغل ببلاش.
+  // ==========================================================================
+  (function initFromUrl() {
+    document.getElementById('searchBox').value = state.filter;
+    document.getElementById('fromDate').value = state.from;
+    document.getElementById('toDate').value = state.to;
+    updateClearBtn();
+
+    if (urlTab) {
+      document.querySelectorAll('.tab-btn').forEach(function (b) { b.classList.remove('active'); });
+      var btn = document.querySelector('.tab-btn[data-tab="' + urlTab + '"]');
+      if (btn) btn.classList.add('active');
+    }
+
+    renderPager();
+    if (hasUrlState) loadPage();
+  })();
+
   initMineTab();
 </script>
 }

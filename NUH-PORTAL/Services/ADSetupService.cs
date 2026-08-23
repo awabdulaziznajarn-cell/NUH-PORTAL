@@ -15,17 +15,24 @@ namespace NUH_PORTAL.Services
         private readonly IRepository<Student> _students;
         private readonly ActiveDirectoryService _adService;
         private readonly ILogger<ADSetupService> _logger;
+        // ⚠️ أماكن الحسابات في الدليل — التعريف الوحيد في
+        //    Services/AdDirectoryLayout.cs. كانت مكتوبة في الملف ده بالإيد
+        //    على دومين بيئة قديمة بينما الدومين الحقيقي في الإعدادات،
+        //    فأدوات التشخيص كانت بتفحص دليلًا تانيًا وترجع «غير موجود».
+        private readonly AdDirectoryLayout _layout;
 
         public ADSetupService(
             IRepository<Student> students,
             ActiveDirectoryService adService,
             ILogger<ADSetupService> logger,
+            AdDirectoryLayout layout,
             IUnitOfWork unitOfWork,
             IMapper mapper) : base(unitOfWork, mapper)
         {
             _students = students;
             _adService = adService;
             _logger = logger;
+            _layout = layout;
         }
 
         public async Task<ADReadinessReport> GetReadinessAsync()
@@ -40,16 +47,18 @@ namespace NUH_PORTAL.Services
 
                 if (result.ServiceAccount?.BindSuccessful == true)
                 {
+                    // المسارات اللي بينشئ فيها النظام فعلًا — نفس المصدر بالحرف،
+                    // فالفحص بيقول لك حالة دليلك أنت لا دليل تاني.
                     result.OUs = new[]
                     {
-                        await ValidateObjectAsync("OU=Male,OU=New,OU=Students,DC=globalgroups,DC=com", "organizationalUnit"),
-                        await ValidateObjectAsync("OU=Female,OU=New,OU=Students,DC=globalgroups,DC=com", "organizationalUnit")
+                        await ValidateObjectAsync(await _layout.StudentOuAsync(Gender.Male), "organizationalUnit"),
+                        await ValidateObjectAsync(await _layout.StudentOuAsync(Gender.Female), "organizationalUnit")
                     };
 
                     result.Groups = new[]
                     {
-                        await ValidateObjectAsync("CN=NUH-Student-B,OU=Groups,DC=globalgroups,DC=com", "group"),
-                        await ValidateObjectAsync("CN=NUH-Student-G,OU=Groups,DC=globalgroups,DC=com", "group")
+                        await ValidateObjectAsync(await _layout.StudentGroupAsync(Gender.Male), "group"),
+                        await ValidateObjectAsync(await _layout.StudentGroupAsync(Gender.Female), "group")
                     };
 
                     result.PasswordPolicy = await _adService.GetPasswordPolicyAsync();
@@ -67,20 +76,14 @@ namespace NUH_PORTAL.Services
             if (student.gender == null)
                 throw new UserFriendlyException("Student has no gender set. Cannot determine target OU.", 400);
 
-            var isMale = student.gender == Gender.Male;
-            var sAMAccountName = "h" + student.student_id;
+            var sAMAccountName = AdDirectoryLayout.SamAccountNameFor(student.student_id);
 
             var nameParts = (student.full_name_english ?? "").Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
             var givenName = nameParts.Length > 0 ? nameParts[0] : sAMAccountName;
             var sn = nameParts.Length > 1 ? string.Join(" ", nameParts.Skip(1)) : givenName;
 
-            var targetOu = isMale
-                ? "OU=Male,OU=New,OU=Students,DC=globalgroups,DC=com"
-                : "OU=Female,OU=New,OU=Students,DC=globalgroups,DC=com";
-
-            var targetGroup = isMale
-                ? "CN=NUH-Student-B,OU=Groups,DC=globalgroups,DC=com"
-                : "CN=NUH-Student-G,OU=Groups,DC=globalgroups,DC=com";
+            var targetOu = await _layout.StudentOuAsync(student.gender);
+            var targetGroup = await _layout.StudentGroupAsync(student.gender);
 
             var tempPassword = "NUH@" + student.student_id;
 
@@ -102,7 +105,7 @@ namespace NUH_PORTAL.Services
                 ProposedAccount = new
                 {
                     sAMAccountName,
-                    userPrincipalName = $"{sAMAccountName}@globalgroups.com",
+                    userPrincipalName = _layout.UpnFor(sAMAccountName),
                     displayName = student.full_name_english ?? sAMAccountName,
                     givenName = givenName,
                     sn = sn,
@@ -132,11 +135,9 @@ namespace NUH_PORTAL.Services
         {
             var report = new ADTestUserReport
             {
-                RequestedSamAccountName = request.StudentId?.StartsWith("h") == true
-                    ? request.StudentId
-                    : "h" + request.StudentId,
-                TargetOu = request.TargetOu ?? "OU=Male,OU=New,OU=Students,DC=globalgroups,DC=com",
-                TargetGroup = request.TargetGroup ?? "CN=NUH-Student-B,OU=Groups,DC=globalgroups,DC=com",
+                RequestedSamAccountName = AdDirectoryLayout.SamAccountNameFor(request.StudentId),
+                TargetOu = request.TargetOu ?? await _layout.StudentOuAsync(Gender.Male),
+                TargetGroup = request.TargetGroup ?? await _layout.StudentGroupAsync(Gender.Male),
                 Timestamp = DateTime.UtcNow
             };
 
@@ -163,7 +164,7 @@ namespace NUH_PORTAL.Services
                 return report;
             }
             report.Steps[0].Status = "Pass";
-            report.Steps[0].Details = $"User '{sAMAccountName}' does not exist — ready to create";
+            report.Steps[0].Details = $"User '{sAMAccountName}' does not exist - ready to create";
 
             report.Steps.Add(new ADTestStep
             {
@@ -175,7 +176,7 @@ namespace NUH_PORTAL.Services
             var createRequest = new ADCreateUserRequest
             {
                 SamAccountName = sAMAccountName,
-                UserPrincipalName = $"{sAMAccountName}@globalgroups.com",
+                UserPrincipalName = _layout.UpnFor(sAMAccountName),
                 DisplayName = sAMAccountName,
                 GivenName = "Test",
                 Surname = "Account",
@@ -201,7 +202,7 @@ namespace NUH_PORTAL.Services
             var passwordResult = await _adService.SetUserPasswordAsync(userDn, password);
             if (!passwordResult.Success)
             {
-                var r = Fail(report, passwordResult.Error, passwordResult.ErrorDetails, "FAILED at SetPassword — cleaning up created user");
+                var r = Fail(report, passwordResult.Error, passwordResult.ErrorDetails, "FAILED at SetPassword - cleaning up created user");
                 await TryCleanupUserAsync(userDn, sAMAccountName);
                 return r;
             }
@@ -218,7 +219,7 @@ namespace NUH_PORTAL.Services
             var enableResult = await _adService.ModifyUserAccountControlAsync(userDn, 66048);
             if (!enableResult.Success)
             {
-                var r = Fail(report, enableResult.Error, enableResult.ErrorDetails, "FAILED at EnableAccount — cleaning up created user");
+                var r = Fail(report, enableResult.Error, enableResult.ErrorDetails, "FAILED at EnableAccount - cleaning up created user");
                 await TryCleanupUserAsync(userDn, sAMAccountName);
                 return r;
             }
@@ -235,7 +236,7 @@ namespace NUH_PORTAL.Services
             var groupResult = await _adService.AddUserToGroupAsync(userDn, targetGroup);
             if (!groupResult.Success)
             {
-                var r = Fail(report, groupResult.Error, groupResult.ErrorDetails, "FAILED at AddToGroup — cleaning up created user");
+                var r = Fail(report, groupResult.Error, groupResult.ErrorDetails, "FAILED at AddToGroup - cleaning up created user");
                 await TryCleanupUserAsync(userDn, sAMAccountName);
                 return r;
             }
@@ -252,7 +253,7 @@ namespace NUH_PORTAL.Services
             var readResult = await _adService.GetUserBySamAccountNameAsync(sAMAccountName);
             if (!readResult.Success)
             {
-                var r = Fail(report, readResult.Error, null, "FAILED at ReadUser — cleaning up created user");
+                var r = Fail(report, readResult.Error, null, "FAILED at ReadUser - cleaning up created user");
                 await TryCleanupUserAsync(userDn, sAMAccountName);
                 return r;
             }
@@ -269,13 +270,13 @@ namespace NUH_PORTAL.Services
 
             var deleteResult = await _adService.DeleteADUserAsync(userDn);
             if (!deleteResult.Success)
-                return Fail(report, deleteResult.Error, deleteResult.ErrorDetails, "FAILED at DeleteUser — manual cleanup required");
+                return Fail(report, deleteResult.Error, deleteResult.ErrorDetails, "FAILED at DeleteUser - manual cleanup required");
 
             report.Steps.Last().Status = "Pass";
             report.Steps.Last().Details = "User deleted from AD";
 
             report.OverallSuccess = true;
-            report.Summary = "ALL TESTS PASSED — AD account creation pipeline verified end-to-end";
+            report.Summary = "ALL TESTS PASSED - AD account creation pipeline verified end-to-end";
             return report;
         }
 

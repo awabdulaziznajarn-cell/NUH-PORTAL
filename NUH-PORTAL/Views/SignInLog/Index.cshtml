@@ -17,7 +17,7 @@
 
 <div class="filters-bar">
   <div class="filter-group">
-    <label>@SharedLocalizer["sil_lblEvent"]</label>
+    <label for="eventFilter">@SharedLocalizer["sil_lblEvent"]</label>
     <select id="eventFilter">
       <option value="">@SharedLocalizer["sil_evt_all"]</option>
       <option value="login_success">@SharedLocalizer["sil_evt_login_success"]</option>
@@ -26,31 +26,34 @@
     </select>
   </div>
   <div class="filter-group">
-    <label>@SharedLocalizer["sil_search"]</label>
+    <label for="searchBox">@SharedLocalizer["sil_search"]</label>
     <input type="text" id="searchBox" placeholder="">
   </div>
   <div class="filter-group">
-    <label>@SharedLocalizer["sil_fromDate"]</label>
+    <label for="fromDate">@SharedLocalizer["sil_fromDate"]</label>
     <input type="date" id="fromDate">
   </div>
   <div class="filter-group">
-    <label>@SharedLocalizer["sil_toDate"]</label>
+    <label for="toDate">@SharedLocalizer["sil_toDate"]</label>
     <input type="date" id="toDate">
   </div>
 </div>
 
 <div class="card">
   <div style="overflow-x:auto">
-    <table>
+    @* ⚠️ عمود «#» و«عنوان IP» من غير data-sort عن قصد: الأول ترقيم عرض
+       مالوش وجود في قاعدة البيانات، والتاني نصّ زي 10.20.3.44 بيترتّب
+       أبجديًّا لا رقميًّا — فـ 10 بيجي قبل 9 والترتيب بيبان غلط. *@
+    <table id="silTable">
       <thead>
         <tr>
           <th>#</th>
-          <th>@SharedLocalizer["sil_col_time"]</th>
-          <th>@SharedLocalizer["sil_col_user"]</th>
-          <th>@SharedLocalizer["sil_col_fullName"]</th>
-          <th>@SharedLocalizer["sil_col_event"]</th>
-          <th>@SharedLocalizer["sil_col_method"]</th>
-          <th>@SharedLocalizer["sil_col_result"]</th>
+          <th data-sort="occurred_at">@SharedLocalizer["sil_col_time"]</th>
+          <th data-sort="username">@SharedLocalizer["sil_col_user"]</th>
+          <th data-sort="full_name">@SharedLocalizer["sil_col_fullName"]</th>
+          <th data-sort="event_type">@SharedLocalizer["sil_col_event"]</th>
+          <th data-sort="method">@SharedLocalizer["sil_col_method"]</th>
+          <th data-sort="success">@SharedLocalizer["sil_col_result"]</th>
           <th>@SharedLocalizer["sil_col_ip"]</th>
         </tr>
       </thead>
@@ -61,27 +64,37 @@
   </div>
 </div>
 
-<div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:16px;padding:0 4px">
-  <span id="totalLabel" style="font-size:13px;color:var(--gray-500)"></span>
-  <button id="prevBtn" class="btn btn-cancel" disabled>@SharedLocalizer["aud_prev"]</button>
-  <span id="pageInd" style="font-size:13px;font-weight:600;color:var(--navy-dark);min-width:60px;text-align:center">1 / 1</span>
-  <button id="nextBtn" class="btn btn-cancel" disabled>@SharedLocalizer["aud_next"]</button>
-</div>
+@* صفّ الترقيم من NuhTable.pager - النسخة الوحيدة في النظام (js/table-state.js) *@
+<div id="silPager"></div>
 
 @section Scripts {
 <script src="/i18n.js"></script>
 <script>
-  var page = 1, pageSize = 50, totalPages = 1, cache = [];
-  var esc = function (v) { return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
+  // الصفحة والفلاتر في الرابط - NuhUrl في js/url-state.js.
+  // ⚠️ الشاشة مابتخرجش لصفحة تانية بنفسها، لكن الخروج من القائمة الجانبية
+  //    والرجوع كان بيمسح مدى التاريخ والبحث والصفحة - وسجل الدخول بالذات
+  //    بيتفلتر على مدى تاريخ ضيّق وبيتنقّل فيه صفحات كتير.
+  var SIL_EVENTS = ['', 'login_success', 'login_failed', 'logout'];
+  var page = NuhUrl.int('page', 1, 1), pageSize = 50, totalPages = 1, cache = [];
+  var SIL_DEFAULTS = { page: 1, event: '', q: '', from: '', to: '', sort: '', asc: '' };
+
+  function syncUrl() {
+    NuhUrl.sync({
+      page: page,
+      event: document.getElementById('eventFilter').value,
+      q: document.getElementById('searchBox').value.trim(),
+      from: document.getElementById('fromDate').value,
+      to: document.getElementById('toDate').value,
+      sort: silSort.by(), asc: silSort.by() ? (silSort.asc() ? '1' : '0') : ''
+    }, SIL_DEFAULTS);
+  }
+  // تهريب HTML — التعريف الوحيد في /js/esc.js
+  var esc = function (v) { return escHtml(v); };
   // الجدول وحالاته من NuhTable، والترويسات من NUH.headers في التخطيط — مفيش نسخة محلية.
   var silTable = NuhTable.bind('tbody', 8);
 
-  function fmt(d) {
-    if (!d) return '';
-    var x = new Date(d); if (isNaN(x.getTime())) return '';
-    var p = function (n) { return String(n).padStart(2, '0'); };
-    return p(x.getDate()) + '/' + p(x.getMonth() + 1) + '/' + x.getFullYear() + ' ' + p(x.getHours()) + ':' + p(x.getMinutes());
-  }
+  // شكل التاريخ من NuhFmt — التعريف الوحيد في /js/date-format.js
+  function fmt(v) { return NuhFmt.dateTime(v); }
 
   function eventBadge(ev, success) {
     if (ev === 'logout') return '<span class="badge badge-out">' + t('sil_evt_logout') + '</span>';
@@ -90,6 +103,7 @@
   }
 
   function buildUrl() {
+    syncUrl();
     var u = '/api/logs/signins?page=' + page + '&pageSize=' + pageSize;
     var ev = document.getElementById('eventFilter').value;
     var s = document.getElementById('searchBox').value.trim();
@@ -99,7 +113,7 @@
     if (s) u += '&search=' + encodeURIComponent(s);
     if (f) u += '&fromDate=' + encodeURIComponent(f);
     if (tt) u += '&toDate=' + encodeURIComponent(tt);
-    return u;
+    return u + silSort.qs();
   }
 
   // ⚠️ setLang تستدعي onLanguageChange المربوطة بـ render، فكانت الصفحة ترسم
@@ -139,16 +153,23 @@
       cache = body.data || [];
       totalPages = body.totalPages || 1;
       render();
-      document.getElementById('pageInd').textContent = page + ' / ' + totalPages;
-      document.getElementById('prevBtn').disabled = page <= 1;
-      document.getElementById('nextBtn').disabled = page >= totalPages;
-      document.getElementById('totalLabel').textContent = t('sil_totalFmt').replace('{0}', body.totalRecords || 0);
+      NuhTable.pager('silPager',
+        { page: page, pageSize: pageSize, total: body.totalRecords || 0, totalPages: totalPages },
+        {
+          summary: t('sil_totalFmt').replace('{0}', body.totalRecords || 0),
+          prev: t('aud_prev'), next: t('aud_next')
+        },
+        function (p) { page = p; load(); });
     } catch (e) { silTable.error(t('sil_loadError')); }
   }
 
+  // ترتيب الأعمدة من نسخة واحدة في النظام — NuhTable.sort. الأعمدة معرّفة
+  // بـ data-sort على الـ <th>، والخادم هو اللي بيرتّب (الجدول مقسّم صفحات،
+  // والترتيب في المتصفح كان هيرتّب الصفحة اللي قدامك بس).
+  var silSort = NuhTable.sort('silTable', function () { page = 1; load(); },
+    { by: NuhUrl.get('sort', ''), asc: NuhUrl.get('asc', '1') === '1' });
+
   function onFilter() { page = 1; load(); }
-  document.getElementById('prevBtn').addEventListener('click', function () { if (page > 1) { page--; load(); } });
-  document.getElementById('nextBtn').addEventListener('click', function () { if (page < totalPages) { page++; load(); } });
   document.getElementById('eventFilter').addEventListener('change', onFilter);
   document.getElementById('searchBox').addEventListener('keyup', function (e) { if (e.key === 'Enter') onFilter(); });
   document.getElementById('fromDate').addEventListener('change', onFilter);
@@ -156,6 +177,15 @@
 
   window.onLanguageChange = function () { render(); };
   setLang(localStorage.getItem('uiLanguage') || 'ar');
+
+  (function initFromUrl() {
+    document.getElementById('eventFilter').value = NuhUrl.one('event', SIL_EVENTS, '');
+    document.getElementById('searchBox').value = NuhUrl.get('q', '');
+    document.getElementById('fromDate').value = NuhUrl.date('from');
+    document.getElementById('toDate').value = NuhUrl.date('to');
+    if (window.NuhSelect && NuhSelect.enhance) NuhSelect.enhance(document);
+  })();
+
   load();
 </script>
 }

@@ -1,17 +1,16 @@
-// صلاحيات المستخدم بتتحقن من الصفحة (Views/Housing/Index.cshtml).
+﻿// صلاحيات المستخدم بتتحقن من الصفحة (Views/Housing/Index.cshtml).
 // لو مش موجودة (صفحة قديمة) بنرجع false — أأمن من إظهار زرار مالوش صلاحية.
 function hmCan(p) {
   var list = (typeof window !== 'undefined' && Array.isArray(window.NUH_PERMS)) ? window.NUH_PERMS : [];
   return list.indexOf(p) !== -1;
 }
 
-// تهريب HTML — اللياوت بيعرّف escHtml، وبنستخدمه لو موجود عشان نفضل متسقين.
-function hmEsc(v) {
-  if (typeof escHtml === 'function') return escHtml(v);
-  return String(v == null ? '' : v)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
+// تهريب HTML — التعريف الوحيد في /js/esc.js المحمَّل من التخطيط.
+// ⚠️ كان فيه نسخة احتياطية هنا «لو escHtml مش موجودة» — والاحتياطي ده هو
+//    بالظبط اللي بيخلّي النسخ تتكاثر: بيفضل مكتوب سنين ومحدّش بيعرف إذا كان
+//    بيشتغل ولا لأ، ولو اتصلّحت القاعدة في مكانها الأصلي ما بيتصلّحش هو.
+//    الصفحة دي بتتحمّل من التخطيط دايمًا، فالاحتياطي مالوش أي حالة.
+function hmEsc(v) { return escHtml(v); }
 
 // أسماء إجراءات سجل دورة الحياة.
 // ⚠️ housing_transfer و left_housing و disable_failed مكانش ليهم اسم، فكانوا
@@ -33,9 +32,9 @@ var HM_ACTION_TEXT = {
   disabled:               { ar: 'تم التعطيل',                  en: 'Disabled' },
   disable_failed:         { ar: 'فشل تعطيل الحساب',            en: 'Disable failed' },
   password_reset:         { ar: 'إعادة تعيين كلمة المرور',     en: 'Password reset' },
-  extension_attrs_synced: { ar: 'تحديث بيانات السكن في الدليل', en: 'Housing data updated in AD' },
+  extension_attrs_synced: { ar: 'تحديث بيانات الإسكان في الـAD', en: 'Housing data updated in AD' },
   housing_transfer:       { ar: 'نقل سكن',                     en: 'Housing transfer' },
-  left_housing:           { ar: 'ترك الإسكان',                 en: 'Left housing' }
+  left_housing:           { ar: 'ترك السكن',                   en: 'Left housing' }
 };
 
 function hmActionLabel(action) {
@@ -112,7 +111,7 @@ function apiHeaders() {
 function showToast(msg, type) {
   var t = document.createElement('div');
   t.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;box-shadow:0 4px 12px rgba(0,0,0,0.15);transition:opacity 0.3s;max-width:400px;text-align:center';
-  t.style.background = type === 'error' ? '#fef3f2' : type === 'success' ? '#dff6e7' : '#fef0c7';
+  t.style.background = type === 'error' ? '#fef3f2' : type === 'success' ? '#dff6e7' : 'var(--gold-pale)';
   t.style.color = type === 'error' ? '#b42318' : type === 'success' ? '#067647' : '#93370d';
   t.style.border = '1px solid ' + (type === 'error' ? '#fecdca' : type === 'success' ? '#a9efc5' : '#fedf89');
   t.textContent = msg;
@@ -131,7 +130,7 @@ function openModal(id) {
 function formatDate(d) {
   if (!d) return '-';
   var dt = new Date(d);
-  return dt.toLocaleString();
+  return NuhFmt.dateTime(dt);
 }
 
 function getBadgeClass(status) {
@@ -174,66 +173,110 @@ async function loadStats() {
   }
 }
 
-// نخزّن الصفوف المحمّلة علشان الترتيب يتم على الجهة (client-side) — الشاشة بتحمّل الكل مرة واحدة
+// ==========================================================================
+//  جدول حسابات السكن — الفلترة والترتيب والترقيم كلهم على الخادم.
+//
+//  ⚠️ الشاشة كانت بتنادي GET /api/HousingAccountManagement اللي بيرجّع **كل**
+//     الحسابات في رد واحد، وترسمهم كلهم، وترتّبهم في المتصفح. ومع كده كان في
+//     نقطة /paged موجودة على الخادم من الأصل ومحدش بيناديها.
+//
+//     والترتيب في المتصفح مش بس مسألة أداء: مع الترقيم بيبقى غلط صريح — بيرتّب
+//     الصفحة اللي قدامك بس، فأول اسم أبجديًّا في صفحة ٢ ممكن يسبق آخر اسم في
+//     صفحة ١. عشان كده الترتيب اتنقل للخادم بالكامل.
+//
+//  ⚠️ الحالة في كائن واحد: لو كل فلتر قرا قيمته من عنصره وقت بناء الطلب،
+//     يبقى كل فلتر لازم يعرف عن التاني، وأي فلتر جديد يتضاف بعد كده يحتاج
+//     تعديل في بناء الطلب.
+// ==========================================================================
 var housingAccounts = [];
-var housingSort = { by: '', asc: false };
+
+// ==========================================================================
+//  حالة الشاشة في الرابط - NuhUrl في js/url-state.js.
+//
+//  ⚠️ المفارقة اللي كانت هنا: الشاشة كانت بتحفظ **حالة لوحة المزامنة**
+//     (مفتوحة/مقفولة) في تخزين المتصفح، وماكانتش بتحفظ البحث ولا الفلتر ولا
+//     الصفحة. يعني بتفتكر الزينة وبتنسى الشغل.
+// ==========================================================================
+var HS_STATUSES = ['', 'enabled', 'disabled', 'unknown'];
+
+var hsState = {
+  page: NuhUrl.int('page', 1, 1),
+  pageSize: 25,
+  filter: NuhUrl.get('q', ''),
+  status: NuhUrl.one('status', HS_STATUSES, ''),
+  total: 0,
+  totalPages: 1
+};
+var HS_DEFAULTS = { page: 1, q: '', status: '', sort: '', asc: '' };
+
+function hsSyncUrl() {
+  NuhUrl.sync({
+    page: hsState.page, q: hsState.filter, status: hsState.status,
+    sort: hsSort.by(), asc: hsSort.by() ? (hsSort.asc() ? '1' : '0') : ''
+  }, HS_DEFAULTS);
+}
+
+// حالات الجدول (تحميل / لا نتائج / خطأ) — التعريف الوحيد في /js/table-state.js
+var hsTable = NuhTable.bind('accountsTableBody', 7);
+
+// ترتيب الأعمدة — نفس النسخة الوحيدة. الأعمدة معرّفة بـ data-sort في الشاشة.
+// ⚠️ الترتيب بيرجّع الصفحة لواحد: لو فضلت على صفحة ٧ بعد ما غيّرت الترتيب،
+//    اللي هتشوفه هو الصفحة السابعة من ترتيب جديد — نتيجة صحيحة بس مالهاش
+//    معنى للي دوس عشان يشوف الأول أو الآخر.
+var hsSort = NuhTable.sort('hsTable', function () { hsState.page = 1; loadAccounts(); },
+  { by: NuhUrl.get('sort', ''), asc: NuhUrl.get('asc', '1') === '1' });
+
+function hsUrl() {
+  var u = API + '/paged?page=' + hsState.page + '&pageSize=' + hsState.pageSize;
+  if (hsState.filter) u += '&filterText=' + encodeURIComponent(hsState.filter);
+  if (hsState.status) u += '&status=' + encodeURIComponent(hsState.status);
+  u += hsSort.qs();
+  return u;
+}
 
 async function loadAccounts() {
-  var tbody = document.getElementById('accountsTableBody');
-  var loading = document.getElementById('loadingIndicator');
-  var empty = document.getElementById('emptyState');
-  loading.style.display = 'block';
-  empty.style.display = 'none';
-  tbody.innerHTML = '';
-
+  hsSyncUrl();
+  hsTable.loading();
   try {
-    var statusFilter = document.getElementById('statusFilter').value;
-    var url = API + '?';
-    if (statusFilter) url += 'status=' + encodeURIComponent(statusFilter);
-
-    var res = await fetch(url, { headers: apiHeaders() });
+    var res = await fetch(hsUrl(), { headers: apiHeaders() });
     if (!res.ok) throw new Error('HTTP ' + res.status);
 
-    var accounts = await res.json();
-    loading.style.display = 'none';
-    housingAccounts = accounts || [];
-
-    if (housingAccounts.length === 0) {
-      empty.style.display = 'block';
-      return;
-    }
+    var body = await res.json();
+    hsTable.done();
+    housingAccounts   = body.items || [];
+    hsState.total     = body.totalCount || 0;
+    hsState.totalPages = body.totalPages || 1;
 
     renderHousingRows();
+    renderHousingPager();
   } catch (e) {
-    loading.style.display = 'none';
-    empty.style.display = 'block';
-    empty.innerHTML = '<p>' + t('apiError') + ': ' + e.message + '</p>';
+    hsTable.error(t('apiError') + ': ' + e.message);
   }
 }
 
-// مقارنة للترتيب: التاريخ رقميًا، والباقي نصيًا مع دعم الأرقام والعربي
-function housingCmp(a, b) {
-  var f = housingSort.by, asc = housingSort.asc;
-  if (f === 'ad_last_sync_at') {
-    var da = a[f] ? new Date(a[f]).getTime() : 0;
-    var db = b[f] ? new Date(b[f]).getTime() : 0;
-    return asc ? da - db : db - da;
-  }
-  var va = (a[f] == null ? '' : String(a[f]));
-  var vb = (b[f] == null ? '' : String(b[f]));
-  var r = va.localeCompare(vb, undefined, { numeric: true, sensitivity: 'base' });
-  return asc ? r : -r;
+// صفّ الترقيم كامل من نسخة واحدة في النظام — NuhTable.pager
+function renderHousingPager() {
+  NuhTable.pager('hsPager',
+    { page: hsState.page, pageSize: hsState.pageSize, total: hsState.total, totalPages: hsState.totalPages },
+    {
+      summary: t('hs_pageInfoFmt')
+        .replace('{0}', hsState.page)
+        .replace('{1}', hsState.totalPages)
+        .replace('{2}', hsState.total),
+      prev: t('aud_prev'), next: t('aud_next')
+    },
+    function (pg) { hsState.page = pg; loadAccounts(); });
 }
 
 function renderHousingRows() {
-  var tbody = document.getElementById('accountsTableBody');
-  var rows = housingAccounts.slice();
-  if (housingSort.by) rows.sort(housingCmp);
-  var html = '';
-  rows.forEach(function(a) {
+  // ⚠️ الترقيم المتسلسل بيكمّل عبر الصفحات — الصف الأول في صفحة ٢ رقمه ٢٦
+  //    مش ١، وإلا الرقم بيقول للموظف إنه رجع لأول القائمة.
+  var i = (hsState.page - 1) * hsState.pageSize;
+  var html = (housingAccounts || []).map(function (a) {
+    i++;
     var lastSync = a.ad_last_sync_at ? formatDate(a.ad_last_sync_at) : '-';
     var statusBadge = '<span class="badge ' + getBadgeClass(a.ad_status) + '">' + getStatusText(a.ad_status) + '</span>';
-    html += '<tr>' +
+    return '<tr>' +
       '<td><bdi>' + hmEsc(a.student_id || '-') + '</bdi></td>' +
       '<td>' + hmEsc(a.full_name_english || a.full_name || '-') + '</td>' +
       '<td>' + hmEsc(collegeName(a.college) || '-') + '</td>' +
@@ -248,23 +291,44 @@ function renderHousingRows() {
         '<button class="abtn" onclick="openLifecycle(' + a.id + ')">' + HM_SVG.log + '<span>' + t('lifecycleLog') + '</span></button>' +
       '</div></td>' +
     '</tr>';
-  });
-  tbody.innerHTML = html;
-  updateHousingSortIndicators();
+  }).join('');
+
+  hsTable.rows(html, t('hs_noStudents'));
 }
 
-function sortHousing(field) {
-  if (housingSort.by === field) { housingSort.asc = !housingSort.asc; }
-  else { housingSort.by = field; housingSort.asc = true; }
-  renderHousingRows();
-}
+// أي تغيير في فلتر بيرجّع الصفحة لواحد — الصفحة ٧ من نتيجة أضيق غالبًا مش موجودة
+function hsFilterChanged() { hsState.page = 1; loadAccounts(); }
 
-function updateHousingSortIndicators() {
-  ['student_id', 'full_name_english', 'college', 'ad_status', 'ad_username', 'ad_last_sync_at'].forEach(function (f) {
-    var el = document.getElementById('hsort-' + f);
-    if (el) el.textContent = (housingSort.by === f) ? (housingSort.asc ? ' ▲' : ' ▼') : '';
+(function wireHousingFilters() {
+  var statusEl = document.getElementById('statusFilter');
+  var searchEl = document.getElementById('hsSearch');
+
+  if (statusEl) statusEl.addEventListener('change', function () {
+    hsState.status = statusEl.value; hsFilterChanged();
   });
-}
+
+  // ⚠️ مهلة قصيرة بعد آخر حرف بدل نداء مع كل ضغطة زرار: الكتابة السريعة كانت
+  //    هتبعت طلب لكل حرف، وردودهم بترجع بترتيب مش مضمون — فآخر رد وصل ممكن
+  //    يكون لأقدم كلمة اتكتبت.
+  if (searchEl) {
+    var timer = null;
+    searchEl.addEventListener('input', function () {
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        hsState.filter = searchEl.value.trim();
+        hsFilterChanged();
+      }, 350);
+    });
+    searchEl.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter') return;
+      e.preventDefault();
+      clearTimeout(timer);
+      hsState.filter = searchEl.value.trim();
+      hsFilterChanged();
+    });
+  }
+})();
+
 
 async function openDetails(studentId) {
   var body = document.getElementById('detailsModalBody');
@@ -572,6 +636,13 @@ window.onLanguageChange = function(l) {
 
 document.addEventListener('DOMContentLoaded', function() {
   setLang(currentLang || 'ar');
+
+  // الخانات الظاهرة توصف اللي معروض - الشرح في js/url-state.js
+  var sb = document.getElementById('hsSearch');
+  if (sb) sb.value = hsState.filter;
+  var sf = document.getElementById('statusFilter');
+  if (sf) { sf.value = hsState.status; if (window.NuhSelect && NuhSelect.enhance) NuhSelect.enhance(sf.parentNode || document); }
+
   loadStats();
   loadAccounts();
   document.title = t('housingManagement');

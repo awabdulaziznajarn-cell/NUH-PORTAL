@@ -6,6 +6,8 @@ namespace NUH_PORTAL.Services.Interfaces
     public interface IRegistrationFlowService
     {
         Task<StartRegistrationResultDto> StartAsync(StartRegistrationRequest request);
+        // وثيقة التعهّد (النصّ + البصمة) — الصفحة بتعرض منها والخادم بيجمّد منها.
+        Task<PledgeDocumentDto> GetPledgeDocumentAsync();
         Task AcceptDeclarationsAsync(int requestId, AcceptDeclarationsRequest request);
         Task<List<MyRequestListItemDto>> GetMyRequestsAsync(string? mobile);
         Task<MyRequestDetailDto> GetMyRequestDetailAsync(int requestId);

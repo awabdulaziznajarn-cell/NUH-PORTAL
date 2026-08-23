@@ -19,7 +19,10 @@
         "fh_DiffAttr","fh_DiffCurrent","fh_DiffNew","fh_DiffNone","fh_DiffCount",
         "fh_PushOk","fh_PushFail","fh_HandoverError","fh_Required","fh_SecDiff","fh_UnitsList",
         "fh_SavedEdit","fh_NoChanges","fh_NoCurrentOccupant",
-        "fh_SelectCollege","fh_SelectCollegeFirst","fh_SelectDepartment"
+        "fh_SelectCollege","fh_SelectCollegeFirst","fh_SelectDepartment",
+        // سجل العمليات — نفس المفاتيح اللي بتستعملها نافذة السجل في قائمة الوحدات
+        "fh_TabChanges","fh_NoAuditLog","fh_ChgField","fh_ChgOld","fh_ChgNew","fh_ChgEmpty",
+        "fh_LastChange","fh_ViewFullLog","fh_PushMoved","close"
     };
     var fhT = JsonSerializer.Serialize(keys.ToDictionary(k => k, k => L(k)));
 }
@@ -40,6 +43,10 @@
   .fh-phone input{border-radius:0 10px 10px 0 !important;text-align:left}
   .fh-hint{font-size:11.5px;color:var(--gray-500);line-height:1.6}
   .fh-diff td.attr{font-family:Consolas,monospace;direction:ltr;color:var(--gray-700)}
+  /* مسار الـ OU: لاتيني وطويل — خطّ أحادي المسافة وبيتكسّر بدل ما يمدّ الجدول */
+  .fh-dn{font-family:Consolas,monospace;font-size:11.5px;word-break:break-all;display:inline-block}
+  /* الملاحظة تحت القيمة لا مكانها — سطر تفسيري لا بديل عن البيانات */
+  .fh-diffnote{display:block;margin-top:3px;font-size:11px;font-weight:400;color:var(--gray-500);line-height:1.7}
   .fh-old{color:var(--red);text-decoration:line-through;opacity:.85}
   .fh-new{color:var(--green);font-weight:700}
   .fh-same{color:var(--gray-500)}
@@ -57,6 +64,11 @@
 
 <div id="fhWrap" style="display:none">
 
+  @* ⚠️ سطر «آخر تعديل» فوق النموذج لا تحته: السؤال اللي بيجاوبه - مين آخر
+     واحد لمس الوحدة دي وإمتى - بيتسأل **وإنت داخل تعدّل**، مش بعد ما تحفظ.
+     وبيتحدّث بعد كل حفظ عشان يشمل اللي عملته للتوّ. *@
+  <div id="hoLastChg" style="margin-bottom:18px"></div>
+
   <!-- بيانات المعاملة — لا تظهر في وضع التعديل: التصحيح ليس طلبًا في إنجاز -->
   @if (!isEdit)
   {
@@ -68,21 +80,29 @@
       <div class="form-card-title">@SharedLocalizer["fh_SecRequest"]</div>
     </div>
     <div class="form-card-body">
-      <div class="form-grid-3">
+      @* ⚠️ الشبكة بقت عمودين لا تلاتة: خانة «تاريخ موافقة الأمن السيبراني»
+         اتشالت، وسيبها تلاتة كان هيخلّي الحقلين الباقيين مزنوقين في تلتين
+         العرض والتلت التالت فاضي. *@
+      <div class="form-grid">
         <div class="field">
           <label for="hoType">@SharedLocalizer["fh_RequestType"]<span class="req">*</span></label>
           <div class="input-wrap"><select id="hoType"></select></div>
         </div>
         <div class="field">
           <label for="hoTicket">@SharedLocalizer["fh_TicketNoLabel"]<span class="req">*</span></label>
-          <div class="input-wrap"><input id="hoTicket" type="text" maxlength="20" placeholder="14872" inputmode="numeric"></div>
+          @* ⚠️ بلا placeholder: «14872» رقم معاملة شكله حقيقي تمامًا، فاللي
+             بيفتح الشاشة ممكن يفتكره متملّي من النظام ويعدّي عليه. النمط
+             (أرقام فقط) مكتوب في التلميح تحت، والمثال كان بيضيف لبسًا لا معلومة. *@
+          <div class="input-wrap"><input id="hoTicket" type="text" maxlength="20" inputmode="numeric"></div>
           <span class="fh-hint">@SharedLocalizer["fh_TicketHint"]</span>
         </div>
-        <div class="field">
-          <label for="hoCyber">@SharedLocalizer["fh_CyberDate"]</label>
-          <div class="input-wrap"><input id="hoCyber" type="date"></div>
-          <span class="fh-hint">@SharedLocalizer["fh_CyberHint"]</span>
-        </div>
+        @* ⚠️ «تاريخ موافقة الأمن السيبراني» اتشال: وجود رقم معاملة إنجاز
+           معناه إن الأمن السيبراني وافق أصلًا - فالتاريخ كان بيتكتب بالإيد
+           لتأكيد حاجة الرقم بيقولها. وخانة بتتكتب بالإيد لمعلومة معروفة من
+           مكان تاني بتفتح باب اختلاف بين الاتنين بلا فايدة.
+           ⚠️ العمود CyberApprovedAt في قاعدة البيانات **باقي**: فيه تواريخ
+           اتسجّلت فعلًا على معاملات قديمة، وحذفه كان هيمسح تاريخًا حقيقيًّا
+           عشان تبسيط شاشة. بيفضل فاضي في الصفوف الجديدة. *@
       </div>
     </div>
   </div>
@@ -101,12 +121,23 @@
         <div class="field full">
           <label for="hoName">@SharedLocalizer["fh_FullNameAr"]<span class="req">*</span></label>
           <div class="input-wrap"><input id="hoName" type="text" maxlength="250"></div>
-          <span class="fh-hint">@SharedLocalizer["fh_NameHint"]</span>
+          @* ⚠️ التلميح اتشال: «يُكتب في خانة description» بيقول للموظف الاسم
+             هيتخزّن فين في الدليل النشط - وde تفصيلة تخزين مالهاش أي أثر على
+             اللي هو بيكتبه. تالت تلميح من نفس النوع يتشال من الشاشة دي
+             (بعد employeeID و mobile)، والقاعدة واحدة: النموذج بيقول للموظف
+             **إيه يكتب**، مش **الحقل رايح فين**.
+             ⚠️ باقي التلميحات في الشاشة قواعد إدخال حقيقية فباقية:
+             «أرقام فقط، دون حروف أو رموز» و«يُفتح عند اختيار سبب آخر فقط». *@
         </div>
         <div class="field">
           <label for="hoNid">@SharedLocalizer["fh_ColNationalId"]<span class="req">*</span></label>
           <div class="input-wrap"><input id="hoNid" type="text" maxlength="10" placeholder="1xxxxxxxxx" inputmode="numeric"></div>
-          <span class="fh-hint">@SharedLocalizer["fh_NationalIdHint"]</span>
+          @* ⚠️ التلميح اتشال. كان بيقول «يُكتب في employeeID - يبدأ بالرقم 1 أو 2»:
+             الشطر الأول اسم خانة في الدليل النشط - كلام مطوّرين مالوش لازمة
+             لمن يملأ النموذج. والشطر التاني **مخالف للتحقّق نفسه**: النمط في
+             Core/IdentityRules بقى ^\d{10}$ عشان يقبل الإقامة ورقم الحدود،
+             وشرط البداية اتشال عن قصد. يعني التلميح كان بيمنع الموظف نفسيًّا
+             من كتابة رقم النظام بيقبله. *@
         </div>
         <div class="field">
           <label for="hoMobile">@SharedLocalizer["fh_ColMobile"]<span class="req">*</span></label>
@@ -117,7 +148,9 @@
             <span class="pfx">+966</span>
             <div class="input-wrap"><input id="hoMobile" type="text" maxlength="9" placeholder="5xxxxxxxx" inputmode="numeric"></div>
           </div>
-          <span class="fh-hint">@SharedLocalizer["fh_MobileHint"]</span>
+          @* ⚠️ التلميح اتشال: «يُكتب في mobile بصيغة 9665XXXXXXXX» بيوصف
+             خانة الدليل النشط وصيغتها الداخلية. الموظف بيشوف قدامه بادئة
+             +966 مطبوعة، فالصيغة الكاملة كلام عن التخزين لا عن الإدخال. *@
         </div>
         @* ⚠️ اختيار من قوائم النظام لا نص حر. النص الحر كان يعني أن «كلية
            الهندسة» و«كليه الهندسه» و«الهندسة» ثلاث قيم مختلفة في الدليل، وأي
@@ -184,9 +217,18 @@
             </select>
           </div>
         </div>
-        <div class="field">
-          <label for="hoReasonNote">@SharedLocalizer["fh_ReasonNote"]</label>
-          <div class="input-wrap"><input id="hoReasonNote" type="text" maxlength="500"></div>
+        @* ⚠️ «بيان السبب» مقفول افتراضيًّا وبيتفتح مع «سبب آخر» بس.
+           السبب: الأسباب التلاتة التانية (انتهاء تعاقد / نقل / مغادرة نهائية)
+           بتشرح نفسها بالكامل - فخانة بيان مفتوحة جنبها بتدعو المستخدم يكتب
+           كلام حرّ مكانه سجل التغييرات لا حقل السبب، والنتيجة سجلّان بيقولوا
+           حاجتين. و«سبب آخر» وحده هو اللي مالوش معنى من غير بيان.
+           ⚠️ ومقفول لا مخفي: الحقل بيفضل في مكانه من الشبكة فما فيش قفزة في
+           التخطيط لمّا يتفتح، والمستخدم بيشوف إن فيه خانة موجودة ومربوطة
+           بالاختيار - مش خانة بتظهر من العدم. *@
+        <div class="field" id="hoReasonNoteField">
+          <label for="hoReasonNote">@SharedLocalizer["fh_ReasonNote"]<span class="req" id="hoReasonNoteReq" style="display:none">*</span></label>
+          <div class="input-wrap"><input id="hoReasonNote" type="text" maxlength="500" disabled></div>
+          <span class="fh-hint" id="hoReasonNoteHint">@SharedLocalizer["fh_ReasonNoteHint"]</span>
         </div>
       </div>
     </div>
@@ -225,5 +267,8 @@
   @* محرّك القوائم المشترك — نفس الملف الذي تستخدمه شاشة تسجيل الطالب *@
   <script src="~/lookups.js" asp-append-version="true"></script>
   <script src="~/js/phone-field.js" asp-append-version="true"></script>
+  @* سجل العمليات المشترك — نفس الملف اللي بترسم بيه شاشة قائمة الوحدات.
+     (audit-labels.js محمّل أصلًا من _Layout لكل شاشات الموظفين.) *@
+  <script src="~/js/faculty-audit-log.js" asp-append-version="true"></script>
   <script src="~/js/faculty-housing-handover.js" asp-append-version="true"></script>
 }

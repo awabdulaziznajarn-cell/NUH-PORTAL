@@ -20,7 +20,7 @@ namespace NUH_PORTAL.Data.Configurations
                 .HasDatabaseName("IX_Notifications_role_status");
 
             // FK على الطلب — سلامة مرجعية (كان request_id مجرد int من غير قيد).
-            // Cascade زي RequestAttachment→Request: لو الطلب اتحذف، إشعاراته تتحذف معاه.
+            // Cascade: لو الطلب اتحذف، إشعاراته تتحذف معاه.
             builder.HasOne(n => n.Request)
                 .WithMany()
                 .HasForeignKey(n => n.request_id)

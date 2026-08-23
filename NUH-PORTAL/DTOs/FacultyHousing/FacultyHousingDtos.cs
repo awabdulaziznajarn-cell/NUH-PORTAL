@@ -6,10 +6,22 @@ namespace NUH_PORTAL.DTOs.FacultyHousing
     public class OuAccessDto
     {
         public string OrganizationalUnit { get; set; } = string.Empty;
-        public string Label { get; set; } = string.Empty;   // «أبراج — بنين» ...
+        // ⚠️ مفتاح ترجمة لا نصّ. الترجمة في الواجهة عبر FH_T.
+        public string LabelKey { get; set; } = string.Empty;
+        // الاسم التقني للوحدة في الدليل (MALE / FEMALE / Villas) — مُشتقّ من المسار.
+        public string OuName { get; set; } = string.Empty;
         public bool OuExists { get; set; }
         public bool CanRead { get; set; }
         public bool AllWritable { get; set; }
+        // إنشاء حساب جوّه الوحدة — بيلزم لنقل الحسابات بين قسمَي الدليل.
+        // null = الدومين ما رجّعش الخاصية المحسوبة، مش «مرفوض».
+        public bool? CanCreateUser { get; set; }
+        // ⚠️ هل هذه الوحدة طرفٌ في النقل أصلًا؟ «الفلل» مختلطة، فلا نقل
+        //    منها ولا إليها، وعرض «مرفوض» في خانتها يصف نقصًا لا وجود له.
+        public bool IsGendered { get; set; }
+        // الكتابة على اسم الكائن (cn / name) — الشرط التالت للنقل
+        public bool CanWriteRdn { get; set; }
+        public Dictionary<string, bool> RdnAttributeWritable { get; set; } = new();
         public string? ProbedAccount { get; set; }
         public Dictionary<string, bool> AttributeWritable { get; set; } = new();
         public string? Error { get; set; }
@@ -18,7 +30,16 @@ namespace NUH_PORTAL.DTOs.FacultyHousing
     public class AccessCheckDto
     {
         public bool Configured { get; set; }
+        // القراءة والكتابة في الخصائص الخمس — ده اللي الاستيراد محتاجه
         public bool AllOk { get; set; }
+        // ⚠️ صلاحية إنشاء حساب في كل الأقسام المقسّمة بالجنس - نص شرط نقل
+        //    الحسابات بينها. النص التاني (الحذف من القسم المصدر) مالوش خاصية
+        //    محسوبة نسأل عنها الدومين، فمابندّعيش إننا فحصناه.
+        public bool MoveCreateOk { get; set; }
+        // الكتابة على اسم الكائن في كل الأقسام المقسّمة بالجنس
+        public bool MoveRdnOk { get; set; }
+        // فيه أقسام مقسّمة بالجنس أصلًا؟ (الفلل ممكن تكون وحدة واحدة مختلطة)
+        public bool HasGenderedOus { get; set; }
         public List<OuAccessDto> Ous { get; set; } = new();
     }
 
@@ -29,9 +50,10 @@ namespace NUH_PORTAL.DTOs.FacultyHousing
     {
         public string AdAccount { get; set; } = string.Empty;
         public string? DistinguishedName { get; set; }
-        public string OrganizationalUnit { get; set; } = string.Empty;
+        // ⚠️ مفتاح ترجمة لا نصّ — انظر OuAccessDto.LabelKey.
+        public string OrganizationalUnitKey { get; set; } = string.Empty;
+        public string OuName { get; set; } = string.Empty;
         public ImportRowAction Action { get; set; }
-        public string ActionLabel { get; set; } = string.Empty;
 
         public FacultyUnitType? UnitType { get; set; }
         public int? TowerNo { get; set; }
@@ -41,6 +63,11 @@ namespace NUH_PORTAL.DTOs.FacultyHousing
 
         public bool NameMatchesStandard { get; set; }
         public string? Deviation { get; set; }
+        // ⚠️ «سيتم تحديثها» من غير ما تقول إيه هيتحدّث بتخلّي اللي بيراجع
+        //    المعاينة يوافق على تغيير مش شايفه. السطر ده بيقول بالظبط أنهي
+        //    حاجة اختلفت عن المسجَّل عندنا.
+        // ⚠️ مفاتيح ترجمة لا نصوص — انظر OrganizationalUnitKey.
+        public List<string> ChangeNoteKeys { get; set; } = new();
 
         // اللي مكتوب في الدومين دلوقتي
         public string? Description { get; set; }
@@ -50,8 +77,8 @@ namespace NUH_PORTAL.DTOs.FacultyHousing
         public string? Department { get; set; }
         public bool AccountEnabled { get; set; }
 
-        // سبب التجاهل لو Action = Ignored
-        public string? IgnoreReason { get; set; }
+        // سبب التجاهل لو Action = Ignored — مفتاح ترجمة لا نصّ.
+        public string? IgnoreReasonKey { get; set; }
     }
 
     public class ImportPreviewDto
@@ -132,6 +159,27 @@ namespace NUH_PORTAL.DTOs.FacultyHousing
         public List<int> Towers { get; set; } = new();
         public int Page { get; set; }
         public int PageSize { get; set; }
+    }
+
+    // ---------- أرقام لوحة التحكم ----------
+    // ⚠️ منفصل عن FacultyUnitsPageDto عن قصد: ده أربع أرقام للوحة التحكم،
+    //    وده صفحة كاملة بعناصرها وفلاترها. لو اتشاركوا، أي إضافة لعدّاد في
+    //    الشاشة كانت هتتحسب في اللوحة كمان بلا داعٍ.
+    public class FacultyDashboardStatsDto
+    {
+        // ⚠️ الوحدات **في الخدمة** فقط لا كل الصفوف. الصفوف اللي حالتها
+        //    OutOfService أو NotExists مش قابلة للتسكين، فلو دخلت في الإجمالي
+        //    كانت «٧ شاغرة من ٤٨» هتبقى مضلّلة — المقام فيه وحدات مستحيل
+        //    تتسكّن أصلًا.
+        public int ActiveUnits { get; set; }
+        public int Vacant { get; set; }
+        // بيتعرض كسطر صغير تحت الإجمالي لما يبقى أكبر من صفر — عشان الرقم
+        // اللي اتشال من المقام ما يختفيش من الشاشة خالص.
+        public int OutOfService { get; set; }
+        // ⚠️ عدّاد استثناء: المفروض يبقى صفر. Pending معناها اتسجّلت عندنا
+        //    وما اتكتبتش في الدومين، وFailed معناها الدومين رفض. الاتنين
+        //    محتاجين تدخّل، فبيتعدّوا مع بعض.
+        public int PendingSync { get; set; }
     }
 
     // ---------- سجل الوحدة ----------
@@ -248,6 +296,8 @@ namespace NUH_PORTAL.DTOs.FacultyHousing
     {
         public bool Success { get; set; }
         public int AttributesWritten { get; set; }
+        // مسار الـ OU اللي الحساب اتنقل له في العملية دي — null يعني ما اتنقلش
+        public string? MovedToOu { get; set; }
         public string? Error { get; set; }
         public FacultyUnitSyncState SyncState { get; set; }
     }

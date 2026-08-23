@@ -1,14 +1,12 @@
-using NUH_PORTAL.DTOs.Auth;
-
 namespace NUH_PORTAL.Services.Interfaces
 {
-    // تسجيل الدخول (AD أولًا ثم fallback محلي) + إدارة كلمة المرور + الخروج
+    // مصادقة الموظف (AD أولًا ثم fallback محلي) + نشاط الجلسة + الخروج.
+    // ⚠️ LoginAsync و SetPasswordAsync اتشالوا مع مسارَي api/Auth — شوف
+    //    التعليق في AuthController.
     public interface IAuthService
     {
-        Task<LoginResultDto> LoginAsync(LoginRequest request);
         // نفس فلو الدخول بالظبط (AD أولًا ثم fallback) بس بترجع المستخدم نفسه — بيستخدمها مسار الكوكي
         Task<NUH_PORTAL.Models.User> AuthenticateAsync(string username, string password);
-        Task SetPasswordAsync(SetPasswordRequest request);
         void RecordActivity();
         Task LogoutAsync();
     }

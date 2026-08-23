@@ -24,20 +24,18 @@ namespace NUH_PORTAL.Controllers
         public async Task<IActionResult> GetRequests()
             => Ok(await _service.GetAllAsync());
 
-        // GET api/Requests/paged?page=&pageSize=&filterText=&sortBy=&sortAsc=&status=&requestType=&mine=
+        // GET api/Requests/paged?page=&pageSize=&filterText=&sortBy=&sortAsc=&status=&requestType=&mine=&from=&to=
+        // filterText: خانة بحث واحدة تقارن برقم الطلب واسم الطالب ورقمه الجامعي معًا
+        // from/to: مدى تاريخ التقديم بتوقيت السعودية (yyyy-MM-dd)
+        // openOnly: الطلبات التي لم تُغلق بعد - تستعملها لوحة «الأطول انتظارًا» في الصفحة الرئيسية
         [HttpGet("paged")]
-        public async Task<IActionResult> GetRequestsPaged([FromQuery] QueryParams queryParams, [FromQuery] string? status = null, [FromQuery] string? requestType = null, [FromQuery] bool mine = false)
-            => Ok(await _service.GetPagedAsync(queryParams, status, requestType, mine));
+        public async Task<IActionResult> GetRequestsPaged([FromQuery] QueryParams queryParams, [FromQuery] string? status = null, [FromQuery] string? requestType = null, [FromQuery] bool mine = false, [FromQuery] DateTime? from = null, [FromQuery] DateTime? to = null, [FromQuery] bool openOnly = false)
+            => Ok(await _service.GetPagedAsync(queryParams, status, requestType, mine, from, to, openOnly));
 
         // GET api/Requests/{id}
         [HttpGet("{id}")]
         public async Task<IActionResult> GetRequest(int id)
             => Ok(await _service.GetDetailsAsync(id));
-
-        // GET api/Requests/pending
-        [HttpGet("pending")]
-        public async Task<IActionResult> GetPending()
-            => Ok(await _service.GetPendingAsync());
 
         // GET api/Requests/stats — عدادات الحالات لصفحة إدارة الطلبات
         [HttpGet("stats")]

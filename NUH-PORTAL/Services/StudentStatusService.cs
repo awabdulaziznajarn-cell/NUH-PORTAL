@@ -2,6 +2,7 @@ using MapsterMapper;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using NUH_PORTAL.Core;
 using NUH_PORTAL.Core.Exceptions;
 using NUH_PORTAL.Data.Interfaces;
 using NUH_PORTAL.DTOs.Attachments;
@@ -95,7 +96,11 @@ namespace NUH_PORTAL.Services
             if (string.IsNullOrEmpty(notes) || notes.Trim().Length < 5)
                 throw new UserFriendlyException("سبب الإجراء إلزامي (5 أحرف على الأقل)", 400);
 
-            var student = await _students.FindAsync(s => s.student_id == studentNumber && !s.IsDeleted)
+            // ⚠️ Scoped: الإحصاءات كانت مقسّمة والإجراء نفسه لأ — فمشرف قسم كان
+            //    يقدر يسجّل تخرّجًا أو فصلًا على طالب من القسم التاني بالرقم
+            //    الجامعي، والإجراء ده بيعطّل حساب الطالب في الدليل.
+            var student = await Scoped(_students.Query())
+                .FirstOrDefaultAsync(s => s.student_id == studentNumber && !s.IsDeleted)
                 ?? throw new UserFriendlyException("الطالب غير موجود", 400);
 
             var st = statusType?.Trim().ToLower();
@@ -290,16 +295,18 @@ namespace NUH_PORTAL.Services
         {
             var scope = UnitOfWork.GetGenderScope();
 
-            var studentsQ = _students.Query().AsNoTracking().Where(s => !s.IsDeleted);
-            if (scope != null) studentsQ = studentsQ.Where(s => s.gender == scope);
+            // ⚠️ الشرطية اتنقلت لـ Core/GenderScope.cs. كانت مكتوبة بيدها هنا
+            //    وفي سجل التنقلات وفي شاشة الطلبات - ثلاث نسخ لقاعدة واحدة،
+            //    وأول شاشة تنساها تصير ثغرة صامتة (وهو المكتوب فوق GetGenderScope
+            //    نفسها منذ اليوم الأول).
+            var studentsQ = _students.Query().AsNoTracking().ForGender(scope).Where(s => !s.IsDeleted);
 
             var students = await studentsQ
                 .GroupBy(s => s.student_status)
                 .Select(g => new { Status = g.Key, Count = g.Count() })
                 .ToListAsync();
 
-            var actionsQ = _actions.Query().AsNoTracking();
-            if (scope != null) actionsQ = actionsQ.Where(a => a.Student != null && a.Student.gender == scope);
+            var actionsQ = _actions.Query().AsNoTracking().ForGender(scope);
 
             var actions = await actionsQ
                 .GroupBy(a => a.StatusType)
@@ -319,20 +326,34 @@ namespace NUH_PORTAL.Services
             };
         }
 
-        public async Task<List<RecentStatusActionDto>> GetRecentAsync()
+        // حجم الصفحة الواحدة من سجل التحديثات. الواجهة تطلب التالية بـ skip.
+        public const int RecentPageSize = 50;
+
+        // ⚠️ كانت تُرجع ٥٠ صفًّا وتتوقّف بلا أن تخبر أحدًا: لو في النظام ٢٠٠
+        //    إجراء فـ١٥٠ منها غير موجودة في الرد أصلًا، والقائمة على الشاشة
+        //    تبدو كاملة وهي ليست كذلك. السقف الصامت أخطر من القائمة الطويلة.
+        public async Task<List<RecentStatusActionDto>> GetRecentAsync(int skip = 0)
         {
-            var recentScope = UnitOfWork.GetGenderScope();
-            // النوع صريح مش var: Include بيرجّع IIncludableQueryable و Where بيرجّع
-            // IQueryable، فـ var بياخد النوع الضيّق وإعادة الإسناد تحت ماتعدّيش.
+            // ⚠️ إجراءات النموذج وحدها. ValidStatuses هي عينها قائمة الخيارات التي
+            //    يقبلها CreateCoreAsync أعلاه، فالقائمة تعرض ما تنتجه الشاشة
+            //    المجاورة لها بالضبط - لا أكثر.
+            //
+            //    كان يظهر فيها ad_provisioning: صفٌّ يكتبه ADProvisioningService
+            //    عند إنشاء حساب الشبكة، لا قرارًا اتّخذه موظف - ولذلك لا سبب له
+            //    ولا مرفق. ووجوده في قائمة عنوانها «آخر التحديثات» بجانب نموذج
+            //    الحالة الأكاديمية يجعل الموظف يقرؤه كإجراء اتُّخذ على الطالب.
+            //    والربط بـ ValidStatuses لا بقائمة استبعاد: أي نوع نظام يُضاف
+            //    مستقبلًا يبقى خارج القائمة تلقائيًّا بلا تعديل هنا.
             IQueryable<StudentStatusAction> recentQ = _actions.Query().AsNoTracking()
+                .ForGender(UnitOfWork.GetGenderScope())
+                .Where(a => a.StatusType != null && ValidStatuses.Contains(a.StatusType))
                 .Include(a => a.Student)
                 .Include(a => a.CreatedByUser);
-            if (recentScope != null)
-                recentQ = recentQ.Where(a => a.Student != null && a.Student.gender == recentScope);
 
             var list = await recentQ
                 .OrderByDescending(a => a.CreatedDate)
-                .Take(50)
+                .Skip(Math.Max(0, skip))
+                .Take(RecentPageSize)
                 .Select(a => new RecentStatusActionDto
                 {
                     Id = a.Id,
@@ -355,13 +376,21 @@ namespace NUH_PORTAL.Services
             {
                 var attachments = await _attachments.Query().AsNoTracking()
                     .Where(at => ids.Contains(at.StudentStatusActionId) && at.FileName != null)
-                    .Select(at => new { at.StudentStatusActionId, at.FileName })
+                    .Select(at => new { at.StudentStatusActionId, at.FileName, at.OriginalFileName })
                     .ToListAsync();
 
                 var map = new Dictionary<int, string>();
                 foreach (var at in attachments)
                     if (at.FileName != null && !map.ContainsKey(at.StudentStatusActionId))
-                        map[at.StudentStatusActionId] = at.FileName;
+                        // ⚠️ المعروض = اسم الملف اللي الموظف رفعه، مش المسار المخزَّن.
+                        //    الشاشة كانت بتطبع FileName كامل:
+                        //    Students\456320025\Status-Change\2026-08-10_1401__action-20__...
+                        //    فالموظف بيقرا مسارًا داخليًا على الخادم بدل «nu-logo.png»،
+                        //    وبيتسرّب معاه شكل مجلدات التخزين. شاشة نقل السكن جنبها
+                        //    كانت بتعرض الاسم الأصلي صح — دي اللي كانت شاذّة.
+                        map[at.StudentStatusActionId] = string.IsNullOrWhiteSpace(at.OriginalFileName)
+                            ? Path.GetFileName(at.FileName)
+                            : at.OriginalFileName;
 
                 foreach (var a in list)
                     if (map.TryGetValue(a.Id, out var fn))
@@ -375,6 +404,17 @@ namespace NUH_PORTAL.Services
         // تتفحص الأول (وثائق طلاب)، وعشان الاسم على الديسك GUID مش الاسم الأصلي.
         public async Task<DownloadFileDto> GetActionAttachmentAsync(int actionId)
         {
+            // ⚠️ نطاق القسم قبل أي حاجة. الدالة دي كانت بتجيب المرفق برقم
+            //    الإجراء وخلاص — ومن غير الفحص ده كان يكفي تخمين رقم عشان
+            //    مشرف قسم ينزّل مستند طالبة من القسم التاني (شهادة تخرّج،
+            //    خطاب فصل). القاعدة في Core/GenderScope.cs.
+            //    «غير موجود» لا «ممنوع» عن قصد: الرد ما يقولش إن السجل موجود
+            //    في القسم التاني — نفس صيغة باقي المسارات.
+            var inScope = await Scoped(_actions.Query()).AsNoTracking()
+                .AnyAsync(a => a.Id == actionId);
+            if (!inScope)
+                throw UserFriendlyException.NotFound("لا يوجد مرفق لهذا الإجراء");
+
             var attachment = await _attachments.Query().AsNoTracking()
                 .Where(a => a.StudentStatusActionId == actionId)
                 .OrderBy(a => a.Id)
@@ -398,7 +438,7 @@ namespace NUH_PORTAL.Services
 
         public async Task<List<StudentStatusActionDto>> GetStudentHistoryAsync(int studentId)
         {
-            var actions = await _actions.Query().AsNoTracking()
+            var actions = await Scoped(_actions.Query().AsNoTracking())
                 .Where(a => a.StudentId == studentId)
                 .OrderByDescending(a => a.CreatedDate)
                 .ToListAsync();

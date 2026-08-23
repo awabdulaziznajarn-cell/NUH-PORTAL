@@ -1,4 +1,4 @@
-@using System.Text.Json
+﻿@using System.Text.Json
 @{
     ViewData["Title"] = SharedLocalizer["fh_HandoverTitle"].Value;
 
@@ -57,13 +57,13 @@
     </div>
   </div>
   <div style="overflow-x:auto">
-    <table>
+    <table id="fhTable">
       <thead>
         <tr>
-          <th>@SharedLocalizer["fh_ColUnit"]</th>
-          <th>@SharedLocalizer["fh_ColAccount"]</th>
-          <th>@SharedLocalizer["fh_ColOccupant"]</th>
-          <th>@SharedLocalizer["fh_ColStatus"]</th>
+          <th data-sort="unit">@SharedLocalizer["fh_ColUnit"]</th>
+          <th data-sort="ad_account">@SharedLocalizer["fh_ColAccount"]</th>
+          <th data-sort="occupant">@SharedLocalizer["fh_ColOccupant"]</th>
+          <th data-sort="status">@SharedLocalizer["fh_ColStatus"]</th>
           <th>@SharedLocalizer["fh_ColActions"]</th>
         </tr>
       </thead>

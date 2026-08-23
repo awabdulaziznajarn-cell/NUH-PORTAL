@@ -95,6 +95,7 @@ namespace NUH_PORTAL.DTOs.Bulk
         public string? AcademicLevel { get; set; }
         public string? Gender { get; set; }
         public string? BuildingNumber { get; set; }
+        public string? FloorNumber { get; set; }
         public string? ApartmentNumber { get; set; }
         public string? RoomNumber { get; set; }
         public bool IsValid { get; set; }

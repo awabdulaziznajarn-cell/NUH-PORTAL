@@ -131,6 +131,11 @@ namespace NUH_PORTAL.Services
             int validCount = 0, errorCount = 0;
             var processedStudentIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
+            // قسم الموظف اللي بيرفع الملف — بيملّي خانة الجنس الفاضية، وبيرفض
+            // الصف اللي جنسه من القسم التاني. القاعدة في Core/GenderScope.cs.
+            var scope = UnitOfWork.GetGenderScope();
+            var scopeLabel = scope == Gender.Male ? "الطلاب" : "الطالبات";
+
             var existingStudentIds = new HashSet<string>(
                 await _students.Query().AsNoTracking()
                     .Where(s => s.student_id != null)
@@ -174,9 +179,11 @@ namespace NUH_PORTAL.Services
                     AddError("StudentID", "الرقم الجامعي مكرر في الملف - تم إدخال نفس الرقم الجامعي في أكثر من سطر");
 
                 if (string.IsNullOrEmpty(nationalId))
-                    AddError("NationalID", "رقم الهوية الوطنية مطلوب - يجب إدخال رقم هوية مكون من 10 أرقام");
-                else if (!Regex.IsMatch(nationalId, @"^\d{10}$"))
-                    AddError("NationalID", "رقم الهوية الوطنية غير صحيح - يجب أن يتكون من 10 أرقام بالضبط");
+                    AddError("NationalID", "رقم الهوية الوطنية مطلوب - " + IdentityRules.NationalIdError);
+                // ⚠️ كانت أي عشرة أرقام — نفس ضعف StudentService. القاعدة الموحّدة
+                //    بتمنع رقم الجوال يتحفظ في خانة الهوية من رفع الإكسل كمان.
+                else if (!IdentityRules.IsValidNationalId(nationalId))
+                    AddError("NationalID", IdentityRules.NationalIdError);
 
                 if (string.IsNullOrEmpty(fullNameAr))
                     AddError("FullNameArabic", "الاسم العربي مطلوب - يجب إدخال الاسم باللغة العربية");
@@ -190,24 +197,43 @@ namespace NUH_PORTAL.Services
 
                 if (string.IsNullOrEmpty(mobile))
                     AddError("Mobile", "رقم الجوال مطلوب - يجب إدخال رقم جوال صحيح");
-                else if (!Regex.IsMatch(mobile, @"^9665\d{8}$"))
-                    AddError("Mobile", "رقم الجوال غير صحيح - يجب أن يبدأ بـ 9665 ويتكون من 12 رقماً (مثال: 9665XXXXXXXX)");
+                else if (!Regex.IsMatch(mobile, IdentityRules.StoredMobilePattern))
+                    AddError("Mobile", IdentityRules.MobileError);
 
                 // ⚠️ كان اختياريًا. الطالب اللي بيتحمّل بلا جنس مايوصلش لا لمشرف
                 //    قسم الطلاب ولا لمشرفة قسم الطالبات — طلبه بيقع في فراغ ومحدش
                 //    شايفه. الجنس بقى هو اللي بيوجّه الطلب، فبقى إجباريًا.
+                //
+                //  ⚠️ لكن مشرف القسم بيرفع طلاب قسمه هو — فالخانة الفاضية
+                //     بتتملي من قسمه بدل ما نرفض الصف ونطلب منه يكتب نفس الكلمة
+                //     في كل سطر. أما لو كتب القسم التاني بإيده فالصف بيترفض ولا
+                //     بنقلب القيمة: الاحتمال الأكبر إنه غلط في السطر نفسه (لصق
+                //     بيانات طالب من كشف تاني)، وقلبها بيبني سجل باسم واحد وجنس
+                //     واحد تاني. الأدمن (نطاقه القسمين) ما بيتغيّرش عليه حاجة.
+                if (string.IsNullOrEmpty(gender) && scope != null)
+                    gender = GenderHelper.ToStr(scope)!;
+
                 if (string.IsNullOrEmpty(gender))
                     AddError("Gender", "الجنس مطلوب - يجب إدخال: ذكر أو أنثى (Male / Female). الطلب بيتوجّه لمشرف القسم بناءً عليه");
                 else if (!GenderHelper.IsValid(gender))
                     AddError("Gender", "قيمة الجنس غير صحيحة - القيم المسموح بها: ذكر, أنثى, Male, Female");
+                else if (!GenderScope.CanWrite(scope, GenderHelper.Parse(gender)))
+                    AddError("Gender", $"هذا السطر خارج نطاق قسمك - أنت مسؤول عن قسم {scopeLabel} فقط. صحّح قيمة الجنس أو احذف السطر من الملف");
 
                 if (!string.IsNullOrEmpty(academicLevel) && !Regex.IsMatch(academicLevel, @"^[1-5]$"))
                     AddError("AcademicLevel", "المستوى الدراسي غير صحيح - يجب أن يكون رقماً بين 1 و 5");
 
                 if (string.IsNullOrEmpty(buildingNumber))
                     AddError("BuildingNumber", "رقم المبنى السكني مطلوب");
-                else if (!Regex.IsMatch(buildingNumber, @"^(4[0-3]|6[5-9]|70)$"))
-                    AddError("BuildingNumber", "رقم المبنى السكني غير صحيح - القيم المسموح بها: 40,41,42,43,65,66,67,68,69,70");
+                else
+                {
+                    // ⚠️ كان Regex ‎^(4[0-3]|6[5-9]|70)$‎ مكتوب هنا، ونسخة تانية
+                    //    (HashSet) في StudentService - والمباني جدول مُدار.
+                    //    فالمدير يضيف مبنى ٧١ ويلاقيه مرفوض من رفع الإكسل.
+                    //    المصدر الوحيد دلوقتي في ILookupResolver.
+                    var bErr = await _lookups.BuildingCodeErrorAsync(buildingNumber);
+                    if (bErr != null) AddError("BuildingNumber", bErr);
+                }
 
                 if (string.IsNullOrEmpty(floorNumber))
                     AddError("FloorNumber", "رقم الدور مطلوب - القيم المسموح بها: 0 (الأرضي) حتى 4");
@@ -294,6 +320,23 @@ namespace NUH_PORTAL.Services
                 if (dupInBatch.Count > 0)
                     throw new UserFriendlyException($"بيانات مكررة في نفس الملف: {string.Join(", ", dupInBatch)}", 409);
 
+                // ⚠️ التحقق (validate) والإنشاء (create) نداءين HTTP منفصلين،
+                //    والعميل هو اللي بيبعت القائمة تاني في التاني — يعني اللي
+                //    فحصناه في الأول مش بالضرورة اللي وصل هنا. فالفحص ده مش
+                //    تكرار للتحقق، ده الحارس الحقيقي؛ والتحقق شغلته إنه يوري
+                //    الموظف الغلط قبل ما يضغط حفظ.
+                var scope = UnitOfWork.GetGenderScope();
+                foreach (var s in dto.Students)
+                    s.Gender = GenderHelper.ToStr(GenderScope.Resolve(scope, GenderHelper.Parse(s.Gender))) ?? s.Gender;
+
+                var badGender = dto.Students
+                    .Where(s => !GenderScope.CanWrite(scope, GenderHelper.Parse(s.Gender))
+                             || GenderHelper.Parse(s.Gender) == null)
+                    .Select(s => s.StudentID)
+                    .ToList();
+                if (badGender.Count > 0)
+                    throw new UserFriendlyException($"طلاب خارج نطاق قسمك أو بلا جنس محدد: {string.Join(", ", badGender)}", 403);
+
                 // منع تسجيل طلاب موجودين مسبقًا
                 var newIdsHash = dto.Students.Where(s => !string.IsNullOrEmpty(s.StudentID)).Select(s => s.StudentID).ToHashSet(StringComparer.OrdinalIgnoreCase);
                 var existingIds = new HashSet<string>(await _students.Query().AsNoTracking()
@@ -331,6 +374,7 @@ namespace NUH_PORTAL.Services
                     AcademicLevel = s.AcademicLevel,
                     Gender = s.Gender,
                     BuildingNumber = s.BuildingNumber,
+                    FloorNumber = s.FloorNumber,
                     ApartmentNumber = s.ApartmentNumber,
                     RoomNumber = s.RoomNumber,
                     IsValid = true

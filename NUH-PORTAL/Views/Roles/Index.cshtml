@@ -20,14 +20,16 @@
   </div>
 
   <div style="overflow-x:auto">
-    <table>
+    <table id="rolTable">
       <thead>
         <tr>
+          @* ⚠️ «#» ترقيم عرض، و«الوصف» جملة حرّة ترتيبها أبجديًّا مالوش
+             معنى، و«إجراءات» مش بيانات — التلاتة بلا data-sort. *@
           <th>#</th>
-          <th>@SharedLocalizer["rol_col_name"]</th>
+          <th data-sort="name">@SharedLocalizer["rol_col_name"]</th>
           <th>@SharedLocalizer["rol_col_desc"]</th>
-          <th>@SharedLocalizer["rol_col_users"]</th>
-          <th>@SharedLocalizer["rol_col_perms"]</th>
+          <th data-sort="userCount">@SharedLocalizer["rol_col_users"]</th>
+          <th data-sort="permissionCount">@SharedLocalizer["rol_col_perms"]</th>
           <th>@SharedLocalizer["rol_col_actions"]</th>
         </tr>
       </thead>
@@ -51,12 +53,12 @@
       <input type="hidden" id="m_id">
       <div class="e-grid">
         <div class="e-field">
-          <label>@SharedLocalizer["rol_lbl_name"]<span class="req">*</span></label>
+          <label for="m_name">@SharedLocalizer["rol_lbl_name"]<span class="req">*</span></label>
           <input type="text" id="m_name">
           <span class="field-error" id="m-err-name">@SharedLocalizer["rol_required"]</span>
         </div>
         <div class="e-field">
-          <label>@SharedLocalizer["rol_lbl_desc"]</label>
+          <label for="m_description">@SharedLocalizer["rol_lbl_desc"]</label>
           <input type="text" id="m_description">
         </div>
       </div>
@@ -93,7 +95,7 @@
   .perm-group-all{font-size:11px;color:var(--navy);cursor:pointer;font-weight:600}
   .perm-list{padding:8px 14px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .perm-item{display:flex;align-items:flex-start;gap:8px;padding:6px;border-radius:8px}
-  .perm-item:hover{background:var(--gray-50)}
+  .perm-item:hover{background:var(--row-hover)}
   .perm-item input{margin-top:3px;width:16px;height:16px;cursor:pointer}
   .perm-item label{cursor:pointer;font-size:13px;color:var(--navy-dark)}
   .perm-item .perm-desc{display:block;font-size:11px;color:var(--gray-500);margin-top:2px}
@@ -105,7 +107,8 @@
 
   // الجدول وحالاته من NuhTable، والترويسات من NUH.headers في التخطيط — مفيش نسخة محلية.
   var rolTable = NuhTable.bind('rolBody', 6);
-  var esc = function (v) { return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
+  // تهريب HTML — التعريف الوحيد في /js/esc.js
+  var esc = function (v) { return escHtml(v); };
 
   function showToast(msg, isError) {
     var el = document.getElementById('toast'); if (!el) return;
@@ -115,12 +118,16 @@
     setTimeout(function () { el.classList.remove('show'); }, 3500);
   }
 
+  var rolSort = NuhTable.sort('rolTable', function () { renderTable(); });
+
   function renderTable() {
     // ⚠️ setLang في التهيئة بتنادي onLanguageChange → renderTable قبل أول نداء،
     //    فكانت الشاشة تكتب «لا توجد أدوار» ثم تمتلئ. الحالتان مختلفتان.
     if (!rolTable.isDone()) return rolTable.loading();
     var body = '';
-    state.roles.forEach(function (r, idx) {
+    // ⚠️ الترتيب في المتصفح: /api/Roles بيرجّع كل الأدوار في نداء واحد بلا
+    //    ترقيم (٦-٩ صفوف)، فالمصفوفة هي كل البيانات. المقارنة من NuhTable.
+    rolSort.sortRows(state.roles).forEach(function (r, idx) {
       var actions = '';
       if (PERM_MANAGE) {
         actions += '<button class="action-btn action-edit" onclick="openEdit(' + r.id + ')">' + t('rol_edit') + '</button>';
@@ -252,7 +259,13 @@
   }
 
   async function delRole(id, name) {
-    if (!confirm(t('rol_confirmDelete').replace('{0}', name))) return;
+    // ⚠️ حوار النظام لا confirm() المتصفح - الشرح في js/dialog.js: خيار
+    //    «امنع هذه الصفحة من إنشاء حوارات» بيعطّل كل تأكيد بعده بصمت.
+    if (!await NuhDialog.confirm({
+      message: t('rol_confirmDelete').replace('{0}', name),
+      danger: true,
+      confirmLabel: t('rol_delete')
+    })) return;
     try {
       var res = await fetch('/api/Roles/' + id, { method: 'DELETE', headers: NUH.headers() });
       if (res.status === 401) { window.location.replace('/Account/Login'); return; }

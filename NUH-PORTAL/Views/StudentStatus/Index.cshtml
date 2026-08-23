@@ -33,8 +33,8 @@
      مكانها الآن wwwroot/css/site.css مرة واحدة، فأي تغيير في الشكل يوصلها كلها. */
   .form-actions-btn{padding:0 28px;height:46px;border-radius:10px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;font-weight:700;cursor:pointer;border:none;transition:all .2s;display:flex;align-items:center;gap:8px}
   .status-option{display:flex;align-items:center;gap:12px;padding:12px 16px;border:1.5px solid var(--gray-200);border-radius:10px;cursor:pointer;transition:all .2s;margin-bottom:8px}
-  .status-option:hover{border-color:var(--navy-light);background:var(--gray-50)}
-  .status-option.selected{border-color:var(--navy);background:#eff4ff}
+  .status-option:hover{border-color:var(--navy-light);background:var(--row-hover)}
+  .status-option.selected{border-color:var(--navy);background:var(--green-light)}
   .status-option input[type=radio]{display:none}
   .status-option-text{font-size:14px;font-weight:600;color:var(--navy-dark)}
   .status-option-desc{font-size:12px;color:var(--gray-500)}
@@ -47,25 +47,67 @@
   .file-upload-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:var(--gray-100);border:1.5px dashed var(--gray-300);border-radius:10px;font-size:13px;color:var(--gray-700);font-weight:500;cursor:pointer;transition:all .2s}
   .file-upload-wrap:hover .file-upload-btn{border-color:var(--navy);color:var(--navy);background:var(--gray-50)}
   .file-name{font-size:12px;color:var(--gray-500);margin-top:4px}
-  .history-list{max-height:400px;overflow-y:auto}
-  .history-item{padding:12px;border-bottom:1px solid var(--gray-100);font-size:13px}
-  .history-item:last-child{border-bottom:none}
+  /* ⚠️ الارتفاع كان ثابتًا 400px بينما عمود النموذج يمتدّ مع محتواه لأكثر من
+     الضعف: فيبقى تحت بطاقة السجل فراغ أبيض، ويُقصّ آخر صفّ في منتصفه.
+     الآن العمودان يتمدّدان معًا (stretch) والبطاقة عمود مرن، فتنتهي حيث تنتهي
+     جارتها بالضبط ويحدث التمرير داخل القائمة وحدها. */
+  /* ⚠️ البطاقة موضوعة absolute داخل عمودها عمدًا - وهذا هو بيت القصيد:
+     في الشبكة، ارتفاع الصف = ارتفاع أطول عمود. فلو ساهم السجل بمحتواه كاملًا
+     (٥٠ صفًّا) لمطّ الصفحة كلها وترك تحت النموذج فراغًا هائلًا - وهو ما حدث
+     في محاولتي الأولى. العنصر المطلق لا يساهم في ارتفاع الصف إطلاقًا، فيصير
+     الارتفاع من النموذج وحده وتملأ البطاقة ما تُعطاه بالضبط.
+     وقبله كان max-height:400px ثابتًا فيحدث العكس: فراغ تحت السجل وصفٌّ مقطوع. */
+  .two-col{align-items:stretch}
+  .two-col .col-history{position:relative;min-height:340px}
+  .two-col .col-history > .card{position:absolute;inset:0;display:flex;flex-direction:column;min-height:0}
+  .history-list{flex:1;overflow-y:auto;min-height:0}
+  /* على الشاشات الصغيرة العمودان فوق بعض ولا يوجد جار يُحاذى، فيعود التدفّق
+     الطبيعي بارتفاع مريح - المطلق هناك يقصّ المحتوى بلا سبب. */
+  @@media(max-width:768px){
+    .two-col .col-history{position:static;min-height:0}
+    .two-col .col-history > .card{position:static;inset:auto}
+    .history-list{flex:none;max-height:420px}
+  }
+  .history-more{padding:10px;text-align:center;border-top:1px solid var(--gray-100);
+    background:#f3fcf6;color:var(--navy);font-size:13px;font-weight:700;cursor:pointer;
+    font-family:'IBM Plex Sans Arabic',sans-serif;border-inline:none;border-bottom:none;width:100%}
+  .history-more:hover{background:var(--green-light)}
+  .history-more:disabled{color:var(--gray-500);background:var(--gray-50);cursor:default}
+  /* حدث نظام لا قرار موظف - رمادي محايد، والأحمر يبقى لقرارات الفصل */
+  .badge-status-ad_provisioning{background:var(--gray-100);color:var(--gray-700)}
+  /* ⚠️ .form-card عليها margin-bottom:20px من components.css، فارتفاع عمود
+     النموذج = البطاقة + ٢٠. وبطاقة السجل تملأ العمود كاملًا (inset:0)، فتظهر
+     أطول من جارتها بعشرين بكسلًا بالضبط - وهو «الأطول بسنة» الذي رأيته.
+     نُلغي الهامش داخل هذا التخطيط وحده؛ المسافة بين القسمين تأتي من .two-col. */
+  .two-col .col-form > .form-card{margin-bottom:0}
+
+  /* ⚠️ كل سجل كيان مستقل: حدّ وظلّ ومسافة. كان خطًّا رفيعًا واحدًا بلون قريب
+     من الخلفية بين كتل نصّ متطابقة الشكل، فتسيح السجلات في بعضها.
+     والحافة الملوّنة تقول نوع الإجراء قبل قراءة كلمة - وهي بألوان الشارة
+     نفسها فوقها، فلا لغة ألوان ثانية تُحفظ. */
+  .history-list{padding:10px}
+  .history-item{position:relative;overflow:hidden;background:var(--white);
+    border:1px solid var(--gray-200);border-radius:10px;padding:12px 14px;
+    margin-bottom:8px;font-size:13px;box-shadow:0 1px 2px rgba(16,70,49,.04)}
+  .history-item:last-child{margin-bottom:0;border-bottom:1px solid var(--gray-200)}
+  .history-item::before{content:'';position:absolute;inset-inline-start:0;top:0;bottom:0;
+    width:4px;background:var(--gray-300)}
+  /* نفس تقسيم ألوان الشارات أدناه - مصدر لوني واحد للاثنين */
+  .history-item[data-type="dismissed"]::before{background:var(--red)}
+  .history-item[data-type="graduated"]::before{background:#175cd3}
+  .history-item[data-type="transferred"]::before{background:var(--gold)}
+  .history-item[data-type="left_housing"]::before{background:var(--purple)}
+  .history-item[data-type="active"]::before{background:var(--green)}
+  .history-item[data-type="ad_provisioning"]::before{background:var(--gray-300)}
   .badge-status-active{background:var(--green-light);color:var(--green)}
-  .badge-status-graduated{background:#d1e0ff;color:#175cd3}
+  .badge-status-graduated{background:var(--blue-pale);color:#175cd3}
   .badge-status-dismissed{background:var(--red-light);color:var(--red)}
   .badge-status-transferred{background:#fffaeb;color:#93370d}
-  .badge-status-left_housing{background:#f4eefa;color:#80519f}
+  .badge-status-left_housing{background:var(--purple-light);color:var(--purple)}
   .badge-status-other{background:var(--gray-100);color:var(--gray-700)}
-  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10000;display:none;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
-  .modal-overlay.show{display:flex}
-  .modal-box{background:var(--white);border-radius:16px;padding:28px;max-width:480px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3)}
-  .modal-icon{width:48px;height:48px;border-radius:12px;background:#fef3f2;display:flex;align-items:center;justify-content:center;margin-bottom:16px;color:#b42318}
-  .modal-title{font-size:18px;font-weight:800;color:var(--navy-dark);margin-bottom:8px}
-  .modal-body{font-size:14px;color:var(--gray-700);line-height:1.6;margin-bottom:16px}
-  .modal-body strong{color:var(--navy-dark)}
-  .modal-actions{display:flex;gap:10px;justify-content:flex-end}
-  .modal-actions .form-actions-btn{min-width:120px;justify-content:center}
-  .modal-divider{border:none;border-top:1px solid var(--gray-100);margin:12px 0}
+  /* ⚠️ ستايل الحوار المبني بالإيد اتشال: شكل الحوار كله بقى من js/dialog.js
+     (NuhDialog). كان هنا غلاف بـ z-index 10000 - أعلى من أي حوار تاني في
+     النظام - وصندوق وأيقونة وعنوان وأزرار، كلها نسخة موازية للمكوّن. */
   /* الرسالة فوق مش تحت: كانت بتظهر في آخر الشاشة والمستخدم شايف أول الصفحة
      فبتروح قبل ما يلاحظها. وبقت قابلة للضغط عشان يقفلها بنفسه. */
   .toast{position:fixed;top:24px;left:50%;transform:translateX(-50%);padding:14px 30px;border-radius:12px;font-size:14px;font-weight:600;z-index:10001;box-shadow:0 10px 30px rgba(0,0,0,.2);opacity:0;transition:opacity .3s;pointer-events:none;max-width:min(680px,92vw);text-align:center;line-height:1.7}
@@ -104,10 +146,10 @@
   </div>
   <div class="stat-card">
     <div class="stat-top">
-      <div class="stat-icon" style="background:#d1e0ff">
+      <div class="stat-icon" style="background:var(--blue-pale)">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#175cd3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
       </div>
-      <span class="stat-badge" style="background:#d1e0ff;color:#175cd3" >@SharedLocalizer["ss_graduatedBadge"]</span>
+      <span class="stat-badge" style="background:var(--blue-pale);color:#175cd3" >@SharedLocalizer["ss_graduatedBadge"]</span>
     </div>
     <div class="stat-num">@Model.Graduated</div>
     <div class="stat-label" >@SharedLocalizer["ss_graduatedLabel"]</div>
@@ -134,10 +176,10 @@
   </div>
   <div class="stat-card">
     <div class="stat-top">
-      <div class="stat-icon" style="background:#f4eefa">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#80519f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <div class="stat-icon" style="background:var(--purple-light)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--purple)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
       </div>
-      <span class="stat-badge" style="background:#f4eefa;color:#80519f" >@SharedLocalizer["ss_leftHousingBadge"]</span>
+      <span class="stat-badge" style="background:var(--purple-light);color:var(--purple)" >@SharedLocalizer["ss_leftHousingBadge"]</span>
     </div>
     <div class="stat-num">@Model.LeftHousing</div>
     <div class="stat-label" >@SharedLocalizer["ss_leftHousingLabel"]</div>
@@ -157,7 +199,7 @@
       <div class="form-card-body">
         <div class="form-grid">
           <div class="field full">
-            <label><span >@SharedLocalizer["ss_studentNumber"]</span> <span style="color:#d92d20">*</span></label>
+            <label for="studentNumber"><span >@SharedLocalizer["ss_studentNumber"]</span> <span style="color:#d92d20">*</span></label>
             <div class="input-wrap">
               <input type="text" id="studentNumber" placeholder='@(SharedLocalizer["ss_studentNumberPlaceholder"].Value)' autocomplete="off">
             </div>
@@ -180,44 +222,48 @@
           </div>
 
           <div class="field full">
-            <label><span >@SharedLocalizer["ss_statusType"]</span> <span style="color:#d92d20">*</span></label>
-            <div id="statusOptions">
+            @* ⚠️ عنوان مجموعة اختيارات لا تسمية حقل واحد: خمس خيارات لا حقل
+               واحد يتربط بيه، فـ role="radiogroup" + aria-labelledby عشان
+               قارئ الشاشة يقول «نوع الحالة - ١ من ٥» بدل ما يقرا الخيارات
+               مفكوكة بلا عنوان. *@
+            <label id="ssStatusTypeLbl"><span >@SharedLocalizer["ss_statusType"]</span> <span style="color:#d92d20">*</span></label>
+            <div id="statusOptions" role="radiogroup" aria-labelledby="ssStatusTypeLbl">
               <div class="status-option" data-value="graduated" onclick="selectStatus(this)">
-                <input type="radio" name="statusType" value="graduated">
+                <input type="radio" name="statusType" value="graduated" id="st_graduated" aria-labelledby="stt_graduated std_graduated">
                 <div>
-                  <div class="status-option-text" >@SharedLocalizer["ss_status_graduated"]</div>
-                  <div class="status-option-desc" >@SharedLocalizer["ss_graduatedDesc"]</div>
+                  <div class="status-option-text" id="stt_graduated">@SharedLocalizer["ss_status_graduated"]</div>
+                  <div class="status-option-desc" id="std_graduated">@SharedLocalizer["ss_graduatedDesc"]</div>
                 </div>
               </div>
               <div class="status-option" data-value="dismissed" onclick="selectStatus(this)">
-                <input type="radio" name="statusType" value="dismissed">
+                <input type="radio" name="statusType" value="dismissed" id="st_dismissed" aria-labelledby="stt_dismissed std_dismissed">
                 <div>
-                  <div class="status-option-text" >@SharedLocalizer["ss_status_dismissed"]</div>
-                  <div class="status-option-desc" >@SharedLocalizer["ss_dismissedDesc"]</div>
+                  <div class="status-option-text" id="stt_dismissed">@SharedLocalizer["ss_status_dismissed"]</div>
+                  <div class="status-option-desc" id="std_dismissed">@SharedLocalizer["ss_dismissedDesc"]</div>
                 </div>
               </div>
               <div class="status-option" data-value="transferred" onclick="selectStatus(this)">
-                <input type="radio" name="statusType" value="transferred">
+                <input type="radio" name="statusType" value="transferred" id="st_transferred" aria-labelledby="stt_transferred std_transferred">
                 <div>
-                  <div class="status-option-text" >@SharedLocalizer["ss_status_transferred"]</div>
-                  <div class="status-option-desc" >@SharedLocalizer["ss_transferredDesc"]</div>
+                  <div class="status-option-text" id="stt_transferred">@SharedLocalizer["ss_status_transferred"]</div>
+                  <div class="status-option-desc" id="std_transferred">@SharedLocalizer["ss_transferredDesc"]</div>
                 </div>
               </div>
               <div class="status-option" data-value="left_housing" onclick="selectStatus(this)">
-                <input type="radio" name="statusType" value="left_housing">
+                <input type="radio" name="statusType" value="left_housing" id="st_left_housing" aria-labelledby="stt_left_housing std_left_housing">
                 <div>
-                  <div class="status-option-text" >@SharedLocalizer["ss_status_left_housing"]</div>
-                  <div class="status-option-desc" >@SharedLocalizer["ss_leftHousingDesc"]</div>
+                  <div class="status-option-text" id="stt_left_housing">@SharedLocalizer["ss_status_left_housing"]</div>
+                  <div class="status-option-desc" id="std_left_housing">@SharedLocalizer["ss_leftHousingDesc"]</div>
                 </div>
               </div>
               @* ⚠️ «أخرى» مقصود إنها آخر بند: الاختيار الافتراضي لازم يكون البند
                  المحدّد مش العام، وإلا المشرف ياخد الأسهل ويبقى عندنا نص السجل
                  «أخرى». وسبب الإجراء إجباري أصلًا فالتفاصيل بتتكتب فيه. *@
               <div class="status-option" data-value="other" onclick="selectStatus(this)">
-                <input type="radio" name="statusType" value="other">
+                <input type="radio" name="statusType" value="other" id="st_other" aria-labelledby="stt_other std_other">
                 <div>
-                  <div class="status-option-text" >@SharedLocalizer["ss_status_other"]</div>
-                  <div class="status-option-desc" >@SharedLocalizer["ss_otherDesc"]</div>
+                  <div class="status-option-text" id="stt_other">@SharedLocalizer["ss_status_other"]</div>
+                  <div class="status-option-desc" id="std_other">@SharedLocalizer["ss_otherDesc"]</div>
                 </div>
               </div>
             </div>
@@ -225,7 +271,7 @@
           </div>
 
           <div class="field full">
-            <label><span >@SharedLocalizer["ss_actionReason"]</span> <span style="color:#d92d20">*</span></label>
+            <label for="notes"><span >@SharedLocalizer["ss_actionReason"]</span> <span style="color:#d92d20">*</span></label>
             <div class="input-wrap">
               <textarea id="notes" style="width:100%;height:100px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:10px;padding:12px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;color:var(--navy-dark);direction:inherit;outline:none;resize:vertical;transition:all .2s" placeholder='@(SharedLocalizer["ss_actionReasonPlaceholder"].Value)'></textarea>
             </div>
@@ -233,7 +279,7 @@
           </div>
 
           <div class="field full">
-            <label >@SharedLocalizer["ss_attachDocument"]</label>
+            <label for="attachmentFile">@SharedLocalizer["ss_attachDocument"]</label>
             <div class="file-upload-wrap">
               <input type="file" id="attachmentFile" accept=".pdf,.jpg,.jpeg,.png,.docx" onchange="updateFileName(this)">
               <div class="file-upload-btn">
@@ -264,6 +310,9 @@
       <div class="history-list" id="historyList">
         <div style="text-align:center;padding:30px;color:var(--gray-500)" >@SharedLocalizer["ss_noUpdates"]</div>
       </div>
+      @* ⚠️ القائمة كانت تجلب ٥٠ صفًّا وتقف بلا أي إشارة - تبدو كاملة وهي ليست
+         كذلك. الزرّ يجلب الخمسين التالية ويختفي عند النهاية الحقيقية. *@
+      <button type="button" class="history-more" id="historyMore" style="display:none">@SharedLocalizer["ss_loadMore"]</button>
     </div>
   </div>
 </div>
@@ -284,7 +333,7 @@
       <div class="form-card-body">
         <div class="form-grid">
           <div class="field full">
-            <label><span >@SharedLocalizer["ss_studentNumber"]</span> <span style="color:#d92d20">*</span></label>
+            <label for="transferStudentNumber"><span >@SharedLocalizer["ss_studentNumber"]</span> <span style="color:#d92d20">*</span></label>
             <div class="input-wrap">
               <input type="text" id="transferStudentNumber" placeholder='@(SharedLocalizer["ss_studentNumberPlaceholder"].Value)' autocomplete="off">
             </div>
@@ -311,7 +360,7 @@
               <div style="font-size:13px;font-weight:600;color:var(--green);margin-bottom:8px" >@SharedLocalizer["ss_newHousing"]</div>
               <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px">
                 <div class="field" style="gap:4px">
-                  <label><span >@SharedLocalizer["ss_newBuilding"]</span> <span style="color:#d92d20">*</span></label>
+                  <label for="transferNewBuilding"><span >@SharedLocalizer["ss_newBuilding"]</span> <span style="color:#d92d20">*</span></label>
                   <div class="input-wrap">
                     @* المباني بتتفلتر حسب جنس الطالب بعد ما يتحمّل — نفس قاعدة شاشات التسجيل *@
                     <select id="transferNewBuilding" disabled>
@@ -320,7 +369,7 @@
                   </div>
                 </div>
                 <div class="field" style="gap:4px">
-                  <label><span >@SharedLocalizer["reg_lblFloor"]</span> <span style="color:#d92d20">*</span></label>
+                  <label for="transferNewFloor"><span >@SharedLocalizer["reg_lblFloor"]</span> <span style="color:#d92d20">*</span></label>
                   <div class="input-wrap">
                     <select id="transferNewFloor">
                       <option value="" >@SharedLocalizer["reg_optSelectFloor"]</option>
@@ -333,7 +382,7 @@
                   </div>
                 </div>
                 <div class="field" style="gap:4px">
-                  <label><span >@SharedLocalizer["ss_newApartment"]</span> <span style="color:#d92d20">*</span></label>
+                  <label for="transferNewApartment"><span >@SharedLocalizer["ss_newApartment"]</span> <span style="color:#d92d20">*</span></label>
                   <div class="input-wrap">
                     @* الشقة بتتولّد من الدور — نفس قاعدة شاشات التسجيل (js/housing-fields.js) *@
                     <select id="transferNewApartment" disabled>
@@ -342,7 +391,7 @@
                   </div>
                 </div>
                 <div class="field" style="gap:4px">
-                  <label><span >@SharedLocalizer["ss_newRoom"]</span> <span style="color:#d92d20">*</span></label>
+                  <label for="transferNewRoom"><span >@SharedLocalizer["ss_newRoom"]</span> <span style="color:#d92d20">*</span></label>
                   <div class="input-wrap">
                     <select id="transferNewRoom">
                       <option value="" >@SharedLocalizer["reg_optSelectRoom"]</option>
@@ -354,7 +403,7 @@
           </div>
 
           <div class="field full">
-            <label><span >@SharedLocalizer["ss_transferReason"]</span> <span style="color:#d92d20">*</span></label>
+            <label for="transferReason"><span >@SharedLocalizer["ss_transferReason"]</span> <span style="color:#d92d20">*</span></label>
             <div class="input-wrap">
               <select id="transferReason">
                 <option value="" >@SharedLocalizer["ss_selectDefault"]</option>
@@ -369,14 +418,14 @@
           </div>
 
           <div class="field full" id="customReasonField" style="display:none">
-            <label><span >@SharedLocalizer["ss_customReason"]</span> <span style="color:#d92d20">*</span></label>
+            <label for="transferCustomReason"><span >@SharedLocalizer["ss_customReason"]</span> <span style="color:#d92d20">*</span></label>
             <div class="input-wrap">
               <textarea id="transferCustomReason" style="width:100%;height:80px;background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:10px;padding:12px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;color:var(--navy-dark);direction:inherit;outline:none;resize:vertical;transition:all .2s" placeholder='@(SharedLocalizer["ss_customReasonPlaceholder"].Value)'></textarea>
             </div>
           </div>
 
           <div class="field full">
-            <label >@SharedLocalizer["ss_attachDocument"]</label>
+            <label for="transferAttachmentFile">@SharedLocalizer["ss_attachDocument"]</label>
             <div class="file-upload-wrap">
               <input type="file" id="transferAttachmentFile" accept=".pdf,.jpg,.jpeg,.png,.docx" onchange="updateTransferFileName(this)">
               <div class="file-upload-btn">
@@ -407,6 +456,7 @@
       <div class="history-list" id="transferHistoryList">
         <div style="text-align:center;padding:30px;color:var(--gray-500)" >@SharedLocalizer["ss_noTransfers"]</div>
       </div>
+      <button type="button" class="history-more" id="transferHistoryMore" style="display:none">@SharedLocalizer["ss_loadMore"]</button>
     </div>
   </div>
 </div>
@@ -414,51 +464,16 @@
 
 <div class="toast" id="toast"></div>
 
-<div class="modal-overlay" id="confirmDialog">
-  <div class="modal-box">
-    <div class="modal-icon">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-    </div>
-    <div class="modal-title" >@SharedLocalizer["ss_warningTitle"]</div>
-    <div class="modal-body" id="confirmBody">
-      @* تحذير التعطيل يظهر لكل الحالات — أربعتها تُنهي السكن فيُعطَّل حساب
-         شبكة السكن. يُخفى فقط إن لم يكن للطالب حساب شبكة أصلًا. *@
-      <p id="confirmDisableIntro" >@SharedLocalizer["ss_disableIntro"]</p>
-      <hr class="modal-divider" id="confirmDivider1">
-      <p id="confirmUsernameRow"><strong >@SharedLocalizer["ss_usernameColonLabel"]</strong> <span id="confirmUsername">--</span></p>
-      <p><strong >@SharedLocalizer["ss_reasonColonLabel"]</strong> <span id="confirmStatus">--</span></p>
-      <hr class="modal-divider">
-      <p >@SharedLocalizer["ss_proceedQuestion"]</p>
-    </div>
-    <div class="modal-actions">
-      <button class="form-actions-btn" style="background:var(--gray-100);color:var(--gray-700)" onclick="closeConfirmDialog()" >@SharedLocalizer["ss_cancel"]</button>
-      <button class="form-actions-btn" id="confirmYesBtn" onclick="executeSubmit()" style="background:#b42318;color:#fff" >@SharedLocalizer["ss_confirmDisableYes"]</button>
-    </div>
-  </div>
-</div>
+@* ⚠️ حوارا التأكيد اتشالوا من هنا: كانوا ماركب كامل (غلاف + صندوق +
+   أيقونة + عنوان + أزرار) بيكرّر مكوّن NuhDialog الموجود في js/dialog.js -
+   نفس المكوّن اللي شِلنا عشانه confirm() المتصفح من ستّ شاشات.
 
-<div class="modal-overlay" id="transferConfirmDialog">
-  <div class="modal-box">
-    <div class="modal-icon" style="background:#dff6e7;color:#067647">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-    </div>
-    <div class="modal-title" >@SharedLocalizer["ss_transferConfirmTitle"]</div>
-    <div class="modal-body">
-      <p >@SharedLocalizer["ss_transferConfirmIntro"]</p>
-      <hr class="modal-divider">
-      <p><strong >@SharedLocalizer["ss_studentColonLabel"]</strong> <span id="transferConfirmName">--</span></p>
-      <p><strong >@SharedLocalizer["ss_currentHousingColonLabel"]</strong> <span id="transferConfirmOld">--</span></p>
-      <p><strong >@SharedLocalizer["ss_newHousingColonLabel"]</strong> <span id="transferConfirmNew">--</span></p>
-      <p><strong >@SharedLocalizer["ss_reasonShortColonLabel"]</strong> <span id="transferConfirmReason">--</span></p>
-      <hr class="modal-divider">
-      <p >@SharedLocalizer["ss_proceedQuestion"]</p>
-    </div>
-    <div class="modal-actions">
-      <button class="form-actions-btn" style="background:var(--gray-100);color:var(--gray-700)" onclick="closeTransferConfirm()" >@SharedLocalizer["ss_cancel"]</button>
-      <button class="form-actions-btn" id="transferConfirmYesBtn" onclick="executeTransfer()" style="background:var(--green);color:#fff" >@SharedLocalizer["ss_transferConfirmYes"]</button>
-    </div>
-  </div>
-</div>
+   وكان فيهم تكرار ظاهر للعين: الأيقونة بتقول «تحذير» والعنوان بيقول
+   «تحذير» - نفس المعلومة مرتين والعنوان مش بيضيف حاجة. دلوقتي العنوان
+   بيقول **إيه اللي هيحصل** والأيقونة بتقول إن ده إجراء خطير.
+
+   وبييجي مع المكوّن: Esc بيقفل، والدوس برّه مابيقفلش في الخطير، والتركيز
+   بيرجع مكانه، والأزرار بتترجم - كلها ماكانتش موجودة في المبني بالإيد. *@
 
 @section Scripts {
 <script src="/i18n.js"></script>
@@ -513,16 +528,21 @@
     el.querySelector('input[type=radio]').checked = true;
   }
 
+  // ⚠️ التظليل بيتبع الاختيار الحقيقي لا الدوسة: اللي بيتنقّل بالكيبورد
+  //    (سهم لتحت جوه المجموعة) كان بيغيّر الخيار المحدَّد فعلًا من غير ما
+  //    أي كارت يتظلّل - فيبعت «منقطع» وهو شايف إنه ما اختارش حاجة.
+  document.querySelectorAll('#statusOptions input[type=radio]').forEach(function (r) {
+    r.addEventListener('change', function () {
+      var card = r.closest('.status-option');
+      if (card) selectStatus(card);
+    });
+  });
+
   function updateFileName(input) {
     document.getElementById('fileName').textContent = input.files.length > 0 ? input.files[0].name : '';
   }
 
   var pendingSubmitData = null;
-
-  function closeConfirmDialog() {
-    document.getElementById('confirmDialog').classList.remove('show');
-    pendingSubmitData = null;
-  }
 
   function resetForm() {
     document.getElementById('studentNumber').value = '';
@@ -568,22 +588,25 @@
       // يكذب على المستخدم في اتجاه أو آخر، وهو أخطر من عدم وجود تحذير أصلًا.
       var hasAdAccount = !!student.ad_username;
 
-      document.getElementById('confirmUsername').textContent = student.ad_username || '--';
-      document.getElementById('confirmStatus').textContent = getStatusLabel(statusEl.value);
-
-      // بلا حساب شبكة لا يوجد ما يُعطَّل — فلا نعرض تحذير تعطيل لن يحدث
-      document.getElementById('confirmDisableIntro').style.display = hasAdAccount ? '' : 'none';
-      document.getElementById('confirmDivider1').style.display = hasAdAccount ? '' : 'none';
-      document.getElementById('confirmUsernameRow').style.display = hasAdAccount ? '' : 'none';
-
-      var yesBtn = document.getElementById('confirmYesBtn');
-      yesBtn.textContent = hasAdAccount ? t('ss_confirmDisableYes') : t('ss_confirmAction');
-      yesBtn.style.background = hasAdAccount ? '#b42318' : 'var(--navy)';
-
-      document.getElementById('confirmDialog').classList.add('show');
-
       pendingSubmitData = { studentNumber: studentNumber, statusType: statusEl.value, notes: notes, file: file };
       window._pendingStatus = pendingSubmitData;
+
+      // ⚠️ بلا حساب شبكة مفيش حاجة تتعطّل - فالعنوان والنصّ والصفّ بتاع اسم
+      //    المستخدم كلهم بيتغيّروا، مابنعرضش تحذير عن إجراء مش هيحصل.
+      //    الصفّ الفاضي بيتشال من المكوّن نفسه فمفيش إخفاء بالإيد.
+      var ok = await NuhDialog.confirm({
+        danger: hasAdAccount,
+        title: hasAdAccount ? t('ss_disableTitle') : t('ss_confirmTitleNoAccount'),
+        message: hasAdAccount ? t('ss_disableIntroFull') : t('ss_proceedQuestion'),
+        rows: [
+          { label: t('ss_usernameLabel'), value: hasAdAccount ? student.ad_username : '' },
+          { label: t('ss_reasonLabel'), value: getStatusLabel(statusEl.value) }
+        ],
+        confirmLabel: hasAdAccount ? t('ss_confirmDisableYes') : t('ss_confirmAction'),
+        cancelLabel: t('ss_cancel')
+      });
+      if (ok) await executeSubmit();
+      else { pendingSubmitData = null; window._pendingStatus = null; }
     } catch (e) {
       showToast(t('ss_serverError'), 'error');
     } finally {
@@ -597,8 +620,6 @@
   }
 
   async function executeSubmit() {
-    closeConfirmDialog();
-    // النسخة المحفوظة في window لأن closeConfirmDialog بيصفّر pendingSubmitData
     var data = window._pendingStatus;
     if (!data) return;
     window._pendingStatus = null;
@@ -639,11 +660,43 @@
     }
   }
 
+  // ==========================================================================
+  //  «عرض المزيد» - تعريف واحد للقائمتين.
+  //
+  //  ⚠️ كلتاهما كانت تجلب ٥٠ صفًّا وتقف بلا أي إشارة: القائمة تبدو منتهية وهي
+  //     ليست كذلك، فيُغلق الموظف الشاشة وهو يظنّ أنه رأى كل شيء. الزرّ يجلب
+  //     الخمسين التالية، ويختفي عند النهاية الحقيقية لا قبلها.
+  //
+  //  ⚠️ نقيس الاكتمال بعدد ما وصل مقابل حجم الصفحة، لا بعدّاد إجمالي منفصل:
+  //     العدّاد المنفصل يعني استعلامًا ثانيًا ورقمًا قد يتأخّر عن القائمة.
+  // ==========================================================================
+  var HISTORY_PAGE = @NUH_PORTAL.Services.StudentStatusService.RecentPageSize;
+
+  function bindMore(btnId, loader) {
+    var b = document.getElementById(btnId);
+    if (b) b.addEventListener('click', function () { loader(true); });
+  }
+
+  function updateMore(btnId, received) {
+    var b = document.getElementById(btnId);
+    if (!b) return;
+    b.disabled = false;
+    b.textContent = t('ss_loadMore');
+    b.style.display = (received === HISTORY_PAGE) ? '' : 'none';
+  }
+
   // نخزّن نسخة من البيانات علشان نقدر نعيد الرسم عند تغيير اللغة بدون إعادة تحميل
   var _statusHistoryData = null;
-  async function loadHistory() {
-    _statusHistoryData = await apiFetch('/api/student-status/recent');
+  async function loadHistory(more) {
+    var btn = document.getElementById('historyMore');
+    if (more && btn) { btn.disabled = true; btn.textContent = t('ss_loading'); }
+
+    var skip = (more && _statusHistoryData) ? _statusHistoryData.length : 0;
+    var page = await apiFetch('/api/student-status/recent?skip=' + skip) || [];
+    _statusHistoryData = (more && _statusHistoryData) ? _statusHistoryData.concat(page) : page;
+
     renderHistory();
+    updateMore('historyMore', page.length);
   }
 
   function renderHistory() {
@@ -658,10 +711,10 @@
       var label = getStatusLabel(a.statusType) || a.statusType;
       var badgeClass = 'badge-status-' + a.statusType;
       var dateObj = new Date(a.createdDate);
-      var dateStr = dateObj.toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' });
-      var timeStr = dateObj.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+      var dateStr = NuhFmt.dateLong(dateObj);
+      var timeStr = NuhFmt.time(dateObj);
       var userName = a.createdByName || t('ss_unknown');
-      return '<div class="history-item" style="display:block;padding:14px 16px;border-bottom:1px solid var(--gray-100)">' +
+      return '<div class="history-item" data-type="' + escHtml(a.statusType || 'other') + '">' +
         '<div style="margin-bottom:8px"><span class="badge ' + badgeClass + '" style="font-size:13px;padding:4px 12px">' + escHtml(label) + '</span></div>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px;color:var(--navy-dark)">' +
           '<div><span style="color:var(--gray-500);font-size:12px">' + t('ss_studentNumber') + '</span><br><strong>' + escHtml(a.studentNumber) + '</strong></div>' +
@@ -757,13 +810,16 @@
   // و«تحميل» بترجع الملف باسمه الأصلي.
   function isImageName(n) { return /\.(png|jpe?g|gif|webp)$/i.test(n || ''); }
 
+  // ⚠️ الأزرار من نظام التصميم (.btn) لا روابط مسطّرة بـ style سطري —
+  //    والشكل نفسه في site.css عشان صف المرفق ما يختلفش بين الشاشتين.
   function attachmentHtml(url, name) {
-    return '<div style="margin-top:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px">' +
-        '<span style="color:var(--gray-500)">📎 ' + escHtml(name) + '</span>' +
-        '<a href="' + escHtml(url) + '" target="_blank" rel="noopener"' +
+    return '<div class="att-row">' +
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>' +
+        '<span class="att-name" title="' + escHtml(name) + '">' + escHtml(name) + '</span>' +
+        '<a class="btn btn-cancel att-btn" href="' + escHtml(url) + '" target="_blank" rel="noopener"' +
           (isImageName(name) ? ' data-preview="' + escHtml(url) + '" data-preview-name="' + escHtml(name) + '"' : '') +
-          ' style="color:var(--navy);text-decoration:underline">' + escHtml(SS_PH.preview) + '</a>' +
-        '<a href="' + escHtml(url) + '?download=true" style="color:var(--navy);text-decoration:underline">' +
+          '>' + escHtml(SS_PH.preview) + '</a>' +
+        '<a class="btn btn-primary att-btn" href="' + escHtml(url) + '?download=true">' +
           escHtml(SS_PH.download) + '</a>' +
       '</div>';
   }
@@ -788,15 +844,17 @@
       document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') closeAttachmentPreview(); });
     }
     overlay.innerHTML =
-      '<div style="background:var(--white);border-radius:14px;max-width:90vw;max-height:90vh;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:12px">' +
-        '<div style="display:flex;align-items:center;justify-content:space-between;gap:16px">' +
-          '<strong style="font-size:14px;color:var(--navy-dark)">' + escHtml(name) + '</strong>' +
-          '<div style="display:flex;gap:12px;font-size:13px">' +
-            '<a href="' + escHtml(url) + '?download=true" style="color:var(--navy);text-decoration:underline">' + escHtml(SS_PH.download) + '</a>' +
-            '<button type="button" id="attPreviewClose" style="border:none;background:none;cursor:pointer;color:var(--gray-500);font-size:13px">' + escHtml(SS_PH.close) + '</button>' +
+      '<div class="att-prev-card">' +
+        '<div class="att-prev-head">' +
+          '<span class="att-prev-title" title="' + escHtml(name) + '">' + escHtml(name) + '</span>' +
+          '<div class="att-prev-actions">' +
+            '<a class="btn btn-primary att-btn" href="' + escHtml(url) + '?download=true">' + escHtml(SS_PH.download) + '</a>' +
+            '<button type="button" id="attPreviewClose" class="btn btn-cancel att-btn">' + escHtml(SS_PH.close) + '</button>' +
           '</div>' +
         '</div>' +
-        '<img src="' + escHtml(url) + '" alt="' + escHtml(name) + '" style="max-width:100%;max-height:75vh;border-radius:10px;display:block">' +
+        '<div class="att-prev-body">' +
+          '<img src="' + escHtml(url) + '" alt="' + escHtml(name) + '">' +
+        '</div>' +
       '</div>';
     overlay.style.display = 'flex';
     var btn = document.getElementById('attPreviewClose');
@@ -869,25 +927,31 @@
     var newLoc = locText(nb, nf, na, nr);
     var reasonLabel = reason === 'other' ? customReason : getTransferReasonLabel(reason);
 
-    document.getElementById('transferConfirmName').textContent = student.full_name;
-    document.getElementById('transferConfirmOld').textContent = oldLoc;
-    document.getElementById('transferConfirmNew').textContent = newLoc;
-    document.getElementById('transferConfirmReason').textContent = reasonLabel;
-    document.getElementById('transferConfirmDialog').classList.add('show');
-
     window._pendingTransfer = {
       studentNumber: sn, newBuilding: nb, newFloor: nf, newApartment: na, newRoom: nr,
       reason: reason, customReason: reason === 'other' ? customReason : null,
       file: document.getElementById('transferAttachmentFile').files[0]
     };
-  }
 
-  function closeTransferConfirm() {
-    document.getElementById('transferConfirmDialog').classList.remove('show');
+    // ⚠️ النقل مش إجراء خطير (مفيش حاجة بتتعطّل) - فالحوار بشكل السؤال العادي
+    //    لا الأحمر. اللون بيفرّق بين «راجع وأكّد» و«ده ملهوش رجعة».
+    var ok = await NuhDialog.confirm({
+      title: t('ss_transferConfirmTitle'),
+      message: t('ss_transferIntroFull'),
+      rows: [
+        { label: t('ss_studentLabel'), value: student.full_name },
+        { label: t('ss_currentHousingLabel'), value: oldLoc },
+        { label: t('ss_newHousingLabel'), value: newLoc },
+        { label: t('ss_reasonShortLabel'), value: reasonLabel }
+      ],
+      confirmLabel: t('ss_transferConfirmYes'),
+      cancelLabel: t('ss_cancel')
+    });
+    if (ok) await executeTransfer();
+    else window._pendingTransfer = null;
   }
 
   async function executeTransfer() {
-    closeTransferConfirm();
     var data = window._pendingTransfer;
     if (!data) return;
     window._pendingTransfer = null;
@@ -932,11 +996,19 @@
   }
 
   var _transferHistoryData = null;
-  async function loadTransferHistory() {
+  async function loadTransferHistory(more) {
     // القسم كله مخفي لو المستخدم مالوش صلاحية النقل — بلاش نداء بيرجّع 403
     if (!document.getElementById('transferHistoryList')) return;
-    _transferHistoryData = await apiFetch('/api/supervisor/housing-transfer/recent');
+
+    var btn = document.getElementById('transferHistoryMore');
+    if (more && btn) { btn.disabled = true; btn.textContent = t('ss_loading'); }
+
+    var skip = (more && _transferHistoryData) ? _transferHistoryData.length : 0;
+    var page = await apiFetch('/api/supervisor/housing-transfer/recent?skip=' + skip) || [];
+    _transferHistoryData = (more && _transferHistoryData) ? _transferHistoryData.concat(page) : page;
+
     renderTransferHistory();
+    updateMore('transferHistoryMore', page.length);
   }
 
   function renderTransferHistory() {
@@ -949,8 +1021,8 @@
     }
     list.innerHTML = data.map(function (x) {
       var dateObj = new Date(x.createdAt);
-      var dateStr = dateObj.toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' });
-      var timeStr = dateObj.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+      var dateStr = NuhFmt.dateLong(dateObj);
+      var timeStr = NuhFmt.time(dateObj);
       var userName = x.createdByName || t('ss_unknown');
       var oldLoc = locText(x.oldBuilding, x.oldFloor, x.oldApartment, x.oldRoom);
       var newLoc = locText(x.newBuilding, x.newFloor, x.newApartment, x.newRoom);
@@ -961,7 +1033,7 @@
       var attachHtml = x.originalFileName
         ? attachmentHtml('/api/supervisor/housing-transfer/' + x.id + '/attachment', x.originalFileName)
         : '';
-      return '<div class="history-item" style="display:block;padding:14px 16px;border-bottom:1px solid var(--gray-100)">' +
+      return '<div class="history-item" data-type="transferred">' +
         '<div style="margin-bottom:8px"><span class="badge badge-status-transferred" style="font-size:13px;padding:4px 12px">🏠 ' + t('ss_housingTransferBadge') + '</span></div>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px;color:var(--navy-dark)">' +
           '<div><span style="color:var(--gray-500);font-size:12px">' + t('ss_studentNumber') + '</span><br><strong>' + escHtml(x.studentNumber) + '</strong></div>' +
@@ -1052,6 +1124,8 @@
   // (createdByName)، فالنداء ده اتشال خالص.
   loadHistory();
   loadTransferHistory();
+  bindMore('historyMore', loadHistory);
+  bindMore('transferHistoryMore', loadTransferHistory);
 
   // اللغة تتبع ثقافة السيرفر — setLang بيترجم عناصر الترجمة وبيستدعي onLanguageChange لإعادة رسم السجلات من الكاش
   window.onLanguageChange = function () {

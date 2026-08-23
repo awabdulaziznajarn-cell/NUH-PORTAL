@@ -64,6 +64,12 @@ namespace NUH_PORTAL.Core
             // المرحلة المكافئة لها في المسار الآخر — تُستعمل للعدّادات والتبويبات
             // حتى لا ينقسم عدّاد المرحلة الواحدة على مسمّيين.
             public string? SameStageAs { get; set; }
+
+            // ⚠️ ترتيب المرحلة من أربع خطوات (1..4) - يقرأه شريط التقدّم في
+            //    الصفحة الرئيسية. مكانه هنا لا في الواجهة: لو أُضيفت مرحلة
+            //    جديدة يتغيّر رقمها في مكان واحد بدل أن يُكتب سلّم ثانٍ في
+            //    الجافاسكربت يفارق الجدول عند أول تعديل.
+            public int Step { get; set; }
         }
 
         public static readonly List<Transition> Transitions = new()
@@ -71,7 +77,7 @@ namespace NUH_PORTAL.Core
             // ---------- مسار تسجيل الطالب (/api/Workflow) ----------
             new Transition
             {
-                Status = "pending_supervisor",
+                Status = "pending_supervisor", Step = 1,
                 Permissions = new[] { "requests.reviewHousing" },
                 ApproveTo = "pending_cyber", ApproveKey = "req_act_housing_approved",
                 RejectTo = "rejected",       RejectKey = "req_act_housing_rejected",
@@ -79,7 +85,7 @@ namespace NUH_PORTAL.Core
             },
             new Transition
             {
-                Status = "pending_cyber",
+                Status = "pending_cyber", Step = 2,
                 Permissions = new[] { "requests.reviewCyber" },
                 ApproveTo = "ready_for_provisioning", ApproveKey = "req_act_cyber_approved",
                 RejectTo = "rejected",                RejectKey = "req_act_cyber_rejected",
@@ -87,7 +93,7 @@ namespace NUH_PORTAL.Core
             },
             new Transition
             {
-                Status = "ready_for_provisioning",
+                Status = "ready_for_provisioning", Step = 3,
                 Permissions = new[] { "requests.complete" },
                 ApproveTo = "completed", ApproveKey = "req_act_completed",
                 RejectTo = "rejected",   RejectKey = "req_act_rejected",
@@ -97,7 +103,7 @@ namespace NUH_PORTAL.Core
             // ---------- مسار طلب الموظف (/api/Requests/{id}/review) ----------
             new Transition
             {
-                Status = "submitted",
+                Status = "submitted", Step = 1,
                 Permissions = new[] { "requests.reviewHousing" },
                 ApproveTo = "housing_approved", ApproveKey = "req_act_housing_approved",
                 RejectTo = "housing_rejected",  RejectKey = "req_act_housing_rejected",
@@ -105,7 +111,7 @@ namespace NUH_PORTAL.Core
             },
             new Transition
             {
-                Status = "cyber_review",
+                Status = "cyber_review", Step = 2,
                 Permissions = new[] { "requests.reviewCyber" },
                 ApproveTo = "cyber_approved", ApproveKey = "req_act_cyber_approved",
                 RejectTo = "cyber_rejected",  RejectKey = "req_act_cyber_rejected",
@@ -116,14 +122,14 @@ namespace NUH_PORTAL.Core
             //    التوحيد يجب أن تبقى قابلة للتحريك، وإلا بقيت عالقة للأبد.
             new Transition
             {
-                Status = "housing_approved",
+                Status = "housing_approved", Step = 2,
                 Permissions = new[] { "requests.complete" },
                 ApproveTo = "cyber_review", ApproveKey = "req_act_cyber_review",
                 Api = Apis.Review
             },
             new Transition
             {
-                Status = "cyber_approved",
+                Status = "cyber_approved", Step = 3,
                 Permissions = new[] { "requests.reviewCyber", "requests.complete" },
                 ApproveTo = "ready_for_provisioning", ApproveKey = "req_act_ready_for_provisioning",
                 Api = Apis.Review
@@ -151,6 +157,24 @@ namespace NUH_PORTAL.Core
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToArray();
         }
+
+        // ====================================================================
+        //  المراحل المفتوحة: كل مرحلة لها انتقال في الجدول، زائد need_more_info.
+        //
+        //  ⚠️ مشتقّة من الجدول لا مكتوبة بالاسم: أي مرحلة تُضاف مستقبلًا تدخل
+        //     هنا وحدها. وكتابتها قائمةً ثابتة كانت ستكرّر الخطأ الذي وقع في
+        //     PermissionStages المحذوف - قائمة تعرف مراحل والجدول يعرف غيرها.
+        //
+        //  ⚠️ و need_more_info مفتوح رغم أنه بلا انتقال في الجدول: الطلب فيه
+        //     ينتظر الطالب لا الموظف، لكنه لم يُغلق - وهو أطول ما يقف بلا حركة،
+        //     فاستثناؤه يخفي أكثر الطلبات تأخّرًا.
+        // ====================================================================
+        private static string[]? _openStatuses;
+        public static string[] OpenStatuses => _openStatuses ??= Transitions
+            .Select(t => t.Status)
+            .Concat(new[] { "need_more_info" })
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
 
         // كل الصلاحيات التي تخوّل التصرّف في هذه المرحلة. فارغة = مرحلة مقفولة.
         public static string[] PermissionsForStage(string? status)
@@ -187,6 +211,34 @@ namespace NUH_PORTAL.Core
             }
             return list.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         }
+
+        // ====================================================================
+        //  الاسم الواحد للمرحلة الواحدة — نصٌّ واحد ولون واحد للموقف الواحد.
+        //
+        //  ⚠️ Aliases فوق بتوحّد العدّادات والتبويبات، لكن *العرض* كان لسه
+        //     بيتبني من الحالة الخام في كل شاشة: "req_badge_" + status.
+        //     فطلبان واقفان في نفس المرحلة بالظبط ظهروا في نفس الجدول
+        //     بنصّين ولونين:
+        //         pending_cyber  →  «بانتظار الأمن السيبراني»  (أزرق)
+        //         cyber_review   →  «مراجعة»                   (بنفسجي)
+        //     والموظف بيقراهما حالتين مختلفتين وهما واحدة.
+        //
+        //  ⚠️ والحل مش تظبيط النصوص في ملف الترجمة — ده بيصلّح اللحظة دي وبس،
+        //     وأول مسمّى جديد يرجّع نفس الانقسام. التسمية بتمرّ من هنا، فأي
+        //     حالة ليها SameStageAs بترث نصّ مرحلتها ولونها بلا ترجمة جديدة
+        //     ولا قاعدة CSS جديدة.
+        // ====================================================================
+        public static string Canonical(string? status)
+        {
+            if (string.IsNullOrWhiteSpace(status)) return "";
+            var s = status.Trim().ToLowerInvariant();
+            var same = Find(s)?.SameStageAs;
+            return string.IsNullOrWhiteSpace(same) ? s : same.Trim().ToLowerInvariant();
+        }
+
+        // مفاتيح الترجمة وأسماء أصناف CSS — بتتبني هنا لا في كل شاشة.
+        public static string BadgeKey(string? status) => "req_badge_" + Canonical(status);
+        public static string StageKey(string? status) => "req_stage_" + Canonical(status);
 
         public static Transition? Find(string? status)
         {
@@ -228,9 +280,78 @@ namespace NUH_PORTAL.Core
 
         // نفس الجدول بصيغة JSON لتقرأه الواجهة — يُبنى مرة واحدة عند أول طلب.
         private static string? _json;
+        // ====================================================================
+        //  «هل الطلب مرفوض؟» — التعريف الوحيد.
+        //
+        //  ⚠️ السؤال ده كان متسأل في **ستّ** حتّت بستّ طرق مختلفة:
+        //       Core/RequestWorkflow    ExtraAliases["rejected"]        ✔ كاملة
+        //       WorkflowActionService   ثلاث مقارنات مكتوبة بالإيد      ✔ كاملة
+        //       RequestService          rejected || housing_rejected    ✘ ناقصة cyber_rejected
+        //       request-details-page    كائن {housing,cyber,rejected}   ✔ كاملة
+        //       request-details-page    st.indexOf('rejected') > -1     ✘ فحص نصّي
+        //       request-details-page    h.toStage.indexOf('rejected')   ✘ فحص نصّي
+        //
+        //     والفحص النصّي (indexOf) هو الأخطر: أي حالة جديدة فيها الكلمة دي
+        //     هتتحسب مرفوضة من غير ما حد ياخد باله، وأي إعادة تسمية هتخلّيه
+        //     يسكت — يرجّع false ومفيش خطأ يبان.
+        //
+        //     والقائمة نفسها مش مكتوبة هنا تاني: بتتقرا من ExtraAliases اللي
+        //     التبويبات والعدّادات بتقرا منها، فمستحيل التبويب يعدّ طلبًا
+        //     والفحص ده يقول إنه مش مرفوض.
+        // ====================================================================
+        public static bool IsRejected(string? status)
+        {
+            if (string.IsNullOrWhiteSpace(status)) return false;
+            return Aliases("rejected").Contains(status.Trim(), StringComparer.OrdinalIgnoreCase);
+        }
+
+        // ⚠️ الشكل بقى كائنًا لا مصفوفة: الواجهة محتاجة قائمة «المرفوض» كمان،
+        //    ولو اتحقنت في متغيّر عام تاني كان بقى عندنا مصدرين لمفهوم واحد.
         public static string ToJson()
         {
-            return _json ??= JsonSerializer.Serialize(Transitions, new JsonSerializerOptions
+            return _json ??= JsonSerializer.Serialize(new
+            {
+                transitions = Transitions,
+                rejected = Aliases("rejected")
+            }, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
+        }
+
+        // ====================================================================
+        //  نفس الجدول لبوابة الطالب - منزوع منه ما لا يخصّه.
+        //
+        //  ⚠️ ليه إسقاط مختصر لا ToJson() نفسها:
+        //     بوابة الطالب صفحات عامة، ونقطة /api/ui/i18n اللي بتغذّيها
+        //     [AllowAnonymous]. الجدول الكامل فيه أسماء الصلاحيات ومسارات
+        //     الـ API الداخلية - ودي مالهاش لازمة عند الطالب، وإرسالها لأي
+        //     زائر بيوصّف بنية النظام ببلاش.
+        //
+        //  ⚠️ وليه إسقاط أصلًا لا جدول تاني مكتوب بالإيد:
+        //     الطالب محتاج ثلاث حاجات بس - اسم المرحلة الموحّد (SameStageAs)،
+        //     ورقم خطوتها (Step)، وهل هي رفض. التلاتة مشتقّة من نفس الصفوف
+        //     فوق، فأي مرحلة تتضاف بكرة بتوصل لشاشة الطالب وحدها. وده بالظبط
+        //     اللي كان ناقص: صفحة «طلباتي» كانت كاتبة الجدول بنفسها بسبع
+        //     حالات من تسعة، والحالات الناقصة كانت بتتطبع للطالب كود خام.
+        //
+        //  ⚠️ والأسماء زي ما هي (status/step/sameStageAs/rejected) عشان
+        //     js/request-workflow.js يقراها بلا أي فرع خاص بالبوابة.
+        // ====================================================================
+        private static string? _portalJson;
+
+        public static string ToPortalJson()
+        {
+            return _portalJson ??= JsonSerializer.Serialize(new
+            {
+                transitions = Transitions.Select(t => new
+                {
+                    status = t.Status,
+                    step = t.Step,
+                    sameStageAs = t.SameStageAs
+                }),
+                rejected = Aliases("rejected")
+            }, new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             });

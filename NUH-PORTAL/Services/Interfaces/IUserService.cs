@@ -17,6 +17,8 @@ namespace NUH_PORTAL.Services.Interfaces
         Task<UserDetailDto> CreateAsync(UserCreateDto dto);
         Task<UserDetailDto> UpdateAsync(int id, UserUpdateDto dto);
         Task SetActiveAsync(int id, bool active);
+        // فكّ القفل التلقائي بعد محاولات الدخول الفاشلة — غير SetActiveAsync
+        Task UnlockAsync(int id);
         Task AssignRoleAsync(int id, string role);
 
         // حذف منطقي واستعادة — الصف بيفضل في القاعدة عشان سجل الإجراءات

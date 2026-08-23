@@ -50,5 +50,57 @@ namespace NUH_PORTAL.Controllers
             Response.Headers["Cache-Control"] = "public, max-age=300";
             return Content(json, "application/json; charset=utf-8");
         }
+
+        // ====================================================================
+        //  GET /js/nuh-id.js — قواعد الهوية والرقم الجامعي والجوال للمتصفح.
+        //
+        //  ⚠️ نفس منطق /api/ui/i18n بالظبط: القاعدة مكتوبة مرة واحدة في
+        //     Core/IdentityRules.cs، والمتصفح بياخدها متولّدة منها. قبل كده كان
+        //     في ملف ثابت wwwroot/js/identity-rules.js مكتوب بالإيد جنب ملف
+        //     الـ C# — ونسختين لنفس القاعدة بيفضلوا متطابقين لحد أول تعديل
+        //     مستعجل في واحد منهم.
+        //
+        //  ⚠️ المسار متكتب بشرطة في أوله عشان يتخطّى [Route("api/ui")]: العنوان
+        //     لازم يفضل شبه ملف عادي، لأن بوابة الطالب صفحات HTML ثابتة
+        //     بتنادي ../js/nuh-id.js وهي مش عارفة إن ده راوت.
+        //
+        //  ⚠️ [AllowAnonymous] لازمة: صفحة تسجيل الطالب متاحة قبل الدخول،
+        //     والمحتوى أنماط تحقّق ورسائل خطأ — مفيش أي بيانات فيه.
+        // ====================================================================
+        [AllowAnonymous]
+        [HttpGet("/js/nuh-id.js")]
+        [Produces("application/javascript")]
+        public IActionResult IdentityRulesScript() => GeneratedScript(Core.IdentityRules.ToJavaScript());
+
+        // ====================================================================
+        //  GET /js/nuh-pledge.js — جملة الإقرار وقاعدة مطابقتها.
+        //
+        //  ⚠️ نفس منطق nuh-id.js بالحرف: القاعدة في Core/PledgeRules.cs،
+        //     والمتصفح بياخدها متولّدة منها. لو الجملة كانت مكتوبة في صفحة
+        //     الإقرار وفي ملف الـ C#، أول تعديل في واحدة منهم كان هيخلّي كل
+        //     طالب يكتب اللي على الشاشة والخادم يرفضه — وهو كاتب صح.
+        // ====================================================================
+        [AllowAnonymous]
+        [HttpGet("/js/nuh-pledge.js")]
+        [Produces("application/javascript")]
+        public IActionResult PledgeRulesScript() => GeneratedScript(Core.PledgeRules.ToJavaScript());
+
+        // ⚠️ الترويسات مكتوبة مرة واحدة للاتنين: النصّ مابيتغيّرش إلا مع نشر
+        //    جديد، والـ ETag بيخلّي المتصفح يتأكد بطلب فاضي بدل ما يستنّى
+        //    انتهاء المدة — فأي تعديل في القاعدة بيوصل من غير ما نستنّى كاش
+        //    قديم يخلص.
+        private IActionResult GeneratedScript(string js)
+        {
+            var etag = "\"" + Convert.ToHexString(
+                System.Security.Cryptography.SHA256.HashData(
+                    System.Text.Encoding.UTF8.GetBytes(js)))[..16] + "\"";
+
+            if (Request.Headers.IfNoneMatch.ToString() == etag)
+                return StatusCode(StatusCodes.Status304NotModified);
+
+            Response.Headers.ETag = etag;
+            Response.Headers["Cache-Control"] = "public, max-age=300";
+            return Content(js, "application/javascript; charset=utf-8");
+        }
     }
 }

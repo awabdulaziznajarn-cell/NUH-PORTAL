@@ -15,12 +15,8 @@
   function T(k) { return (window.FH_T && window.FH_T[k]) || k; }
   function el(id) { return document.getElementById(id); }
 
-  function esc(s) {
-    if (s === null || s === undefined) return '';
-    return String(s).replace(/[&<>"']/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-    });
-  }
+  // تهريب HTML — التعريف الوحيد في /js/esc.js
+  function esc(s) { return escHtml(s); }
 
   // نفس منطق شاشة القائمة: القيمة قد تصل رقمًا أو نصًّا بصيغة PascalCase
   function isEnum(value, name, num) {
@@ -96,6 +92,10 @@
     }, function (p) { state.page = p; load(); });
   }
 
+  // ترتيب الأعمدة من نسخة واحدة في النظام — NuhTable.sort. الأعمدة معرّفة
+  // بـ data-sort على الـ <th>، والخادم هو اللي بيرتّب (الجدول مقسّم صفحات).
+  var fhSort = NuhTable.sort('fhTable', function () { state.page = 1; load(); });
+
   function load() {
     var qs = new URLSearchParams({ page: String(state.page), pageSize: '25' });
     if (state.type) qs.set('type', state.type);
@@ -103,7 +103,7 @@
     if (state.tower) qs.set('tower', state.tower);
     if (state.search) qs.set('search', state.search);
 
-    fetch('/api/FacultyHousing/units?' + qs.toString(), { credentials: 'same-origin' })
+    fetch('/api/FacultyHousing/units?' + qs.toString() + fhSort.qs(), { credentials: 'same-origin' })
       .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(function (d) { renderTowers(d.towers); render(d.items); renderPager(d); })
       .catch(function (e) {

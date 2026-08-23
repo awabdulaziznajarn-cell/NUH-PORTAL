@@ -10,17 +10,17 @@
       الملف ده هو المصدر الوحيد للتصميم في البوابة. الصفحة بتربطه وتكتب فيها
       الستايل الخاص بيها هي بس.
 
-   ⚠️ المتغيّرات هنا مطابقة لـ css/site.css (نظام الموظفين) عن قصد — نفس الكحلي
-      والذهبي والرمادي. لو غيّرت لون في site.css غيّره هنا كمان.
+   ⚠️ المتغيّرات مابقتش هنا ولا في site.css — بقت في css/base.css، والملفين
+      بيقروا منه. فتغيير أي لون في الهوية بقى في مكان واحد.
    ============================================================================ */
 
-/* ---------- الخط ---------- */
-@font-face{font-family:'IBM Plex Sans Arabic';font-style:normal;font-weight:400;font-display:swap;src:url('../fonts/IBMPlexSansArabic-Regular.woff2') format('woff2')}
-@font-face{font-family:'IBM Plex Sans Arabic';font-style:normal;font-weight:600;font-display:swap;src:url('../fonts/IBMPlexSansArabic-SemiBold.woff2') format('woff2')}
-@font-face{font-family:'IBM Plex Sans Arabic';font-style:normal;font-weight:700;font-display:swap;src:url('../fonts/IBMPlexSansArabic-SemiBold.woff2') format('woff2')}
+/* ⚠️ الخط والتوكنز و reset الصندوق مش هنا — كلهم في css/base.css، وبيتحمّل
+   من هنا بـ @import. كانوا مكتوبين هنا وفي site.css الاتنين، وكان مكتوب
+   في التعليق فوق «لو غيّرت لون في site.css غيّره هنا كمان» — يعني القاعدة
+   في مكانين والاعتماد على إن حد يفتكر. (شوف الشرح في base.css.) */
+@import url('base.css');
 
-/* ---------- Reset ---------- */
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+/* ---------- reset خاص بالبوابة ---------- */
 img{max-width:100%;height:auto;display:block}
 a{text-decoration:none;color:inherit}
 
@@ -33,24 +33,6 @@ button{font-family:inherit;touch-action:manipulation}
 input,select,textarea{font-size:16px;-webkit-appearance:none;appearance:none;border-radius:0}
 input[type="checkbox"]{-webkit-appearance:checkbox;appearance:checkbox}
 
-/* ---------- التوكنز ---------- */
-:root{
-  --navy:#166a45; --navy-dark:#104631; --navy-light:#25935f;
-  --gold:#dba102; --gold-light:#f0c33c;
-  --white:#fff;
-  --gray-50:#f5f5f6; --gray-100:#eceded; --gray-200:#dcdfe4;
-  --gray-300:#cecfd2; --gray-500:#85888e; --gray-700:#333741;
-  --green:#067647; --green-light:#dff6e7;
-  --red:#b42318; --red-light:#fef3f2;
-  --amber:#93370d; --amber-light:#fffaeb;
-  --blue:#175cd3; --blue-light:#eff4ff;
-
-  --r-sm:8px; --r-md:12px; --r-lg:16px; --r-pill:999px;
-  --sh-1:0 1px 3px rgba(16,70,49,.06);
-  --sh-2:0 2px 10px rgba(16,70,49,.07);
-  --sh-3:0 8px 28px rgba(16,70,49,.10);
-  --page-max:980px;
-}
 
 html{scroll-behavior:smooth}
 body{
@@ -61,19 +43,116 @@ body{
 }
 
 /* ============================================================================
-   الشريط العلوي — بديل الـ hero الضخم. ثابت في كل صفحات البوابة عشان الطالب
-   يعرف إنه لسه جوّه نفس النظام وهو بيتنقل بين الخطوات.
+   الترويسة — .pbar
+   ⚠️ كانت شريطًا كحليًّا لاصقًا أعلى الشاشة (position:sticky) باسم البوابة
+      مكتوبًا فيه. والصفحة الرئيسية للنظام (/index.html) ترويستها بيضا باللوجو
+      واسم الجامعة. يعني الزائر بيدوس على «خدمات الطلاب» فيلاقي الترويسة
+      اتغيّرت شكلًا ولونًا وموضعًا في خطوة واحدة — فيقرا إنه خرج من النظام
+      ودخل حاجة تانية.
+      بقت نفس ترويسة الصفحة الرئيسية: بيضا، اللوجو واسم الجامعة على اليمين،
+      الإجراءات على الشمال.
+   ⚠️ ومابقتش sticky: الشريط الكحلي كان بياخد ٥٤ بكسل من ارتفاع الشاشة طول
+      الوقت، وعلى موبايل ده عُشر المساحة المتاحة للمحتوى مقابل اسم بيقراه
+      الطالب مرة واحدة.
    ============================================================================ */
-.pbar{background:var(--navy-dark);color:#fff;position:sticky;top:0;z-index:50;box-shadow:0 2px 12px rgba(16,70,49,.25)}
-.pbar-in{max-width:var(--page-max);margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px}
-.pbar-logo{background:#fff;border-radius:10px;padding:5px 9px;display:flex;flex-shrink:0}
-.pbar-logo img{width:30px;height:30px;object-fit:contain}
-.pbar-titles{flex:1;min-width:0}
-.pbar-titles b{display:block;font-size:14px;font-weight:700;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pbar-titles span{display:block;font-size:12px;color:var(--gold-light);line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pbar-lang{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;
-           border-radius:var(--r-sm);padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;transition:background .2s;flex-shrink:0}
-.pbar-lang:hover{background:rgba(255,255,255,.2)}
+.pbar{background:var(--white);border-bottom:1px solid var(--gray-100)}
+.pbar-in{max-width:var(--page-max);margin:0 auto;padding:16px;display:flex;
+         align-items:center;justify-content:space-between;gap:14px}
+/* ⚠️ الترويسة بقت الشعار واسم الجامعة وبس. كان تحت الاسم سطر تاني «إدارة
+   الإسكان الجامعي» - والصفحة تحته بالظبط فيها عنوان بحرف ٣٠ بكسل بيقول
+   «بوابة الإسكان الجامعي». يعني نفس المعلومة مرتين على بُعد ٨٠ بكسل من
+   بعض، والسطر الصغير كان بيسرق الانتباه من العنوان الكبير بلا فايدة.
+
+   ⚠️ height:auto لا ارتفاع ثابت - وde كان سبب إن الشعار يبان أصغر من رقمه:
+      viewBox بتاعه 1096×816، يعني نسبته ١٫٣٤ عرض لكل ١ ارتفاع. ولما كان
+      مكتوب width:62 و height:62 مع object-fit:contain، المتصفح كان بيحطّه
+      جوّه مربّع 62×62 من غير تشويه - فيطلع 62 عرض × **46** ارتفاع، و١٦
+      بكسل تفضل فاضية فوق وتحت. الرقم كان بيقول ٦٢ والعين بتشوف ٤٦.
+      دلوقتي العرض بس، والارتفاع بيتحسب من النسبة - فالرقم هو اللي بيتشاف.
+
+   ⚠️ وحجم الاسم بيتبع الشعار: ٩٦ بكسل شعار جنب اسم ١٧ بكسل بيخلّي الاسم
+      يبان حاشية على الشعار. ٢٠ بكسل بيخلّي الاتنين يتقروا كوحدة واحدة. */
+.pbar-brand{display:flex;align-items:center;gap:15px;min-width:0}
+.pbar-brand img{width:78px;height:auto;flex-shrink:0}
+.pbar-brand .t{font-size:18px;font-weight:800;color:var(--navy-dark);line-height:1.4}
+.pbar-acts{display:flex;align-items:center;gap:8px;flex-shrink:0}
+/* زر الترويسة — اللغة والعودة بنفس الشكل: الاتنين إجراء ثانوي بنفس الوزن */
+.pbar-btn,.pbar-lang{background:var(--white);border:1.5px solid var(--gray-200);color:var(--navy-dark);
+         border-radius:9px;padding:8px 16px;font-family:inherit;font-size:12.5px;font-weight:600;
+         cursor:pointer;display:inline-flex;align-items:center;gap:7px;
+         transition:border-color .18s,background .18s;flex-shrink:0}
+.pbar-btn:hover,.pbar-lang:hover{border-color:var(--navy);background:var(--tint)}
+.pbar-btn:focus-visible,.pbar-lang:focus-visible{outline:2px solid var(--gold-ink);outline-offset:2px}
+.pbar-btn svg{width:15px;height:15px;flex-shrink:0}
+
+/* ⚠️ على ٣٩٠ بكسل الترويسة فيها ٣ عناصر: اللوجو والاسم وزرّين. الاسم كان
+   بيلفّ على تلات سطور والزراير بتتزنق. تحت ٥٦٠ بكسل نصّ زرّ العودة بيتخفي
+   وتفضل الأيقونة — ودي أكبر من ٤٤ بكسل بحشوها فالإصبع بتوصلها.
+   ⚠️ ولمّا النصّ بيتخفي بـ display:none بيتخفي عن قارئ الشاشة كمان، فالزرّ
+      بقى شايل data-i18n-aria — بلاها الزرّ بيتقري «رابط» بلا اسم. */
+@media(max-width:560px){
+  .pbar-in{padding:12px 14px;gap:10px}
+  .pbar-brand{gap:10px}
+  .pbar-brand{gap:11px}
+  .pbar-brand img{width:62px}
+  .pbar-brand .t{font-size:15.5px}
+  .pbar-btn{padding:10px 12px}
+  .pbar-btn span{display:none}
+}
+
+/* ---------- كتلة العنوان ----------
+   العنوان ثم خط ذهبي قصير ثم سطر التعريف — نفس ترتيب الصفحة الرئيسية. */
+.phero{text-align:center;padding:26px 16px 6px}
+.phero h1{font-size:23px;font-weight:800;letter-spacing:-.3px;color:var(--navy-dark);line-height:1.45}
+.phero .rule{width:56px;height:3px;background:var(--gold);margin:12px auto;border-radius:2px}
+.phero p{font-size:13.5px;color:var(--gray-500);font-weight:500;line-height:1.9;max-width:620px;margin:0 auto}
+
+/* ============================================================================
+   ترويسة صفحات الخطوات — .portal-header
+   ⚠️ الكتلة دي كانت مكتوبة بنصّها في **ست صفحات**: register-phone و
+      register-form و register-declarations و register-confirmation و
+      track-request و my-requests. عشر قواعد في كل صفحة (الترويسة وزرّ اللغة
+      وثلاث نسخ في استعلامات الشاشة) = ستّين قاعدة مكرّرة.
+
+   ⚠️ وافترقت فعلًا، والفرق كان **باين للطالب**: خمس صفحات كاتبة
+      «.portal-header img{margin-bottom:10px}» وصفحة واحدة (register-form)
+      كاتبة «margin:0 auto 10px». وportal.css بيعمل img{display:block}، وصورة
+      display:block مابتتوسّطش بـ text-align:center على الأب - محتاجة
+      margin auto. يعني اللوجو كان **ملزوق في حافة الشاشة** في خمس صفحات
+      ومتوسّط في واحدة. النسخة اللي «افترقت» هي الصح، فهي اللي اتاخدت.
+
+   ⚠️ وألوان زرّ اللغة كانت أرقامًا مكتوبة بالإيد (#fff و#dcdfe4 و#f5f5f6)
+      لا توكنز. القيم نفسها بالظبط هي --white و--gray-200 و--gray-50،
+      فالتحويل مالوش أثر بصري - بس بقى اللون بيتبع الهوية لو اتغيّرت.
+
+   ⚠️ .lang-btn معرّف كمان في css/site.css بشكل مختلف (شارة بلا حدّ لشاشات
+      الموظفين). الملفّين مابيتحمّلوش مع بعض أبدًا - site.css لشاشات الموظفين
+      وportal.css للبوابة - فمفيش تضارب. متكتبش صفحة تحمّل الاتنين.
+   ============================================================================ */
+.portal-header{text-align:center;padding:24px 16px 0;width:100%;position:relative}
+/* نفس مقاس الشعار في ترويسة الرئيسية وبوابة الطالب (.pbar-brand) - الصفحات
+   دي امتداد لنفس المسار، فالشعار مايتغيّرش حجمه وانت بتتنقّل بين خطواته. */
+.portal-header img{width:96px;height:auto;margin:0 auto 12px}
+.portal-header h1{font-size:20px;font-weight:800;color:var(--navy-dark)}
+
+.lang-btn{position:absolute;top:12px;background:var(--white);border:1px solid var(--gray-200);
+          border-radius:6px;padding:6px 14px;font-family:'IBM Plex Sans Arabic',sans-serif;
+          font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;z-index:10}
+[dir="rtl"] .lang-btn{left:12px}
+[dir="ltr"] .lang-btn{right:12px}
+.lang-btn:hover{background:var(--gray-50)}
+.lang-btn:focus-visible{outline:2px solid var(--gold-ink);outline-offset:2px}
+
+@media(max-width:768px){
+  .portal-header{padding:20px 16px 0}
+  .portal-header img{width:78px}
+  .portal-header h1{font-size:18px}
+}
+@media(max-width:375px){
+  .portal-header{padding:16px 12px 0}
+  .portal-header img{width:64px}
+  .portal-header h1{font-size:16px}
+}
 
 /* ---------- الحاوية ---------- */
 .wrap{width:100%;max-width:var(--page-max);margin:0 auto;padding:0 16px;flex:1}
@@ -121,22 +200,54 @@ body{
 .btn-gold:hover{background:var(--gold-light);transform:translateY(-1px)}
 .btn:disabled{opacity:.55;cursor:default;box-shadow:none;transform:none}
 
-/* ---------- بطاقات الخدمات ---------- */
-.tiles{display:grid;grid-template-columns:1fr;gap:14px}
-.tile{display:flex;align-items:center;gap:16px;background:var(--white);
-      border:1px solid var(--gray-100);border-radius:var(--r-lg);padding:20px;
-      box-shadow:var(--sh-1);transition:border-color .18s,box-shadow .18s,transform .18s}
-.tile:hover{border-color:var(--navy);box-shadow:var(--sh-3);transform:translateY(-2px)}
-.tile-ico{width:52px;height:52px;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.tile-ico svg{width:24px;height:24px}
-.tile-ico.navy{background:#d1e0ff;color:var(--navy)}
-.tile-ico.gold{background:var(--amber-light);color:var(--amber)}
-.tile-txt{flex:1;min-width:0}
-.tile-txt b{display:block;font-size:15.5px;font-weight:700;margin-bottom:3px}
-.tile-txt span{display:block;font-size:12.5px;color:var(--gray-500);line-height:1.6}
-.tile-go{color:var(--gray-300);flex-shrink:0;transition:color .18s}
-.tile-go svg{width:20px;height:20px}
-.tile:hover .tile-go{color:var(--navy)}
+/* ============================================================================
+   الأبواب — .pdoor
+   ⚠️ التعريف ده هو **نفسه** المستخدم في الصفحة الرئيسية للنظام. كان مكتوب
+      هناك باسم .hm-door جوّه وسم <style> في index.html، وهنا باسم .tile
+      بشكل تاني خالص (صف أفقي بأيقونة صغيرة). فنفس القرار — «وديني لواحد
+      من بابين» — كان له تصميمان في صفحتين متتاليتين.
+      دلوقتي index.html بيحمّل الملف ده وبيستعمل نفس الكلاس.
+   ⚠️ والباب الأساسي مصمت والتاني فاتح: مش تفضيل، ده الباب اللي بيتفتح آلاف
+      المرات مقابل عشرات. الوزن البصري بيتبع الاستعمال.
+   ============================================================================ */
+.pdoors{display:grid;grid-template-columns:1fr;gap:16px;width:100%}
+/* ⚠️ text-decoration:none و color:inherit مكتوبين هنا رغم reset الروابط فوق:
+   الملف ده بيتحمّل من صفحات مالهاش الـ reset ده لو اتحمّل بـ <link> مباشر،
+   والباب كله <a> — من غيرهم العنوان والوسوم بتطلع مسطّرة بلون الرابط. */
+.pdoor{border-radius:18px;padding:30px 28px;display:flex;flex-direction:column;
+       justify-content:space-between;min-height:270px;text-decoration:none;color:inherit;
+       transition:transform .18s,box-shadow .18s,border-color .18s}
+.pdoor:hover{transform:translateY(-2px)}
+.pdoor:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.pdoor.solid{background:linear-gradient(160deg,var(--navy) 0%,var(--navy-dark) 100%);color:var(--white)}
+.pdoor.solid:hover{box-shadow:0 14px 34px rgba(16,70,49,.28)}
+.pdoor.soft{background:var(--tint);border:1.5px solid var(--gray-200);color:var(--navy-dark)}
+.pdoor.soft:hover{box-shadow:0 10px 26px rgba(16,70,49,.10);border-color:var(--navy)}
+
+.pdoor-ic{width:50px;height:50px;border-radius:14px;display:flex;align-items:center;
+          justify-content:center;margin-bottom:16px}
+.pdoor-ic svg{width:25px;height:25px}
+.pdoor.solid .pdoor-ic{background:rgba(255,255,255,.15);color:var(--white)}
+.pdoor.soft .pdoor-ic{background:var(--white);border:1px solid var(--gray-200);color:var(--navy)}
+.pdoor h2{font-size:20px;font-weight:800;margin-bottom:8px;line-height:1.45}
+.pdoor .sub{font-size:12.5px;line-height:1.75;margin-bottom:14px;display:block}
+/* ⚠️ الشفافية ٨٢٪ لا ٧٢٪، واللون --gray-700 لا --gray-500: السطر ده وصف
+   الخدمة، ونسبة تباينه كانت ٤٫٢٧:١ على الأخضر الفاتح و٣٫٣:١ على الأخضر
+   المشوب — والمعيار بيطلب ٤٫٥:١ للنصّ العادي. بقت ٥٫٠٣:١ و١١٫١:١. */
+.pdoor.solid .sub{color:rgba(255,255,255,.82)}
+.pdoor.soft .sub{color:var(--gray-700)}
+
+/* الوسوم بتقول الخدمات من غير فقرة شرح — أسماء الخدمات بتشرح نفسها */
+.pdoor-tags{display:flex;gap:8px;flex-wrap:wrap}
+.pdoor-tags span{font-size:11.5px;font-weight:600;padding:6px 13px;border-radius:20px}
+.pdoor.solid .pdoor-tags span{background:rgba(255,255,255,.14);color:var(--white)}
+.pdoor.soft .pdoor-tags span{background:var(--white);border:1px solid var(--gray-200);color:var(--gray-700)}
+
+.pdoor-go{display:inline-flex;align-items:center;gap:10px;margin-top:24px;font-size:14.5px;
+          font-weight:700;align-self:flex-start;padding:13px 26px;border-radius:11px;transition:opacity .18s}
+.pdoor:hover .pdoor-go{opacity:.92}
+.pdoor.solid .pdoor-go{background:var(--white);color:var(--navy-dark)}
+.pdoor.soft .pdoor-go{background:var(--navy);color:var(--white)}
 
 /* ============================================================================
    خطوات الرحلة (بطاقات عريضة في الصفحة الرئيسية) — .journey
@@ -146,16 +257,22 @@ body{
    ⚠️ كانت grid بسبع أعمدة ثابتة على الشاشات الكبيرة، فالنص بيتزنق ويبقى غير
       مقروء. بقت auto-fit بحد أدنى للعرض: بتلف لسطر جديد بدل ما تضغط النص.
    ============================================================================ */
-.journey{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
-.journey-step{background:var(--white);border:1px solid var(--gray-100);border-radius:var(--r-md);
-      padding:16px;display:flex;gap:12px;align-items:flex-start}
-.journey-num{width:28px;height:28px;border-radius:50%;background:var(--gray-100);color:var(--gray-500);
+.journey{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.journey-step{background:var(--white);border:1px solid var(--gray-100);border-radius:14px;
+      padding:18px;display:flex;gap:13px;align-items:flex-start;
+      transition:border-color .18s,box-shadow .18s}
+.journey-step:hover{border-color:var(--gray-200);box-shadow:var(--sh-1)}
+/* ⚠️ الرقم بحدّ ذهبي لا بخلفية رمادية: الخطوات السبعة كلها كانت رماديّة
+   باهتة، فالقسم كله كان بيتقري كأنه معطّل أو «قريبًا». الحدّ --gold-ink لأن
+   اللون هنا على حرف فوق أبيض لا على مساحة. */
+.journey-num{width:30px;height:30px;border-radius:50%;background:var(--white);
+        border:1.5px solid var(--gold);color:var(--gold-ink);
         display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:700;flex-shrink:0}
-.journey-step.on .journey-num{background:var(--navy);color:#fff}
-.journey-step.done .journey-num{background:var(--green);color:#fff}
+.journey-step.on .journey-num{background:var(--navy);border-color:var(--navy);color:#fff}
+.journey-step.done .journey-num{background:var(--green);border-color:var(--green);color:#fff}
 .journey-txt{min-width:0}
-.journey-txt b{display:block;font-size:13px;font-weight:700;color:var(--navy-dark);margin-bottom:2px;line-height:1.45}
-.journey-txt span{display:block;font-size:12px;color:var(--gray-500);line-height:1.6}
+.journey-txt b{display:block;font-size:13.5px;font-weight:700;color:var(--navy-dark);margin-bottom:3px;line-height:1.45}
+.journey-txt span{display:block;font-size:12px;color:var(--gray-500);line-height:1.65}
 
 /* ============================================================================
    شريط خطوات المعالج — الدوائر المرقّمة أعلى صفحات التسجيل.
@@ -183,22 +300,22 @@ body{
 .row-i .v{font-size:13.5px;font-weight:600;color:var(--navy-dark);word-break:break-word}
 .row-i .v[dir=ltr]{text-align:start}
 
-/* ---------- حقول الإدخال ---------- */
-.field{display:flex;flex-direction:column;gap:6px;margin-bottom:16px}
-.field label{font-size:12.5px;font-weight:600;color:var(--gray-700)}
-.field label i{color:var(--red);font-style:normal}
-.field input,.field select,.field textarea{
-  padding:11px 13px;border:1px solid var(--gray-200);border-radius:var(--r-md);
-  font-family:inherit;font-size:14px;color:var(--navy-dark);background:var(--white);
-  transition:border-color .15s,box-shadow .15s;width:100%}
-.field input:focus,.field select:focus,.field textarea:focus{
-  outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(16,70,49,.08)}
-.field input:disabled,.field select:disabled{background:var(--gray-50);color:var(--gray-500)}
-.field .hint{font-size:11.5px;color:var(--gray-500)}
-.field .err{font-size:11.5px;color:var(--red);display:none}
-.field.invalid input,.field.invalid select{border-color:var(--red)}
-.field.invalid .err{display:block}
-.grid-2{display:grid;grid-template-columns:1fr;gap:0 16px}
+/* ⚠️ كتلة «حقول الإدخال» (.field و.field label و.field input و.hint و.err
+   و.invalid و.grid-2) اتشالت من هنا بالكامل.
+
+   كان في تعريفين لـ .field في النظام: واحد هنا وواحد في css/components.css،
+   بشكلين مختلفين — الأول خانات بيضا ضيّقة، والتاني خانات رمادية عريضة جوّه
+   .input-wrap. وصفحة «تسجيل طالب جديد» في البوابة **بتحمّل الملفين مع بعض**،
+   فكانت بتاخد خليطًا: الفجوة والتسمية من components.css، والهامش السفلي
+   من هنا — نتيجة مالهاش تصميم، بتتحدّد بترتيب وسوم <link> في الصفحة.
+
+   وفحصت مين محتاج التعريف ده فعلًا: **ولا صفحة**. كل استخدامات .field في
+   النظام (نموذج الطالب، وتسجيل طالب فردي، وتحديث حالة الطالب) على نظام
+   components.css بـ .input-wrap و.field-error. و.err و.invalid و.grid-2
+   استخدامهم **صفر** في المشروع كله، و.hint الصفحات اللي بتستخدمه معرّفاه
+   بنفسها محليًّا.
+
+   يعني الكتلة دي مكانتش بتخدم حاجة — كانت بتشوّش على اللي شغّال بس. */
 
 /* ---------- تنبيهات ---------- */
 /* (تعريفات .alert القديمة كانت هنا — أُزيلت. النسخة الموحّدة أعلاه، والأسماء
@@ -212,23 +329,37 @@ body{
 .pill-err{background:var(--red-light);color:var(--red)}
 .pill-info{background:var(--blue-light);color:var(--blue)}
 
-/* ---------- التذييل ---------- */
-.pfoot{background:var(--navy-dark);color:rgba(255,255,255,.6);padding:26px 16px 22px;margin-top:32px;text-align:center}
-.pfoot img{width:32px;height:32px;margin:0 auto 14px;opacity:.65}
-.pfoot-links{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 18px;margin-bottom:14px;font-size:12px}
-.pfoot-links a{color:rgba(255,255,255,.5);transition:color .2s}
+/* ---------- التذييل ----------
+   ⚠️ سطر الحقوق كان ١١ بكسل بشفافية ٣٥٪ — يعني تباينه على الكحلي أقل من
+      المعيار، وهو السطر اللي بيقول مين الجهة المالكة للنظام. بقى ١٣ بكسل
+      بشفافية ٨٢٪، زيّه زي تذييل الصفحة الرئيسية بالظبط. */
+.pfoot{background:var(--navy-dark);color:rgba(255,255,255,.82);padding:24px 16px;margin-top:36px;text-align:center}
+/* height:auto هنا كمان: 30×30 مع contain كانت بتحجز ٣٠ وترسم ٢٢ */
+.pfoot img{width:34px;height:auto;margin:0 auto 12px;opacity:.7}
+.pfoot-links{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 18px;margin-bottom:12px;font-size:12.5px;font-weight:600}
+.pfoot-links a{color:rgba(255,255,255,.72);transition:color .2s}
 .pfoot-links a:hover{color:var(--gold-light)}
-.pfoot-line{width:40px;height:1px;background:rgba(255,255,255,.12);margin:0 auto 14px}
-.pfoot-copy{font-size:11px;color:rgba(255,255,255,.35);line-height:1.7}
+.pfoot-links a:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:4px}
+.pfoot-line{width:44px;height:1px;background:rgba(255,255,255,.16);margin:0 auto 12px}
+/* ⚠️ white-space:pre-line: سطر الحقوق سطران في مفتاح واحد (Brand_Copyright). */
+.pfoot-copy{font-size:13px;font-weight:600;color:rgba(255,255,255,.82);line-height:1.8;white-space:pre-line}
 
 /* ---------- شاشات أكبر ---------- */
 @media(min-width:640px){
-  .tiles{grid-template-columns:1fr 1fr}
+  .pdoors{grid-template-columns:1fr 1fr;gap:18px}
   .grid-2{grid-template-columns:1fr 1fr}
   .wrap{padding:0 24px}
   .section{padding:34px 0}
-  .pbar-in{padding:12px 24px}
-  .pbar-titles b{font-size:15px}
+  /* ⚠️ الحشو الرأسي نزل من ٢٠ لـ ١٤: الشعار بقى ٧٢ بكسل ارتفاعًا، ومع
+     حشو ٢٠ كانت الترويسة هتبقى ١١٢ بكسل - عُشر شاشة لابتوب لسطر واحد. */
+  .pbar-in{padding:14px 24px}
+  .pbar-brand img{width:96px}
+  .pbar-brand .t{font-size:20px}
+  .phero{padding:30px 20px 8px}
+  .phero h1{font-size:29px}
+  .phero p{font-size:14px}
+  .pdoor{padding:34px 32px;min-height:290px}
+  .pdoor h2{font-size:22px}
 }
 
 /* ---------- انتظار قاموس الترجمة ----------

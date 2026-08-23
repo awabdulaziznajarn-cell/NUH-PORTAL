@@ -1,11 +1,19 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" id="html-root">
+<html lang="ar" dir="rtl" id="html-root" data-title-key="pt_myRequests">
 <head>
 <link rel="icon" href="../favicon.ico">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>طلباتي - بوابة السكن الجامعي</title>
+<title>طلباتي - بوابة الإسكان الجامعي</title>
+<script src="../js/esc.js"></script>
 <script src="../i18n.js"></script>
+<!-- شكل التاريخ - التعريف الوحيد في js/date-format.js. الصفحة كانت بتنادي
+     toLocaleDateString('ar-SA') وهي في متصفحات بترجّع **هجري**، فنفس الطلب
+     كان بيظهر هنا بتاريخ وفي شاشة تتبّع الطلب بتاريخ تاني. -->
+<script src="../js/date-format.js"></script>
+<!-- جدول مسار الطلب - التعريف الوحيد Core/RequestWorkflow.cs، بيوصل للبوابة
+     مع القاموس من /api/ui/i18n. الصفحة كانت كاتبة الجدول بنفسها. -->
+<script src="../js/request-workflow.js"></script>
 <link rel="stylesheet" href="../css/portal.css">
   <link rel="stylesheet" href="../css/portal-touch.css">
   <style>
@@ -16,13 +24,6 @@
 
 
 
-.portal-header{text-align:center;padding:28px 16px 0;width:100%;position:relative}
-.portal-header img{width:80px;height:auto;margin-bottom:10px}
-.portal-header h1{font-size:17px;font-weight:800;color:var(--navy-dark)}
-.lang-btn{position:absolute;top:12px;background:#fff;border:1px solid #dcdfe4;border-radius:6px;padding:6px 14px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;z-index:10}
-[dir="rtl"] .lang-btn{left:12px}
-[dir="ltr"] .lang-btn{right:12px}
-.lang-btn:hover{background:#f5f5f6}
 .content{max-width:860px}
 .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
 .page-header h2{font-size:20px;font-weight:800;color:var(--navy-dark)}
@@ -33,11 +34,18 @@ table{width:100%;border-collapse:collapse;font-size:13px}
 thead th{background:var(--gray-50);padding:11px 16px;text-align:right;font-size:11px;font-weight:600;color:var(--gray-500);border-bottom:1px solid var(--gray-100);text-transform:uppercase;letter-spacing:0.5px}
 tbody td{padding:13px 16px;border-bottom:1px solid var(--gray-100);color:var(--navy-dark);font-weight:500;vertical-align:middle}
 tbody tr:last-child td{border-bottom:none}
-tbody tr:hover{background:var(--gray-50)}
+tbody tr:hover{background:var(--row-hover)}
 .status-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
-.status-pending_supervisor{background:#fef0c7;color:#7a5c0b}
-.status-pending_cyber{background:#eff4ff;color:#175cd3}
-.status-pending_admin{background:#f4eefa;color:#80519f}
+/* ⚠️ الأصناف باسم المرحلة الموحّد (Core/RequestWorkflow.cs) لا بالحالة الخام:
+   pending_supervisor و submitted مرحلة واحدة، فلون واحد.
+   وقبل كده كان ready_for_provisioning و completed **بلا لون خالص** - الشارة
+   كانت تطلع رمادية بلا خلفية لأن الصنف مكانش معرَّف أصلًا. */
+.status-submitted{background:var(--gold-pale);color:var(--gold-dark)}
+.status-cyber_review{background:#eff4ff;color:#175cd3}
+.status-housing_approved{background:#eff4ff;color:#175cd3}
+.status-ready_for_provisioning{background:var(--purple-light);color:var(--purple)}
+.status-cyber_approved{background:var(--purple-light);color:var(--purple)}
+.status-completed{background:var(--green-light);color:var(--green)}
 .status-approved{background:var(--green-light);color:var(--green)}
 .status-rejected{background:var(--red-light);color:var(--red)}
 .status-need_more_info{background:#fffaeb;color:#b54708}
@@ -57,34 +65,39 @@ tbody tr:hover{background:var(--gray-50)}
 
 
 .empty-state{padding:48px;text-align:center;color:var(--gray-500);font-size:14px}
-@media(max-width:768px){.portal-header{padding:20px 16px 0}.portal-header img{width:64px}.portal-header h1{font-size:16px}.content{padding:16px}.card{overflow-x:auto}.page-header h2{font-size:18px}table{min-width:500px}}
+@media(max-width:768px){.content{padding:16px}.card{overflow-x:auto}.page-header h2{font-size:18px}table{min-width:500px}}
 @media(max-width:414px){.page-header h2{font-size:18px}thead th{padding:8px 10px;font-size:10px}tbody td{padding:10px;font-size:12px}.status-badge{font-size:10px;padding:2px 8px}.tl-bar{width:10px}}
-@media(max-width:375px){.content{padding:12px}.btn{padding:6px 10px;font-size:12px}.card{border-radius:12px}.empty-state{padding:32px 16px}.portal-header{padding:16px 12px 0}.portal-header img{width:56px}.portal-header h1{font-size:15px}}
+@media(max-width:375px){.content{padding:12px}.btn{padding:6px 10px;font-size:12px}.card{border-radius:12px}.empty-state{padding:32px 16px}}
 @media(max-width:320px){thead th{padding:6px 8px;font-size:9px}tbody td{padding:8px;font-size:11px}}
 </style>
 </head>
 <body>
 <div class="portal-header">
-<img src="../nu-logo.png" alt="جامعة نجران">
-<h1>بوابة الطلاب</h1>
-<button class="lang-btn" id="langBtn" onclick="toggleLang()">English</button>
+<img src="../nu-logo.svg" alt="جامعة نجران" data-i18n-alt="Brand_Sub">
+<h1 data-i18n="Brand_Title">بوابة الإسكان الجامعي</h1>
+<!-- ⚠️ data-i18n لا نصّ ثابت: الزرّ كان مكتوب فيه «English» بالإيد، فالطالب
+     اللي بدّل للإنجليزي كان بيلاقي صفحة إنجليزي وزرّ بيعرض عليه «English»
+     تاني - مفيش طريق راجع ظاهر للعربي. المفتاح pt_langToggle قيمته في
+     الملف العربي «English» وفي الإنجليزي «العربية»، يعني نصّه دايمًا اسم
+     اللغة اللي المستخدم رايح لها. -->
+<button class="lang-btn" id="langBtn" type="button" onclick="toggleLang()" data-i18n="pt_langToggle">English</button>
 </div>
 <div class="content">
 <div class="page-header">
 <div>
-<h2>طلبات التسجيل في الإسكان</h2>
-<p>جميع طلبات التسجيل المقدمة منك</p>
+<h2 data-i18n="pt_mrHead">طلبات التسجيل في الإسكان</h2>
+<p data-i18n="pt_mrSub">جميع طلبات التسجيل المقدمة منك</p>
 </div>
 <div style="display:flex;gap:8px">
-<a href="register-phone.html" class="btn btn-sm btn-primary">تسجيل جديد</a>
-<a href="index.html" class="btn btn-sm btn-outline">العودة</a>
+<a href="register-phone.html" class="btn btn-sm btn-primary" data-i18n="pt_mrNew">تسجيل جديد</a>
+<a href="index.html" class="btn btn-sm btn-outline" data-i18n="pt_back">العودة</a>
 </div>
 </div>
 <div class="card card-flush">
 <table>
-<thead><tr><th>رقم الطلب</th><th>الحالة</th><th>تاريخ التقديم</th><th></th><th></th></tr></thead>
+<thead><tr><th data-i18n="pt_mrColNumber">رقم الطلب</th><th data-i18n="pt_mrColStatus">الحالة</th><th data-i18n="pt_mrColDate">تاريخ التقديم</th><th></th><th></th></tr></thead>
 <tbody id="requestsBody">
-<tr><td colspan="5" class="empty-state">جاري التحميل...</td></tr>
+<tr><td colspan="5" class="empty-state" data-i18n="pt_loading">جاري التحميل...</td></tr>
 </tbody>
 </table>
 </div>
@@ -94,41 +107,78 @@ setLang(localStorage.getItem('uiLanguage') || 'ar');
 function toggleLang() { applyLang(window.currentLang === 'ar' ? 'en' : 'ar'); }
 var token = localStorage.getItem('studentToken');
 
-var STAGES = [
-  { label: 'تم تقديم الطلب' },
-  { label: 'تمت موافقة إدارة الإسكان' },
-  { label: 'تمت مراجعة إدارة الأمن السيبراني' },
-  { label: 'جاري إنشاء حساب شبكة السكن' },
-  { label: 'مكتمل' }
-];
+// ==========================================================================
+//  حالة الطلب كما يراها الطالب.
+//
+//  ⚠️ الصفحة دي كانت كاتبة جدول المراحل بنفسها (PROGRESS_MAP) بسبع حالات،
+//     والنظام عنده تسعة. الحالات الناقصة - cyber_review و cyber_approved
+//     و housing_approved و housing_rejected و cyber_rejected و submitted -
+//     كانت بتقع في السطر الأخير وتتطبع للطالب **زي ما هي**: كود قاعدة
+//     البيانات cyber_review في خانة الحالة. وشاشة تتبّع الطلب - على بُعد
+//     دوسة واحدة - كانت بتترجمها صح، فالطالب يشوف نفس الطلب بحالتين.
+//
+//  ⚠️ وكانت أرقام المراحل نفسها مفارِقة للخادم: pending_supervisor عند
+//     الخادم خطوة ١ وهنا كانت صفر. نفس الغلط اللي اتصلّح في شاشات الموظفين
+//     (الشرح في js/request-workflow.js) كان لسه عايش هنا.
+//
+//  الجدول دلوقتي بيتقرا من Core/RequestWorkflow.cs عبر NuhWorkflow، والنصّ
+//  من Resources/*.resx. أي مرحلة تتضاف بكرة بتوصل للطالب من غير لمس الملف ده.
+// ==========================================================================
 
-var PROGRESS_MAP = {
-  pending_supervisor: { progress: 0, label: 'بانتظار موافقة إدارة الإسكان', icon: '⏳' },
-  pending_cyber: { progress: 1, label: 'بانتظار مراجعة إدارة الأمن السيبراني', icon: '⏳' },
-  ready_for_provisioning: { progress: 2, label: 'جاري إنشاء حساب شبكة السكن', icon: '⏳' },
-  completed: { progress: 4, label: 'مكتمل', icon: '✅' },
-  approved: { progress: 4, label: 'مكتمل', icon: '✅' },
-  rejected: { progress: -1, label: 'مرفوض', icon: '❌' },
-  need_more_info: { progress: 0, label: 'بانتظار موافقة إدارة الإسكان', icon: '⏳' }
-};
+// اسم المرحلة الموحّد: pending_supervisor و submitted مرحلة واحدة باسمين.
+function stageName(status) {
+  // ⚠️ الرفض له تلات أسماء في النظام (rejected / housing_rejected /
+  //    cyber_rejected) وهو عند الطالب موقف واحد. القائمة من الخادم
+  //    (Aliases("rejected")) لا مكتوبة هنا - من غير السطر ده كان الطالب
+  //    المرفوض من الأمن السيبراني يشوف نصًّا عامًّا مكان «مرفوض».
+  if (NuhWorkflow.isRejected(status)) return 'rejected';
+  return NuhWorkflow.canonical(status);
+}
+
+// ⚠️ النصّ بيرجع للمفتاح نفسه لو ماكانش في الـ resx - وساعتها بنعرض
+//    «قيد المعالجة» لا المفتاح ولا الكود الخام. ده ضمان إن الطالب مايشوفش
+//    كود قاعدة بيانات مهما اتضاف من حالات.
+function ptText(prefix, status) {
+  var key = prefix + stageName(status);
+  var v = t(key);
+  if (v !== key) return v;
+  var g = t(prefix + 'unknown');
+  return g !== (prefix + 'unknown') ? g : '';
+}
+
+function statusText(status) { return ptText('pt_status_', status); }
+
+// ⚠️ رقم الخطوة من الخادم (حقل Step) لا من جدول محلي. النقطة النشطة هي آخر
+//    محطة **اتحققت**، والخادم بيعدّ المرحلة اللي الطلب واقف فيها - فبنطرح
+//    واحد. والمكتمل استثناء: المحطة الأخيرة نفسها هي اللي اتحققت.
+function progressOf(status) {
+  if (NuhWorkflow.isRejected(status)) return -1;
+  var s = stageName(status);
+  if (s === 'completed' || s === 'approved') return 4;
+  var step = NuhWorkflow.stepOf(status);
+  return (typeof step === 'number') ? Math.max(0, step - 1) : 0;
+}
+
+function statusIcon(status) {
+  if (NuhWorkflow.isRejected(status)) return '❌';
+  var s = stageName(status);
+  return (s === 'completed' || s === 'approved') ? '✅' : '⏳';
+}
 
 function renderTimeline(status) {
-  var info = PROGRESS_MAP[status];
-  if (!info) return '<span class="status-badge">' + status + '</span>';
-  if (info.progress === -1) return '<span class="status-badge status-' + status + '">' + info.icon + ' ' + info.label + '</span>';
+  var progress = progressOf(status);
+  var cls = 'status-' + escHtml(stageName(status));
+  var badge = '<span class="status-badge ' + cls + '">' +
+              statusIcon(status) + ' ' + escHtml(statusText(status)) + '</span>';
+  if (progress === -1) return badge;
+
   var html = '<div class="tl">';
-  for (var i = 0; i < STAGES.length; i++) {
-    if (i > 0) {
-      var barCls = i <= info.progress ? ' done' : '';
-      html += '<div class="tl-bar' + barCls + '"></div>';
-    }
-    var isDone = i < info.progress;
-    var isActive = i === info.progress;
-    var dotCls = isDone ? 'done' : (isActive ? 'active' : '');
-    html += '<div class="tl-dot ' + dotCls + '"></div>';
+  for (var i = 0; i < 5; i++) {
+    if (i > 0) html += '<div class="tl-bar' + (i <= progress ? ' done' : '') + '"></div>';
+    var dotCls = i < progress ? 'done' : (i === progress ? 'active' : '');
+    html += '<div class="tl-dot ' + dotCls + '" title="' + escHtml(t('pt_stage_' + i)) + '"></div>';
   }
-  html += '</div>';
-  html += '<div style="margin-top:4px"><span class="status-badge status-' + status + '">' + info.icon + ' ' + info.label + '</span></div>';
+  html += '</div><div style="margin-top:4px">' + badge + '</div>';
   return html;
 }
 
@@ -143,21 +193,21 @@ async function loadRequests() {
     var data = await r.json();
     var tbody = document.getElementById('requestsBody');
     if (!data || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" class="empty-state">لا توجد طلبات</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="5" class="empty-state">' + escHtml(t('pt_mrEmpty')) + '</td></tr>';
       return;
     }
     tbody.innerHTML = data.map(function(req) {
-      var date = new Date(req.submittedAt).toLocaleDateString('ar-SA');
+      var date = NuhFmt.date(req.submittedAt);
       var editBtn = req.status === 'need_more_info'
-        ? '<a href="register-form.html?edit=' + req.id + '" class="btn btn-sm" style="background:var(--gold);color:var(--navy-dark)">تعديل وإعادة تقديم</a>'
+        ? '<a href="register-form.html?edit=' + req.id + '" class="btn btn-sm" style="background:var(--gold);color:var(--navy-dark)">' + escHtml(t('pt_mrEditResubmit')) + '</a>'
         : '';
       return '<tr><td><strong>' + req.requestNumber + '</strong></td>' +
         '<td>' + renderTimeline(req.status) + '</td>' +
         '<td>' + date + '</td>' +
         '<td>' + editBtn + '</td>' +
-        '<td><a href="track-request.html" class="btn btn-sm" onclick="showDetail(\'' + safeNum(req.requestNumber) + '\');return false">عرض</a></td></tr>';
+        '<td><a href="track-request.html" class="btn btn-sm" onclick="showDetail(\'' + safeNum(req.requestNumber) + '\');return false">' + escHtml(t('pt_mrView')) + '</a></td></tr>';
     }).join('');
-  } catch(e) { document.getElementById('requestsBody').innerHTML = '<tr><td colspan="5" class="empty-state">تعذر التحميل</td></tr>'; }
+  } catch(e) { document.getElementById('requestsBody').innerHTML = '<tr><td colspan="5" class="empty-state">' + escHtml(t('pt_loadFailed')) + '</td></tr>'; }
 }
 
 // أرقام الطلبات بصيغة 2026-000004 — أي شيء خارجها ما يتحطّش في onclick
@@ -172,7 +222,12 @@ function showDetail(number) {
   try { localStorage.setItem('openRequestNumber', String(number || '')); } catch (e) {}
   window.location.href = 'track-request.html';
 }
-loadRequests();
+// ⚠️ الرسم بيستنّى القاموس وجدول المسار: البوابة بتجيبهم بـ fetch، ولو
+//    رسمنا قبلهم الطالب هيشوف مفاتيح خام مكان أسماء المراحل.
+(window.__i18nReady || Promise.resolve()).then(loadRequests);
+
+// إعادة الرسم عند تبديل اللغة أو التقويم - الصفوف مرسومة خلاص.
+window.onLanguageChange = function () { loadRequests(); };
 </script>
 
 <!-- ===== إنهاء الجلسة عند الخمول =====
@@ -185,7 +240,10 @@ NuhIdle.start({
   warnSeconds: 120,
   showExpiredPanel: true,          // تبقى الرسالة على الشاشة بدل تحويل صامت
   homeUrl: 'index.html',
-  homeLabel: 'العودة لبوابة الطلاب',
+  // ⚠️ مفتاح لا t('...'): السطر ده بيتنفّذ وقت تحليل السكربت، والقاموس
+  //    لسه بيتجاب بـ fetch - فـ t() كانت بترجّع «pt_backToPortal» نفسها
+  //    وتتكتب على الزرّ. NuhIdle بقت هي اللي بتترجم وقت العرض.
+  homeLabelKey: 'pt_backToPortal',
   pingHeaders: function () {
     var t = localStorage.getItem('studentToken');
     return t ? { 'Authorization': 'Bearer ' + t } : {};

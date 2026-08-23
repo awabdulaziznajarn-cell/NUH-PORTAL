@@ -13,7 +13,51 @@
 var NuhWorkflow = (function () {
   'use strict';
 
-  function table() { return Array.isArray(window.__WF) ? window.__WF : []; }
+  // ⚠️ __WF بقى كائن { transitions, rejected } مش مصفوفة. مفيش احتياطي
+  //    للشكل القديم عن قصد: الاحتياطي بيخلّي نصف الصفحات تشتغل بالقديم
+  //    ونصفها بالجديد، وده أصعب في الاكتشاف من عطل صريح.
+  function wf() { return window.__WF || {}; }
+  function table() { var t = wf().transitions; return Array.isArray(t) ? t : []; }
+
+  // ==========================================================================
+  //  رقم خطوة المرحلة في مؤشّر «سير العمل».
+  //
+  //  ⚠️ الرقم ده موجود على الخادم من الأول في حقل Step جوّه نفس جدول
+  //     الانتقالات — ومع ذلك كانت شاشة التفاصيل كاتبة خريطة تانية بالإيد
+  //     (stageToWorkflowStep). والاتنين اتفارقوا فعلًا:
+  //
+  //        الحالة              الخادم   الواجهة
+  //        submitted             1        0      ← اختلاف حقيقي
+  //        housing_approved      2        1      ← اختلاف حقيقي
+  //        pending_supervisor    1        1
+  //        cyber_review          2        2
+  //
+  //     يعني طلب مقدَّم كان المؤشّر بيوقف على «تم تقديم الطلب» بينما الخادم
+  //     شايفه في مرحلة «بانتظار مراجعة الإسكان» — والشارة فوقه بتقول كده.
+  //
+  //  ⚠️ المراحل النهائية (مكتمل/معتمد) والحالة «بيانات ناقصة» مالهاش انتقال في
+  //     الجدول لأنها مش نقطة قرار، فأرقامها هنا — ودي كل ما تبقّى من الخريطة.
+  var TERMINAL_STEP = { completed: 4, approved: 4, need_more_info: 1 };
+
+  function stepOf(status) {
+    var s = String(status || '').toLowerCase();
+    var row = forStatus(s);
+    if (row && typeof row.step === 'number') return row.step;
+    return TERMINAL_STEP[s];      // undefined لو الحالة مش معروفة — والنداء بيقرر
+  }
+
+  // «هل الحالة دي مرفوضة؟» — القائمة من الخادم لا مكتوبة هنا.
+  //    ⚠️ شاشة التفاصيل كانت بتسألها بـ indexOf('rejected') — فحص نصّي بيمسك
+  //       أي حالة فيها الكلمة، ويسكت لو اتغيّر الاسم.
+  function isRejected(status) {
+    var s = String(status || '').toLowerCase();
+    var list = wf().rejected;
+    if (!Array.isArray(list)) return false;
+    for (var i = 0; i < list.length; i++) {
+      if (String(list[i]).toLowerCase() === s) return true;
+    }
+    return false;
+  }
 
   // بيانات الانتقال من حالة معيّنة، أو null إن كانت مرحلة مقفولة (مكتمل/مرفوض)
   function forStatus(status) {
@@ -24,6 +68,27 @@ var NuhWorkflow = (function () {
     }
     return null;
   }
+
+  // ==========================================================================
+  //  الاسم الواحد للمرحلة الواحدة — نفس RequestWorkflow.Canonical على الخادم.
+  //
+  //  ⚠️ الشاشات كانت بتبني مفتاح الترجمة وصنف الـ CSS من الحالة الخام
+  //     ('req_badge_' + status)، فطلبان واقفان في نفس المرحلة بالظبط ظهروا في
+  //     نفس الجدول بنصّين ولونين (pending_cyber مقابل cyber_review) — والموظف
+  //     بيقراهما حالتين مختلفتين. التسمية بقت تمرّ من هنا.
+  //
+  //  ⚠️ والمسمّيات نفسها مش مكتوبة هنا: القراءة من حقل sameStageAs في الجدول
+  //     المحقون من الخادم، فما فيش قائمة في الواجهة تقدر تفارق الجدول.
+  // ==========================================================================
+  function canonical(status) {
+    var s = String(status || '').toLowerCase();
+    var row = forStatus(s);
+    var same = row && row.sameStageAs;
+    return same ? String(same).toLowerCase() : s;
+  }
+
+  function badgeKey(status) { return 'req_badge_' + canonical(status); }
+  function stageKey(status) { return 'req_stage_' + canonical(status); }
 
   // هل يملك المستخدم صلاحية التصرّف في هذه المرحلة؟
   // hasPerm دالة يمرّرها كل شاشة لأن مصدر الصلاحيات يختلف بينها.
@@ -73,6 +138,11 @@ var NuhWorkflow = (function () {
 
   return {
     forStatus: forStatus,
+    isRejected: isRejected,
+    stepOf: stepOf,
+    canonical: canonical,
+    badgeKey: badgeKey,
+    stageKey: stageKey,
     canAct: canAct,
     endpointFor: endpointFor,
     labelKey: labelKey

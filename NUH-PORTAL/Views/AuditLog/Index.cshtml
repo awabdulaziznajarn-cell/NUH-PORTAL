@@ -21,7 +21,7 @@
   .badge-blue{background:#eff4ff;color:#166a45}
   .badge-red{background:var(--red-light);color:var(--red)}
   .badge-orange{background:#fffaeb;color:#93370d}
-  .badge-purple{background:#f4eefa;color:#80519f}
+  .badge-purple{background:var(--purple-light);color:var(--purple)}
   .badge-darkred{background:#fef3f2;color:#912018}
   .empty-state{text-align:center;padding:60px 20px;color:var(--gray-500)}
   .empty-state .empty-icon{font-size:48px;margin-bottom:12px}
@@ -31,7 +31,6 @@
   .modal{background:var(--white);border-radius:16px;padding:28px;min-width:360px;max-width:480px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,.15);position:relative}
   .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
   .modal-title{font-size:16px;font-weight:700;color:var(--navy-dark)}
-  .modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--gray-500);padding:4px;line-height:1}
   .modal-row{display:flex;flex-direction:column;gap:2px;margin-bottom:12px}
   .modal-row-label{font-size:11px;font-weight:600;color:var(--gray-500)}
   .modal-row-value{font-size:14px;font-weight:500;color:var(--navy-dark)}
@@ -45,23 +44,23 @@
 
 <div class="filters-bar">
   <div class="filter-group">
-    <label >@SharedLocalizer["aud_lblUser"]</label>
+    <label for="userFilter">@SharedLocalizer["aud_lblUser"]</label>
     <select id="userFilter"><option value="" >@SharedLocalizer["aud_optAll"]</option></select>
   </div>
   <div class="filter-group">
-    <label >@SharedLocalizer["aud_lblAction"]</label>
+    <label for="actionFilter">@SharedLocalizer["aud_lblAction"]</label>
     <select id="actionFilter"></select>
   </div>
   <div class="filter-group">
-    <label >@SharedLocalizer["aud_lblFromDate"]</label>
+    <label for="fromDate">@SharedLocalizer["aud_lblFromDate"]</label>
     <input type="date" id="fromDate">
   </div>
   <div class="filter-group">
-    <label >@SharedLocalizer["aud_lblToDate"]</label>
+    <label for="toDate">@SharedLocalizer["aud_lblToDate"]</label>
     <input type="date" id="toDate">
   </div>
   <div class="filter-group">
-    <label >@SharedLocalizer["aud_lblSearch"]</label>
+    <label for="searchBox">@SharedLocalizer["aud_lblSearch"]</label>
     <input type="text" id="searchBox" placeholder="">
   </div>
   <button class="export-btn" id="exportBtn">⬇ <span >@SharedLocalizer["aud_exportBtn"]</span></button>
@@ -74,7 +73,7 @@
 <div id="unitChipWrap" style="display:none;margin:-6px 0 14px">
   <span class="unit-chip">
     <span >@SharedLocalizer["aud_lblUnit"]</span>:&nbsp;<b id="unitChipName"></b>
-    <button type="button" id="unitChipClear" title="@SharedLocalizer["aud_clearUnit"]">&times;</button>
+    <button type="button" id="unitChipClear" title="@SharedLocalizer["aud_clearUnit"]" aria-label="@SharedLocalizer["close"]"><span aria-hidden="true">&times;</span></button>
   </span>
 </div>
 
@@ -87,15 +86,19 @@
 
 <div class="card">
   <div style="overflow-x:auto">
-    <table>
+    <table id="audTable">
       <thead>
         <tr>
           <th>#</th>
-          <th class="sortable" onclick="sortByColumn('user')">@SharedLocalizer["aud_col_user"]<span class="sort-ind" id="sort-user"></span></th>
-          <th class="sortable" onclick="sortByColumn('action')">@SharedLocalizer["aud_col_action"]<span class="sort-ind" id="sort-action"></span></th>
-          <th class="sortable" onclick="sortByColumn('table')">@SharedLocalizer["aud_col_table"]<span class="sort-ind" id="sort-table"></span></th>
-          <th class="sortable" onclick="sortByColumn('targetid')">@SharedLocalizer["aud_col_targetId"]<span class="sort-ind" id="sort-targetid"></span></th>
-          <th class="sortable" onclick="sortByColumn('date')">@SharedLocalizer["aud_col_date"]<span class="sort-ind" id="sort-date"></span></th>
+          <th data-sort="user">@SharedLocalizer["aud_col_user"]</th>
+          <th data-sort="action">@SharedLocalizer["aud_col_action"]</th>
+          <th data-sort="table">@SharedLocalizer["aud_col_table"]</th>
+          @* ⚠️ الترتيب لسه على الرقم لا على الاسم: الاسم بيتحلّ في الذاكرة
+             بعد ما الصفحة تتجاب من قاعدة البيانات، فترتيب عليه كان هيرتّب
+             الخمسين صف اللي قدامك بس لا السجل كله. والترتيب بالرقم بيجمّع
+             صفوف نفس الهدف جنب بعض وهو المطلوب منه أصلًا. *@
+          <th data-sort="targetid">@SharedLocalizer["aud_col_targetId"]</th>
+          <th data-sort="date">@SharedLocalizer["aud_col_date"]</th>
         </tr>
       </thead>
       <tbody id="log-tbody">
@@ -105,29 +108,16 @@
   </div>
 </div>
 
-<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-top:16px;padding:0 4px">
-  <div style="display:flex;align-items:center;gap:8px">
-    <span style="font-size:13px;color:var(--gray-500)" >@SharedLocalizer["aud_show"]</span>
-    <select id="pageSizeSelect" style="padding:6px 10px;border:1px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:13px;background:var(--white);color:var(--navy-dark);cursor:pointer">
-      <option value="50">50</option>
-      <option value="100">100</option>
-      <option value="200">200</option>
-    </select>
-    <span style="font-size:13px;color:var(--gray-500)" >@SharedLocalizer["aud_entries"]</span>
-  </div>
-  <div style="display:flex;align-items:center;gap:8px">
-    <span id="totalRecordsLabel" style="font-size:13px;color:var(--gray-500)"></span>
-    <button id="prevPageBtn" class="btn btn-cancel" disabled >@SharedLocalizer["aud_prev"]</button>
-    <span id="pageIndicator" style="font-size:13px;font-weight:600;color:var(--navy-dark);min-width:60px;text-align:center">1 / 1</span>
-    <button id="nextPageBtn" class="btn btn-cancel" disabled >@SharedLocalizer["aud_next"]</button>
-  </div>
-</div>
+@* ⚠️ صفّ الترقيم بقى من NuhTable.pager - النسخة الوحيدة في النظام
+   (wwwroot/js/table-state.js). كان مبنيًّا هنا بالكامل بستايل مضمّن مختلف عن
+   شاشة الطلبات وعن شاشة إسكان أعضاء هيئة التدريس - تلات أشكال لنفس الزرّين. *@
+<div id="audPager"></div>
 
 <div class="modal-overlay" id="detailModal">
   <div class="modal">
     <div class="modal-header">
       <div class="modal-title" >@SharedLocalizer["aud_modalTitle"]</div>
-      <button class="modal-close" id="modalCloseBtn">&times;</button>
+      <button class="modal-close" id="modalCloseBtn" aria-label="@SharedLocalizer["close"]"><span aria-hidden="true">&times;</span></button>
     </div>
     <div class="modal-body">
       <div class="modal-row"><span class="modal-row-label" >@SharedLocalizer["aud_modalUser"]</span><span class="modal-row-value" id="modalUser"></span></div>
@@ -145,6 +135,9 @@
 
 @section Scripts {
 <script src="/i18n.js"></script>
+@* ⚠️ NuhAudit (audit-labels.js) بيتحمّل من _Layout مش من هنا. كان متحمَّل
+   في الشاشة دي وحدها، وشاشة سكن أعضاء هيئة التدريس بتناديه كمان — فكانت
+   بترمي «NuhAudit is not defined». التحميل بقى في مكان واحد للشاشتين. *@
 <script>
   // ⚠️ اسم الإجراء من NuhAudit لا من سلسلة هنا: نافذة سجل الوحدة في سكن أعضاء
   //    هيئة التدريس تعرض الأسماء نفسها، فلو تُرجمت في الملفين لتُرجمت في
@@ -181,25 +174,19 @@
     return map[action] || '';
   }
 
-  function formatDate(dateStr) {
-    if (!dateStr) return '';
-    var d = new Date(dateStr);
-    if (isNaN(d.getTime())) return '';
-    var y = d.getFullYear();
-    var mo = String(d.getMonth() + 1).padStart(2, '0');
-    var da = String(d.getDate()).padStart(2, '0');
-    var h = String(d.getHours()).padStart(2, '0');
-    var mi = String(d.getMinutes()).padStart(2, '0');
-    return da + '/' + mo + '/' + y + ' ' + h + ':' + mi;
-  }
+  // شكل التاريخ من NuhFmt — التعريف الوحيد في /js/date-format.js
+  function formatDate(v) { return NuhFmt.dateTime(v); }
 
+  // ⚠️ «تسجيل الدخول» و«تسجيل الخروج» ليسا هنا: لهما شاشة مستقلة (سجل الدخول
+  //    والخروج) تقرأ من جدول SignInLogs، وهو أغنى - يسجّل المحاولات الفاشلة
+  //    باسم المستخدم المُدخَل ووسيلة الدخول (الدليل النشط أو محلّي)، وهذا كلّه
+  //    لا يظهر في سجل العمليات. وجودهما في الفلترتين يعني قائمتين لنفس الحدث
+  //    تختلفان في التفاصيل، فيقرأ الموظف الأفقر منهما ويظنّها الكاملة.
   var actionFilterOptions = [
     { value: '', i18n: 'aud_filterAll' },
-    { value: 'login', i18n: 'aud_filterLogin' },
     { value: 'student', i18n: 'aud_filterStudent' },
     { value: 'request', i18n: 'aud_filterRequest' },
     { value: 'password', i18n: 'aud_filterPassword' },
-    { value: 'logout', i18n: 'aud_filterLogout' },
     { value: 'ad', i18n: 'aud_filterAd' },
     { value: 'faculty', i18n: 'aud_filterFaculty' }
   ];
@@ -233,13 +220,14 @@
     unitFilter.id = null;
     unitFilter.name = '';
     renderUnitChip();
-    // ننظّف العنوان أيضًا وإلا عاد الفلتر مع أول تحديث للصفحة
-    history.replaceState(null, '', window.location.pathname);
+    // ⚠️ نشيل مفاتيح الوحدة وحدها لا الرابط كله: بقى فيه فلاتر الشاشة
+    //    التانية في نفس الرابط، ومسحه كان هيمسح بحث الموظف وتواريخه معاه.
+    NuhUrl.sync({ unit: '', unitName: '', group: '' }, {});
     loadLogs(1, currentPageSize);
   }
 
-  var currentPage = 1;
-  var currentPageSize = 50;
+  var currentPage = NuhUrl.int('page', 1, 1);
+  var currentPageSize = NuhUrl.int('size', 50, 1);
 
   // ⚠️ أول صفحة والعدادات وقائمة الفلتر جايين مع الـ HTML من AuditLogController.
   //    الشاشة كانت بتبعت نداءين تانيين بعد ما تتحمّل عشان ترسم أول صف — رحلتين
@@ -251,8 +239,6 @@
   var totalRecords = 0;
   var cachedData = null;
   var dataLoaded = false;
-  var currentSortBy = '';
-  var currentSortAsc = false;
 
   function getFilters() {
     return {
@@ -264,25 +250,42 @@
     };
   }
 
+  // ==========================================================================
+  //  الفلاتر في الرابط لا في تخزين المتصفح - NuhUrl في js/url-state.js.
+  //
+  //  ⚠️ كانت في localStorage بستّ مفاتيح (auditUserId وأخواتها)، وده كان
+  //     بيدّي تلات مشاكل:
+  //       • الفلتر بيتسرّب: تبويب تاني في نفس المتصفح بيفتح بفلتر ما حدّش
+  //         طلبه فيه، والموظف بيقرا نتيجة مفلترة على إنها الكل.
+  //       • الرابط ما بيتبعتش: «بص على عمليات فلان الأسبوع ده» كان شرحًا
+  //         شفهيًا لخطوات، مش لينك.
+  //       • ورقم الصفحة ما كانش محفوظ أصلًا، فالرجوع كان بيرجّع الفلاتر
+  //         ويرمي الصفحة - وده أسوأ من ضياعهم كلهم لأنه بيبان صح.
+  //     دلوقتي المصدر واحد: الرابط. زي كل شاشة تانية في النظام.
+  //
+  //  ⚠️ وفلتر الوحدة (unit) كان أصلًا بيتقرا من الرابط - فبقى الاتنين في
+  //     نفس المكان بدل مصدرين على نفس الشاشة.
+  // ==========================================================================
+  var AUD_DEFAULTS = { page: 1, size: 50, user: '', group: '', from: '', to: '', q: '', sort: '', asc: '' };
+
   function saveFilters() {
     var f = getFilters();
-    localStorage.setItem('auditUserId', f.userId);
-    localStorage.setItem('auditActionGroup', f.actionGroup);
-    localStorage.setItem('auditFromDate', f.fromDate);
-    localStorage.setItem('auditToDate', f.toDate);
-    localStorage.setItem('auditSearch', f.search);
-    localStorage.setItem('auditPageSize', String(currentPageSize));
+    NuhUrl.sync({
+      page: currentPage, size: currentPageSize,
+      user: f.userId, group: f.actionGroup,
+      from: f.fromDate, to: f.toDate, q: f.search,
+      sort: audSort.by(), asc: audSort.by() ? (audSort.asc() ? '1' : '0') : ''
+    }, AUD_DEFAULTS);
   }
 
   function restoreFilters() {
-    document.getElementById('userFilter').value = localStorage.getItem('auditUserId') || '';
-    document.getElementById('actionFilter').value = localStorage.getItem('auditActionGroup') || '';
-    document.getElementById('fromDate').value = localStorage.getItem('auditFromDate') || '';
-    document.getElementById('toDate').value = localStorage.getItem('auditToDate') || '';
-    document.getElementById('searchBox').value = localStorage.getItem('auditSearch') || '';
-    var ps = parseInt(localStorage.getItem('auditPageSize')) || 50;
-    currentPageSize = ps;
-    document.getElementById('pageSizeSelect').value = String(ps);
+    document.getElementById('userFilter').value = NuhUrl.get('user', '');
+    document.getElementById('actionFilter').value = NuhUrl.get('group', '');
+    document.getElementById('fromDate').value = NuhUrl.date('from');
+    document.getElementById('toDate').value = NuhUrl.date('to');
+    document.getElementById('searchBox').value = NuhUrl.get('q', '');
+    // ⚠️ مفيش تعيين لقيمة قائمة عدد الصفوف هنا: القائمة بيرسمها صفّ الترقيم
+    //    بعد أول نداء، وبتاخد المختار من currentPageSize نفسه.
   }
 
   function buildUrl(p, ps) {
@@ -294,24 +297,14 @@
     if (f.toDate) url += '&toDate=' + encodeURIComponent(f.toDate);
     if (f.search) url += '&search=' + encodeURIComponent(f.search);
     if (unitFilter.id) url += '&facultyUnitId=' + unitFilter.id;
-    if (currentSortBy) url += '&sortBy=' + encodeURIComponent(currentSortBy) + '&sortAsc=' + currentSortAsc;
+    url += audSort.qs();
     return url;
   }
 
-  // ترتيب الأعمدة: أول ضغطة تصاعدي، وتكرار الضغط يعكس الاتجاه (السيرفر بيرتّب على كل السجلات مش الصفحة بس)
-  function sortByColumn(field) {
-    if (currentSortBy === field) { currentSortAsc = !currentSortAsc; }
-    else { currentSortBy = field; currentSortAsc = true; }
-    updateSortIndicators();
-    loadLogs(1, currentPageSize);
-  }
-
-  function updateSortIndicators() {
-    ['user', 'action', 'table', 'targetid', 'date'].forEach(function (f) {
-      var el = document.getElementById('sort-' + f);
-      if (el) el.textContent = (currentSortBy === f) ? (currentSortAsc ? ' ▲' : ' ▼') : '';
-    });
-  }
+  // ترتيب الأعمدة كامل من نسخة واحدة في النظام - NuhTable.sort.
+  // (السيرفر بيرتّب على كل السجلات مش الصفحة اللي قدامك بس.)
+  var audSort = NuhTable.sort('audTable', function () { loadLogs(1, currentPageSize); },
+    { by: NuhUrl.get('sort', ''), asc: NuhUrl.get('asc', '1') === '1' });
 
   function rebuildActionFilter() {
     var sel = document.getElementById('actionFilter');
@@ -343,22 +336,35 @@
     document.getElementById('modalUser').textContent = (record.user && (record.user.full_name || record.user.username)) || record.user_id;
     document.getElementById('modalAction').innerHTML = badgeIcon(record.action) + ' ' + escHtml(translateAction(record.action));
     document.getElementById('modalTable').textContent = record.target_table || '';
-    document.getElementById('modalTargetId').textContent = String(record.target_id || '');
+    // نفس قاعدة الجدول: الاسم في النصّ والرقم في التلميح
+    // نفس قاعدة الجدول: الاسم ومعاه حساب الدومين، والرقم في التلميح
+    var tgt = document.getElementById('modalTargetId');
+    tgt.innerHTML = escHtml(record.target_name || String(record.target_id || '')) +
+      (record.target_sub ? ' <bdi class="fh-acct">' + escHtml(record.target_sub) + '</bdi>' : '');
+    tgt.title = String(record.target_id || '');
     document.getElementById('modalDate').textContent = formatDate(record.action_at);
     var changesDiv = document.getElementById('modalChangesRow');
     var changesContent = document.getElementById('modalChangesContent');
     if (record.changes && record.changes.length > 0) {
       changesDiv.style.display = '';
-      changesContent.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:12px">' +
-        '<tr style="background:var(--gray-100)"><th style="padding:6px 8px;text-align:start;font-weight:600">' + t('aud_changeField') +
-        '</th><th style="padding:6px 8px;text-align:start;font-weight:600">' + t('aud_changeOldValue') +
-        '</th><th style="padding:6px 8px;text-align:start;font-weight:600">' + t('aud_changeNewValue') + '</th></tr>' +
+      // ⚠️ الجدول كان مبنيًّا بستايلات inline مكتوبة في السطور دي: عرض وحشو
+      //    وألوان — نسخة تالتة من نفس المكوّن اللي في تفاصيل الطلب وسجل وحدات
+      //    أعضاء هيئة التدريس. بقى .chg-tbl و.chg-old و.chg-new من
+      //    css/components.css، فأي تعديل في شكل «كانت كذا وبقت كذا» بيوصل
+      //    للتلاتة مرة واحدة.
+      changesContent.innerHTML = '<table class="chg-tbl">' +
+        '<tr><th>' + t('aud_changeField') +
+        '</th><th>' + t('aud_changeOldValue') +
+        '</th><th>' + t('aud_changeNewValue') + '</th></tr>' +
         record.changes.map(function (c) {
           // ⚠️ اسم الحقل كان يُطبع خامًا: «NationalId» و«Mobile» في شاشة عربية.
           //    من يُطلب منه تقرير مساءلة كان يقرأ أسماء أعمدة قاعدة بيانات.
-          return '<tr style="border-bottom:1px solid var(--gray-100)"><td style="padding:6px 8px;font-weight:500">' + escHtml(NuhAudit.fieldText(c.fieldName)) +
-            '</td><td style="padding:6px 8px;color:var(--red)">' + escHtml(NuhAudit.valueText(c.oldValue)) +
-            '</td><td style="padding:6px 8px;color:var(--green)">' + escHtml(NuhAudit.valueText(c.newValue)) + '</td></tr>';
+          return '<tr><td>' + escHtml(NuhAudit.fieldText(c.fieldName)) +
+            @* ⚠️ اسم الحقل بيتبعت مع القيمة عشان قيم الـ enum تتترجم - نفس
+               اللي بيحصل في نافذة سجل الوحدة. من غيره الشاشتين بيعرضوا نفس
+               السطر بشكلين. *@
+            '</td><td><span class="chg-old">' + escHtml(NuhAudit.valueText(c.oldValue, c.fieldName)) +
+            '</span></td><td><span class="chg-new">' + escHtml(NuhAudit.valueText(c.newValue, c.fieldName)) + '</span></td></tr>';
         }).join('') + '</table>';
     } else {
       changesDiv.style.display = 'none';
@@ -383,7 +389,14 @@
         '</td><td>' + escHtml((l.user && (l.user.full_name || l.user.username)) || l.user_id) +
         '</td><td><span class="badge ' + badgeClass(l.action) + '">' + badgeIcon(l.action) + ' ' + escHtml(translateAction(l.action)) + '</span>' +
         '</td><td>' + escHtml(l.target_table || '') +
-        '</td><td>' + escHtml(String(l.target_id || '')) +
+        @* ⚠️ الاسم لا الرقم: الخادم بيحلّ (جدول + رقم) لاسم مقروء
+           (AuditLogQueryService.ResolveTargetNamesAsync) - «برج 6 - شقة 20»
+           بدل «53». والرقم فضل موجود كـ title لمن يحتاجه في تتبّع تقني. *@
+        '</td><td title="' + escHtml(String(l.target_id || '')) + '">' +
+          escHtml(l.target_name || String(l.target_id || '')) +
+          @* ⚠️ حساب الدومين جنب الاسم في <bdi>: نصّ لاتيني جوّه خانة عربية
+             بيتقلب ترتيبه من غير عزل. وهو نفس شكل .fh-acct في شاشة الوحدات. *@
+          (l.target_sub ? ' <bdi class="fh-acct">' + escHtml(l.target_sub) + '</bdi>' : '') +
         '</td><td>' + formatDate(l.action_at) +
         '</td></tr>';
     }).join('');
@@ -428,7 +441,7 @@
   function useServerFirstPage() {
     if (!FIRST_PAGE || !FIRST_PAGE.data) return false;
     if (currentPageSize !== FIRST_PAGE_SIZE) return false;
-    if (currentSortBy) return false;
+    if (audSort.by()) return false;
     var f = getFilters();
     if (f.userId || f.actionGroup || f.action || f.fromDate || f.toDate || f.search) return false;
 
@@ -443,10 +456,15 @@
   }
 
   function updatePagination(recs) {
-    document.getElementById('pageIndicator').textContent = currentPage + ' / ' + (totalPages || 1);
-    document.getElementById('prevPageBtn').disabled = currentPage <= 1;
-    document.getElementById('nextPageBtn').disabled = currentPage >= totalPages;
-    document.getElementById('totalRecordsLabel').textContent = t('aud_totalRecordsFmt').replace('{0}', recs);
+    NuhTable.pager('audPager',
+      { page: currentPage, pageSize: currentPageSize, total: recs, totalPages: totalPages || 1 },
+      {
+        summary: t('aud_totalRecordsFmt').replace('{0}', recs),
+        prev: t('aud_prev'), next: t('aud_next'),
+        sizePrefix: t('aud_show'), sizeSuffix: t('aud_entries')
+      },
+      function (p) { loadLogs(p, currentPageSize); },
+      { sizes: [50, 100, 200], onSize: function (n) { loadLogs(1, n); } });
   }
 
   function updateStats(stats) {
@@ -469,6 +487,9 @@
       if (f.search) qs.push('search=' + encodeURIComponent(f.search));
       // ⚠️ نفس نطاق الشاشة بالضبط: تصديرٌ يخالف ما يُعرض تقريرٌ كاذب.
       if (unitFilter.id) qs.push('facultyUnitId=' + unitFilter.id);
+      // ⚠️ وتقويم العرض كمان — نفس القاعدة: الشاشة هجرية والملف ميلادي
+      //    يخالف ما يُعرض بنفس القدر.
+      qs.push('calendar=' + encodeURIComponent(NuhFmt.mode()));
       if (qs.length) url += '?' + qs.join('&');
 
       var res = await fetch(url, { headers: NUH.headers() });
@@ -485,15 +506,8 @@
     } catch (e) { }
   }
 
-  document.getElementById('prevPageBtn').addEventListener('click', function () {
-    if (currentPage > 1) loadLogs(currentPage - 1, currentPageSize);
-  });
-  document.getElementById('nextPageBtn').addEventListener('click', function () {
-    if (currentPage < totalPages) loadLogs(currentPage + 1, currentPageSize);
-  });
-  document.getElementById('pageSizeSelect').addEventListener('change', function () {
-    loadLogs(1, parseInt(this.value));
-  });
+  // ⚠️ مفيش مستمعات للسابق/التالي/عدد الصفوف هنا: صفّ الترقيم بيربطها بنفسه
+  //    وقت الرسم (NuhTable.pager)، فلو اتكتبت هنا كمان هتشتغل مرتين.
   document.getElementById('userFilter').addEventListener('change', onFilterChange);
   document.getElementById('actionFilter').addEventListener('change', onFilterChange);
   document.getElementById('fromDate').addEventListener('change', onFilterChange);
@@ -523,8 +537,13 @@
   renderUnitChip();
   document.getElementById('unitChipClear').addEventListener('click', clearUnitFilter);
   setLang(localStorage.getItem('uiLanguage') || 'ar');
-  updateSortIndicators();
-  if (!useServerFirstPage()) loadLogs(1, currentPageSize);
+  // ⚠️ أول صفحة جاهزة من الخادم - بس هي صفحة ١ بلا فلاتر. لو الرابط فيه
+  //    حالة فعلًا فالمعروض غلط ولازم نداء حقيقي.
+  var audHasUrlState = !!(NuhUrl.get('user', '') || NuhUrl.get('group', '') ||
+                          NuhUrl.date('from') || NuhUrl.date('to') || NuhUrl.get('q', '') ||
+                          NuhUrl.get('sort', '') || currentPage > 1 || currentPageSize !== 50 ||
+                          unitFilter.id);
+  if (audHasUrlState || !useServerFirstPage()) loadLogs(currentPage, currentPageSize);
   if (FIRST_USERS) populateUserFilter(FIRST_USERS); else loadAuditUsers();
 </script>
 }

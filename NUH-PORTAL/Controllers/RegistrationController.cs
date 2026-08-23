@@ -23,6 +23,22 @@ namespace NUH_PORTAL.Controllers
             return Ok(new { message = result.Message, requestId = result.RequestId, requestNumber = result.RequestNumber });
         }
 
+        // ====================================================================
+        //  GET api/Registration/pledge — بنود التعهّد وبصمتها.
+        //
+        //  ⚠️ [AllowAnonymous] زي /api/lookups/terms بالظبط: الرد بنود عامة
+        //     بيقراها أي طالب قبل ما يبدأ، مفيش فيه بيانات حد.
+        //
+        //  ⚠️ وموجودة مع إن /api/lookups/terms موجودة: دي بترجّع اللغتين مع
+        //     النصّ المجمَّد وبصمته، وتلك بترجّع لغة واحدة بلا بصمة. لو الصفحة
+        //     حسبت البصمة من اللي عرضته، الطالب اللي فاتح بالإنجليزية كان
+        //     هيطلعله بصمة تانية لنفس البنود.
+        // ====================================================================
+        [AllowAnonymous]
+        [HttpGet("pledge")]
+        public async Task<IActionResult> Pledge()
+            => Ok(await _service.GetPledgeDocumentAsync());
+
         // POST api/Registration/{requestId}/declarations
         [HttpPost("{requestId}/declarations")]
         public async Task<IActionResult> AcceptDeclarations(int requestId, [FromBody] AcceptDeclarationsRequest request)
@@ -30,6 +46,18 @@ namespace NUH_PORTAL.Controllers
             await _service.AcceptDeclarationsAsync(requestId, request);
             return Ok(new { message = "تم قبول الإقرار" });
         }
+
+        // GET api/Registration/open-statuses
+        // ⚠️ موجود عشان شاشة الجوال (register-phone.html) كانت شايلة نسخة
+        //    تالتة من قائمة الحالات المفتوحة مكتوبة بالإيد. صفحة ثابتة في
+        //    wwwroot فما ينفعش نحقن لها الجدول زي شاشات الموظفين، فبتقراها
+        //    من هنا — والمصدر واحد: Core/RequestWorkflow.OpenStatuses.
+        //    [AllowAnonymous] لأن الرد أسماء مراحل لا بيانات أي طالب، والفحص
+        //    ده تسهيل للطالب أصلًا: الحارس الحقيقي عند الإرسال على السيرفر.
+        [AllowAnonymous]
+        [HttpGet("open-statuses")]
+        public IActionResult GetOpenStatuses()
+            => Ok(NUH_PORTAL.Core.RequestWorkflow.OpenStatuses);
 
         // GET api/Registration/my-requests?mobile=
         [HttpGet("my-requests")]

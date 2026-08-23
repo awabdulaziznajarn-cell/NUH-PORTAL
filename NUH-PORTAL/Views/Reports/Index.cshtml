@@ -2,219 +2,365 @@
     ViewData["Title"] = SharedLocalizer["Page_Reports"].Value;
 }
 
+@*
+  ============================================================================
+   مركز التقارير — تبويبات حقيقية
+  ============================================================================
+   ⚠️ الشكل القديم كان: صفّ تبويبات + صفّ مدد + ٦ بطاقات «اليوم» + صفّ فلاتر
+      + أربعة رسوم معًا + شريط عدّادات + ملخّص تنفيذي + ثلاث بطاقات + الجدول.
+      كله ظاهر في وقت واحد، والتبويبات كانت بتفلتر الجدول وحده — فالمستخدم
+      يقف على «عمليات الطلبات» وقدّامه رسم «تسجيل الدخول» فاضي.
+
+   القاعدة هنا: كل تبويب صفحة كاملة بمؤشراته ورسمه، وشريط أدوات واحد وجدول
+   واحد مشتركين تحت. فما تشوفش إلا اللي طلبته.
+
+   ⚠️ الدونات القديمة («عمليات الطلاب» و«عمليات الطلبات») اتحوّلت أعمدة أفقية.
+      سببان: الدونات كانت على ٢-٣ أرقام (نفس العيب اللي اتشال من لوحة التحكم)،
+      وأسماء الإجراءات عربية فالأعمدة الرأسية كانت هتقلبها أو تقصّها.
+  ============================================================================
+*@
+
 <style>
-  /* خاص بمركز التقارير — الباقي من site.css */
-.stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; margin-bottom: 24px; }
-.stat-card { background: var(--white); border-radius: 14px; padding: 16px; border: 1px solid var(--gray-100); box-shadow: 0 2px 8px rgba(16,70,49,0.05); display: flex; flex-direction: column; gap: 8px; transition: transform 0.2s, box-shadow 0.2s; }
-.stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(16,70,49,0.1); }
-.stat-top { display: flex; align-items: center; justify-content: space-between; }
-.stat-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; }
-.stat-num { font-size: 26px; font-weight: 900; color: var(--navy-dark); line-height: 1; }
-.stat-label { font-size: 12px; color: var(--gray-500); font-weight: 500; }
-.report-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
-.report-tab { padding: 8px 18px; border-radius: 20px; border: 1.5px solid var(--gray-200); background: var(--white); font-family: inherit; font-size: 13px; font-weight: 600; color: var(--gray-500); cursor: pointer; transition: all 0.2s; }
-.report-tab:hover { border-color: var(--navy); color: var(--navy); }
-.report-tab.active { background: var(--navy); color: var(--white); border-color: var(--navy); }
-.filters-bar { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; align-items: end; }
-.filter-group { display: flex; flex-direction: column; gap: 4px; }
-.filter-group label { font-size: 11px; font-weight: 600; color: var(--gray-500); }
-.filter-group select, .filter-group input { padding: 8px 10px; border: 1px solid var(--gray-200); border-radius: 8px; font-family: inherit; font-size: 13px; background: var(--white); color: var(--navy-dark); min-width: 140px; }
-.filter-group input[type=text] { min-width: 160px; }
-.export-bar { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; }
-.export-btn { padding: 8px 16px; border: none; border-radius: 8px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap; transition: all 0.2s; }
-.export-btn-excel { background: #067647; color: #fff; }
-.export-btn-excel:hover { background: var(--navy); }
-.export-btn-pdf { background: #b42318; color: #fff; }
-.export-btn-pdf:hover { background: #912018; }
-.export-btn-print { background: var(--gray-100); color: var(--navy-dark); }
-.export-btn-print:hover { background: var(--gray-200); }
-.stats-bar { display: flex; flex-wrap: wrap; gap: 24px; margin-bottom: 16px; padding: 12px 20px; background: var(--gray-50); border-radius: 10px; font-size: 13px; }
-.stat-item { display: flex; align-items: center; gap: 6px; }
-.stat-value { color: var(--navy-dark); font-weight: 700; }
-.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
-#chartsRow { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
-.spinner { width: 32px; height: 32px; border: 3px solid var(--gray-200); border-top-color: var(--navy); border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto; }
-.empty-state { text-align: center; padding: 40px 20px; color: var(--gray-500); }
-.empty-state .empty-icon { font-size: 36px; margin-bottom: 8px; }
-.empty-state .empty-text { font-size: 14px; }
-.badge-green { background: var(--green-light); color: var(--green); }
-.badge-blue { background: #eff4ff; color: #166a45; }
-.badge-red { background: var(--red-light); color: var(--red); }
-.badge-gray { background: var(--gray-100); color: var(--gray-700); }
-.badge-orange { background: #fffaeb; color: #93370d; }
-.badge-purple { background: #f4eefa; color: #80519f; }
-.badge-darkred { background: #fef3f2; color: #912018; }
-.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 1000; align-items: center; justify-content: center; }
-.modal-overlay.open { display: flex; }
-.modal { background: var(--white); border-radius: 16px; padding: 28px; min-width: 360px; max-width: 480px; width: 90%; box-shadow: 0 8px 40px rgba(0,0,0,.15); position: relative; }
-.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-.modal-title { font-size: 16px; font-weight: 700; color: var(--navy-dark); }
-.modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--gray-500); padding: 4px; line-height: 1; }
-.modal-close:hover { color: var(--navy-dark); }
-.modal-body { display: flex; flex-direction: column; gap: 14px; }
-.modal-row { display: flex; flex-direction: column; gap: 2px; }
-.modal-row-label { font-size: 11px; font-weight: 600; color: var(--gray-500); }
-.modal-row-value { font-size: 14px; font-weight: 500; color: var(--navy-dark); }
-.date-presets { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
-.date-preset-btn { padding: 6px 14px; border-radius: 16px; border: 1px solid var(--gray-200); background: var(--white); font-family: inherit; font-size: 12px; font-weight: 500; color: var(--gray-700); cursor: pointer; transition: all 0.2s; }
-.date-preset-btn:hover { border-color: var(--navy); color: var(--navy); background: var(--gray-50); }
-.date-preset-btn.active { background: var(--navy); color: var(--white); border-color: var(--navy); }
-.mini-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; margin-bottom: 24px; }
-.mini-card { background: var(--white); border-radius: 14px; padding: 16px; border: 1px solid var(--gray-100); box-shadow: 0 2px 8px rgba(16,70,49,0.05); }
-.mini-card-title { font-size: 12px; font-weight: 700; color: var(--gray-500); margin-bottom: 12px; }
-.mini-card-title svg { vertical-align: middle; margin-left: 6px; }
-.mini-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
-.mini-list-item { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; border-radius: 8px; cursor: pointer; transition: background 0.15s; font-size: 13px; }
-.mini-list-item:hover { background: var(--gray-50); }
-.mini-list-item .name { font-weight: 500; color: var(--navy-dark); }
-.mini-list-item .count { font-weight: 700; color: var(--navy); font-size: 13px; }
-.kpi-value { font-size: 22px; font-weight: 900; color: var(--navy-dark); line-height: 1; margin-bottom: 4px; }
-.exec-summary { background: var(--white); border-radius: 16px; padding: 20px; border: 1px solid var(--gray-100); box-shadow: 0 2px 8px rgba(16,70,49,0.05); margin-bottom: 24px; }
-.exec-summary-title { font-size: 15px; font-weight: 700; color: var(--navy-dark); margin-bottom: 12px; }
-.exec-summary-text { font-size: 13px; line-height: 1.8; color: var(--gray-700); }
-.stat-card-clickable { cursor: pointer; }
-.stat-card-clickable:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(16,70,49,0.1); }
-@@keyframes spin{to{transform:rotate(360deg)}}
+  /* ===== مركز التقارير — الباقي من site.css و components.css ===== */
+
+  /* ⚠️ التبويبات هنا كانت مكتوبة بستايل خاص بالشاشة (.rp-tabs/.report-tab)
+     بخطّ سفلي بدل الحبوب الخضرا — سابع تصميم منفصل لمكوّن موجود أصلًا موحّد
+     في site.css (.tabs/.tab-btn) ومستعمَل في المستخدمين والطلبات وحسابات
+     السكن وإسكان أعضاء هيئة التدريس. اتشال، والشاشة بقت على المكوّن المشترك. */
+
+  /* شريط أدوات واحد بدل ثلاثة صفوف */
+  .rp-bar{display:flex;flex-wrap:wrap;align-items:center;gap:9px;background:var(--white);
+          border:1px solid var(--gray-200);border-radius:14px;padding:12px 15px;margin-bottom:18px;
+          box-shadow:0 1px 2px rgba(16,24,40,.04)}
+  .date-presets{display:flex;background:var(--gray-100);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
+  .date-preset-btn{border:0;background:none;font-family:inherit;font-size:12.5px;font-weight:600;
+                   color:var(--gray-500);padding:7px 12px;border-radius:8px;cursor:pointer;white-space:nowrap}
+  .date-preset-btn:hover{color:var(--navy-dark)}
+  .date-preset-btn.active{background:var(--white);color:var(--navy-dark);box-shadow:0 1px 3px rgba(16,24,40,.10)}
+  .rp-bar input,.rp-bar select{height:36px;border:1px solid var(--gray-200);border-radius:9px;background:var(--white);
+                               font-family:inherit;font-size:12.5px;color:var(--navy-dark);padding:0 10px;min-width:132px}
+  .rp-bar input[type=date]{min-width:142px}
+  .rp-grow{flex:1 1 auto}
+  .rp-apply{height:36px;border:0;border-radius:9px;background:var(--green);color:#fff;font-family:inherit;
+            font-size:13px;font-weight:700;padding:0 20px;cursor:pointer;display:flex;align-items:center;gap:6px}
+  .rp-apply:hover{background:var(--navy-dark)}
+  .rp-out{height:36px;border:1px solid var(--gray-200);border-radius:9px;background:var(--white);
+          color:var(--navy-dark);font-family:inherit;font-size:12.5px;font-weight:600;padding:0 13px;
+          cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s,border-color .15s,color .15s}
+  .rp-out:hover{background:var(--gray-50);border-color:var(--gray-300)}
+
+  /* ⚠️ التلوين هنا معناه «نوع الملف» لا «أهمية الزرّ»: الأخضر والأحمر دول لونا
+     Excel وPDF اللي أي حد يعرفهما من غير ما يقرا. وعشان كده «طباعة» فضل محايدًا
+     عن قصد — هو مش ملف، هو إجراء على الشاشة اللي قدّامك. ولو اتلوّن هو كمان
+     بقى عندنا تلات أزرار صارخة بتزاحم «تطبيق» وهو الإجراء الأساسي في الشريط.
+     والأخضر ده نفس لون زرّ التصدير في «سجل العمليات» (.export-btn) فما نبقاش
+     بأخضرين مختلفين لنفس المعنى. */
+  .rp-out.is-excel{background:var(--green);border-color:var(--green);color:#fff}
+  .rp-out.is-excel:hover{background:var(--navy-dark);border-color:var(--navy-dark)}
+  .rp-out.is-pdf{background:var(--red);border-color:var(--red);color:#fff}
+  .rp-out.is-pdf:hover{background:#912018;border-color:#912018}
+
+  /* اللوحات — واحدة ظاهرة في أي وقت */
+  .rp-panel{display:none}
+  .rp-panel.on{display:block}
+
+  .rp-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
+  .rp-kpi{background:var(--white);border:1px solid var(--gray-200);border-radius:14px;padding:16px 18px;
+          box-shadow:0 1px 2px rgba(16,24,40,.04)}
+  .rp-kpi .k{font-size:12px;font-weight:600;color:var(--gray-500);margin-bottom:7px}
+  .rp-kpi .v{font-size:27px;font-weight:800;color:var(--navy-dark);line-height:1}
+  .rp-kpi .s{font-size:11.5px;color:var(--gray-500);margin-top:6px}
+
+  .rp-card{background:var(--white);border:1px solid var(--gray-200);border-radius:14px;overflow:hidden;
+           box-shadow:0 1px 2px rgba(16,24,40,.04);margin-bottom:16px}
+  .rp-head{display:flex;align-items:center;gap:10px;padding:13px 18px;border-bottom:1px solid var(--gray-100);flex-wrap:wrap}
+  .rp-head > b{font-size:14px;font-weight:800;color:var(--navy-dark)}
+  /* الشارة فيها رقم غامق جوّه نص رمادي - الوزن بيفرّق الاتنين من غير فاصل */
+  .rp-head .tot b{font-weight:800;color:var(--navy-dark)}
+  .rp-head .tot{background:var(--gray-100);color:var(--gray-700);border-radius:999px;padding:3px 11px;
+                font-size:11.5px;font-weight:700}
+  .rp-body{padding:16px 18px}
+  .rp-2col{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+
+  /* أعمدة أفقية — بديل الدونات */
+  .hb{display:flex;align-items:center;gap:11px;margin-bottom:9px}
+  .hb:last-child{margin-bottom:0}
+  .hb-l{flex:0 0 168px;font-size:12.5px;color:var(--gray-700);text-align:start;
+        overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .hb-t{flex:1;height:9px;background:var(--gray-100);border-radius:99px;overflow:hidden}
+  .hb-t i{display:block;height:100%;border-radius:99px;background:var(--navy)}
+  .hb-v{flex:0 0 38px;text-align:start;font-size:12.5px;font-weight:800;color:var(--navy-dark)}
+
+  .mini-list{list-style:none;margin:0;padding:0}
+  .mini-list-item{display:flex;align-items:center;gap:10px;padding:9px 0;cursor:pointer;
+                  border-bottom:1px dashed var(--gray-100);font-size:12.5px;color:var(--gray-700)}
+  .mini-list-item:last-child{border-bottom:0}
+  .mini-list-item:hover .name{color:var(--navy)}
+  .mini-list-item .name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .mini-list-item .count{font-size:13px;font-weight:800;color:var(--navy-dark)}
+
+  .chart-box{position:relative;height:230px}
+  .spinner{width:32px;height:32px;border:3px solid var(--gray-200);border-top-color:var(--navy);
+           border-radius:50%;animation:spin .7s linear infinite;margin:0 auto}
+  @@keyframes spin{to{transform:rotate(360deg)}}
+  .empty-state{text-align:center;padding:34px 20px;color:var(--gray-500);font-size:13px}
+
+  .badge-green{background:var(--green-light);color:var(--green)}
+  .badge-blue{background:#eff4ff;color:#166a45}
+  .badge-red{background:var(--red-light);color:var(--red)}
+  .badge-gray{background:var(--gray-100);color:var(--gray-700)}
+  .badge-orange{background:#fffaeb;color:#93370d}
+  .badge-purple{background:var(--purple-light);color:var(--purple)}
+  .badge-darkred{background:#fef3f2;color:#912018}
+
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;
+                 align-items:center;justify-content:center}
+  .modal-overlay.open{display:flex}
+  .modal{background:var(--white);border-radius:16px;padding:28px;min-width:360px;max-width:480px;width:90%;
+         box-shadow:0 8px 40px rgba(0,0,0,.15);position:relative}
+  .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+  .modal-title{font-size:16px;font-weight:700;color:var(--navy-dark)}
+  .modal-body{display:flex;flex-direction:column;gap:14px}
+  .modal-row{display:flex;flex-direction:column;gap:2px}
+  .modal-row-label{font-size:11px;font-weight:600;color:var(--gray-500)}
+  .modal-row-value{font-size:14px;font-weight:500;color:var(--navy-dark)}
+
   tbody tr{cursor:pointer}
+  @@media(max-width:980px){.rp-kpis{grid-template-columns:repeat(2,1fr)}.rp-2col{grid-template-columns:1fr}}
 </style>
 
-    <div class="page-header">
-      <h2 >@SharedLocalizer["rep_1"]</h2>
-      <p >@SharedLocalizer["rep_2"]</p>
-    </div>
+<div class="page-header">
+  <h2>@SharedLocalizer["rep_1"]</h2>
+  <p>@SharedLocalizer["rep_2"]</p>
+</div>
 
-    <div class="report-tabs" id="reportTabs">
-      <button class="report-tab active" data-group="" >@SharedLocalizer["rep_3"]</button>
-      <button class="report-tab" data-group="login" >@SharedLocalizer["rep_4"]</button>
-      <button class="report-tab" data-group="student" >@SharedLocalizer["rep_5"]</button>
-      <button class="report-tab" data-group="request" >@SharedLocalizer["rep_6"]</button>
-      <button class="report-tab" data-group="security" >@SharedLocalizer["rep_7"]</button>
-    </div>
+@* ⚠️ data-panel هو الجديد: التبويب بقى بيبدّل لوحة كاملة لا يفلتر الجدول وبس.
+   data-group باقٍ زي ما هو لأن reports-page.js بيستعمله في فلتر الجدول. *@
+<div class="tabs" id="reportTabs">
+  <button type="button" class="tab-btn active" data-panel="overview" data-group="">@SharedLocalizer["rpx_tab_overview"]</button>
+  <button type="button" class="tab-btn" data-panel="login"    data-group="login">@SharedLocalizer["rep_4"]</button>
+  <button type="button" class="tab-btn" data-panel="student"  data-group="student">@SharedLocalizer["rep_5"]</button>
+  <button type="button" class="tab-btn" data-panel="request"  data-group="request">@SharedLocalizer["rep_6"]</button>
+  <button type="button" class="tab-btn" data-panel="security" data-group="security">@SharedLocalizer["rep_7"]</button>
+</div>
 
-    <div class="date-presets" id="datePresets">
-      <button class="date-preset-btn active" data-days="" >@SharedLocalizer["rep_3"]</button>
-      <button class="date-preset-btn" data-days="1" >@SharedLocalizer["rep_8"]</button>
-      <button class="date-preset-btn" data-days="7" >@SharedLocalizer["rep_9"]</button>
-      <button class="date-preset-btn" data-days="30" >@SharedLocalizer["rep_10"]</button>
-      <button class="date-preset-btn" data-days="this-month" >@SharedLocalizer["rep_11"]</button>
-      <button class="date-preset-btn" data-days="last-month" >@SharedLocalizer["rep_12"]</button>
-      <button class="date-preset-btn" data-days="this-year" >@SharedLocalizer["rep_13"]</button>
-    </div>
+<div class="rp-bar">
+  <div class="date-presets" id="datePresets">
+    <button class="date-preset-btn active" data-days="">@SharedLocalizer["rep_3"]</button>
+    <button class="date-preset-btn" data-days="1">@SharedLocalizer["rep_8"]</button>
+    <button class="date-preset-btn" data-days="7">@SharedLocalizer["rep_9"]</button>
+    <button class="date-preset-btn" data-days="30">@SharedLocalizer["rep_10"]</button>
+    <button class="date-preset-btn" data-days="this-month">@SharedLocalizer["rep_11"]</button>
+    <button class="date-preset-btn" data-days="last-month">@SharedLocalizer["rep_12"]</button>
+    <button class="date-preset-btn" data-days="this-year">@SharedLocalizer["rep_13"]</button>
+  </div>
+  <input type="date" id="fromDate" title="@SharedLocalizer["rep_20"]">
+  <input type="date" id="toDate" title="@SharedLocalizer["rep_21"]">
+  <select id="userFilter" title="@SharedLocalizer["rep_22"]"><option value="">@SharedLocalizer["rep_22"]</option></select>
+  <select id="actionFilter" title="@SharedLocalizer["rep_23"]"></select>
+  <input type="text" id="searchBox" placeholder="@SharedLocalizer["rep_24"]">
+  <button class="rp-apply" onclick="applyFilters()">@SharedLocalizer["rep_25"]</button>
+  <span class="rp-grow"></span>
+  <button type="button" class="rp-out is-excel" onclick="exportExcel()">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M8 2v8m0 0L5 7m3 3 3-3M2.5 12.5v1h11v-1"/></svg>
+    <span>@SharedLocalizer["rep_46"]</span>
+  </button>
+  <button type="button" class="rp-out is-pdf" onclick="exportPdf()">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M8 2v8m0 0L5 7m3 3 3-3M2.5 12.5v1h11v-1"/></svg>
+    <span>@SharedLocalizer["rep_47"]</span>
+  </button>
+  <button type="button" class="rp-out" onclick="window.print()">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M4.5 6V2.5h7V6M4.5 11.5h7v2h-7zM3 6h10a1 1 0 0 1 1 1v3.5h-2.5M3 10.5H2V7a1 1 0 0 1 1-1z"/></svg>
+    <span>@SharedLocalizer["rep_48"]</span>
+  </button>
+</div>
 
-    <div class="stats-grid" id="summaryCards">
-      <div class="stat-card stat-card-clickable" data-drill="tot"><div class="stat-top"><div class="stat-icon" style="background:#eff4ff;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#166a45" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div></div><div class="stat-num" id="statTotOps">0</div><div class="stat-label" >@SharedLocalizer["rep_14"]</div></div>
-      <div class="stat-card stat-card-clickable" data-drill="users"><div class="stat-top"><div class="stat-icon" style="background:#dff6e7;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#067647" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div></div><div class="stat-num" id="statUsers">0</div><div class="stat-label" >@SharedLocalizer["rep_15"]</div></div>
-      <div class="stat-card stat-card-clickable" data-drill="student"><div class="stat-top"><div class="stat-icon" style="background:#fffaeb;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#93370d" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg></div></div><div class="stat-num" id="statStudentOps">0</div><div class="stat-label" >@SharedLocalizer["rep_16"]</div></div>
-      <div class="stat-card stat-card-clickable" data-drill="request"><div class="stat-top"><div class="stat-icon" style="background:#f4eefa;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#80519f" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div></div><div class="stat-num" id="statRequestOps">0</div><div class="stat-label" >@SharedLocalizer["rep_17"]</div></div>
-      <div class="stat-card" data-drill="fail"><div class="stat-top"><div class="stat-icon" style="background:#fef3f2;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#b42318" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div></div><div class="stat-num" id="statFailed">0</div><div class="stat-label" >@SharedLocalizer["rep_18"]</div></div>
-      <div class="stat-card" data-drill="delete"><div class="stat-top"><div class="stat-icon" style="background:#fef3f2;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#b42318" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div></div><div class="stat-num" id="statDeletes">0</div><div class="stat-label" >@SharedLocalizer["rep_19"]</div></div>
-    </div>
-
-    <div class="filters-bar">
-      <div class="filter-group"><label >@SharedLocalizer["rep_20"]</label><input type="date" id="fromDate"></div>
-      <div class="filter-group"><label >@SharedLocalizer["rep_21"]</label><input type="date" id="toDate"></div>
-      <div class="filter-group"><label >@SharedLocalizer["rep_22"]</label><select id="userFilter"><option value="" >@SharedLocalizer["rep_3"]</option></select></div>
-      <div class="filter-group"><label >@SharedLocalizer["rep_23"]</label><select id="actionFilter"></select></div>
-      <div class="filter-group"><label >@SharedLocalizer["rep_24"]</label><input type="text" id="searchBox" placeholder=""></div>
-      <button class="card-action" onclick="applyFilters()" style="height:37px;align-self:end;display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> <span >@SharedLocalizer["rep_25"]</span></button>
-    </div>
-
-    <div class="grid-2" id="chartsRow" style="margin-bottom:24px">
-      <div class="card"><div class="card-header"><div class="card-title" >@SharedLocalizer["rep_26"]</div></div><div class="chart-box"><canvas id="chartOps7"></canvas></div></div>
-      <div class="card"><div class="card-header"><div class="card-title" >@SharedLocalizer["rep_27"]</div></div><div class="chart-box"><canvas id="chartLogins30"></canvas></div></div>
-      <div class="card"><div class="card-header"><div class="card-title" >@SharedLocalizer["rep_5"]</div></div><div class="chart-box"><canvas id="chartStudents"></canvas></div></div>
-      <div class="card"><div class="card-header"><div class="card-title" >@SharedLocalizer["rep_6"]</div></div><div class="chart-box"><canvas id="chartRequests"></canvas></div></div>
-    </div>
-
-    <div class="stats-bar" id="statsBar">
-      <div class="stat-item"><span class="stat-label" >@SharedLocalizer["rep_28"]</span><span class="stat-value" id="statTotalRecords">0</span></div>
-      <div class="stat-item"><span class="stat-label" >@SharedLocalizer["rep_29"]</span><span class="stat-value" id="statStudentRecs">0</span></div>
-      <div class="stat-item"><span class="stat-label" >@SharedLocalizer["rep_30"]</span><span class="stat-value" id="statRequestRecs">0</span></div>
-    </div>
-
-    <div class="card" id="alertsCard" style="margin-bottom:24px">
-      <div class="card-header"><div class="card-title" >@SharedLocalizer["rep_31"]</div><button class="card-action" onclick="loadAlerts()" >@SharedLocalizer["rep_32"]</button></div>
-      <div id="alertsBody" style="padding:16px;text-align:center;color:var(--gray-500)" >@SharedLocalizer["rep_33"]</div>
-    </div>
-
-    <div class="exec-summary" id="execSummary" style="display:none">
-      <div class="exec-summary-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2" style="vertical-align:middle;margin-left:6px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span >@SharedLocalizer["rep_34"]</span></div>
-      <div class="exec-summary-text" id="execSummaryText"></div>
-    </div>
-
-    <div class="mini-grid" id="miniGrid">
-      <div class="mini-card" id="miniKpi">
-        <div class="mini-card-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span >@SharedLocalizer["rep_35"]</span></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-          <div><div class="kpi-value" id="kpiDailyAvg">0</div><div style="font-size:11px;color:var(--gray-500)" >@SharedLocalizer["rep_36"]</div></div>
-          <div><div class="kpi-value" id="kpiPeakDay">-</div><div style="font-size:11px;color:var(--gray-500)" >@SharedLocalizer["rep_37"]</div></div>
-          <div><div class="kpi-value" id="kpiLastTime">-</div><div style="font-size:11px;color:var(--gray-500)" >@SharedLocalizer["rep_38"]</div></div>
-          <div><div class="kpi-value" id="kpiActiveUsers">0</div><div style="font-size:11px;color:var(--gray-500)" >@SharedLocalizer["rep_39"]</div></div>
-        </div>
-      </div>
-      <div class="mini-card" id="miniTopUsers">
-        <div class="mini-card-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span >@SharedLocalizer["rep_40"]</span></div>
-        <ul class="mini-list" id="topUsersList"><li style="font-size:12px;color:var(--gray-400)" >@SharedLocalizer["rep_33"]</li></ul>
-      </div>
-      <div class="mini-card" id="miniTopActions">
-        <div class="mini-card-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span >@SharedLocalizer["rep_41"]</span></div>
-        <ul class="mini-list" id="topActionsList"><li style="font-size:12px;color:var(--gray-400)" >@SharedLocalizer["rep_33"]</li></ul>
-      </div>
-    </div>
-
-    <div class="card">
-      <div style="overflow-x:auto">
-        <table>
-          <thead><tr><th>#</th><th >@SharedLocalizer["rep_22"]</th><th >@SharedLocalizer["rep_42"]</th><th >@SharedLocalizer["rep_43"]</th><th >@SharedLocalizer["rep_44"]</th><th >@SharedLocalizer["rep_45"]</th></tr></thead>
-          <tbody id="logTbody"><tr><td colspan="6" style="text-align:center;padding:60px 20px"><div class="spinner"></div></td></tr></tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="export-bar">
-      <button class="export-btn export-btn-excel" onclick="exportExcel()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> <span >@SharedLocalizer["rep_46"]</span></button>
-      <button class="export-btn export-btn-pdf" onclick="exportPdf()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 11 9 11 11 13 11 13 12 10 12 10 9"/></svg> <span >@SharedLocalizer["rep_47"]</span></button>
-      <button class="export-btn export-btn-print" onclick="window.print()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> <span >@SharedLocalizer["rep_48"]</span></button>
-    </div>
-
-    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:0 4px">
-      <div style="display:flex;align-items:center;gap:8px">
-        <span style="font-size:13px;color:var(--gray-500)" >@SharedLocalizer["rep_49"]</span>
-        <select id="pageSizeSelect" style="padding:6px 10px;border:1px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:13px;background:var(--white);color:var(--navy-dark);cursor:pointer"><option value="50">50</option><option value="100">100</option><option value="200">200</option></select>
-        <span style="font-size:13px;color:var(--gray-500)" >@SharedLocalizer["rep_50"]</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <span id="totalRecordsLabel" style="font-size:13px;color:var(--gray-500)"></span>
-        <button id="prevPageBtn" style="padding:6px 14px;border:1px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:13px;background:var(--white);color:var(--navy-dark);cursor:pointer;display:flex;align-items:center;gap:4px" disabled><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg> <span >@SharedLocalizer["rep_51"]</span></button>
-        <span id="pageIndicator" style="font-size:13px;font-weight:600;color:var(--navy-dark);min-width:60px;text-align:center">1 / 1</span>
-        <button id="nextPageBtn" style="padding:6px 14px;border:1px solid var(--gray-200);border-radius:8px;font-family:inherit;font-size:13px;background:var(--white);color:var(--navy-dark);cursor:pointer;display:flex;align-items:center;gap:4px" disabled><span >@SharedLocalizer["rep_52"]</span> <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
-      </div>
-    </div>
+@* ============================ نظرة عامة ============================ *@
+<div class="rp-panel on" id="panel-overview">
+  <div class="rp-kpis">
+    <div class="rp-kpi stat-card-clickable" data-drill="tot" style="cursor:pointer"><div class="k">@SharedLocalizer["rep_14"]</div><div class="v" id="statTotOps">0</div>
+      <div class="s" id="kpiTotal7">-</div></div>
+    <div class="rp-kpi"><div class="k">@SharedLocalizer["rep_36"]</div><div class="v" id="kpiDailyAvg">0</div>
+      <div class="s" data-period='@(SharedLocalizer["rep_9"].Value)'>@SharedLocalizer["rep_9"]</div></div>
+    <div class="rp-kpi"><div class="k">@SharedLocalizer["rep_37"]</div><div class="v" id="kpiPeakDay">-</div>
+      <div class="s" data-period='@(SharedLocalizer["rep_9"].Value)'>@SharedLocalizer["rep_9"]</div></div>
+    <div class="rp-kpi stat-card-clickable" data-drill="users" style="cursor:pointer"><div class="k">@SharedLocalizer["rep_15"]</div><div class="v" id="statUsers">0</div>
+      <div class="s"><span id="kpiActiveUsers">0</span> @SharedLocalizer["rep_39"]</div></div>
   </div>
 
-<div class="modal-overlay" id="detailModal">
-  <div class="modal">
-    <div class="modal-header"><div class="modal-title" >@SharedLocalizer["rep_53"]</div><button class="modal-close" id="modalCloseBtn">&times;</button></div>
-    <div class="modal-body">
-      <div class="modal-row"><span class="modal-row-label" >@SharedLocalizer["rep_22"]</span><span class="modal-row-value" id="modalUser"></span></div>
-      <div class="modal-row"><span class="modal-row-label" >@SharedLocalizer["rep_23"]</span><span class="modal-row-value" id="modalAction"></span></div>
-      <div class="modal-row"><span class="modal-row-label" >@SharedLocalizer["rep_43"]</span><span class="modal-row-value" id="modalTable"></span></div>
-      <div class="modal-row"><span class="modal-row-label" >@SharedLocalizer["rep_54"]</span><span class="modal-row-value" id="modalTargetId"></span></div>
-      <div class="modal-row"><span class="modal-row-label" >@SharedLocalizer["rep_45"]</span><span class="modal-row-value" id="modalDate"></span></div>
+  <div class="rp-card">
+    <div class="rp-head"><b>@SharedLocalizer["rpx_chart_ops"]</b><span class="tot">@SharedLocalizer["rep_9"]</span></div>
+    <div class="rp-body"><div class="chart-box"><canvas id="chartOps7"></canvas></div></div>
+  </div>
+
+  <div class="rp-2col">
+    <div class="rp-card">
+      <div class="rp-head"><b>@SharedLocalizer["rep_41"]</b></div>
+      <div class="rp-body"><ul class="mini-list" id="topActionsList"><li class="empty-state">@SharedLocalizer["rep_33"]</li></ul></div>
+    </div>
+    <div class="rp-card">
+      <div class="rp-head"><b>@SharedLocalizer["rep_40"]</b></div>
+      <div class="rp-body"><ul class="mini-list" id="topUsersList"><li class="empty-state">@SharedLocalizer["rep_33"]</li></ul></div>
     </div>
   </div>
 </div>
 
+@* ============================ تسجيل الدخول ============================ *@
+<div class="rp-panel" id="panel-login">
+  <div class="rp-kpis">
+    <div class="rp-kpi"><div class="k">@SharedLocalizer["rpx_kpi_logins"]</div><div class="v" id="kpiLoginTotal">0</div>
+      <div class="s">@SharedLocalizer["rep_10"]</div></div>
+    <div class="rp-kpi"><div class="k">@SharedLocalizer["rpx_kpi_loginAvg"]</div><div class="v" id="kpiLoginAvg">0</div>
+      <div class="s">@SharedLocalizer["rep_10"]</div></div>
+    <div class="rp-kpi"><div class="k">@SharedLocalizer["rep_38"]</div><div class="v" id="kpiLastTime">-</div>
+      <div class="s">@SharedLocalizer["rep_27"]</div></div>
+    <div class="rp-kpi"><div class="k">@SharedLocalizer["rep_18"]</div><div class="v" id="statFailed">0</div>
+      <div class="s" data-period='@(SharedLocalizer["rpx_today"].Value)'>@SharedLocalizer["rpx_today"]</div></div>
+  </div>
+  <div class="rp-card">
+    <div class="rp-head"><b>@SharedLocalizer["rpx_chart_logins"]</b><span class="tot">@SharedLocalizer["rep_10"]</span></div>
+    <div class="rp-body"><div class="chart-box"><canvas id="chartLogins30"></canvas></div></div>
+  </div>
+</div>
+
+@* ============================ عمليات الطلاب ============================ *@
+<div class="rp-panel" id="panel-student">
+  <div class="rp-kpis">
+    <div class="rp-kpi"><div class="k">@SharedLocalizer["rpx_kpi_studentTotal"]</div><div class="v" id="kpiStudentTotal">0</div>
+      <div class="s" data-period='@(SharedLocalizer["rpx_allPeriod"].Value)'>@SharedLocalizer["rpx_allPeriod"]</div></div>
+    <div class="rp-kpi stat-card-clickable" data-drill="student" style="cursor:pointer"><div class="k">@SharedLocalizer["rep_16"]</div><div class="v" id="statStudentOps">0</div>
+      <div class="s" data-period='@(SharedLocalizer["rpx_today"].Value)'>@SharedLocalizer["rpx_today"]</div></div>
+    <div class="rp-kpi"><div class="k">@SharedLocalizer["rpx_kpi_kinds"]</div><div class="v" id="kpiStudentKinds">0</div>
+      <div class="s">@SharedLocalizer["rpx_kinds_sub"]</div></div>
+    <div class="rp-kpi"><div class="k">@SharedLocalizer["rep_29"]</div><div class="v" id="statStudentRecs">0</div>
+      <div class="s" data-period='@(SharedLocalizer["rpx_inFilter"].Value)'>@SharedLocalizer["rpx_inFilter"]</div></div>
+  </div>
+  @* ⚠️ عمودين لا عمود واحد: بطاقة التوزيع لوحدها كانت بتمدّ أعمدتها على عرض
+     الشاشة كله لقيم من رقم أو رقمين، فنص الشاشة بيفضل فاضي. والأهم إن التبويب
+     كان بيجاوب على «أي إجراء اتعمل» وما بيجاوبش على «مين عمله» — وده السؤال
+     اللي بيتسأل فعلًا. البيانات محمّلة أصلًا (loadTopData)، فمفيش نداء جديد. *@
+  <div class="rp-2col">
+    <div class="rp-card">
+      <div class="rp-head"><b>@SharedLocalizer["rpx_breakdown_student"]</b></div>
+      <div class="rp-body" id="barsStudents"><div class="empty-state">@SharedLocalizer["rep_33"]</div></div>
+    </div>
+    <div class="rp-card">
+      <div class="rp-head"><b>@SharedLocalizer["rpx_topUsers_student"]</b></div>
+      <div class="rp-body"><ul class="mini-list" id="topUsersStudent"></ul></div>
+    </div>
+  </div>
+</div>
+
+@* ============================ عمليات الطلبات ============================ *@
+<div class="rp-panel" id="panel-request">
+  <div class="rp-kpis">
+    <div class="rp-kpi"><div class="k">@SharedLocalizer["rpx_kpi_requestTotal"]</div><div class="v" id="kpiRequestTotal">0</div>
+      <div class="s" data-period='@(SharedLocalizer["rpx_allPeriod"].Value)'>@SharedLocalizer["rpx_allPeriod"]</div></div>
+    <div class="rp-kpi stat-card-clickable" data-drill="request" style="cursor:pointer"><div class="k">@SharedLocalizer["rep_17"]</div><div class="v" id="statRequestOps">0</div>
+      <div class="s" data-period='@(SharedLocalizer["rpx_today"].Value)'>@SharedLocalizer["rpx_today"]</div></div>
+    <div class="rp-kpi"><div class="k">@SharedLocalizer["rpx_kpi_kinds"]</div><div class="v" id="kpiRequestKinds">0</div>
+      <div class="s">@SharedLocalizer["rpx_kinds_sub"]</div></div>
+    <div class="rp-kpi"><div class="k">@SharedLocalizer["rep_30"]</div><div class="v" id="statRequestRecs">0</div>
+      <div class="s" data-period='@(SharedLocalizer["rpx_inFilter"].Value)'>@SharedLocalizer["rpx_inFilter"]</div></div>
+  </div>
+  @* نفس تقسيم تبويب الطلاب — التبويبين ليهم نفس البنية بالظبط *@
+  <div class="rp-2col">
+    <div class="rp-card">
+      <div class="rp-head"><b>@SharedLocalizer["rpx_breakdown_request"]</b></div>
+      <div class="rp-body" id="barsRequests"><div class="empty-state">@SharedLocalizer["rep_33"]</div></div>
+    </div>
+    <div class="rp-card">
+      <div class="rp-head"><b>@SharedLocalizer["rpx_topUsers_request"]</b></div>
+      <div class="rp-body"><ul class="mini-list" id="topUsersRequest"></ul></div>
+    </div>
+  </div>
+</div>
+
+@* ============================ الأمان ============================ *@
+<div class="rp-panel" id="panel-security">
+  <div class="rp-kpis">
+    <div class="rp-kpi stat-card-clickable" data-drill="fail" style="cursor:pointer"><div class="k">@SharedLocalizer["rep_18"]</div><div class="v" id="statFailedSec">0</div>
+      <div class="s" data-period='@(SharedLocalizer["rpx_today"].Value)'>@SharedLocalizer["rpx_today"]</div></div>
+    <div class="rp-kpi stat-card-clickable" data-drill="delete" style="cursor:pointer"><div class="k">@SharedLocalizer["rep_19"]</div><div class="v" id="statDeletes">0</div>
+      <div class="s" data-period='@(SharedLocalizer["rpx_today"].Value)'>@SharedLocalizer["rpx_today"]</div></div>
+    <div class="rp-kpi"><div class="k">@SharedLocalizer["rep_15"]</div><div class="v" id="statUsersSec">0</div>
+      <div class="s" data-period='@(SharedLocalizer["rpx_today"].Value)'>@SharedLocalizer["rpx_today"]</div></div>
+    <div class="rp-kpi"><div class="k">@SharedLocalizer["rep_28"]</div><div class="v" id="statTotalRecords">0</div>
+      <div class="s" data-period='@(SharedLocalizer["rpx_inFilter"].Value)'>@SharedLocalizer["rpx_inFilter"]</div></div>
+  </div>
+  <div class="rp-card" id="alertsCard">
+    <div class="rp-head"><b>@SharedLocalizer["rep_31"]</b>
+      <button class="rp-out" onclick="loadAlerts()">@SharedLocalizer["rep_32"]</button></div>
+    <div class="rp-body" id="alertsBody"><div class="empty-state">@SharedLocalizer["rep_33"]</div></div>
+  </div>
+</div>
+
+@* ⚠️ الملخّص التنفيذي اتشال من العرض: كان بيعيد كتابة نفس أرقام البطاقات فوقه
+   في جملة. العنصر باقٍ مخفيًا لأن generateExecSummary لسه بتكتب فيه. *@
+<div id="execSummary" style="display:none"><div id="execSummaryText"></div></div>
+
+@* ===================== الجدول المشترك ===================== *@
+@* ⚠️ الأعداد التلاتة دي كانت في شريط رمادي عايم لوحده فوق الجدول: خطّ ١٢.٥
+   ولون رمادي فاتح على خلفية رمادية، ومفصول عن الحاجة اللي بيعدّها. فكان
+   بيتقرا كأنه فاصل مش معلومة. مكانه الصح رأس الجدول: هو بيوصف اللي جوّه
+   الجدول بالظبط، والشارات جنب بعض بتتقارن بنظرة. *@
+<div class="rp-card">
+  <div class="rp-head">
+    <b>@SharedLocalizer["rpx_table"]</b>
+    <span class="tot" id="tableScopeLabel">@SharedLocalizer["rep_3"]</span>
+    <span class="tot">@SharedLocalizer["rep_28"]: <b id="statTotalRecordsMain">0</b></span>
+    <span class="tot">@SharedLocalizer["rep_29"]: <b id="statStudentRecsMain">0</b></span>
+    <span class="tot">@SharedLocalizer["rep_30"]: <b id="statRequestRecsMain">0</b></span>
+    @* ⚠️ مطوي افتراضيًا: الصفحة دي تقارير، والجدول الخام كان بياخد شاشة كاملة
+       تحت كل تبويب — وهو أصلًا موجود بشاشته الخاصة (سجل العمليات). الحالة
+       متحفوظة، فاللي بيفتحه كل مرة ما يفضلش يفتحه كل مرة. *@
+    <button type="button" class="rp-out" id="logToggle" onclick="toggleLog()"
+            style="margin-inline-start:auto;height:30px;font-size:12px;padding:0 11px">
+      @SharedLocalizer["rpx_showLog"]
+    </button>
+  </div>
+  <div id="logDetails" hidden>
+    <div style="overflow-x:auto">
+      @* ⚠️ الشاشة دي بتقرا من نفس نقطة «سجل العمليات» (/api/auditlogs)، فمفاتيح
+         الفرز هي نفسها بالظبط — مش مفاتيح تانية لنفس الأعمدة. عمود «#» بلا
+         فرز: ترقيم عرض مش موجود في قاعدة البيانات. *@
+      <table id="repTable">
+        <thead><tr><th>#</th><th data-sort="user">@SharedLocalizer["rep_22"]</th><th data-sort="action">@SharedLocalizer["rep_42"]</th><th data-sort="table">@SharedLocalizer["rep_43"]</th><th data-sort="targetid">@SharedLocalizer["rep_44"]</th><th data-sort="date">@SharedLocalizer["rep_45"]</th></tr></thead>
+        <tbody id="logTbody"><tr><td colspan="6" style="text-align:center;padding:60px 20px"><div class="spinner"></div></td></tr></tbody>
+      </table>
+    </div>
+    @* صفّ الترقيم من NuhTable.pager - النسخة الوحيدة في النظام (js/table-state.js).
+       كان الزرّان هنا بكلاس .rp-out الخاص بالشاشة دي وحدها - شكل سادس لنفس الزرّ. *@
+    <div id="repPager" class="in-card"></div>
+  </div>
+</div>
+
+<div style="height:24px"></div>
+
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <div class="modal-header"><div class="modal-title">@SharedLocalizer["rep_53"]</div><button class="modal-close" id="modalCloseBtn" aria-label="@SharedLocalizer["close"]"><span aria-hidden="true">&times;</span></button></div>
+    <div class="modal-body">
+      <div class="modal-row"><span class="modal-row-label">@SharedLocalizer["rep_22"]</span><span class="modal-row-value" id="modalUser"></span></div>
+      <div class="modal-row"><span class="modal-row-label">@SharedLocalizer["rep_23"]</span><span class="modal-row-value" id="modalAction"></span></div>
+      <div class="modal-row"><span class="modal-row-label">@SharedLocalizer["rep_43"]</span><span class="modal-row-value" id="modalTable"></span></div>
+      <div class="modal-row"><span class="modal-row-label">@SharedLocalizer["rep_54"]</span><span class="modal-row-value" id="modalTargetId"></span></div>
+      <div class="modal-row"><span class="modal-row-label">@SharedLocalizer["rep_45"]</span><span class="modal-row-value" id="modalDate"></span></div>
+    </div>
+  </div>
+</div>
 
 @section Scripts {
 <script src="/i18n.js"></script>
-@* ⚠️ مكتبة الرسوم كانت تأتي من CDN خارجي بوسم حاجز قبل reports-page.js مباشرة.
-   الوسم الحاجز يوقف تنفيذ أي جافاسكريبت بعده حتى ينتهي تنزيله من الإنترنت،
-   فكانت الصفحة تقف بلا أرقام ولا جدول طوال ذلك الانتظار رغم أن كل بياناتها
-   محلية ولا علاقة لها بالمكتبة. صارت الآن:
-     • محلية من /js — لا انتظار لشبكة خارجية، وتعمل لو انقطع منفذ الإنترنت.
-     • async — تُنزَّل بالتوازي ولا تحجز أحدًا، و loadCharts وحدها تنتظرها.
-   والرجوع للـ CDN يبقى شبكة أمان لو لم يُنسخ الملف بعد على الخادم. *@
+@* ⚠️ مكتبة الرسوم محلية و async: الوسم الحاجز كان بيوقف كل جافاسكريبت الصفحة
+   لحد ما تنزل من الإنترنت، والصفحة كلها بياناتها محلية. loadCharts وحدها
+   بتستناها، والـ CDN شبكة أمان لو الملف مانتسخش على الخادم. *@
 <script>
   function __chartLibFallback() {
     var s = document.createElement('script');

@@ -30,21 +30,36 @@ const urlParams = new URLSearchParams(window.location.search);
 var __pathIdMatch = window.location.pathname.match(/\/Requests\/Details\/(\d+)/i);
 const requestId = (urlParams.get('id') || (__pathIdMatch ? __pathIdMatch[1] : null));
 
-function escHtml(str) { return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+// ⚠️ كان هنا تعريف تاني لـ escHtml **ناقص تهريب العلامة المفردة (')**، ولأنه
+//    في النطاق العام كان بيدهس نسخة التخطيط القوية على الصفحة دي وحدها.
+//    وشاشة تفاصيل الطلب بالذات بتحقن أسماء الطلاب والملاحظات جوّه خصائص
+//    (title=... وonclick=...) - يعني هي أكتر شاشة الفرق ده بيهمّ فيها.
+//    التعريف الوحيد دلوقتي في /js/esc.js المحمَّل من التخطيط.
 
 // نص بديل لو المفتاح مش موجود في ملف الترجمة.
 // ⚠️ كانت متعرّفة *جوه* renderRequest، يعني أي كود برّاها بينادي عليها كان
 //    بيرمي ReferenceError. ده اللي كان بيمنع خانة «المعلومات المطلوبة» إنها
 //    تظهر: selectInfo() بينادي setReasonTexts('info') واللي بتستخدم tf، فبتقع
 //    قبل ما توصل للسطر اللي بيعرض الخانة. (زر الرفض كان شغال لأنه بيستخدم t.)
-function tf(key, arText, enText) {
-  var v = t(key);
-  if (v !== key) return v;
-  var root = document.getElementById('html-root');
-  var lng = root ? (root.getAttribute('lang') || 'ar') : 'ar';
-  return lng === 'en' ? enText : arText;
+// ⚠️ tf() اتنقلت لـ /i18n.js - بقت مستخدمة في أكتر من شاشة.
+// ============================================================================
+//  زرّ «رجوع».
+//
+//  ⚠️ كان رابطًا ثابتًا لـ /Requests. وبعد ما بقت حالة الشاشة في الرابط
+//     (js/url-state.js) بقى الرابط الثابت غلط صريح: بيرمي الموظف على قائمة
+//     نضيفة كأنه داخل لأول مرة، بينما زرّ الرجوع بتاع المتصفح - جنبه على
+//     بُعد سنتيمترات - بيرجّعه لتبويبه وصفحته وبحثه.
+//
+//  ⚠️ والفولباك مش زيادة: اللي فتح الطلب من إشعار أو من رابط متبعت مالوش
+//     صفحة سابقة، و history.back() ساعتها بتطلّعه بره النظام كله - أو
+//     بترجّعه للموقع اللي جه منه.
+// ============================================================================
+function goBack() {
+  var ref = document.referrer || '';
+  var fromUs = ref.indexOf(window.location.origin + '/') === 0;
+  if (fromUs && window.history.length > 1) { window.history.back(); return; }
+  window.location.href = '/Requests';
 }
-function goBack() { window.location.href = '/Requests'; }
 // ⚠️ تنسيق التاريخ كان بأربع صيغ مختلفة في نفس الملف. أوضحها في الشاشة:
 //    «تاريخ التقديم» كان toLocaleDateString('ar-SA') فيطلع ٢٠٢٦/٨/٩، بينما
 //    «آخر مزامنة» كان toLocaleString() بلا لغة فيطلع 09/08/2026, 14:26:01 —
@@ -53,11 +68,10 @@ function __lang() {
   var el = document.getElementById('html-root') || document.documentElement;
   return (el.getAttribute('lang') || 'ar') === 'en' ? 'en-US' : 'ar-SA';
 }
-function formatDate(d) {
-  if (!d) return '-';
-  var x = new Date(d);
-  return isNaN(x.getTime()) ? '-' : x.toLocaleDateString(__lang());
-}
+// شكل التاريخ من NuhFmt — التعريف الوحيد في /js/date-format.js
+// ⚠️ كانت toLocaleDateString('ar-SA') — وفي متصفحات دي بترجّع **هجري**
+//    افتراضيًا، فالتاريخ يتقرا على إنه ميلادي وهو مش كده.
+function formatDate(v) { return NuhFmt.date(v); }
 
 window.onLanguageChange = function(l) {
   if (requestId) loadRequest();
@@ -87,7 +101,11 @@ const actionNames = {
   pending_cyber:          { ok: 'rdp_stage_cyberApproved',         no: 'rdp_stage_cyberRejected'   },
   pending_admin:          { ok: 'rdp_stage_readyForProvisioning',  no: 'rdp_stage_rejected'        },
   ready_for_provisioning: { ok: 'rdp_stage_completed',             no: 'rdp_stage_rejected'        },
-  need_more_info:         { ok: 'rdp_stage_pendingSupervisor',     no: 'rdp_stage_rejected'        }
+  // ⚠️ اللي بيتصرّف وهو واقف على need_more_info هو *الطالب* لا المشرف —
+  //    بيعيد تقديم بياناته. وكان مكتوب هنا 'rdp_stage_pendingSupervisor'
+  //    («موافقة إدارة الإسكان»)، فسجل المراجعات كان بيقول إن الطالبة وافقت
+  //    على إسكان نفسها.
+  need_more_info:         { ok: 'rdp_tl_studentResubmitted',       no: 'rdp_stage_rejected'        }
 };
 // أسماء أنواع الطلبات موجودة في الترجمة (req_type_*) لكن الصفحة كانت بتعرض
 // الكود الخام self_registration زي ما هو للمستخدم النهائي.
@@ -111,7 +129,7 @@ const statusMap = {
 //    واحدة — موافقة الأمن السيبراني *هي* اللي بتخلّي الطلب جاهزًا لإنشاء الحساب.
 //    وكان عنوان الخطوة نفسه بيقول الاتنين: «موافقة إدارة الأمن السيبراني -
 //    جاهز لإنشاء حساب شبكة السكن»، فالمسار يبان فيه تكرار.
-//    كمان stageToWorkflowStep تحت مبني أصلًا على ٥ خطوات (completed:4)، فالمصفوفة
+//    كمان أرقام الخطوات جاية من الخادم على أساس ٥ خطوات، فالمصفوفة
 //    السداسية كانت بتخلّي «مكتمل» يعلّم على الخطوة الغلط.
 //    المسارين دلوقتي بنفس الشكل: تقديم ← إسكان ← سيبراني ← تجهيز ← مكتمل.
 const workflowSteps = [
@@ -121,14 +139,14 @@ const workflowSteps = [
   { status:'ready_for_provisioning', key:'ready' },
   { status:'completed', key:'completed' }
 ];
-const stageToWorkflowStep = {
-  submitted:0, housing_approved:1, housing_rejected:1,
-  cyber_review:2, cyber_approved:3, cyber_rejected:2,
-  ready_for_provisioning:3, completed:4,
-  pending_supervisor:1, pending_cyber:2,
-  approved:4,
-  need_more_info:1, rejected:0
-};
+// ⚠️ كانت هنا خريطة «الحالة → رقم الخطوة» مكتوبة بالإيد. الرقم موجود على
+//    الخادم في حقل Step جوّه جدول الانتقالات، والخريطتان اتفارقتا فعلًا —
+//    التفاصيل في تعليق stepOf داخل js/request-workflow.js.
+//    القراءة بقت NuhWorkflow.stepOf، وحالات الرفض بتتحدّد من السجل تحت.
+function stepOf(status) {
+  var v = NuhWorkflow.stepOf(status);
+  return v === undefined ? 0 : v;
+}
 
 const selfRegWorkflowSteps = [
   { status: null, key:'submitted' },
@@ -137,7 +155,35 @@ const selfRegWorkflowSteps = [
   { status:'ready_for_provisioning', key:'ready' },
   { status:'completed', key:'completed' }
 ];
-const isRejectedStatus = { housing_rejected:true, cyber_rejected:true, rejected:true };
+// ⚠️ اسم الخطوة في شريط «سير العمل» كان ثابتًا مهما كانت حالتها، فالمرحلة اللي
+//    لسه شغّالة كانت بتتسمّى باسم *نتيجتها*: طلب واقف على «مراجعة إدارة الأمن
+//    السيبراني» كان المسار بيوريه «موافقة إدارة الأمن السيبراني» — يعني وافقوا
+//    وهُم لسه ما فتحوش الطلب. ونفس العلة في خطوة الإسكان: مرفوض الإسكان كان
+//    بيبان بعلامة ✗ حمرا وتحتها «موافقة إدارة الإسكان».
+//    الاسم دلوقتي بيتبع الحالة الفعلية للخطوة اللي الطلب واقف عليها.
+//
+//    ⚠️ الجدول ده بالحالة مش بالخطوة عن قصد: أكتر من حالة بتقع على نفس الخطوة
+//    ومعناها مختلف — housing_approved معناها الإسكان خلص، و pending_supervisor
+//    معناها لسه بيراجع، والاتنين على خطوة الإسكان. الخطوات اللي مش حالية
+//    بتفضل بأسماء المراحل زي ما هي (التوازي بين «موافقة إدارة الإسكان» و
+//    «موافقة إدارة الأمن السيبراني» هو اللي بيخلّي المسار يتقرا كوحدة واحدة).
+const currentStepLabel = {
+  submitted:              'rdp_step_submitted',
+  pending_supervisor:     'rdp_wf_housingPending',
+  need_more_info:         'rdp_stage_needMoreInfo',
+  housing_approved:       'rdp_wf_housingApp',
+  housing_rejected:       'rdp_stage_housingRejected',
+  cyber_review:           'rdp_stage_cyberReview',
+  pending_cyber:          'rdp_stage_cyberReview',
+  cyber_rejected:         'rdp_stage_cyberRejected',
+  cyber_approved:         'rdp_wf_readyHousing',
+  ready_for_provisioning: 'rdp_wf_readyHousing',
+  completed:              'rdp_stage_completed',
+  approved:               'rdp_stage_completed',
+  rejected:               'rdp_stage_rejected'
+};
+// ⚠️ كانت هنا قائمة تالتة للحالات المرفوضة مكتوبة بالإيد. القائمة الوحيدة
+//    في Core/RequestWorkflow.cs، وبتوصل الواجهة في __WF.rejected.
 const genderMap = { male: 'rdp_gender_male', female: 'rdp_gender_female' };
 
 async function loadRequest() {
@@ -173,25 +219,11 @@ async function loadRequest() {
 //  المصدر r.studentEdits القادم من WorkflowHistory.changes_json — بيانات منظّمة
 //  مش نص، فالتعليم بيشتغل مع أي حقل يتضاف في TrackedFields من غير تعديل هنا.
 // ============================================================================
-function injectEditStyles() {
-  if (document.getElementById('rdpEditStyles')) return;
-  var st = document.createElement('style');
-  st.id = 'rdpEditStyles';
-  st.textContent =
-    '.info-field.edited{background:#fffaeb;border-radius:8px;padding:8px 12px;margin:-8px -4px}' +
-    '[dir="rtl"] .info-field.edited{border-right:3px solid #dba102}' +
-    '[dir="ltr"] .info-field.edited{border-left:3px solid #dba102}' +
-    '.info-field.edited .info-value{font-weight:700}' +
-    '.edited-tag{display:inline-block;margin-inline-start:6px;padding:1px 7px;border-radius:20px;' +
-      'background:#dba102;color:#3a2e08;font-size:10px;font-weight:700;vertical-align:middle}' +
-    '.edited-old{display:block;margin-top:3px;font-size:11.5px;color:#85888e}' +
-    '.edited-old del{color:#b42318;text-decoration-thickness:1px}' +
-    '.edits-banner{display:flex;align-items:flex-start;gap:10px;margin:0 0 14px;padding:11px 14px;' +
-      'border-radius:10px;background:#fffaeb;border:1px solid #f0dfa4;color:#7A5C0B;' +
-      'font-size:13px;font-weight:600;line-height:1.7}' +
-    '.edits-banner svg{flex-shrink:0;margin-top:2px}';
-  document.head.appendChild(st);
-}
+// ⚠️ الستايل كان بيتحقن من هنا: <style> بيتبني كنصّ في الجافاسكريبت بألوان
+//    مكتوبة بالإيد (#fffaeb و#dba102 و#b42318). يعني مكوّن تصميم مخبّي جوّه
+//    ملف سلوك — اللي بيقرا الـ CSS مش شايفه، واللي بيغيّر لون في الهوية
+//    مش هيلاقيه. اتنقل كله لـ css/components.css تحت اسم .chg، والألوان
+//    بقت توكنز.
 
 // خريطة field -> التغيير. mobile و phone نفس الحقل في سجل الطالب.
 var STUDENT_EDITS = {};
@@ -205,6 +237,19 @@ function buildEditMap(list) {
   });
 }
 
+// «كانت كذا وبقت كذا» — الشكل كله من .chg في css/components.css.
+// ⚠️ نفس المكوّن بيستخدمه سجل العمليات وسجل وحدات أعضاء هيئة التدريس.
+function chgHtml(oldVal, newHtml) {
+  var empty = (oldVal === null || oldVal === undefined || oldVal === '');
+  return '<span class="chg">' +
+           '<span class="chg-old' + (empty ? ' chg-empty' : '') + '">' +
+             (empty ? tf('rdp_editEmpty', 'فارغ', 'empty') : escHtml(oldVal)) +
+           '</span>' +
+           '<span class="chg-arrow" aria-hidden="true"></span>' +
+           '<span class="chg-new">' + newHtml + '</span>' +
+         '</span>';
+}
+
 // بديل موحّد لكتابة صف البيانات — بيعلّم الصف تلقائيًا لو الحقل اتعدّل
 function infoField(fieldKeys, label, valueHtml) {
   var keys = [].concat(fieldKeys || []);
@@ -214,48 +259,113 @@ function infoField(fieldKeys, label, valueHtml) {
     return '<div class="info-field"><span class="info-label">' + label +
            '</span><span class="info-value">' + valueHtml + '</span></div>';
 
-  var olds = hits.map(function (c) {
-    var prev = (c.old === null || c.old === undefined || c.old === '')
-      ? tf('rdp_editEmpty', 'فارغ', 'empty') : c.old;
-    return (hits.length > 1 ? escHtml(c.label) + ': ' : '') + '<del>' + escHtml(prev) + '</del>';
-  }).join(' · ');
+  var head = '<span class="info-label">' + label +
+             '<span class="edited-tag">' + tf('rdp_editedTag', 'مُعدَّل', 'Edited') + '</span></span>';
 
-  return '<div class="info-field edited"><span class="info-label">' + label +
-         '<span class="edited-tag">' + tf('rdp_editedTag', 'مُعدَّل', 'Edited') + '</span></span>' +
+  // ⚠️ حقل واحد: القديم والجديد على سطر واحد بسهم بينهم. قبل كده كانت القيمة
+  //    الجديدة في سطر، وتحتها سطر رمادي صغير «قبل التعديل: ...» بشطب أحمر —
+  //    فالعين ما كانتش بتربط الاتنين ببعض، والأحمر كان بيقول «غلط» والحقيقة
+  //    إن ده تعديل صحيح مش خطأ.
+  if (hits.length === 1)
+    return '<div class="info-field edited">' + head +
+           '<span class="info-value">' + chgHtml(hits[0].old, valueHtml) + '</span></div>';
+
+  // ⚠️ أكتر من حقل (السكن: مبنى ودور وشقة وغرفة): القيمة المركّبة فوق زي ما
+  //    هي، وتحتها سطر مستقل لكل حقل اتغيّر باسمه. كانت كلها بتتلزق في سطر
+  //    واحد مفصول بنقط، فمكانش باين أنهي رقم بتاع أنهي حقل.
+  var rows = hits.map(function (c) {
+    return '<span class="chg-row">' +
+             '<span class="chg-lbl">' + escHtml(c.label) + '</span>' +
+             chgHtml(c.old, escHtml(c['new'] == null ? '' : c['new'])) +
+           '</span>';
+  }).join('');
+
+  return '<div class="info-field edited">' + head +
          '<span class="info-value">' + valueHtml + '</span>' +
-         '<span class="edited-old">' + tf('rdp_editPrev', 'قبل التعديل', 'Before') + ': ' + olds + '</span></div>';
+         '<span class="chg-list">' + rows + '</span></div>';
 }
 
+// ============================================================================
+//  وثيقة التعهّد - الشكل والطباعة في wwwroot/js/pledge-doc.js.
+//
+//  ⚠️ اتنقلت من هنا لأن شاشة «ملف الطالب» بتعرض نفس الوثيقة وبتطبعها بنفس
+//     الطريقة. لو فضلت مكتوبة في الشاشة دي، الشاشة التانية كانت هتاخد نسخة -
+//     ونسختين لنفس الوثيقة بيفترقوا مع أول تعديل، والوثيقة دي بالذات وثيقة
+//     رسمية بتتطبع وتتحطّ في ملفات.
+// ============================================================================
+function pledgeCardHtml(r) { return NuhPledgeDoc.card(r); }
+function printPledge() { NuhPledgeDoc.print(); }
+
 function renderRequest(r) {
-  injectEditStyles();
   buildEditMap(r.studentEdits);
   var lang = document.getElementById('html-root').getAttribute('lang') || 'ar';
   document.getElementById('loading-state').style.display = 'none';
   document.getElementById('detail-content').style.display = 'block';
   // ماتخترعش رقم طلب — الرقم المصنوع هنا مكانش متخزّن، والطالب كان بيكتبه في
   // صفحة التتبع فمايتلاقاش. الرقم بقى بيتولّد ويتخزّن وقت إنشاء الطلب.
-  var reqNum = r.requestNumber || '—';
+  var reqNum = r.requestNumber || '-';
   var __pt = document.getElementById('pageTitle'); if (__pt) __pt.textContent = t('rdp_pageTitle')+' - '+reqNum;
 
   var s = r.student || {};
   var st = (r.status||'').toLowerCase();
   var stageLabel = (stageNames[st]&&t(stageNames[st]))||st;
-  var isRejected = isRejectedStatus[st];
-  var workflowIdx = stageToWorkflowStep[st] !== undefined ? stageToWorkflowStep[st] : 0;
+  var isRejected = NuhWorkflow.isRejected(st);
+  var workflowIdx = stepOf(st);
+
+  // ⚠️ الحالة «rejected» المجرّدة ما بتقولش الرفض جه من مين — والخريطة فوق
+  //    بتحطّها على الخطوة ٠ (تقديم الطلب). فالمؤشّر كان بيوري الرفض على خطوة
+  //    التقديم نفسها، يعني «التقديم فشل» — والتقديم نجح، واللي رفض هو الإسكان،
+  //    وسجل المراجعات تحته بيقول «رفض إسكان» بالنص. نفس الشاشة بروايتين.
+  //
+  //    المرحلة اللي الرفض حصل فيها متسجّلة في fromStage لآخر سطر في السجل —
+  //    بنقرأها منه بدل ما نخمّن.
+  if (isRejected) {
+    var atStage;
+
+    // (١) المرحلة اللي الرفض حصل فيها من آخر سطر في السجل — أدقّ مصدر.
+    if (Array.isArray(r._regHistory) && r._regHistory.length) {
+      var lastStep = r._regHistory[r._regHistory.length - 1];
+      atStage = NuhWorkflow.stepOf(lastStep.fromStage);
+      // ⚠️ سجلات قديمة ممكن تكون بلا fromStage محفوظ (نفس الاحتياطي المكتوب
+      //    تحت في بناء السجل). ساعتها بنجرّب toStage: housing_rejected و
+      //    cyber_rejected بيقولوا المرحلة لوحدهم.
+      if (atStage === undefined)
+        atStage = NuhWorkflow.stepOf(lastStep.toStage);
+    }
+
+    // (٢) وإلا من ختم المراجعة: مين آخر واحد فتح الطلب فعلًا.
+    //     ⚠️ السيبراني الأول: لو ختمه موجود يبقى هو آخر مرحلة اتلمست، حتى لو
+    //        الإسكان ختم قبله.
+    if (atStage === undefined && r.cyberReviewedAt) atStage = NuhWorkflow.stepOf('cyber_review');
+    if (atStage === undefined && r.housingReviewedAt) atStage = NuhWorkflow.stepOf('pending_supervisor');
+
+    if (atStage !== undefined) workflowIdx = atStage;
+  }
 
   /* --- Workflow bar --- */
   var isSelfReg = r.requestType === 'self_registration';
   var wfSteps = isSelfReg ? selfRegWorkflowSteps : workflowSteps;
   var wfHtml = wfSteps.map(function(step,i) {
     var cls = '';
-    if (isRejected && st.indexOf('rejected') > -1) {
-      cls = (i === workflowIdx) ? ' rejected' : '';
+    // ⚠️ كان الشرط st.indexOf('rejected') > -1 — فحص نصّي بيمسك أي حالة فيها
+    //    الكلمة دي، ويسكت بلا خطأ لو الاسم اتغيّر.
+    if (isRejected) {
+      // ⚠️ الخطوات اللي قبل نقطة الرفض بتفضل «مكتملة»: هي حصلت فعلًا. كانت
+      //    بتطلع رمادية زي اللي ما حصلش، فالمؤشّر بيقول إن التقديم نفسه فشل —
+      //    وبوابة الطالب في نفس اللحظة بتقول «تم تقديم الطلب ✓ ثم مرفوض ✗».
+      //    نفس الطلب بروايتين، والموظف هو اللي بيرد على الطالب.
+      cls = (i === workflowIdx) ? ' rejected' : (i < workflowIdx ? ' completed' : '');
     } else if (i < workflowIdx) {
       cls = ' completed';
     } else if (i === workflowIdx) {
       cls = ' active';
     }
-    var label = step.key === 'submitted' ? t('rdp_step_submitted')
+    // الخطوة اللي الطلب واقف عليها دلوقتي (سواء جارية أو مرفوضة) بتاخد اسم
+    // الحالة نفسها — نفس النص اللي في الشارة فوق، فما يحصلش تناقض بين
+    // «مراجعة إدارة الأمن السيبراني» في الشارة و«موافقة…» في نفس اللحظة.
+    var curKey = (cls === ' active' || cls === ' rejected') ? currentStepLabel[st] : null;
+    var label = curKey ? t(curKey)
+      : step.key === 'submitted' ? t('rdp_step_submitted')
       : step.key === 'housing' ? t('rdp_wf_housingApp')
       // ⚠️ مفتاح مستقل عن rdp_stage_cyberReview: ذاك اسم *حالة* («مراجعة
       //    إدارة الأمن السيبراني») ومستخدم في الشارات وسجل المراحل.
@@ -278,7 +388,7 @@ function renderRequest(r) {
   var historyEntries = [];
   if (r.requestType === 'self_registration' && r._regHistory) {
     r._regHistory.forEach(function(h, idx) {
-      var wasRejected = String(h.toStage || '').indexOf('rejected') > -1;
+      var wasRejected = NuhWorkflow.isRejected(h.toStage);
       // «طلب معلومات إضافية» مش موافقة ولا رفض — كانت بتتسمّى بالخطأ
       // «موافقة إدارة الإسكان» لأن الاسم كان بيتحدد من fromStage بفرضية إن
       // أي خطوة مش رفض تبقى موافقة.
@@ -338,8 +448,8 @@ function renderRequest(r) {
     return ta - tb;
   });
 
-  function fmtDate(t) { return new Date(t).toLocaleDateString(lang==='ar'?'ar-SA':'en-US', { year:'numeric', month:'short', day:'numeric' }); }
-  function fmtTime(t) { return new Date(t).toLocaleTimeString(lang==='ar'?'ar-SA':'en-US', { hour:'2-digit', minute:'2-digit' }); }
+  function fmtDate(t) { return NuhFmt.dateLong(t); }
+  function fmtTime(t) { return NuhFmt.time(t); }
 
   var historyHtml = historyEntries.map(function(e) {
     var title = e.label;
@@ -357,7 +467,17 @@ function renderRequest(r) {
     // الملاحظات بتظهر في خطوات الرفض *وطلب المعلومات* — دول الخطوتين اللي
     // الملاحظة فيهم هي المحتوى نفسه. ملاحظات الموافقة داخلية.
     var showNotes = e.cls === 'rejected' || e.cls === 'info';
-    var notesHtml = '<div class="tl-notes">'+t('rdp_lbl_notes')+' '+(e.notes && showNotes?escHtml(e.notes):t('rdp_msg_noNotes'))+'</div>';
+    // ⚠️ الصندوق بيختفي خالص لما ما يكونش فيه ملاحظة. كان بيتكتب دايمًا
+    //    و«لا توجد ملاحظات» بتاخد نفس المساحة واللون بتاع الملاحظة الحقيقية —
+    //    فتلات صناديق فاضية بتخنق ملاحظتين، والعين ما بتفرّقش بينهم.
+    // ⚠️ والعنوان بيقول *محتوى* الصندوق: «سبب الرفض» أو «المطلوب استكماله»
+    //    بدل كلمة «الملاحظات» اللي ما بتقولش حاجة عن اللي جوّه.
+    var notesHtml = (showNotes && e.notes)
+      ? '<div class="note-block in-tl' + (e.cls === 'rejected' ? ' red' : '') + '">' +
+          '<div class="note-block-cap">' +
+          (e.cls === 'rejected' ? t('rdp_lbl_rejectionReason') : t('rdp_lbl_infoRequested')) +
+          '</div><div class="note-block-txt">' + escHtml(e.notes) + '</div></div>'
+      : '';
     // اللون البرتقالي للنقطة — مافيش كلاس ليه في site.css فبيتحط هنا مباشرة
     var dotStyle = e.cls === 'info' ? ' style="border-color:#b54708;background:#b54708"' : '';
     return '<div class="tl-item"><div class="tl-dot '+dotCls+'"'+dotStyle+'></div><div class="tl-content"><div class="tl-title">'+title+'</div>'+userHtml+'<div class="tl-row"><span class="tl-label">'+t('rdp_lbl_date')+'</span><span class="tl-value">'+dateStr+' - '+timeStr+'</span></div>'+notesHtml+'</div></div>';
@@ -369,11 +489,12 @@ function renderRequest(r) {
   /* --- Rejection info banner --- */
   var rejectionNotes = st === 'cyber_rejected' ? r.cyberNotes : (st === 'housing_rejected' ? r.housingNotes : (st === 'rejected' ? r.notes : null));
   var rejectionHtml = rejectionNotes
-    ? '<div class="rejection-info">'+
-      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#b42318" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'+
-      '<div><div class="rejection-info-label">'+
-      t('rdp_lbl_rejectionReason')+'</div><div class="rejection-info-text">'+
-      escHtml(rejectionNotes)+'</div></div></div>'
+    // ⚠️ كان .rejection-info — تصميم تالت لنفس الصندوق، مكتوب في
+    //    Views/Requests/Details.cshtml وحدها. بقى نفس المكوّن المشترك،
+    //    فالبانر فوق والملاحظة في الخط الزمني وبوابة الطالب شكلهم واحد.
+    ? '<div class="note-block red">'+
+      '<div class="note-block-cap">'+t('rdp_lbl_rejectionReason')+'</div>'+
+      '<div class="note-block-txt">'+escHtml(rejectionNotes)+'</div></div>'
     : '';
 
   // "مقدّم من" في التسجيل الذاتي = الطالب نفسه، مش حساب الدخول اللي اتسجّل عليه
@@ -484,7 +605,7 @@ function renderRequest(r) {
   var editsBanner = '';
   if (r.studentEdits && r.studentEdits.length) {
     var __n = r.studentEdits.length;
-    var __when = r.studentEditedAt ? new Date(r.studentEditedAt).toLocaleString(lang === 'en' ? 'en-GB' : 'ar-SA') : '';
+    var __when = NuhFmt.dateTime(r.studentEditedAt);
     editsBanner =
       '<div class="edits-banner" style="grid-column:1/-1">' +
         '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
@@ -522,9 +643,9 @@ function renderRequest(r) {
       t('rdp_card_requestInfo')+'</div><div class="card-body"><div class="info-grid">'+
       '<div class="info-field"><span class="info-label">'+t('rdp_field_requestNumber')+'</span><span class="info-value">'+reqNum+'</span></div>'+
       '<div class="info-field"><span class="info-label">'+t('rdp_field_requestType')+'</span><span class="info-value">'+escHtml(requestTypeName(r.requestType))+'</span></div>'+
-      '<div class="info-field"><span class="info-label">'+t('rdp_field_status')+'</span><span class="info-value"><span class="badge badge-'+st+'">'+(statusMap[st]?t(statusMap[st]):r.status)+'</span></span></div>'+
+      '<div class="info-field"><span class="info-label">'+t('rdp_field_status')+'</span><span class="info-value"><span class="badge badge-'+NuhWorkflow.canonical(st)+'">'+(statusMap[st]?t(statusMap[st]):r.status)+'</span></span></div>'+
       '<div class="info-field"><span class="info-label">'+t('rdp_field_submittedBy')+'</span><span class="info-value">'+escHtml(submittedByDisplay)+'</span></div>'+
-      '<div class="info-field"><span class="info-label">'+t('rdp_field_submittedDate')+'</span><span class="info-value">'+(r.submittedAt?new Date(r.submittedAt).toLocaleDateString(lang==='ar'?'ar-SA':'en-US'):'')+'</span></div>'+
+      '<div class="info-field"><span class="info-label">'+t('rdp_field_submittedDate')+'</span><span class="info-value">'+NuhFmt.date(r.submittedAt)+'</span></div>'+
     '</div></div></div>'+
 
     /* 1b - Bulk Request Details (only for bulk_req) */
@@ -550,7 +671,7 @@ function renderRequest(r) {
           '<div class="info-field"><span class="info-label">'+t('rdp_field_validCount')+'</span><span class="info-value">'+(bd.validCount||0)+'</span></div>'+
           '<div class="info-field"><span class="info-label">'+t('rdp_field_errors')+'</span><span class="info-value">'+(bd.errorCount||0)+'</span></div>'+
           '<div class="info-field"><span class="info-label">'+t('rdp_field_status')+'</span><span class="info-value">'+(bulkStatusMap[bd.status]||bd.status||'')+'</span></div>'+
-          '<div class="info-field"><span class="info-label">'+t('rdp_field_createdDate')+'</span><span class="info-value">'+(bd.createdDate?new Date(bd.createdDate).toLocaleDateString(lang==='ar'?'ar-SA':'en-US'):'')+'</span></div>'+
+          '<div class="info-field"><span class="info-label">'+t('rdp_field_createdDate')+'</span><span class="info-value">'+NuhFmt.date(bd.createdDate)+'</span></div>'+
         '</div></div></div>'+
 
         /* Summary card */
@@ -634,6 +755,9 @@ function renderRequest(r) {
       '<p style="font-size:12px;color:var(--gray-500);margin-top:8px">'+t('rdp_msg_credentialsSms')+'</p>'+
     '</div></div>' : '')+
 
+    /* 4c - وثيقة التعهّد */
+    pledgeCardHtml(r)+
+
     /* 5 - Review History */
     '<div class="card"><div class="card-header">'+
       '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>'+
@@ -679,19 +803,38 @@ async function loadHousingAccount(studentId) {
     //    الصحيح <bdi>: يعزل اتجاه النص في داخله فقط — فالحروف والأرقام تُقرأ
     //    بترتيبها الصحيح — بينما محاذاة السطر تبقى تابعة لاتجاه الصفحة، فتقف
     //    القيمة تحت عنوانها تمامًا في العربية وفي الإنجليزية بلا استثناء لأيهما.
-    function adField(label, valueHtml, ltr) {
+    // hint اختياري: بيتحط على العنوان كـ title، من غير أي تغيير في الشكل
+    function adField(label, valueHtml, ltr, hint) {
       return '<div class="info-field">' +
-               '<span class="info-label">' + label + '</span>' +
+               '<span class="info-label"' + (hint ? ' title="' + escHtml(hint) + '"' : '') + '>' + label + '</span>' +
                '<span class="info-value">' +
                  (ltr ? '<bdi>' + valueHtml + '</bdi>' : valueHtml) +
                '</span>' +
              '</div>';
     }
 
+    // ⚠️ «آخر دخول للشبكة» غير «آخر مزامنة»: المزامنة وقت *قراءتنا* من
+    //    الدليل، ودي وقت *الطالب* ما استخدم الحساب فعلًا. الاتنين جنب بعض
+    //    عن قصد عشان محدش يقرا واحدة على إنها التانية.
+    //    فاضية = الحساب اتعمل وما اتستخدمش ولا مرة.
+    // ⚠️ NuhFmt.dateTime لا NuhFmt.date: الوقت جزء من المعلومة هنا.
+    //    والتاريخين دول كانوا بيظهروا **بصيغتين مختلفتين** في شاشتين:
+    //    «إدارة حسابات السكن» بتعرض «18/08/2026 11:44» وهنا كان «18/08/2026»
+    //    لنفس القيمة بالظبط — فالموظف يفتكر إن الشاشتين بيقروا حاجتين مختلفتين.
+    //    الاتنين بيستخدموا NuhFmt (التعريف الوحيد)، بس كانوا مختارين دالتين.
+    var lastLogon = ad.lastLogonAt
+      ? NuhFmt.dateTime(ad.lastLogonAt)
+      : '<span style="color:var(--gray-500)">' + t('adNeverLoggedIn') + '</span>';
+
     content.innerHTML = '<div class="info-grid">' +
       adField(t('adUsername'), escHtml(s.ad_username || '-'), true) +
       adField(t('adAccountStatus'), statusBadge) +
-      adField(t('adLastSync'), s.ad_last_sync_at ? formatDate(s.ad_last_sync_at) : '-', true) +
+      // ⚠️ الوقت هنا مقروء من lastLogonTimestamp في الدليل، والدومين بيحدّثها
+      //    كل ٩-١٤ يوم لا مع كل دخول. يعني الساعة اللي ظاهرة ساعة دخول حقيقي
+      //    بس مش بالضرورة **آخر** واحد. الـ hint بيقول ده للموظف بدل ما رقم
+      //    دقيق للدقيقة يوحي بدقّة مش موجودة.
+      adField(t('adLastLogon'), lastLogon, true, t('adLastLogonHint')) +
+      adField(t('adLastSync'), s.ad_last_sync_at ? NuhFmt.dateTime(s.ad_last_sync_at) : '-', true) +
       adField(t('college'), escHtml(collegeName(s.college) || '-')) +
     '</div>';
 

@@ -93,14 +93,5 @@ namespace NUH_PORTAL.Services
                 .ToListAsync();
         }
 
-        public async Task<string?> GetCurrentStageAsync(int requestId)
-        {
-            var last = await _context.WorkflowHistories
-                .Where(w => w.RequestId == requestId)
-                .OrderByDescending(w => w.ActionDate)
-                .FirstOrDefaultAsync();
-
-            return last?.ToStage;
-        }
     }
 }

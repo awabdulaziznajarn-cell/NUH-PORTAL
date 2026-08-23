@@ -1,127 +1,26 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" id="html-root">
+<html lang="ar" dir="rtl">
 <head>
-<link rel="icon" href="../favicon.ico">
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>قائمة المهام</title>
-<script src="../i18n.js"></script>
-<style>
-@font-face { font-family:'IBM Plex Sans Arabic'; font-style:normal; font-weight:400; src:url('../fonts/IBMPlexSansArabic-Regular.woff2') format('woff2'); }
-@font-face { font-family:'IBM Plex Sans Arabic'; font-style:normal; font-weight:600; src:url('../fonts/IBMPlexSansArabic-SemiBold.woff2') format('woff2'); }
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{--navy:#166a45;--navy-dark:#104631;--navy-light:#25935f;--gold:#dba102;--gold-light:#f0c33c;--white:#FFFFFF;--gray-50:#f5f5f6;--gray-100:#eceded;--gray-200:#dcdfe4;--gray-300:#cecfd2;--gray-500:#85888e;--gray-700:#333741;--green:#067647;--green-light:#dff6e7;--red:#b42318;--red-light:#fef3f2;--sidebar-w:240px}
-body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);color:var(--navy-dark);min-height:100vh;display:flex}
-#sidebar-placeholder{width:var(--sidebar-w);flex-shrink:0}
-.main{flex:1;display:flex;flex-direction:column;height:100vh;overflow-y:auto}
-.topbar{background:var(--white);border-bottom:1px solid var(--gray-200);padding:0 28px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
-.topbar-title{font-size:18px;font-weight:800;color:var(--navy-dark)}
-.content{padding:28px;flex:1}
-.page-header{margin-bottom:24px}
-.page-header h2{font-size:22px;font-weight:800;color:var(--navy-dark);margin-bottom:4px}
-.page-header p{font-size:13px;color:var(--gray-500)}
-.stats-row{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap}
-.stat-pill{background:var(--white);border:1px solid var(--gray-100);border-radius:12px;padding:12px 20px;flex:1;min-width:100px;box-shadow:0 2px 8px rgba(16,70,49,0.05)}
-.stat-pill-num{font-size:24px;font-weight:900;color:var(--navy-dark)}
-.stat-pill-label{font-size:12px;color:var(--gray-500);font-weight:500}
-.card{background:var(--white);border-radius:16px;border:1px solid var(--gray-100);box-shadow:0 2px 8px rgba(16,70,49,0.05);overflow:hidden}
-table{width:100%;border-collapse:collapse;font-size:13px}
-thead th{background:var(--gray-50);padding:11px 16px;text-align:right;font-size:11px;font-weight:600;color:var(--gray-500);border-bottom:1px solid var(--gray-100)}
-tbody td{padding:12px 16px;border-bottom:1px solid var(--gray-100)}
-tbody tr:last-child td{border-bottom:none}
-tbody tr:hover{background:var(--gray-50)}
-.status-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
-.status-pending_supervisor{background:#fef0c7;color:#7a5c0b}
-.status-pending_cyber{background:#eff4ff;color:#175cd3}
-.status-pending_admin{background:#f4eefa;color:#80519f}
-.status-approved{background:var(--green-light);color:var(--green)}
-.status-rejected{background:var(--red-light);color:var(--red)}
-.status-need_more_info{background:#fffaeb;color:#b54708}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:6px 14px;border-radius:8px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;border:none;text-decoration:none}
-.btn-sm{background:var(--navy);color:var(--white)}
-.btn-sm:hover{opacity:0.9}
-.empty-state{padding:48px;text-align:center;color:var(--gray-500);font-size:14px}
-</style>
+<meta charset="utf-8">
+<title>بوابة الإسكان الجامعي</title>
+<!-- ==========================================================================
+     الصفحة دي اتشالت.
+
+     كانت شاشة موظفين قاعدة في مجلد بوابة الطالب (wwwroot/register/) — يعني
+     بتتقدّم لأي حد معاه الرابط بلا تسجيل دخول. ومكانش فيها تسريب بيانات
+     (الـ API بيرفض بلا توكن، وهي أصلًا كانت بتقرا staffToken من localStorage
+     وهو مفتاح مابقاش موجود بعد ما الموظفين اتحوّلوا للكوكي) — لكنها كانت
+     بتكشف شكل سير العمل الداخلي لأي زائر.
+
+     وكانت يتيمة: صفر مرجع ليها في المشروع كله.
+
+     التحويل هنا عشان أي رابط قديم محفوظ يوصل لمكان له معنى بدل شاشة مكسورة.
+     تقدر تمسح الملف ده من wwwroot ومن مجلد النشر.
+     ========================================================================== -->
+<meta http-equiv="refresh" content="0; url=/register/">
+<link rel="canonical" href="/register/">
 </head>
 <body>
-<div id="sidebar-placeholder"></div>
-<div class="main">
-<div class="topbar"><div class="topbar-title">قائمة المهام</div></div>
-<div class="content">
-<div class="page-header">
-<h2>طلبات التسجيل الجديدة</h2>
-<p>الطلبات التي تنتظر مراجعتك</p>
-</div>
-<div class="stats-row" id="statsRow"></div>
-<div class="card">
-<table>
-<thead><tr><th>رقم الطلب</th><th>الطالب</th><th>تاريخ التقديم</th><th>الحالة</th><th></th></tr></thead>
-<tbody id="queueBody">
-<tr><td colspan="5" class="empty-state">جاري التحميل...</td></tr>
-</tbody>
-</table>
-</div>
-</div>
-</div>
-<script src="../sidebar.js"></script>
-<script>
-let token = localStorage.getItem('staffToken') || localStorage.getItem('studentToken');
-const STATUS_MAP = {
-  pending_supervisor: 'بانتظار موافقة إدارة الإسكان',
-  pending_cyber: 'بانتظار مراجعة إدارة الأمن السيبراني',
-  ready_for_provisioning: 'جاهز لإنشاء حساب شبكة السكن',
-  completed: 'مكتمل',
-  approved: 'مكتمل',
-  rejected: 'مرفوض',
-  need_more_info: 'بحاجة معلومات إضافية'
-};
-const USER_ROLE = (JSON.parse(localStorage.getItem('staffUser') || localStorage.getItem('studentUser') || '{}').role || '').toLowerCase();
-
-async function loadQueue() {
-  try {
-    var r = await fetch('/api/Workflow/queue', { headers: {'Authorization':'Bearer '+token} });
-    if (r.status === 401) { window.location.href = '../login.html'; return; }
-    var data = await r.json();
-    var tbody = document.getElementById('queueBody');
-    if (!data || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" class="empty-state">لا توجد طلبات في قائمة المهام</td></tr>';
-      return;
-    }
-    tbody.innerHTML = data.map(function(req) {
-      var date = new Date(req.submittedAt).toLocaleDateString('ar-SA');
-      return '<tr><td><strong>' + (req.requestNumber || '---') + '</strong></td>' +
-        '<td>' + (req.studentName || '') + '</td>' +
-        '<td>' + date + '</td>' +
-        '<td><span class="status-badge status-' + req.status + '">' + (STATUS_MAP[req.status] || req.status) + '</span></td>' +
-        '<td><a href="request-review.html?id=' + req.id + '" class="btn btn-sm">مراجعة</a></td></tr>';
-    }).join('');
-  } catch(e) { document.getElementById('queueBody').innerHTML = '<tr><td colspan="5" class="empty-state">تعذر التحميل</td></tr>'; }
-}
-
-async function loadCounts() {
-  try {
-    var r = await fetch('/api/Workflow/queue/counts', { headers: {'Authorization':'Bearer '+token} });
-    var data = await r.json();
-    var html = '';
-    var stages = [
-      {key: 'pending_supervisor', label: 'بانتظار موافقة إدارة الإسكان'},
-      {key: 'pending_cyber', label: 'بانتظار مراجعة إدارة الأمن السيبراني'},
-      {key: 'ready_for_provisioning', label: 'جاهز لإنشاء حساب شبكة السكن'},
-      {key: 'completed', label: 'مكتمل'},
-      {key: 'rejected', label: 'مرفوض'},
-      {key: 'need_more_info', label: 'بحاجة معلومات'}
-    ];
-    stages.forEach(function(s) {
-      var found = data.find(function(d) { return d.status === s.key; });
-      var count = found ? found.count : 0;
-      html += '<div class="stat-pill"><div class="stat-pill-num">' + count + '</div><div class="stat-pill-label">' + s.label + '</div></div>';
-    });
-    document.getElementById('statsRow').innerHTML = html;
-  } catch(e) {}
-}
-loadQueue();
-loadCounts();
-fetch('../sidebar.html').then(r=>r.text()).then(h=>{document.getElementById('sidebar-placeholder').innerHTML=h; applyRolePermissions();});
-</script>
+<p>يتم تحويلك إلى <a href="/register/">بوابة الإسكان الجامعي</a>…</p>
 </body>
 </html>

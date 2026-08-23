@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" id="html-root">
+<html lang="ar" dir="rtl" id="html-root" data-title-key="pt_phTitle">
 <head>
 <link rel="icon" href="../favicon.ico">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>التحقق برقم الجوال - بوابة السكن الجامعي</title>
+<title>التحقق برقم الجوال - بوابة الإسكان الجامعي</title>
 <script src="../i18n.js"></script>
 <script src="../js/phone-field.js"></script>
 <script src="../js/code-field.js"></script>
@@ -19,13 +19,6 @@
 
 
 
-.portal-header{text-align:center;padding:28px 16px 0;width:100%;position:relative}
-.portal-header img{width:80px;height:auto;margin-bottom:10px}
-.portal-header h1{font-size:17px;font-weight:800;color:var(--navy-dark)}
-.lang-btn{position:absolute;top:12px;background:#fff;border:1px solid #dcdfe4;border-radius:6px;padding:6px 14px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;z-index:10}
-[dir="rtl"] .lang-btn{left:12px}
-[dir="ltr"] .lang-btn{right:12px}
-.lang-btn:hover{background:#f5f5f6}
 .content{max-width:520px}
 
 .card:hover{box-shadow:0 4px 20px rgba(16,70,49,0.09)}
@@ -66,17 +59,22 @@
 .phone-input::placeholder{font-weight:400;letter-spacing:1px;color:var(--gray-300)}
 .phone-hint{font-size:11.5px;color:var(--gray-500);line-height:1.6}
 .phone-hint.err{color:var(--red);margin-top:6px}
-@media(max-width:768px){.portal-header{padding:20px 16px 0}.portal-header img{width:64px}.portal-header h1{font-size:16px}.content{padding:16px}.card{padding:20px}.step-indicator{gap:6px}.step{width:30px;height:30px;font-size:12px}}
+@media(max-width:768px){.content{padding:16px}.card{padding:20px}.step-indicator{gap:6px}.step{width:30px;height:30px;font-size:12px}}
 @media(max-width:414px){.card{border-radius:12px}.step{width:28px;height:28px;font-size:11px}.step-indicator{gap:4px}}
-@media(max-width:375px){.content{padding:12px}.card{padding:16px;border-radius:10px}.form-control{height:44px;font-size:16px}.btn{padding:10px 16px}.step{width:26px;height:26px;font-size:10px}.timer-text{font-size:12px}.portal-header{padding:16px 12px 0}.portal-header img{width:56px}.portal-header h1{font-size:15px}}
+@media(max-width:375px){.content{padding:12px}.card{padding:16px;border-radius:10px}.form-control{height:44px;font-size:16px}.btn{padding:10px 16px}.step{width:26px;height:26px;font-size:10px}.timer-text{font-size:12px}}
 @media(max-width:320px){.card{padding:14px}.form-group label{font-size:12px}.form-control{font-size:14px;height:40px}.btn{font-size:13px;padding:8px 14px}}
 </style>
 </head>
 <body>
 <div class="portal-header">
-<img src="../nu-logo.png" alt="جامعة نجران">
-<h1>تسجيل الإسكان الجامعي</h1>
-<button class="lang-btn" id="langBtn" onclick="toggleLang()">English</button>
+<img src="../nu-logo.svg" alt="جامعة نجران" data-i18n-alt="Brand_Sub">
+<h1 data-i18n="Brand_Title">بوابة الإسكان الجامعي</h1>
+<!-- ⚠️ data-i18n لا نصّ ثابت: الزرّ كان مكتوب فيه «English» بالإيد، فالطالب
+     اللي بدّل للإنجليزي كان بيلاقي صفحة إنجليزي وزرّ بيعرض عليه «English»
+     تاني - مفيش طريق راجع ظاهر للعربي. المفتاح pt_langToggle قيمته في
+     الملف العربي «English» وفي الإنجليزي «العربية»، يعني نصّه دايمًا اسم
+     اللغة اللي المستخدم رايح لها. -->
+<button class="lang-btn" id="langBtn" type="button" onclick="toggleLang()" data-i18n="pt_langToggle">English</button>
 </div>
 <div class="content">
 <div class="card card-pad-lg">
@@ -86,12 +84,12 @@
 <div class="step">3</div>
 <div class="step">4</div>
 </div>
-<h2 style="font-size:18px;font-weight:800;margin-bottom:4px">التحقق برقم الجوال</h2>
-<p style="font-size:13px;color:var(--gray-500);margin-bottom:20px">أدخل رقم جوالك لاستلام رمز التحقق</p>
+<h2 style="font-size:18px;font-weight:800;margin-bottom:4px" data-i18n="pt_phTitle">التحقق برقم الجوال</h2>
+<p style="font-size:13px;color:var(--gray-500);margin-bottom:20px" data-i18n="pt_phSubtitle">أدخل رقم جوالك لاستلام رمز التحقق</p>
 <div id="alertMessage" class="alert"></div>
 <div id="stepPhone">
 <div class="form-group">
-<label>رقم الجوال</label>
+<label for="mobileInput" data-i18n="reg_lblPhone">رقم الجوال</label>
 <div class="phone-field" id="phoneField">
   <span class="phone-cc">+966</span>
   <!-- ⚠️ من غير maxlength عن قصد: المتصفح بيقص اللصق *قبل* ما الكود ينظّفه،
@@ -103,20 +101,20 @@
 </div>
 <div class="phone-hint" id="phoneHint"></div>
 </div>
-<button id="sendOtpBtn" class="btn btn-block btn-primary" onclick="sendOtp()" disabled>إرسال رمز التحقق</button>
+<button id="sendOtpBtn" class="btn btn-block btn-primary" onclick="sendOtp()" disabled data-i18n="pt_phSendOtp">إرسال رمز التحقق</button>
 </div>
 <div id="trackLinkWrap" style="display:none;text-align:center;margin-top:8px">
-<a id="trackLink" class="btn btn-block btn-primary" href="track-request.html" style="text-decoration:none">متابعة الطلب</a>
+<a id="trackLink" class="btn btn-block btn-primary" href="track-request.html" style="text-decoration:none" data-i18n="pt_trackRequest">متابعة الطلب</a>
 </div>
 <div id="stepOtp" style="display:none">
-<div id="staticOtpNote" class="alert alert-info" style="display:none">خدمة الرسائل النصية قيد التفعيل. استخدم الرمز 123456 للتجربة.</div>
+<div id="staticOtpNote" class="alert alert-info" style="display:none" data-i18n="pt_phStaticNote">خدمة الرسائل النصية قيد التفعيل. استخدم الرمز 123456 للتجربة.</div>
 <div class="form-group">
-<label>رمز التحقق</label>
+<label for="otpInput" data-i18n="pt_phOtpLabel">رمز التحقق</label>
 <input type="text" id="otpInput" class="form-control otp-input" placeholder="------" maxlength="6" inputmode="numeric">
 </div>
-<button id="verifyOtpBtn" class="btn btn-block btn-primary" onclick="verifyOtp()">تحقق</button>
+<button id="verifyOtpBtn" class="btn btn-block btn-primary" onclick="verifyOtp()" data-i18n="pt_phVerify">تحقق</button>
 <div id="timerText" class="timer-text"></div>
-<button id="resendBtn" class="btn btn-outline" style="margin-top:8px;display:none" onclick="sendOtp()">إعادة إرسال الرمز</button>
+<button id="resendBtn" class="btn btn-outline" style="margin-top:8px;display:none" onclick="sendOtp()" data-i18n="pt_phResend">إعادة إرسال الرمز</button>
 </div>
 </div>
 </div>
@@ -141,38 +139,38 @@ NuhCode.gate({ button: 'verifyOtpBtn', fields: [{ input: 'otpInput', length: 6, 
 NuhPhone.attach({
   input: 'mobileInput', wrap: 'phoneField', hint: 'phoneHint', button: 'sendOtpBtn',
   messages: {
-    start:  'رقم الجوال يجب أن يبدأ بالرقم 5 - بدون صفر وبدون 966',
-    length: 'رقم الجوال يجب أن يتكوّن من ٩ أرقام'
+    start:  t('pt_phStart5'),
+    length: t('pt_phLen9')
   }
 });
 
 async function sendOtp() {
   var digits = NuhPhone.normalize(document.getElementById('mobileInput').value);
-  if (!NuhPhone.isValid(digits)) { showAlert('يرجى إدخال رقم جوال صحيح مكوّن من ٩ أرقام يبدأ بالرقم 5', 'error'); return; }
+  if (!NuhPhone.isValid(digits)) { showAlert(t('pt_phInvalid'), 'error'); return; }
   // بنبعت الصيغة الموحّدة 9665XXXXXXXX زي ما هي متخزّنة في قاعدة البيانات
   mobile = '966' + digits;
   var btn = document.getElementById('sendOtpBtn');
-  btn.disabled = true; btn.textContent = 'جاري الإرسال...';
+  btn.disabled = true; btn.textContent = t('pt_phSending');
   try {
     var r = await fetch('/api/Otp/send', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({mobile:mobile}) });
     var d = await r.json();
     if (r.ok) {
-      showAlert('تم إرسال رمز التحقق إلى +966 ' + digits, 'success');
+      showAlert(t('pt_phOtpSentToFmt').replace('{0}', '+966 ' + digits), 'success');
       document.getElementById('stepPhone').style.display='none';
       document.getElementById('stepOtp').style.display='block';
       if (d.mode === 'static') {
         document.getElementById('staticOtpNote').style.display='block';
       }
       startTimer();
-    } else { showAlert(d.message || 'فشل الإرسال', 'error'); btn.disabled=false; btn.textContent='إرسال رمز التحقق'; }
-  } catch(e) { showAlert('تعذر الاتصال بالخادم', 'error'); btn.disabled=false; btn.textContent='إرسال رمز التحقق'; }
+    } else { showAlert(d.message || t('pt_phSendFailed'), 'error'); btn.disabled=false; btn.textContent=t('pt_phSendOtp'); }
+  } catch(e) { showAlert(t('reg_toastConnError'), 'error'); btn.disabled=false; btn.textContent=t('pt_phSendOtp'); }
 }
 
 async function verifyOtp() {
   var code = document.getElementById('otpInput').value.trim();
-  if (!code || code.length < 6) { showAlert('يرجى إدخال رمز التحقق كاملاً', 'error'); return; }
+  if (!code || code.length < 6) { showAlert(t('pt_phCodeShort'), 'error'); return; }
   var btn = document.getElementById('verifyOtpBtn');
-  btn.disabled = true; btn.textContent = 'جاري التحقق...';
+  btn.disabled = true; btn.textContent = t('pt_phVerifying');
   try {
     var r = await fetch('/api/Otp/verify', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({mobile:mobile, code:code}) });
     var d = await r.json();
@@ -205,15 +203,15 @@ async function verifyOtp() {
       if (openNum) {
         var msg;
         if (openReq.status === 'need_more_info')
-          msg = 'لديك طلب قائم رقمه ' + openNum + ' بحاجة إلى استكمال بيانات - تابعه من صفحة تتبع الطلب.';
+          msg = t('pt_phOpenNeedInfoFmt').replace('{0}', openNum);
         else if (DONE_STATUSES.indexOf(openReq.status) !== -1)
-          msg = 'أنت مسجَّل بالفعل في الإسكان الجامعي بموجب الطلب رقم ' + openNum + '. لا يمكن تقديم طلب جديد؛ للاستفسار يرجى مراجعة إدارة الإسكان.';
+          msg = t('pt_phAlreadyHousedFmt').replace('{0}', openNum);
         else
-          msg = 'لديك طلب قائم بالفعل رقمه ' + openNum + '. لا يمكن تقديم طلب جديد قبل اكتمال مراجعته أو رفضه؛ يمكنك متابعته من صفحة تتبع الطلب، وللاستفسار يرجى مراجعة إدارة الإسكان.';
+          msg = t('pt_phOpenReqFmt').replace('{0}', openNum);
         showAlert(msg, 'error');
         document.getElementById('stepOtp').style.display = 'none';
         document.getElementById('trackLinkWrap').style.display = 'block';
-        document.getElementById('trackLink').textContent = 'متابعة الطلب ' + openNum;
+        document.getElementById('trackLink').textContent = t('pt_trackRequest') + openNum;
         // بنمرّر رقم الطلب وآخر ٤ أرقام في الرابط عشان صفحة التتبع تفتح الطلب على طول
         // بدل ما الطالب يعيد كتابة الرقم اللي إحنا عارفينه أصلاً.
         var l4 = NuhPhone.last4(mobile);
@@ -223,14 +221,24 @@ async function verifyOtp() {
       }
 
       window.location.href = 'register-declarations.html';
-    } else { showAlert(d.message || 'رمز غير صحيح', 'error'); NuhCode.busy(btn, false); btn.textContent='تحقق'; }
-  } catch(e) { showAlert('تعذر الاتصال بالخادم', 'error'); NuhCode.busy(btn, false); btn.textContent='تحقق'; }
+    } else { showAlert(d.message || t('pt_phCodeWrong'), 'error'); NuhCode.busy(btn, false); btn.textContent=t('pt_phVerify'); }
+  } catch(e) { showAlert(t('reg_toastConnError'), 'error'); NuhCode.busy(btn, false); btn.textContent=t('pt_phVerify'); }
 }
 
-// نفس قائمة الحالات المفتوحة في السيرفر (RegistrationService.OpenStatuses).
-// الحالات المنتهية (مكتمل/مرفوض) مش مفتوحة — الطالب المرفوض لازم يقدر يقدّم تاني.
-var OPEN_STATUSES = ['submitted','pending_supervisor','pending_cyber',
-                     'cyber_review','cyber_approved','ready_for_provisioning','need_more_info'];
+// ⚠️ كانت مكتوبة هنا بالإيد — نسخة تالتة من نفس القائمة، وناقصة
+//    housing_approved زي نسخة السيرفر. بقت تتقرا من
+//    /api/Registration/open-statuses، ومصدرها Core/RequestWorkflow.OpenStatuses.
+//
+// ⚠️ ومن غير قائمة احتياطية هنا عن قصد: القائمة الاحتياطية نسخة تانية
+//    بتفارق. لو النداء فشل بتفضل فاضية فالفحص المبكر بيتخطّى، والطالب
+//    بيتحجب عند الإرسال — وده بالظبط سلوك الفشل المكتوب تحت في findOpenRequest.
+var OPEN_STATUSES = [];
+(async function loadOpenStatuses() {
+  try {
+    var r = await fetch('/api/Registration/open-statuses');
+    if (r.ok) { var v = await r.json(); if (Array.isArray(v)) OPEN_STATUSES = v; }
+  } catch (e) { /* الفحص المبكر بيتخطّى — السيرفر بيحجب عند الإرسال */ }
+})();
 
 // الطلب المكتمل مش «مفتوح»، لكنه يعني إن الطالب مسجَّل بالفعل وله حساب شبكة.
 // التسجيل من جديد بيتفتح تلقائيًا لما حالته تتغيّر (مغادرة / تخرّج / تحويل)،
@@ -308,8 +316,9 @@ function startTimer() {
   var sec = 300;
   var timer = setInterval(function() {
     var m = Math.floor(sec/60), s = sec%60;
-    document.getElementById('timerText').textContent = 'انتهاء الصلاحية: ' + m + ':' + (s<10?'0':'') + s;
-    if (sec <= 0) { clearInterval(timer); document.getElementById('timerText').textContent = 'انتهت صلاحية الرمز';
+    document.getElementById('timerText').textContent =
+      t('pt_phOtpExpiryFmt').replace('{0}', m + ':' + (s<10?'0':'') + s);
+    if (sec <= 0) { clearInterval(timer); document.getElementById('timerText').textContent = t('pt_phExpired');
       document.getElementById('resendBtn').style.display = 'block'; }
     sec--;
   }, 1000);

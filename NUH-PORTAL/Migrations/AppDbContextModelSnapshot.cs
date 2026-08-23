@@ -411,6 +411,10 @@ namespace NUH_PORTAL.Migrations
                     b.Property<string>("ErrorMessage")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("FloorNumber")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<string>("FullNameArabic")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -582,6 +586,201 @@ namespace NUH_PORTAL.Migrations
                     b.HasIndex("user_id");
 
                     b.ToTable("ErrorLogs", (string)null);
+                });
+
+            modelBuilder.Entity("NUH_PORTAL.Models.FacultyOccupancy", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AttachmentPath")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int?>("ClosedBy")
+                        .HasColumnType("int");
+
+                    b.Property<string>("College")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("ConfirmedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("ConfirmedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("CreatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("CyberApprovedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Department")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("EndReason")
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("EndReasonNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("FullNameAr")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
+                    b.Property<string>("Gender")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<bool>("ImportedFromAd")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Mobile")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("NationalId")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("OriginalFileName")
+                        .HasMaxLength(260)
+                        .HasColumnType("nvarchar(260)");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TicketNo")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<int>("UnitId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClosedBy");
+
+                    b.HasIndex("ConfirmedBy");
+
+                    b.HasIndex("CreatedBy");
+
+                    b.HasIndex("NationalId")
+                        .HasDatabaseName("IX_FacultyOccupancies_national_id");
+
+                    b.HasIndex("TicketNo")
+                        .HasDatabaseName("IX_FacultyOccupancies_ticket");
+
+                    b.HasIndex("UnitId")
+                        .HasDatabaseName("IX_FacultyOccupancies_unit");
+
+                    b.ToTable("FacultyOccupancies", (string)null);
+                });
+
+            modelBuilder.Entity("NUH_PORTAL.Models.FacultyUnit", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AdAccount")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<bool>("AdAccountEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("AdDistinguishedName")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<int?>("ApartmentNo")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("CreatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<string>("LastSyncError")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("LastSyncedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("NameMatchesStandard")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("SyncState")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int?>("TowerNo")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UnitType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("UpdatedBy")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("VillaNo")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AdAccount")
+                        .IsUnique()
+                        .HasDatabaseName("UX_FacultyUnits_ad_account");
+
+                    b.HasIndex("CreatedBy");
+
+                    b.HasIndex("Status")
+                        .HasDatabaseName("IX_FacultyUnits_status");
+
+                    b.HasIndex("UpdatedBy");
+
+                    b.HasIndex("UnitType", "VillaNo")
+                        .HasDatabaseName("IX_FacultyUnits_villa");
+
+                    b.HasIndex("UnitType", "TowerNo", "ApartmentNo")
+                        .HasDatabaseName("IX_FacultyUnits_tower");
+
+                    b.ToTable("FacultyUnits", (string)null);
                 });
 
             modelBuilder.Entity("NUH_PORTAL.Models.HousingTransfer", b =>
@@ -793,6 +992,11 @@ namespace NUH_PORTAL.Migrations
                         .HasColumnType("int")
                         .HasColumnName("housing_reviewed_by");
 
+                    b.Property<string>("InfoFields")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("info_fields");
+
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("notes");
@@ -829,9 +1033,20 @@ namespace NUH_PORTAL.Migrations
                         .HasColumnType("int")
                         .HasColumnName("reviewed_by");
 
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion")
+                        .HasColumnName("row_version");
+
                     b.Property<string>("Status")
                         .HasColumnType("nvarchar(450)")
                         .HasColumnName("status");
+
+                    b.Property<string>("StudentGender")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)")
+                        .HasColumnName("student_gender");
 
                     b.Property<int>("StudentId")
                         .HasColumnType("int")
@@ -861,67 +1076,6 @@ namespace NUH_PORTAL.Migrations
                         .HasDatabaseName("IX_Requests_type_status");
 
                     b.ToTable("Requests", (string)null);
-                });
-
-            modelBuilder.Entity("NUH_PORTAL.Models.RequestAttachment", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ContentType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("content_type");
-
-                    b.Property<string>("DocumentType")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("document_type");
-
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("file_name");
-
-                    b.Property<long>("FileSize")
-                        .HasColumnType("bigint")
-                        .HasColumnName("file_size");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit")
-                        .HasColumnName("is_deleted");
-
-                    b.Property<string>("Notes")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("notes");
-
-                    b.Property<string>("OriginalFileName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("original_file_name");
-
-                    b.Property<int>("RequestId")
-                        .HasColumnType("int")
-                        .HasColumnName("request_id");
-
-                    b.Property<DateTime>("UploadedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("uploaded_at");
-
-                    b.Property<int>("UploadedBy")
-                        .HasColumnType("int")
-                        .HasColumnName("uploaded_by");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UploadedBy");
-
-                    b.HasIndex("RequestId", "IsDeleted")
-                        .HasDatabaseName("IX_RequestAttachments_request_deleted");
-
-                    b.ToTable("RequestAttachments", (string)null);
                 });
 
             modelBuilder.Entity("NUH_PORTAL.Models.Role", b =>
@@ -1230,6 +1384,20 @@ namespace NUH_PORTAL.Migrations
                         .HasColumnType("int")
                         .HasColumnName("request_id");
 
+                    b.Property<string>("TermsHash")
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)")
+                        .HasColumnName("terms_hash");
+
+                    b.Property<string>("TermsText")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("terms_text");
+
+                    b.Property<string>("TypedConfirmation")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)")
+                        .HasColumnName("typed_confirmation");
+
                     b.Property<string>("UserAgent")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("user_agent");
@@ -1417,8 +1585,18 @@ namespace NUH_PORTAL.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<string>("auth_source")
+                        .HasMaxLength(16)
+                        .HasColumnType("nvarchar(16)");
+
                     b.Property<DateTime>("created_at")
                         .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("deleted_at")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("deleted_by")
+                        .HasColumnType("int");
 
                     b.Property<string>("department")
                         .HasColumnType("nvarchar(max)");
@@ -1429,11 +1607,18 @@ namespace NUH_PORTAL.Migrations
                     b.Property<bool>("is_active")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("is_deleted")
+                        .HasColumnType("bit");
+
                     b.Property<string>("job_title")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("mobile")
                         .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("scope_gender")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
 
                     b.HasKey("Id");
 
@@ -1444,6 +1629,9 @@ namespace NUH_PORTAL.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
+
+                    b.HasIndex("is_deleted")
+                        .HasDatabaseName("IX_Users_is_deleted");
 
                     b.HasIndex("mobile")
                         .IsUnique()
@@ -1632,6 +1820,55 @@ namespace NUH_PORTAL.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("NUH_PORTAL.Models.FacultyOccupancy", b =>
+                {
+                    b.HasOne("NUH_PORTAL.Models.User", "ClosedByUser")
+                        .WithMany()
+                        .HasForeignKey("ClosedBy")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("NUH_PORTAL.Models.User", "ConfirmedByUser")
+                        .WithMany()
+                        .HasForeignKey("ConfirmedBy")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("NUH_PORTAL.Models.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("NUH_PORTAL.Models.FacultyUnit", "Unit")
+                        .WithMany("Occupancies")
+                        .HasForeignKey("UnitId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ClosedByUser");
+
+                    b.Navigation("ConfirmedByUser");
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("Unit");
+                });
+
+            modelBuilder.Entity("NUH_PORTAL.Models.FacultyUnit", b =>
+                {
+                    b.HasOne("NUH_PORTAL.Models.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedBy")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("NUH_PORTAL.Models.User", "UpdatedByUser")
+                        .WithMany()
+                        .HasForeignKey("UpdatedBy")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("UpdatedByUser");
+                });
+
             modelBuilder.Entity("NUH_PORTAL.Models.HousingTransfer", b =>
                 {
                     b.HasOne("NUH_PORTAL.Models.User", "CreatedByUser")
@@ -1671,25 +1908,6 @@ namespace NUH_PORTAL.Migrations
                         .IsRequired();
 
                     b.Navigation("Student");
-                });
-
-            modelBuilder.Entity("NUH_PORTAL.Models.RequestAttachment", b =>
-                {
-                    b.HasOne("NUH_PORTAL.Models.Request", "Request")
-                        .WithMany()
-                        .HasForeignKey("RequestId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("NUH_PORTAL.Models.User", "UploadedByUser")
-                        .WithMany()
-                        .HasForeignKey("UploadedBy")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Request");
-
-                    b.Navigation("UploadedByUser");
                 });
 
             modelBuilder.Entity("NUH_PORTAL.Models.SignInLog", b =>
@@ -1833,6 +2051,11 @@ namespace NUH_PORTAL.Migrations
             modelBuilder.Entity("NUH_PORTAL.Models.College", b =>
                 {
                     b.Navigation("Departments");
+                });
+
+            modelBuilder.Entity("NUH_PORTAL.Models.FacultyUnit", b =>
+                {
+                    b.Navigation("Occupancies");
                 });
 
             modelBuilder.Entity("NUH_PORTAL.Models.Role", b =>

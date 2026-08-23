@@ -6,7 +6,7 @@ Tested: 2026-07-15
 
 ### API Base URL
 - Local dev: `http://localhost:5058` (from launchSettings.json)
-- Test users: admin, osamasuper, osamacyber (password: Test@123)
+- Test users: admin, osamasuper, osamacyber (credentials are not recorded here — see the environment owner)
 
 ### Bugs Found & Fixed
 
@@ -46,14 +46,18 @@ var userPrincipal = $"{_serviceAccount.Username}@{_config.Domain}";
 ```
 
 **Broken config** (after first fix attempt):
-- `ADServiceAccount.Username = "globalgroups\nuh.portal"` (down-level format)
-- `ActiveDirectory.Domain = "globalgroups"` (NetBIOS)
-- Constructed: `globalgroups\nuh.portal@globalgroups` — **INVALID**
+- `ADServiceAccount.Username` in down-level form (`DOMAIN\account`)
+- `ActiveDirectory.Domain` set to the NetBIOS short name
+- Constructed: `DOMAIN\account@SHORTNAME` — **INVALID**
 
 **Fixed config**:
-- `ADServiceAccount.Username = "nuh.portal"` (bare SAM name)
-- `ActiveDirectory.Domain = "globalgroups.com"` (FQDN for UPN suffix)
-- Constructed: `nuh.portal@globalgroups.com` — **VALID**
+- `ADServiceAccount.Username` = bare SAM name, no domain prefix
+- `ActiveDirectory.Domain` = the FQDN (UPN suffix), from `appsettings.Production.json`
+- Constructed: `account@fqdn` — **VALID**
+
+> The live values live in `appsettings.Production.json` only. Do not copy a domain
+> name into this file, into source, or into `appsettings.json` — an environment
+> without its own settings file would silently run against it.
 
 **Validation**: Request 96 → completed ✅; AD account `h3698521478` created with UAC=512 (enabled), correct OU (`Male>New>Students`), group membership (`NUH-Student-B`). See `D:\Service\NUH-PORTAL\reports\REPORT-*.md`.
 
@@ -114,8 +118,8 @@ Updated all visible UI labels for `pending_supervisor`, `pending_cyber`, `pendin
 - OTP codes are 6 digits, stored in SmsLogs table
 - Audit logs use AuditLogs table with action, user_id, action_at columns
 - Duplicate checks only apply to active statuses (pending_supervisor, pending_cyber, pending_admin, need_more_info)
-- Database: NUH_DB on housing.globalgroups.com,1433
-- **AD provisioning**: Code at `ActiveDirectoryService.cs:584` constructs UPN as `{Username}@{Domain}` — so `ADServiceAccount.Username` must be bare SAM (e.g. `nuh.portal`), `ActiveDirectory.Domain` must be FQDN (e.g. `globalgroups.com`). Group membership and OU assignment are based on student attributes (gender, department). Three `ready_for_provisioning` requests available for testing: id=96 (done), 105, 141.
+- Database: `NUH_DB` — host and credentials come from the connection string in `appsettings.Production.json`
+- **AD provisioning**: Code at `ActiveDirectoryService.cs:584` constructs UPN as `{Username}@{Domain}` — so `ADServiceAccount.Username` must be the bare SAM name and `ActiveDirectory.Domain` must be the FQDN. Both are read from `appsettings.Production.json`; neither is written in source or in this file. Group membership and OU assignment are based on student attributes (gender, department). Three `ready_for_provisioning` requests available for testing: id=96 (done), 105, 141.
 - **Self-registration workflow**: `pending_supervisor` → `pending_cyber` → `pending_admin` → `ready_for_provisioning` → `completed` (with AD provisioning at final step)
 - **Request number format**: `YYYY-NNNNNN` (prefix-less, resets yearly)
 - **Notifications**: Self-registration now creates Notification records at every workflow transition (all roles)

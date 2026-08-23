@@ -1,91 +1,98 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" id="html-root" data-title-key="pt_idxHeroTitle">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>بوابة السكن الجامعي</title>
-<meta name="description" content="بوابة تسجيل طلبات خدمات السكن الجامعي للطلاب - جامعة نجران">
+<title>بوابة الإسكان الجامعي</title>
+<meta name="description" content="بوابة تسجيل طلبات خدمات الإسكان الجامعي للطلاب - جامعة نجران">
 <link rel="icon" href="../favicon.ico" type="image/x-icon">
-<!-- ⚠️ التصميم كله من الملف المشترك. الصفحة دي مالهاش ستايل خاص غير الغلاف. -->
+
+<!-- ============================================================================
+     بوابة الطالب — الصفحة الأولى.
+
+     ⚠️ الصفحة دي كانت بشكل تاني خالص عن الصفحة الرئيسية للنظام: ترويسة كحلية
+        لاصقة، وغلاف متدرّج بارتفاع ١٠٠ بكسل، وبطاقات خدمات صفوف أفقية. يعني
+        الزائر بيدوس على «خدمات الطلاب» من الرئيسية فيلاقي نفسه في تصميم
+        مختلف - فيقرا إنه خرج من النظام.
+        بقت نفس لغة الرئيسية: ترويسة بيضا، عنوان وخط ذهبي، وبابان.
+
+     ⚠️ ومفيش ستايل خاص بالصفحة هنا خالص. كل المكوّنات (.pbar و.phero و.pdoor
+        و.journey و.pfoot) اتنقلت لـ css/portal.css، لأن الصفحة الرئيسية
+        بتستعمل نفس الأبواب - وتعريفين لنفس المكوّن معناه إنهم هيفترقوا.
+     ============================================================================ -->
+
 <link rel="stylesheet" href="../css/portal.css">
-  <link rel="stylesheet" href="../css/portal-touch.css">
+<link rel="stylesheet" href="../css/portal-touch.css">
 <script src="../i18n.js"></script>
 <style>
-  /* غلاف الصفحة الرئيسية بس — باقي المكوّنات من portal.css */
-  .cover{background:linear-gradient(135deg,var(--navy-dark) 0%,var(--navy) 55%,#166a45 100%);
-         color:#fff;padding:40px 16px 46px;text-align:center;position:relative;overflow:hidden}
-  .cover::after{content:'';position:absolute;inset:0;pointer-events:none;
-                background:radial-gradient(ellipse 75% 60% at 50% 100%,rgba(219,161,2,.13) 0%,transparent 70%)}
-  .cover-in{position:relative;max-width:var(--page-max);margin:0 auto}
-  .cover h1{font-size:24px;font-weight:700;line-height:1.4;margin-bottom:8px}
-  .cover p{font-size:13.5px;color:rgba(255,255,255,.72);line-height:1.7}
-  .cover .rule{width:64px;height:3px;border-radius:2px;margin:0 auto 18px;
-               background:linear-gradient(90deg,var(--gold),var(--gold-light))}
-  @media(min-width:640px){ .cover{padding:52px 24px 58px} .cover h1{font-size:30px} .cover p{font-size:14.5px} }
+  /* ⚠️ خلفية بيضا لا رمادية: باقي صفحات البوابة كروت فوق رمادي، والصفحة دي
+     أبواب كبيرة ملوّنة - الرمادي تحتها بيبوّظ حدودها. */
+  body{background:var(--white)}
 </style>
 </head>
 <body>
 
 <header class="pbar">
   <div class="pbar-in">
-    <div class="pbar-logo"><img src="../nu-logo.png" alt="جامعة نجران"></div>
-    <div class="pbar-titles">
-      <b>بوابة السكن الجامعي</b>
-      <span>جامعة نجران - إدارة السكن الجامعي</span>
+    <div class="pbar-brand">
+      <img src="../nu-logo.svg" alt="جامعة نجران" data-i18n-alt="Brand_Sub">
+      <div>
+        <div class="t" data-i18n="Brand_Sub">جامعة نجران</div>
+      </div>
     </div>
-    <button class="pbar-lang" id="langBtn" onclick="toggleLang()">English</button>
+    <div class="pbar-acts">
+      <!-- ⚠️ رابط العودة للرئيسية: الصفحة دي مدخلها الوحيد كان زرّ الرجوع في
+           المتصفح. الزائر اللي بيوصلها من لينك مباشر مكانش عنده أي طريق
+           لبوابة الموظفين ولا لصفحة النظام الرئيسية. -->
+      <a class="pbar-btn" href="../index.html" data-i18n-aria="pt_backHome" aria-label="العودة للرئيسية">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        <span data-i18n="pt_backHome">العودة للرئيسية</span>
+      </a>
+      <button class="pbar-lang" id="langBtn" type="button" onclick="toggleLang()" data-i18n="pt_langToggle">English</button>
+    </div>
   </div>
 </header>
 
-<section class="cover">
-  <div class="cover-in">
-    <div class="rule"></div>
-    <h1>بوابة تسجيل السكن الجامعي</h1>
-    <p>قدّم طلب السكن وتابع حالته في أي وقت - من غير مراجعة الإدارة.</p>
-  </div>
-</section>
+<div class="phero">
+  <h1 data-i18n="pt_idxHeroTitle">بوابة تسجيل الإسكان الجامعي</h1>
+  <div class="rule"></div>
+  <p data-i18n="pt_idxHeroSub">قدِّم طلبك وتابع حالته في أي وقت دون مراجعة الإدارة.</p>
+</div>
 
 <main class="wrap">
 
   <section class="section">
-    <div class="section-head">
-      <h2>الخدمات الإلكترونية</h2>
-      <p>اختر الخدمة اللي محتاجها</p>
-    </div>
+    <div class="pdoors">
 
-    <div class="tiles">
-      <a href="register-phone.html" class="tile">
-        <div class="tile-ico navy">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+      <a href="register-phone.html" class="pdoor solid">
+        <div>
+          <div class="pdoor-ic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+          </div>
+          <h2 data-i18n="pt_idxNewTitle">تقديم طلب جديد</h2>
+          <span class="sub" data-i18n="pt_idxNewSub">ابدأ طلب تسجيل إسكان جامعي بالتحقق من رقم جوالك</span>
         </div>
-        <div class="tile-txt">
-          <b>تقديم طلب جديد</b>
-          <span>ابدأ طلب تسجيل سكن جامعي بالتحقق من رقم جوالك</span>
-        </div>
-        <span class="tile-go">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        </span>
+        <span class="pdoor-go" data-i18n="pt_idxNewBtn">ابدأ الطلب الآن</span>
       </a>
 
-      <a href="track-request.html" class="tile">
-        <div class="tile-ico gold">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <a href="track-request.html" class="pdoor soft">
+        <div>
+          <div class="pdoor-ic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </div>
+          <h2 data-i18n="pt_idxTrackTitle">متابعة طلب قائم</h2>
+          <span class="sub" data-i18n="pt_idxTrackSub">تعرَّف على حالة طلبك برقم الطلب وآخر أربعة أرقام من جوالك</span>
         </div>
-        <div class="tile-txt">
-          <b>متابعة طلب قائم</b>
-          <span>اعرف حالة طلبك برقم الطلب وآخر ٤ أرقام من جوالك</span>
-        </div>
-        <span class="tile-go">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        </span>
+        <span class="pdoor-go" data-i18n="pt_trackRequest">متابعة الطلب</span>
       </a>
+
     </div>
   </section>
 
   <section class="section">
     <div class="section-head">
-      <h2>خطوات التسجيل</h2>
-      <p>طلبك بيعدّي على المراحل دي بالترتيب - وتقدر تتابعه في أي مرحلة</p>
+      <h2 data-i18n="pt_idxStepsTitle">خطوات التسجيل</h2>
+      <p data-i18n="pt_idxStepsSub">يمرّ طلبك بهذه المراحل بالترتيب، ويمكنك متابعته في أي مرحلة</p>
     </div>
 
     <!-- ⚠️ الخطوات كانت 7 أعمدة ثابتة على الشاشة الكبيرة، فالنص بيتزنق ويبقى
@@ -93,31 +100,31 @@
     <div class="journey">
       <div class="journey-step">
         <div class="journey-num">1</div>
-        <div class="journey-txt"><b>التحقق من رقم الجوال</b><span>إدخال رقم الجوال واستلام رمز التحقق</span></div>
+        <div class="journey-txt"><b data-i18n="pt_stp1">التحقق من رقم الجوال</b><span data-i18n="pt_stp1s">إدخال رقم الجوال واستلام رمز التحقق</span></div>
       </div>
       <div class="journey-step">
         <div class="journey-num">2</div>
-        <div class="journey-txt"><b>الموافقة على الإقرارات</b><span>الاطلاع على التعهدات والموافقة عليها</span></div>
+        <div class="journey-txt"><b data-i18n="pt_stp2">الموافقة على الإقرارات</b><span data-i18n="pt_stp2s">الاطلاع على التعهدات والموافقة عليها</span></div>
       </div>
       <div class="journey-step">
         <div class="journey-num">3</div>
-        <div class="journey-txt"><b>إدخال بيانات الطالب</b><span>تعبئة البيانات الشخصية والأكاديمية</span></div>
+        <div class="journey-txt"><b data-i18n="pt_stp3">إدخال بيانات الطالب</b><span data-i18n="pt_stp3s">تعبئة البيانات الشخصية والأكاديمية</span></div>
       </div>
       <div class="journey-step">
         <div class="journey-num">4</div>
-        <div class="journey-txt"><b>مراجعة إدارة الإسكان</b><span>مراجعة الطلب من مشرف السكن الجامعي</span></div>
+        <div class="journey-txt"><b data-i18n="pt_stp4">مراجعة إدارة الإسكان</b><span data-i18n="pt_stp4s">مراجعة الطلب من مشرف الإسكان الجامعي</span></div>
       </div>
       <div class="journey-step">
         <div class="journey-num">5</div>
-        <div class="journey-txt"><b>مراجعة الأمن السيبراني</b><span>التحقق الأمني من البيانات والمعلومات</span></div>
+        <div class="journey-txt"><b data-i18n="pt_stp5">مراجعة الأمن السيبراني</b><span data-i18n="pt_stp5s">التحقق الأمني من البيانات والمعلومات</span></div>
       </div>
       <div class="journey-step">
         <div class="journey-num">6</div>
-        <div class="journey-txt"><b>اعتماد الطلب</b><span>الموافقة النهائية على طلب التسجيل</span></div>
+        <div class="journey-txt"><b data-i18n="pt_stp6">اعتماد الطلب</b><span data-i18n="pt_stp6s">الموافقة النهائية على طلب التسجيل</span></div>
       </div>
       <div class="journey-step">
         <div class="journey-num">7</div>
-        <div class="journey-txt"><b>استلام الخدمة</b><span>تفعيل حساب الشبكة وتأكيد استلام السكن</span></div>
+        <div class="journey-txt"><b data-i18n="pt_stp7">استلام الخدمة</b><span data-i18n="pt_stp7s">تفعيل حساب الشبكة وتأكيد استلام السكن</span></div>
       </div>
     </div>
   </section>
@@ -125,15 +132,15 @@
   <section class="section">
     <div class="card">
       <div class="card-head">
-        <h3>مقر الخدمة</h3>
-        <p>إدارة السكن الجامعي - جامعة نجران</p>
+        <h3 data-i18n="pt_idxContactTitle">مقر الخدمة</h3>
+        <p data-i18n="pt_idxContactSub">إدارة الإسكان الجامعي - جامعة نجران</p>
       </div>
       <div class="card-body">
         <div class="rows">
           <div class="row-i">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            <span class="k">المقر</span>
-            <span class="v">جامعة نجران - مبنى إدارة السكن الجامعي</span>
+            <span class="k" data-i18n="pt_idxLocLabel">المقر</span>
+            <span class="v" data-i18n="pt_idxLocValue">جامعة نجران - مبنى إدارة الإسكان الجامعي</span>
           </div>
         </div>
         <!-- ⚠️ بيانات التواصل (البريد ورقم الدعم) اتشالت عن قصد:
@@ -147,22 +154,21 @@
 </main>
 
 <footer class="pfoot">
-  <img src="../nu-logo.png" alt="جامعة نجران">
+  <img src="../nu-logo.svg" alt="جامعة نجران" data-i18n-alt="Brand_Sub">
   <div class="pfoot-links">
-    <a href="https://www.nu.edu.sa" target="_blank" rel="noopener">جامعة نجران</a>
+    <a href="https://www.nu.edu.sa" target="_blank" rel="noopener" data-i18n="Brand_Sub">جامعة نجران</a>
     <span>•</span>
-    <a href="index.html">السكن الجامعي</a>
+    <a href="index.html" data-i18n="pt_footHousing">الإسكان الجامعي</a>
     <span>•</span>
-    <a href="track-request.html">متابعة طلب</a>
+    <a href="track-request.html" data-i18n="pt_footTrack">متابعة طلب</a>
   </div>
   <div class="pfoot-line"></div>
-  <div class="pfoot-copy">
-    جميع الحقوق محفوظة &copy; 2026 جامعة نجران - عمادة التحول الرقمي ومصادر المعرفة - تقنية المعلومات
-  </div>
+  <div class="pfoot-copy" data-i18n="Brand_Copyright">جميع الحقوق محفوظة © جامعة نجران 2026
+تطوير عمادة التحول الرقمي ومصادر المعرفة - إدارة تقنية المعلومات</div>
 </footer>
 
 <script>
-  setLang(localStorage.getItem('uiLanguage') || 'ar');
+  applyLang(localStorage.getItem('uiLanguage') || 'ar');
   function toggleLang() { applyLang(window.currentLang === 'ar' ? 'en' : 'ar'); }
 </script>
 </body>

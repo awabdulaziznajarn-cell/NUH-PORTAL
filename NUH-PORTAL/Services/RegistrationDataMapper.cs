@@ -45,20 +45,36 @@ namespace NUH_PORTAL.Services
         //    ومن غير التكرار: mobile و phone نفس الخانة باسمين، ولو ظهروا
         //    الاتنين في القائمة المراجع هيشوف «رقم الجوال» مرتين ومايعرفش
         //    الفرق. الترتيب هنا مقصود عشان القائمة تقرا زي الفورم.
-        public static readonly (string Key, string Label)[] EditableFields =
+        //  Pickable = هل المراجع يقدر يطلب من الطالب تصحيح الخانة دي؟
+        //
+        //  ⚠️ رقم الجوال Pickable = false عن قصد. الرقم ده هو اللي وصله رمز
+        //     التحقق في الخطوة الأولى، وخانته مقفولة في نموذج الطالب لهذا
+        //     السبب من قبل ميزة تحديد الخانات أصلًا. فلو المراجع علّم عليه،
+        //     الطالب بيلاقي مطلوب منه تصحيح خانة ما يقدرش يفتحها فيقف.
+        //     تغيير الجوال بيتم بالرجوع لخطوة التحقق بالرمز لا من هنا.
+        //
+        //  ⚠️ الخانة فاضلة في القائمة رغم إنها مش قابلة للاختيار، عشان LabelOf
+        //     تفضل ترجّع «رقم الجوال» في ملخّص التعديلات وسجل المسار. شيلها
+        //     من القائمة كان هيخلّي الملخّص يكتب "phone" للمراجع.
+        public static readonly (string Key, string Label, bool Pickable)[] EditableFields =
         {
-            ("full_name",         "الاسم بالعربية"),
-            ("full_name_english", "الاسم بالإنجليزية"),
-            ("national_id",       "رقم الهوية"),
-            ("phone",             "رقم الجوال"),
-            ("gender",            "الجنس"),
-            ("college",           "الكلية"),
-            ("department",        "القسم"),
-            ("academic_level",    "المستوى الدراسي"),
-            ("housing_building",  "رقم المبنى"),
-            ("floor_number",      "الدور"),
-            ("apartment_number",  "رقم الشقة"),
-            ("room_number",       "رقم الغرفة")
+            // ⚠️ الرقم الجامعي Pickable = false: مش خانة عادية، ده هوية الطلب
+            //    نفسه. تغييره في إعادة التقديم بيحوّل الطلب لطالب تاني بعد ما
+            //    المراجع راجعه. مذكور هنا عشان LabelOf ترجّع اسمه بالعربي في
+            //    رسالة الرفض وملخّص التعديلات بدل "student_id".
+            ("student_id",        "الرقم الجامعي",     false),
+            ("full_name",         "الاسم بالعربية",    true),
+            ("full_name_english", "الاسم بالإنجليزية", true),
+            ("national_id",       "رقم الهوية",        true),
+            ("phone",             "رقم الجوال",        false),
+            ("gender",            "الجنس",             true),
+            ("college",           "الكلية",            true),
+            ("department",        "القسم",             true),
+            ("academic_level",    "المستوى الدراسي",   true),
+            ("housing_building",  "رقم المبنى",        true),
+            ("floor_number",      "الدور",             true),
+            ("apartment_number",  "رقم الشقة",         true),
+            ("room_number",       "رقم الغرفة",        true)
         };
 
         // mobile و phone نفس الخانة — التطبيع ده بيمنع رفض تعديل مشروع
@@ -66,11 +82,14 @@ namespace NUH_PORTAL.Services
         public static string NormalizeFieldKey(string key)
             => string.Equals(key, "mobile", StringComparison.OrdinalIgnoreCase) ? "phone" : key;
 
+        //  ⚠️ بترجّع true للخانات القابلة للاختيار بس. المستدعي الوحيد هو
+        //     الفلتر اللي بيحدد إيه اللي يتخزّن في info_fields، فالخانة غير
+        //     القابلة للاختيار لازم تتصدّ هنا كمان لا في الواجهة وحدها.
         public static bool IsEditableField(string key)
         {
             var k = NormalizeFieldKey(key);
             foreach (var f in EditableFields)
-                if (string.Equals(f.Key, k, StringComparison.OrdinalIgnoreCase)) return true;
+                if (string.Equals(f.Key, k, StringComparison.OrdinalIgnoreCase)) return f.Pickable;
             return false;
         }
 

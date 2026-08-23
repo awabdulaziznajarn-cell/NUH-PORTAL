@@ -75,15 +75,25 @@ namespace NUH_PORTAL.Services
         {
             var query = BuildAccountsQuery(status);
 
+            // ⚠️ full_name_english داخل البحث: الجدول في الشاشة بيعرض الاسم
+            //    الإنجليزي لا العربي. من غيره الموظف بيقرا «ALAA ELDIN ELHAJ»
+            //    قدامه، يكتبه في خانة البحث، ويرجعله «لا توجد نتائج».
             var f = queryParams.FilterText?.Trim();
             if (!string.IsNullOrEmpty(f))
             {
                 query = query.Where(s =>
                     (s.student_id != null && s.student_id.Contains(f)) ||
                     (s.full_name != null && s.full_name.Contains(f)) ||
+                    (s.full_name_english != null && s.full_name_english.Contains(f)) ||
                     (s.ad_username != null && s.ad_username.Contains(f)));
             }
 
+            // ⚠️ الترتيب لازم يغطّي كل عمود عليه علامة فرز في الشاشة، وإلا
+            //    الموظف يدوس على ترويسة «الاسم بالإنجليزية» أو «الكلية» فيقع
+            //    الطلب في الحالة الافتراضية ويترتّب بالاسم العربي — الجدول
+            //    بيتغيّر قدامه فيفتكره اترتّب، وهو اترتّب بحاجة تانية خالص.
+            //    (كان الترتيب بيحصل في المتصفح على الصفحة المحمّلة كلها؛
+            //     مع الترقيم بقى لازم يحصل على الخادم على كل النتائج.)
             query = (queryParams.SortBy?.ToLowerInvariant(), queryParams.SortAsc) switch
             {
                 ("student_id", true) => query.OrderBy(s => s.student_id),
@@ -92,6 +102,12 @@ namespace NUH_PORTAL.Services
                 ("ad_status", false) => query.OrderByDescending(s => s.ad_status),
                 ("ad_last_sync_at", true) => query.OrderBy(s => s.ad_last_sync_at),
                 ("ad_last_sync_at", false) => query.OrderByDescending(s => s.ad_last_sync_at),
+                ("ad_username", true) => query.OrderBy(s => s.ad_username),
+                ("ad_username", false) => query.OrderByDescending(s => s.ad_username),
+                ("full_name_english", true) => query.OrderBy(s => s.full_name_english),
+                ("full_name_english", false) => query.OrderByDescending(s => s.full_name_english),
+                ("college", true) => query.OrderBy(s => s.college),
+                ("college", false) => query.OrderByDescending(s => s.college),
                 ("full_name", false) => query.OrderByDescending(s => s.full_name),
                 _ => query.OrderBy(s => s.full_name)
             };
@@ -168,6 +184,7 @@ namespace NUH_PORTAL.Services
                         UserAccountControl = adResult.UserAccountControl,
                         Department = adResult.Department,
                         Description = adResult.Description,
+                        LastLogonAt = adResult.LastLogonAt,
                         MemberOf = adResult.MemberOf,
                         ExtensionAttribute1 = adResult.ExtensionAttribute1
                     };
@@ -281,7 +298,11 @@ namespace NUH_PORTAL.Services
 
         public async Task<ReProvisionResultDto> ReProvisionAsync(int studentId)
         {
-            var student = await _students.GetByIdAsync(studentId)
+            // ⚠️ ScopeToGender لا GetByIdAsync — نفس بوابة باقي عمليات الكتابة.
+            //    (مابنعديش على GetStudentWithAdAccountAsync لأنها بتشترط وجود
+            //     حساب في الدليل أصلًا، وإعادة الإنشاء ممكن تكون لطالب بلا حساب.)
+            var student = await ScopeToGender(_students.Query())
+                .FirstOrDefaultAsync(s => s.Id == studentId)
                 ?? throw UserFriendlyException.NotFound("Student not found");
 
             var result = await _adProvisioning.ReProvisionAsync(student, UnitOfWork.GetCurrentUserId(), ClientIp);
@@ -296,7 +317,8 @@ namespace NUH_PORTAL.Services
 
         public async Task SyncExtensionAttributesAsync(int studentId)
         {
-            var student = await _students.GetByIdAsync(studentId)
+            var student = await ScopeToGender(_students.Query())
+                .FirstOrDefaultAsync(s => s.Id == studentId)
                 ?? throw UserFriendlyException.NotFound("Student not found");
 
             var result = await _adProvisioning.SyncExtensionAttributesAsync(student, UnitOfWork.GetCurrentUserId());
@@ -339,58 +361,6 @@ namespace NUH_PORTAL.Services
                 .ToListAsync();
         }
 
-        public async Task<List<AdConfigurationDto>> GetAdConfigAsync()
-        {
-            return await _adConfigs.Query().AsNoTracking()
-                .OrderBy(c => c.ConfigKey)
-                .Select(c => new AdConfigurationDto
-                {
-                    Id = c.Id,
-                    ConfigKey = c.ConfigKey,
-                    ConfigValue = c.ConfigValue,
-                    Description = c.Description,
-                    UpdatedBy = c.UpdatedBy,
-                    UpdatedAt = c.UpdatedAt
-                })
-                .ToListAsync();
-        }
-
-        public async Task UpdateAdConfigAsync(List<AdConfigDto> configs)
-        {
-            // إعدادات الاتصال بالأكتف دايركتوري (مسارات الـ OU والمجموعات) — housing.syncAd
-            if (!UnitOfWork.HasPermission("housing.syncAd"))
-                throw UserFriendlyException.Forbidden();
-
-            var actorId = UnitOfWork.GetCurrentUserId();
-
-            foreach (var dto in configs)
-            {
-                var existing = await _adConfigs.FindAsync(c => c.ConfigKey == dto.ConfigKey);
-
-                if (existing != null)
-                {
-                    existing.ConfigValue = dto.ConfigValue;
-                    existing.Description = dto.Description ?? existing.Description;
-                    existing.UpdatedBy = actorId;
-                    existing.UpdatedAt = DateTime.UtcNow;
-                }
-                else
-                {
-                    await _adConfigs.AddAsync(new ADConfiguration
-                    {
-                        ConfigKey = dto.ConfigKey,
-                        ConfigValue = dto.ConfigValue,
-                        Description = dto.Description,
-                        UpdatedBy = actorId,
-                        UpdatedAt = DateTime.UtcNow
-                    });
-                }
-            }
-
-            await UnitOfWork.SaveAsync();
-            _logger.LogInformation("AD configuration updated by user {UserId}", actorId);
-        }
-
         // «مزامنة حسابات الشبكة» — المنطق كله في ADProvisioningService، ده تمرير
         // بس مع تحديد المستخدم اللي طلبها عشان يتسجّل في سجل العمليات.
         public async Task<AdLinkResultDto> SyncAdAccountsAsync(AdSyncMode mode, bool dryRun)
@@ -428,6 +398,9 @@ namespace NUH_PORTAL.Services
             // ⚠️ الدالة دي بوابة كل عمليات الكتابة على حساب الشبكة (تفعيل، تعطيل،
             //    تصفير باسورد، إعادة إنشاء). لو القائمة اتقيّدت والكتابة لأ، المشرفة
             //    تقدر تعطّل حساب طالب من القسم التاني بنداء مباشر على الـ API.
+            //    ⚠️ وده اللي حصل فعلًا: ReProvisionAsync و SyncExtensionAttributesAsync
+            //       كانتا بتنادوا ‎_students.GetByIdAsync‎ مباشرة فتعدّيان البوابة —
+            //       رغم إن التعليق ده بيسمّي «إعادة الإنشاء» ضمن اللي بيحرسه.
             var student = await ScopeToGender(_students.Query()).FirstOrDefaultAsync(s => s.Id == studentId);
             if (student == null || string.IsNullOrEmpty(student.ad_username))
                 throw new UserFriendlyException("Student has no AD account", 400);

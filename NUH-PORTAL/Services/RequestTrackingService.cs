@@ -40,16 +40,18 @@ namespace NUH_PORTAL.Services
         //     «فلان الفلاني، ساكن في السكن الجامعي، وطلبه في المرحلة كذا» —
         //     يعني أداة لربط الأرقام بالهويات لأي حد بيجرّب أرقام.
         //
-        //     أول حرف من كل كلمة كافٍ تمامًا لصاحب الطلب إنه يتعرّف على اسمه،
-        //     وغير كافٍ لمن يجمع هويات.
+        //     الاسم الأول يظهر كاملًا، وباقي الأسماء بأول حرف فقط. الاسم الأول
+        //     وحده شائع جدًا فلا يميّز شخصًا بعينه، لكنه يكفي صاحب الطلب ليطمئن
+        //     أن الطلب طلبه — وكان الإخفاء الكامل يجعل الشاشة غير مفهومة له.
+        //     اسم الأب والجد والعائلة هي التي تربط الرقم بالهوية، وتبقى مخفية.
         // ====================================================================
         private static string? MaskName(string? name)
         {
             if (string.IsNullOrWhiteSpace(name)) return name;
 
             var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            return string.Join(' ', parts.Select(p =>
-                p.Length <= 1 ? p : p[0] + new string('*', Math.Min(p.Length - 1, 4))));
+            return string.Join(' ', parts.Select((p, i) =>
+                i == 0 || p.Length <= 1 ? p : p[0] + new string('*', Math.Min(p.Length - 1, 4))));
         }
 
         public async Task<List<TrackedRequestDto>> TrackByMobileAsync(string mobile)
@@ -131,7 +133,7 @@ namespace NUH_PORTAL.Services
             }
             else
             {
-                items = await BuildHistoryFromTimestampsAsync(request);
+                items = BuildHistoryFromTimestamps(request);
             }
 
             return new TrackingDetailsDto
@@ -168,7 +170,11 @@ namespace NUH_PORTAL.Services
             || string.Equals(stage, "housing_rejected", StringComparison.OrdinalIgnoreCase)
             || string.Equals(stage, "cyber_rejected", StringComparison.OrdinalIgnoreCase);
 
-        private async Task<List<TrackingHistoryItemDto>> BuildHistoryFromTimestampsAsync(Models.Request r)
+        // ⚠️ ماكانتش async فعلًا: الاستعلام الوحيد اللي كان جوّاها اتشال مع
+        //    ActorName (المسار عام بلا مصادقة فمينفعش يخرج منه اسم موظف)،
+        //    وفضل التوقيع async بلا await — الدالة بتشتغل تزامنيًا ومغلّفة
+        //    في Task بلا داعي. بقت متزامنة زي ما هي فعلًا.
+        private static List<TrackingHistoryItemDto> BuildHistoryFromTimestamps(Models.Request r)
         {
             var list = new List<TrackingHistoryItemDto>();
             var status = r.Status ?? "";

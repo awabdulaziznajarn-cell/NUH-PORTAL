@@ -6,7 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 using NUH_PORTAL.Core.Exceptions;
 using NUH_PORTAL.Data;
 using NUH_PORTAL.Data.Interfaces;
-using NUH_PORTAL.DTOs.Auth;
 using NUH_PORTAL.Models;
 using NUH_PORTAL.Repositories.Interfaces;
 using NUH_PORTAL.Services.Interfaces;
@@ -55,15 +54,6 @@ namespace NUH_PORTAL.Services
         {
             var ctx = _http.HttpContext;
             return (ctx?.Connection.RemoteIpAddress?.ToString(), ctx?.Request.Headers["User-Agent"].ToString() ?? "");
-        }
-
-        public async Task<LoginResultDto> LoginAsync(LoginRequest request)
-        {
-            var user = await AuthenticateAsync(request.username, request.password);
-            var roles = await _userManager.GetRolesAsync(user);
-            var perms = await _permissions.GetPermissionsForRolesAsync(roles);
-            var token = _tokens.GenerateToken(user, roles, perms);
-            return BuildResult(user, roles, token);
         }
 
         // ====================================================================
@@ -203,23 +193,6 @@ namespace NUH_PORTAL.Services
             throw new UserFriendlyException("اسم المستخدم أو كلمة المرور غير صحيحة", 401);
         }
 
-        public async Task SetPasswordAsync(SetPasswordRequest request)
-        {
-            if (string.IsNullOrWhiteSpace(request.username) || string.IsNullOrWhiteSpace(request.password))
-                throw new UserFriendlyException("اسم المستخدم وكلمة المرور مطلوبان", 400);
-
-            var user = await _userManager.FindByNameAsync(request.username)
-                ?? throw UserFriendlyException.NotFound("المستخدم غير موجود");
-
-            var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
-            var res = await _userManager.ResetPasswordAsync(user, resetToken, request.password);
-            if (!res.Succeeded)
-                throw new UserFriendlyException("تعذّر تعيين كلمة المرور: " + string.Join(", ", res.Errors.Select(e => e.Description)), 400);
-
-            await AddAuditLogAsync(UnitOfWork.GetCurrentUserId(), "set_password", "Users", user.Id);
-            await UnitOfWork.SaveAsync();
-        }
-
         public void RecordActivity()
         {
             var userId = UnitOfWork.GetCurrentUserId();
@@ -312,17 +285,5 @@ namespace NUH_PORTAL.Services
             });
         }
 
-        private static LoginResultDto BuildResult(User user, IList<string> roles, string token) => new()
-        {
-            Message = "تم تسجيل الدخول بنجاح",
-            Token = token,
-            User = new AuthUserDto
-            {
-                id = user.Id,
-                username = user.UserName,
-                full_name = user.full_name,
-                role = roles.FirstOrDefault() ?? "user"
-            }
-        };
     }
 }

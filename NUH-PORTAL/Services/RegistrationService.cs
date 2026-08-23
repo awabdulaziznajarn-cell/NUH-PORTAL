@@ -48,65 +48,21 @@ namespace NUH_PORTAL.Services
         //    ويُبحث عنه بصيغة أخرى. القاعدة الوحيدة في Core/IdentityRules.cs.
         private static string NormalizePhone(string mobile) => IdentityRules.NormalizeMobileOrDigits(mobile);
 
-        // ⚠️ الحالات "المفتوحة" لازم تشمل مصطلحات المسارين: مسار تسجيل الطالب
-        //    (pending_*) ومسار طلبات الموظف (submitted / cyber_review / cyber_approved).
-        //    كانت الأولى بس، فطلب مفتوح عمله موظف مكانش بيمنع تكرار.
-        //    الحالات المنتهية (مكتمل/مرفوض) مش مفتوحة عن قصد — الطالب المرفوض
-        //    لازم يقدر يقدّم من جديد.
-        private static readonly string[] OpenStatuses =
-        {
-            "submitted", "pending_supervisor", "pending_cyber",
-            "cyber_review", "cyber_approved", "ready_for_provisioning", "need_more_info"
-        };
+        // ⚠️ كانت مكتوبة بالإيد هنا: سبع حالات ناقصة منها housing_approved.
+        //    والنتيجة مش تجميلية — الطالب اللي طلبه واقف على housing_approved
+        //    مكانش بيتحسب «عنده طلب مفتوح»، فيقدر يقدّم طلب تاني ويبقى له
+        //    طلبين في النظام.
+        //
+        //    والمصدر الوحيد Core/RequestWorkflow.OpenStatuses — وهو نفسه
+        //    مشتقّ من جدول الانتقالات لا مكتوب بالإيد، فأي مرحلة جديدة تدخل
+        //    هنا وحدها. الحالات المنتهية (مكتمل/مرفوض) مش فيها عن قصد:
+        //    الطالب المرفوض لازم يقدر يقدّم من جديد.
+        private static string[] OpenStatuses => RequestWorkflow.OpenStatuses;
 
         private static bool PhonesMatch(string a, string b)
         {
             if (string.IsNullOrWhiteSpace(a) || string.IsNullOrWhiteSpace(b)) return false;
             return NormalizePhone(a) == NormalizePhone(b);
-        }
-
-        public async Task<bool> CheckDuplicateByMobileAsync(string mobile, int? excludeRequestId = null)
-        {
-            if (string.IsNullOrWhiteSpace(mobile))
-                return false;
-
-            var requests = await _context.Requests
-                .Include(r => r.Student)
-                .Where(r => OpenStatuses.Contains(r.Status))
-                .ToListAsync();
-
-            foreach (var req in requests)
-            {
-                if (excludeRequestId.HasValue && req.Id == excludeRequestId.Value)
-                    continue;
-
-                // ⚠️ كان الفحص يقرأ الجوال من registration_data أولًا ثم من سجل
-                //    الطالب. الاتنين كانوا بيفترقوا بعد إعادة التقديم، فالفحص كان
-                //    ممكن يمسك رقمًا قديمًا. المصدر الوحيد الآن هو سجل الطالب —
-                //    وإعادة التقديم تحدّثه عبر RegistrationDataMapper.
-                if (req.Student != null && !string.IsNullOrEmpty(req.Student.phone) && PhonesMatch(req.Student.phone, mobile))
-                    return true;
-            }
-
-            return false;
-        }
-
-        public async Task<bool> CheckDuplicateByStudentIdAsync(string studentId, int? excludeRequestId = null)
-        {
-            if (string.IsNullOrWhiteSpace(studentId))
-                return false;
-
-            var student = await _context.Students.FirstOrDefaultAsync(s => s.student_id == studentId);
-            if (student == null)
-                return false;
-
-            var query = _context.Requests
-                .Where(r => r.StudentId == student.Id && OpenStatuses.Contains(r.Status));
-
-            if (excludeRequestId.HasValue)
-                query = query.Where(r => r.Id != excludeRequestId.Value);
-
-            return await query.AnyAsync();
         }
 
         // ====================================================================
@@ -219,10 +175,22 @@ namespace NUH_PORTAL.Services
 
         public async Task<Request> CreateRegistrationRequestAsync(int studentId, string requestNumber, string registrationData, int submittedBy)
         {
+            // ⚠️ جنس الطالب يُنسخ على صف الطلب. كان لا يُملأ في هذا المسار إطلاقًا -
+            //    يُملأ في مسار طلب الموظف وحده - فيبقى NULL. وتصفية تقسيم الطلاب
+            //    والطالبات تقارن student_gender بقسم الموظف، و NULL لا يساوي
+            //    'male' ولا 'female' في SQL: فطلب الطالب لا يظهر للمشرف ولا
+            //    للمشرفة، ويظهر لمن لا قسم له وحده. التقسيم كان معطَّلًا في هذا
+            //    المسار من أوله.
+            var studentGender = await _context.Students.AsNoTracking()
+                .Where(x => x.Id == studentId)
+                .Select(x => x.gender)
+                .FirstOrDefaultAsync();
+
             var request = new Request
             {
                 RequestType = RequestType.self_registration,
                 StudentId = studentId,
+                StudentGender = studentGender,
                 SubmittedBy = submittedBy,
                 Status = "pending_supervisor",
                 RequestNumber = requestNumber,
@@ -231,7 +199,22 @@ namespace NUH_PORTAL.Services
             };
 
             _context.Requests.Add(request);
-            await _context.SaveChangesAsync();
+
+            // ⚠️ الرقم اللي جه في requestNumber اتولّد قبل الإدخال بلحظات، وممكن
+            //    يكون حد تاني أخده في نفس اللحظة. القاعدة في Core/RequestNumberRetry.cs
+            //    — بتعيد التوليد وتحفظ تاني بدل ما الطالب ياخد خطأ ٥٠٠.
+            // المحاولة الأولى بالرقم اللي جه من المستدعي، وأي محاولة بعدها
+            // بتولّد من جديد — وإلا كنا بنعيد نفس الرقم المتصادم للأبد.
+            var useCallerNumber = true;
+            await RequestNumberRetry.RunAsync(
+                generate: () =>
+                {
+                    if (!useCallerNumber) return GenerateRequestNumberAsync();
+                    useCallerNumber = false;
+                    return Task.FromResult(requestNumber);
+                },
+                assign: n => request.RequestNumber = n,
+                save: () => _context.SaveChangesAsync());
 
             await _workflowService.LogTransitionAsync(request.Id, null, "pending_supervisor", submittedBy, "تقديم طلب التسجيل");
 
@@ -257,6 +240,22 @@ namespace NUH_PORTAL.Services
                 return false;
 
             request.Status = "pending_cyber";
+            // ⚠️ مراجعة الإسكان تُسجَّل في HousingReviewedBy/At — هذا هو العمود
+            //    الذي يقرأه بقية النظام. وهذا المسار (تسجيل الطالب بنفسه) كان
+            //    يكتب في ReviewedBy/At وحدهما، وهما عمودان عامّان قديمان سبقا
+            //    أعمدة المراحل.
+            //
+            //    والنتيجة لم تكن تجميلية: ScopeToRole يُبقي الطلب ظاهرًا لمراجع
+            //    الإسكان بعد اعتماده بشرط HousingReviewedAt != null - فكان طلب
+            //    التسجيل الذاتي *يختفي من شاشة المشرفة في اللحظة التي تعتمده
+            //    فيها*، ولا تراه إلا حين يكتمل. أما طلب الموظف فيظل ظاهرًا،
+            //    لأن مساره يكتب في العمود الصحيح.
+            //
+            //    ReviewedBy/At يبقيان مكتوبَين: صفوفٌ قديمة وشاشة تتبّع الطالب
+            //    تقرأ منهما (RequestTrackingService: HousingReviewedAt ?? ReviewedAt).
+            request.HousingReviewedBy = supervisorId;
+            request.HousingReviewedAt = DateTime.UtcNow;
+            request.HousingNotes = notes;
             request.ReviewedBy = supervisorId;
             request.ReviewedAt = DateTime.UtcNow;
             request.Notes = notes;
@@ -286,6 +285,11 @@ namespace NUH_PORTAL.Services
                 return false;
 
             request.Status = "rejected";
+            // نفس السبب في الاعتماد فوق: بدون HousingReviewedAt يختفي الطلب
+            // الذي رفضته المشرفة من شاشتها فور الرفض.
+            request.HousingReviewedBy = supervisorId;
+            request.HousingReviewedAt = DateTime.UtcNow;
+            request.HousingNotes = notes;
             request.ReviewedBy = supervisorId;
             request.ReviewedAt = DateTime.UtcNow;
             request.Notes = notes;

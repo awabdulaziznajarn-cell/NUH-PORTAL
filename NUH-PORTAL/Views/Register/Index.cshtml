@@ -4,6 +4,18 @@
     var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "0";
     var canRegister = role != "user" && role != "cyber";
 
+    // ⚠️ قسم الموظف (طلاب/طالبات) من نفس الـ claim اللي بتقرا منه التصفية في
+    //    السيرفر — مصدر واحد لا نسخة. الفاضي معناه «بيشوف القسمين» (الأدمن).
+    var scopeGender = (User.FindFirst(NUH_PORTAL.Core.ClaimConstants.ScopeGender)?.Value ?? "").Trim().ToLowerInvariant();
+    if (scopeGender != "male" && scopeGender != "female") scopeGender = "";
+    var genderLocked = scopeGender.Length > 0;
+    // القيمة null بتخلّي Razor يشيل السمة خالص — والفاضي "" كان هيبقى
+    // disabled="" يعني مقفولة على الأدمن كمان.
+    string? genderLockAttr = genderLocked ? "disabled" : null;
+    // اسم حالة السكن يتبع جنس الطالب. المشرف جنسه ثابت من قسمه فبيتطبع صح
+    // من الخادم؛ الأدمن بيغيّره من القائمة فالجافاسكربت بيحدّثه.
+    var residentKey = scopeGender == "female" ? "stu_residentF" : "stu_resident";
+
     // تنبيه: Razor بيهرّب أي نص بيطبعه ترميز HTML، حتى لو كان جوه وسم script.
     // يعني لو طبعنا نص الترجمة مباشرة وحطيناه في textContent، المستخدم بيشوف
     // رموز زي 0627x& بدل الحروف العربية. الحل: نسلسله JSON ونطبعه بـ Html.Raw،
@@ -44,23 +56,26 @@
   </div>
   <div class="form-card-body">
     <div class="form-grid">
-      <div class="field name-group">
-        <label >@SharedLocalizer["reg_lblFullName"]<span class="req">*</span></label>
+    @* ⚠️ عنوان مجموعة لا تسمية حقل: الاسم مقسوم لتلات خانات فمفيش حقل واحد
+       يتربط بيه. role="group" + aria-labelledby بيخلّي قارئ الشاشة يقرا
+       «الاسم الكامل» مرة واحدة قبل التلاتة بدل تسمية سايبة بلا حقل. *@
+      <div class="field name-group" role="group" aria-labelledby="lblFullNameAr">
+        <label id="lblFullNameAr">@SharedLocalizer["reg_lblFullName"]<span class="req">*</span></label>
         <div class="name-row">
           <div>
-            <label >@SharedLocalizer["reg_lblNameFirst"]</label>
+            <label for="ar_first">@SharedLocalizer["reg_lblNameFirst"]</label>
             <div class="input-wrap">
               <input type="text" id="ar_first" autocomplete="off">
             </div>
           </div>
           <div>
-            <label >@SharedLocalizer["reg_lblNameMiddle"]</label>
+            <label for="ar_middle">@SharedLocalizer["reg_lblNameMiddle"]</label>
             <div class="input-wrap">
               <input type="text" id="ar_middle" autocomplete="off">
             </div>
           </div>
           <div>
-            <label >@SharedLocalizer["reg_lblNameFamily"]</label>
+            <label for="ar_family">@SharedLocalizer["reg_lblNameFamily"]</label>
             <div class="input-wrap">
               <input type="text" id="ar_family" autocomplete="off">
             </div>
@@ -68,23 +83,23 @@
         </div>
         <span class="field-error" id="err-name_ar" >@SharedLocalizer["reg_errNameParts"]</span>
       </div>
-      <div class="field name-group">
-        <label >@SharedLocalizer["reg_lblFullNameEn"]<span class="req">*</span></label>
+      <div class="field name-group" role="group" aria-labelledby="lblFullNameEn">
+        <label id="lblFullNameEn">@SharedLocalizer["reg_lblFullNameEn"]<span class="req">*</span></label>
         <div class="name-row">
           <div>
-            <label >@SharedLocalizer["reg_lblNameFirst"]</label>
+            <label for="en_first">@SharedLocalizer["reg_lblNameFirst"]</label>
             <div class="input-wrap">
               <input type="text" id="en_first" dir="ltr" autocomplete="off">
             </div>
           </div>
           <div>
-            <label >@SharedLocalizer["reg_lblNameMiddle"]</label>
+            <label for="en_middle">@SharedLocalizer["reg_lblNameMiddle"]</label>
             <div class="input-wrap">
               <input type="text" id="en_middle" dir="ltr" autocomplete="off">
             </div>
           </div>
           <div>
-            <label >@SharedLocalizer["reg_lblNameFamily"]</label>
+            <label for="en_family">@SharedLocalizer["reg_lblNameFamily"]</label>
             <div class="input-wrap">
               <input type="text" id="en_family" dir="ltr" autocomplete="off">
             </div>
@@ -94,7 +109,7 @@
       </div>
       <span class="field-error name-group" id="err-name_match" >@SharedLocalizer["reg_valNameMismatch"]</span>
       <div class="field">
-        <label >@SharedLocalizer["reg_lblStudentId"]<span class="req">*</span></label>
+        <label for="student_id">@SharedLocalizer["reg_lblStudentId"]<span class="req">*</span></label>
         <div class="input-wrap with-icon">
           <input type="text" id="student_id" maxlength="9" placeholder="">
           <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8a2 2 0 0 0-2 2v2h12V5a2 2 0 0 0-2-2z"/></svg>
@@ -104,7 +119,7 @@
         <span class="field-error" id="val-student_id" >@SharedLocalizer["reg_valStudentId"]</span>
       </div>
             <div class="field">
-        <label >@SharedLocalizer["reg_lblNationalId"]<span class="req">*</span></label>
+        <label for="national_id">@SharedLocalizer["reg_lblNationalId"]<span class="req">*</span></label>
         <div class="input-wrap with-icon">
           <input type="text" id="national_id" placeholder="" maxlength="10">
           <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
@@ -113,7 +128,7 @@
         <span class="field-error" id="val-national_id" >@SharedLocalizer["reg_valNationalId"]</span>
       </div>
       <div class="field">
-        <label >@SharedLocalizer["reg_lblPhone"]</label>
+        <label for="phone">@SharedLocalizer["reg_lblPhone"]</label>
         <div class="phone-wrap" id="phoneWrap">
           <span class="cc">+966</span>
           @* من غير maxlength: المتصفح بيقص اللصق قبل التنظيف، فلصق 0501234567
@@ -124,12 +139,30 @@
         <span class="field-error" id="val-phone" >@SharedLocalizer["reg_valPhone"]</span>
       </div>
       <div class="field">
-        <label >@SharedLocalizer["reg_lblGender"]<span class="req">*</span></label>
+        <label for="gender">@SharedLocalizer["reg_lblGender"]<span class="req">*</span></label>
         <div class="input-wrap with-icon">
-          <select id="gender">
-            <option value="" >@SharedLocalizer["reg_optSelectGender"]</option>
-            <option value="male" >@SharedLocalizer["reg_optMale"]</option>
-            <option value="female" >@SharedLocalizer["reg_optFemale"]</option>
+          @* ⚠️ الموظف بيسجّل لقسمه هو، فلما يكون له قسم بنعرض خياره وحده ونقفل
+             الخانة. والقفل ده راحة مش حراسة — الخادم بيفرض نفس القيمة على أي
+             حال في StudentService.CreateAsync، لأن نداء واحد بالـ API كان
+             بينشئ طالبة تحت قسم الطلاب فتختفي عن القسمين.
+             الأدمن (بلا قسم) بيشوف الاختيارين زي ما هما.
+             ⚠️ وبوابة تسجيل الطالب لنفسه (wwwroot/register/register-form.html)
+             مالهاش دعوة بالكلام ده: الطالب بيحدد جنسه بنفسه ومفيش قسم أصلًا. *@
+          <select id="gender" disabled="@genderLockAttr">
+            @if (!genderLocked)
+            {
+              <option value="" >@SharedLocalizer["reg_optSelectGender"]</option>
+              <option value="male" >@SharedLocalizer["reg_optMale"]</option>
+              <option value="female" >@SharedLocalizer["reg_optFemale"]</option>
+            }
+            else if (scopeGender == "male")
+            {
+              <option value="male" selected>@SharedLocalizer["reg_optMale"]</option>
+            }
+            else
+            {
+              <option value="female" selected>@SharedLocalizer["reg_optFemale"]</option>
+            }
           </select>
           <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/></svg>
         </div>
@@ -149,7 +182,7 @@
   <div class="form-card-body">
     <div class="form-grid">
       <div class="field">
-        <label >@SharedLocalizer["reg_lblCollege"]<span class="req">*</span></label>
+        <label for="college">@SharedLocalizer["reg_lblCollege"]<span class="req">*</span></label>
         <div class="input-wrap with-icon">
           <select id="college">
             <option value="" >@SharedLocalizer["reg_optSelectCollege"]</option>
@@ -167,7 +200,7 @@
         <span class="field-error" id="err-college" >@SharedLocalizer["reg_optSelectCollege"]</span>
       </div>
       <div class="field">
-        <label >@SharedLocalizer["reg_lblDepartment"]<span class="req">*</span></label>
+        <label for="department">@SharedLocalizer["reg_lblDepartment"]<span class="req">*</span></label>
         <div class="input-wrap with-icon">
           <select id="department">
             <option value="" >@SharedLocalizer["reg_optSelectDepartment"]</option>
@@ -191,7 +224,7 @@
         <span class="field-error" id="err-department" >@SharedLocalizer["reg_optSelectDepartment"]</span>
       </div>
       <div class="field">
-        <label >@SharedLocalizer["reg_lblAcademicLevel"]<span class="req">*</span></label>
+        <label for="academic_level">@SharedLocalizer["reg_lblAcademicLevel"]<span class="req">*</span></label>
         <div class="input-wrap with-icon">
           <select id="academic_level">
             <option value="" >@SharedLocalizer["reg_optSelectLevel"]</option>
@@ -206,7 +239,7 @@
         <span class="field-error" id="err-academic_level" >@SharedLocalizer["reg_optSelectLevel"]</span>
       </div>
       <div class="field">
-        <label >@SharedLocalizer["reg_lblUsername"]</label>
+        <label for="ad_username">@SharedLocalizer["reg_lblUsername"]</label>
         <div class="input-wrap with-icon">
           @* اسم مستخدم الشبكة بيتولّد من الرقم الجامعي (h + الرقم) — مقفول عشان
              ماحدش يكتب قيمة مخالفة لللي هيتعمل فعليًا في الأكتف دايركتوري *@
@@ -229,7 +262,7 @@
   <div class="form-card-body">
     <div class="form-grid-3">
       <div class="field">
-        <label >@SharedLocalizer["reg_lblBuilding"]<span class="req">*</span></label>
+        <label for="housing_building">@SharedLocalizer["reg_lblBuilding"]<span class="req">*</span></label>
         <div class="input-wrap with-icon">
           @* القائمة بتفضل فاضية ومقفولة لحد ما يتحدد النوع — نفس سلوك شاشة تسجيل
              الطالب لنفسه. الخيارات الثابتة اتشالت من هنا عشان ماتظهرش قبل الاختيار. *@
@@ -241,7 +274,7 @@
         <span class="field-error" id="err-housing_building" >@SharedLocalizer["reg_optSelectBuilding"]</span>
       </div>
       <div class="field">
-        <label >@SharedLocalizer["reg_lblFloor"]<span class="req">*</span></label>
+        <label for="floor_number">@SharedLocalizer["reg_lblFloor"]<span class="req">*</span></label>
         <div class="input-wrap with-icon">
           <select id="floor_number">
             <option value="" >@SharedLocalizer["reg_optSelectFloor"]</option>
@@ -256,7 +289,7 @@
         <span class="field-error" id="err-floor_number" >@SharedLocalizer["reg_errRequired"]</span>
       </div>
       <div class="field">
-        <label >@SharedLocalizer["reg_lblApartment"]<span class="req">*</span></label>
+        <label for="apartment_number">@SharedLocalizer["reg_lblApartment"]<span class="req">*</span></label>
         <div class="input-wrap with-icon">
           @* الشقة بتتولّد من الدور (الدور×4+1 .. +4) — القائمة مقفولة لحد ما يتحدد الدور *@
           <select id="apartment_number" disabled>
@@ -267,7 +300,7 @@
         <span class="field-error" id="err-apartment_number" >@SharedLocalizer["reg_errRequired"]</span>
       </div>
       <div class="field">
-        <label >@SharedLocalizer["reg_lblRoom"]<span class="req">*</span></label>
+        <label for="room_number">@SharedLocalizer["reg_lblRoom"]<span class="req">*</span></label>
         <div class="input-wrap with-icon">
           <select id="room_number">
             <option value="" >@SharedLocalizer["reg_optSelectRoom"]</option>
@@ -277,11 +310,17 @@
         <span class="field-error" id="err-room_number" >@SharedLocalizer["reg_errRequired"]</span>
       </div>
       <div class="field">
-        <label >@SharedLocalizer["reg_lblStatus"]</label>
+        <label for="status">@SharedLocalizer["reg_lblStatus"]</label>
         <div class="input-wrap with-icon">
-          <select id="status">
-            <option value="active" >@SharedLocalizer["reg_statusActive"]</option>
-            <option value="inactive" >@SharedLocalizer["reg_statusInactive"]</option>
+          @* ⚠️ «غير نشط» اتشال: الطالب اللي بيتسجّل دلوقتي مقيم بالتعريف،
+             والحالة الوحيدة اللي بقية النظام بيفرّقها هي left (غادر) —
+             شاشة الطلاب بتعرض أي حاجة غير left على إنها «مقيم». يعني
+             اختيار «غير نشط» ماكانش بيغيّر حاجة في أي شاشة، وبيسيب في
+             قاعدة البيانات حالة محدش بيقراها.
+             ⚠️ والاسم بقى «مقيم/مقيمة» زي شاشة الطلاب بالحرف، بدل «نشط»
+             اللي كان مصطلح تاني لنفس الحاجة. *@
+          <select id="status" disabled>
+            <option value="active" data-i18n="@residentKey">@SharedLocalizer[residentKey]</option>
           </select>
           <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
@@ -353,7 +392,7 @@
     var __sid = document.getElementById('student_id').value.trim();
     showValError('student_id', 'val-student_id_start', /^4/.test(__sid));
     showValError('student_id', 'val-student_id', /^\d{9}$/.test(__sid));
-    showValError('national_id', 'val-national_id', /^\d{10}$/.test(document.getElementById('national_id').value.trim()));
+    showValError('national_id', 'val-national_id', NuhId.isNationalId(document.getElementById('national_id').value));
     showValError('phone', 'val-phone', NuhPhone.isValid(NuhPhone.normalize(document.getElementById('phone').value)));
     var gender = document.getElementById('gender');
     var errGender = document.getElementById('err-gender');
@@ -421,6 +460,7 @@
       document.getElementById(id).classList.remove('error');
     });
     document.querySelectorAll('.field-error').forEach(function (e) { e.classList.remove('show'); });
+    syncResidentLabel();
   }
 
   function showToast(msg, isError) {
@@ -450,7 +490,7 @@
     var err = document.getElementById('err-student_id'); if (this.value.trim()) err.classList.remove('show');
   });
   document.getElementById('national_id').addEventListener('input', function () {
-    validateField('national_id', 'val-national_id', /^\d{10}$/);
+    validateField('national_id', 'val-national_id', NuhId.NATIONAL_ID);
     var err = document.getElementById('err-national_id'); if (this.value.trim()) err.classList.remove('show');
   });
   // القاعدة كلها في js/phone-field.js — نفس ملف شاشات الطالب
@@ -530,7 +570,21 @@
 
   // الأقسام تتفلتر حسب الكلية، والمباني حسب النوع
   // تغيير الكلية بيحدّث الأقسام من جوّه Lookups.dependent — مفيش ربط تاني هنا.
-  lkGender.addEventListener('change', function () { lkLoadBuildings(lkGender.value); });
+  // ⚠️ «مقيم» / «مقيمة» بتتبع جنس الطالب. المشرف جنسه ثابت من قسمه فالخادم
+  //    بيطبع الاسم الصح من الأول؛ الأدمن وحده بيقدر يغيّر الجنس، فالاسم
+  //    بيتحدّث معاه هنا. data-i18n بيخلّي تبديل اللغة يشتغل عليه لوحده.
+  function syncResidentLabel() {
+    var st = document.getElementById('status');
+    if (!st || !st.options.length) return;
+    var key = lkGender.value === 'female' ? 'stu_residentF' : 'stu_resident';
+    st.options[0].setAttribute('data-i18n', key);
+    st.options[0].textContent = t(key);
+  }
+
+  lkGender.addEventListener('change', function () {
+    lkLoadBuildings(lkGender.value);
+    syncResidentLabel();
+  });
 
   lkLoadColleges().then(function () { deptGate.refresh(); });
   lkLoadLevels();

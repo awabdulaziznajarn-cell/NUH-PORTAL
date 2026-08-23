@@ -37,6 +37,11 @@ namespace NUH_PORTAL.Controllers
         public async Task<IActionResult> GetStats()
             => Ok(await _service.GetStatsAsync());
 
+        // GET api/Students/by-building — عدد الساكنين في كل مبنى (مفلتر بالجنس)
+        [HttpGet("by-building")]
+        public async Task<IActionResult> GetCountByBuilding()
+            => Ok(await _service.GetCountByBuildingAsync());
+
         // GET api/Students/by-number/{studentNumber}
         //
         // ⚠️ المسار ده كانت شاشة «تحديث حالة الطالب» بتناديه في مكانين (الحالة

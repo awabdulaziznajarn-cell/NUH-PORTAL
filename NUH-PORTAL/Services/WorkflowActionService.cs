@@ -62,6 +62,10 @@ namespace NUH_PORTAL.Services
 
             return await _requests.Query().AsNoTracking()
                 .Include(r => r.Student)
+                // ⚠️ تقسيم الطلاب/الطالبات - كان غائبًا عن الطابور كلّه، فيرى
+                //    المشرف طلبات القسم الآخر في «يحتاج إجراءك» ويعتمدها.
+                //    القاعدة في Core/GenderScope.cs، هي نفسها في شاشة الطلبات.
+                .ForGender(UnitOfWork.GetGenderScope())
                 // النوعين مع بعض — طلب الموظف طلب سكن زي طلب الطالب بالظبط
                 .Where(r => (r.RequestType == RequestType.self_registration || r.RequestType == RequestType.housing)
                             && r.Status != null && stages.Contains(r.Status))
@@ -104,7 +108,10 @@ namespace NUH_PORTAL.Services
             if (stages.Length == 0)
                 return 0;
 
+            // ⚠️ الشارة الحمراء في القائمة الجانبية. بلا تقسيم كانت تعدّ طلبات
+            //    القسمين معًا، فيرى المشرف رقمًا لا يطابق ما في شاشته.
             return await _requests.Query().AsNoTracking()
+                .ForGender(UnitOfWork.GetGenderScope())
                 .CountAsync(r => (r.RequestType == RequestType.self_registration || r.RequestType == RequestType.housing)
                                  && r.Status != null && stages.Contains(r.Status));
         }
@@ -112,6 +119,7 @@ namespace NUH_PORTAL.Services
         public async Task<List<StatusCountDto>> GetQueueCountsAsync()
         {
             return await _requests.Query().AsNoTracking()
+                .ForGender(UnitOfWork.GetGenderScope())
                 .Where(r => r.RequestType == RequestType.self_registration || r.RequestType == RequestType.housing)
                 .GroupBy(r => r.Status)
                 .Select(g => new StatusCountDto { Status = g.Key, Count = g.Count() })
@@ -163,6 +171,33 @@ namespace NUH_PORTAL.Services
             var actorId = RequireActor();
             await RequireStagePermissionAsync(requestId);
 
+            // ================================================================
+            //  المرحلة لازم تكون بتقبل «طلب معلومات إضافية» — والفحص هنا مش
+            //  في الواجهة وحدها.
+            //
+            //  ⚠️ AllowMoreInfo موجود في جدول المراحل، وشاشة التفاصيل بتقراه
+            //     وتخفي الزر لما يكون false. بس الخادم كان بيقبل النداء من أي
+            //     مرحلة ومن أي نوع طلب — والواجهة تسهيل لا حماية.
+            //
+            //  ⚠️ والنتيجة كانت طلب ميت: طلب موظف (housing) يترجّع للطالب،
+            //     والطالب ما يقدرش يعيد تقديمه (ResubmitRequestAsync بتشترط
+            //     self_registration)، والموظف مالوش إجراء (need_more_info
+            //     مالهاش انتقال في الجدول). فالطلب يقف في مكانه للأبد ومحدش
+            //     يقدر يحرّكه — لا الطالب ولا المراجع ولا الأدمن.
+            //
+            //     ودي أسوأ من رسالة خطأ: الرسالة بتتقال وتنتهي، والطلب الميت
+            //     بيفضل في القوائم وحد مستنيه.
+            // ================================================================
+            var status = await _requests.Query().AsNoTracking()
+                .ForGender(UnitOfWork.GetGenderScope())
+                .Where(r => r.Id == requestId)
+                .Select(r => r.Status)
+                .FirstOrDefaultAsync();
+
+            if (RequestWorkflow.Find(status)?.AllowMoreInfo != true)
+                throw new UserFriendlyException(
+                    "طلب المعلومات الإضافية غير متاح في هذه المرحلة - الطلب لن يجد طريقًا للعودة", 400);
+
             if (string.IsNullOrWhiteSpace(notes))
                 throw new UserFriendlyException("الملاحظات مطلوبة لطلب معلومات إضافية", 400);
 
@@ -188,6 +223,7 @@ namespace NUH_PORTAL.Services
         public async Task<List<WorkflowHistoryItemDto>> GetHistoryAsync(int requestId)
         {
             var request = await _requests.Query().AsNoTracking()
+                .ForGender(UnitOfWork.GetGenderScope())
                 .Include(r => r.Student)
                 .FirstOrDefaultAsync(r => r.Id == requestId);
             var studentName = request?.Student?.full_name;
@@ -217,19 +253,26 @@ namespace NUH_PORTAL.Services
                 Notes = (hideOtherStageRejections && IsRejection(h.ToStage) && !IsCyberRejection(h))
                         ? null
                         : h.Notes,
-                // لو المنفّذ طالب (دور user) بنعرض اسم الطالب صاحب الطلب — نفس منطق الكود القديم
+                // لو المنفّذ حساب طالب بنعرض اسم الطالب صاحب الطلب.
+                // ⚠️ الفحص كان بدور "user"، ودور "user" دور قراءة فقط لأي موظف
+                //    ومالوش علاقة بالطلاب. فموظف قراءة-فقط ينفّذ إجراء كان
+                //    اسمه بيتبدّل باسم الطالب في سجل المسار — نسبة إجراء
+                //    لشخص لم يفعله. العلامة الصحيحة هي بادئة اسم المستخدم
+                //    (StudentLoginIdentity.Prefix) زي شاشة المستخدمين بالظبط.
                 ActorName = h.Actor != null
-                    ? (h.Actor.UserRoles.Any(ur => ur.Role.Name == "user") && studentName != null ? studentName : h.Actor.full_name ?? h.Actor.UserName)
+                    ? (h.Actor.UserName != null
+                       && h.Actor.UserName.StartsWith(NUH_PORTAL.Core.StudentLoginIdentity.Prefix)
+                       && studentName != null
+                        ? studentName
+                        : h.Actor.full_name ?? h.Actor.UserName)
                     : null
             }).ToList();
         }
 
         // ----------------------------- Helpers -----------------------------
 
-        private static bool IsRejection(string? stage) =>
-            string.Equals(stage, "rejected", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(stage, "housing_rejected", StringComparison.OrdinalIgnoreCase)
-            || string.Equals(stage, "cyber_rejected", StringComparison.OrdinalIgnoreCase);
+        // القائمة من RequestWorkflow لا مكتوبة هنا — نفس اللي التبويبات بتعدّ بيه.
+        private static bool IsRejection(string? stage) => RequestWorkflow.IsRejected(stage);
 
         // رفض صادر من مرحلة الأمن السيبراني نفسها — ده اللي مراجع السايبر يشوف ملاحظاته
         private static bool IsCyberRejection(Models.WorkflowHistory h) =>
@@ -250,7 +293,11 @@ namespace NUH_PORTAL.Services
         // الفحص هنا مش في الكنترولر لأن نفس الـ endpoint بيخدم المراحل كلها.
         private async Task<string> RequireStagePermissionAsync(int requestId)
         {
+            // ⚠️ ForGender هنا لا في الطابور وحده: الطابور كان مقسّمًا والإجراء لأ،
+            //    فمشرفة كانت تقدر تعتمد أو ترفض أو ترجّع طلب طالب مش من قسمها
+            //    بالمعرّف مباشرة — الفحص تحت على الصلاحية بس، مايسألش عن القسم.
             var status = await _requests.Query().AsNoTracking()
+                .ForGender(UnitOfWork.GetGenderScope())
                 .Where(r => r.Id == requestId)
                 .Select(r => r.Status)
                 .FirstOrDefaultAsync()

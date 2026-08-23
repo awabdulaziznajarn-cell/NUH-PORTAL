@@ -65,6 +65,7 @@ namespace NUH_PORTAL.Controllers
         [HttpGet("editable-fields")]
         public IActionResult GetEditableFields()
             => Ok(NUH_PORTAL.Services.RegistrationDataMapper.EditableFields
+                    .Where(f => f.Pickable)
                     .Select(f => new { key = f.Key, label = f.Label }));
 
         // GET api/Workflow/{requestId}/history

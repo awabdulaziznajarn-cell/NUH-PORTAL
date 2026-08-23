@@ -30,6 +30,29 @@ namespace NUH_PORTAL.Services
 
         private static string Norm(string? c) => (c ?? "").Trim().ToLowerInvariant();
 
+        // ⚠️ الفحص والرسالة من نفس الجدول: لو المدير ضاف مبنى، بيبان في
+        //    المسموح تلقائيًا - ومفيش مكان تاني لازم حد يفتكر يعدّله.
+        // ⚠️ والمبنى غير المفعّل بيترفض زي غير الموجود: إيقاف المبنى معناه منع
+        //    التسكين فيه، والقايمة المنسدلة بتخفيه أصلًا.
+        public async Task<string?> BuildingCodeErrorAsync(string? code)
+        {
+            if (string.IsNullOrWhiteSpace(code)) return null;
+
+            var all = await _buildings.GetAllAsync();
+            var active = all.Where(b => b.IsActive)
+                            .OrderBy(b => b.DisplayOrder).ThenBy(b => b.Id)
+                            .Select(b => b.Code ?? string.Empty)
+                            .Where(c => c.Length > 0)
+                            .ToList();
+
+            var wanted = Norm(code);
+            if (active.Any(c => Norm(c) == wanted)) return null;
+
+            return active.Count == 0
+                ? "لا توجد مبانٍ سكنية مفعّلة في النظام - أضفها من شاشة القوائم المرجعية."
+                : "رقم المبنى السكني غير صحيح - القيم المسموح بها: " + string.Join("، ", active);
+        }
+
         private static Dictionary<string, int> BuildMap<T>(IEnumerable<T> items, Func<T, string?> code, Func<T, int> id)
         {
             var d = new Dictionary<string, int>();

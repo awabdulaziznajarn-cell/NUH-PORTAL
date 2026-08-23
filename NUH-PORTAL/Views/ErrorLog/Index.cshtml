@@ -12,7 +12,6 @@
   .modal{background:var(--white);border-radius:16px;padding:28px;min-width:420px;max-width:720px;width:92%;max-height:88vh;overflow:auto;box-shadow:0 8px 40px rgba(0,0,0,.15)}
   .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
   .modal-title{font-size:16px;font-weight:700;color:var(--navy-dark)}
-  .modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--gray-500)}
   .modal-row{display:flex;flex-direction:column;gap:2px;margin-bottom:12px}
   .modal-row-label{font-size:11px;font-weight:600;color:var(--gray-500)}
   .modal-row-value{font-size:14px;font-weight:500;color:var(--navy-dark);word-break:break-word}
@@ -26,31 +25,34 @@
 
 <div class="filters-bar">
   <div class="filter-group">
-    <label>@SharedLocalizer["err_search"]</label>
+    <label for="searchBox">@SharedLocalizer["err_search"]</label>
     <input type="text" id="searchBox" placeholder="">
   </div>
   <div class="filter-group">
-    <label>@SharedLocalizer["err_fromDate"]</label>
+    <label for="fromDate">@SharedLocalizer["err_fromDate"]</label>
     <input type="date" id="fromDate">
   </div>
   <div class="filter-group">
-    <label>@SharedLocalizer["err_toDate"]</label>
+    <label for="toDate">@SharedLocalizer["err_toDate"]</label>
     <input type="date" id="toDate">
   </div>
 </div>
 
 <div class="card">
   <div style="overflow-x:auto">
-    <table>
+    <table id="errTbl">
       <thead>
         <tr>
+          @* ⚠️ «#» ترقيم عرض مش موجود في قاعدة البيانات، و«الرسالة» نصّ
+             طويل حرّ — ترتيبه أبجديًّا مالوش أي معنى تشغيلي. الاتنين
+             بلا data-sort عن قصد. *@
           <th>#</th>
-          <th>@SharedLocalizer["err_col_time"]</th>
-          <th>@SharedLocalizer["err_col_path"]</th>
-          <th>@SharedLocalizer["err_col_type"]</th>
+          <th data-sort="occurred_at">@SharedLocalizer["err_col_time"]</th>
+          <th data-sort="request_path">@SharedLocalizer["err_col_path"]</th>
+          <th data-sort="exception_type">@SharedLocalizer["err_col_type"]</th>
           <th>@SharedLocalizer["err_col_message"]</th>
-          <th>@SharedLocalizer["err_col_status"]</th>
-          <th>@SharedLocalizer["err_col_user"]</th>
+          <th data-sort="status_code">@SharedLocalizer["err_col_status"]</th>
+          <th data-sort="username">@SharedLocalizer["err_col_user"]</th>
         </tr>
       </thead>
       <tbody id="tbody">
@@ -60,18 +62,14 @@
   </div>
 </div>
 
-<div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:16px;padding:0 4px">
-  <span id="totalLabel" style="font-size:13px;color:var(--gray-500)"></span>
-  <button id="prevBtn" class="btn btn-cancel" disabled>@SharedLocalizer["aud_prev"]</button>
-  <span id="pageInd" style="font-size:13px;font-weight:600;color:var(--navy-dark);min-width:60px;text-align:center">1 / 1</span>
-  <button id="nextBtn" class="btn btn-cancel" disabled>@SharedLocalizer["aud_next"]</button>
-</div>
+@* صفّ الترقيم من NuhTable.pager - النسخة الوحيدة في النظام (js/table-state.js) *@
+<div id="errPager"></div>
 
 <div class="modal-overlay" id="detailModal">
   <div class="modal">
     <div class="modal-header">
       <div class="modal-title">@SharedLocalizer["err_modalTitle"]</div>
-      <button class="modal-close" id="modalClose">&times;</button>
+      <button class="modal-close" id="modalClose" aria-label="@SharedLocalizer["close"]"><span aria-hidden="true">&times;</span></button>
     </div>
     <div class="modal-row"><span class="modal-row-label">@SharedLocalizer["err_col_time"]</span><span class="modal-row-value" id="d_time"></span></div>
     <div class="modal-row"><span class="modal-row-label">@SharedLocalizer["err_col_type"]</span><span class="modal-row-value mono" id="d_type"></span></div>
@@ -86,19 +84,29 @@
 @section Scripts {
 <script src="/i18n.js"></script>
 <script>
-  var page = 1, pageSize = 50, totalPages = 1, cache = [];
-  var esc = function (v) { return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
+  // الصفحة والفلاتر في الرابط - نفس آلية باقي الشاشات (js/url-state.js)
+  var page = NuhUrl.int('page', 1, 1), pageSize = 50, totalPages = 1, cache = [];
+  var ERR_DEFAULTS = { page: 1, q: '', from: '', to: '', sort: '', asc: '' };
+
+  function syncUrl() {
+    NuhUrl.sync({
+      page: page,
+      q: document.getElementById('searchBox').value.trim(),
+      from: document.getElementById('fromDate').value,
+      to: document.getElementById('toDate').value,
+      sort: errSort.by(), asc: errSort.by() ? (errSort.asc() ? '1' : '0') : ''
+    }, ERR_DEFAULTS);
+  }
+  // تهريب HTML — التعريف الوحيد في /js/esc.js
+  var esc = function (v) { return escHtml(v); };
   // الجدول وحالاته من NuhTable، والترويسات من NUH.headers في التخطيط — مفيش نسخة محلية.
   var errTable = NuhTable.bind('tbody', 7);
 
-  function fmt(d) {
-    if (!d) return '';
-    var x = new Date(d); if (isNaN(x.getTime())) return '';
-    var p = function (n) { return String(n).padStart(2, '0'); };
-    return p(x.getDate()) + '/' + p(x.getMonth() + 1) + '/' + x.getFullYear() + ' ' + p(x.getHours()) + ':' + p(x.getMinutes());
-  }
+  // شكل التاريخ من NuhFmt — التعريف الوحيد في /js/date-format.js
+  function fmt(v) { return NuhFmt.dateTime(v); }
 
   function buildUrl() {
+    syncUrl();
     var u = '/api/logs/errors?page=' + page + '&pageSize=' + pageSize;
     var s = document.getElementById('searchBox').value.trim();
     var f = document.getElementById('fromDate').value;
@@ -106,7 +114,7 @@
     if (s) u += '&search=' + encodeURIComponent(s);
     if (f) u += '&fromDate=' + encodeURIComponent(f);
     if (tt) u += '&toDate=' + encodeURIComponent(tt);
-    return u;
+    return u + errSort.qs();
   }
 
   // ⚠️ setLang تستدعي onLanguageChange المربوطة بـ render، فكانت الصفحة ترسم
@@ -139,10 +147,13 @@
       cache = body.data || [];
       totalPages = body.totalPages || 1;
       render();
-      document.getElementById('pageInd').textContent = page + ' / ' + totalPages;
-      document.getElementById('prevBtn').disabled = page <= 1;
-      document.getElementById('nextBtn').disabled = page >= totalPages;
-      document.getElementById('totalLabel').textContent = t('err_totalFmt').replace('{0}', body.totalRecords || 0);
+      NuhTable.pager('errPager',
+        { page: page, pageSize: pageSize, total: body.totalRecords || 0, totalPages: totalPages },
+        {
+          summary: t('err_totalFmt').replace('{0}', body.totalRecords || 0),
+          prev: t('aud_prev'), next: t('aud_next')
+        },
+        function (p) { page = p; load(); });
     } catch (e) { errTable.error(t('err_loadError')); }
   }
 
@@ -162,9 +173,13 @@
     } catch (e) { }
   }
 
+  // ترتيب الأعمدة من نسخة واحدة في النظام — NuhTable.sort. الأعمدة معرّفة
+  // بـ data-sort على الـ <th>، والخادم هو اللي بيرتّب (الجدول مقسّم صفحات،
+  // والترتيب في المتصفح كان هيرتّب الصفحة اللي قدامك بس).
+  var errSort = NuhTable.sort('errTbl', function () { page = 1; load(); },
+    { by: NuhUrl.get('sort', ''), asc: NuhUrl.get('asc', '1') === '1' });
+
   function onFilter() { page = 1; load(); }
-  document.getElementById('prevBtn').addEventListener('click', function () { if (page > 1) { page--; load(); } });
-  document.getElementById('nextBtn').addEventListener('click', function () { if (page < totalPages) { page++; load(); } });
   document.getElementById('searchBox').addEventListener('keyup', function (e) { if (e.key === 'Enter') onFilter(); });
   document.getElementById('fromDate').addEventListener('change', onFilter);
   document.getElementById('toDate').addEventListener('change', onFilter);
@@ -173,6 +188,13 @@
 
   window.onLanguageChange = function () { render(); };
   setLang(localStorage.getItem('uiLanguage') || 'ar');
+
+  (function initFromUrl() {
+    document.getElementById('searchBox').value = NuhUrl.get('q', '');
+    document.getElementById('fromDate').value = NuhUrl.date('from');
+    document.getElementById('toDate').value = NuhUrl.date('to');
+  })();
+
   load();
 </script>
 }

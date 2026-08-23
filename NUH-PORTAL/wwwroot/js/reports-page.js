@@ -47,9 +47,10 @@ function translateAction(action) {
   return v === k ? action : v;
 }
 
-function escHtml(str) {
-  return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+// ⚠️ كان هنا تعريف تاني لـ escHtml **ناقص تهريب العلامة المفردة (')**، ولأنه
+//    في النطاق العام كان بيدهس نسخة التخطيط القوية على الصفحة دي وحدها.
+//    يعني شاشة التقارير كانت شغّالة بتهريب أضعف من باقي النظام من غير ما
+//    يبان أي فرق. التعريف الوحيد دلوقتي في /js/esc.js.
 
 async function apiFetch(url) {
   try {
@@ -61,10 +62,10 @@ async function apiFetch(url) {
 
 function setLang(l) {
   __baseSetLang(l);
-  var d = new Date();
-  document.getElementById('dateNow').textContent = l === 'ar'
-    ? d.toLocaleDateString('ar-SA', {weekday:'long', year:'numeric', month:'long', day:'numeric'})
-    : d.toLocaleDateString('en-US', {weekday:'long', year:'numeric', month:'long', day:'numeric'});
+  // ⚠️ نسخة تانية من ترويسة التاريخ اللي في التخطيط، وبـ ar-SA اللي بترجّع
+  //    هجري في متصفحات — فالشاشة دي وحدها كانت ممكن تعرض تاريخ هجري في
+  //    الترويسة والباقي ميلادي.
+  document.getElementById('dateNow').textContent = NuhFmt.dateFull(new Date());
   rebuildActionFilter();
   var userFilterEl = document.getElementById('userFilter');
   var allOption = userFilterEl.options[0];
@@ -108,8 +109,10 @@ function populateUserFilter(users) {
   sel.value = currentVal;
 }
 
-var currentPage = 1;
-var currentPageSize = 50;
+// الصفحة وعدد الصفوف من الرابط زي باقي الفلاتر - كانوا الوحيدين برّه
+// (مع الترتيب)، فالرابط المتبعت كان بيفتح بفلاتر صح وصفحة غلط.
+var currentPage = NuhUrl.int('page', 1, 1);
+var currentPageSize = NuhUrl.int('size', 50, 1);
 var totalPages = 1;
 var totalRecords = 0;
 var cachedUsers = [];
@@ -130,18 +133,10 @@ function badgeClass(action) {
   return map[action] || 'badge-gray';
 }
 
-function formatDate(dateStr) {
-  if (!dateStr) return '';
-  var d = new Date(dateStr);
-  if (isNaN(d.getTime())) return '';
-  var lang = document.getElementById('html-root').getAttribute('lang') || 'ar';
-  var y = d.getFullYear();
-  var mo = String(d.getMonth() + 1).padStart(2, '0');
-  var da = String(d.getDate()).padStart(2, '0');
-  var h = String(d.getHours()).padStart(2, '0');
-  var mi = String(d.getMinutes()).padStart(2, '0');
-  return lang === 'ar' ? da + '/' + mo + '/' + y + ' ' + h + ':' + mi : mo + '/' + da + '/' + y + ' ' + h + ':' + mi;
-}
+// شكل التاريخ من NuhFmt — التعريف الوحيد في /js/date-format.js
+// ⚠️ كانت الصيغة بتتقلب mm/dd في الإنجليزي — يعني 08/09 تتقرا ٨ سبتمبر عند
+//    واحد و٩ أغسطس عند التاني على نفس الشاشة. صيغة واحدة في اللغتين دلوقتي.
+function formatDate(v) { return NuhFmt.dateTime(v); }
 
 function getFilters() {
   return {
@@ -153,6 +148,11 @@ function getFilters() {
   };
 }
 
+// ترتيب الأعمدة من نسخة واحدة في النظام — NuhTable.sort. الأعمدة معرّفة بـ
+// data-sort على الـ <th>، والخادم بيرتّب على كل السجلات مش الصفحة المعروضة.
+var repSort = NuhTable.sort('repTable', function () { loadLogs(1, currentPageSize); },
+  { by: NuhUrl.get('sort', ''), asc: NuhUrl.get('asc', '1') === '1' });
+
 function buildUrl(p, ps) {
   var url = '/api/auditlogs?page=' + p + '&pageSize=' + ps;
   var f = getFilters();
@@ -161,7 +161,7 @@ function buildUrl(p, ps) {
   if (f.fromDate) url += '&fromDate=' + encodeURIComponent(f.fromDate);
   if (f.toDate) url += '&toDate=' + encodeURIComponent(f.toDate);
   if (f.search) url += '&search=' + encodeURIComponent(f.search);
-  return url;
+  return url + repSort.qs();
 }
 
 function renderTable() {
@@ -186,11 +186,30 @@ function renderTable() {
 }
 
 function updatePagination(recs) {
-  document.getElementById('pageIndicator').textContent = currentPage + ' / ' + (totalPages || 1);
-  document.getElementById('prevPageBtn').disabled = currentPage <= 1;
-  document.getElementById('nextPageBtn').disabled = currentPage >= totalPages;
-  var lang = document.getElementById('html-root').getAttribute('lang') || 'ar';
-  document.getElementById('totalRecordsLabel').textContent = t('totalRecords') + ': ' + recs;
+  // صفّ الترقيم من النسخة الوحيدة في النظام - NuhTable.pager
+  NuhTable.pager('repPager',
+    { page: currentPage, pageSize: currentPageSize, total: recs, totalPages: totalPages || 1 },
+    {
+      summary: t('totalRecords') + ': ' + recs,
+      prev: t('rep_51'), next: t('rep_52'),
+      sizePrefix: t('rep_49'), sizeSuffix: t('rep_50')
+    },
+    function (p) { loadLogs(p, currentPageSize); },
+    { sizes: [50, 100, 200], onSize: function (n) { loadLogs(1, n); } });
+
+  // ⚠️ statTotalRecords / statStudentRecs / statRequestRecs كانت موجودة في
+  //    الصفحة ومحدّش بيملاها إطلاقًا، فبتفضل أصفارًا للأبد. بتتملا هنا من
+  //    الصفحة المعروضة: الإجمالي من الخادم، والتفصيل من صفوف الصفحة دي.
+  var rows = cachedData || [];
+  var stu = 0, req = 0;
+  rows.forEach(function (r) {
+    var g = actionGroup(r.action);
+    if (g === 'student') stu++;
+    else if (g === 'request') req++;
+  });
+  ['statTotalRecords', 'statTotalRecordsMain'].forEach(function (id) { setTxt(id, recs); });
+  ['statStudentRecs', 'statStudentRecsMain'].forEach(function (id) { setTxt(id, stu); });
+  ['statRequestRecs', 'statRequestRecsMain'].forEach(function (id) { setTxt(id, req); });
 }
 
 // ⚠️ كانت هنا updateStats تكتب في statTotalRecords / statStudentRecs /
@@ -250,15 +269,48 @@ async function loadAuditUsers() {
 }
 
 function applyFilters() {
+  // ⚠️ الفلترة بتفتح السجل التفصيلي غصب. السجل مطوي افتراضيًا عشان الصفحة
+  //    تقارير لا جدول خام، بس اللي بيضغط «تطبيق» طالب نتيجة بعينها — ولو
+  //    فضلت في جدول مخفي بيقرا ده على إن الفلتر مرجّعش حاجة.
+  if (typeof toggleLog === 'function') toggleLog(true);
+  reloadAll();
+}
+
+// ⚠️ الصفحة كلها بتتبع الفلتر مش الجدول وحده. قبل كده «تطبيق» كان بيحدّث آخر
+//    جدول بس، والبطاقات والرسم والقوائم فوقه يفضلوا على «اليوم» و«آخر ٧ أيام» —
+//    فالمستخدم يختار ١١–١٦ أغسطس ويشوف عمودًا على ١٨ أغسطس فوق نتيجة صحيحة
+//    تحت. صفحة اسمها «مركز التقارير» وفلترها بيحرّك خُمسها.
+function reloadAll() {
+  topDataLoaded = false;
+  cachedTopData = [];
   loadLogs(1, currentPageSize);
+  loadSummaryStats();
+  loadCharts();
+  loadTopData();
 }
 
 function onFilterChange() {
-  loadLogs(1, currentPageSize);
+  reloadAll();
+}
+
+// ⚠️ لاحقة المدة مكتوبة مرة واحدة: البطاقات والرسوم والقوائم والجدول لازم
+//    يقيسوا نفس المدة بالحرف. لو كل نداء بنى الوسائط بنفسه كان الجدول يقول
+//    ١٩ عملية والرسم يرسم عمودًا في يوم بره المدة — والمستخدم يقرا ده على إن
+//    الفلتر مشتغلش أصلًا.
+function rangeQs(prefix) {
+  var f = document.getElementById('fromDate').value;
+  var t = document.getElementById('toDate').value;
+  var qs = '';
+  if (f) qs += (qs || prefix) + (qs ? '&' : '') + 'fromDate=' + encodeURIComponent(f);
+  if (t) qs += (qs ? '&' : prefix) + 'toDate=' + encodeURIComponent(t);
+  return qs;
+}
+function hasRange() {
+  return !!(document.getElementById('fromDate').value || document.getElementById('toDate').value);
 }
 
 async function loadSummaryStats() {
-  const data = await apiFetch('/api/auditlogs/today-stats');
+  const data = await apiFetch('/api/auditlogs/today-stats' + rangeQs('?'));
   if (!data) return;
   document.getElementById('statTotOps').textContent = data.todayTotalOps || 0;
   document.getElementById('statUsers').textContent = data.todayActiveUsers || 0;
@@ -266,6 +318,16 @@ async function loadSummaryStats() {
   document.getElementById('statRequestOps').textContent = data.todayRequestOps || 0;
   document.getElementById('statFailed').textContent = data.todayFailedLogins || 0;
   document.getElementById('statDeletes').textContent = data.todayDeletes || 0;
+  applyPeriodLabels();
+}
+
+// ⚠️ البطاقة اللي مكتوب تحتها «اليوم» بتقيس المدة المختارة لمّا تتحدّد — فلو
+//    النصّ فضل «اليوم» كان الرقم يتقرا غلط تمامًا. النصّ بيتبع المصدر.
+function applyPeriodLabels() {
+  var txt = hasRange() ? t('rpx_inRange') : null;
+  document.querySelectorAll('[data-period]').forEach(function (el) {
+    el.textContent = txt || el.getAttribute('data-period');
+  });
 }
 
 // انتظار محدود لوصول مكتبة الرسوم. المهلة مقصودة: بعدها نعرض رسالة واضحة
@@ -282,7 +344,7 @@ function waitForChartLib(maxMs) {
 }
 
 async function loadCharts() {
-  const data = await apiFetch('/api/auditlogs/chart-data');
+  const data = await apiFetch('/api/auditlogs/chart-data' + rangeQs('?'));
   if (!data) return;
   cachedChartData = data;
 
@@ -291,7 +353,9 @@ async function loadCharts() {
   //    وإن لم تصل (خادم أو جهاز بلا منفذ للإنترنت) تبقى المربعات الأربعة فارغة
   //    بلا كلمة تشرح السبب، فيظن المستخدم أن لا بيانات لديه. نقولها صراحة.
   if (!(await waitForChartLib(10000))) {
-    ['chartOps7', 'chartLogins30', 'chartStudents', 'chartRequests'].forEach(function (id) {
+    // ⚠️ الرسمان الباقيان بس: «عمليات الطلاب» و«عمليات الطلبات» بقوا أعمدة
+    //    أفقية بـ CSS، فمش محتاجين المكتبة ولا بيتأثروا بغيابها.
+    ['chartOps7', 'chartLogins30'].forEach(function (id) {
       var c = document.getElementById(id);
       if (c && c.parentNode) {
         c.parentNode.innerHTML = '<div style="padding:28px 14px;text-align:center;color:var(--gray-500);' +
@@ -312,18 +376,11 @@ async function loadCharts() {
     var counts = data.login30.map(function(d) { return d.count; });
     renderChart('chartLogins30', 'line', labels, counts, '#dba102');
   }
-  if (data.studentOps && data.studentOps.length) {
-    var labels = data.studentOps.map(function(d) { return d.action; });
-    var counts = data.studentOps.map(function(d) { return d.count; });
-    var colors = ['#166a45','#dba102','#b42318'];
-    renderChart('chartStudents', 'doughnut', labels, counts, colors, t('chart_total'));
-  }
-  if (data.requestOps && data.requestOps.length) {
-    var labels = data.requestOps.map(function(d) { return d.action; });
-    var counts = data.requestOps.map(function(d) { return d.count; });
-    var colors = ['#067647','#dba102','#b42318'];
-    renderChart('chartRequests', 'doughnut', labels, counts, colors, t('chart_total'));
-  }
+  // ⚠️ كانت دونات. اتحوّلت أعمدة أفقية لسببين: الدونة على ٢-٣ أرقام بترسم
+  //    تلات شرايح وتحتاج وسيلة إيضاح تحتها عشان تقراها — الأعمدة بتكتب الاسم
+  //    والرقم جنب بعض. وأسماء الإجراءات عربية، فالأعمدة الرأسية كانت هتقصّها.
+  renderHBars('barsStudents', data.studentOps, 'kpiStudentTotal', 'kpiStudentKinds');
+  renderHBars('barsRequests', data.requestOps, 'kpiRequestTotal', 'kpiRequestKinds');
   if (dataLoaded) { computeKpi(); computeTopWidgets(); generateExecSummary(); }
 }
 
@@ -332,6 +389,31 @@ async function loadCharts() {
 //    بقت في js/chart-theme.js — شكل واحد لكل رسوم النظام.
 function renderChart(id, type, labels, data, bgColors, totalLabel) {
   return NuhChart.render(id, type, labels, data, bgColors, totalLabel);
+}
+
+// أعمدة أفقية بديلة عن الدونة لما التصنيفات قليلة وأسماؤها عربية طويلة.
+// rows = [{action, count}] — بترجّع الإجمالي وعدد الأنواع للمؤشرات فوقها.
+function renderHBars(hostId, rows, totalId, kindsId) {
+  var host = document.getElementById(hostId);
+  if (!host) return;
+  rows = (rows || []).slice().sort(function (a, b) { return b.count - a.count; });
+  var total = rows.reduce(function (s, r) { return s + (r.count || 0); }, 0);
+  if (totalId) { var te = document.getElementById(totalId); if (te) te.textContent = total; }
+  if (kindsId) { var ke = document.getElementById(kindsId); if (ke) ke.textContent = rows.length; }
+  if (!rows.length) {
+    host.innerHTML = '<div class="empty-state">' + t('noData') + '</div>';
+    return;
+  }
+  var max = rows[0].count || 1;
+  host.innerHTML = rows.map(function (r) {
+    var pct = Math.max(2, (r.count / max) * 100);
+    return '<div class="hb">' +
+             '<span class="hb-l" title="' + escHtml(translateAction(r.action)) + '">' +
+               escHtml(translateAction(r.action)) + '</span>' +
+             '<span class="hb-t"><i style="width:' + pct.toFixed(1) + '%"></i></span>' +
+             '<b class="hb-v">' + r.count + '</b>' +
+           '</div>';
+  }).join('');
 }
 
 async function loadAlerts() {
@@ -382,7 +464,7 @@ async function exportExcel() {
 }
 
 function exportPdf() {
-  var activeGroup = document.querySelector('.report-tab.active')?.getAttribute('data-group') || '';
+  var activeGroup = document.querySelector('.tab-btn.active')?.getAttribute('data-group') || '';
   var typeMap = { '': 'activity', 'login': 'login', 'student': 'student', 'request': 'request' };
   var reportType = typeMap[activeGroup] || 'activity';
 
@@ -394,6 +476,9 @@ function exportPdf() {
   if (f.userId) url += '&userId=' + encodeURIComponent(f.userId);
   if (f.fromDate) url += '&fromDate=' + encodeURIComponent(f.fromDate);
   if (f.toDate) url += '&toDate=' + encodeURIComponent(f.toDate);
+  // ⚠️ تقويم العرض بيتبعت مع التقرير كمان: كان الموظف يبدّل لهجري ويطبع،
+  //    فيراجع ورقة ميلادية على شاشة هجرية ويفتكر إن البيانات نفسها غلط.
+  url += '&calendar=' + encodeURIComponent(NuhFmt.mode());
 
   // ⚠️ نافذة محجوبة من المتصفح كانت تعني «لا شيء يحدث» بلا تفسير.
   var w = window.open(url, '_blank');
@@ -436,7 +521,7 @@ var cachedTopData = [];
 
 async function loadTopData() {
   try {
-    var res = await fetch('/api/auditlogs?page=1&pageSize=500&sort=action_at&order=desc', { credentials: 'same-origin' });
+    var res = await fetch('/api/auditlogs?page=1&pageSize=500&sort=action_at&order=desc' + rangeQs('&'), { credentials: 'same-origin' });
     if (!res.ok) return;
     var body = await res.json();
     if (body.data) cachedTopData = body.data;
@@ -453,7 +538,10 @@ function computeTopWidgets() {
   var userMap = {};
   var actionMap = {};
   source.forEach(function(r) {
-    var name = r.user?.full_name || r.user?.username || String(r.user_id);
+    // ⚠️ String(null) = "null" — وده اللي كان بيظهر في «أكثر المستخدمين نشاطًا».
+    //    العمليات اللي بينفّذها النظام نفسه (إرسال رمز تحقق مثلًا) مالهاش مستخدم.
+    var name = r.user?.full_name || r.user?.username ||
+               (r.user_id ? String(r.user_id) : t('rpx_systemUser'));
     userMap[name] = (userMap[name] || 0) + 1;
     actionMap[r.action] = (actionMap[r.action] || 0) + 1;
   });
@@ -466,6 +554,41 @@ function computeTopWidgets() {
   document.getElementById('topActionsList').innerHTML = topActions.length ? topActions.map(function(a) {
     return '<li class="mini-list-item" onclick="applyActionFilter(\'' + escHtml(a[0]) + '\')"><span class="name">' + escHtml(translateAction(a[0])) + '</span><span class="count">' + a[1] + '</span></li>';
   }).join('') : '<li style="font-size:12px;color:var(--gray-400)">' + t('noData') + '</li>';
+
+  // ⚠️ نفس المصدر بالظبط (source) مصفّى على مجموعة واحدة. التبويبات كانت
+  //    بتقول «أي إجراء اتعمل» وما بتقولش «مين عمله»، والسؤال التاني هو اللي
+  //    بيتسأل فعلًا. مفيش نداء إضافي: الـ ٥٠٠ سجل محمّلين أصلًا.
+  renderTopUsersFor('topUsersStudent', source, 'student');
+  renderTopUsersFor('topUsersRequest', source, 'request');
+}
+
+// ⚠️ قايمة إجراءات المجموعة من __AUDIT_GROUPS المحقونة في التخطيط، ومصدرها
+//    Core/AuditActionGroups.cs. لو اتكتبت هنا كانت هتبقى نسخة تانية تفترق أول
+//    ما يتضاف إجراء جديد — وده حصل فعلًا في السيرفر قبل كده.
+function actionsInGroup(group) {
+  var g = (window.__AUDIT_GROUPS || {})[group];
+  return Array.isArray(g) ? g : [];
+}
+
+function renderTopUsersFor(hostId, source, group) {
+  var host = document.getElementById(hostId);
+  if (!host) return;
+
+  var actions = actionsInGroup(group);
+  var map = {};
+  source.forEach(function (r) {
+    if (actions.indexOf(r.action) === -1) return;
+    var name = r.user?.full_name || r.user?.username ||
+               (r.user_id ? String(r.user_id) : t('rpx_systemUser'));
+    map[name] = (map[name] || 0) + 1;
+  });
+
+  var top = Object.entries(map).sort(function (a, b) { return b[1] - a[1]; }).slice(0, 5);
+  host.innerHTML = top.length ? top.map(function (u) {
+    return '<li class="mini-list-item" onclick="applyUserFilter(\'' + escHtml(u[0]) + '\')">' +
+           '<span class="name">' + escHtml(u[0]) + '</span>' +
+           '<span class="count">' + u[1] + '</span></li>';
+  }).join('') : '<li style="font-size:12px;color:var(--gray-500)">' + t('noData') + '</li>';
 }
 
 function applyUserFilter(name) {
@@ -502,6 +625,32 @@ function computeKpi() {
   document.getElementById('kpiLastTime').textContent = lastLogin ? lastLogin.date.slice(5,10) : '-';
   var userCount = new Set((cachedTopData.length ? cachedTopData : (cachedData || [])).map(function(r) { return r.user_id; })).size;
   document.getElementById('kpiActiveUsers').textContent = userCount || document.getElementById('statUsers').textContent || '0';
+
+  // إجمالي السبع أيام تحت بطاقة «إجمالي العمليات اليوم» — الرقم اليومي وحده
+  // مايقولش إذا كان اليوم ده عالي ولا واطي.
+  setTxt('kpiTotal7', total7 + ' ' + t('rpx_inLast7'));
+
+  // تبويب تسجيل الدخول
+  var login30 = d30.reduce(function (s, d) { return s + d.count; }, 0);
+  setTxt('kpiLoginTotal', login30);
+  setTxt('kpiLoginAvg', d30.length ? Math.round(login30 / d30.length) : 0);
+
+  // ⚠️ نسخ مكرّرة من نفس الرقم في تبويب الأمان: المستخدم لازم يشوفه وهو واقف
+  //    هناك، ومصدره واحد (today-stats) فما فيش خطر افتراق.
+  setTxt('statFailedSec', document.getElementById('statFailed')?.textContent || '0');
+  setTxt('statUsersSec',  document.getElementById('statUsers')?.textContent || '0');
+}
+
+function setTxt(id, v) { var e = document.getElementById(id); if (e) e.textContent = v; }
+
+// تصنيف الإجراء لمجموعته — نفس تصنيف فلتر الجدول بالحرف.
+function actionGroup(a) {
+  if (a === 'login' || a === 'login_failed' || a === 'login_admin_fallback' ||
+      a === 'login_admin_fallback_failed' || a === 'logout') return 'login';
+  if (a === 'create_student' || a === 'update_student' || a === 'delete_student' ||
+      a === 'checkout_student') return 'student';
+  if (a && a.indexOf('request') !== -1) return 'request';
+  return 'other';
 }
 
 /* ====== Phase 6: Drill-down Analytics ====== */
@@ -511,38 +660,45 @@ function applyDrill(type) {
   document.getElementById('fromDate').value = '';
   document.getElementById('toDate').value = '';
   document.getElementById('searchBox').value = '';
-  document.querySelectorAll('.report-tab').forEach(function(t) { t.classList.remove('active'); });
-  if (type === 'tot') { document.querySelector('.report-tab[data-group=""]').classList.add('active'); }
-  else if (type === 'users') { document.querySelector('.report-tab[data-group=""]').classList.add('active'); }
+  document.querySelectorAll('.tab-btn').forEach(function(t) { t.classList.remove('active'); });
+  if (type === 'tot') { document.querySelector('.tab-btn[data-group=""]').classList.add('active'); }
+  else if (type === 'users') { document.querySelector('.tab-btn[data-group=""]').classList.add('active'); }
   else if (type === 'student') {
-    document.querySelector('.report-tab[data-group="student"]').classList.add('active');
+    document.querySelector('.tab-btn[data-group="student"]').classList.add('active');
     document.getElementById('actionFilter').value = 'student';
   } else if (type === 'request') {
-    document.querySelector('.report-tab[data-group="request"]').classList.add('active');
+    document.querySelector('.tab-btn[data-group="request"]').classList.add('active');
     document.getElementById('actionFilter').value = 'request';
   } else if (type === 'fail') {
-    document.querySelector('.report-tab[data-group="login"]').classList.add('active');
+    document.querySelector('.tab-btn[data-group="login"]').classList.add('active');
     document.getElementById('actionFilter').value = 'login';
   } else if (type === 'delete') {
-    document.querySelector('.report-tab[data-group=""]').classList.add('active');
+    document.querySelector('.tab-btn[data-group=""]').classList.add('active');
   }
+  // ⚠️ اللوحة تتبع التبويب اللي اتفعّل فوق، وإلا بقى تبويب مضيء ولوحة تانية ظاهرة.
+  var act = document.querySelector('.tab-btn.active');
+  if (act) showReportPanel(act.getAttribute('data-panel') || 'overview');
   onFilterChange();
 }
 
-/* ====== Phase 7: Shareable URL ====== */
+/* ====== الرابط القابل للإرسال ====== */
+// ⚠️ الكتابة من NuhUrl (js/url-state.js) لا بـ replaceState مكتوبة هنا:
+//    كانت بتبني الاستعلام من الصفر فبتمسح أي مفتاح مش من بتاعها، والصفحة
+//    وعدد الصفوف والترتيب كانوا ناقصين أصلًا - فالرابط بيوصل لزميل بنفس
+//    الفلاتر لكن على صفحة ١ وترتيب تاني: نتيجة صح لسؤال تاني.
+var REP_DEFAULTS = { user: '', action: '', from: '', to: '', q: '', tab: '',
+                     page: 1, size: 50, sort: '', asc: '' };
+
 function syncUrlParams() {
   var f = getFilters();
-  var p = new URLSearchParams();
-  if (f.userId) p.set('user', f.userId);
-  if (f.actionGroup) p.set('action', f.actionGroup);
-  if (f.fromDate) p.set('from', f.fromDate);
-  if (f.toDate) p.set('to', f.toDate);
-  if (f.search) p.set('q', f.search);
-  var g = document.querySelector('.report-tab.active')?.getAttribute('data-group') || '';
-  if (g) p.set('tab', g);
-  var qs = p.toString();
-  var url = window.location.pathname + (qs ? '?' + qs : '');
-  window.history.replaceState(null, '', url);
+  var active = document.querySelector('.tab-btn.active');
+  NuhUrl.sync({
+    user: f.userId, action: f.actionGroup,
+    from: f.fromDate, to: f.toDate, q: f.search,
+    tab: (active && active.getAttribute('data-group')) || '',
+    page: currentPage, size: currentPageSize,
+    sort: repSort.by(), asc: repSort.by() ? (repSort.asc() ? '1' : '0') : ''
+  }, REP_DEFAULTS);
 }
 
 function loadFromUrlParams() {
@@ -553,7 +709,7 @@ function loadFromUrlParams() {
   if (p.has('to')) document.getElementById('toDate').value = p.get('to');
   if (p.has('q')) document.getElementById('searchBox').value = p.get('q');
   if (p.has('tab')) {
-    document.querySelectorAll('.report-tab').forEach(function(t) { t.classList.toggle('active', t.getAttribute('data-group') === p.get('tab')); });
+    document.querySelectorAll('.tab-btn').forEach(function(t) { t.classList.toggle('active', t.getAttribute('data-group') === p.get('tab')); });
     if (p.get('tab') === 'security') {
       document.getElementById('logTbody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px"><div class="spinner"></div></td></tr>';
       loadAlerts();
@@ -564,6 +720,12 @@ function loadFromUrlParams() {
 
 /* ====== Phase 8: Executive Summary ====== */
 function generateExecSummary() {
+  // ⚠️ اتوقّفت عن قصد. كانت بتعيد كتابة نفس أرقام البطاقات اللي فوقها في جملة
+  //    («إجمالي العمليات 129، بمتوسط 26 يوميًا، عدد عمليات اليوم 52…») —
+  //    تكرار بيطوّل الصفحة ولا بيضيف معلومة. الدالة والعنصر باقيان عشان أي
+  //    نداء قديم ما يرميش، ولو احتجناها ترجع بسطر واحد.
+  return;
+  /* eslint-disable no-unreachable */
   if (!cachedChartData && !dataLoaded) return;
   if (execTimeout) clearTimeout(execTimeout);
   execTimeout = setTimeout(function() {
@@ -614,17 +776,22 @@ document.getElementById('searchBox').addEventListener('keyup', function(e) {
 
 // زر الخروج بقى فورم /Account/Logout في اللياوت الموحد — مفيش override هنا
 
-document.getElementById('prevPageBtn').addEventListener('click', function() {
-  if (currentPage > 1) loadLogs(currentPage - 1, currentPageSize);
-});
+// ⚠️ مفيش مستمعات للسابق/التالي/عدد الصفوف هنا: صفّ الترقيم بيربطها بنفسه
+//    وقت الرسم (NuhTable.pager)، فلو اتكتبت هنا كمان هتشتغل مرتين.
 
-document.getElementById('nextPageBtn').addEventListener('click', function() {
-  if (currentPage < totalPages) loadLogs(currentPage + 1, currentPageSize);
-});
-
-document.getElementById('pageSizeSelect').addEventListener('change', function() {
-  loadLogs(1, parseInt(this.value));
-});
+// ⚠️ السجل التفصيلي مطوي افتراضيًا: الصفحة تقارير، والجدول الخام له شاشته
+//    الخاصة (سجل العمليات). الحالة متحفوظة عشان اللي محتاجه مفتوح ما يفتحهوش
+//    كل مرة — والبيانات بتتحمّل في الحالتين لأن الأعداد في الرأس بتتغذّى منها.
+function toggleLog(force) {
+  var box = document.getElementById('logDetails');
+  var btn = document.getElementById('logToggle');
+  if (!box || !btn) return;
+  var open = (typeof force === 'boolean') ? force : box.hasAttribute('hidden');
+  if (open) box.removeAttribute('hidden'); else box.setAttribute('hidden', '');
+  btn.textContent = t(open ? 'rpx_hideLog' : 'rpx_showLog');
+  try { localStorage.setItem('reportsLogOpen', open ? '1' : '0'); } catch (e) {}
+}
+toggleLog(localStorage.getItem('reportsLogOpen') === '1');
 
 document.getElementById('userFilter').addEventListener('change', onFilterChange);
 document.getElementById('actionFilter').addEventListener('change', onFilterChange);
@@ -639,17 +806,33 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') closeModal();
 });
 
-document.querySelectorAll('.report-tab').forEach(function(tab) {
+// ⚠️ التبويب كان بيغيّر فلتر الجدول وبس، وباقي الصفحة يفضل زي ما هو — فتقف
+//    على «عمليات الطلبات» وقدّامك رسم «تسجيل الدخول» فاضي. بقى بيبدّل لوحة
+//    كاملة: مؤشرات التبويب ورسمه، والجدول تحت بيتفلتر معاه.
+function showReportPanel(name) {
+  document.querySelectorAll('.rp-panel').forEach(function (p) {
+    p.classList.toggle('on', p.id === 'panel-' + name);
+  });
+  var tabEl = document.querySelector('.tab-btn[data-panel="' + name + '"]');
+  var lbl = document.getElementById('tableScopeLabel');
+  if (lbl && tabEl) lbl.textContent = tabEl.textContent.trim();
+}
+
+document.querySelectorAll('.tab-btn').forEach(function(tab) {
   tab.addEventListener('click', function() {
-    document.querySelectorAll('.report-tab').forEach(function(t) { t.classList.remove('active'); });
+    document.querySelectorAll('.tab-btn').forEach(function(t) { t.classList.remove('active'); });
     this.classList.add('active');
+    showReportPanel(this.getAttribute('data-panel') || 'overview');
     var group = this.getAttribute('data-group');
     if (group === 'security') {
-      document.getElementById('logTbody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px"><div class="spinner"></div></td></tr>';
       loadAlerts();
-      return;
+      // ⚠️ الجدول مابيتفضّاش هنا زي الأول: تنبيهات الأمان بقى لها مكانها في
+      //    لوحة الأمان، والجدول تحتها بيفضل شغّال بفلتره — إفراغه كان بيخلّي
+      //    التبويب ده الوحيد اللي بيوقف السجل بلا سبب.
+      document.getElementById('actionFilter').value = '';
+    } else {
+      document.getElementById('actionFilter').value = group;
     }
-    document.getElementById('actionFilter').value = group;
     onFilterChange();
   });
 });
@@ -675,6 +858,6 @@ rebuildActionFilter();
 //    المستخدم أول ما تفتح الصفحة، فتسبق. سجل العمليات والرسوم أثقل فتليها.
 loadSummaryStats();
 loadAlerts();
-loadLogs(1, currentPageSize);
+loadLogs(currentPage, currentPageSize);
 loadCharts();
 loadAuditUsers();

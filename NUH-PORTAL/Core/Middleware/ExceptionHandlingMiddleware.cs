@@ -30,17 +30,46 @@ namespace NUH_PORTAL.Core.Middleware
             }
             catch (UserFriendlyException ex)
             {
+                // ⚠️ كان بيعدّي من غير تسجيل مهما كانت الحالة، والنتيجة إن أعطال
+                //    النظام الحقيقية كانت بتضيع: «فشل إنشاء حساب الشبكة» بيرجع
+                //    للمستخدم ٥٠٠ ومايدخلش سجل الأخطاء خالص، فمفيش أثر يتشخّص منه.
+                //
+                //  ⚠️ الكود هو اللي بيقرّر، لا نوع الاستثناء: 4xx نتيجة طبيعية
+                //     يشوفها المستخدم (بيانات ناقصة، غير موجود، تعارض) وماتتسجّلش،
+                //     و5xx عطل في النظام اتلفّ في رسالة مقروءة — وده بالظبط اللي
+                //     سجل الأخطاء موجود عشانه.
+                if (ex.StatusCode >= 500)
+                {
+                    _logger.LogError(ex, "System failure surfaced as UserFriendlyException");
+                    await PersistErrorAsync(context, ex, ex.StatusCode);
+                }
+
                 if (context.Response.HasStarted) throw;
                 context.Response.StatusCode = ex.StatusCode;
                 context.Response.ContentType = "application/json; charset=utf-8";
                 await context.Response.WriteAsJsonAsync(new { message = ex.Message });
+            }
+            // ⚠️ تعارض نسخة: حد تاني عدّل نفس السجل بين قراءتنا وحفظنا.
+            //    ده مش عطل — ده الحارس شغّال، ومنع الكتابة فوق تعديل التاني.
+            //    ٤٠٩ لا ٥٠٠، ورسالة تقول للمستخدم يعمل إيه بالظبط.
+            //    ومكانها هنا لا في كل خدمة: أي مسار بيحفظ بيستفيد منها.
+            catch (Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException ex)
+            {
+                _logger.LogWarning(ex, "Concurrent update rejected on {Path}", context.Request.Path);
+                if (context.Response.HasStarted) throw;
+                context.Response.StatusCode = 409;
+                context.Response.ContentType = "application/json; charset=utf-8";
+                await context.Response.WriteAsJsonAsync(new
+                {
+                    message = "تم تعديل هذا السجل من مستخدم آخر أثناء عملك عليه. حدِّث الصفحة وراجع الحالة قبل إعادة المحاولة."
+                });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unhandled exception");
 
                 // نسجّل الخطأ في قاعدة البيانات (سجل الأخطاء) — من غير ما نكسر الرد لو التسجيل نفسه فشل
-                await PersistErrorAsync(context, ex);
+                await PersistErrorAsync(context, ex, 500);
 
                 if (context.Response.HasStarted) throw;
                 context.Response.StatusCode = 500;
@@ -63,7 +92,7 @@ namespace NUH_PORTAL.Core.Middleware
         }
 
         // بنستخدم scope جديد (DbContext نظيف) عشان ماننفعش نكتب على سياق ممكن يكون اتلوّث بنفس الخطأ.
-        private static async Task PersistErrorAsync(HttpContext context, Exception ex)
+        private static async Task PersistErrorAsync(HttpContext context, Exception ex, int statusCode)
         {
             try
             {
@@ -97,7 +126,7 @@ namespace NUH_PORTAL.Core.Middleware
                     source = Truncate(root.Source, 256),
                     request_path = Truncate(context.Request.Path.Value, 512),
                     request_method = context.Request.Method,
-                    status_code = 500,
+                    status_code = statusCode,
                     user_id = userId,
                     username = context.User?.Identity?.Name,
                     ip_address = context.Connection.RemoteIpAddress?.ToString(),

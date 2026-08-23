@@ -118,7 +118,7 @@ namespace NUH_PORTAL.Services
             }
             catch (DbUpdateException)
             {
-                throw new UserFriendlyException("لا يمكن الحذف — العنصر مستخدم من قِبل طلاب. عطّله بدل الحذف.", 409);
+                throw new UserFriendlyException("لا يمكن الحذف - العنصر مستخدم من قِبل طلاب. عطّله بدل الحذف.", 409);
             }
         }
 

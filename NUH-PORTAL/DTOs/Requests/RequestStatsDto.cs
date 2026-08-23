@@ -11,5 +11,11 @@ namespace NUH_PORTAL.DTOs.Requests
         public int ReadyForProvisioning { get; set; }
         public int Completed { get; set; }
         public int Rejected { get; set; }
+
+        // ⚠️ «بيانات ناقصة» - الطلب المُعاد إلى الطالب لاستكمال بياناته. لم يكن
+        //    له عدّاد ولا تبويب، فلا يظهر إلا تحت «الكل»: المراجع يطلب معلومات
+        //    ثم يفقد أثر الطلب. وهو الحالة الوحيدة التي كانت تخفي عملًا حقيقيًّا،
+        //    بينما التبويبان المحذوفان (موافقة الإسكان/معتمد) لا يقف فيهما طلب.
+        public int NeedMoreInfo { get; set; }
     }
 }

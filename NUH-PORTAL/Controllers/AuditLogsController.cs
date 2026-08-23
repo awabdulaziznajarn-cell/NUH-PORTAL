@@ -6,7 +6,16 @@ using NUH_PORTAL.Services.Interfaces;
 namespace NUH_PORTAL.Controllers
 {
     // كنترولر رفيع — استعلامات وتقارير السجل في IAuditLogQueryService
-    [Authorize]
+    //
+    // ⚠️ الصلاحية على الكلاس لا على كل دالة. كانت مكتوبة على أربع دوال
+    //    وسايبة تلاتة بـ [Authorize] وحدها — يعني أي حساب مسجّل دخول، بما
+    //    فيهم حساب طالب، كان يقرا chart-data و alerts و today-stats: عدد
+    //    محاولات الدخول الفاشلة النهارده وإنذار «نشاط تسجيل دخول مشبوه».
+    //    يعني اللي بيحاول يخمّن كلمة سر كان يقدر يسأل النظام: هل اتنبهتوا؟
+    //
+    //    ولمّا بقت على الكلاس، أي دالة تتضاف هنا بعدين بتاخدها بالوراثة —
+    //    فالنسيان نفسه بقى مستحيل، مش مجرد متصلَّح مرة.
+    [Authorize(Policy = "auditLogs.view")]
     [Route("api/[controller]")]
     [ApiController]
     public class AuditLogsController : ControllerBase
@@ -16,7 +25,6 @@ namespace NUH_PORTAL.Controllers
         public AuditLogsController(IAuditLogQueryService service) => _service = service;
 
         // GET api/AuditLogs
-        [Authorize(Policy = "auditLogs.view")]
         [HttpGet]
         public async Task<IActionResult> GetLogs(
             [FromQuery] int page = 1,
@@ -44,7 +52,6 @@ namespace NUH_PORTAL.Controllers
             }));
 
         // GET api/AuditLogs/export
-        [Authorize(Policy = "auditLogs.view")]
         [HttpGet("export")]
         public async Task<IActionResult> ExportLogs(
             [FromQuery] int? userId = null,
@@ -53,7 +60,10 @@ namespace NUH_PORTAL.Controllers
             [FromQuery] string? fromDate = null,
             [FromQuery] string? toDate = null,
             [FromQuery] string? search = null,
-            [FromQuery] int? facultyUnitId = null)
+            [FromQuery] int? facultyUnitId = null,
+            // ⚠️ تقويم العرض جاي من الشاشة عشان الملف يطلع بنفس التقويم اللي
+            //    الموظف شايفه. التخزين والفلترة ميلادي دايمًا.
+            [FromQuery] string? calendar = null)
         {
             var file = await _service.ExportLogsAsync(new AuditLogFilter
             {
@@ -64,14 +74,16 @@ namespace NUH_PORTAL.Controllers
                 ToDate = toDate,
                 Search = search,
                 FacultyUnitId = facultyUnitId
-            });
+            }, calendar);
             return File(file.Content, file.ContentType, file.FileName);
         }
 
         // GET api/AuditLogs/chart-data
         [HttpGet("chart-data")]
-        public async Task<IActionResult> GetChartData()
-            => Ok(await _service.GetChartDataAsync());
+        public async Task<IActionResult> GetChartData(
+            [FromQuery] string? fromDate = null,
+            [FromQuery] string? toDate = null)
+            => Ok(await _service.GetChartDataAsync(fromDate, toDate));
 
         // GET api/AuditLogs/alerts
         [HttpGet("alerts")]
@@ -79,26 +91,27 @@ namespace NUH_PORTAL.Controllers
             => Ok(await _service.GetAlertsAsync());
 
         // GET api/AuditLogs/report-html
-        [Authorize(Policy = "auditLogs.view")]
         [HttpGet("report-html")]
         public async Task<IActionResult> GetReportHtml(
             [FromQuery] string? type = "activity",
             [FromQuery] int? userId = null,
             [FromQuery] string? fromDate = null,
-            [FromQuery] string? toDate = null)
+            [FromQuery] string? toDate = null,
+            [FromQuery] string? calendar = null)
         {
             var lang = Request.Headers["Accept-Language"].ToString().StartsWith("ar") ? "ar" : "en";
-            var html = await _service.GetReportHtmlAsync(type, userId, fromDate, toDate, lang);
+            var html = await _service.GetReportHtmlAsync(type, userId, fromDate, toDate, lang, calendar);
             return Content(html, "text/html;charset=utf-8");
         }
 
         // GET api/AuditLogs/today-stats
         [HttpGet("today-stats")]
-        public async Task<IActionResult> GetTodayStats()
-            => Ok(await _service.GetTodayStatsAsync());
+        public async Task<IActionResult> GetTodayStats(
+            [FromQuery] string? fromDate = null,
+            [FromQuery] string? toDate = null)
+            => Ok(await _service.GetTodayStatsAsync(fromDate, toDate));
 
         // GET api/AuditLogs/users
-        [Authorize(Policy = "auditLogs.view")]
         [HttpGet("users")]
         public async Task<IActionResult> GetUsers()
             => Ok(await _service.GetUsersAsync());

@@ -9,20 +9,43 @@
 //  ملف مشترك بين شاشات الموظفين وبوابة الطالب — قاعدة واحدة لا نسختان.
 //  المهلة نفسها تأتي من الخادم (Core/SessionPolicy.cs) فلا يفترق الرقمان.
 // ==========================================================================
-// ⚠️ ترجمة آمنة: الملف ده بيتحمّل في صفحات ممكن ما يكونش i18n.js فيها،
-//    فلو t() مش موجودة أو المفتاح ناقص بنرجع للنص العربي الافتراضي.
-var __IDLE_AR = {
-  pt_idleTitle: 'جلستك على وشك الانتهاء',
-  pt_idleText: 'لم يُسجَّل أي نشاط منذ فترة. سيتم إنهاء الجلسة تلقائيًا خلال',
-  pt_idleStay: 'متابعة الجلسة',
-  pt_idleLogout: 'تسجيل الخروج الآن',
-  pt_idleOverTitle: 'انتهت الجلسة لعدم النشاط',
-  pt_idleOverText: 'تم تسجيل خروجك تلقائيًا حفاظًا على أمان بياناتك.',
-  pt_idleHome: 'العودة للبوابة'
+// ⚠️ ترجمة آمنة: الملف ده بيتحمّل في صفحات ممكن ما يكونش i18n.js فيها
+//    (شاشات الموظفين اللي مابتحمّلوش الملف، وأي صفحة جديدة)، فلو t() مش
+//    موجودة أو المفتاح ناقص بنرجع للنصّ المكتوب هنا.
+//
+//  ⚠️ والاحتياطي باللغتين لا بالعربي وحده: كان فيه قاموس عربي واحد، يعني
+//     الصفحة اللي مافيهاش t() كانت بتوريّ نافذة عربية للمستخدم اللي واجهته
+//     إنجليزي - ودي آخر نافذة بيشوفها قبل ما جلسته تتقفل.
+var __IDLE_TX = {
+  ar: {
+    pt_idleTitle: 'جلستك على وشك الانتهاء',
+    pt_idleText: 'لم يُسجَّل أي نشاط منذ فترة. سيتم إنهاء الجلسة تلقائيًا خلال',
+    pt_idleStay: 'متابعة الجلسة',
+    pt_idleLogout: 'تسجيل الخروج الآن',
+    pt_idleOverTitle: 'انتهت الجلسة لعدم النشاط',
+    pt_idleOverText: 'تم تسجيل خروجك تلقائيًا حفاظًا على أمان بياناتك.',
+    pt_idleHome: 'العودة للبوابة',
+    pt_backToPortal: 'العودة لبوابة الطلاب'
+  },
+  en: {
+    pt_idleTitle: 'Your session is about to end',
+    pt_idleText: 'No activity has been recorded for a while. The session will end automatically in',
+    pt_idleStay: 'Stay signed in',
+    pt_idleLogout: 'Sign out now',
+    pt_idleOverTitle: 'Your session ended due to inactivity',
+    pt_idleOverText: 'You were signed out automatically to keep your data secure.',
+    pt_idleHome: 'Back to the portal',
+    pt_backToPortal: 'Back to the student portal'
+  }
 };
+function txLang() {
+  try { return (document.documentElement.lang || 'ar').slice(0, 2) === 'en' ? 'en' : 'ar'; }
+  catch (e) { return 'ar'; }
+}
 function tx(k) {
   if (typeof t === 'function') { var v = t(k); if (v && v !== k) return v; }
-  return __IDLE_AR[k] || k;
+  var d = __IDLE_TX[txLang()] || __IDLE_TX.ar;
+  return d[k] || __IDLE_TX.ar[k] || k;
 }
 
 var NuhIdle = (function () {
@@ -51,9 +74,14 @@ var NuhIdle = (function () {
         'display:none;align-items:center;justify-content:center;padding:20px;' +
         'font-family:"IBM Plex Sans Arabic",sans-serif}' +
       '#nuhIdleOverlay.show{display:flex}' +
+      /* ⚠️ مافيش direction:rtl مثبّت هنا. كان مكتوب بالحرف، فالنافذة كانت
+         بتطلع من اليمين لليسار على صفحة إنجليزية - الزرّ الأساسي («متابعة
+         الجلسة») بيقع على اليمين وباقي الصفحة أزرارها الأساسية على الشمال.
+         بلا القاعدة دي الصندوق بيورّث اتجاه <html> فيمشي مع الصفحة في
+         اللغتين، وبيتغيّر معاها لحظة تبديل اللغة من غير إعادة بناء. */
       '#nuhIdleBox{background:#fff;border-radius:16px;max-width:420px;width:100%;padding:28px 26px;' +
-        'text-align:center;box-shadow:0 20px 60px rgba(16,70,49,.3);direction:rtl}' +
-      '#nuhIdleBox .ic{width:56px;height:56px;border-radius:50%;background:#fffaeb;color:#7a5c0b;' +
+        'text-align:center;box-shadow:0 20px 60px rgba(16,70,49,.3)}' +
+      '#nuhIdleBox .ic{width:56px;height:56px;border-radius:50%;background:#fffaeb;color:var(--gold-dark);' +
         'display:flex;align-items:center;justify-content:center;margin:0 auto 14px}' +
       '#nuhIdleBox h3{font-size:17px;font-weight:800;color:#104631;margin-bottom:8px}' +
       '#nuhIdleBox p{font-size:13.5px;color:#333741;line-height:2;margin-bottom:6px}' +
@@ -77,12 +105,15 @@ var NuhIdle = (function () {
           '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>' +
         // ⚠️ النص من قاموس الـ resx — الشاشة دي بتظهر في بوابة الطالب كمان
         //    وهي بلغتين، فما ينفعش يكون مكتوب عربي هنا.
-        '<h3>' + tx('pt_idleTitle') + '</h3>' +
-        '<p>' + tx('pt_idleText') + '</p>' +
+        // ⚠️ data-i18n مع النصّ لا بدله: النصّ بيتكتب دلوقتي عشان النافذة
+        //    تبان صح فورًا، والسمة بتخلّي تبديل اللغة وهي مفتوحة يوصلها -
+        //    قبل كده كانت بتفضل باللغة اللي اتبنت بيها.
+        '<h3 data-i18n="pt_idleTitle">' + tx('pt_idleTitle') + '</h3>' +
+        '<p data-i18n="pt_idleText">' + tx('pt_idleText') + '</p>' +
         '<span id="nuhIdleCount">2:00</span>' +
         '<div class="btns">' +
-          '<button id="nuhIdleStay" type="button">' + tx('pt_idleStay') + '</button>' +
-          '<button id="nuhIdleOut" type="button">' + tx('pt_idleLogout') + '</button>' +
+          '<button id="nuhIdleStay" type="button" data-i18n="pt_idleStay">' + tx('pt_idleStay') + '</button>' +
+          '<button id="nuhIdleOut" type="button" data-i18n="pt_idleLogout">' + tx('pt_idleLogout') + '</button>' +
         '</div>' +
       '</div>';
     document.body.appendChild(o);
@@ -123,6 +154,16 @@ var NuhIdle = (function () {
     } catch (e) { }
   }
 
+  // ⚠️ homeLabel القديمة لسه مقبولة عشان مانكسرش أي صفحة فاتت، بس بنتجاهلها
+  //    لو طلعت مفتاح خام (اللي كان بيحصل فعلًا) بدل ما نطبعه زي ما هو.
+  function homeKey() {
+    var k = cfg && cfg.homeLabelKey;
+    if (k) return k;
+    var lbl = cfg && cfg.homeLabel;
+    if (lbl && !/^[a-z]{2,4}_[A-Za-z]/.test(lbl)) return lbl;   // نصّ حقيقي
+    return 'pt_idleHome';
+  }
+
   // ⚠️ التحويل الصامت يترك المستخدم أمام صفحة جديدة بلا تفسير — يعود بعد ساعة
   //    فيجد نفسه في مكان آخر ولا يعرف لماذا. الرسالة تبقى على الشاشة حتى يقرأها.
   function showExpired() {
@@ -133,10 +174,16 @@ var NuhIdle = (function () {
         '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
         'stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/>' +
         '<line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>' +
-      '<h3>' + tx('pt_idleOverTitle') + '</h3>' +
-      '<p style="margin-bottom:18px">' + tx('pt_idleOverText') + '</p>' +
-      '<div class="btns"><button id="nuhIdleHome" type="button" ' +
-        'style="background:#166a45;color:#fff">' + (cfg.homeLabel || tx('pt_idleHome')) + '</button></div>';
+      '<h3 data-i18n="pt_idleOverTitle">' + tx('pt_idleOverTitle') + '</h3>' +
+      '<p style="margin-bottom:18px" data-i18n="pt_idleOverText">' + tx('pt_idleOverText') + '</p>' +
+      // ⚠️ اسم الزرّ بيتترجم **دلوقتي** لا وقت ما الصفحة نادت start().
+      //    الصفحات الثابتة في البوابة بتنادي start() في <head> والقاموس
+      //    بيوصل بـ fetch بعدها، فـ t() وقتها بترجّع المفتاح نفسه. النتيجة
+      //    اللي كانت بتحصل فعلًا: الزرّ مكتوب عليه «pt_backToPortal» -
+      //    مفتاح خام في وش الطالب على آخر شاشة قبل ما جلسته تنتهي.
+      //    الحلّ نفس قاعدة باقي المكوّنات: بتاخد **مفتاح** وبتترجمه هي.
+      '<div class="btns"><button id="nuhIdleHome" type="button" data-i18n="' + homeKey() + '" ' +
+        'style="background:#166a45;color:#fff">' + tx(homeKey()) + '</button></div>';
     document.getElementById('nuhIdleOverlay').classList.add('show');
     document.getElementById('nuhIdleHome').addEventListener('click', function () {
       window.location.replace(cfg.homeUrl || '/');

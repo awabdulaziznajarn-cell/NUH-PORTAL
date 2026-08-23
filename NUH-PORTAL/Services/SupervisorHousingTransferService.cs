@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.StaticFiles;
+using NUH_PORTAL.Core;
 using NUH_PORTAL.Core.Exceptions;
 using NUH_PORTAL.Data.Interfaces;
 using NUH_PORTAL.DTOs.Attachments;
@@ -76,7 +77,10 @@ namespace NUH_PORTAL.Services
             if (reason == "other" && string.IsNullOrEmpty(customReason))
                 throw new UserFriendlyException("يرجى كتابة وصف السبب", 400);
 
-            var student = await _students.FindAsync(s => s.student_id == studentNumber && !s.IsDeleted)
+            // ⚠️ Scoped: قائمة التحويلات كانت مقسّمة والتحويل نفسه لأ — فمشرف قسم
+            //    كان يقدر ينقل طالبًا من القسم التاني بين المباني بالرقم الجامعي.
+            var student = await Scoped(_students.Query())
+                .FirstOrDefaultAsync(s => s.student_id == studentNumber && !s.IsDeleted)
                 ?? throw new UserFriendlyException("الطالب غير موجود", 400);
 
             if (string.IsNullOrEmpty(student.housing_building) && string.IsNullOrEmpty(student.room_number) && string.IsNullOrEmpty(student.apartment_number))
@@ -240,7 +244,10 @@ namespace NUH_PORTAL.Services
             return string.Join(LocSeparator, parts);
         }
 
-        public async Task<List<RecentTransferDto>> GetRecentAsync()
+        // حجم الصفحة الواحدة من سجل التنقلات - نفس رقم سجل التحديثات.
+        public const int RecentPageSize = 50;
+
+        public async Task<List<RecentTransferDto>> GetRecentAsync(int skip = 0)
         {
             if (UnitOfWork.GetCurrentUserId() == 0)
                 throw new UserFriendlyException("غير مصرح", 401);
@@ -249,19 +256,17 @@ namespace NUH_PORTAL.Services
             // وشلنا الفلتر Where(CreatedBy == actorId): كان بيخلّي كل مستخدم يشوف
             // تنقلاته هو بس، فالأدمن كان بيلاقي السجل فاضي تمامًا رغم إنه المفروض
             // يشوف كل حاجة. عمود «بواسطة» بيوضّح مين عمل كل نقل.
-            // سجل النقل بيتقيّد بالقسم زي أي شاشة تانية
-            var scope = UnitOfWork.GetGenderScope();
-            // النوع صريح مش var: Include بيرجّع IIncludableQueryable و Where بيرجّع
-            // IQueryable، فـ var بياخد النوع الضيّق وإعادة الإسناد تحت ماتعدّيش.
+            // سجل النقل بيتقيّد بالقسم زي أي شاشة تانية.
+            // ⚠️ الشرطية اتنقلت لـ Core/GenderScope.cs - نسخة واحدة لكل السجلات.
             IQueryable<HousingTransfer> q = _transfers.Query().AsNoTracking()
+                .ForGender(UnitOfWork.GetGenderScope())
                 .Include(t => t.Student)
                 .Include(t => t.CreatedByUser);
-            if (scope != null)
-                q = q.Where(t => t.Student != null && t.Student.gender == scope);
 
             return await q
                 .OrderByDescending(t => t.CreatedAt)
-                .Take(50)
+                .Skip(Math.Max(0, skip))
+                .Take(RecentPageSize)
                 .Select(t => new RecentTransferDto
                 {
                     Id = t.Id,

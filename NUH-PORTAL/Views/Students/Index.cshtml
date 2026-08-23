@@ -6,6 +6,15 @@
     var canEdit = User.HasClaim("permission", "students.edit");
     var canDelete = User.HasClaim("permission", "students.delete");
 
+    // ⚠️ قسم الموظف من نفس الـ claim اللي بتقرا منه التصفية في السيرفر —
+    //    مصدر واحد لا نسخة. الفاضي معناه «بيشوف القسمين» (الأدمن).
+    var scopeGender = (User.FindFirst(NUH_PORTAL.Core.ClaimConstants.ScopeGender)?.Value ?? "").Trim().ToLowerInvariant();
+    if (scopeGender != "male" && scopeGender != "female") scopeGender = "";
+    var genderLocked = scopeGender.Length > 0;
+    // القيمة null بتخلّي Razor يشيل السمة خالص — والفاضي "" كان هيبقى
+    // disabled="" يعني مقفولة على الأدمن كمان.
+    string? genderLockAttr = genderLocked ? "disabled" : null;
+
     // النصوص بتتسلسل JSON عشان Razor بيهرّب أي نص بيطبعه ترميز HTML حتى جوه script،
     // فلو اتحطت في textContent المستخدم بيشوف رموز بدل الحروف العربية.
     var __housingPh = System.Text.Json.JsonSerializer.Serialize(new
@@ -37,6 +46,11 @@
     // ⚠️ الوضع الأكاديمي قد يكون فارغًا في سجلات قديمة سجّلها الطالب بنفسه قبل
     //    أن يضبطه RegistrationFlowService. وبدون هذا الفحص يُركَّب مفتاح ناقص
     //    «stu_status_» فيظهر اسم المفتاح نصًّا خامًا في الجدول بدل الحالة.
+    // حالة السكن باسم يوافق الطالب — «مقيم» / «مقيمة». الاختيار بين
+    // المفتاحين هنا مرة واحدة بدل ما كل شاشة تكتب النص بإيدها.
+    private string ResidentText(Gender? g)
+        => SharedLocalizer[g == Gender.Female ? "stu_residentF" : "stu_resident"].Value;
+
     private string StudentStatusText(StudentStatus? st)
         => SharedLocalizer[st == null ? "stu_status_none" : "stu_status_" + st].Value;
 }
@@ -82,21 +96,21 @@
   </div>
 
   <div style="overflow-x:auto">
-    <table>
+    <table id="stuTable">
       <thead>
         <tr>
           <th>#</th>
-          <th class="sortable" onclick="sortByColumn('full_name')">@SharedLocalizer["stu_col_name"]<span class="sort-ind" id="sort-full_name"></span></th>
-          <th class="sortable" onclick="sortByColumn('student_id')">@SharedLocalizer["stu_col_studentId"]<span class="sort-ind" id="sort-student_id"></span></th>
+          <th data-sort="full_name">@SharedLocalizer["stu_col_name"]</th>
+          <th data-sort="student_id">@SharedLocalizer["stu_col_studentId"]</th>
           <th >@SharedLocalizer["stu_col_nationalId"]</th>
           <th >@SharedLocalizer["stu_col_phone"]</th>
-          <th class="sortable" onclick="sortByColumn('college')">@SharedLocalizer["stu_col_college"]<span class="sort-ind" id="sort-college"></span></th>
+          <th data-sort="college">@SharedLocalizer["stu_col_college"]</th>
           <th >@SharedLocalizer["stu_col_level"]</th>
           <th >@SharedLocalizer["stu_col_nameEn"]</th>
           <th >@SharedLocalizer["stu_col_building"]</th>
           <th >@SharedLocalizer["stu_col_room"]</th>
           <th >@SharedLocalizer["stu_col_academic"]</th>
-          <th class="sortable" onclick="sortByColumn('status')">@SharedLocalizer["stu_col_status"]<span class="sort-ind" id="sort-status"></span></th>
+          <th data-sort="status">@SharedLocalizer["stu_col_status"]</th>
           <th >@SharedLocalizer["stu_col_actions"]</th>
         </tr>
       </thead>
@@ -124,7 +138,7 @@
               }
               else
               {
-                <span class="badge badge-active" >@SharedLocalizer["stu_resident"]</span>
+                <span class="badge badge-active" >@ResidentText(s.gender)</span>
               }
             </td>
             <td>
@@ -145,13 +159,8 @@
     </table>
   </div>
 
-  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-top:1px solid var(--gray-100)">
-    <div style="font-size:12px;color:var(--gray-500)" id="pageInfo"></div>
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-cancel" id="prevBtn" onclick="changePage(-1)" >@SharedLocalizer["stu_prev"]</button>
-      <button class="btn btn-cancel" id="nextBtn" onclick="changePage(1)" >@SharedLocalizer["stu_next"]</button>
-    </div>
-  </div>
+  @* صفّ الترقيم من NuhTable.pager - النسخة الوحيدة في النظام (js/table-state.js) *@
+  <div id="stuPager" class="in-card"></div>
 </div>
 
 @if (canEdit)
@@ -168,15 +177,16 @@
     <div class="edit-modal-body">
       <input type="hidden" id="e_id">
       <div class="e-grid">
-        <div class="e-field name-group">
+        @* ⚠️ عنوان مجموعة لا تسمية حقل - الشرح في Views/Register/Index.cshtml *@
+        <div class="e-field name-group" role="group" aria-labelledby="eLblFullNameAr">
 
-          <label >@SharedLocalizer["reg_lblFullName"]<span>*</span></label>
+          <label id="eLblFullNameAr">@SharedLocalizer["reg_lblFullName"]<span>*</span></label>
 
           <div class="name-row">
 
             <div>
 
-              <label >@SharedLocalizer["reg_lblNameFirst"]</label>
+              <label for="e_ar_first">@SharedLocalizer["reg_lblNameFirst"]</label>
 
               <input type="text" id="e_ar_first" autocomplete="off">
 
@@ -184,7 +194,7 @@
 
             <div>
 
-              <label >@SharedLocalizer["reg_lblNameMiddle"]</label>
+              <label for="e_ar_middle">@SharedLocalizer["reg_lblNameMiddle"]</label>
 
               <input type="text" id="e_ar_middle" autocomplete="off">
 
@@ -192,7 +202,7 @@
 
             <div>
 
-              <label >@SharedLocalizer["reg_lblNameFamily"]</label>
+              <label for="e_ar_family">@SharedLocalizer["reg_lblNameFamily"]</label>
 
               <input type="text" id="e_ar_family" autocomplete="off">
 
@@ -204,15 +214,15 @@
 
         </div>
 
-        <div class="e-field name-group">
+        <div class="e-field name-group" role="group" aria-labelledby="eLblFullNameEn">
 
-          <label >@SharedLocalizer["reg_lblFullNameEn"]<span>*</span></label>
+          <label id="eLblFullNameEn">@SharedLocalizer["reg_lblFullNameEn"]<span>*</span></label>
 
           <div class="name-row">
 
             <div>
 
-              <label >@SharedLocalizer["reg_lblNameFirst"]</label>
+              <label for="e_en_first">@SharedLocalizer["reg_lblNameFirst"]</label>
 
               <input type="text" id="e_en_first" dir="ltr" autocomplete="off">
 
@@ -220,7 +230,7 @@
 
             <div>
 
-              <label >@SharedLocalizer["reg_lblNameMiddle"]</label>
+              <label for="e_en_middle">@SharedLocalizer["reg_lblNameMiddle"]</label>
 
               <input type="text" id="e_en_middle" dir="ltr" autocomplete="off">
 
@@ -228,7 +238,7 @@
 
             <div>
 
-              <label >@SharedLocalizer["reg_lblNameFamily"]</label>
+              <label for="e_en_family">@SharedLocalizer["reg_lblNameFamily"]</label>
 
               <input type="text" id="e_en_family" dir="ltr" autocomplete="off">
 
@@ -242,17 +252,17 @@
 
         <span class="field-error name-group" id="e_err-name_match" >@SharedLocalizer["reg_valNameMismatch"]</span>
         <div class="e-field">
-          <label >@SharedLocalizer["reg_lblStudentId"]</label>
+          <label for="e_student_id">@SharedLocalizer["reg_lblStudentId"]</label>
           <input type="text" id="e_student_id" maxlength="10" readonly>
         </div>
         <div class="e-field">
-          <label >@SharedLocalizer["reg_lblNationalId"]<span>*</span></label>
+          <label for="e_national_id">@SharedLocalizer["reg_lblNationalId"]<span>*</span></label>
           <input type="text" id="e_national_id" maxlength="10">
           <span class="field-error" id="e-err-national_id" >@SharedLocalizer["reg_errRequired"]</span>
           <span class="field-error" id="e-val-national_id" >@SharedLocalizer["reg_valNationalId"]</span>
         </div>
         <div class="e-field">
-          <label >@SharedLocalizer["reg_lblPhone"]</label>
+          <label for="e_phone">@SharedLocalizer["reg_lblPhone"]</label>
           @* من غير maxlength: المتصفح بيقص اللصق قبل التنظيف فيضيّع رقم *@
           <div class="phone-wrap" id="e_phoneWrap">
             <span class="cc">+966</span>
@@ -262,16 +272,32 @@
           <span class="field-error" id="e-val-phone" >@SharedLocalizer["reg_valPhone"]</span>
         </div>
         <div class="e-field">
-          <label >@SharedLocalizer["reg_lblGender"]<span>*</span></label>
-          <select id="e_gender">
-            <option value="" >@SharedLocalizer["reg_optSelectGender"]</option>
-            <option value="male" >@SharedLocalizer["reg_optMale"]</option>
-            <option value="female" >@SharedLocalizer["reg_optFemale"]</option>
+          <label for="e_gender">@SharedLocalizer["reg_lblGender"]<span>*</span></label>
+          @* ⚠️ تغيير جنس طالب قائم = نقله لقسم تاني، فيختفي من قائمة اللي
+             بيتابعه. مقفول على مشرف القسم ومفتوح للأدمن وحده — والحارس
+             الحقيقي في StudentService.UpdateAsync، ده إخفاء واجهة بس.
+             ومشرف القسم أصلًا ما بيفتحش سجل من القسم التاني، فالخيار الوحيد
+             المعروض عليه هو قسمه. *@
+          <select id="e_gender" disabled="@genderLockAttr">
+            @if (!genderLocked)
+            {
+              <option value="" >@SharedLocalizer["reg_optSelectGender"]</option>
+              <option value="male" >@SharedLocalizer["reg_optMale"]</option>
+              <option value="female" >@SharedLocalizer["reg_optFemale"]</option>
+            }
+            else if (scopeGender == "male")
+            {
+              <option value="male" selected>@SharedLocalizer["reg_optMale"]</option>
+            }
+            else
+            {
+              <option value="female" selected>@SharedLocalizer["reg_optFemale"]</option>
+            }
           </select>
           <span class="field-error" id="e-err-gender" >@SharedLocalizer["reg_optSelectGender"]</span>
         </div>
         <div class="e-field">
-          <label >@SharedLocalizer["reg_lblCollege"]<span>*</span></label>
+          <label for="e_college">@SharedLocalizer["reg_lblCollege"]<span>*</span></label>
           <select id="e_college">
             <option value="" >@SharedLocalizer["reg_optSelectCollege"]</option>
             <option value="engineering" >@SharedLocalizer["reg_collegeEngineering"]</option>
@@ -286,7 +312,7 @@
           <span class="field-error" id="e-err-college" >@SharedLocalizer["reg_optSelectCollege"]</span>
         </div>
         <div class="e-field">
-          <label >@SharedLocalizer["reg_lblDepartment"]<span>*</span></label>
+          <label for="e_department">@SharedLocalizer["reg_lblDepartment"]<span>*</span></label>
           <select id="e_department">
             <option value="" >@SharedLocalizer["reg_optSelectDepartment"]</option>
             <option value="cs" >@SharedLocalizer["reg_deptCS"]</option>
@@ -307,7 +333,7 @@
           <span class="field-error" id="e-err-department" >@SharedLocalizer["reg_optSelectDepartment"]</span>
         </div>
         <div class="e-field">
-          <label >@SharedLocalizer["reg_lblAcademicLevel"]<span>*</span></label>
+          <label for="e_academic_level">@SharedLocalizer["reg_lblAcademicLevel"]<span>*</span></label>
           <select id="e_academic_level">
             <option value="" >@SharedLocalizer["reg_optSelectLevel"]</option>
             <option value="1">1</option>
@@ -319,7 +345,7 @@
           <span class="field-error" id="e-err-academic_level" >@SharedLocalizer["reg_optSelectLevel"]</span>
         </div>
         <div class="e-field">
-          <label >@SharedLocalizer["reg_lblBuilding"]<span>*</span></label>
+          <label for="e_housing_building">@SharedLocalizer["reg_lblBuilding"]<span>*</span></label>
           <select id="e_housing_building">
             <option value="" >@SharedLocalizer["reg_optSelectBuilding"]</option>
             <option value="65">65</option>
@@ -332,7 +358,7 @@
           <span class="field-error" id="e-err-housing_building" >@SharedLocalizer["reg_optSelectBuilding"]</span>
         </div>
         <div class="e-field">
-          <label >@SharedLocalizer["reg_lblFloor"]<span>*</span></label>
+          <label for="e_floor_number">@SharedLocalizer["reg_lblFloor"]<span>*</span></label>
           <select id="e_floor_number">
             <option value="" >@SharedLocalizer["reg_optSelectFloor"]</option>
             <option value="0" >@SharedLocalizer["reg_optFloorGround"]</option>
@@ -344,7 +370,7 @@
           <span class="field-error" id="e-err-floor_number" >@SharedLocalizer["reg_optSelectFloor"]</span>
         </div>
         <div class="e-field">
-          <label >@SharedLocalizer["reg_lblApartment"]<span>*</span></label>
+          <label for="e_apartment_number">@SharedLocalizer["reg_lblApartment"]<span>*</span></label>
           @* الشقة بتتولّد من الدور — مقفولة لحد ما يتحدد الدور *@
           <select id="e_apartment_number" disabled>
             <option value="" >@SharedLocalizer["reg_optSelectFloorFirst"]</option>
@@ -352,19 +378,21 @@
           <span class="field-error" id="e-err-apartment_number" >@SharedLocalizer["reg_errRequired"]</span>
         </div>
         <div class="e-field">
-          <label >@SharedLocalizer["reg_lblRoom"]<span>*</span></label>
+          <label for="e_room_number">@SharedLocalizer["reg_lblRoom"]<span>*</span></label>
           <select id="e_room_number">
             <option value="" >@SharedLocalizer["reg_optSelectRoom"]</option>
           </select>
           <span class="field-error" id="e-err-room_number" >@SharedLocalizer["reg_errRequired"]</span>
         </div>
-        <div class="e-field">
-          <label >@SharedLocalizer["reg_lblStatus"]</label>
-          <select id="e_status">
-            <option value="active" >@SharedLocalizer["reg_statusActive"]</option>
-            <option value="inactive" >@SharedLocalizer["reg_statusInactive"]</option>
-          </select>
-        </div>
+        @* ⚠️ خانة «الحالة» اتشالت من هنا — وماكانتش زيادة، كانت بتمسح بيانات:
+           الطالب اللي حالته left (غادر السكن، اتسجّلت من شاشة «تحديث حالة
+           الطالب» بسبب وتاريخ) ماكانش له خيار مطابق في القائمة، فـ
+           setEditSelect بيقع على أول خيار = «نشط»، وأي حفظ للمودال — حتى لو
+           الموظف غيّر رقم الجوال بس — كان بيرجّعه «مقيم» ويمسح قرار الشاشة
+           التانية بلا ما حد ياخد باله.
+           وحالة السكن ليها شاشة واحدة مسؤولة عنها: «تحديث حالة الطالب» —
+           بتسجّل السبب والتاريخ والسجل. كاتبان لنفس العمود = تفارق مؤكّد.
+           و inactive ماكانش بيقراه حاجة في النظام أصلًا. *@
       </div>
     </div>
     <div class="edit-modal-actions">
@@ -419,24 +447,29 @@
 <script>
   var CAN_EDIT = @(canEdit ? "true" : "false");
   var CAN_DELETE = @(canDelete ? "true" : "false");
-  // حالة الصفحة (أول تحميل جاي جاهز من السيرفر)
+  // حالة الصفحة - مصدرها الرابط (NuhUrl في js/url-state.js) لا الافتراضيات.
+  // ⚠️ الشاشة دي مابتخرجش لصفحة تانية بنفسها، لكن الموظف بيخرج منها من
+  //    القائمة الجانبية ويرجع - وكان بيلاقي بحثه وصفحته راحوا.
   var state = {
-    page: @Model.Page.Page,
+    page: NuhUrl.int('page', @Model.Page.Page, 1),
     pageSize: @Model.Page.PageSize,
     totalPages: @Model.Page.TotalPages,
     total: @Model.Page.TotalCount,
-    filter: '',
-    sortBy: '',
-    sortAsc: false
+    filter: NuhUrl.get('q', '')
   };
+  var STATE_DEFAULTS = { page: 1, q: '', sort: '', asc: '' };
+
+  function syncUrl() {
+    NuhUrl.sync({
+      page: state.page, q: state.filter,
+      sort: stuSort.by(), asc: stuSort.by() ? (stuSort.asc() ? '1' : '0') : ''
+    }, STATE_DEFAULTS);
+  }
 
   // الترويسات من NUH.headers في التخطيط — الكوكي بيتبعت لوحده، ومفيش توكن.
 
-  var esc = function (v) {
-    return String(v == null ? '' : v)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-  };
+  // تهريب HTML — التعريف الوحيد في /js/esc.js
+  var esc = function (v) { return escHtml(v); };
 
   // نص الحالة من القاموس. الحقل الفارغ له مفتاحه الخاص «غير محدد» - نفس
   // قاعدة الخادم في StudentStatusText أعلاه، فلا يختلف أول تحميل عن إعادة الفلترة.
@@ -447,21 +480,42 @@
     return v === k ? st : v;
   }
 
-  // سطر معلومات الصفحة بصيغة مترجمة مع أرقام
-  function renderPageInfo() {
-    var el = document.getElementById('pageInfo');
-    if (!el) return;
-    el.textContent = t('stu_pageInfoFmt')
-      .replace('{0}', state.page).replace('{1}', state.totalPages || 1).replace('{2}', state.total);
+  // صفّ الترقيم كامل من نسخة واحدة في النظام - NuhTable.pager
+  function renderPager() {
+    NuhTable.pager('stuPager',
+      { page: state.page, pageSize: state.pageSize, total: state.total, totalPages: state.totalPages || 1 },
+      {
+        summary: t('stu_pageInfoFmt')
+          .replace('{0}', state.page).replace('{1}', state.totalPages || 1).replace('{2}', state.total),
+        prev: t('stu_prev'), next: t('stu_next')
+      },
+      function (p) { state.page = p; loadPage(); });
   }
 
+  // رسالة عطل مكان الصفوف - بزرار إعادة محاولة.
+  // صفّ الخطأ + زرّ إعادة المحاولة من NuhTable - الشرح في js/table-state.js
+  var stuTableState = NuhTable.bind('studentsBody',
+    document.querySelectorAll('#stuTable thead th').length || 8);
+  function showLoadError(msg) { stuTableState.error(msg, loadPage, t('stu_retry')); }
+
   async function loadPage() {
+    syncUrl();
     var url = '/api/Students/paged?page=' + state.page + '&pageSize=' + state.pageSize +
-              '&filterText=' + encodeURIComponent(state.filter) +
-              (state.sortBy ? '&sortBy=' + encodeURIComponent(state.sortBy) + '&sortAsc=' + state.sortAsc : '');
-    var res = await fetch(url, { headers: NUH.headers() });
-    if (!res.ok) return;
-    var data = await res.json();
+              '&filterText=' + encodeURIComponent(state.filter) + stuSort.qs();
+    var res, data;
+    try {
+      res = await fetch(url, { headers: NUH.headers() });
+    } catch (e) {
+      // انقطاع الشبكة كان بيرمي استثناء مالوش ماسك: الصفوف القديمة بتفضل
+      // معروضة كأنها نتيجة الفلتر الجديد.
+      return showLoadError(t('stu_loadErrorNet'));
+    }
+    if (res.status === 401) { window.location.replace('/Account/Login'); return; }
+    // ⚠️ كان `if (!res.ok) return;` - الموظف يضغط فلتر فمايحصلش حاجة، والصفوف
+    //    القديمة تفضل مكانها وهو فاكرها النتيجة. الخطأ الصامت بيدّي بيانات
+    //    غلط بثقة، والظاهر بيقول للموظف يحاول تاني.
+    if (!res.ok) return showLoadError(t('stu_loadErrorFmt').replace('{0}', res.status));
+    data = await res.json();
     state.totalPages = data.totalPages;
     state.total = data.totalCount;
 
@@ -483,7 +537,7 @@
         '<td>' + esc(studentStatusText(s.student_status)) + '</td>' +
         '<td>' + (s.status === 'left'
             ? '<span class="badge badge-left">' + t('stu_badge_left') + '</span>'
-            : '<span class="badge badge-active">' + t('stu_resident') + '</span>') + '</td>' +
+            : '<span class="badge badge-active">' + t(normalizeGender(s.gender) === 'female' ? 'stu_residentF' : 'stu_resident') + '</span>') + '</td>' +
         '<td><div class="row-actions">' +
           (CAN_EDIT ? '<button class="action-btn action-edit" onclick="openEditModal(' + s.id + ')">' + t('stu_edit') + '</button>' : '') +
           (CAN_DELETE ? '<button class="action-btn action-delete" onclick="deleteStudent(' + s.id + ', this)">' + t('stu_delete') + '</button>' : '') +
@@ -492,37 +546,14 @@
     });
     document.getElementById('studentsBody').innerHTML = rows ||
       '<tr><td colspan="13" style="text-align:center;color:var(--gray-500);padding:28px">' + t('stu_noResults') + '</td></tr>';
-    renderPageInfo();
-    updatePagerButtons();
+    renderPager();
   }
 
-  function updatePagerButtons() {
-    document.getElementById('prevBtn').disabled = state.page <= 1;
-    document.getElementById('nextBtn').disabled = state.page >= state.totalPages;
-  }
-
-  // ترتيب الأعمدة: أول ضغطة تصاعدي، وتكرار الضغط على نفس العمود يعكس الاتجاه
-  function sortByColumn(field) {
-    if (state.sortBy === field) { state.sortAsc = !state.sortAsc; }
-    else { state.sortBy = field; state.sortAsc = true; }
-    state.page = 1;
-    updateSortIndicators();
-    loadPage();
-  }
-
-  function updateSortIndicators() {
-    ['full_name', 'student_id', 'college', 'status'].forEach(function (f) {
-      var el = document.getElementById('sort-' + f);
-      if (el) el.textContent = (state.sortBy === f) ? (state.sortAsc ? ' ▲' : ' ▼') : '';
-    });
-  }
-
-  function changePage(delta) {
-    var next = state.page + delta;
-    if (next < 1 || (state.totalPages && next > state.totalPages)) return;
-    state.page = next;
-    loadPage();
-  }
+  // ترتيب الأعمدة كامل من نسخة واحدة في النظام - NuhTable.sort.
+  // الأعمدة اللي بتترتّب معرّفة بـ data-sort على الـ <th> في الجدول فوق، مش
+  // في قائمة مكتوبة هنا كمان - فإضافة عمود بقت في مكان واحد.
+  var stuSort = NuhTable.sort('stuTable', function () { state.page = 1; loadPage(); },
+    { by: NuhUrl.get('sort', ''), asc: NuhUrl.get('asc', '1') === '1' });
 
   var searchTimer = null;
   document.getElementById('searchBox').addEventListener('input', function (e) {
@@ -612,8 +643,6 @@
     // والموظف لازم يختار من جديد — ده اللي اتفقنا عليه بدل ما نحفظ رقم مش موجود.
     setEditSelect('apartment_number', data.apartment_number == null ? '' : String(data.apartment_number));
     setEditSelect('room_number', data.room_number == null ? '' : String(data.room_number));
-    setEditSelect('status', data.status);
-    if (!eGet('status').value) eGet('status').value = 'active';
     // college/department/academic_level/housing_building من قاعدة البيانات (مع fallback للخيارات الثابتة لو مش متهاجرة)
     await lkLoadEditAll(data);
     document.getElementById('editOverlay').classList.add('show');
@@ -641,7 +670,7 @@
       if (el.value.trim() && !cond) { el.classList.add('error'); if (val) val.classList.add('show'); ok = false; }
       else if (el.value.trim()) { el.classList.remove('error'); if (val) val.classList.remove('show'); }
     }
-    valErr('national_id', 'e-val-national_id', /^\d{10}$/.test(eGet('national_id').value.trim()));
+    valErr('national_id', 'e-val-national_id', NuhId.isNationalId(eGet('national_id').value));
     valErr('phone', 'e-val-phone', NuhPhone.isValid(NuhPhone.normalize(eGet('phone').value)));
     var g = eGet('gender'), ge = document.getElementById('e-err-gender');
     if (!g.value) { g.classList.add('error'); if (ge) ge.classList.add('show'); ok = false; }
@@ -668,8 +697,9 @@
       housing_building: eGet('housing_building').value,
       floor_number: eGet('floor_number').value,
       room_number: eGet('room_number').value.trim(),
-      apartment_number: eGet('apartment_number').value.trim(),
-      status: eGet('status').value
+      // الحالة مش في الحمولة عن قصد — UpdateAsync بيتخطّى الحقل الغائب
+      // فبتفضل زي ما هي (شوف التعليق على الخانة المشالة فوق).
+      apartment_number: eGet('apartment_number').value.trim()
     };
     try {
       var res = await fetch('/api/Students/' + id, {
@@ -736,10 +766,17 @@
   }
 
   // اللغة تتبع ثقافة السيرفر — setLang بيترجم كل عناصر الترجمة وبيستدعي onLanguageChange
-  window.onLanguageChange = function () { renderPageInfo(); };
+  window.onLanguageChange = function () { renderPager(); };
   setLang(localStorage.getItem('uiLanguage') || 'ar');
-  updatePagerButtons();
-  updateSortIndicators();
+
+  (function initFromUrl() {
+    var sb = document.getElementById('studentSearch') || document.getElementById('searchBox');
+    if (sb) sb.value = state.filter;
+    renderPager();
+    // أول صفحة مرسومة من الخادم - مانعيدش تحميلها إلا لو الرابط فيه حالة فعلًا
+    if (state.page > 1 || state.filter || stuSort.by()) loadPage();
+  })();
+
   NuhName.attach('e_');
 </script>
 }

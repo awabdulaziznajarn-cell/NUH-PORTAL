@@ -14,6 +14,17 @@ namespace NUH_PORTAL.DTOs.Users
         public string? mobile { get; set; }
         public DateTime created_at { get; set; }
         public bool is_active { get; set; }
+        // ⚠️ القفل غير التعطيل، وde كان مصدر لبس حقيقي:
+        //      is_active   = قرار إداري بتاعنا (عمود عندنا في الجدول)
+        //      is_locked   = قفل تلقائي من Identity بعد ٣ محاولات دخول فاشلة
+        //                    (LockoutEnd) وبيفكّ لوحده بعد ١٥ دقيقة
+        //    تعطيل الحساب وتفعيله تاني **مابيفكّش القفل** - عمودين مختلفين
+        //    تمامًا. المسؤول كان بيعطّل ويفعّل والمستخدم لسه مش قادر يدخل،
+        //    وشاشة المستخدمين مكانش فيها أي إشارة إن فيه قفل أصلًا.
+        public bool is_locked { get; set; }
+        // ⚠️ بيتعرض في tooltip الشارة: «مقفول لحد الساعة كذا». من غيره
+        //    المسؤول مايعرفش هو يستنى ولا يفكّ.
+        public DateTimeOffset? lockout_end { get; set; }
         // الحذف منطقي — الصف بيفضل موجود، فالشاشة محتاجة تعرف حالته وتاريخه
         public bool is_deleted { get; set; }
         public DateTime? deleted_at { get; set; }

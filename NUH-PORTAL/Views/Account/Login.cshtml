@@ -7,6 +7,7 @@
     // قيم السمات (attributes) نحسبها هنا لتفادي تعارض علامات الاقتباس داخل Razor
     var __logoAlt = SharedLocalizer["login_logoAlt"].Value;
     var __usernamePh = SharedLocalizer["login_usernamePlaceholder"].Value;
+    var __passwordPh = SharedLocalizer["login_passwordPlaceholder"].Value;
     ViewData["Title"] = SharedLocalizer["login_submit"].Value;
 }
 <!DOCTYPE html>
@@ -17,31 +18,61 @@
   <title>@SharedLocalizer["login_submit"] - @SharedLocalizer["Brand_Title"]</title>
   <link rel="stylesheet" href="/css/site.css" />
   <style>
-    /* خاص بصفحة الدخول — نفس هوية login.html */
-    body{
-      min-height:100vh;display:flex;align-items:center;
-      background:url('/nni1.jpg') center/cover no-repeat fixed;
-      position:relative;
-    }
-    body::before{content:'';position:fixed;inset:0;background:linear-gradient(120deg,rgba(16,70,49,.25),rgba(16,70,49,.05) 45%,rgba(16,70,49,.35));}
-    .login-card{
-      position:relative;z-index:1;
-      background:#fff;border-radius:22px;overflow:hidden;
-      width:430px;max-width:92vw;
-      margin-inline-start:6vw;
-      box-shadow:0 30px 70px rgba(9,14,36,.45);
-      border-top:6px solid var(--navy-dark);
-    }
-    .login-inner{padding:30px 34px 26px;text-align:center}
-    .login-toprow{display:flex;justify-content:flex-end;margin-bottom:8px}
-    .login-logo{
-      background:#fff;border:1px solid rgba(219,161,2,.25);border-radius:18px;
-      box-shadow:0 6px 20px rgba(0,0,0,.08);
-      display:inline-block;padding:14px 30px;margin-bottom:18px;
-    }
-    .login-logo img{width:120px;height:84px;object-fit:contain;display:block}
-    .login-title{font-size:21px;font-weight:800;color:var(--navy-dark);position:relative;padding-bottom:14px;margin-bottom:22px}
-    .login-title::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:46px;height:3px;border-radius:2px;background:linear-gradient(90deg,var(--gold),var(--gold-light));}
+    /* ============================================================================
+       صفحة الدخول - لوحتان.
+
+       ⚠️ الصفحة كانت بطاقة بيضا فوق صورة فوتوغرافية للحرم (nni1.jpg)، والتعليق
+          اللي كان هنا بيبرّرها بإنها «نفس صورة صفحة الهبوط». الحجة دي اتلغت
+          لمّا اتعاد تصميم wwwroot/index.html وبقت صفحة بيضا بلا صورة - فصفحة
+          الدخول بقت الشاشة الوحيدة في النظام كله اللي فيها صورة، والصورة
+          فضلت لأن التعليق فضل، مش لأن السبب فضل.
+
+       ⚠️ اللوحة الخضرا هنا هي **نفس** .pdoor.solid في css/portal.css: نفس
+          التدرّج (160deg من --navy لـ --navy-dark) ونفس شكل الوسوم. مقصود:
+          الموظف بيدوس على لوحة خضرا مكتوب عليها «بوابة الموظفين» في الصفحة
+          الرئيسية، فيلاقي نفس اللوحة مستنياه هنا - فالانتقال بيقرا استمرارًا
+          لنفس العنصر لا صفحة جديدة.
+          ⚠️ والقيم مكتوبة هنا لا مستوردة: الصفحة دي بتحمّل css/site.css
+             (شاشات الموظفين) لا portal.css. لو التدرّج اتغيّر في portal.css
+             غيّره هنا كمان - وde المكان الوحيد اللي فيه نسخة منه.
+
+       ⚠️ زرّ اللغة بقى زرًّا واحدًا بيبدّل للّغة التانية، بدل قطعتين
+          (ع | EN) واحدة منهم مضيّئة. الشكل ده مالوش نظير في أي شاشة تانية،
+          وباقي النظام كله زرّ واحد نصّه اسم اللغة اللي هتروح لها.
+       ============================================================================ */
+    body{min-height:100vh;display:flex;align-items:center;justify-content:center;
+      background:var(--gray-50);padding:24px}
+
+    .login-split{display:grid;grid-template-columns:1.05fr 1fr;width:900px;max-width:96vw;
+      border-radius:18px;overflow:hidden;box-shadow:0 24px 60px rgba(16,70,49,.18);background:#fff}
+
+    /* ---------------- لوحة الهوية ---------------- */
+    .login-brand{background:linear-gradient(160deg,var(--navy) 0%,var(--navy-dark) 100%);
+      color:#fff;padding:48px 40px;display:flex;flex-direction:column;justify-content:center}
+    /* الشعار أبيض بالكامل: ألوانه الأصلية (ذهبي وأزرق) تباينها ضعيف على الأخضر
+       الغامق، والقلب لأبيض هو المعالجة المتعارف عليها للشعار على خلفية غامقة. */
+    .login-brand img{width:96px;height:auto;margin-bottom:22px;filter:brightness(0) invert(1)}
+    .login-brand h1{font-size:24px;font-weight:800;line-height:1.5;margin-bottom:12px}
+    .login-brand .rule{width:56px;height:3px;background:var(--gold);border-radius:2px;margin-bottom:16px}
+    /* ⚠️ شفافية ٨٢٪ لا ٧٢٪: عند ٧٢٪ التباين على الطرف الفاتح من التدرّج
+       ٤٫٢٧:١، والمطلوب ٤٫٥:١ للنصّ العادي. */
+    .login-brand p{font-size:13.5px;line-height:1.9;color:rgba(255,255,255,.82)}
+    .login-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:22px}
+    .login-tags span{font-size:11.5px;font-weight:600;padding:6px 13px;border-radius:20px;
+      background:rgba(255,255,255,.14)}
+
+    /* ---------------- لوحة النموذج ---------------- */
+    .login-form{padding:44px 40px;text-align:center}
+    .login-toprow{display:flex;justify-content:flex-end;margin-bottom:20px}
+    .login-lang{background:var(--white);border:1.5px solid var(--gray-200);color:var(--navy-dark);
+      border-radius:9px;padding:8px 16px;font-family:'IBM Plex Sans Arabic',sans-serif;
+      font-size:12.5px;font-weight:600;cursor:pointer;text-decoration:none;
+      display:inline-flex;align-items:center;transition:border-color .18s,background .18s}
+    .login-lang:hover{border-color:var(--navy);background:var(--tint)}
+    .login-lang:focus-visible{outline:2px solid var(--gold-ink);outline-offset:2px}
+    .login-title{font-size:19px;font-weight:800;color:var(--navy-dark);margin-bottom:6px}
+    .login-sub{font-size:12.5px;color:var(--gray-500);margin-bottom:24px}
+
     .field{margin-bottom:16px}
     html[dir=rtl] .field{text-align:right}
     html[dir=ltr] .field{text-align:left}
@@ -54,7 +85,8 @@
       font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;
       background:var(--gray-50);color:var(--navy-dark);
     }
-    .input-wrap input:focus{outline:none;border-color:var(--gold);background:#fff}
+    /* حدّ الحقل المركَّز - --gold-ink عشان يعدّي ٣:١ المطلوبة لمؤشّر التركيز */
+    .input-wrap input:focus{outline:none;border-color:var(--gold-ink);background:var(--white)}
     .login-btn{
       width:100%;padding:13px;margin-top:6px;
       border:none;border-radius:12px;
@@ -64,31 +96,74 @@
     }
     .login-btn:hover{background:var(--navy)}
     .login-btn:active{transform:scale(.99)}
+    .login-btn:disabled{opacity:.6;cursor:default}
     .login-error{background:var(--red-light);color:var(--red);font-size:12.5px;font-weight:600;padding:10px 12px;border-radius:12px;margin-bottom:14px}
-    .login-footer{margin-top:20px;font-size:11px;color:var(--gray-500)}
-    .login-back{display:inline-block;margin-top:10px;font-size:12px;color:var(--gray-500);text-decoration:none}
-    .login-back:hover{color:var(--navy)}
-    @@media (max-width:640px){ body{justify-content:center} .login-card{margin-inline-start:0} }
+    /* ⚠️ كان نصًّا رماديًا بلا خطّ ولا إطار - محدّش يعرف إنه قابل للضغط.
+       بقى زرًّا ثانويًا بحدّ واضح: نفس شكل الأزرار الثانوية في باقي النظام. */
+    .login-back{display:inline-flex;align-items:center;gap:7px;margin-top:18px;
+      padding:10px 18px;border:1px solid var(--gray-200);border-radius:11px;
+      font-size:12.5px;font-weight:600;color:var(--navy-dark);text-decoration:none;
+      transition:background .18s,border-color .18s,color .18s}
+    .login-back svg{width:14px;height:14px;flex-shrink:0}
+    html[dir=rtl] .login-back svg{transform:scaleX(-1)}
+    .login-back:hover{background:var(--gray-50);border-color:var(--navy);color:var(--navy)}
+    .login-back:focus-visible{outline:3px solid var(--gold-light);outline-offset:2px}
+    /* ⚠️ white-space:pre-line: سطر الحقوق سطران في مفتاح واحد (Brand_Copyright)
+       - نفس المفتاح المستعمل في تذييل البوابة، عشان ما يفترقوش تاني. */
+    .login-footer{margin-top:18px;font-size:12px;font-weight:600;color:var(--gold-ink);line-height:1.8;white-space:pre-line}
+
+    /* ⚠️ تحت ٨٢٠ بكسل اللوحتان بيبقوا فوق بعض: عمودان على شاشة موبايل معناه
+       نموذج عرضه ١٧٠ بكسل - أضيق من إن حقل يتقري فيه. */
+    @@media(max-width:820px){
+      body{padding:0}
+      .login-split{grid-template-columns:1fr;border-radius:0;min-height:100vh;max-width:100vw;box-shadow:none}
+      .login-brand{padding:32px 26px;text-align:center;align-items:center}
+      .login-brand img{width:76px;margin-bottom:16px}
+      .login-brand h1{font-size:20px}
+      .login-brand .rule{margin-inline:auto}
+      .login-form{padding:30px 24px}
+    }
   </style>
 </head>
 <body>
-  <div class="login-card">
-    <div class="login-inner">
-      <div class="login-toprow">
-        <div class="lang-toggle" role="group" aria-label="Language">
-          <a class="lang-btn @(__isAr ? "active" : "")" href="/Culture/Set?culture=ar&amp;returnUrl=@__self">ع</a>
-          <a class="lang-btn @(!__isAr ? "active" : "")" href="/Culture/Set?culture=en&amp;returnUrl=@__self">EN</a>
-        </div>
+  @* ⚠️ الغطاء هنا مخفي في الأول (is-done) وبيظهر عند إرسال النموذج فقط —
+     مش عند فتح الصفحة. صفحة الدخول مالهاش انتظار، الانتظار بيبدأ لما
+     الخادم يروح يتحقّق من كلمة المرور في الدليل النشط. *@
+  <div class="nuh-boot is-done" id="nuhBoot">
+    <img src="/nu-logo.svg" alt="">
+    <div class="nuh-boot-bar"><i></i></div>
+  </div>
+  <div class="login-split">
+
+    <div class="login-brand">
+      <img src="/nu-logo.svg" alt="@__logoAlt">
+      <h1>@SharedLocalizer["Brand_Title"]</h1>
+      <div class="rule"></div>
+      <p>@SharedLocalizer["pt_homeSub"]</p>
+      <div class="login-tags">
+        <span>@SharedLocalizer["pt_homeStaffTag1"]</span>
+        <span>@SharedLocalizer["pt_homeStaffTag2"]</span>
+        <span>@SharedLocalizer["pt_homeStaffTag3"]</span>
       </div>
-      <div class="login-logo"><img src="/nu-logo.png" alt="@__logoAlt"></div>
-      <div class="login-title">@SharedLocalizer["Brand_Title"]</div>
+    </div>
+
+    <div class="login-form">
+      <div class="login-toprow">
+        @* ⚠️ زرّ واحد بيوَدّي للّغة التانية. مفتاح pt_langToggle قيمته في الملف
+           العربي «English» وفي الإنجليزي «العربية» - يعني نصّه دايمًا اسم اللغة
+           اللي المستخدم رايح لها، وde نفس سلوك زرّ اللغة في كل شاشات البوابة. *@
+        <a class="login-lang" href="/Culture/Set?culture=@(__isAr ? "en" : "ar")&amp;returnUrl=@__self">@SharedLocalizer["pt_langToggle"]</a>
+      </div>
+
+      <div class="login-title">@SharedLocalizer["login_submit"]</div>
+      <div class="login-sub">@SharedLocalizer["login_formSub"]</div>
 
       @if (ViewData["Error"] is string err && !string.IsNullOrEmpty(err))
       {
         <div class="login-error">@err</div>
       }
 
-      <form method="post" action="/Account/Login">
+      <form method="post" action="/Account/Login" id="loginForm">
         @Html.AntiForgeryToken()
         <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
         <div class="field">
@@ -102,15 +177,25 @@
           <label for="password">@SharedLocalizer["login_password"]</label>
           <div class="input-wrap">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            <input id="password" name="password" type="password" placeholder="••••••••" autocomplete="current-password" required />
+            @* ⚠️ كان الـ placeholder نقطًا ‎••••••••‎ — بيبان كأن الخانة متملّية بكلمة مرور
+               فعلًا، فالمستخدم يضغط «دخول» على خانة فاضية. نصّ صريح زي خانة اسم المستخدم. *@
+            <input id="password" name="password" type="password" placeholder="@__passwordPh" autocomplete="current-password" required />
           </div>
         </div>
         <button class="login-btn" type="submit">@SharedLocalizer["login_submit"]</button>
       </form>
 
-      <a class="login-back" href="/">→ @SharedLocalizer["login_back"]</a>
-      <div class="login-footer">@SharedLocalizer["login_footer"]</div>
+      @* ⚠️ السهم كان محرف «←» مكتوب في النصّ، وشكله ثابت مهما كانت اللغة.
+         سهم «رجوع» المفروض يشاور ناحية بداية القراءة: يمين في العربي وشمال
+         في الإنجليزي. المحرف الثابت كان صح في العربي وغلط في الإنجليزي —
+         بيشاور «للأمام» على رابط اسمه «رجوع». بقى SVG بينقلب مع الاتجاه. *@
+      <a class="login-back" href="/">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+        @SharedLocalizer["login_back"]
+      </a>
+      <div class="login-footer">@SharedLocalizer["Brand_Copyright"]</div>
     </div>
+
   </div>
 
   @* ⚠️ حالة مجموعات القائمة الجانبية محفوظة في المتصفح حتى تبقى كما تركها
@@ -119,7 +204,33 @@
      صفحة الدخول هي الحدّ الفاصل بين الجلستين، فهنا نمسحها: كل دخول يبدأ
      بقائمة مطويّة، ثم يفتح المستخدم ما يحتاجه فيبقى مفتوحًا حتى يخرج. *@
   <script>
-    try { sessionStorage.removeItem('navGroups'); localStorage.removeItem('navGroups'); } catch (e) { }
+    // ⚠️ الاسمين مع بعض: navGroups هو المفتاح القديم اللي فيه الحالة الغلط
+    //    من قبل الإصلاح، وnavGroups2 هو الحالي. مسح الاتنين عشان تسجيل دخول
+    //    جديد يبدأ من قائمة مطويّة مهما كان اللي متخزّن قبل كده.
+    try {
+      sessionStorage.removeItem('navGroups');  localStorage.removeItem('navGroups');
+      sessionStorage.removeItem('navGroups2'); localStorage.removeItem('navGroups2');
+    } catch (e) { }
   </script>
+<script>
+  // ⚠️ الغطاء بيظهر عند الإرسال ومالوش وقت انتهاء: بيفضل لحد ما المتصفح
+  //    ينتقل لصفحة الرد. لو الدليل النشط رد بسرعة بيختفي فورًا مع الانتقال،
+  //    ولو كان بطيء بيفضل مكانه — فمفيش انتظار مصطنع في الحالتين.
+  // ⚠️ ومعاه قفل الزرار: من غيره الموظف بيدوس مرتين على «تسجيل الدخول» لما
+  //    يحسّ إنها وقفت، فيتبعت طلبين تحقّق للدليل بدل واحد.
+  (function () {
+    var f = document.getElementById('loginForm');
+    var boot = document.getElementById('nuhBoot');
+    if (!f || !boot) return;
+    f.addEventListener('submit', function () {
+      boot.classList.remove('is-done');
+      var b = f.querySelector('button[type=submit],.login-btn');
+      if (b) setTimeout(function () { b.disabled = true; }, 0);
+    });
+    // ⚠️ الرجوع بزرار Back بيرجّع الصفحة من ذاكرة التنقّل والغطاء لسه ظاهر —
+    //    فبنقفله من جديد، وإلا الموظف يلاقي شاشة بيضا فيها شعار بلا سبب.
+    window.addEventListener('pageshow', function () { boot.classList.add('is-done'); });
+  })();
+</script>
 </body>
 </html>

@@ -5,9 +5,7 @@
    ⚠️ وكان فيه كمان .edit-modal-header بخلفية بيضا — بيتحمّل بعد site.css فكان
       بيلغي ترويسة النافذة الزرقاء، فشاشات القوائم المرجعية كانت وحدها بيضا. */
 .lk-inactive{opacity:.55}
-.lk-pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:600}
-.lk-pill-on{background:#dff6e7;color:#067647}
-.lk-pill-off{background:#f5f5f6;color:#61646c}
+/* ⚠️ .lk-pill اتشالت: عمود «الحالة» بقى مفتاحًا، فما بقاش في شارة تتلوّن. */
 
 .action-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:8px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;cursor:pointer;border:none;transition:all .2s}
 .action-edit{background:#eceded;color:var(--navy)}
@@ -15,11 +13,5 @@
 .action-delete{background:var(--red-light);color:var(--red)}
 .action-delete:hover{background:#fee4e2}
 
-/* مفتاح التفعيل/إلغاء التفعيل */
-.lk-switch{position:relative;display:inline-block;width:42px;height:22px;cursor:pointer;vertical-align:middle}
-.lk-switch input{opacity:0;width:0;height:0;position:absolute;margin:0}
-.lk-slider{position:absolute;inset:0;background:#cecfd2;border-radius:999px;transition:background .25s}
-.lk-slider::before{content:'';position:absolute;height:16px;width:16px;top:3px;inset-inline-start:3px;background:#fff;border-radius:50%;transition:transform .25s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
-.lk-switch input:checked + .lk-slider{background:#067647}
-.lk-switch input:checked + .lk-slider::before{transform:translateX(20px)}
-[dir=rtl] .lk-switch input:checked + .lk-slider::before{transform:translateX(-20px)}
+/* ⚠️ مفتاح التفعيل اتنقل لـ css/site.css باسم .nsw - بقى مشترك مع شاشة
+   المستخدمين بدل ما يبقى محبوس هنا. */

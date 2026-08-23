@@ -8,6 +8,8 @@ namespace NUH_PORTAL.DTOs.Housing
         public string? UserPrincipalName { get; set; }
         public string? DisplayName { get; set; }
         public bool AccountEnabled { get; set; }
+        // آخر دخول للشبكة من الدليل — فاضي يعني «ما دخلش ولا مرة»
+        public DateTime? LastLogonAt { get; set; }
         public int UserAccountControl { get; set; }
         public string? Department { get; set; }
         public string? Description { get; set; }

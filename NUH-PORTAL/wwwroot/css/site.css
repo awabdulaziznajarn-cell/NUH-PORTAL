@@ -4,35 +4,87 @@
    أي ستايل خاص بصفحة واحدة يفضل جوه الصفحة نفسها.
    ============================================================ */
 
-/* ---------- الخط ---------- */
-@font-face{font-family:'IBM Plex Sans Arabic';font-style:normal;font-weight:400;src:url('../fonts/IBMPlexSansArabic-Regular.woff2') format('woff2')}
-@font-face{font-family:'IBM Plex Sans Arabic';font-style:normal;font-weight:600;src:url('../fonts/IBMPlexSansArabic-SemiBold.woff2') format('woff2')}
-
-/* ---------- Reset + المتغيرات ---------- */
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --navy:#166a45; --navy-dark:#104631; --navy-light:#25935f;
-  --gold:#dba102; --gold-light:#f0c33c;
-  --white:#fff;
-  --gray-50:#f5f5f6; --gray-100:#eceded; --gray-200:#dcdfe4;
-  --gray-300:#cecfd2; --gray-500:#85888e; --gray-700:#333741;
-  --green:#067647; --green-light:#dff6e7;
-  --red:#b42318; --red-light:#fef3f2;
-  --sidebar-w:240px;
-}
+/* ⚠️ الخط والتوكنز و reset الصندوق مش هنا — كلهم في css/base.css، وبيتحمّل
+   من هنا بـ @import عشان يستحيل صفحة تجيب site.css من غيرهم. كانوا مكتوبين
+   هنا وفي portal.css الاتنين، واتفارقوا فعلًا (شوف الشرح في base.css). */
+@import url('base.css');
 body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);color:var(--navy-dark);min-height:100vh;display:flex}
 
 /* ---------- السايدبار ---------- */
-.sidebar{width:var(--sidebar-w);background:var(--navy-dark);min-height:100vh;display:flex;flex-direction:column;position:fixed;right:0;top:0;z-index:100;box-shadow:-4px 0 24px rgba(0,0,0,.18)}
+/* ⚠️ height لا min-height: الشريط position:fixed، فـ min-height تسمح له بالنموّ
+   خارج الشاشة ويصير ما تحته غير قابل للوصول إطلاقًا - وهو ما كان يحدث مع
+   «المستخدمون» و«الأدوار والصلاحيات» في آخر القائمة. */
+.sidebar{width:var(--sidebar-w);background:var(--navy-dark);height:100vh;display:flex;flex-direction:column;position:fixed;right:0;top:0;z-index:100;box-shadow:-4px 0 24px rgba(0,0,0,.18)}
 [dir=ltr] .sidebar{right:auto;left:0;box-shadow:4px 0 24px rgba(0,0,0,.18)}
-.sidebar-logo{padding:24px 20px 20px;display:flex;flex-direction:column;align-items:center}
-.sidebar-logo-image-container{background:#fff;border-radius:16px;padding:12px 24px;border:1px solid rgba(219,161,2,.2);box-shadow:0 4px 16px rgba(0,0,0,.08),0 0 0 1px rgba(219,161,2,.06);transition:box-shadow .3s ease,transform .3s ease;margin-bottom:24px}
+/* ---------- هوية النظام في أعلى الشريط ----------
+   ⚠️ «جامعة نجران» كانت مكتوبة **مرتين**: جوّه صورة الشعار (الاسم مطبوع في
+      الصورة نفسها بالعربي والإنجليزي)، وتحتها تاني كنصّ بـ ١٠ بكسل. اتشال
+      النصّ وفضل الشعار — فالمساحة راحت لاسم البوابة، وهو اللي المفروض يبان.
+
+   ⚠️ و١٠ بكسل في العربي مش «خط صغير» — هو تحت الحدّ اللي الحروف المتّصلة
+      تتقرا عنده أصلًا: الحروف بتتلزق في بعض وتبقى خط متعرّج. واسم البوابة
+      كان ١٣ وهو أهم نصّ في الشريط كله. بقوا ١٥.
+
+   ⚠️ والصورة كانت متحطوطة في مربّع ٧٢×٧٢ مع object-fit:contain، والشعار
+      نسبته مش مربّعة — يعني كان بيترسم ٧٢×٥٨ ويسيب ربع المربّع فاضي. بقى
+      العرض ١١٨ والارتفاع تلقائي، فالمساحة كلها بتتستخدم.
+   ⚠️ والشعار بقى nu-logo.svg متجه بدل nu-logo.png اللي كان ١٧١×١٣٧ — كان
+      بيبان ناعم على أي شاشة ×٢. المتجه حادّ على أي مقاس، فمفيش سقف للتكبير
+      غير المساحة المتاحة في الشريط. */
+.sidebar-logo{padding:26px 18px 18px;display:flex;flex-direction:column;align-items:center}
+/* ⚠️ <a> مش <div>: كان عليه transform عند المرور وهو مش رابط ولا زرار —
+   حركة بتوعد بحاجة تحصل لما تدوس، وما بيحصلش حاجة. بقى رابط للرئيسية،
+   وده اللي أي حد بيتوقّعه من شعار، فالحركة بقت صادقة. */
+.sidebar-logo-image-container{display:block;background:#fff;border-radius:16px;padding:14px 18px;
+  border:1px solid rgba(219,161,2,.2);box-shadow:0 4px 16px rgba(0,0,0,.08),0 0 0 1px rgba(219,161,2,.06);
+  transition:box-shadow .3s ease,transform .3s ease;margin-bottom:14px}
 .sidebar-logo-image-container:hover{box-shadow:0 8px 24px rgba(0,0,0,.12),0 0 0 1px rgba(219,161,2,.15);transform:translateY(-2px)}
-.sidebar-logo-image-container img{display:block;width:72px;height:72px;object-fit:contain}
-.sidebar-logo-title{font-size:13px;font-weight:700;color:var(--white);text-align:center;line-height:1.5;margin-bottom:4px}
-.sidebar-logo-sub{font-size:10px;color:var(--gold-light);text-align:center;position:relative;padding-bottom:12px}
-.sidebar-logo-sub::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:32px;height:2px;background:linear-gradient(90deg,var(--gold),var(--gold-light));border-radius:1px}
-.sidebar-nav{flex:1;padding:16px 12px;display:flex;flex-direction:column;gap:4px}
+.sidebar-logo-image-container:focus-visible{outline:2px solid var(--gold-light);outline-offset:3px}
+.sidebar-logo-image-container img{display:block;width:118px;height:auto}
+.sidebar-logo-title{font-size:15px;font-weight:700;color:var(--white);text-align:center;
+  line-height:1.55;position:relative;padding-bottom:12px}
+/* الخط الذهبي اتنقل من السطر المحذوف لتحت اسم البوابة */
+.sidebar-logo-title::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:32px;height:2px;background:linear-gradient(90deg,var(--gold),var(--gold-light));border-radius:1px}
+/* ⚠️ min-height:0 شرط لا زينة: عنصر flex لا ينكمش تحت حجم محتواه افتراضيًّا،
+   فبدونه يتمدّد الـ nav ويبقى overflow-y بلا أثر - وكانت دالة revealActive في
+   _Sidebar.cshtml تحرّك scrollTop لحاوية لا تُمرَّر أصلًا، فتبدو كأنها تعمل
+   وهي لا تفعل شيئًا. */
+.sidebar-nav{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;
+  padding:16px 12px;display:flex;flex-direction:column;gap:4px;scroll-behavior:smooth}
+/* أول رسم: قفزة فورية إلى العنصر النشط بلا حركة يراها المستخدم */
+.sidebar-nav.no-anim{scroll-behavior:auto}
+/* شريط تمرير خافت على الخلفية الداكنة - يظهر عند الحاجة ولا يزاحم النصّ */
+.sidebar-nav::-webkit-scrollbar{width:6px}
+.sidebar-nav::-webkit-scrollbar-track{background:transparent}
+.sidebar-nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:3px}
+.sidebar-nav::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.28)}
+.sidebar-nav{scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.16) transparent}
+/* ==========================================================================
+   سطر الحقوق في آخر القائمة الجانبية.
+
+   ⚠️ مكانه هنا لا تحت المحتوى: السطر ده بيوصف **النظام** مش الصفحة. تحت
+      جدول الطلبات كان هيبان كأنه جزء من التقرير لأي حد يطبع الشاشة أو
+      ياخد لقطة منها - وفي القائمة هو جزء من إطار النظام زي اللوجو فوقه.
+      وكمان: شاشة الطلبات فيها ٥٠ صف، فسطر تحتها محدش هينزّل عشان يقراه.
+
+   ⚠️ ومفيش position:absolute ولا حساب ارتفاع: .sidebar عمود flex و
+      .sidebar-nav جوّاه flex:1، فالعنصر ده بياخد مكانه في الآخر لوحده
+      والقوائم بتتمرّر فوقه وهو ثابت.
+
+   ⚠️ واللون rgba(255,255,255,.6) لا .3 زي عناوين الأقسام: قِست التباين على
+      الكحلي #104631 - عند ٠٫٦ بيدّي ٤٫٩٩:١ (يعدّي AA لنصّ صغير)، وعند ٠٫٣
+      بيدّي ٢٫٣٨:١ وهو راسب. عناوين الأقسام كلمة واحدة بتتعرف بمكانها،
+      والسطر ده بيتقرا.
+
+   ⚠️ white-space:pre-line عشان Brand_Copyright سطرين في ملف الترجمة نفسه -
+      نفس المفتاح اللي بتستعمله بوابة الطالب وصفحة الدخول. تقسيم السطر
+      مايتعملش هنا وإلا بقى القرار في مكانين.
+   ========================================================================== */
+.sidebar-foot{flex-shrink:0;padding:12px 14px 15px;
+  border-top:1px solid rgba(255,255,255,.12);
+  font-size:10.5px;line-height:1.85;color:rgba(255,255,255,.6);
+  text-align:center;white-space:pre-line}
+
 .nav-section{font-size:10px;font-weight:600;color:rgba(255,255,255,.3);padding:12px 8px 6px;letter-spacing:1px}
 .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:rgba(255,255,255,.65);font-size:13.5px;font-weight:500;text-decoration:none;cursor:pointer;transition:all .2s}
 .nav-item:hover{background:rgba(255,255,255,.07);color:#fff}
@@ -100,11 +152,25 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);col
 .topbar-title{font-size:18px;font-weight:800;color:var(--navy-dark);
   opacity:0;transform:translateY(-6px);transition:opacity .18s ease,transform .18s ease}
 .topbar.is-scrolled .topbar-title{opacity:1;transform:none}
-.topbar-date{font-size:12px;color:var(--gray-500)}
+/* ⚠️ كان ١٢ بكسل بلون --gray-500 — أبهت من أي نصّ في الشريط، مع إنه
+   معلومة بيتبص عليها كل شوية (وبتتقلب ميلادي/هجري مع مفتاح التقويم).
+   بقى ١٢٫٥ بوزن ٦٠٠ وباللون الرمادي الغامق: باين من غير ما ينافس العنوان. */
+.topbar-date{font-size:12.5px;font-weight:600;color:var(--gray-700)}
 .topbar-right{display:flex;align-items:center;gap:12px}
-.lang-toggle{display:flex;align-items:center;background:var(--gray-100);border-radius:20px;padding:3px;gap:2px}
-.lang-btn{padding:4px 12px;border-radius:16px;border:none;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;background:transparent;color:var(--gray-500);text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
-.lang-btn.active{background:var(--navy);color:#fff;box-shadow:0 2px 8px rgba(16,70,49,.2)}
+/* ⚠️ الاسم .topbar-lang لا .lang-btn عن قصد: .lang-btn معرّف كمان في
+   css/portal.css بمعنى تاني خالص (زرّ مطلق في ركن صفحات البوابة). الملفّين
+   مابيتحمّلوش مع بعض، فمكانش في تضارب - بس اسم واحد لمكوّنين مختلفين فخّ
+   مستنّي أول صفحة تحمّل الاتنين. الاسم هنا بيقول مكانه: زرّ في الشريط العلوي.
+   ⚠️ والشكل هو نفس زرّ اللغة في البوابة وصفحة الدخول: حدّ رمادي وخلفية بيضا
+      ونصّه اسم اللغة اللي رايح لها. كان قطعتين في كبسولة رمادية، واحدة
+      مضيّئة - شكل مالوش نظير في أي شاشة تانية. */
+.topbar-lang{background:var(--white);border:1.5px solid var(--gray-200);color:var(--navy-dark);
+  border-radius:9px;padding:7px 15px;font-family:'IBM Plex Sans Arabic',sans-serif;
+  font-size:12.5px;font-weight:600;cursor:pointer;text-decoration:none;
+  display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;
+  transition:border-color .18s,background .18s}
+.topbar-lang:hover{border-color:var(--navy);background:var(--tint)}
+.topbar-lang:focus-visible{outline:2px solid var(--gold-ink);outline-offset:2px}
 
 /* ---------- الإشعارات ---------- */
 .notif-btn{width:36px;height:36px;background:var(--gray-100);border:none;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--gray-700);position:relative;transition:background .2s}
@@ -124,7 +190,7 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);col
 .notif-header button{background:none;border:none;font-size:12px;color:var(--navy);cursor:pointer;font-weight:600;font-family:'IBM Plex Sans Arabic',sans-serif}
 .notif-header button:hover{text-decoration:underline}
 .notif-item{display:flex;align-items:flex-start;gap:10px;padding:12px 16px;border-bottom:1px solid var(--gray-100);cursor:pointer;transition:background .15s}
-.notif-item:hover{background:var(--gray-50)}
+.notif-item:hover{background:var(--row-hover)}
 .notif-item:last-child{border-bottom:none}
 .notif-item-dot{width:8px;height:8px;border-radius:50%;margin-top:6px;flex-shrink:0}
 .notif-item-text{font-size:13px;color:var(--navy-dark);font-weight:500;flex:1;line-height:1.4}
@@ -134,7 +200,10 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);col
 /* ---------- المحتوى ---------- */
 .content{padding:28px;flex:1}
 .page-header{margin-bottom:24px}
-.page-header h2{font-size:22px;font-weight:800;color:var(--navy-dark);margin-bottom:4px}
+/* ⚠️ عنوان الشاشة بأخضر الجامعة: هو **المرساة الوحيدة** الملوّنة في الشاشة،
+   وأول حاجة العين بتقع عليها وانت داخل. وعشان كده ترويسة الجدول تحته رجعت
+   هادية — أخضرين فوق بعض كل واحد بيسحب العين للتاني، والاتنين بيخسروا. */
+.page-header h2{font-size:22px;font-weight:800;color:var(--navy);margin-bottom:4px}
 .page-header p{font-size:13px;color:var(--gray-500)}
 
 /* ---------- إحصائيات (أقراص) ---------- */
@@ -155,7 +224,7 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);col
 .card{background:var(--white);border-radius:16px;border:1px solid var(--gray-100);box-shadow:0 2px 8px rgba(16,70,49,.05);overflow:hidden}
 /* ⚠️ min-height: الرأس اللي فيه صندوق بحث (٣٣ بكسل) كان أطول ٢ بكسل من الرأس
    اللي فيه زرار بس (٣١ بكسل) — فالجدول بيبدأ من ارتفاع مختلف بين شاشة وشاشة. */
-.card-header{padding:16px 20px;min-height:66px;background:#f3fcf6;border-bottom:1px solid #c6ecd6;display:flex;align-items:center;justify-content:space-between}
+.card-header{padding:16px 20px;min-height:66px;background:var(--tint);border-bottom:1px solid #c6ecd6;display:flex;align-items:center;justify-content:space-between}
 .card-header > div{font-size:15px;font-weight:700;color:var(--navy)}
 .card-header svg{color:var(--navy)}
 .card-title{font-size:15px;font-weight:700;color:var(--navy)}
@@ -172,12 +241,45 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);col
 
 /* ---------- ترويسة نافذة التعديل ----------
    ⚠️ كانت مكرّرة في ثلاث شاشات (الأدوار، المستخدمون، الطلاب) بنفس السطر بالضبط. */
-.edit-modal-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:18px 24px;background:#f3fcf6;border-bottom:1px solid #c6ecd6}
+.edit-modal-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:18px 24px;background:var(--tint);border-bottom:1px solid #c6ecd6}
+
+/* ---------- مفتاح التفعيل ----------
+   ⚠️ كان معرَّفًا في lookup-admin.css باسم .lk-switch، فلا تراه إلا شاشات
+      القوائم المرجعية. وشاشة المستخدمين كانت تفعّل وتعطّل بزرَّين في عمود
+      الإجراءات - نفس الفكرة بمظهرين، والحالة معروضة مرتين: شارة في عمود
+      وزر في عمود آخر. المكوّن هنا فتقرأه كل الشاشات، والاسم محايد لأنه لم
+      يعد خاصًّا بالقوائم المرجعية.
+
+   ⚠️ المعطّل أحمر فاتح لا رمادي: الصف المعطّل في جدول طويل كان يمرّ بلا أن
+      يُلحظ. والأحمر الصريح (--red) تُرك لأزرار الحذف والرفض حتى لا يشتبك
+      المفتاح مع زر «حذف» في الصف نفسه - الكلمة وحدها هي التي تأخذه. */
+.nsw{position:relative;display:inline-block;width:42px;height:22px;cursor:pointer;vertical-align:middle;flex-shrink:0}
+.nsw input{opacity:0;width:0;height:0;position:absolute;margin:0}
+.nsw-track{position:absolute;inset:0;background:#f2a9a2;border-radius:999px;transition:background .25s,box-shadow .15s}
+.nsw-track::before{content:'';position:absolute;height:16px;width:16px;top:3px;inset-inline-start:3px;
+  background:#fff;border-radius:50%;transition:transform .25s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.nsw input:checked + .nsw-track{background:var(--green)}
+.nsw input:checked + .nsw-track::before{transform:translateX(20px)}
+[dir=rtl] .nsw input:checked + .nsw-track::before{transform:translateX(-20px)}
+/* التركيز بلوحة المفاتيح لازم يبان: العنصر الحقيقي checkbox شفاف بلا إطار */
+.nsw input:focus-visible + .nsw-track{box-shadow:0 0 0 3px rgba(16,70,49,.22)}
+.nsw input:disabled + .nsw-track{opacity:.5;cursor:not-allowed}
+
+/* ⚠️ الكلمة بجانب المفتاح ليست زينة: المفتاح وحده يحتاج تخمينًا في الواجهة
+   العربية - أي الجهتين «تشغيل»؟ - والكلمة تحسمها. وهي كذلك ما يقرأه قارئ
+   الشاشة، إذ المفتاح بلا اسم يُقرأ «مربع اختيار» فقط. */
+.nsw-field{display:inline-flex;align-items:center;gap:9px}
+.nsw-label{font-size:12px;font-weight:600;min-width:38px;text-align:start;color:var(--red)}
+.nsw-field.is-on .nsw-label{color:var(--green)}
 
 /* ---------- البحث ---------- */
 .search-wrap{position:relative}
-.search-wrap input{padding:8px 36px 8px 12px;border:1px solid var(--gray-200);border-radius:20px;font-size:13px;font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);color:var(--navy-dark);width:240px}
-.search-wrap input:focus{outline:none;border-color:var(--gold)}
+/* ⚠️ العرض 360 لا 240: نصّ الخانة يوضّح بم يبحث المستخدم، وعند 240 كان النصّ
+   يُقصّ في منتصفه فيقرأ نصف الجملة - وهو أسوأ من غياب النصّ. القياس مأخوذ من
+   أطول نصّ في النظام. و max-width كي تنكمش على الشاشات الضيّقة بدل أن تدفع
+   ما بجانبها خارج البطاقة. */
+.search-wrap input{padding:8px 36px 8px 12px;border:1px solid var(--gray-200);border-radius:20px;font-size:13px;font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);color:var(--navy-dark);width:360px;max-width:100%}
+.search-wrap input:focus{outline:none;border-color:var(--gold-ink)}
 .search-icon{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--gray-500)}
 
 /* ---------- الجداول ---------- */
@@ -190,10 +292,32 @@ table{width:100%;border-collapse:collapse;font-size:13px}
    ⚠️ التغيير هنا في site.css مش في شاشة واحدة — كل جداول النظام بتتحرك
       مع بعض، وإلا الشاشة اللي اتعدّلت لوحدها تبقى هي الغريبة.
    ⚠️ واتشالت [dir=ltr] thead th{text-align:left} — النص نص في الاتجاهين. */
-thead th{background:var(--gray-50);padding:11px 16px;text-align:center;font-size:11px;font-weight:600;color:var(--gray-500);border-bottom:1px solid var(--gray-100)}
+/* ⚠️ الترويسة كانت ١١ بكسل بوزن ٦٠٠ ولون رمادي فاتح (--gray-500) — نفس لون
+   النصّ الثانوي في النظام. يعني اسم العمود كان مكتوب بلون «كلام مش مهم»
+   وحجم أصغر من أي نصّ تاني في الشاشة، وهو في الحقيقة مفتاح قراءة الجدول
+   كله: من غيره الصفوف أرقام بلا معنى.
+   بقت ١٢٫٥ بكسل بوزن ٧٠٠ باللون الكحلي الغامق، وتحتها خط أخضر بسمك ٢ بكسل.
+
+   ⚠️ جُرِّب قبلها شريط أخضر كامل بنصّ أبيض واتشال: الأخضر ده لون هوية مشبع،
+      شغّال ممتاز على مساحة صغيرة (زرار، تبويب، شارة) لأنه بيبقى **علامة**.
+      على مساحة بعرض الجدول كله بيتحوّل لـ**خلفية** وبينافس البيانات نفسها —
+      وفي «قائمة الطلاب» (١٣ عمود) بيبقى أعرض حاجة في الشاشة.
+      الأخضر هنا بقى **خط** مش **بلاطة**: الهوية موجودة والجدول هادي.
+
+   ⚠️ وللعلم لو حد فكّر يرجّع الشريط الأخضر بدرجة أفتح: مش هينفع. التباين
+      على #166a45 هو ٦٫٦ (المطلوب ٤٫٥)، وعلى أي أخضر أفتح — #25935f مثلًا —
+      بينزل لـ ٣٫٩ ويسقط. يبقى إما غامق مع أبيض أو فاتح مع نصّ غامق.
+   ⚠️ ومن غير letter-spacing ولا text-transform: التباعد بين الحروف بيكسر
+      اتصال الحروف العربي فتتقرا كأنها حروف مبعثرة، وتحويل الحالة مالوش
+      أي أثر في العربي فبيعمل فرق بين الواجهتين بلا سبب. */
+thead th{background:var(--gray-50);padding:13px 16px;text-align:center;font-size:12.5px;font-weight:700;
+  color:var(--navy-dark);border-bottom:2px solid var(--navy);white-space:nowrap}
 tbody td{padding:13px 16px;border-bottom:1px solid var(--gray-100);color:var(--navy-dark);font-weight:500;text-align:center}
 tbody tr:last-child td{border-bottom:none}
-tbody tr:hover{background:var(--gray-50)}
+/* ⚠️ تظليل الصف عند المرور أخضر فاتح لا رمادي: #f3fcf6 هو نفس تدرّج ترويسة
+   بطاقة النموذج وخيار القائمة المنسدلة عند المرور، فالتظليل في كل النظام
+   لون واحد. الرمادي كان يبدو تعطيلًا لا تحديدًا. */
+tbody tr:hover{background:var(--row-hover)}
 /* ⚠️ عرض الأعمدة كان بيتحسب من المحتوى، فعمود «#» بياخد عرض مختلف في كل شاشة
    وعمود «إجراءات» بيتمطّ حسب عدد الأزرار. تثبيت الطرفين بيخلّي إطار الجدول
    واحدًا في كل الشاشات، والأعمدة اللي جوّه بتتوزّع طبيعي. */
@@ -248,6 +372,42 @@ th.col-code,td.col-code{white-space:nowrap}
    لطريقة الطلب (GET/POST) — فكانت بتطلع بلا خلفية هناك. */
 .badge-gray{background:var(--gray-100);color:var(--gray-700)}
 
+/* ============================================================================
+   شارات مراحل الطلب — .badge-<canonical>
+   ⚠️ الكلاس بيتبني في الكود من RequestWorkflow.Canonical(status)، يعني الأسماء
+      دي مش اختيار CSS - هي حالات سير العمل نفسها. أي حالة جديدة في
+      Core/RequestWorkflow.cs محتاجة سطر هنا، وإلا شارتها بتطلع بلا لون.
+   ⚠️ وde اللي كان حاصل فعلًا: تسعة من إحدى عشرة حالة مكانش ليها لون خالص
+      (submitted و cyber_review و completed و... )، وكانت بتقع على .badge
+      الأساسي - شارة رمادية بلا معنى. الموجود كان approved و rejected
+      و pending وبس، والتلاتة دول أسماء عامة مش أسماء مراحل الطلب.
+   ⚠️ والألوان مجموعات لا لون لكل حالة: العين بتقرا «في أي مربّع» أسرع ما
+      بتقرا أحد عشر لونًا. أربع مجموعات: بانتظار مكتب · ماشي · واقف · مستنّي
+      الطالب.
+   ⚠️ وكل زوج اتقاس: أقل واحد 5.01:1 على نصّ 11 بكسل (المعيار 4.5:1).
+   ============================================================================ */
+
+/* بانتظار مكتب يتحرّك — كهرماني */
+.badge-submitted,
+.badge-cyber_review{background:var(--amber-light);color:var(--amber)}
+
+/* ماشي في مساره: مكتب وافق والطلب راح للي بعده — أزرق */
+.badge-housing_approved,
+.badge-cyber_approved,
+.badge-ready_for_provisioning{background:var(--blue-light);color:var(--blue)}
+
+/* وصل لآخره — أخضر */
+.badge-completed{background:var(--green-light);color:var(--green)}
+
+/* وقف — أحمر. التلات حالات بلون واحد لأن النصّ جوّه الشارة هو اللي بيقول
+   مين اللي رفض («رفض الأمن السيبراني» / «رفض إسكان»). */
+.badge-housing_rejected,
+.badge-cyber_rejected{background:var(--red-light);color:var(--red)}
+
+/* الكرة في ملعب الطالب — بنفسجي، مميّز عن «بانتظار مكتب» عن قصد:
+   الاتنين انتظار بس اللي هيتحرّك مختلف. */
+.badge-need_more_info{background:var(--purple-light);color:var(--purple)}
+
 /* ---------- الأزرار ---------- */
 .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:10px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:13px;font-weight:600;text-decoration:none;cursor:pointer;border:none;transition:all .2s}
 .btn-primary{background:var(--navy);color:#fff}
@@ -256,6 +416,34 @@ th.col-code,td.col-code{white-space:nowrap}
 .btn-danger:hover{background:#912018}
 .btn-cancel{background:var(--gray-100);color:var(--gray-700)}
 .btn-cancel:hover{background:var(--gray-200)}
+
+/* ---------- صفّ الترقيم (السابق / التالي) ---------- */
+/* ⚠️ .table-pager كانت مكتوبة في شاشتَي إسكان أعضاء هيئة التدريس وما كانش ليها
+   تعريف هنا إطلاقًا. فالصفّ كان بيتكوّم عمودي (سطر «عرض ١ إلى ١ من ١» فوق
+   والزراير تحته) والزراير بشكل زرّ الإلغاء الرمادي — نفس شكل «إلغاء» في
+   المودالات، وهو مش المعنى المقصود أصلًا.
+   وشاشتا «سجل العمليات» و«الطلبات» كانتا تبنيان الصفّ بالإيد بستايل مضمّن
+   مختلف، فبقى عندنا تلات أشكال لنفس الحاجة. ده التعريف الوحيد، وكل الشاشات
+   بتوصله عن طريق NuhTable.pager. */
+.table-pager{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-top:14px;padding:14px 4px 2px;border-top:1px solid var(--gray-100);font-size:13px;color:var(--gray-500)}
+/* داخل بطاقة لها حوافّها الخاصة: الصفّ بياخد بطانة البطاقة بدل بطانة الصفحة */
+.table-pager.in-card{margin-top:0;padding:14px 20px}
+.table-pager b{color:var(--navy-dark);font-weight:700}
+.pager-info{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pager-nav{display:flex;align-items:center;gap:8px}
+.pager-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:34px;padding:0 14px;border:1px solid var(--gray-200);border-radius:9px;background:var(--white);color:var(--navy-dark);font-family:inherit;font-size:13px;font-weight:600;line-height:1;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+.pager-btn:hover:not(:disabled){background:var(--row-hover);border-color:var(--green);color:var(--green)}
+.pager-btn:active:not(:disabled){background:var(--green-light)}
+.pager-btn:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+/* ⚠️ الزرّ الموقوف لازم مايبقاش شكله زرّ شغّال: بلا حدّ داكن وبلا مؤشّر يد.
+   كان بنفس شكل الزرّ الشغّال بالظبط، فالمستخدم في صفحة واحدة بيدوس «التالي»
+   وما يحصلش حاجة فيفتكر الشاشة واقفة. */
+.pager-btn:disabled{background:var(--gray-50);border-color:var(--gray-100);color:var(--gray-300);cursor:default}
+.pager-btn svg{width:13px;height:13px;flex:none}
+/* السهم بيتقلب مع اتجاه الصفحة: «السابق» بيشاور ناحية البداية في الاتجاهين */
+[dir=ltr] .pager-btn svg{transform:scaleX(-1)}
+.pager-page{padding:0 6px;font-weight:600;color:var(--navy-dark);white-space:nowrap}
+.pager-select{height:34px;padding:0 10px;border:1px solid var(--gray-200);border-radius:9px;background:var(--white);color:var(--navy-dark);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer}
 
 /* ---------- المودالات ---------- */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:center;justify-content:center}
@@ -343,7 +531,9 @@ html[dir=ltr] .app-shell .main>.topbar,html[dir=ltr] .app-shell .main>.content{d
 .tl-label { color:var(--gray-500); font-weight:500; flex-shrink:0; }
 .tl-value { color:var(--gray-700); font-weight:400; }
 .tl-value.username { font-weight:600; color:var(--navy); }
-.tl-notes { font-size:12px; color:var(--gray-700); margin-top:10px; background:var(--gray-50); padding:10px 14px; border-radius:8px; }
+/* ⚠️ .tl-notes اتشالت — كانت أول أربع نسخ من صندوق الملاحظة، وصندوقها كان
+   بيظهر حتى لما مافيش ملاحظة. الخط الزمني بقى بيستعمل .note-block.in-tl
+   من css/components.css زيّه زي البانر وبوابة الطالب. */
 .history-empty { padding:24px; text-align:center; color:var(--gray-500); font-size:13px; }
 
 /* ============================================================================
@@ -361,10 +551,27 @@ html[dir=ltr] .app-shell .main>.topbar,html[dir=ltr] .app-shell .main>.content{d
 /* أدوات رأس البطاقة (بحث + أزرار) — كانت style="display:flex;gap:10px" مكتوبة يدويًا */
 .card-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 /* ⚠️ select-field.js يحوّل كل <select> إلى .nsel، وعرض .nsel ١٠٠٪ لأنه مصمَّم
-   لحقول النماذج. داخل رأس البطاقة كان ذلك يجعل كل قائمة تحتلّ سطرًا كاملًا
-   فينكسر صف الفلاتر. العرض هنا لرأس البطاقة وحده، فتتطابق كل شاشات النظام
-   ولا تحتاج شاشة قاعدة خاصة بها. */
-.card-tools .nsel{width:190px}
+   لحقول النماذج. داخل أي شريط أدوات أفقي كان ذلك يجعل كل قائمة تحتلّ سطرًا
+   كاملًا فينكسر صف الفلاتر — والسطر يبقى فاضي من جنب واحد.
+
+   ⚠️ والحالة دي ظهرت تلات مرات: رأس البطاقة، وصفّ الفلاتر، وشريط أدوات مركز
+      التقارير (.rp-bar). الأولين اتصلّحوا كل واحد في مكانه، والتالت فضل مكسور
+      — قائمتَي «المستخدم» و«الإجراء» كانتا بتاخدا سطرين كاملين والنص الشمال
+      من الشريط فاضي. التلاتة هنا مع بعض عشان الرابع ياخد الحلّ جاهز.
+   ⚠️ و.rp-bar معرّفة في Views/Reports/Index.cshtml، بس القاعدة نفسها مشتركة
+      فمكانها هنا لا هناك. */
+.card-tools .nsel,
+.rp-bar .nsel{width:190px}
+
+/* ⚠️ و.ndate (حقل التاريخ) ليها نفس العلّة بالحرف — غلافها ١٠٠٪ كمان. مكتوبة
+   هنا مع أخواتها لا لما تظهر المشكلة: العرض المرن جوّه شريط أفقي هو القاعدة،
+   والاستثناء هو النموذج الرأسي. */
+.card-tools .ndate,
+.rp-bar .ndate,
+.filter-group > .ndate{width:158px}
+.req-dates .ndate{width:150px}
+.ndate-btn{min-height:34px}
+.filter-group > .ndate .ndate-btn{min-height:36px}
 
 /* ---------- التبويبات ----------
    ⚠️ كان في تصميمين مختلفين: .tabs/.tab-btn في شاشة الطلبات (أزرار فوق البطاقة)
@@ -378,11 +585,40 @@ html[dir=ltr] .app-shell .main>.topbar,html[dir=ltr] .app-shell .main>.content{d
 .tab-btn.active{background:var(--navy);color:var(--white);border-color:var(--navy)}
 .tab-count{background:var(--gray-100);color:var(--gray-500);border-radius:999px;padding:1px 8px;font-size:11.5px;font-weight:700}
 .tab-btn.active .tab-count{background:rgba(255,255,255,.2);color:var(--white)}
+/* ⚠️ الصفر يبقى ظاهرًا باهتًا لا يُخفى: إخفاء التبويب الفارغ يجعل الشاشة تتغيّر
+      شكلها كلما تحرّك رقم، والصفر نفسه معلومة - يقول «هذا الطابور فارغ». */
+.tab-count.zero{background:var(--gray-50);color:var(--gray-300)}
+.tab-btn.active .tab-count.zero{background:rgba(255,255,255,.14);color:rgba(255,255,255,.6)}
 
 /* ---------- ترتيب الأعمدة ---------- */
-th.sortable{cursor:pointer;user-select:none;white-space:nowrap;transition:color .15s}
-th.sortable:hover{color:var(--navy)}
-.sort-ind{font-size:10px;color:var(--navy);font-weight:700}
+/* ⚠️ العمود القابل للفرز بيتعرّف من data-sort لوحدها — لا class="sortable"
+   ولا <span class="sort-ind"> ولا onclick. الشاشة بتكتب:
+       <th data-sort="full_name">الاسم</th>
+   والباقي كله من هنا ومن NuhTable.sort.
+
+   ⚠️ قبل كده كان كل عمود محتاج تلات حاجات في الـ HTML (كلاس + onclick +
+      span بـ id)، ودالة فرز في كل شاشة بتكتب ' ▲' نصًّا جوّه الـ span.
+      وكان في أعمدة بتترتّب من غير سهم لأن الـ id اتكتب غلط — والشاشة
+      شكلها سليم فمحدش لاحظ.
+
+   ⚠️ والمؤشّر بقى aria-sort مش كلاس: دي الخاصية القياسية اللي قارئ الشاشة
+      بيقولها للمستخدم («مرتّب تصاعديًّا»)، فالشكل والوصول بيتحرّكوا مع بعض
+      بدل ما الواحد يفضل ناقص.
+
+   ⚠️ والسهم مرسوم بحدود CSS لا بحرف زي ▲ أو ⇅: الحرف بيطلع مربّع فاضي لو
+      الخط مافيهوش الرمز — والخط هنا خط عربي مش خط أيقونات. */
+th[data-sort]{cursor:pointer;user-select:none;white-space:nowrap;transition:background .15s,color .15s}
+th[data-sort]:hover{background:var(--row-hover);color:var(--navy)}
+/* ⚠️ العمود المرتَّب حاليًا بيفضل أخضر بعد ما تسيب الماوس — مش وقت المرور بس.
+   من غير كده الموظف بيرتّب ويسيب الماوس ومايبقاش عارف رتّب بإيه غير لو
+   دوّر على السهم الصغير. */
+th[data-sort][aria-sort]{color:var(--navy)}
+/* الحالة الافتراضية: مثلّث باهت معناه «العمود ده بيترتّب، لسه ما اترتّبش بيه» */
+th[data-sort]::after{content:'';display:inline-block;width:0;height:0;margin-inline-start:6px;
+  border-inline:4px solid transparent;border-bottom:5px solid var(--gray-300);vertical-align:middle}
+th[data-sort]:hover::after{border-bottom-color:var(--navy)}
+th[data-sort][aria-sort]::after{border-bottom-color:var(--navy)}
+th[data-sort][aria-sort=descending]::after{border-bottom:0;border-top:5px solid var(--navy)}
 
 /* ---------- مؤشر التحميل ---------- */
 /* ⚠️ @keyframes spin/spin2 في css/components.css — مشتركين مع البوابة */
@@ -420,6 +656,31 @@ th.sortable:hover{color:var(--navy)}
 .e-field input[readonly]{background:#eceded;color:var(--gray-500);cursor:not-allowed}
 .field-error{font-size:11px;color:#d92d20;font-weight:500;display:none}
 .field-error.show{display:block}
+/* القائمة المقفولة تاخد نفس شكل input[readonly] — القفل يتقرا بنفس اللغة في
+   كل الشاشات بدل ما كل شاشة تخترع شكل لنفسها. */
+select:disabled{background:#eceded;color:var(--gray-500);cursor:not-allowed}
+
+/* ---------- صف المرفق (معاينة / تحميل) ---------- */
+/* ⚠️ الشكل هنا مرة واحدة: نفس الصف بيتكرر في «تحديث حالة الطالب» وفي سجل نقل
+   السكن، وكان مكتوب style سطريًا في الاتنين — روابط مسطّرة بلا شكل زر. */
+.att-row{margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  padding:8px 10px;background:var(--gray-50);border:1px solid var(--gray-100);border-radius:10px}
+.att-row > svg{flex-shrink:0;color:var(--gray-500)}
+/* الأسماء لاتينية فالاتجاه ltr مهما كانت لغة الواجهة، والقصّ بدل ما السطر يلفّ */
+.att-name{font-size:12px;color:var(--gray-700);font-weight:500;flex:1;min-width:80px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;direction:ltr;text-align:start}
+.att-btn{padding:5px 12px;font-size:12px;border-radius:8px}
+
+/* نافذة معاينة المرفق */
+.att-prev-card{background:var(--white);border-radius:14px;max-width:90vw;max-height:90vh;
+  overflow:auto;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.28)}
+.att-prev-head{display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:14px 16px;border-bottom:1px solid var(--gray-100)}
+.att-prev-title{font-size:13.5px;font-weight:700;color:var(--navy-dark);min-width:0;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;direction:ltr;text-align:start}
+.att-prev-actions{display:flex;gap:8px;flex-shrink:0}
+.att-prev-body{padding:16px;display:flex;align-items:center;justify-content:center}
+.att-prev-body img{max-width:100%;max-height:72vh;border-radius:10px;display:block}
 
 /* ---------- رسالة التأكيد (toast) ---------- */
 .toast{position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-90px);background:#067647;

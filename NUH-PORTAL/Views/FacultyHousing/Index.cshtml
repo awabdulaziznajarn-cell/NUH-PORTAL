@@ -24,15 +24,15 @@
         ["fh_TypeStop"] = L("fh_TypeStop"),
         ["fh_TicketNoLabel"] = L("fh_TicketNoLabel"),
         ["fh_TicketHint"] = L("fh_TicketHint"),
-        ["fh_CyberDate"] = L("fh_CyberDate"),
-        ["fh_CyberHint"] = L("fh_CyberHint"),
+        @* ⚠️ fh_CyberDate و fh_CyberHint اتشالوا: مكانوش مستعملين في
+           faculty-housing-page.js أصلًا (الخانة كانت في شاشة التسليم وحدها)،
+           وبعد ما اتشالت من هناك بقوا بلا أي قارئ. *@
         ["fh_FullNameAr"] = L("fh_FullNameAr"),
-        ["fh_NameHint"] = L("fh_NameHint"),
         ["fh_Gender"] = L("fh_Gender"),
         ["fh_Male"] = L("fh_Male"),
         ["fh_Female"] = L("fh_Female"),
-        ["fh_NationalIdHint"] = L("fh_NationalIdHint"),
-        ["fh_MobileHint"] = L("fh_MobileHint"),
+        @* ⚠️ fh_NationalIdHint و fh_MobileHint اتشالوا: مكانوش مستعملين هنا
+           أصلًا، والتلميحين نفسهم اتشالوا من شاشة التسليم. *@
         ["fh_StartDate"] = L("fh_StartDate"),
         ["fh_EndDate"] = L("fh_EndDate"),
         ["fh_CurrentName"] = L("fh_CurrentName"),
@@ -85,6 +85,8 @@
         ["fh_FlagBadNameTitle"] = L("fh_FlagBadNameTitle"),
         ["fh_FlagImported"] = L("fh_FlagImported"),
         ["fh_FlagImportedTitle"] = L("fh_FlagImportedTitle"),
+        ["fh_FlagAdDisabled"] = L("fh_FlagAdDisabled"),
+        ["fh_FlagAdDisabledTitle"] = L("fh_FlagAdDisabledTitle"),
         ["fh_FlagOuMismatch"] = L("fh_FlagOuMismatch"),
         ["fh_NoOccupant"] = L("fh_NoOccupant"),
         ["fh_NotAssignable"] = L("fh_NotAssignable"),
@@ -100,6 +102,9 @@
         ["fh_TabOccupants"] = L("fh_TabOccupants"),
         ["fh_TabChanges"] = L("fh_TabChanges"),
         ["fh_FullReport"] = L("fh_FullReport"),
+        ["close"] = L("close"),
+        ["fh_LastChange"] = L("fh_LastChange"),
+        ["fh_ViewFullLog"] = L("fh_ViewFullLog"),
         ["fh_NoAuditLog"] = L("fh_NoAuditLog"),
         ["fh_ChgField"] = L("fh_ChgField"),
         ["fh_ChgOld"] = L("fh_ChgOld"),
@@ -127,7 +132,41 @@
         ["fh_ReadOk"] = L("fh_ReadOk"),
         ["fh_ReadFail"] = L("fh_ReadFail"),
         ["fh_ProbedOn"] = L("fh_ProbedOn"),
+        ["fh_MoveInOk"] = L("fh_MoveInOk"),
+        ["fh_MoveInNo"] = L("fh_MoveInNo"),
+        ["fh_MoveAuthPartial"] = L("fh_MoveAuthPartial"),
+        ["fh_MoveAuthNo"] = L("fh_MoveAuthNo"),
+        ["fh_MoveAuthNoRdn"] = L("fh_MoveAuthNoRdn"),
         ["fh_AuthComplete"] = L("fh_AuthComplete"),
+        ["fh_SyncTitle"] = L("fh_SyncTitle"),
+        ["fh_AuthCompleteSub"] = L("fh_AuthCompleteSub"),
+        ["fh_AuthIncompleteSub"] = L("fh_AuthIncompleteSub"),
+        ["fh_MoveVerdictBad"] = L("fh_MoveVerdictBad"),
+        ["fh_MoveVerdictBadSub"] = L("fh_MoveVerdictBadSub"),
+        ["fh_ImportNoteShort"] = L("fh_ImportNoteShort"),
+        ["fh_ImpActNew"] = L("fh_ImpActNew"),
+        ["fh_ImpActChanged"] = L("fh_ImpActChanged"),
+        ["fh_ImpActUnchanged"] = L("fh_ImpActUnchanged"),
+        ["fh_ImpActIgnored"] = L("fh_ImpActIgnored"),
+        ["fh_ImpChgOuMoved"] = L("fh_ImpChgOuMoved"),
+        ["fh_ImpChgAdEnabled"] = L("fh_ImpChgAdEnabled"),
+        ["fh_ImpChgAdDisabled"] = L("fh_ImpChgAdDisabled"),
+        ["fh_ImpChgNameOk"] = L("fh_ImpChgNameOk"),
+        ["fh_ImpChgNameBad"] = L("fh_ImpChgNameBad"),
+        ["fh_ImpIgnNameMismatch"] = L("fh_ImpIgnNameMismatch"),
+        ["fh_HowItWorks"] = L("fh_HowItWorks"),
+        ["fh_AccRead"] = L("fh_AccRead"),
+        ["fh_AccWrite"] = L("fh_AccWrite"),
+        ["fh_AccMoveIn"] = L("fh_AccMoveIn"),
+        ["fh_AccRdn"] = L("fh_AccRdn"),
+        ["fh_AccDetails"] = L("fh_AccDetails"),
+        ["fh_AccNotSplit"] = L("fh_AccNotSplit"),
+        ["fh_AccAttrs"] = L("fh_AccAttrs"),
+        ["fh_OuTowersMale"] = L("fh_OuTowersMale"),
+        ["fh_OuTowersFemale"] = L("fh_OuTowersFemale"),
+        ["fh_OuVillas"] = L("fh_OuVillas"),
+        ["fh_OuVillasMale"] = L("fh_OuVillasMale"),
+        ["fh_OuVillasFemale"] = L("fh_OuVillasFemale"),
         ["fh_AuthIncomplete"] = L("fh_AuthIncomplete"),
         ["fh_ReadFailed"] = L("fh_ReadFailed"),
         ["fh_PartialWarn"] = L("fh_PartialWarn"),
@@ -166,7 +205,7 @@
            box-shadow:0 2px 8px rgba(16,70,49,.05);display:flex;flex-direction:column;gap:5px;
            cursor:pointer;transition:transform .18s,box-shadow .18s,border-color .18s}
   .fh-stat:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(16,70,49,.1)}
-  .fh-stat.is-on{border-color:var(--gold);box-shadow:0 0 0 3px rgba(219,161,2,.18)}
+  .fh-stat.is-on{border-color:var(--gold-ink);box-shadow:0 0 0 3px rgba(219,161,2,.18)}
   .fh-stat-num{font-size:25px;font-weight:900;color:var(--navy-dark);line-height:1}
   .fh-stat-label{font-size:11.5px;color:var(--gray-500);font-weight:500}
   .fh-stat.ok .fh-stat-num{color:var(--green)}
@@ -174,7 +213,11 @@
   .fh-stat.bad .fh-stat-num{color:var(--red)}
 
   .fh-flag{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;
-           padding:2px 8px;border-radius:20px;background:#fef0c7;color:#93370d;white-space:nowrap}
+           padding:2px 8px;border-radius:20px;background:var(--gold-pale);color:#93370d;white-space:nowrap}
+  /* ⚠️ رمادية لا كهرمانية: «مُعطَّل» حالة قائمة في الدليل قد تكون مقصودة،
+     مش مخالفة في بياناتنا زي «اسم مخالف» و«وحدة تنظيمية». لون التحذير
+     على حاجة متعمَّدة بيعلّم المستخدم يتجاهل اللون. */
+  .fh-flag-off{background:var(--gray-100);color:var(--gray-700)}
 
   /* الاستيراد */
   .fh-imp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-bottom:16px}
@@ -189,6 +232,82 @@
   .fh-attr{font-family:Consolas,monospace;font-size:10.5px;padding:2px 7px;border-radius:6px;direction:ltr}
   .fh-attr.y{background:var(--green-light);color:var(--green)}
   .fh-attr.n{background:var(--red-light);color:var(--red)}
+
+  /* شريط المزامنة — فوق القائمة، ويفتح في مكانه */
+  .fh-sync{background:var(--white);border:1px solid #c6ecd6;border-radius:16px;margin-bottom:20px;overflow:hidden;
+           box-shadow:0 2px 8px rgba(16,70,49,.05)}
+  .fh-sync-bar{padding:11px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;
+               flex-wrap:wrap;background:var(--tint)}
+  .fh-sync-ttl{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:700;color:var(--navy-dark)}
+  .fh-sync-btns{display:flex;gap:9px;align-items:center}
+  .fh-sync-x{background:none;border:none;font-size:21px;line-height:1;color:var(--gray-500);cursor:pointer;
+             padding:1px 8px;border-radius:8px;font-family:inherit}
+  .fh-sync-x:hover{background:var(--gray-100);color:var(--navy-dark)}
+  .fh-sync-x:focus-visible{outline:2px solid var(--gold-ink);outline-offset:2px}
+  .fh-sync-panel{padding:16px 18px;border-top:1px solid #c6ecd6}
+
+  /* نتيجة فحص الصلاحيات — خلاصة ثم جدول */
+  .fh-verdict{display:flex;align-items:center;gap:10px;padding:11px 15px;border-radius:12px;
+              font-size:14px;font-weight:700;margin-bottom:13px}
+  .fh-verdict.ok{background:var(--green-light);color:var(--green)}
+  .fh-verdict.bad{background:var(--red-light);color:var(--red)}
+  .fh-vic{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:13px;flex:none}
+  .fh-verdict.ok .fh-vic{background:var(--green)}
+  .fh-verdict.bad .fh-vic{background:var(--red)}
+  .fh-verdict span.fh-vsub{font-weight:400;font-size:12.5px;opacity:.92}
+  table.fh-acc{width:100%;border-collapse:collapse;font-size:12.5px}
+  table.fh-acc th{background:var(--gray-50);color:var(--gray-500);font-weight:600;padding:8px 11px;
+                  border-bottom:1px solid var(--gray-100);text-align:center;white-space:nowrap}
+  table.fh-acc th:first-child,table.fh-acc td:first-child{text-align:start}
+  /* اسم الوحدة يأخذ نصيبه من العرض؛ خانات العلامات لا تحتاج أكثر من قدرها */
+  table.fh-acc th:first-child{width:40%}
+  table.fh-acc td{padding:10px 11px;border-bottom:1px solid var(--gray-100);text-align:center;color:var(--gray-700)}
+  table.fh-acc tr:last-child td{border-bottom:none}
+  table.fh-acc tr.bad td{background:#fff8f7}
+  table.fh-acc td:first-child{font-weight:600;color:var(--navy-dark)}
+  .fh-acc-y{color:var(--green);font-weight:800}
+  .fh-acc-n{color:var(--red);font-weight:800}
+  .fh-acc-na{color:var(--gray-300)}
+  .fh-acc-cnt{font-variant-numeric:tabular-nums}
+  /* الاسم التقني للوحدة في الدليل — بجانب اسمها المقروء */
+  .fh-ouname{font-family:Consolas,monospace;font-size:10.5px;background:var(--gray-100);color:var(--gray-700);
+             padding:1px 7px;border-radius:6px;direction:ltr;display:inline-block;margin-inline-start:6px}
+  .fh-det-btn{margin-top:11px;font-family:inherit;font-size:11.5px;color:var(--gray-500);cursor:pointer;
+              background:var(--gray-50);border:1px solid var(--gray-200);border-radius:9px;padding:5px 12px}
+  .fh-det-btn:hover{border-color:var(--navy);color:var(--navy)}
+  .fh-det-btn:focus-visible{outline:2px solid var(--gold-ink);outline-offset:2px}
+  .fh-det-box{margin-top:10px;background:var(--gray-50);border:1px solid var(--gray-100);border-radius:11px;
+              padding:11px 14px;font-size:11.5px;color:var(--gray-700);line-height:2}
+  .fh-det-box + .fh-det-box{margin-top:7px}
+  /* الفقرة الشارحة — سطر واحد يفتح عند الطلب */
+  .fh-shortnote{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--gray-500);
+                margin-bottom:12px;flex-wrap:wrap}
+  .fh-shortnote button{font-family:inherit;font-size:11.5px;font-weight:700;color:var(--navy);background:none;
+                       border:none;border-bottom:1px dashed var(--navy);cursor:pointer;padding:0}
+
+  /* ---------- معاينة الاستيراد: شرائح تفلتر وصفوف ملوّنة ---------- */
+  /* ⚠️ الشريحة زرّ لا شارة: هي بتفلتر الجدول، فلازم تبان إنها بتتضغط -
+     مؤشّر اليد وحدّ بيتلوّن عند المرور. الشكل الأساسي زي .badge-sync
+     عشان ما تبقاش عنصرًا جديدًا في الشاشة. */
+  .fh-pvchips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+  .fh-pvchip{font-family:inherit;font-size:11.5px;font-weight:600;padding:4px 11px;border-radius:999px;
+    background:var(--gray-50);color:var(--gray-700);border:1.5px solid var(--gray-200);cursor:pointer;transition:all .18s}
+  /* ⚠️ :not(.is-on) شرط لا زخرفة: قاعدة الـ hover أخصّ من .is-on (صنف +
+     محدِّدين زائفين مقابل صنفين)، فكانت بتغلب عليها ونصّ الشريحة المختارة
+     يبقى بلون خلفيتها - يعني الشريحة اللي إنت فالتر بيها تختفي كتابتها
+     أول ما تحطّ الماوس عليها. */
+  .fh-pvchip:hover:not(:disabled):not(.is-on){border-color:var(--navy);color:var(--navy)}
+  .fh-pvchip.is-on{background:var(--navy);border-color:var(--navy);color:var(--white)}
+  .fh-pvchip.is-on:hover{background:var(--navy-light);border-color:var(--navy-light)}
+  /* العدّاد صفر: يبان إنه رقم لا زرّ */
+  .fh-pvchip.is-dead{opacity:.55;cursor:default}
+  .fh-pvchip:focus-visible{outline:2px solid var(--gold-ink);outline-offset:2px}
+
+  /* ⚠️ خلفية خفيفة لا نصّ ملوّن: النصّ في الصف ده بيانات (اسم ساكن، حساب)،
+     وتلوينه بيوحي إن البيانات نفسها فيها حاجة. الخلفية بتوسم **الصف**. */
+  tr.fh-pv-new td{background:#f0fdf4}
+  tr.fh-pv-chg td{background:#fffbeb}
+  tr.fh-pv-ign td{opacity:.6}
 
   /* سجل الوحدة */
   .tl{position:relative;padding-inline-start:26px}
@@ -221,27 +340,17 @@
   .fh-tab-rep{margin-inline-start:auto;align-self:center;background:var(--navy);color:#fff;font-size:12px;
     font-weight:700;padding:6px 13px;border-radius:8px;text-decoration:none;margin-bottom:6px}
   .fh-tab-rep:hover{background:var(--navy-dark);color:#fff}
-  .ch-item{border:1px solid var(--gray-100);border-radius:12px;padding:12px 15px;margin-bottom:12px;background:var(--white)}
-  .ch-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:9px}
-  .ch-act{font-size:13.5px;font-weight:700;color:var(--navy-dark)}
-  .ch-meta{font-size:11.5px;color:var(--gray-500)}
-  .ch-tbl{width:100%;border-collapse:collapse;font-size:12px}
-  .ch-tbl th{padding:5px 8px;text-align:start;font-weight:600;background:var(--gray-50);color:var(--gray-700);font-size:11.5px}
-  .ch-tbl td{padding:5px 8px;border-top:1px solid var(--gray-100);vertical-align:top}
-  .ch-old{color:var(--red);text-decoration:line-through}
-  .ch-new{color:var(--green);font-weight:600}
+  /* ⚠️ .ch-item و.ch-top و.ch-act و.ch-meta و.fh-modal* اتشالوا من هنا
+     لـ css/components.css: بقوا مستعملين في شاشة «تغيير بيانات ساكن» كمان،
+     ونسختين لنفس البند كانوا هيفترقوا عند أول تعديل.
+     وجدول التغييرات وقيمه (.chg-tbl و.chg-old و.chg-new) كانوا اتنقلوا قبل
+     كده لنفس السبب — نفس المكوّن اللي بيستخدمه تفاصيل الطلب وسجل العمليات.
+     واللون الأحمر للقيمة القديمة اتشال لأن الأحمر معناه «خطأ» في النظام
+     وده تعديل صحيح مش غلط. */
   .tl-meta{font-size:12px;color:var(--gray-500);line-height:1.95}
   .tl-meta code{font-family:Consolas,monospace;background:var(--gray-50);padding:1px 6px;
                 border-radius:5px;direction:ltr;display:inline-block}
 
-  .fh-modal{background:var(--white);border-radius:16px;width:760px;max-width:94vw;max-height:88vh;
-            display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden}
-  .fh-modal-head{padding:16px 20px;background:#f3fcf6;border-bottom:1px solid #c6ecd6;
-                 display:flex;align-items:center;justify-content:space-between;gap:12px}
-  .fh-modal-body{padding:20px;overflow-y:auto;scrollbar-width:thin}
-  .fh-x{background:none;border:none;cursor:pointer;color:var(--gray-500);font-size:22px;line-height:1;padding:0 4px}
-
-  @@media(max-width:900px){ .fh-modal{width:96vw} }
 </style>
 
 <div class="page-header">
@@ -251,6 +360,35 @@
 
 <div class="fh-stats" id="fhStats"></div>
 <div id="fhMsg"></div>
+
+@if (canImport)
+{
+@* ⚠️ فوق القائمة لا تحتها: الأداتان كانتا في ترويسة بطاقة أسفل جدول يتجاوز
+   المئتي صفّ وشريط ترقيم، فمن يقصدهما لا يجدهما. والنتيجة تُفتح في هذا
+   الموضع نفسه لا في أسفل الصفحة، حتى لا تعقب كلَّ ضغطة رحلةُ تمرير. *@
+<div class="fh-sync" id="fhSyncBox">
+  <div class="fh-sync-bar">
+    <div class="fh-sync-ttl">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/>
+        <path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
+      </svg>
+      <span>@SharedLocalizer["fh_SyncTitle"]</span>
+    </div>
+    <div class="fh-sync-btns">
+      <button class="btn btn-cancel" id="fhCheckBtn">@SharedLocalizer["fh_CheckAccess"]</button>
+      <button class="btn btn-primary" id="fhPreviewBtn">@SharedLocalizer["fh_PreviewImport"]</button>
+      <button type="button" class="fh-sync-x" id="fhSyncClose" hidden
+              aria-label="@SharedLocalizer["close"]"><span aria-hidden="true">&times;</span></button>
+    </div>
+  </div>
+  <div class="fh-sync-panel" id="fhSyncPanel" hidden>
+    <div id="fhAccess"></div>
+    <div id="fhPreview"></div>
+  </div>
+</div>
+}
 
 <div class="card" style="margin-bottom:20px">
   <div class="card-header">
@@ -281,13 +419,15 @@
     <table id="fhTable">
       <thead>
         <tr>
-          <th>@SharedLocalizer["fh_ColUnit"]</th>
-          <th>@SharedLocalizer["fh_ColAccount"]</th>
-          <th>@SharedLocalizer["fh_ColOccupant"]</th>
-          <th>@SharedLocalizer["fh_ColNationalId"]</th>
+          @* ⚠️ «الجوال» و«إجراءات» بلا data-sort: الجوال بيتقرا مش بيتبحث
+             بيه ترتيبًا، و«إجراءات» مش بيانات أصلًا. *@
+          <th data-sort="unit">@SharedLocalizer["fh_ColUnit"]</th>
+          <th data-sort="ad_account">@SharedLocalizer["fh_ColAccount"]</th>
+          <th data-sort="occupant">@SharedLocalizer["fh_ColOccupant"]</th>
+          <th data-sort="national_id">@SharedLocalizer["fh_ColNationalId"]</th>
           <th>@SharedLocalizer["fh_ColMobile"]</th>
-          <th>@SharedLocalizer["fh_ColSince"]</th>
-          <th>@SharedLocalizer["fh_ColStatus"]</th>
+          <th data-sort="since">@SharedLocalizer["fh_ColSince"]</th>
+          <th data-sort="status">@SharedLocalizer["fh_ColStatus"]</th>
           <th>@SharedLocalizer["fh_ColActions"]</th>
         </tr>
       </thead>
@@ -299,25 +439,6 @@
   <div id="fhPager" class="table-pager"></div>
 </div>
 
-@if (canImport)
-{
-<div class="card">
-  <div class="card-header">
-    <div class="card-title">@SharedLocalizer["fh_ImportTitle"]</div>
-    <div style="display:flex;gap:10px">
-      <button class="btn btn-cancel" id="fhCheckBtn">@SharedLocalizer["fh_CheckAccess"]</button>
-      <button class="btn btn-primary" id="fhPreviewBtn">@SharedLocalizer["fh_PreviewImport"]</button>
-    </div>
-  </div>
-  <div class="card-body">
-    <div class="fh-note">@Html.Raw(SharedLocalizer["fh_ImportNote"].Value)
-    </div>
-
-    <div id="fhAccess"></div>
-    <div id="fhPreview"></div>
-  </div>
-</div>
-}
 
 
 <!-- سجل الوحدة -->
@@ -326,9 +447,9 @@
     <div class="fh-modal-head">
       <div>
         <div class="card-title" id="fhHistTitle">@SharedLocalizer["fh_HistoryTitle"]</div>
-        <div style="font-size:12px;color:var(--gray-500);margin-top:2px" id="fhHistSub"></div>
+        <div class="fh-modal-sub" id="fhHistSub"></div>
       </div>
-      <button class="fh-x" onclick="fhCloseHistory()" aria-label="إغلاق">&times;</button>
+      <button class="modal-close" onclick="fhCloseHistory()" aria-label="@SharedLocalizer["close"]"><span aria-hidden="true">&times;</span></button>
     </div>
     @* ⚠️ تبويبان لا شاشتان: السكّان يجيب «من يسكن ومنذ متى»، والتعديلات تجيب
        «من غيّر وماذا كانت القيمة قبل». الأول كان موجودًا وحده، فبقي الثاني
@@ -356,5 +477,7 @@
     //    الحماية الفعلية على نقاط الـ API نفسها: إخفاء زر لا يمنع طلبًا.
     window.FH_CAN = { manage: @canManage.ToString().ToLowerInvariant(), sync: @canSync.ToString().ToLowerInvariant() };
   </script>
+  @* لازم قبل faculty-housing-page.js — renderChanges بتنادي NuhFacultyLog *@
+  <script src="~/js/faculty-audit-log.js" asp-append-version="true"></script>
   <script src="~/js/faculty-housing-page.js" asp-append-version="true"></script>
 }

@@ -11,15 +11,30 @@
 //
 //  كلها تُرجع Promise، فالاستدعاء يبقى بنفس بساطة القديم:
 //     if (!await NuhDialog.confirm({ message: '...' })) return;
+//
+//  opts.rows = [{label, value}] — صندوق بيانات المراجعة تحت النصّ.
+//
+//  ⚠️ نصوص الأزرار والعناوين من Resources/*.resx زي أي نصّ تاني في النظام،
+//     مش مكتوبة هنا. الشاشة اللي بتفتح الحوار مابتبعتش labels إلا لو عايزة
+//     كلمة مخصوصة («حذف» بدل «تأكيد») - والافتراضي بيترجم لوحده.
 // ==========================================================================
 var NuhDialog = (function () {
 
   var OVERLAY_ID = 'nuhDialogOverlay';
 
-  function esc(v) {
-    return String(v == null ? '' : v)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  // تهريب HTML — التعريف الوحيد في /js/esc.js
+  function esc(v) { return escHtml(v); }
+
+  function lang() {
+    var root = document.getElementById('html-root') || document.documentElement;
+    return (root && root.getAttribute('lang') === 'en') ? 'en' : 'ar';
+  }
+
+  // ⚠️ الحوار متحمَّل من اللياوت لكل الشاشات، وفي شاشة أو اتنين ممكن i18n.js
+  //    ما يكونش اتحمّل. الفولباك هنا شبكة أمان مش مصدر تاني: المفتاح هو الأصل.
+  function dt(key, ar, en) {
+    if (typeof tf === 'function') return tf(key, ar, en);
+    return lang() === 'en' ? en : ar;
   }
 
   function ensureStyles() {
@@ -33,15 +48,17 @@ var NuhDialog = (function () {
       '#' + OVERLAY_ID + '.show{display:flex}' +
       '@keyframes nuhDlgFade{from{opacity:0}to{opacity:1}}' +
       '@keyframes nuhDlgRise{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}' +
+      /* ⚠️ الاتجاه من سمة dir على العنصر لا من CSS متيّبة: النظام بيشتغل
+         عربي وإنجليزي، وحوار مقلوب في الإنجليزي بيبان كأنه حاجة تانية. */
       '.nuh-dlg{background:#fff;border-radius:16px;max-width:440px;width:100%;padding:26px;' +
-        'box-shadow:0 24px 64px rgba(16,70,49,.28);direction:rtl;text-align:center;' +
+        'box-shadow:0 24px 64px rgba(16,70,49,.28);text-align:center;' +
         'animation:nuhDlgRise .18s ease}' +
       '.nuh-dlg .ic{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;' +
         'justify-content:center;margin:0 auto 14px}' +
       '.nuh-dlg .ic.ask{background:#eff4ff;color:#166a45}' +
       '.nuh-dlg .ic.danger{background:#fef3f2;color:#b42318}' +
       '.nuh-dlg .ic.ok{background:#dff6e7;color:#067647}' +
-      '.nuh-dlg .ic.warn{background:#fffaeb;color:#7a5c0b}' +
+      '.nuh-dlg .ic.warn{background:#fffaeb;color:var(--gold-dark)}' +
       '.nuh-dlg h3{font-size:17px;font-weight:800;color:#104631;margin:0 0 8px}' +
       '.nuh-dlg p{font-size:13.5px;color:#333741;line-height:2;margin:0 0 18px;' +
         'white-space:pre-wrap;word-break:break-word}' +
@@ -49,6 +66,15 @@ var NuhDialog = (function () {
         'padding:0 14px;margin-bottom:16px;font-family:inherit;font-size:14px;outline:none;' +
         'color:#104631;background:#f5f5f6}' +
       '.nuh-dlg input:focus{border-color:#166a45;background:#fff;box-shadow:0 0 0 3px rgba(16,70,49,.08)}' +
+      /* ⚠️ صندوق البيانات: القيم اللي المستخدم بيراجعها قبل ما يأكّد (اسم
+         المستخدم، السكن القديم والجديد…). كانت الشاشات بتكتبها سطورًا بخطوط
+         فاصلة جوّه نصّ الحوار، فبتتقري كأنها جزء من الكلام. الصندوق بيفرزها
+         بصريًا: النصّ بيقول «هيحصل إيه» والصندوق بيقول «على إيه». */
+      '.nuh-dlg .rows{text-align:start;background:#f9fafb;border:1px solid #dcdfe4;' +
+        'border-radius:10px;padding:10px 14px;margin:0 0 16px}' +
+      '.nuh-dlg .rows > div{display:flex;gap:8px;font-size:13px;padding:3px 0}' +
+      '.nuh-dlg .rows b{color:#85888e;font-weight:600;flex-shrink:0}' +
+      '.nuh-dlg .rows span{color:#104631;font-weight:700;word-break:break-word}' +
       '.nuh-dlg .btns{display:flex;gap:10px}' +
       '.nuh-dlg button{flex:1;padding:12px;border-radius:10px;border:none;cursor:pointer;' +
         'font-family:inherit;font-size:14px;font-weight:700;transition:all .18s}' +
@@ -59,6 +85,18 @@ var NuhDialog = (function () {
       '.nuh-dlg .b-ghost{background:#f5f5f6;color:#333741;border:1.5px solid #dcdfe4}' +
       '.nuh-dlg .b-ghost:hover{background:#eceded}';
     document.head.appendChild(css);
+  }
+
+  // rows: [{ label, value }] — الصفوف اللي قيمتها فاضية بتتشال، فالشاشة
+  // مابتحتاجش تخفي صفًّا بإيدها زي ما كانت بتعمل مع الماركب المبني بالإيد.
+  function rowsHtml(rows) {
+    if (!rows || !rows.length) return '';
+    var body = rows.filter(function (r) {
+      return r && r.label && r.value != null && String(r.value).trim() !== '' && String(r.value).trim() !== '--';
+    }).map(function (r) {
+      return '<div><b>' + esc(r.label) + '</b><span>' + esc(r.value) + '</span></div>';
+    }).join('');
+    return body ? '<div class="rows">' + body + '</div>' : '';
   }
 
   function close(overlay) {
@@ -86,20 +124,26 @@ var NuhDialog = (function () {
       var hasCancel = opts.cancelLabel !== null;
       var confirmClass = kind === 'danger' ? 'b-danger' : 'b-primary';
 
+      // ⚠️ اسم الحوار للقارئ الصوتي من العنوان والنصّ الفعليين: role="dialog"
+      //    من غير اسم بيتقري «مربع حوار» وبس.
       overlay.innerHTML =
-        '<div class="nuh-dlg" role="dialog" aria-modal="true">' +
+        '<div class="nuh-dlg" role="dialog" aria-modal="true" dir="' + (lang() === 'en' ? 'ltr' : 'rtl') + '"' +
+          (opts.title ? ' aria-labelledby="nuhDlgTitle"' : '') +
+          (opts.message ? ' aria-describedby="nuhDlgMsg"' : '') + '>' +
           '<div class="ic ' + kind + '"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" ' +
-            'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+            'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ' +
+            'aria-hidden="true" focusable="false">' +
             (icons[kind] || icons.ask) + '</svg></div>' +
-          (opts.title ? '<h3>' + esc(opts.title) + '</h3>' : '') +
-          (opts.message ? '<p>' + esc(opts.message) + '</p>' : '') +
+          (opts.title ? '<h3 id="nuhDlgTitle">' + esc(opts.title) + '</h3>' : '') +
+          (opts.message ? '<p id="nuhDlgMsg">' + esc(opts.message) + '</p>' : '') +
+          rowsHtml(opts.rows) +
           (opts.input ? '<input type="' + esc(opts.inputType || 'text') + '" id="nuhDlgInput" ' +
                         'placeholder="' + esc(opts.placeholder || '') + '">' : '') +
           '<div class="btns">' +
             '<button type="button" class="' + confirmClass + '" id="nuhDlgOk">' +
-              esc(opts.confirmLabel || 'تأكيد') + '</button>' +
+              esc(opts.confirmLabel || dt('dlg_confirm', 'تأكيد', 'Confirm')) + '</button>' +
             (hasCancel ? '<button type="button" class="b-ghost" id="nuhDlgCancel">' +
-              esc(opts.cancelLabel || 'إلغاء') + '</button>' : '') +
+              esc(opts.cancelLabel || dt('dlg_cancel', 'إلغاء', 'Cancel')) + '</button>' : '') +
           '</div>' +
         '</div>';
 
@@ -108,9 +152,15 @@ var NuhDialog = (function () {
       var input = document.getElementById('nuhDlgInput');
       var okBtn = document.getElementById('nuhDlgOk');
 
+      // ⚠️ العنصر اللي كان عليه التركيز قبل الفتح بيرجع له بعد الإغلاق:
+      //    من غير كده التركيز بيرجع لأول الصفحة وبيضيع مكان الصف اللي كان
+      //    الموظف واقف عليه في الجدول.
+      var prevFocus = document.activeElement;
+
       function done(v) {
         document.removeEventListener('keydown', onKey);
         close(overlay);
+        try { if (prevFocus && prevFocus.focus) prevFocus.focus(); } catch (e) { }
         resolve(v);
       }
       function accept() { done(opts.input ? (input ? input.value : '') : true); }
@@ -144,10 +194,12 @@ var NuhDialog = (function () {
       o = typeof o === 'string' ? { message: o } : (o || {});
       return open({
         kind: o.danger ? 'danger' : 'ask',
-        title: o.title || (o.danger ? 'تأكيد الإجراء' : 'تأكيد'),
+        title: o.title || (o.danger ? dt('dlg_titleDanger', 'تأكيد الإجراء', 'Confirm action')
+                                    : dt('dlg_titleConfirm', 'تأكيد', 'Confirm')),
         message: o.message,
-        confirmLabel: o.confirmLabel || 'تأكيد',
-        cancelLabel: o.cancelLabel || 'إلغاء'
+        rows: o.rows,
+        confirmLabel: o.confirmLabel || dt('dlg_confirm', 'تأكيد', 'Confirm'),
+        cancelLabel: o.cancelLabel || dt('dlg_cancel', 'إلغاء', 'Cancel')
       });
     },
 
@@ -158,19 +210,19 @@ var NuhDialog = (function () {
         kind: o.kind || 'warn',
         title: o.title || '',
         message: o.message,
-        confirmLabel: o.confirmLabel || 'حسنًا',
+        confirmLabel: o.confirmLabel || dt('dlg_ok', 'حسنًا', 'OK'),
         cancelLabel: null
       });
     },
 
     success: function (msg, title) {
-      return open({ kind: 'ok', title: title || 'تمت العملية بنجاح', message: msg,
-                    confirmLabel: 'حسنًا', cancelLabel: null });
+      return open({ kind: 'ok', title: title || dt('dlg_titleSuccess', 'تمت العملية بنجاح', 'Done'),
+                    message: msg, confirmLabel: dt('dlg_ok', 'حسنًا', 'OK'), cancelLabel: null });
     },
 
     error: function (msg, title) {
-      return open({ kind: 'danger', title: title || 'تعذّر إتمام العملية', message: msg,
-                    confirmLabel: 'حسنًا', cancelLabel: null });
+      return open({ kind: 'danger', title: title || dt('dlg_titleError', 'تعذّر إتمام العملية', 'Action failed'),
+                    message: msg, confirmLabel: dt('dlg_ok', 'حسنًا', 'OK'), cancelLabel: null });
     },
 
     // بديل prompt() — يرجّع النص أو null
@@ -179,7 +231,8 @@ var NuhDialog = (function () {
       return open({
         kind: 'ask', title: o.title || '', message: o.message,
         input: true, inputType: o.inputType || 'text', placeholder: o.placeholder || '',
-        confirmLabel: o.confirmLabel || 'حفظ', cancelLabel: o.cancelLabel || 'إلغاء'
+        confirmLabel: o.confirmLabel || dt('dlg_save', 'حفظ', 'Save'),
+        cancelLabel: o.cancelLabel || dt('dlg_cancel', 'إلغاء', 'Cancel')
       });
     }
   };

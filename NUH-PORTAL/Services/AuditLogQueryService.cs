@@ -11,6 +11,7 @@ using NUH_PORTAL.Data.Interfaces;
 using NUH_PORTAL.DTOs.AuditLogs;
 using NUH_PORTAL.DTOs.Common;
 using NUH_PORTAL.Models;
+using NUH_PORTAL.Models.Enums;      // FacultyUnitType في شرط البحث بأسماء الوحدات
 using NUH_PORTAL.Repositories.Interfaces;
 using NUH_PORTAL.Services.Interfaces;
 
@@ -33,25 +34,15 @@ namespace NUH_PORTAL.Services
         //    يظهر إلا حين يقارن أحدهم الورقة بالشاشة.
         private readonly IStringLocalizer<SharedResource> _t;
 
-        private static readonly string[] StudentActions = { "create_student", "update_student", "delete_student", "checkout_student" };
-        private static readonly string[] RequestActions =
-        {
-            "create_request", "approve_request", "reject_request",
-            "housing_approve_request", "housing_reject_request",
-            "submit_cyber_review",
-            "cyber_approve_request", "cyber_reject_request"
-        };
-        private static readonly string[] LoginActions = { "login", "login_failed", "logout", "login_admin_fallback", "login_admin_fallback_failed" };
+        // ⚠️ مجموعات الإجراءات اتنقلت لـ Core/AuditActionGroups: الواجهة محتاجة
+        //    تقراها كمان، وكانت هتتكتب نسخة تانية في الجافاسكريبت. والأهم إن
+        //    نسخة منها هنا كانت اتفارقت فعلًا (رسم توزيع الطلاب كان ناسي
+        //    checkout_student) — التفاصيل في تعليق الملف الجديد.
+        private static readonly string[] StudentActions = AuditActionGroups.Student;
+        private static readonly string[] RequestActions = AuditActionGroups.Request;
+        private static readonly string[] LoginActions   = AuditActionGroups.Login;
 
-        // ⚠️ سكن أعضاء هيئة التدريس: بياناته تُكتب في الدليل النشط، وكان سجله
-        //    بلا فلتر - فالبحث عن «من عدّل هذه الوحدة» يعني تصفّح السجل كله
-        //    صفحةً صفحة. الإجراءات هنا هي التي تكتبها FacultyHousingService.
-        private static readonly string[] FacultyActions =
-        {
-            "faculty_occupant_updated", "faculty_handover",
-            "faculty_service_started", "faculty_service_stopped",
-            "faculty_ad_push", "faculty_ad_push_failed", "faculty_import_applied"
-        };
+        private static readonly string[] FacultyActions = AuditActionGroups.Faculty;
 
         private readonly UserManager<User> _userManager;
         private readonly RoleManager<Role> _roleManager;
@@ -92,6 +83,141 @@ namespace NUH_PORTAL.Services
             if (string.IsNullOrWhiteSpace(name)) return "";
             var v = _t[prefix + name.ToLowerInvariant()];
             return (v.ResourceNotFound || string.IsNullOrEmpty(v.Value)) ? name : v.Value;
+        }
+
+        // ============================================================================
+        //  ترجمة (جدول + رقم) إلى اسم يقرأه بشر.
+        //
+        //  ⚠️ عمود «الهدف» كان بيعرض رقم الصف في قاعدة البيانات: «FacultyUnits
+        //     / 53». الرقم ده مالوش أي معنى لأي حد بره فريق التطوير، وتقرير
+        //     المساءلة كان بيتقري بأرقام لازم تترجمها بإيدك واحدة واحدة.
+        //
+        //  ⚠️ والترجمة كانت موجودة فعلًا - بس في التصدير لإكسل وحده، كدالة
+        //     محلية جوّه ميثود التصدير وبتعرف وحدات السكن بس. يعني الشاشة
+        //     بتقول رقم والملف بيقول اسم لنفس السطر. بقت مكان واحد بتخدم
+        //     الاتنين.
+        //
+        //  ⚠️ استعلام واحد لكل جدول لا واحد لكل صف: بنلمّ الأرقام الأول
+        //     وبنجيب أسماءها دفعة واحدة. من غير كده صفحة ٥٠ سطر = ٥٠ استعلام.
+        //
+        //  ⚠️ واللي مالوش اسم بيفضل «الجدول #الرقم» لا بيفضى: سطر بلا هدف
+        //     بيخلّي اللي بيراجع يفتكر إن العملية مالهاش محل، وهي ليها.
+        // ============================================================================
+        // ⚠️ بتاخد أزواج (جدول، رقم) وبترجّع خريطة، مش بتعدّل نوع بعينه:
+        //    الشاشة بترجّع AuditLogItemDto والتصدير لإكسل بيرجّع نوعًا مجهولًا
+        //    (anonymous) بشكل مختلف. دالة مربوطة بنوع واحد كانت هتخدم واحد
+        //    منهم بس - وde بالظبط اللي كان بيخلّي الترجمة في التصدير وحده.
+        private async Task<TargetNames> BuildTargetNamesAsync(IEnumerable<(string? Table, int Id)> targets)
+        {
+            var list = targets.Distinct().ToList();
+
+            List<int> Ids(string table) => list
+                .Where(x => x.Table == table && x.Id > 0)
+                .Select(x => x.Id).Distinct().ToList();
+
+            // ---- وحدات سكن أعضاء هيئة التدريس (مباشرةً أو عبر فترة إشغال) ----
+            var unitIds = Ids("FacultyUnits");
+            var occIds = Ids("FacultyOccupancies");
+
+            var occToUnit = occIds.Count == 0
+                ? new Dictionary<int, int>()
+                : await _db.FacultyOccupancies.AsNoTracking()
+                    .Where(o => occIds.Contains(o.Id))
+                    .ToDictionaryAsync(o => o.Id, o => o.UnitId);
+
+            var allUnitIds = unitIds.Concat(occToUnit.Values).Distinct().ToList();
+            var unitRows = allUnitIds.Count == 0
+                ? new List<FacultyUnit>()
+                : await _db.FacultyUnits.AsNoTracking()
+                    .Where(u => allUnitIds.Contains(u.Id))
+                    .ToListAsync();
+            var unitNames = unitRows.ToDictionary(u => u.Id, u => u.DisplayNameAr);
+            // حساب الدومين جنب الاسم — هو المعرّف اللي بيتبحث بيه فعلًا
+            var unitAccounts = unitRows.ToDictionary(u => u.Id, u => u.AdAccount);
+
+            // ⚠️ الأعمدة بتتجاب الأول والاسم بيتركّب في الذاكرة، مش جوّه
+            //    ToDictionaryAsync. السبب إن تركيب زي («#» + الرقم) أو Trim()
+            //    على تجميعة نصوص لازم يتترجم لـ SQL - وترجمة زي دي بتفشل وقت
+            //    التشغيل لا وقت البناء. نفس الأسلوب اللي كان متّبع مع أسماء
+            //    الوحدات فوق (DisplayNameAr خاصية محسوبة مش عمود أصلًا).
+            // ---- الطلبات: رقم الطلب هو اسمه ----
+            var reqIds = Ids("Requests");
+            var reqNames = reqIds.Count == 0
+                ? new Dictionary<int, string>()
+                : (await _db.Requests.AsNoTracking()
+                    .Where(r => reqIds.Contains(r.Id))
+                    .Select(r => new { r.Id, r.RequestNumber })
+                    .ToListAsync())
+                    .ToDictionary(r => r.Id, r => r.RequestNumber ?? ("#" + r.Id));
+
+            // ---- الطلاب: الاسم والرقم الجامعي ----
+            var stuIds = Ids("Students");
+            var stuNames = stuIds.Count == 0
+                ? new Dictionary<int, string>()
+                : (await _db.Students.AsNoTracking()
+                    .Where(s => stuIds.Contains(s.Id))
+                    .Select(s => new { s.Id, s.full_name, s.student_id })
+                    .ToListAsync())
+                    .ToDictionary(s => s.Id,
+                        s => ((s.full_name ?? "") + " " + (s.student_id ?? "")).Trim());
+
+            // ---- المستخدمون ----
+            var usrIds = Ids("Users");
+            var usrNames = usrIds.Count == 0
+                ? new Dictionary<int, string>()
+                : (await _db.Users.AsNoTracking()
+                    .Where(u => usrIds.Contains(u.Id))
+                    .Select(u => new { u.Id, u.full_name, u.UserName })
+                    .ToListAsync())
+                    .ToDictionary(u => u.Id, u => u.full_name ?? u.UserName ?? ("#" + u.Id));
+
+            return new TargetNames(unitNames, unitAccounts, occToUnit, reqNames, stuNames, usrNames);
+        }
+
+        // خريطة الأسماء المحلولة — الاستعلامات اتعملت مرة واحدة والبحث هنا في الذاكرة.
+        private sealed class TargetNames
+        {
+            private readonly Dictionary<int, string> _units, _accts, _reqs, _stus, _usrs;
+            private readonly Dictionary<int, int> _occToUnit;
+
+            public TargetNames(Dictionary<int, string> units, Dictionary<int, string> accts,
+                Dictionary<int, int> occToUnit,
+                Dictionary<int, string> reqs, Dictionary<int, string> stus, Dictionary<int, string> usrs)
+            {
+                _units = units; _accts = accts; _occToUnit = occToUnit;
+                _reqs = reqs; _stus = stus; _usrs = usrs;
+            }
+
+            // المعرّف التقني: حساب الدومين لوحدات السكن. غيرها مالهاش معرّف
+            // تاني يستاهل العرض - رقم الطلب هو اسمه أصلًا.
+            public string? SubOf(string? table, int id)
+            {
+                string? acct = null;
+                if (table == "FacultyUnits") _accts.TryGetValue(id, out acct);
+                else if (table == "FacultyOccupancies" && _occToUnit.TryGetValue(id, out var uid))
+                    _accts.TryGetValue(uid, out acct);
+                return string.IsNullOrWhiteSpace(acct) ? null : acct;
+            }
+
+            public string? Of(string? table, int id)
+            {
+                string? name = null;
+
+                if (table == "FacultyUnits") _units.TryGetValue(id, out name);
+                else if (table == "FacultyOccupancies" && _occToUnit.TryGetValue(id, out var uid))
+                    _units.TryGetValue(uid, out name);
+                else if (table == "Requests") _reqs.TryGetValue(id, out name);
+                else if (table == "Students") _stus.TryGetValue(id, out name);
+                else if (table == "Users") _usrs.TryGetValue(id, out name);
+
+                if (!string.IsNullOrWhiteSpace(name)) return name;
+
+                // ⚠️ العملية اللي مالهاش هدف أصلًا (تسجيل دخول مثلًا) بترجّع null
+                //    لا «0». الصفر ده رقم صف مش موجود، وكتابته بتخلّي اللي
+                //    بيراجع يدوّر على هدف مالوش وجود.
+                if (string.IsNullOrEmpty(table)) return id > 0 ? id.ToString() : null;
+                return table + " #" + id;
+            }
         }
 
         private string ActionLabel(string? a) => Label("aud_action_", a);
@@ -280,6 +406,15 @@ namespace NUH_PORTAL.Services
                 .AsSplitQuery()
                 .ToListAsync();
 
+            // ⚠️ بعد التقسيم لصفحات لا قبله: الأسماء بتتحلّ لصفوف الصفحة
+            //    المعروضة بس (٥٠ صف)، مش لكل السجل.
+            var names = await BuildTargetNamesAsync(logs.Select(l => (l.target_table, l.target_id)));
+            foreach (var l in logs)
+            {
+                l.target_name = names.Of(l.target_table, l.target_id);
+                l.target_sub = names.SubOf(l.target_table, l.target_id);
+            }
+
             return new AuditLogsPageDto
             {
                 Data = logs,
@@ -297,7 +432,7 @@ namespace NUH_PORTAL.Services
             };
         }
 
-        public async Task<FileResultDto> ExportLogsAsync(AuditLogFilter filter)
+        public async Task<FileResultDto> ExportLogsAsync(AuditLogFilter filter, string? calendar = null)
         {
             var filteredQuery = await ApplyAllFiltersAsync((await ScopedAsync()), filter);
 
@@ -329,41 +464,13 @@ namespace NUH_PORTAL.Services
             var truncated = logs.Count > MaxRows;
             if (truncated) logs = logs.Take(MaxRows).ToList();
 
-            // ====================================================================
-            //  رقم السجل → اسم مفهوم.
-            //
-            //  ⚠️ عمود «Target ID» كان يطبع الرقم ٢٠ ولا شيء غيره. من يقرأ تقرير
-            //     مساءلة لا يعرف أي وحدة هي، ولا سبيل له إلى معرفتها من الورقة.
-            //     نترجم سجلات سكن أعضاء هيئة التدريس إلى اسم الوحدة «برج 2 - شقة 4».
-            //     وما عداها يبقى «الجدول #الرقم» - أصدق من رقم عارٍ.
-            // ====================================================================
-            var unitIds = logs.Where(l => l.target_table == "FacultyUnits" && l.target_id > 0)
-                              .Select(l => l.target_id).Distinct().ToList();
-            var occIds = logs.Where(l => l.target_table == "FacultyOccupancies")
-                             .Select(l => l.target_id).Distinct().ToList();
-
-            var occToUnit = occIds.Count == 0
-                ? new Dictionary<int, int>()
-                : await _db.FacultyOccupancies.AsNoTracking()
-                    .Where(o => occIds.Contains(o.Id))
-                    .ToDictionaryAsync(o => o.Id, o => o.UnitId);
-
-            var allUnitIds = unitIds.Concat(occToUnit.Values).Distinct().ToList();
-            var unitNames = allUnitIds.Count == 0
-                ? new Dictionary<int, string>()
-                : (await _db.FacultyUnits.AsNoTracking()
-                    .Where(u => allUnitIds.Contains(u.Id))
-                    .ToListAsync())
-                    .ToDictionary(u => u.Id, u => u.DisplayNameAr);
-
-            string TargetName(string? table, int id)
-            {
-                if (table == "FacultyUnits" && unitNames.TryGetValue(id, out var n1)) return n1;
-                if (table == "FacultyOccupancies"
-                    && occToUnit.TryGetValue(id, out var uid)
-                    && unitNames.TryGetValue(uid, out var n2)) return n2;
-                return string.IsNullOrEmpty(table) ? id.ToString() : table + " #" + id;
-            }
+            // ⚠️ بعد القصّ على MaxRows لا قبله: الأسماء بتتحلّ للصفوف اللي
+            //    هتتكتب في الملف فعلًا.
+            // ⚠️ ونفس الدالة اللي بتخدم الشاشة - كانت مكتوبة هنا كدالة محلية
+            //    بتعرف وحدات السكن وبس، فالتصدير كان بيوري أسماء والشاشة
+            //    أرقام، والطلبات والطلاب والمستخدمين مكانوش بيتحلّوا في
+            //    الاتنين.
+            var names = await BuildTargetNamesAsync(logs.Select(l => (l.target_table, l.target_id)));
 
             using var wb = new XLWorkbook();
             var ws = wb.Worksheets.Add("سجل العمليات");
@@ -400,9 +507,16 @@ namespace NUH_PORTAL.Services
 
             foreach (var l in logs)
             {
-                var target = TargetName(l.target_table, l.target_id);
+                // ⚠️ الاتنين في خانة واحدة في الملف: إكسل مافيهوش تنسيق
+                //    مختلف جوّه الخانة، والحساب لازم يبقى في العمود عشان
+                //    الفلترة عليه تشتغل.
+                var target = names.Of(l.target_table, l.target_id) ?? "";
+                var targetSub = names.SubOf(l.target_table, l.target_id);
+                if (!string.IsNullOrEmpty(targetSub)) target += "  ·  " + targetSub;
                 var actionText = ActionLabel(l.action);
-                var when = l.action_at.ToString("yyyy-MM-dd HH:mm:ss");
+                // ⚠️ نفس تقويم الشاشة: الموظف بيبدّل لهجري وبعدين بيصدّر، وكان
+                //    الملف بيطلع ميلادي — فيراجع ورقة على شاشة والتواريخ مختلفة.
+                var when = CalendarFormat.DateTimeText(l.action_at, calendar);
 
                 // العملية بلا حقول (تسجيل دخول مثلًا) تبقى سطرًا واحدًا بخانات فارغة
                 var fields = new List<(string? Name, string? Old, string? New)>();
@@ -456,36 +570,61 @@ namespace NUH_PORTAL.Services
             };
         }
 
-        public async Task<ChartDataDto> GetChartDataAsync()
+        // ====================================================================
+        //  ⚠️ حدّا المدة من النصّ المرسَل، بنفس قاعدة ApplyFilters بالحرف:
+        //     بداية اليوم المحلي، وبداية اليوم التالي للحدّ الأعلى (لا نهايته).
+        //     مكتوبة هنا مرة واحدة عشان الرسوم والبطاقات والجدول يقيسوا نفس
+        //     المدة — لو كل واحد حسبها بنفسه كان الجدول يقول ١٩ عملية والرسم
+        //     يرسم عمودًا في يوم بره المدة، والمستخدم يفتكر إن فيه بيانات ضايعة.
+        // ====================================================================
+        private static (DateTime? From, DateTime? To) RangeUtc(string? fromDate, string? toDate)
+        {
+            DateTime? f = DateTime.TryParse(fromDate, out var a) ? KsaTime.StartOfDayUtc(a) : null;
+            DateTime? t = DateTime.TryParse(toDate, out var b) ? KsaTime.EndOfDayUtc(b) : null;
+            return (f, t);
+        }
+
+        public async Task<ChartDataDto> GetChartDataAsync(string? fromDate = null, string? toDate = null)
         {
             var now = DateTime.UtcNow;
-            var sevenDaysAgo = now.AddDays(-7).Date;
-            var thirtyDaysAgo = now.AddDays(-30).Date;
+            var (rFrom, rTo) = RangeUtc(fromDate, toDate);
 
-            var last7Days = await (await ScopedAsync())
-                .Where(a => a.action_at >= sevenDaysAgo)
+            // ⚠️ لمّا المستخدم يحدّد مدة، كل السلاسل بتتبعها — مش الجدول وحده.
+            //    قبل كده الفلتر كان بيحرّك آخر جدول في الصفحة بس، والرسم فوقه
+            //    يفضل على آخر ٧ أيام. فالمستخدم يختار ١١–١٦ أغسطس ويشوف قدّامه
+            //    عمودًا على ١٨ أغسطس — يقرا ده على إن الفلتر مشتغلش.
+            var hasRange = rFrom.HasValue || rTo.HasValue;
+            var seriesFrom = rFrom ?? (hasRange ? DateTime.MinValue : now.AddDays(-7).Date);
+            var loginFrom  = rFrom ?? (hasRange ? DateTime.MinValue : now.AddDays(-30).Date);
+            var seriesTo   = rTo ?? DateTime.MaxValue;
+
+            async Task<IQueryable<AuditLog>> InRange(DateTime from) =>
+                (await ScopedAsync()).Where(a => a.action_at >= from && a.action_at < seriesTo);
+
+            var last7Days = await (await InRange(seriesFrom))
                 .GroupBy(a => a.action_at.Date)
                 .Select(g => new DateCountDto { Date = g.Key, Count = g.Count() })
                 .OrderBy(x => x.Date)
                 .ToListAsync();
 
-            var login30 = await (await ScopedAsync())
-                .Where(a => a.action_at >= thirtyDaysAgo &&
-                    (a.action == "login" || a.action == "login_failed" || a.action == "logout"))
+            var login30 = await (await InRange(loginFrom))
+                .Where(a => a.action == "login" || a.action == "login_failed" || a.action == "logout")
                 .GroupBy(a => a.action_at.Date)
                 .Select(g => new DateCountDto { Date = g.Key, Count = g.Count() })
                 .OrderBy(x => x.Date)
                 .ToListAsync();
 
-            var studentOps = await (await ScopedAsync())
-                .Where(a => a.action_at >= sevenDaysAgo &&
-                    (a.action == "create_student" || a.action == "update_student" || a.action == "delete_student"))
+            var studentOps = await (await InRange(seriesFrom))
+                // ⚠️ كان الشرط هنا مكتوب بالإيد: create_student || update_student ||
+                //    delete_student — وناسي checkout_student. فكل عمليات إخلاء
+                //    الطلاب كانت ساقطة من الرسم بلا أي علامة إنه ناقص.
+                .Where(a => StudentActions.Contains(a.action!))
                 .GroupBy(a => a.action)
                 .Select(g => new ActionCountDto { Action = g.Key, Count = g.Count() })
                 .ToListAsync();
 
-            var requestOps = await (await ScopedAsync())
-                .Where(a => a.action_at >= sevenDaysAgo && RequestActions.Contains(a.action!))
+            var requestOps = await (await InRange(seriesFrom))
+                .Where(a => RequestActions.Contains(a.action!))
                 .GroupBy(a => a.action)
                 .Select(g => new ActionCountDto { Action = g.Key, Count = g.Count() })
                 .ToListAsync();
@@ -528,18 +667,18 @@ namespace NUH_PORTAL.Services
             return alerts;
         }
 
-        public async Task<string> GetReportHtmlAsync(string? type, int? userId, string? fromDate, string? toDate, string lang)
+        public async Task<string> GetReportHtmlAsync(string? type, int? userId, string? fromDate, string? toDate, string lang, string? calendar = null)
         {
             var filteredQuery = ApplyFilters((await ScopedAsync()),
                 new AuditLogFilter { UserId = userId, FromDate = fromDate, ToDate = toDate });
 
-            if (type == "login")
-                filteredQuery = filteredQuery.Where(a => LoginActions.Contains(a.action!));
-            else if (type == "student")
-                filteredQuery = filteredQuery.Where(a =>
-                    a.action == "create_student" || a.action == "update_student" || a.action == "delete_student");
-            else if (type == "request")
-                filteredQuery = filteredQuery.Where(a => RequestActions.Contains(a.action!));
+            // ⚠️ تاني نسخة من نفس الشرط المكتوب بالإيد — وناسية checkout_student
+            //    هي كمان. يعني التقرير المطبوع/المصدَّر لـ «عمليات الطلاب» كان
+            //    بيطلع من غير عمليات الإخلاء، زيّه زي الرسم في الشاشة: نسختين
+            //    اتفارقوا عن الأصل في نفس الملف.
+            var typeActions = AuditActionGroups.ByKey(type);
+            if (typeActions.Length > 0)
+                filteredQuery = filteredQuery.Where(a => typeActions.Contains(a.action!));
 
             var logs = await filteredQuery
                 .OrderByDescending(a => a.action_at)
@@ -590,7 +729,7 @@ tr:nth-child(even){{background:#f5f5f6}}
             int idx = 1;
             foreach (var l in logs)
             {
-                html += $"<tr><td>{idx++}</td><td>{System.Net.WebUtility.HtmlEncode(l.user_name ?? "")}</td><td>{System.Net.WebUtility.HtmlEncode(l.action ?? "")}</td><td>{System.Net.WebUtility.HtmlEncode(l.target_table ?? "")}</td><td>{l.action_at:yyyy-MM-dd HH:mm}</td><td>{System.Net.WebUtility.HtmlEncode(l.ip_address ?? "")}</td></tr>";
+                html += $"<tr><td>{idx++}</td><td>{System.Net.WebUtility.HtmlEncode(l.user_name ?? "")}</td><td>{System.Net.WebUtility.HtmlEncode(l.action ?? "")}</td><td>{System.Net.WebUtility.HtmlEncode(l.target_table ?? "")}</td><td>{CalendarFormat.DateTimeText(l.action_at, calendar)}</td><td>{System.Net.WebUtility.HtmlEncode(l.ip_address ?? "")}</td></tr>";
             }
             // الفوتر كان verbatim من غير $ في الكود القديم فكان بيطبع {DateTime.Now} حرفيًا — اتصلح
             html += $@"</tbody></table>
@@ -600,16 +739,24 @@ tr:nth-child(even){{background:#f5f5f6}}
             return html;
         }
 
-        public async Task<TodayStatsDto> GetTodayStatsAsync()
+        public async Task<TodayStatsDto> GetTodayStatsAsync(string? fromDate = null, string? toDate = null)
         {
-            var ksaOffset = TimeSpan.FromHours(3);
-            var ksaNow = DateTime.UtcNow + ksaOffset;
-            var ksaDate = ksaNow.Date;
-            var todayStart = ksaDate - ksaOffset;
-            var todayEnd = ksaDate.AddDays(1) - ksaOffset;
+            // ⚠️ الإزاحة كانت مكتوبة هنا وحدها بينما فلتر «من / إلى» تحت يقارن
+            //    بلا إزاحة - الشاشة الواحدة تحسب اليوم بطريقتين. المصدر الآن
+            //    Core/KsaTime.cs ويقرأ منه الاثنان.
+            var ksaDate = KsaTime.Today;
+            var todayStart = KsaTime.StartOfDayUtc(ksaDate);
+            var todayEnd = KsaTime.EndOfDayUtc(ksaDate);
+
+            // ⚠️ المدة المختارة بتحلّ محلّ «اليوم» لمّا تتحدّد. البطاقات ساعتها
+            //    بتقيس نفس المدة اللي بيقيسها الجدول والرسم — والواجهة بتغيّر
+            //    نصّها من «اليوم» لـ «في المدة المختارة» عشان الرقم ما يتقراش غلط.
+            var (rFrom, rTo) = RangeUtc(fromDate, toDate);
+            var winStart = rFrom ?? todayStart;
+            var winEnd   = rTo   ?? todayEnd;
 
             var todayQuery = (await ScopedAsync())
-                .Where(a => a.action_at >= todayStart && a.action_at < todayEnd);
+                .Where(a => a.action_at >= winStart && a.action_at < winEnd);
 
             return new TodayStatsDto
             {
@@ -659,7 +806,15 @@ tr:nth-child(even){{background:#f5f5f6}}
         // ====================================================================
         private async Task<IQueryable<AuditLog>> ApplyAllFiltersAsync(IQueryable<AuditLog> query, AuditLogFilter f)
         {
-            query = ApplyFilters(query, f);
+            // ⚠️ أحداث الدخول والخروج مستبعَدة من هذه الشاشة: لها شاشة مستقلة
+            //    تقرأ من SignInLogs، وهو سجلّ أغنى - يحفظ المحاولات الفاشلة باسم
+            //    المستخدم المُدخَل ووسيلة الدخول. إبقاؤها هنا يعني قائمتين لنفس
+            //    الحدث تختلفان في التفاصيل، فيقرأ الموظف الأفقر ويظنّها الكاملة.
+            //    وتركها ظاهرة بلا خيار في الفلتر أسوأ: تُرى ولا تُصفّى.
+            //
+            // ⚠️ الاستبعاد هنا لا في ApplyFilters عمدًا: شاشة التقارير تبني تقرير
+            //    «نشاط تسجيل الدخول» من الجدول نفسه وتمرّ من هناك، فلا تتأثر.
+            query = ApplyFilters(query, f).Where(a => a.action == null || !LoginActions.Contains(a.action));
 
             if (f.FacultyUnitId.HasValue)
             {
@@ -681,7 +836,9 @@ tr:nth-child(even){{background:#f5f5f6}}
             return query;
         }
 
-        private static IQueryable<AuditLog> ApplyFilters(IQueryable<AuditLog> query, AuditLogFilter f)
+        // ⚠️ مش static: البحث محتاج يوصل للجداول التانية (_db) عشان يدوّر
+        //    بأسماء الأهداف لا بأرقامها.
+        private IQueryable<AuditLog> ApplyFilters(IQueryable<AuditLog> query, AuditLogFilter f)
         {
             if (f.UserId.HasValue)
                 query = query.Where(a => a.user_id == f.UserId.Value);
@@ -691,30 +848,71 @@ tr:nth-child(even){{background:#f5f5f6}}
 
             if (!string.IsNullOrEmpty(f.ActionGroup))
             {
-                var actions = f.ActionGroup.ToLower() switch
-                {
-                    "login" => new[] { "login", "login_admin_fallback", "login_admin_fallback_failed", "login_failed" },
-                    "student" => StudentActions,
-                    "request" => RequestActions,
-                    "password" => new[] { "set_password" },
-                    "logout" => new[] { "logout" },
-                    "ad" => new[] { "user_created_ad", "user_updated_ad" },
-                    "faculty" => FacultyActions,
-                    _ => Array.Empty<string>()
-                };
+                // ⚠️ الـ switch اللي كان هنا اتنقل لـ AuditActionGroups.ByKey.
+                //    كان بيكتب مجموعة الدخول بالإيد بترتيب مختلف عن LoginActions
+                //    فوق — نفس القايمة بنسختين في نفس الملف.
+                var actions = AuditActionGroups.ByKey(f.ActionGroup);
                 if (actions.Length > 0)
                     query = query.Where(a => actions.Contains(a.action!));
             }
 
+            // ⚠️ كان المقارن <= على التاريخ كما وصل - أي على منتصف ليل اليوم
+            //    المختار، فاختيار «إلى 17/08» يُسقط عمليات ذلك اليوم كلها عدا
+            //    اللحظة الأولى منه. الحدّان الآن من KsaTime: بداية اليوم وبداية
+            //    اليوم التالي، بإزاحة التوقيت السعودي.
             if (DateTime.TryParse(f.FromDate, out var from))
-                query = query.Where(a => a.action_at >= from);
+            {
+                var fromUtc = KsaTime.StartOfDayUtc(from);
+                query = query.Where(a => a.action_at >= fromUtc);
+            }
 
             if (DateTime.TryParse(f.ToDate, out var to))
-                query = query.Where(a => a.action_at <= to);
+            {
+                var toUtc = KsaTime.EndOfDayUtc(to);
+                query = query.Where(a => a.action_at < toUtc);
+            }
 
             if (!string.IsNullOrEmpty(f.Search))
             {
                 var s = f.Search.ToLower();
+
+                // ============================================================
+                //  البحث بأسماء الأهداف لا بأرقامها.
+                //
+                //  ⚠️ عمود «الهدف» بقى يعرض «برج 6 - شقة 20»، والبحث كان لسه
+                //     بيدوّر في رقم الصف (53) واسم الجدول. النتيجة اللي كانت
+                //     بتحصل فعلًا: المستخدم يشوف الاسم قدامه بالحرف، ينسخه في
+                //     خانة البحث، فيرد عليه «لا توجد سجلات». عمود بيعرض حاجة
+                //     والبحث مش لاقيها أسوأ من عمود مابيعرضهاش أصلًا.
+                //
+                //  ⚠️ والاسم ده مركَّب في الذاكرة من عمودين (TowerNo/ApartmentNo)
+                //     فمالوش وجود في قاعدة البيانات ليتبحث فيه. فبنحلّل النصّ
+                //     لأرقام ونطابقها على الأعمدة الأصلية - بنفس المحلّل اللي
+                //     بتستعمله شاشة قائمة الوحدات (FacultyHousingService.
+                //     ParseUnitSearch)، اللي بيفهم «شقه» و«شقة» والأرقام
+                //     الهندية والتطويل. نسخة تانية منه هنا كانت هتفترق عنه.
+                // ============================================================
+                var (pt, pa, pv, ptype) = FacultyHousingService.ParseUnitSearch(f.Search);
+                // ⚠️ قيمة غير قابلة للـ null للمقارنة: مقارنة عمود enum بمتغيّر
+                //    nullable بتتحوّل لمقارنة مرفوعة، وترجمتها لـ SQL مش مضمونة.
+                //    الحارس (ptype != null) تحت هو اللي بيمنع استعمالها لما تكون فاضية.
+                var ptypeVal = ptype ?? FacultyUnitType.Tower;
+
+                // ⚠️ استعلامات فرعية مش منفَّذة: EF بتحطّها EXISTS/IN جوّه
+                //    الاستعلام الأصلي، فمفيش رحلة زيادة لقاعدة البيانات.
+                var matchedUnitIds = _db.FacultyUnits
+                    .Where(u => u.AdAccount.ToLower().Contains(s)
+                        || (pv != null && u.UnitType == FacultyUnitType.Villa && u.VillaNo == pv)
+                        || ((pt != null || pa != null) && u.UnitType == FacultyUnitType.Tower
+                            && (pt == null || u.TowerNo == pt)
+                            && (pa == null || u.ApartmentNo == pa))
+                        || (ptype != null && pt == null && pa == null && pv == null && u.UnitType == ptypeVal))
+                    .Select(u => u.Id);
+
+                var matchedOccIds = _db.FacultyOccupancies
+                    .Where(o => matchedUnitIds.Contains(o.UnitId))
+                    .Select(o => o.Id);
+
                 query = query.Where(a =>
                     (a.User != null && (
                         a.User.full_name != null && a.User.full_name.ToLower().Contains(s) ||
@@ -722,7 +920,30 @@ tr:nth-child(even){{background:#f5f5f6}}
                     (a.action != null && a.action.ToLower().Contains(s)) ||
                     (a.target_table != null && a.target_table.ToLower().Contains(s)) ||
                     a.target_id.ToString().Contains(s) ||
-                    (a.ip_address != null && a.ip_address.Contains(s)));
+                    (a.ip_address != null && a.ip_address.Contains(s)) ||
+
+                    // ---- أهداف بأسمائها ----
+                    (a.target_table == "FacultyUnits" && matchedUnitIds.Contains(a.target_id)) ||
+                    (a.target_table == "FacultyOccupancies" && matchedOccIds.Contains(a.target_id)) ||
+                    (a.target_table == "Requests" && _db.Requests.Any(r =>
+                        r.Id == a.target_id && r.RequestNumber != null &&
+                        r.RequestNumber.ToLower().Contains(s))) ||
+                    (a.target_table == "Students" && _db.Students.Any(st =>
+                        st.Id == a.target_id &&
+                        ((st.full_name != null && st.full_name.ToLower().Contains(s)) ||
+                         (st.student_id != null && st.student_id.ToLower().Contains(s))))) ||
+                    (a.target_table == "Users" && _db.Users.Any(us =>
+                        us.Id == a.target_id &&
+                        ((us.full_name != null && us.full_name.ToLower().Contains(s)) ||
+                         (us.UserName != null && us.UserName.ToLower().Contains(s))))) ||
+
+                    // ⚠️ البحث في **قيم** التغييرات كمان لا في بيانات العملية
+                    //    وبس. الموظف بيدوّر برقم معاملة إنجاز أو برقم هوية -
+                    //    والقيم دي متخزّنة في AuditChangeLogs مش في صف العملية،
+                    //    فالبحث عنها كان بيرجّع فاضي وهي مسجّلة عندنا.
+                    a.AuditChangeLogs!.Any(c =>
+                        (c.NewValue != null && c.NewValue.ToLower().Contains(s)) ||
+                        (c.OldValue != null && c.OldValue.ToLower().Contains(s))));
             }
 
             return query;

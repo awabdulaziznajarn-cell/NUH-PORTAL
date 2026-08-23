@@ -27,6 +27,18 @@ namespace NUH_PORTAL.Core
     //  التخزين المؤقت: 60 ثانية لكل دور. يمنع استعلامًا لكل طلب، ويظل التأخير
     //  الأقصى لسريان أي تعديل دقيقة واحدة — مقبول مقابل ألا نضرب القاعدة على
     //  كل نداء. (شاشة الأدوار تمسح الذاكرة عند الحفظ فيسري التعديل فورًا.)
+    //
+    //  ⚠️ والعيب التاني اللي عالجه الملف (٢.٣): إيقاف الموظف ماكانش بيقطع جلسته.
+    //     التوكن عمره ٨ ساعات ومتخزّن في المتصفح، وفحص is_active/is_deleted كان
+    //     في مسار الدخول وحده — يعني الموظف اللي بيتوقف الساعة ٩ الصبح يفضل
+    //     شغّال على النظام بكامل صلاحياته لحد الساعة ٥. وده بالظبط الوقت اللي
+    //     بيتوقف فيه الحساب لسبب: نهاية تعاقد، نقل، أو حادثة أمنية.
+    //
+    //     المعالجة هنا لا في مسار الدخول: حالة الحساب بتتقرأ من القاعدة مع كل
+    //     طلب (بنفس كاش الدقيقة)، ولو الحساب موقوف أو محذوف بتتشال كل الأدوار
+    //     وكل الصلاحيات من الهوية. التوكن يفضل صالح تقنيًا لكنه بقى بلا أي
+    //     سلطة — أي صفحة أو نداء محمي بيرجع ٤٠٣، والخروج بيحصل عمليًّا.
+    //     وشاشة المستخدمين بتمسح الكاش عند الإيقاف/الحذف/الاستعادة فيسري فورًا.
     // ========================================================================
     public class PermissionClaimsTransformation : IClaimsTransformation
     {
@@ -42,11 +54,17 @@ namespace NUH_PORTAL.Core
             _cache = cache;
         }
 
-        public static string CacheKey(string roleName) => $"roleperms::{roleName.ToLowerInvariant()}";
-        private static string ScopeCacheKey(int userId) => $"userscope::{userId}";
+        // ⚠️ حالة الحساب والقسم في سطر واحد مخزّن: الاتنين بيتقروا من نفس صفّ
+        //    المستخدم في نفس اللحظة، فتخزينهم منفصلين كان معناه استعلامين
+        //    وكاشين ممكن يفترقوا — واحد يقول «موقوف» والتاني لسه شايف قسمه.
+        private sealed record UserState(bool Active, string Scope);
 
-        // تُستدعى بعد تعديل قسم الموظف من شاشة المستخدمين حتى يسري فورًا
-        public static void InvalidateScope(IMemoryCache cache, int userId) => cache.Remove(ScopeCacheKey(userId));
+        public static string CacheKey(string roleName) => $"roleperms::{roleName.ToLowerInvariant()}";
+        private static string StateCacheKey(int userId) => $"userstate::{userId}";
+
+        // تُستدعى بعد أي تغيير على المستخدم من شاشة المستخدمين (القسم، الإيقاف،
+        // الحذف، الاستعادة) حتى يسري فورًا بدل انتظار انتهاء الكاش
+        public static void InvalidateUser(IMemoryCache cache, int userId) => cache.Remove(StateCacheKey(userId));
 
         // تُستدعى من شاشة الأدوار بعد الحفظ حتى يسري التعديل بلا انتظار
         public static void Invalidate(IMemoryCache cache, string roleName) => cache.Remove(CacheKey(roleName));
@@ -56,11 +74,45 @@ namespace NUH_PORTAL.Core
             if (principal?.Identity is not ClaimsIdentity identity || !identity.IsAuthenticated)
                 return principal!;
 
+            // ⚠️ المسح الأول دايمًا، قبل أي قرار. سببان:
+            //    • التحويل ممكن يتنادى أكتر من مرة على نفس الطلب، فلو ضفنا من غير
+            //      مسح الصلاحيات بتتضاعف.
+            //    • المنع الافتراضي: لو حصل أي خروج مبكر تحت، الهوية بتكون خلاص
+            //      اتجرّدت من نسخة الكوكي/التوكن القديمة — مش محتفظة بيها.
+            foreach (var c in identity.FindAll(ClaimConstants.ScopeGender).ToList())
+                identity.RemoveClaim(c);
+            foreach (var c in identity.FindAll(ClaimConstants.Permission).ToList())
+                identity.RemoveClaim(c);
+            // ⚠️ دي بالذات لازم تتشال هنا: لو الكوكي أو التوكن جاي بيها من قبل
+            //    الإيقاف، سيبانها معناه إن الموظف الموقوف يعدّي من السياسة
+            //    الافتراضية. العلامة تتحطّ من القاعدة كل طلب لا تتوارث.
+            foreach (var c in identity.FindAll(ClaimConstants.AccountActive).ToList())
+                identity.RemoveClaim(c);
+
+            var state = await GetUserStateAsync(principal);
+
+            // ⚠️ الحساب موقوف أو محذوف: التوكن لسه صالح تقنيًا (عمره ٨ ساعات) لكن
+            //    بنشيل منه كل دور وكل صلاحية، فيبقى بلا أي سلطة على النظام.
+            //    ماينفعش نستنى انتهاء التوكن: ده بالظبط العيب اللي بنقفله.
+            if (state is { Active: false })
+            {
+                foreach (var c in identity.FindAll(ClaimTypes.Role).ToList())
+                    identity.RemoveClaim(c);
+                return principal;
+            }
+
+            // ⚠️ وصلنا هنا يبقى الحساب موجود ونشط وغير محذوف — دي العلامة اللي
+            //    بتفتح السياسة الافتراضية. من غيرها كل [Authorize] بلا صلاحية
+            //    (لوحة التحكم، الإشعارات، سجلات النظام...) بيترفض.
+            if (state != null)
+                identity.AddClaim(new Claim(ClaimConstants.AccountActive, "1"));
+
             // ⚠️ قسم الموظف (طلاب/طالبات) بيتحمّل هنا مش وقت الدخول — لنفس سبب
             //    الصلاحيات بالظبط. لو اتحفظ في الكوكي وقت الدخول، المسؤول يغيّر قسم
             //    المشرفة من الشاشة وما يحصلش حاجة، وتفضل شايفة القسم القديم لحد ما
             //    تخرج وتدخل — وهي مش عارفة إن ده مطلوب أصلًا.
-            await ApplyGenderScopeAsync(identity, principal);
+            if (state != null && !string.IsNullOrEmpty(state.Scope))
+                identity.AddClaim(new Claim(ClaimConstants.ScopeGender, state.Scope));
 
             var roles = principal.FindAll(ClaimTypes.Role)
                                  .Select(c => c.Value)
@@ -76,41 +128,38 @@ namespace NUH_PORTAL.Core
                 foreach (var p in await GetRolePermissionsAsync(role))
                     fresh.Add(p);
 
-            // ⚠️ التحويل قد يُستدعى أكثر من مرة على نفس الطلب، فلا بد أن يكون
-            //    idempotent: نحذف القديم أولًا ثم نضيف، وإلا تتضاعف الصلاحيات.
-            var stale = identity.FindAll(ClaimConstants.Permission).ToList();
-            foreach (var c in stale)
-                identity.RemoveClaim(c);
-
             foreach (var p in fresh)
                 identity.AddClaim(new Claim(ClaimConstants.Permission, p));
 
             return principal;
         }
 
-        private async Task ApplyGenderScopeAsync(ClaimsIdentity identity, ClaimsPrincipal principal)
+        private async Task<UserState?> GetUserStateAsync(ClaimsPrincipal principal)
         {
-            // idempotent زي الصلاحيات: نمسح القديم الأول وإلا الـ claim بيتكرّر
-            foreach (var c in identity.FindAll(ClaimConstants.ScopeGender).ToList())
-                identity.RemoveClaim(c);
-
             var idText = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (!int.TryParse(idText, out var userId) || userId <= 0) return;
+            if (!int.TryParse(idText, out var userId) || userId <= 0) return null;
 
-            if (!_cache.TryGetValue(ScopeCacheKey(userId), out string? scope))
-            {
-                var user = await _userManager.FindByIdAsync(userId.ToString());
-                scope = user?.scope_gender switch
-                {
-                    Models.Enums.Gender.Male => "male",
-                    Models.Enums.Gender.Female => "female",
-                    _ => ""
-                };
-                _cache.Set(ScopeCacheKey(userId), scope, CacheFor);
-            }
+            if (_cache.TryGetValue(StateCacheKey(userId), out UserState? cached) && cached != null)
+                return cached;
 
-            if (!string.IsNullOrEmpty(scope))
-                identity.AddClaim(new Claim(ClaimConstants.ScopeGender, scope));
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+
+            // ⚠️ المستخدم مش موجود في القاعدة أصلًا وهو ماسك توكن → موقوف.
+            //    مفيش هوية في النظام غير اللي بتتعمل من صفّ مستخدم حقيقي
+            //    (AccountController والـ JWT)، فالحالة دي معناها صفّ اتشال.
+            var state = user == null
+                ? new UserState(false, "")
+                : new UserState(
+                    user.is_active && !user.is_deleted,
+                    user.scope_gender switch
+                    {
+                        Models.Enums.Gender.Male => "male",
+                        Models.Enums.Gender.Female => "female",
+                        _ => ""
+                    });
+
+            _cache.Set(StateCacheKey(userId), state, CacheFor);
+            return state;
         }
 
         private async Task<IReadOnlyCollection<string>> GetRolePermissionsAsync(string roleName)

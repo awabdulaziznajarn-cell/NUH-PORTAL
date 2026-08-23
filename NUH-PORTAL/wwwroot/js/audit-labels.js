@@ -40,14 +40,37 @@ var NuhAudit = (function () {
   function actionText(action) { return look('aud_action_', action); }
   function fieldText(field) { return look('aud_field_', field); }
 
-  // القيمة كما تُعرض: الفارغ يُكتب «(فارغ)» لا يُترك بياضًا، لأن الفرق بين
-  // «كانت فارغة فمُلئت» و«لم تتغيّر» هو جوهر السطر.
-  function valueText(v) {
+  // ============================================================================
+  //  القيمة كما تُعرض.
+  //
+  //  الفارغ يُكتب «(فارغ)» لا يُترك بياضًا، لأن الفرق بين «كانت فارغة فمُلئت»
+  //  و«لم تتغيّر» هو جوهر السطر.
+  //
+  //  ⚠️ والقيمة تُترجَم كذلك لا الاسم وحده. كان السطر يظهر هكذا:
+  //         سبب الإنهاء   (فارغ) → LeftPermanently
+  //     اسمُ عضوٍ في enum بلغة الكود داخل تقرير مساءلة عربي. الترجمة تُطلب
+  //     بمفتاح مبنيّ من اسم الحقل وقيمته (aud_val_<حقل>_<قيمة>)، فأي حقل
+  //     جديد له قائمة ثابتة يُترجَم بإضافة مفاتيحه - بلا تعديل هنا.
+  //
+  //  ⚠️ وحقل Status له مصدر ثانٍ: حالات الطلبات مكتوبة أصلًا في req_stage_*
+  //     (Core/RequestWorkflow.StageKey) وتُعرض بها في كل شاشات الطلبات.
+  //     نسخُها تحت اسم aud_val_ كان سيُنتج نصّين لنفس الحالة يفترقان عند أول
+  //     تعديل. فالبحث يمرّ عليها قبل أن يستسلم للقيمة الخام.
+  // ============================================================================
+  function valueText(v, field) {
     if (v == null || v === '') {
       var e = dict()['aud_emptyValue'];
       return e || '-';
     }
-    return String(v);
+    var raw = String(v);
+    if (field) {
+      var d = dict();
+      var f = String(field).toLowerCase(), lv = raw.toLowerCase();
+      var hit = d['aud_val_' + f + '_' + lv];
+      if (hit) return hit;
+      if (f === 'status' && d['req_stage_' + lv]) return d['req_stage_' + lv];
+    }
+    return raw;
   }
 
   return { actionText: actionText, fieldText: fieldText, valueText: valueText };

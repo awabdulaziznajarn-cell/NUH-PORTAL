@@ -1,14 +1,27 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" id="html-root">
+<html lang="ar" dir="rtl" id="html-root" data-title-key="pt_trkTitle">
 <head>
 <link rel="icon" href="../favicon.ico">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>تتبع الطلب - بوابة السكن الجامعي</title>
+<title>تتبع الطلب - بوابة الإسكان الجامعي</title>
+<!-- تهريب HTML (escHtml) - التعريف الوحيد في النظام.
+     ⚠️ الصفحة دي مش بتمرّ على التخطيط، فلازم تحمّله بنفسها وقبل
+        أي ملف بيناديه. -->
+<script src="../js/esc.js"></script>
 <script src="../i18n.js"></script>
+<!-- شكل التاريخ - التعريف الوحيد في js/date-format.js. الصفحة كانت بتنادي
+     toLocaleDateString('en-GB') بينما صفحة «طلباتي» بـ 'ar-SA' الهجري:
+     نفس الطلب بتاريخين على بُعد دوسة واحدة. -->
+<script src="../js/date-format.js"></script>
+<!-- جدول مسار الطلب - التعريف الوحيد Core/RequestWorkflow.cs -->
+<script src="../js/request-workflow.js"></script>
 <script src="../js/phone-field.js"></script>
 <script src="../js/code-field.js"></script>
 <link rel="stylesheet" href="../css/portal.css">
+  <!-- ⚠️ صندوق الملاحظة/السبب (.note-block) معرّف هنا — نفس اللي شاشات
+       الموظفين بتستعمله، عشان الطالب والموظف يقروا سبب الرفض بنفس الشكل. -->
+  <link rel="stylesheet" href="../css/components.css">
   <link rel="stylesheet" href="../css/portal-touch.css">
   <style>
 
@@ -18,16 +31,12 @@
 
 
 
-.portal-header{text-align:center;padding:28px 16px 0;width:100%;position:relative}
-.portal-header img{width:80px;height:auto;margin-bottom:10px}
-.portal-header h1{font-size:17px;font-weight:800;color:var(--navy-dark)}
-.lang-btn{position:absolute;top:12px;background:#fff;border:1px solid #dcdfe4;border-radius:6px;padding:6px 14px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;z-index:10}
-[dir="rtl"] .lang-btn{left:12px}
-[dir="ltr"] .lang-btn{right:12px}
-.lang-btn:hover{background:#f5f5f6}
 .container{max-width:560px}
 
-h1{font-size:22px;font-weight:800;text-align:center;margin-bottom:4px}
+/* ⚠️ h2 لا h1: الصفحة كانت فيها عنوانان بوسم h1 — واحد للبوابة وواحد
+   للصفحة — وباقي صفحات البوابة الستّ عنوان صفحتها h2. والمُحدِّد كان
+   وسمًا عاريًا فكان بيمسك الاتنين. */
+h2{font-size:22px;font-weight:800;text-align:center;margin-bottom:4px}
 .sub{font-size:13px;color:var(--gray-500);text-align:center;margin-bottom:20px}
 .form-group{margin-bottom:16px}
 .form-group label{display:block;font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:6px}
@@ -48,10 +57,10 @@ h1{font-size:22px;font-weight:800;text-align:center;margin-bottom:4px}
 .info-label{font-size:12px;color:var(--gray-500)}
 .info-value{font-size:13px;font-weight:600;color:var(--navy-dark)}
 .status-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
-.status-submitted{background:#fef0c7;color:#7a5c0b}
-.status-pending_supervisor{background:#fef0c7;color:#7a5c0b}
+.status-submitted{background:var(--gold-pale);color:var(--gold-dark)}
+.status-pending_supervisor{background:var(--gold-pale);color:var(--gold-dark)}
 .status-pending_cyber{background:#eff4ff;color:#175cd3}
-.status-ready_for_provisioning{background:#f4eefa;color:#80519f}
+.status-ready_for_provisioning{background:var(--purple-light);color:var(--purple)}
 .status-completed{background:var(--green-light);color:var(--green)}
 .status-approved{background:var(--green-light);color:var(--green)}
 .status-rejected{background:var(--red-light);color:var(--red)}
@@ -59,7 +68,7 @@ h1{font-size:22px;font-weight:800;text-align:center;margin-bottom:4px}
 /* حالات مسار طلبات الموظف — من غيرها الشارة بتطلع بدون خلفية (نص سادة)
    لأن الكلاس status-{الحالة} مالوش تعريف، فالحالة كانت بتبان مختلفة عن الحالات التانية */
 .status-cyber_review{background:#eff4ff;color:#175cd3}
-.status-cyber_approved{background:#f4eefa;color:#80519f}
+.status-cyber_approved{background:var(--purple-light);color:var(--purple)}
 .status-cyber_rejected{background:var(--red-light);color:var(--red)}
 .status-housing_rejected{background:var(--red-light);color:var(--red)}
 /* العنوان اتطلّع بره .timeline عشان الخط الرأسي ما يعديش جنبه، وبياخد نفس
@@ -84,13 +93,10 @@ h1{font-size:22px;font-weight:800;text-align:center;margin-bottom:4px}
 .now-box svg{flex-shrink:0;margin-top:1px}
 .now-title{font-size:13.5px;font-weight:700;color:var(--navy);line-height:1.7}
 .now-text{font-size:12.5px;color:var(--gray-700);line-height:1.9;margin-top:2px}
-.reject-box{margin-top:14px;border:1px solid var(--red);background:var(--red-light);padding:16px;border-radius:12px}
-.info-box{margin-top:14px;border:1px solid #b54708;background:#fffaeb;padding:16px;border-radius:12px}
-.info-box-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:#b54708;margin-bottom:6px}
-.info-box-text{font-size:13px;line-height:1.9;color:var(--navy-dark);white-space:pre-wrap;word-break:break-word}
+/* ⚠️ .reject-box و.info-box كانا نسختين تانيتين من صندوق الملاحظة — الرابعة
+   والخامسة في النظام. التعريف الوحيد بقى .note-block في components.css،
+   والصفحة دي بتحمّله فوق. اللي فاضل هنا هو الزرّ وحده لأنه مش جزء من الصندوق. */
 .info-box-btn{display:inline-block;margin-top:12px;background:#b54708;color:#fff;text-decoration:none;font-size:13px;font-weight:700;padding:10px 22px;border-radius:10px}
-.reject-box-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--red);margin-bottom:6px}
-.reject-box-text{font-size:13px;line-height:1.9;color:var(--navy-dark);white-space:pre-wrap;word-break:break-word}
 .done-box{margin-top:14px;border:2px solid var(--green);background:var(--green-light);padding:20px;border-radius:12px;text-align:center}
 
 
@@ -112,63 +118,82 @@ h1{font-size:22px;font-weight:800;text-align:center;margin-bottom:4px}
              letter-spacing:1.5px;color:var(--navy-dark)}
 .phone-input::placeholder{font-weight:400;letter-spacing:1px;color:var(--gray-300)}
 .phone-hint{font-size:11.5px;color:var(--red);line-height:1.6;margin-top:6px}
-.footer{text-align:center;font-size:11px;color:var(--gray-500);padding:20px;border-top:1px solid var(--gray-100);margin-top:auto;width:100%}
-.nav-link{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:var(--gray-500);text-decoration:none;margin-bottom:16px}
+/* ⚠️ white-space:pre-line لأن سطر الحقوق سطران في مفتاح واحد (Brand_Copyright).
+   ومن غيرها السطرين بيتلزقوا في سطر واحد طويل. */
+.footer{text-align:center;font-size:12px;color:var(--gray-500);padding:20px;border-top:1px solid var(--gray-100);margin-top:auto;width:100%;line-height:1.8;white-space:pre-line}
+.nav-link{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--gray-500);text-decoration:none;margin-bottom:16px}
+.nav-link svg{width:13px;height:13px;flex-shrink:0}
+[dir=rtl] .nav-link svg{transform:scaleX(-1)}
 .nav-link:hover{color:var(--navy)}
 .empty{text-align:center;font-size:13px;color:var(--gray-500);padding:24px 0}
 .hint{background:var(--gray-50);border:1px solid var(--gray-100);border-radius:10px;padding:12px 14px;font-size:12.5px;line-height:1.8;color:var(--gray-700);margin-bottom:14px}
 .hint strong{color:var(--navy-dark);direction:ltr;display:inline-block}
 .last4-input{text-align:center;letter-spacing:10px;font-size:22px;font-weight:700;direction:ltr}
 .link-btn{background:none;border:none;color:var(--navy);font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;font-weight:600;cursor:pointer;text-decoration:underline;padding:0;width:auto;margin-top:12px}
-@media(max-width:768px){.portal-header{padding:20px 16px 0}.portal-header img{width:64px}.portal-header h1{font-size:16px}.container{padding:16px}.card{padding:20px}}
+@media(max-width:768px){.container{padding:16px}.card{padding:20px}}
 @media(max-width:414px){.card{border-radius:12px}.info-row{padding:10px 0;flex-direction:column;gap:2px}.info-value{font-size:12px}}
-@media(max-width:375px){.container{padding:12px;margin:0}.card{padding:16px;border-radius:10px}.form-control{height:44px;font-size:16px}h1{font-size:18px}.sub{font-size:12px;margin-bottom:16px}.portal-header{padding:16px 12px 0}.portal-header img{width:56px}.portal-header h1{font-size:15px}}
-@media(max-width:320px){.card{padding:14px}.form-group label{font-size:12px}.form-control{font-size:14px;height:40px}.btn{font-size:13px;padding:8px 14px}h1{font-size:16px}}
+@media(max-width:375px){.container{padding:12px;margin:0}.card{padding:16px;border-radius:10px}.form-control{height:44px;font-size:16px}h2{font-size:18px}.sub{font-size:12px;margin-bottom:16px}}
+@media(max-width:320px){.card{padding:14px}.form-group label{font-size:12px}.form-control{font-size:14px;height:40px}.btn{font-size:13px;padding:8px 14px}h2{font-size:16px}}
 </style>
 </head>
 <body>
 <div class="portal-header">
-<img src="../nu-logo.png" alt="جامعة نجران">
-<h1>نظام إسكان الطلاب والطالبات</h1>
-<button class="lang-btn" id="langBtn" onclick="toggleLang()">English</button>
+<img src="../nu-logo.svg" alt="جامعة نجران" data-i18n-alt="Brand_Sub">
+<h1 data-i18n="Brand_Title">بوابة الإسكان الجامعي</h1>
+<!-- ⚠️ data-i18n لا نصّ ثابت: الزرّ كان مكتوب فيه «English» بالإيد، فالطالب
+     اللي بدّل للإنجليزي كان بيلاقي صفحة إنجليزي وزرّ بيعرض عليه «English»
+     تاني - مفيش طريق راجع ظاهر للعربي. المفتاح pt_langToggle قيمته في
+     الملف العربي «English» وفي الإنجليزي «العربية»، يعني نصّه دايمًا اسم
+     اللغة اللي المستخدم رايح لها. -->
+<button class="lang-btn" id="langBtn" type="button" onclick="toggleLang()" data-i18n="pt_langToggle">English</button>
 </div>
 <div class="container">
 <div class="card card-pad-lg">
-<a href="index.html" class="nav-link">← العودة للرئيسية</a>
-<h1>تتبع الطلب</h1>
-<p class="sub">ابحث عن طلبك باستخدام رقم الطلب أو رقم الجوال</p>
+<!-- ⚠️ السهم كان محرف «←» مكتوب **جوّه نصّ الترجمة نفسه** في الـ resx.
+     مشكلتان: (١) سهم «رجوع» المفروض يشاور ناحية بداية القراءة - يمين في
+     العربي وشمال في الإنجليزي - والمحرف الثابت كان بيشاور شمال في
+     الاتنين، يعني «للأمام» في العربي. (٢) والأهم: التخطيط مكانش يبقى
+     في ملف الترجمة، وde معناه إن أي حد بيعدّل النصّ ممكن يشيله من غير
+     ما يعرف إنه شكل مش كلام.
+     السهم اتشال من الـ resx وبقى SVG هنا بينقلب مع dir. -->
+<a href="index.html" class="nav-link">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+  <span data-i18n="pt_trkBackHome">العودة للرئيسية</span>
+</a>
+<h2 data-i18n="pt_trkTitle">تتبع الطلب</h2>
+<p class="sub" data-i18n="pt_trkSub">ابحث عن طلبك باستخدام رقم الطلب أو رقم الجوال</p>
 <div id="alertMessage" class="alert"></div>
 
 <div class="tabs">
-  <button id="tabNumber" class="btn tab active" onclick="setSearchType('number')">رقم الطلب</button>
-  <button id="tabMobile" class="btn tab" onclick="setSearchType('mobile')">رقم الجوال</button>
+  <button id="tabNumber" class="btn tab active" onclick="setSearchType('number')" data-i18n="pt_trkTabNumber">رقم الطلب</button>
+  <button id="tabMobile" class="btn tab" onclick="setSearchType('mobile')" data-i18n="pt_trkTabMobile">رقم الجوال</button>
 </div>
 
 <div id="numberSearchGroup">
   <div id="numStep1">
     <div class="form-group">
-      <label>رقم الطلب</label>
-      <input type="text" id="requestNumberInput" class="form-control" placeholder="مثال: 2026-000001" dir="ltr" style="text-align:center">
+      <label for="requestNumberInput" data-i18n="pt_trkTabNumber">رقم الطلب</label>
+      <input type="text" id="requestNumberInput" class="form-control" placeholder="مثال: 2026-000001" data-i18n-placeholder="pt_trkNumberPlaceholder" dir="ltr" style="text-align:center">
     </div>
-    <button class="btn btn-block btn-primary" onclick="goToLast4()">التالي</button>
+    <button class="btn btn-block btn-primary" onclick="goToLast4()" data-i18n="pt_trkNext">التالي</button>
   </div>
   <div id="numStep2" style="display:none">
     <div class="hint">
-      للتحقق من ملكية الطلب، يرجى إدخال <strong>آخر ٤ أرقام</strong> من رقم الجوال المسجّل فيه
+      للتحقق من ملكية الطلب، يرجى إدخال <strong data-i18n="pt_trkLast4Inline">آخر ٤ أرقام</strong> من رقم الجوال المسجّل فيه
       <strong id="numEcho"></strong>
     </div>
     <div class="form-group">
-      <label>آخر ٤ أرقام من رقم الجوال</label>
+      <label for="last4Input" data-i18n="pt_trkLast4Label">آخر ٤ أرقام من رقم الجوال</label>
       <input type="tel" id="last4Input" class="form-control last4-input" placeholder="----" maxlength="4" inputmode="numeric" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
     </div>
-    <button id="searchBtnNum" class="btn btn-block btn-primary" onclick="trackByNumber()">بحث</button>
-    <div style="text-align:center"><button class="link-btn" onclick="backToNumber()">تغيير رقم الطلب</button></div>
+    <button id="searchBtnNum" class="btn btn-block btn-primary" onclick="trackByNumber()" data-i18n="pt_trkSearch">بحث</button>
+    <div style="text-align:center"><button class="link-btn" onclick="backToNumber()" data-i18n="pt_trkChangeNum">تغيير رقم الطلب</button></div>
   </div>
 </div>
 
 <div id="mobileSearchGroup" style="display:none">
   <div class="form-group">
-    <label>رقم الجوال</label>
+    <label for="mobileInput" data-i18n="pt_trkTabMobile">رقم الجوال</label>
     <div class="phone-field" id="phoneField">
       <span class="phone-cc">+966</span>
       <!-- من غير maxlength: القص لازم يحصل بعد التنظيف مش قبله (شوف register-phone) -->
@@ -178,18 +203,19 @@ h1{font-size:22px;font-weight:800;text-align:center;margin-bottom:4px}
     </div>
     <div class="phone-hint" id="phoneHint"></div>
   </div>
-  <button id="searchBtnMob" class="btn btn-block btn-primary" onclick="trackByMobile()" disabled>بحث</button>
+  <button id="searchBtnMob" class="btn btn-block btn-primary" onclick="trackByMobile()" disabled data-i18n="pt_trkSearch">بحث</button>
 </div>
 
 <div id="newSearchWrap" style="display:none;text-align:center">
-  <button class="link-btn" onclick="newSearch()">بحث عن طلب آخر</button>
+  <button class="link-btn" onclick="newSearch()" data-i18n="pt_trkNewSearch">بحث عن طلب آخر</button>
 </div>
 
 <div id="resultsList"></div>
 
 </div>
 </div>
-<div class="footer">عمادة التحول الرقمي ومصادر المعرفة - جامعة نجران 2026</div>
+<div class="footer" data-i18n="Brand_Copyright">جميع الحقوق محفوظة © جامعة نجران 2026
+تطوير عمادة التحول الرقمي ومصادر المعرفة - إدارة تقنية المعلومات</div>
 <script>
 setLang(localStorage.getItem('uiLanguage') || 'ar');
 function toggleLang() { applyLang(window.currentLang === 'ar' ? 'en' : 'ar'); }
@@ -213,12 +239,6 @@ function showAlert(msg, type) {
   el.className = type ? 'alert alert-' + type : 'alert';
 }
 
-function escHtml(v) {
-  return String(v == null ? '' : v)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
-
 // credentials:'omit' مقصودة: الصفحة دي عامة ولازم تفضل مفصولة تمامًا عن أي
 // جلسة موظف مفتوحة في نفس المتصفح. من غيرها المتصفح بيبعت كوكي NUH.Auth مع
 // كل نداء، وده كان بيخلي السيرفر يتعامل مع الزائر كموظف.
@@ -234,55 +254,49 @@ async function apiFetch(url, opts) {
 // رسالة مفهومة بدل "تعذر الاتصال بالخادم" لكل حاجة — محدّد المعدل بيرد 429
 // بجسم مش JSON، وكان بيتفسّر غلط كانقطاع اتصال.
 function httpMessage(r, fallback) {
-  if (r.status === 429) return 'عدد المحاولات تجاوز الحد المسموح - يرجى الانتظار دقيقة ثم إعادة المحاولة';
+  if (r.status === 429) return t('pt_trkTooMany');
   if (r.data && r.data.message) return r.data.message;
-  if (r.status >= 500) return 'خطأ في الخادم، حاول بعد قليل';
+  if (r.status >= 500) return t('pt_serverError');
   return fallback;
 }
 
-var STATUS_MAP = {
-  submitted: 'تم تقديم الطلب',
-  pending_supervisor: 'بانتظار موافقة إدارة الإسكان',
-  pending_cyber: 'بانتظار مراجعة إدارة الأمن السيبراني',
-  ready_for_provisioning: 'جاري إنشاء حساب شبكة السكن',
-  completed: 'مكتمل',
-  approved: 'مكتمل',
-  rejected: 'مرفوض',
-  need_more_info: 'بانتظار استكمال بيانات',
-  // مصطلحات مسار طلبات المشرف — من غيرها الطالب كان هيشوف الكود الخام زي cyber_review
-  cyber_review: 'بانتظار مراجعة إدارة الأمن السيبراني',
-  cyber_approved: 'جاري إنشاء حساب شبكة السكن',
-  cyber_rejected: 'مرفوض',
-  housing_rejected: 'مرفوض'
-};
-
-function getHistoryLabel(toStage) {
-  var map = {
-    // الصياغة موحّدة عن قصد: «تمت موافقة إدارة …» في الخطوتين. المراجعة
-    // متضمَّنة في الموافقة، وتوازي الصياغة هو اللي بيخلّي المسار يتقرأ مرتّبًا.
-    pending_supervisor: 'تم تقديم الطلب',
-    pending_cyber: 'تمت موافقة إدارة الإسكان',
-    ready_for_provisioning: 'تمت موافقة إدارة الأمن السيبراني',
-    completed: 'تم إنشاء حساب شبكة السكن', approved: 'تم إنشاء حساب شبكة السكن',
-    rejected: 'مرفوض',
-    need_more_info: 'مطلوب استكمال بيانات',
-    cyber_review: 'تمت موافقة إدارة الإسكان',
-    cyber_approved: 'تمت موافقة إدارة الأمن السيبراني',
-    cyber_rejected: 'مرفوض', housing_rejected: 'مرفوض'
-  };
-  return map[toStage] || STATUS_MAP[toStage] || toStage;
+// ==========================================================================
+//  أسماء المراحل - من جدول الخادم لا من قائمة هنا.
+//
+//  ⚠️ الصفحة دي كان فيها **قائمتين** لنفس الشيء: STATUS_MAP للحالة الحالية
+//     و map جوّه getHistoryLabel لسطور المسار، وكل واحدة بتعدّ الحالات
+//     بنفسها. وصفحة «طلباتي» كان فيها قائمة **تالتة** ناقصة ستّ حالات.
+//     تلات نسخ لمفهوم واحد، وواحدة منهم كانت بتطبع للطالب كود قاعدة
+//     البيانات. المصدر بقى Core/RequestWorkflow.cs، والنصّ من الـ resx.
+//
+//  ⚠️ والصياغة موحّدة عن قصد: «تمت موافقة إدارة …» في الخطوتين. المراجعة
+//     متضمَّنة في الموافقة، وتوازي الصياغة هو اللي بيخلّي المسار يتقرأ مرتّبًا.
+// ==========================================================================
+function stageName(status) {
+  // ⚠️ الرفض له تلات أسماء في النظام (rejected / housing_rejected /
+  //    cyber_rejected) وهو عند الطالب موقف واحد. القائمة من الخادم
+  //    (Aliases("rejected")) لا مكتوبة هنا - من غير السطر ده كان الطالب
+  //    المرفوض من الأمن السيبراني يشوف نصًّا عامًّا مكان «مرفوض».
+  if (NuhWorkflow.isRejected(status)) return 'rejected';
+  return NuhWorkflow.canonical(status);
 }
 
-function fmtDateTime(v) {
-  var dt = new Date(v);
-  if (isNaN(dt.getTime())) return '';
-  return dt.toLocaleDateString('en-GB') + ' ' + dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+// ⚠️ لو المفتاح لسه ماتكتبش في الـ resx بنرجع لنصّ عام - الطالب مايشوفش
+//    مفتاح ولا كود قاعدة بيانات مهما اتضاف من حالات.
+function ptText(prefix, status) {
+  var key = prefix + stageName(status);
+  var v = t(key);
+  if (v !== key) return v;
+  var g = t(prefix + 'unknown');
+  return g !== (prefix + 'unknown') ? g : '';
 }
 
-function fmtDate(v) {
-  var dt = new Date(v);
-  return isNaN(dt.getTime()) ? '' : dt.toLocaleDateString('en-GB');
-}
+function getStatusLabel(status) { return ptText('pt_status_', status); }
+function getHistoryLabel(toStage) { return ptText('pt_hist_', toStage); }
+
+// شكل التاريخ من NuhFmt - نفس اللي بتقراه كل شاشة في النظام.
+function fmtDateTime(v) { var d = NuhFmt.parse(v); return d ? NuhFmt.dateTime(d) : ''; }
+function fmtDate(v) { var d = NuhFmt.parse(v); return d ? NuhFmt.date(d) : ''; }
 
 // بعد ما النتيجة تظهر، خانات البحث مالهاش لازمة — بتاخد مساحة وبتشتّت.
 // بنطويها ونسيب رابط للرجوع لبحث جديد.
@@ -323,7 +337,7 @@ function setSearchType(type) {
 // من غير ما يعرف الجوال. الاتنين بيتبعتوا مع بعض في نداء واحد.
 function goToLast4() {
   var num = document.getElementById('requestNumberInput').value.trim();
-  if (!num) { showAlert('يرجى إدخال رقم الطلب', 'error'); return; }
+  if (!num) { showAlert(t('pt_trkEnterNumber'), 'error'); return; }
   showAlert('');
   document.getElementById('numEcho').textContent = num;
   document.getElementById('numStep1').style.display = 'none';
@@ -348,23 +362,23 @@ async function trackByNumber() {
   var list = document.getElementById('resultsList');
   showAlert('');
 
-  if (!num) { backToNumber(); showAlert('يرجى إدخال رقم الطلب', 'error'); return; }
-  if (!/^\d{4}$/.test(last4)) { showAlert('اكتب آخر ٤ أرقام من رقم الجوال', 'error'); return; }
+  if (!num) { backToNumber(); showAlert(t('pt_trkEnterNumber'), 'error'); return; }
+  if (!/^\d{4}$/.test(last4)) { showAlert(t('pt_trkEnterLast4'), 'error'); return; }
 
-  btn.disabled = true; btn.textContent = 'جاري البحث...';
-  list.innerHTML = '<div class="empty">جاري البحث...</div>';
+  btn.disabled = true; btn.textContent = t('pt_trkSearching');
+  list.innerHTML = '<div class="empty">' + escHtml(t('pt_trkSearching')) + '</div>';
   try {
     var r = await apiFetch('/api/RequestTracking/' + encodeURIComponent(num) + '?last4=' + encodeURIComponent(last4));
     if (r.status === 404) {
       // نفس الرسالة سواء الرقم غلط أو آخر ٤ أرقام غلط — السيرفر مابيفرّقش بينهم عن قصد
-      list.innerHTML = ''; showAlert('الطلب غير موجود أو البيانات غير متطابقة', 'error');
+      list.innerHTML = ''; showAlert(t('pt_trkNotFound'), 'error');
     }
-    else if (!r.ok || !r.data) { list.innerHTML = ''; showAlert(httpMessage(r, 'خطأ في البحث'), 'error'); }
+    else if (!r.ok || !r.data) { list.innerHTML = ''; showAlert(httpMessage(r, t('pt_trkSearchError')), 'error'); }
     else { list.innerHTML = renderFull(r.data); collapseSearch(true); }
   } catch (e) {
-    list.innerHTML = ''; showAlert('تعذر الاتصال بالخادم', 'error');
+    list.innerHTML = ''; showAlert(t('reg_toastConnError'), 'error');
   }
-  btn.disabled = false; btn.textContent = 'بحث';
+  btn.disabled = false; btn.textContent = t('pt_trkSearch');
 }
 
 // القاعدة كلها في js/phone-field.js — نفس الملف اللي تستخدمه شاشة التحقق.
@@ -378,8 +392,8 @@ NuhCode.gate({ button: 'searchBtnNum', fields: [
 NuhPhone.attach({
   input: 'mobileInput', wrap: 'phoneField', hint: 'phoneHint', button: 'searchBtnMob',
   messages: {
-    start:  'رقم الجوال يجب أن يبدأ بالرقم 5 - بدون صفر وبدون 966',
-    length: 'رقم الجوال يجب أن يتكوّن من ٩ أرقام'
+    start:  t('pt_phStart5'),
+    length: t('pt_phLen9')
   }
 });
 
@@ -389,18 +403,18 @@ async function trackByMobile() {
   var list = document.getElementById('resultsList');
   showAlert('');
 
-  if (!NuhPhone.isValid(digits)) { showAlert('يرجى إدخال رقم جوال صحيح مكوّن من ٩ أرقام يبدأ بالرقم 5', 'error'); return; }
+  if (!NuhPhone.isValid(digits)) { showAlert(t('pt_phInvalid'), 'error'); return; }
 
   // الصيغة الموحّدة 9665XXXXXXXX — نفس المخزّن في قاعدة البيانات
   var mobile = '966' + digits;
 
-  btn.disabled = true; btn.textContent = 'جاري البحث...';
-  list.innerHTML = '<div class="empty">جاري البحث...</div>';
+  btn.disabled = true; btn.textContent = t('pt_trkSearching');
+  list.innerHTML = '<div class="empty">' + escHtml(t('pt_trkSearching')) + '</div>';
   try {
     var r2 = await apiFetch('/api/RequestTracking/by-mobile/' + encodeURIComponent(mobile));
-    if (r2.status === 404) { list.innerHTML = ''; showAlert('لا توجد طلبات مرتبطة بهذا الرقم', 'error'); }
-    else if (!r2.ok || !r2.data) { list.innerHTML = ''; showAlert(httpMessage(r2, 'خطأ في البحث'), 'error'); }
-    else if (!r2.data.length) { list.innerHTML = ''; showAlert('لا توجد طلبات مرتبطة بهذا الرقم', 'error'); }
+    if (r2.status === 404) { list.innerHTML = ''; showAlert(t('pt_trkNoneForMobile'), 'error'); }
+    else if (!r2.ok || !r2.data) { list.innerHTML = ''; showAlert(httpMessage(r2, t('pt_trkSearchError')), 'error'); }
+    else if (!r2.data.length) { list.innerHTML = ''; showAlert(t('pt_trkNoneForMobile'), 'error'); }
     else {
       // البحث برقم الجوال بيرجّع سطر مختصر لكل طلب من غير خطوات، فبنجيب تفاصيل
       // كل طلب لوحده عشان المسار وسبب الرفض يظهروا زي البحث برقم الطلب بالظبط.
@@ -417,9 +431,9 @@ async function trackByMobile() {
       collapseSearch(true);
     }
   } catch (e) {
-    list.innerHTML = ''; showAlert('تعذر الاتصال بالخادم', 'error');
+    list.innerHTML = ''; showAlert(t('reg_toastConnError'), 'error');
   }
-  btn.disabled = false; btn.textContent = 'بحث';
+  btn.disabled = false; btn.textContent = t('pt_trkSearch');
 }
 
 async function loadTimeline(item, holder, last4) {
@@ -443,7 +457,7 @@ function renderFull(d) {
 // بطاقة مختصرة + مكان للمسار (نتيجة البحث برقم الجوال)
 function renderSummary(item) {
   return '<div class="req-card">' + headerRows(item) +
-      '<div class="detail-slot"><div class="empty">جاري تحميل مسار الطلب...</div></div>' +
+      '<div class="detail-slot"><div class="empty">' + escHtml(t('pt_trkLoadingPath')) + '</div></div>' +
     '</div>';
 }
 
@@ -451,10 +465,10 @@ function headerRows(d) {
   var st = d.status || '';
   return '<div class="req-head">' +
       '<span class="req-num">' + escHtml(d.requestNumber || '') + '</span>' +
-      '<span class="status-badge status-' + escHtml(st) + '">' + escHtml(STATUS_MAP[st] || st) + '</span>' +
+      '<span class="status-badge status-' + escHtml(stageName(st)) + '">' + escHtml(getStatusLabel(st)) + '</span>' +
     '</div>' +
-    '<div class="info-row"><span class="info-label">الطالب</span><span class="info-value">' + escHtml(d.studentName || '') + '</span></div>' +
-    '<div class="info-row"><span class="info-label">تاريخ التقديم</span><span class="info-value">' + fmtDate(d.submittedAt) + '</span></div>';
+    '<div class="info-row"><span class="info-label">' + escHtml(t('pt_trkStudent')) + '</span><span class="info-value">' + escHtml(d.studentName || '') + '</span></div>' +
+    '<div class="info-row"><span class="info-label">' + escHtml(t('pt_trkSubmitDate')) + '</span><span class="info-value">' + fmtDate(d.submittedAt) + '</span></div>';
 }
 
 function renderDetail(d) {
@@ -463,9 +477,11 @@ function renderDetail(d) {
   var infoNotes = null;
 
   if (d.history && d.history.length) {
-    html += '<div class="timeline-title">مراحل الطلب</div><div class="timeline">';
+    html += '<div class="timeline-title">' + escHtml(t('pt_trkStages')) + '</div><div class="timeline">';
     d.history.forEach(function (h) {
-      var isRejected = (h.toStage === 'rejected' || h.toStage === 'cyber_rejected' || h.toStage === 'housing_rejected');
+      // ⚠️ قائمة حالات الرفض من الخادم لا مكتوبة هنا: أي اسم رفض جديد كان
+      //    هيعدّي كأنه خطوة ناجحة وياخد علامة ✓ خضرا في مسار الطالب.
+      var isRejected = NuhWorkflow.isRejected(h.toStage);
       // سبب الرفض بيتاخد من خطوة الرفض نفسها — سواء جه من إدارة الإسكان
       // أو من الأمن السيبراني. الطالب لازم يشوفه عشان يعرف يصحّح إيه.
       if (isRejected && h.notes) rejectionNotes = h.notes;
@@ -487,14 +503,11 @@ function renderDetail(d) {
   html += renderNowBox(st);
 
   // الحالة "مرفوض" من غير سبب كانت بتسيب الطالب من غير أي إرشاد
-  var isRejected = (st === 'rejected' || st === 'cyber_rejected' || st === 'housing_rejected');
+  var isRejected = NuhWorkflow.isRejected(st);
   if (isRejected && rejectionNotes) {
-    html += '<div class="reject-box">' +
-        '<div class="reject-box-title">' +
-          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>' +
-          'سبب الرفض' +
-        '</div>' +
-        '<div class="reject-box-text">' + escHtml(rejectionNotes) + '</div>' +
+    html += '<div class="note-block red">' +
+        '<div class="note-block-cap">' + escHtml(t('pt_trkRejectReason')) + '</div>' +
+        '<div class="note-block-txt">' + escHtml(rejectionNotes) + '</div>' +
       '</div>';
   }
 
@@ -502,22 +515,20 @@ function renderDetail(d) {
   // الطالب يكمّله. الزر بيوديه على شاشة التحقق بالجوال، وبعد الـ OTP النظام
   // بيفتحله طلبه في وضع التعديل مباشرة.
   if (st === 'need_more_info') {
-    html += '<div class="info-box">' +
-        '<div class="info-box-title">' +
-          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' +
-          'المطلوب استكماله' +
-        '</div>' +
-        '<div class="info-box-text">' + (infoNotes ? escHtml(infoNotes) : 'يرجى مراجعة بيانات الطلب واستكمال الناقص.') + '</div>' +
-        '<a class="info-box-btn" href="register-phone.html">استكمال الطلب</a>' +
+    html += '<div class="note-block">' +
+        '<div class="note-block-cap">' + escHtml(t('pt_trkNeedInfo')) + '</div>' +
+        '<div class="note-block-txt">' + (infoNotes ? escHtml(infoNotes) : t('pt_trkNeedInfoDefault')) + '</div>' +
+        '<a class="info-box-btn" href="register-phone.html">' + escHtml(t('pt_trkComplete')) + '</a>' +
       '</div>';
   }
 
   if (st === 'completed' || st === 'approved') {
     html += '<div class="done-box">' +
         '<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#067647" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:8px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' +
-        '<h3 style="font-size:16px;color:#067647;margin-bottom:8px">تم إنشاء حساب شبكة السكن بنجاح</h3>' +
-        '<p style="font-size:14px;margin-bottom:4px">اسم المستخدم: <strong dir="ltr" style="display:inline-block;background:#fff;padding:4px 12px;border-radius:6px;border:1px solid #dcdfe4">' + escHtml(d.adUsername || '-') + '</strong></p>' +
-        '<p style="font-size:12px;color:#85888e">تم إرسال بيانات الدخول إلى رقم الجوال المسجل بالنظام.</p>' +
+        '<h3 style="font-size:16px;color:#067647;margin-bottom:6px">' + escHtml(t('pt_trkAccountCreated')) + '</h3>' +
+        // ⚠️ سطر «اسم المستخدم» اتشال. AdUsername كان اتشال من TrackingDetailsDto
+        //    عشان الشاشة دي عامة بلا تسجيل دخول، فالسطر كان بيعرض «-» دايمًا.
+        '<p style="font-size:13.5px;color:#333741;line-height:1.8">' + escHtml(t('pt_trkAccountSentSms')) + '</p>' +
       '</div>';
   }
 
@@ -536,16 +547,16 @@ function renderDetail(d) {
 //    الطالب يحتاج يعرف: وصل فين، ومطلوب منه إيه (غالبًا لا شيء). وده موجود.
 var NOW_STATE = {
   submitted: {
-    title: 'طلبك قيد المراجعة لدى إدارة الإسكان',
-    text: 'تم استلام طلبك وإحالته إلى الموظف المختص، وسيتم التواصل معك عند صدور القرار.'
+    title: t('pt_trkNowHousing'),
+    text: t('pt_trkNowReviewTxt')
   },
   cyber_review: {
-    title: 'طلبك قيد المراجعة',
-    text: 'اعتمدت إدارة الإسكان طلبك، ويجري استكمال المراجعة. سيتم التواصل معك عند صدور القرار.'
+    title: t('pt_trkNowReview'),
+    text: t('pt_trkNowHousingOk')
   },
   cyber_approved: {
-    title: 'اكتملت المراجعات ويجري تجهيز حسابك',
-    text: 'تمت الموافقة على طلبك، ويجري حاليًا تجهيز حساب شبكة السكن. ستصلك بيانات الدخول برسالة نصية.'
+    title: t('pt_trkNowReady'),
+    text: t('pt_trkNowReadyTxt')
   }
 };
 NOW_STATE.pending_supervisor = NOW_STATE.submitted;
@@ -574,7 +585,10 @@ var TRUST_WINDOW_MS = 30 * 60 * 1000; // ٣٠ دقيقة
 
 // فتح مباشر من رابط: ?req=2026-000005[&last4=1234] — بييجي من شاشة التحقق أو
 // من شاشة تأكيد التقديم، فمالوش لازمة يعيد كتابة بيانات إحنا عارفينها.
-(function autoOpenFromUrl() {
+// ⚠️ مربوط بـ __i18nReady: الفتح المباشر بيرسم الحالة والمسار فورًا، ولو
+//    اشتغل قبل ما القاموس وجدول المسار يوصلوا الطالب هيشوف نصوص عامة مكان
+//    اسم مرحلته.
+(window.__i18nReady || Promise.resolve()).then(function autoOpenFromUrl() {
   try {
     var q = new URLSearchParams(window.location.search);
     var req = q.get('req') || q.get('number');
@@ -610,10 +624,10 @@ var TRUST_WINDOW_MS = 30 * 60 * 1000; // ٣٠ دقيقة
       trackByNumber();
     } else {
       // خارج نافذة الثقة: رقم الطلب متعبّي والمؤشر واقف على خانة التحقق.
-      showAlert('للتحقق من ملكية الطلب، يرجى إدخال آخر ٤ أرقام من رقم جوالك', 'info');
+      showAlert(t('pt_trkOwnerNote'), 'info');
     }
   } catch (e) { /* رابط غير صالح - الصفحة تفضل تشتغل عادي */ }
-})();
+});
 
 document.getElementById('requestNumberInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') goToLast4(); });
 document.getElementById('last4Input').addEventListener('keydown', function (e) { if (e.key === 'Enter') trackByNumber(); });

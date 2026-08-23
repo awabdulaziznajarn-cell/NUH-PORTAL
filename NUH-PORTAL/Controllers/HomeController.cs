@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NUH_PORTAL.Common.Pagination;
+using NUH_PORTAL.Core;
+using NUH_PORTAL.Services;
 using NUH_PORTAL.Services.Interfaces;
 using NUH_PORTAL.ViewModels;
 
@@ -15,12 +17,15 @@ namespace NUH_PORTAL.Controllers
         private readonly IStudentService _students;
         private readonly IStudentStatusService _status;
         private readonly IRequestService _requests;
+        private readonly FacultyHousingService _faculty;
 
-        public HomeController(IStudentService students, IStudentStatusService status, IRequestService requests)
+        public HomeController(IStudentService students, IStudentStatusService status,
+                              IRequestService requests, FacultyHousingService faculty)
         {
             _students = students;
             _status = status;
             _requests = requests;
+            _faculty = faculty;
         }
 
         // GET /Home
@@ -36,6 +41,15 @@ namespace NUH_PORTAL.Controllers
                 LatestRequests = (await _requests.GetPagedAsync(
                     new QueryParams { Page = 1, PageSize = 6 }, status: null, requestType: null)).Items
             };
+
+            // ⚠️ الاستعلام مشروط بالصلاحية لا الشاشة: لو اتحسب دايمًا وخبّيناه
+            //    في الـ view، كنا بندفع أربع استعلامات مع كل فتح للوحة لمستخدم
+            //    مش هيشوفها - والأرقام بتوصل الصفحة أصلًا حتى لو مخفية.
+            if (User.HasClaim(ClaimConstants.Permission, "facultyHousing.view"))
+            {
+                vm.FacultyStats = await _faculty.GetDashboardStatsAsync();
+            }
+
             return View(vm);
         }
     }

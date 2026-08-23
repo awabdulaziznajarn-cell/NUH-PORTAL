@@ -78,17 +78,17 @@
      الأعمدة المخفية بـ display:none بتخرج من الحساب، فالسبعة الظاهرة في كل
      تبويب بيجمعوا نفس النِسَب: 56px + 88% + 150px. *@
   <div style="overflow-x:auto">
-    <table class="table-fixed">
+    <table class="table-fixed" id="usrTable">
       <thead>
         <tr id="usrHeadRow">
           <th style="width:56px">#</th>
-          <th style="width:18%">@SharedLocalizer["usr_col_username"]</th>
-          <th style="width:21%">@SharedLocalizer["usr_col_fullName"]</th>
-          <th class="col-staff" style="width:20%">@SharedLocalizer["usr_col_email"]</th>
-          <th class="col-staff" style="width:13%">@SharedLocalizer["usr_col_role"]</th>
-          <th class="col-students" style="display:none;width:20%">@SharedLocalizer["usr_lbl_mobile"]</th>
-          <th class="col-students" style="display:none;width:13%">@SharedLocalizer["usr_colCreatedAt"]</th>
-          <th style="width:10%">@SharedLocalizer["usr_col_status"]</th>
+          <th data-sort="username" style="width:18%">@SharedLocalizer["usr_col_username"]</th>
+          <th data-sort="full_name" style="width:21%">@SharedLocalizer["usr_col_fullName"]</th>
+          <th class="col-staff" data-sort="email" style="width:20%">@SharedLocalizer["usr_col_email"]</th>
+          <th class="col-staff" data-sort="role" style="width:13%">@SharedLocalizer["usr_col_role"]</th>
+          <th class="col-students" data-sort="mobile" style="display:none;width:20%">@SharedLocalizer["usr_lbl_mobile"]</th>
+          <th class="col-students" data-sort="created_at" style="display:none;width:13%">@SharedLocalizer["usr_colCreatedAt"]</th>
+          <th data-sort="is_active" style="width:10%">@SharedLocalizer["usr_col_status"]</th>
           @* ⚠️ ١٥٠ بكسل كانت مظبوطة على زرارين. مع زرار «حذف» التالت بقى
              العمود أضيق من محتواه فالزرار يتقصّ عند حافة الجدول.
              ٢٤٠ اتقاسوا في المتصفح على أعرض حالة فعليًا: الأزرار التلاتة في
@@ -119,39 +119,47 @@
       <input type="hidden" id="m_id">
       <div class="e-grid">
         <div class="e-field">
-          <label>@SharedLocalizer["usr_lbl_username"]<span class="req">*</span></label>
+          <label for="m_username">@SharedLocalizer["usr_lbl_username"]<span class="req">*</span></label>
           <input type="text" id="m_username">
           <span class="field-error" id="m-err-username">@SharedLocalizer["usr_required"]</span>
         </div>
         <div class="e-field">
-          <label>@SharedLocalizer["usr_lbl_fullName"]</label>
+          <label for="m_full_name">@SharedLocalizer["usr_lbl_fullName"]</label>
           <input type="text" id="m_full_name">
         </div>
         <div class="e-field">
-          <label>@SharedLocalizer["usr_lbl_email"]</label>
+          <label for="m_email">@SharedLocalizer["usr_lbl_email"]</label>
           <input type="text" id="m_email">
         </div>
         <div class="e-field">
-          <label>@SharedLocalizer["usr_lbl_mobile"]</label>
+          <label for="m_mobile">@SharedLocalizer["usr_lbl_mobile"]</label>
           <input type="text" id="m_mobile">
         </div>
         <div class="e-field">
-          <label>@SharedLocalizer["usr_lbl_department"]</label>
+          <label for="m_department">@SharedLocalizer["usr_lbl_department"]</label>
           <input type="text" id="m_department">
         </div>
         <div class="e-field">
-          <label>@SharedLocalizer["usr_lbl_jobTitle"]</label>
+          <label for="m_job_title">@SharedLocalizer["usr_lbl_jobTitle"]</label>
           <input type="text" id="m_job_title">
         </div>
+        @* ⚠️ الدور معطَّل لمن لا يملك «إسناد الأدوار» (roles.assign) بدل إخفائه:
+           صاحب users.manage محتاج يقرا دور الموظف وهو بيعدّل بياناته، لكنه لا
+           يملك تغييره. والحقل معطَّل هنا وسـاقط من الحمولة في saveUser، والخادم
+           يرفضه كذلك - ثلاث طبقات لأن الأولى تجميلية والثانية يسهل تخطّيها. *@
         <div class="e-field">
-          <label>@SharedLocalizer["usr_lbl_role"]</label>
-          <select id="m_role"></select>
+          <label for="m_role">@SharedLocalizer["usr_lbl_role"]</label>
+          <select id="m_role" @(canAssign ? "" : "disabled")></select>
+          @if (!canAssign)
+          {
+              <span class="e-hint">@SharedLocalizer["usr_roleLockedHint"]</span>
+          }
         </div>
         @* القسم صفة الشخص مش صفة الدور: المشرف والمشرفة بنفس دور supervisor
            وبنفس الصلاحيات، واللي بيفرّق بينهم هو القسم المسؤول عنه كل واحد.
            والدور اللي فيه صلاحية «الطلاب والطالبات معًا» بيتخطّى الحقل ده أصلًا. *@
         <div class="e-field">
-          <label>@SharedLocalizer["usr_lbl_scope"]</label>
+          <label for="m_scope_gender">@SharedLocalizer["usr_lbl_scope"]</label>
           <select id="m_scope_gender">
             <option value="">@SharedLocalizer["usr_scope_all"]</option>
             <option value="male">@SharedLocalizer["usr_scope_male"]</option>
@@ -160,16 +168,25 @@
           <span class="e-hint">@SharedLocalizer["usr_scopeHint"]</span>
         </div>
         <div class="e-field">
-          <label id="m_pwd_label">@SharedLocalizer["usr_lbl_password"]<span id="m_pwd_req">*</span></label>
+          <label for="m_password" id="m_pwd_label">@SharedLocalizer["usr_lbl_password"]<span id="m_pwd_req">*</span></label>
           <input type="password" id="m_password" autocomplete="new-password">
           <span class="field-error" id="m-err-password">@SharedLocalizer["usr_required"]</span>
         </div>
+        @* ⚠️ مفتاح لا قائمة من خيارين: الحالة قيمة ثنائية، والقائمة تطلب
+           فتحًا واختيارًا وإغلاقًا لتبديل نعم/لا. والشكل واحد الآن بين
+           الجدول والنافذة. *@
         <div class="e-field">
-          <label>@SharedLocalizer["usr_lbl_active"]</label>
-          <select id="m_is_active">
-            <option value="true">@SharedLocalizer["usr_active_yes"]</option>
-            <option value="false">@SharedLocalizer["usr_active_no"]</option>
-          </select>
+          @* ⚠️ التسمية بتشاور على مربع المفتاح نفسه: الدوس على كلمة «الحالة»
+             بيقلب المفتاح زي أي حقل تاني في النافذة. *@
+          <label for="m_is_active">@SharedLocalizer["usr_lbl_active"]</label>
+          <span class="nsw-field is-on" id="m_is_active_wrap"
+                data-on='@(SharedLocalizer["usr_active_yes"].Value)' data-off='@(SharedLocalizer["usr_active_no"].Value)'>
+            <label class="nsw">
+              <input type="checkbox" id="m_is_active" checked onchange="NuhSwitch.sync('m_is_active')">
+              <span class="nsw-track"></span>
+            </label>
+            <span class="nsw-label">@SharedLocalizer["usr_active_yes"]</span>
+          </span>
         </div>
       </div>
     </div>
@@ -199,9 +216,10 @@
         <button class="btn btn-primary" type="button" onclick="ldapSearch()">@SharedLocalizer["usr_ldapSearchBtn"]</button>
       </div>
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-        <label style="font-size:13px;font-weight:600;color:var(--gray-700)">@SharedLocalizer["usr_ldapPickRole"]</label>
-        <select id="ldapRole" style="max-width:220px"></select>
-        <label style="font-size:13px;font-weight:600;color:var(--gray-700)">@SharedLocalizer["usr_lbl_scope"]</label>
+        <label for="ldapRole" style="font-size:13px;font-weight:600;color:var(--gray-700)">@SharedLocalizer["usr_ldapPickRole"]</label>
+        @* نفس القاعدة: اختيار دور غير الافتراضي يحتاج «إسناد الأدوار» *@
+        <select id="ldapRole" style="max-width:220px" @(canAssign ? "" : "disabled")></select>
+        <label for="ldapScope" style="font-size:13px;font-weight:600;color:var(--gray-700)">@SharedLocalizer["usr_lbl_scope"]</label>
         <select id="ldapScope" style="max-width:200px">
           <option value="">@SharedLocalizer["usr_scope_all"]</option>
           <option value="male">@SharedLocalizer["usr_scope_male"]</option>
@@ -235,17 +253,29 @@
      الحقول، رسالة التأكيد، مؤشر التحميل) من site.css،
      وأزرار إجراءات الصف (.row-actions / .action-*) من components.css. */
   .usr-pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:11px;font-weight:600}
-  .usr-pill-on{background:#dff6e7;color:#067647}
-  .usr-pill-off{background:#f5f5f6;color:#61646c}
+  /* ⚠️ .usr-pill-on / .usr-pill-off اتشالوا: عمود «الحالة» بقى مفتاحًا،
+     وفضلت شارة المحذوف وحدها لأن الحساب المحذوف لا يُبدَّل بمفتاح. */
   .usr-role{display:inline-block;padding:2px 10px;border-radius:6px;font-size:11px;font-weight:600;background:#eff4ff;color:#1849a9}
   .usr-pill-del{background:#fee4e2;color:#b42318}
+  /* ⚠️ شارة «مقفول» جنب المفتاح لا بدله: القفل والتعطيل حالتان مستقلّتان
+     تمامًا - حساب ممكن يكون مفعَّل ومقفول في نفس الوقت، وde بالظبط اللي كان
+     بيحصل ومحدّش شايفه. المفتاح بيقول الحالة الإدارية، والشارة بتقول إن فيه
+     قفل تلقائي فوقها.
+     ⚠️ واللون كهرماني لا أحمر: القفل مش عقوبة ولا خطأ - بيفكّ لوحده بعد ١٥
+        دقيقة. الأحمر محجوز للمحذوف. */
+  .usr-pill-lock{background:var(--gold-pale);color:#93370d;cursor:help}
+  /* ⚠️ غلاف flex حوالين المفتاح والشارة، مش vertical-align:
+     .nsw-field نفسه inline-flex، وخطّ قاعدته هو قاعدة آخر سطر جوّاه - فأي
+     شارة جنبه بـ vertical-align بتقع تحت مركزه بكام بكسل. الـ flex بيحاذي
+     الاتنين على مركزهم فعلًا. */
+  .usr-status{display:inline-flex;align-items:center;gap:7px}
   /* شارة مصدر الحساب — المسؤول لازم يفرّق بين حساب الجامعة (الباسورد عند الدومين
      وتصفيره من هنا مالوش معنى) وحساب محلي اتعمل جوّه النظام. */
   .usr-src{display:inline-block;margin-inline-start:6px;padding:1px 7px;border-radius:5px;font-size:10px;font-weight:700;background:#eff4ff;color:#166a45;vertical-align:middle}
   /* شارة القسم — بتفرّق مشرف الطلاب عن مشرفة الطالبات وهما بنفس الدور */
   .usr-scope{display:inline-block;margin-inline-start:6px;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700;vertical-align:middle}
   .usr-scope-male{background:#eff4ff;color:#1849a9}
-  .usr-scope-female{background:#f4eefa;color:#80519f}
+  .usr-scope-female{background:var(--purple-light);color:var(--purple)}
   .e-hint{display:block;margin-top:5px;font-size:11px;color:var(--gray-500);line-height:1.7}
   .usr-inactive{opacity:.55}
   /* ⚠️ .edit-modal-header اتشالت من هنا — كانت مكرّرة في ثلاث شاشات.
@@ -259,7 +289,8 @@
   // الجدول وحالاته من NuhTable، والترويسات من NUH.headers في التخطيط — مفيش نسخة محلية.
   var usrTable = NuhTable.bind('usrBody', 7);
   var ldapTable = NuhTable.bind('ldapBody', 4);
-  var esc = function (v) { return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); };
+  // تهريب HTML — التعريف الوحيد في /js/esc.js
+  var esc = function (v) { return escHtml(v); };
 
   function showToast(msg, isError) {
     var el = document.getElementById('toast'); if (!el) return;
@@ -291,6 +322,15 @@
   //    ترسم «لا يوجد مستخدمون» قبل أن ينطلق أول نداء أصلًا، ثم تُستبدل بالبيانات
   //    عند وصولها. المستخدم يرى شاشة فارغة تقول صراحة «لا يوجد» ثم تمتلئ فجأة —
   //    فأي بطء عادي يبدو كعطل. التفرقة نفسها صارت في NuhTable لكل الشاشات.
+  // ⚠️ الترتيب هنا في المتصفح مش على الخادم — وده صح في الشاشة دي بالذات:
+  //    /api/Users بيرجّع **كل** المستخدمين في نداء واحد بلا ترقيم، فالمصفوفة
+  //    اللي في الذاكرة هي كل البيانات. الترتيب في المتصفح بيبقى غلط بس لما
+  //    يكون الجدول مقسّم صفحات (زي الطلاب والطلبات) — وده مش الحال هنا.
+  //    المقارنة نفسها من NuhTable (التعريف الوحيد): بتفهم الفاضي والتاريخ
+  //    والأرقام جوّه النصّ، ومش مكتوبة في الشاشة.
+  var usrSort = NuhTable.sort('usrTable', function () { syncUrl(); renderTable(); },
+    { by: NuhUrl.get('sort', ''), asc: NuhUrl.get('asc', '1') === '1' });
+
   function renderTable() {
     if (!usrTable.isDone()) return usrTable.loading();
     var q = (document.getElementById('usrSearch').value || '').trim().toLowerCase();
@@ -302,6 +342,8 @@
              (u.mobile || '').toLowerCase().indexOf(q) !== -1 ||
              (u.role || '').toLowerCase().indexOf(q) !== -1;
     });
+
+    rows = usrSort.sortRows(rows);
 
     var colCount = 7;
     var body = '';
@@ -316,14 +358,19 @@
       } else {
         // ⚠️ حساب الطالب مالوش «تعديل»: بياناته بتيجي من سجل الطالب نفسه، وتعديلها
         //    من هنا هيخلّي الاتنين مختلفين. المتاح تعطيل الدخول بس.
-        if (PERM.manage) {
-          if (tab === 'staff')
-            actions += '<button class="action-btn action-edit" onclick="openEdit(' + u.id + ')">' + t('usr_edit') + '</button>';
-          if (u.is_active)
-            actions += '<button class="action-btn action-toggle" onclick="toggleActive(' + u.id + ',false)">' + t('usr_deactivate') + '</button>';
-          else
-            actions += '<button class="action-btn action-on" onclick="toggleActive(' + u.id + ',true)">' + t('usr_activate') + '</button>';
-        }
+        // ⚠️ زرّا «تفعيل» و«تعطيل» اتشالوا من هنا: الحالة بقت مفتاحًا في عمود
+        //    «الحالة» نفسه. قبل كده كانت المعلومة الواحدة في مكانين - شارة
+        //    تُقرأ وزر يُضغط - وعمود الإجراءات فيه تلات أزرار.
+        // ⚠️ «فكّ القفل» أول زرّ في الصف ولمّا يكون فيه قفل بس: الحساب ده
+        //    مش قادر يدخل **دلوقتي**، فهو أعجل حاجة في الصف. ولمّا مافيش
+        //    قفل الزرّ مايظهرش خالص بدل ما يبقى معطّلًا - زرّ معطّل في كل
+        //    صف بيخلّي العين تعدّي على الصف اللي فيه قفل حقيقي.
+        // ⚠️ وفي تبويب الطلاب كمان لا الموظفين بس: حساب الطالب بيتقفل بنفس
+        //    الطريقة، وهو بالذات مالوش حد يتصل بيه غير الإدارة.
+        if (PERM.manage && u.is_locked)
+          actions += '<button class="action-btn action-on" onclick="unlockUser(' + u.id + ')">' + t('usr_unlock') + '</button>';
+        if (PERM.manage && tab === 'staff')
+          actions += '<button class="action-btn action-edit" onclick="openEdit(' + u.id + ')">' + t('usr_edit') + '</button>';
         // ⚠️ الحذف في تبويب الموظفين بس. حساب الطالب بيتعمل تلقائيًا مع كل تحقق
         //    برمز جوال، فحذفه بيرجع لوحده أول ما الطالب يقدّم طلب تاني — زرار
         //    بيوعد بحاجة النظام نفسه بيلغيها بعد دقيقة.
@@ -337,15 +384,25 @@
         //    بعيدًا عن عنوان العمود. <bdi> يعزل ترتيب الأرقام وحده وتبقى
         //    المحاذاة تابعة لاتجاه الصفحة، فيقف الرقم تحت «الجوال» تمامًا.
         ? '<td><bdi>' + esc(u.mobile || '-') + '</bdi></td>' +
-          '<td>' + (u.created_at ? new Date(u.created_at).toLocaleDateString('ar-EG') : '-') + '</td>'
+          '<td>' + NuhFmt.date(u.created_at) + '</td>'
         : '<td>' + esc(u.email) + '</td>' +
           '<td><span class="usr-role">' + esc(roleText(u.role)) + '</span>' + scopeBadge(u) + '</td>';
 
+      // ⚠️ المحذوف يبقى شارةً لا مفتاحًا: حسابه مقفول أصلًا، ومفتاح قابل
+      //    للتبديل عليه يوحي بأنه يُفعَّل بضغطة - وهو لا يُفعَّل إلا بالاستعادة.
+      // ⚠️ ومن لا يملك صلاحية الإدارة يرى المفتاح معطَّل التبديل لا مخفيًّا:
+      //    الحالة معلومة يحتاجها، والذي يُمنع منه هو تغييرها.
+      // ⚠️ الشارة بتظهر **بس** لما يكون فيه قفل فعلًا: القفل حالة عابرة
+      //    (١٥ دقيقة)، فشارة دايمة عنه كانت هتبقى فاضية في ٩٩٪ من الصفوف.
+      var lockPill = (!u.is_deleted && u.is_locked)
+        ? '<span class="usr-pill usr-pill-lock" title="' + esc(t('usr_lockedTitle') + ' ' + NuhFmt.dateTime(u.lockout_end)) + '">' + t('usr_locked') + '</span>'
+        : '';
+
       var status = u.is_deleted
-        ? '<span class="usr-pill usr-pill-del" title="' + (u.deleted_at ? esc(new Date(u.deleted_at).toLocaleString('ar-EG')) : '') + '">' + t('usr_status_deleted') + '</span>'
-        : (u.is_active
-            ? '<span class="usr-pill usr-pill-on">' + t('usr_status_active') + '</span>'
-            : '<span class="usr-pill usr-pill-off">' + t('usr_status_inactive') + '</span>');
+        ? '<span class="usr-pill usr-pill-del" title="' + esc(NuhFmt.dateTime(u.deleted_at)) + '">' + t('usr_status_deleted') + '</span>'
+        : NuhSwitch.cell(u.is_active, 'toggleActive(' + u.id + ',' + (u.is_active ? 'false' : 'true') + ')',
+                         t('usr_status_active'), t('usr_status_inactive'), { disabled: !PERM.manage });
+      if (lockPill) status = '<span class="usr-status">' + status + lockPill + '</span>';
 
       // شارة «دومين» جنب الاسم — الحساب ده باسورده عند الدومين مش عندنا، فتصفير
       // الباسورد من نافذة التعديل مالوش أي أثر عليه. المسؤول لازم يشوف ده من الجدول.
@@ -393,10 +450,7 @@
     //    نكتبه في الرابط: يبقى بعد التحديث، ويعمل مع زر الرجوع، ويمكن نسخ
     //    الرابط وإرساله لزميل فيفتح على نفس التبويب. (أفضل من التخزين المحلي:
     //    ذاك يجعل الرابط الواحد يفتح على شاشتين مختلفتين حسب الجهاز.)
-    var u = new URL(window.location.href);
-    if (which === 'staff') u.searchParams.delete('tab');
-    else u.searchParams.set('tab', which);
-    history.replaceState(null, '', u);
+    syncUrl();
 
     usrTable.reset();
     renderTable();
@@ -415,7 +469,20 @@
     } catch (e) { /* صامت - العدّاد مش حاجة حرجة */ }
   }
 
-  function filterUsers() { renderTable(); }
+  // ⚠️ التبويب كان بيتكتب في الرابط لوحده، والبحث والترتيب لأ. فالرجوع كان
+  //    بيرجّعك للتبويب الصح وبكلمة بحث راحت - وده بيبان صح وهو مش صح.
+  //    الكتابة كلها بقت من هنا (NuhUrl في js/url-state.js).
+  var USR_DEFAULTS = { tab: 'staff', q: '', sort: '', asc: '' };
+
+  function syncUrl() {
+    NuhUrl.sync({
+      tab: tab,
+      q: (document.getElementById('usrSearch').value || '').trim(),
+      sort: usrSort.by(), asc: usrSort.by() ? (usrSort.asc() ? '1' : '0') : ''
+    }, USR_DEFAULTS);
+  }
+
+  function filterUsers() { syncUrl(); renderTable(); }
 
   async function loadUsers() {
     try {
@@ -462,7 +529,7 @@
     mGet('id').value = '';
     ['username','full_name','email','mobile','department','job_title','password'].forEach(function (f) { mGet(f).value = ''; });
     mGet('username').removeAttribute('readonly');
-    mGet('is_active').value = 'true';
+    NuhSwitch.set('m_is_active', true);
     mGet('scope_gender').value = '';
     if (state.roles.length) mGet('role').value = (state.roles.find(function (r) { return r.name === 'user'; }) ? 'user' : state.roles[0].name);
     document.getElementById('m_pwd_req').style.display = '';
@@ -484,7 +551,7 @@
     mGet('department').value = u.department || '';
     mGet('job_title').value = u.job_title || '';
     mGet('password').value = '';
-    mGet('is_active').value = u.is_active ? 'true' : 'false';
+    NuhSwitch.set('m_is_active', !!u.is_active);
     mGet('scope_gender').value = u.scope_gender || '';
     if (u.role) mGet('role').value = u.role;
     document.getElementById('m_pwd_req').style.display = 'none';
@@ -529,11 +596,16 @@
       mobile: mGet('mobile').value.trim(),
       department: mGet('department').value.trim(),
       job_title: mGet('job_title').value.trim(),
-      role: mGet('role').value,
       // فاضي بيتبعت null مش '' — العمود Gender? في قاعدة البيانات
       scope_gender: mGet('scope_gender').value || null,
-      is_active: mGet('is_active').value === 'true'
+      is_active: NuhSwitch.get('m_is_active')
     };
+    // ⚠️ الدور يُرسل فقط لمن يملك «إسناد الأدوار». من غير الشرط ده كانت الشاشة
+    //    بتبعت الدور مع **كل** حفظ، فأي تعديل اسم من صاحب users.manage كان
+    //    بيتحوّل عند الخادم إلى محاولة إسناد دور - والحارس الجديد كان هيرفضها
+    //    ويكسر تعديلًا مشروعًا تمامًا.
+    if (PERM.assign) payload.role = mGet('role').value;
+
     var pwd = mGet('password').value;
     if (pwd) payload.password = pwd;
     if (!isEdit) payload.username = mGet('username').value.trim();
@@ -565,6 +637,19 @@
       });
       if (res.status === 401) { window.location.replace('/Account/Login'); return; }
       if (res.ok) { loadUsers(); showToast(t('usr_saved')); }
+      else { var err = await res.json().catch(function () { return {}; }); showToast(err.message || t('usr_saveError'), true); }
+    } catch (e) { showToast(t('usr_saveError'), true); }
+  }
+
+  // ⚠️ فكّ القفل مش نفس التفعيل: بينده endpoint تاني خالص (unlock) لأنه
+  //    بيمسح LockoutEnd و AccessFailedCount بتوع Identity، مش عمود is_active.
+  //    الاتنين كانوا مخلوطين في دماغ المستخدم - وde كان أول سؤال اتسأل.
+  async function unlockUser(id) {
+    if (!await NuhDialog.confirm({ message: t('usr_confirmUnlock') })) return;
+    try {
+      var res = await fetch('/api/Users/' + id + '/unlock', { method: 'POST', headers: NUH.headers() });
+      if (res.status === 401) { window.location.replace('/Account/Login'); return; }
+      if (res.ok) { loadUsers(); showToast(t('usr_unlocked')); }
       else { var err = await res.json().catch(function () { return {}; }); showToast(err.message || t('usr_saveError'), true); }
     } catch (e) { showToast(t('usr_saveError'), true); }
   }
@@ -628,7 +713,9 @@
   }
 
   async function addFromLdap(sam) {
-    var role = document.getElementById('ldapRole').value || 'user';
+    // ⚠️ بدون «إسناد الأدوار» يُضاف الموظف بالدور الافتراضي (قراءة فقط)،
+    //    ويرقّيه بعدها من يملك الصلاحية. وهذا ما يفرضه الخادم أيضًا.
+    var role = PERM.assign ? (document.getElementById('ldapRole').value || 'user') : 'user';
     var scope = document.getElementById('ldapScope').value || null;
     try {
       var res = await fetch('/api/Users/from-ldap', {
@@ -654,8 +741,8 @@
   setLang(localStorage.getItem('uiLanguage') || 'ar');
 
   // استعادة التبويب من الرابط قبل أول نداء، حتى لا يُحمَّل تبويب ثم يُستبدل
-  var qTab = new URLSearchParams(window.location.search).get('tab');
-  tab = (qTab === 'students' || qTab === 'deleted') ? qTab : 'staff';
+  tab = NuhUrl.one('tab', ['staff', 'students', 'deleted'], 'staff');
+  document.getElementById('usrSearch').value = NuhUrl.get('q', '');
   // ⚠️ تبويب المحذوفين مربوط بصلاحية users.delete. رابط منسوخ من زميل صلاحياته
   //    أوسع كان هيفتح تبويبًا غير موجود في الشاشة، فيبان الجدول فارغًا بلا سبب.
   if (tab === 'deleted' && !PERM.del) tab = 'staff';

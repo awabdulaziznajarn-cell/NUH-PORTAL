@@ -40,6 +40,15 @@ namespace NUH_PORTAL.DTOs.AuditLogs
         public string? action { get; set; }
         public string? target_table { get; set; }
         public int target_id { get; set; }
+        // ⚠️ الاسم المقروء للهدف: «برج 6 - شقة 20» بدل «FacultyUnits / 53».
+        //    كان التصدير لإكسل بيترجم الرقم لاسم والشاشة لأ - فالموظف بيقرا
+        //    على الشاشة أرقامًا ويصدّر الملف فيلاقي أسماء. نفس المصدر للاتنين
+        //    دلوقتي (AuditLogQueryService.ResolveTargetNamesAsync).
+        public string? target_name { get; set; }
+        // ⚠️ المعرّف التقني للهدف جنب اسمه: حساب الدومين لوحدة السكن مثلًا.
+        //    الاسم العربي بيقول «أنهي وحدة»، والحساب هو اللي بيتكتب في الدليل
+        //    وبيتبحث بيه فعلًا - فالاتنين مطلوبين، وكل واحد بشكله على الشاشة.
+        public string? target_sub { get; set; }
         public DateTime action_at { get; set; }
         public string? ip_address { get; set; }
         public string? user_agent { get; set; }

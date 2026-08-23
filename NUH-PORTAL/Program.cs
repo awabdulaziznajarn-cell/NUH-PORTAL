@@ -1,4 +1,4 @@
-﻿using AspNetCoreRateLimit;
+using AspNetCoreRateLimit;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -229,14 +229,69 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
-// ملاحظة: مبقناش محتاجين DefaultPolicy مخصّصة — السكيم الذكي "NUH_Smart" فوق بيوثّق
-// كل الـ [Authorize] (العادية واللي عليها Roles) بالكوكي أو الـ JWT حسب الطلب.
+// ملاحظة: السكيم الذكي "NUH_Smart" فوق بيوثّق كل الـ [Authorize] (العادية واللي
+// عليها Roles) بالكوكي أو الـ JWT حسب الطلب — ده جزء *التوثيق* (إنت مين).
+// أما جزء *التصريح* (هل مسموح لك) فله DefaultPolicy مخصّصة تحت، وسببها مشروح
+// عندها: التوثيق بيقول إن الكوكي صالح، وما بيقولش إن الحساب لسه نشط.
 
 // ✅ Authorization — policy لكل صلاحية (permission)، الكنترولر بيستخدم [Authorize(Policy = "users.manage")]
 builder.Services.AddAuthorization(options =>
 {
     foreach (var permission in ApplicationPermissions.All)
         options.AddPolicy(permission.Value, policy => policy.RequireClaim(ClaimConstants.Permission, permission.Value));
+
+    // ========================================================================
+    //  ⚠️ السياسة الافتراضية — كل [Authorize] مكتوب بلا Policy بيمرّ من هنا.
+    //
+    //     العيب اللي بتقفله: إيقاف الموظف بقى بيشيل أدواره وصلاحياته
+    //     (PermissionClaimsTransformation)، فأي شاشة محميّة بصلاحية بترفضه.
+    //     لكن عشر كنترولرات في النظام محميّة بـ [Authorize] مجرّد — يعني
+    //     «أي حد مسجّل دخول» — وأهمها HomeController: لوحة التحكم بتقرا
+    //     إحصائيات الطلاب وآخر ٦ طلاب بأسمائهم وآخر ٦ طلبات وبترندرهم من
+    //     السيرفر. فالموظف الموقوف كان لسه بيشوف الأسماء دي، والقائمة
+    //     الجانبية فاضية فمفيش حتى إشارة إنه المفروض مطرود.
+    //
+    //     ومكانها هنا لا على كل كنترولر: أي كنترولر جديد بـ [Authorize] مجرّد
+    //     بياخد الفحص ده تلقائيًا. لو كتبناها على العشرة، الحادي عشر هيتنسى.
+    // ========================================================================
+    options.DefaultPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .RequireClaim(ClaimConstants.AccountActive)
+        .Build();
+
+    // ⚠️ الاستثناء الوحيد، وهو مقصود مش ثغرة: دي الصفحتان اللي *لازم* الموظف
+    //    الموقوف يوصلهم وهو بلا أي سلطة —
+    //      • /Account/Denied  لو اتقفلت، رفضها بيحوّل عليها هي نفسها = لوب
+    //        تحويل لا نهائي، والمستخدم بيشوفه كأن الصفحة بتعيد تحميل نفسها.
+    //      • /Account/Logout  لو اتقفلت، مايقدرش يمسح الكوكي بنفسه ويفضل
+    //        عالق في شاشة الرفض لحد ما يقفل المتصفح خالص.
+    //    الاتنين مالهمش أي بيانات، فمفيش حاجة تتسرّب منهم.
+    options.AddPolicy("signedIn", policy => policy.RequireAuthenticatedUser());
+
+    // ⚠️ السياسة المركّبة الوحيدة في النظام — دونات «حسابات شبكة السكن» في لوحة
+    //    التحكم. كل ما فوق صلاحية = سياسة، وده لا يعبّر عن "أو". والدونات دي
+    //    أداة الأمن السيبراني: هو من يُنشئ الحساب ويعطّله، لكنه لا يملك
+    //    housing.view (شاشة إدارة الحسابات)، فكانت البطاقة تظهر له والطلب
+    //    يرجع 403 فيبقى مكانها فارغًا.
+    //    الردّ ثلاثة مجاميع لا بيانات طالب، ومن يملك أيًّا من الثلاثة يراها اليوم
+    //    في الشاشة نفسها. مضاف هنا لا كصلاحية جديدة في قاعدة البيانات: صلاحية
+    //    جديدة كانت تحتاج إسنادًا يدويًا لكل دور، وتُنسى مع أول دور يُضاف.
+    options.AddPolicy("dashboard.accountStats", policy => policy.RequireAssertion(ctx =>
+        ctx.User.HasClaim(ClaimConstants.Permission, "housing.view") ||
+        ctx.User.HasClaim(ClaimConstants.Permission, "requests.reviewCyber") ||
+        ctx.User.HasClaim(ClaimConstants.Permission, "requests.complete")));
+
+    // ⚠️ شاشة «التقارير» بتقرا *كل* بياناتها من AuditLogsController، فاللي
+    //    معاه reports.view وحدها كان بيفتحها ويلاقي نصّها شغّال ونصّها
+    //    «تعذر الاتصال بالخادم». والمفارقة إن الأجزاء اللي كانت بتشتغل هي
+    //    بالظبط الـ endpoints المفتوحة بلا صلاحية، واللي كان بيفشل هو
+    //    المحميّ صح — يعني الشاشة كانت «شغّالة» بقدر الثغرة فيها.
+    //    الشرطان معًا: إما تشتغل كاملة أو ما تظهرش أصلًا.
+    //    ومكانها هنا لا كصلاحية جديدة في قاعدة البيانات: صلاحية جديدة تحتاج
+    //    إسنادًا يدويًا لكل دور وتُنسى مع أول دور يُضاف.
+    options.AddPolicy("reports.page", policy => policy.RequireAssertion(ctx =>
+        ctx.User.HasClaim(ClaimConstants.Permission, "reports.view") &&
+        ctx.User.HasClaim(ClaimConstants.Permission, "auditLogs.view")));
 });
 
 // ✅ CORS
@@ -303,8 +358,9 @@ builder.Services.Configure<IpRateLimitOptions>(options =>
         // ⚠️ القاعدة كانت على /api/Auth/Login بس، ومفيش أي واجهة بتستخدم المسار ده.
         //    نموذج دخول الموظفين الفعلي بيرسل على POST /Account/Login (Views/Account/Login.cshtml)
         //    وكان بلا أي حد — يعني الحماية كانت على باب مقفول والباب المفتوح جنبه.
+        // ⚠️ القاعدة على /api/Auth/Login اتشالت مع المسار نفسه — الحدّ على مسار
+        //    مش موجود بيوهم إن الحماية مضاعفة وهي على باب متشال أصلًا.
         new RateLimitRule { Endpoint = "POST:/Account/Login", Period = "1m", Limit = 10 },
-        new RateLimitRule { Endpoint = "POST:/api/Auth/Login", Period = "1m", Limit = 10 },
         // إرسال OTP — مكافحة سبام الرسائل وتعداد الأرقام (الخدمة كمان بتمنع طلب قبل مرور دقيقة)
         new RateLimitRule { Endpoint = "POST:/api/Otp/send", Period = "10m", Limit = 5 },
         // التحقق من OTP — مكافحة التخمين (الخدمة كمان بتقفل بعد 3 محاولات)
@@ -340,6 +396,9 @@ builder.Services.Configure<ADServiceAccountConfig>(builder.Configuration.GetSect
 // أو تصحيح اسم OU في الدومين يبقى تعديل إعداد، مش build ونشر.
 builder.Services.Configure<FacultyHousingConfig>(builder.Configuration.GetSection("FacultyHousing"));
 builder.Services.AddSingleton<ActiveDirectoryService>();
+// أماكن حسابات الطلاب في الدليل — مصدر واحد لخدمة الإنشاء ولأدوات التشخيص.
+// Scoped لأنه بيقرا من ADConfigurations (AppDbContext).
+builder.Services.AddScoped<AdDirectoryLayout>();
 builder.Services.AddScoped<ADProvisioningService>();
 builder.Services.AddScoped<FacultyHousingService>();
 builder.Services.AddScoped<OtpService>();
@@ -374,9 +433,10 @@ builder.Services.AddScoped<ISupervisorHousingTransferService, SupervisorHousingT
 // مكان تخزين المرفقات — Singleton لأنه بيقرأ الإعدادات مرة واحدة وبعدها بيحسب مسارات بس.
 // المسار بيتظبط من Storage:AttachmentsRoot في appsettings.
 builder.Services.AddSingleton<IAttachmentStorage, AttachmentStorage>();
-builder.Services.AddScoped<IAttachmentService, AttachmentService>();
 builder.Services.AddScoped<IAuditLogQueryService, AuditLogQueryService>();
 builder.Services.AddScoped<ILogQueryService, LogQueryService>();
+builder.Services.AddScoped<IPledgeService, PledgeService>();
+builder.Services.AddScoped<IStudentFileService, StudentFileService>();
 builder.Services.AddScoped<IRegistrationFlowService, RegistrationFlowService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IOtpFlowService, OtpFlowService>();
@@ -545,42 +605,23 @@ if (app.Environment.IsDevelopment())
     DbSeeder.SeedDevData(seedDb);
 }
 
-// ✅ استكمال صلاحيات دور «admin» — في كل البيئات.
+// ⚠️ كان هنا كتلة تانية بتمنح دور admin كل الصلاحيات في كل إقلاع.
 //
-// ⚠️ سبب وجوده: زرع الصلاحيات الأول يعمل في بيئة التطوير فقط. فأي صلاحية جديدة
-//    تُضاف للنظام بعد التشغيل لا تصل لدور admin في الإنتاج، والنتيجة أن مدير
-//    النظام يفقد قدرة كان يملكها — بلا رسالة ولا سبب ظاهر. حدث هذا فعليًا مع
-//    auditLogs.viewAll: بدونها كان مدير النظام سيرى سجلًا منقوصًا ويظنّه عطلًا.
-//    الدور معرَّف في النظام بأنه يملك كل الصلاحيات، فهذا تنفيذ للتعريف لا توسيع له.
-//    (الأدوار الأخرى لا تُمسّ — صلاحياتها قرار إداري من شاشة الأدوار.)
-try
-{
-    using var permScope = app.Services.CreateScope();
-    var permRoleManager = permScope.ServiceProvider.GetRequiredService<RoleManager<Role>>();
-    var adminRole = await permRoleManager.FindByNameAsync("admin");
-    if (adminRole != null)
-    {
-        var have = (await permRoleManager.GetClaimsAsync(adminRole))
-            .Where(c => c.Type == ClaimConstants.Permission)
-            .Select(c => c.Value)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        var added = 0;
-        foreach (var p in NUH_PORTAL.Core.ApplicationPermissions.All)
-            if (!have.Contains(p.Value))
-            {
-                await permRoleManager.AddClaimAsync(adminRole, new Claim(ClaimConstants.Permission, p.Value));
-                added++;
-            }
-
-        if (added > 0)
-        {
-            var permCache = permScope.ServiceProvider.GetRequiredService<IMemoryCache>();
-            NUH_PORTAL.Core.PermissionClaimsTransformation.Invalidate(permCache, "admin");
-        }
-    }
-}
-catch { /* لا يوقف الإقلاع — الصلاحيات تُمنح يدويًا من شاشة الأدوار عند الحاجة */ }
+//    اتشالت لأنها كانت **نسخة تانية من نفس القاعدة** اللي في
+//    DbSeeder.SeedRolesAndPermissionsAsync، وده اللي خلّى العطل يعيش بعد ما
+//    اتصلّح: الصلاحية اللي بيشيلها مدير النظام من شاشة الأدوار كانت بترجع مع
+//    أول إعادة تدوير للـ application pool، وإصلاح مكان واحد مكانش بيكفّي لأن
+//    التاني لسه بيمنحها.
+//
+//    والتعليق اللي كان فوقها بيوضّح إزاي حصل ده: هي اتكتبت لمّا كان الـ seeder
+//    بيشتغل في بيئة التطوير بس، فكان لازم حاجة تستكمل صلاحيات admin في
+//    الإنتاج. بعدين الـ seeder اتنقل يشتغل في كل البيئات — والكتلة دي فضلت
+//    مكانها، وبقت الصلاحية بتتمنح مرتين من مكانين مالهمش علاقة ببعض.
+//
+//    والحاجة اللي كانت بتحلّها لسه متحلّة: صلاحية جديدة في نسخة أحدث لازم
+//    توصل admin وإلا الشاشة الجديدة تفضل مقفولة على الكل — بس دي بقت في
+//    GrantNewPermissionsToAdminAsync، وبطريقة بتفرّق بين «صلاحية جديدة على
+//    النظام» و«صلاحية اتشالت بإيد مدير النظام».
 
 // ✅ زرع القوائم المرجعية (lookups) — في كل البيئات لأنها بيانات أساسية.
 // try/catch عشان لو الـ migration الخاصة بالقوائم لسه ماتطبّقتش مايكسرش الإقلاع.
@@ -848,7 +889,6 @@ app.Use(async (context, next) =>
 // 🔒 مرفقات الطلاب (هويات، مستندات نقل، قرارات فصل) بتتخزّن تحت wwwroot/uploads،
 //    يعني UseStaticFiles كان بيقدّمها لأي حد معاه الرابط من غير تسجيل دخول.
 //    الوصول المشروع كله بيعدّي من كنترولرات بتتحقق من الصلاحية:
-//      /api/Attachment/download/{id}
 //      /api/supervisor/housing-transfer/{id}/attachment
 //      /api/student-status/{actionId}/attachment
 //    فالمسار المباشر مقفول هنا. 404 مش 403 — عشان ما نأكّدش وجود الملف أصلًا.

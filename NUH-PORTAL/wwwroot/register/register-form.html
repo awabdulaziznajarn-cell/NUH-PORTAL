@@ -1,258 +1,375 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" id="html-root">
+<html lang="ar" dir="rtl" id="html-root" data-title-key="pt_formTitle">
 <head>
 <link rel="icon" href="../favicon.ico">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>نموذج التسجيل - بوابة السكن الجامعي</title>
+<title>نموذج التسجيل - بوابة الإسكان الجامعي</title>
+<!-- تهريب HTML (escHtml) - التعريف الوحيد في النظام.
+     ⚠️ الصفحة دي مش بتمرّ على التخطيط، فلازم تحمّله بنفسها وقبل
+        أي ملف بيناديه. -->
+<script src="../js/esc.js"></script>
+<!-- قواعد الهوية والجوال (NuhId) - متولّدة من Core/IdentityRules.cs.
+     ⚠️ ده راوت على الخادم مش ملف في wwwroot، عشان القاعدة تفضل
+        مكتوبة في مكان واحد بس. -->
+<script src="../js/nuh-id.js"></script>
 <script src="../i18n.js"></script>
 <script src="../js/housing-fields.js"></script>
+<script src="../js/name-fields.js"></script>
+<script src="../js/phone-field.js"></script>
 <script src="../lookups.js"></script>
 <link rel="stylesheet" href="../css/portal.css">
+  <!-- ⚠️ نفس مكوّن القوائم الذي تستعمله شاشات الموظفين، لا نسخة ثانية منه.
+       كانت هذه الصفحة تترك <select> على حاله فيرسمه المتصفح بقائمته الأصلية:
+       تظليل أزرق من نظام التشغيل داخل شاشة خضراء، وشكل يختلف من ويندوز إلى
+       ماك إلى الجوال. المكوّن يقرأ ألوانه من نفس متغيّرات portal.css. -->
+  <link rel="stylesheet" href="../css/components.css">
   <link rel="stylesheet" href="../css/portal-touch.css">
   <style>
+/* ============================================================================
+   ⚠️ ما بقي هنا يخصّ هذه الصفحة وحدها.
+      كانت هذه الكتلة تحمل نسخة ثانية كاملة من مكوّنات النماذج: .form-control
+      و .field و .field-error و .form-section و .form-row و .name-group.
+      النتيجة أن النموذج نفسه كان له شكلان: خانات بيضاء بارتفاع ٤٨ عند الطالب،
+      وخانات رمادية بارتفاع ٤٦ داخل بطاقة بترويسة خضراء عند المشرف، وخانة جوال
+      بلا مفتاح +966 عند الطالب ومعه عند المشرف.
+      الكتلة حُذفت، والصفحة تقرأ الآن من css/components.css — نفس الملف الذي
+      تقرأ منه شاشة «تسجيل طالب فردي». أي تعديل في المكوّن يصل للشاشتين معًا.
+   ============================================================================ */
+/* ⚠️ ٧٦٠ بدل ٦٤٠: بطاقة القسم تضيف حشوًا من جانبيها، وخانات الاسم الثلاث
+   داخل .name-row تحتاج عرضًا كافيًا وإلا انضغطت «اسم الأب والجد». */
+.content{max-width:760px}
 
+/* ترويسة النموذج - خارج البطاقات عمدًا حتى تبدأ الأقسام من أعلى الصفحة */
+.reg-head{text-align:center;margin-bottom:18px}
+.reg-head h2{font-size:18px;font-weight:800;color:var(--navy-dark)}
+.reg-head p{font-size:13px;color:var(--gray-500);margin-top:4px}
 
-
-
-
-
-
-
-.portal-header{text-align:center;padding:28px 16px 0;width:100%;position:relative}
-.portal-header img{width:80px;height:auto;margin-bottom:10px}
-.portal-header h1{font-size:17px;font-weight:800;color:var(--navy-dark)}
-.lang-btn{position:absolute;top:12px;background:#fff;border:1px solid #dcdfe4;border-radius:6px;padding:6px 14px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;z-index:10}
-[dir="rtl"] .lang-btn{left:12px}
-[dir="ltr"] .lang-btn{right:12px}
-.lang-btn:hover{background:#f5f5f6}
-.content{max-width:640px}
-
-.card:hover{box-shadow:0 4px 20px rgba(16,70,49,0.09)}
-
-
-
-
-.field{margin-bottom:16px}
-.field label{display:block;font-size:13px;font-weight:600;color:var(--gray-700);margin-bottom:6px}
-.field label span{color:#d92d20;margin-right:2px}
-.form-control{width:100%;padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:10px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;transition:border-color 0.2s;height:48px}
-.form-control:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(16,70,49,0.1)}
-.form-control.error{border-color:#d92d20}
-.form-control:disabled{background:var(--gray-100);color:var(--gray-500);cursor:not-allowed}
-select.form-control{appearance:auto}
-.field-error{font-size:11px;color:#d92d20;font-weight:500;display:none;margin-top:4px}
-.field-error.show{display:block}
 /* تنبيه التكرار المبكر: يخصّ خانتين معًا (الرقم الجامعي + الهوية) فمكانه تحتهما
-   على عرض الصف كله، مش تحت خانة واحدة. */
-.dup-warn{display:none;grid-column:1/-1;margin-top:-4px;padding:11px 14px;border-radius:10px;
-          background:#fef0c7;border:1px solid #f0c33c;color:#93370d;font-size:12.5px;
+   على عرض الصف كله، لا تحت خانة واحدة. */
+.dup-warn{display:none;grid-column:1/-1;margin-top:-8px;padding:11px 14px;border-radius:10px;
+          background:var(--gold-pale);border:1px solid #f0c33c;color:#93370d;font-size:12.5px;
           font-weight:600;line-height:1.8}
 .dup-warn.show{display:block}
-.form-control.dup{border-color:#dba102;background:#fffaeb}
-.form-section{margin-bottom:24px}
-.form-section-title{font-size:15px;font-weight:700;color:var(--navy-dark);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--gray-100)}
-.form-row{display:flex;gap:12px}
-.form-row .field{flex:1}
-.form-row .field.wide{flex:1.7}
-.name-group{margin-bottom:18px}
-.name-group>.group-label{display:block;font-size:13px;font-weight:700;color:var(--navy-dark);margin-bottom:8px}
-.name-group>.group-label span{color:#d92d20;margin-right:2px}
-.name-group .field{margin-bottom:12px}
-.name-group .field label{font-size:12px;font-weight:500;color:var(--gray-500)}
-.form-control[dir="ltr"]{direction:ltr;text-align:left}
+.input-wrap input.dup{border-color:#dba102;background:#fffaeb}
 
-
+/* ⚠️ حالة تخصّ الطالب وحده: رقم الجوال تحقّق منه برمز في الخطوة الأولى، فيُقفل
+   هنا. لا وجود لها في شاشة المشرف لأنه يكتب الرقم ابتداءً. */
+.phone-wrap.is-locked{background:var(--gray-100)}
+.phone-wrap.is-locked .cc{background:var(--gray-200)}
+.phone-wrap.is-locked input{color:var(--gray-500);cursor:not-allowed}
 
 .btn-primary:disabled{opacity:0.5;cursor:not-allowed}
 
+/* ⚠️ وضع التعديل فقط: المراجع بيحدد الخانات المطلوب تصحيحها، فبنقفل الباقي
+   وبنبيّن للطالب المطلوب منه بالظبط. من غير ده كان بيلاقي النموذج كله مفتوح.
 
+   البطاقة متعمَّد إنها بنفس بنية .form-card (رأس أخضر فاتح + جسم أبيض): النسخة
+   الأولى كانت صندوقًا أصفر بالكامل، وكان بيبان دخيلًا فوق بطاقات النموذج.
+   الكهرماني اتحصر في صندوق ملاحظة المراجع وحده — نصّ إنسان لا عنصر واجهة. */
+.reg-fix{background:#fff;border:1px solid var(--gray-200);border-radius:14px;overflow:hidden;
+         margin-bottom:18px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+.reg-fix-head{display:flex;align-items:center;gap:11px;padding:14px 18px;background:#f0f9f4;
+              border-bottom:1px solid #d6ecdf}
+.reg-fix-ic{flex:0 0 auto;width:30px;height:30px;border-radius:8px;background:#fff;
+            border:1px solid #d6ecdf;display:flex;align-items:center;justify-content:center;
+            color:var(--navy)}
+.reg-fix-head b{flex:1;font-size:14px;font-weight:800;color:var(--navy-dark)}
+.reg-fix-cnt{flex:0 0 auto;background:var(--navy);color:#fff;border-radius:999px;
+             padding:3px 11px;font-size:12px;font-weight:700}
+.reg-fix-body{padding:16px 18px}
+.reg-fix-list{list-style:none;margin:0 0 14px;padding:0}
+.reg-fix-list li{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:9px;
+                 background:var(--gray-50);border:1px solid var(--gray-200);font-size:13.5px;
+                 font-weight:600;color:var(--navy-dark)}
+.reg-fix-list li+li{margin-top:7px}
+.reg-fix-list li svg{flex:0 0 auto;color:var(--gold)}
+.reg-fix-hint{font-size:12.5px;line-height:1.8;color:var(--gray-500)}
+.reg-fix-note{margin-top:12px;background:#fffaeb;border:1px solid #fde8b0;border-radius:10px;
+              padding:11px 14px;font-size:13px;line-height:1.85;color:#93370d;white-space:pre-wrap}
+.reg-fix-note i{display:block;font-style:normal;font-size:11.5px;font-weight:700;
+                opacity:.75;margin-bottom:2px}
 
-@media(max-width:768px){.portal-header{padding:20px 16px 0}.portal-header img{width:64px}.portal-header h1{font-size:16px}.content{padding:16px}.card{padding:20px}.form-row{flex-direction:column;gap:0}.step-indicator{gap:6px}.step{width:30px;height:30px;font-size:12px}}
-@media(max-width:414px){.card{border-radius:12px}.step{width:28px;height:28px;font-size:11px}.step-indicator{gap:4px}}
-@media(max-width:375px){.content{padding:12px}.card{padding:16px;border-radius:10px}.form-control{height:44px;font-size:16px}.btn{padding:10px 16px}.step{width:26px;height:26px;font-size:10px}.portal-header{padding:16px 12px 0}.portal-header img{width:56px}.portal-header h1{font-size:15px}}
-@media(max-width:320px){.card{padding:14px}.field label{font-size:12px}.form-control{font-size:14px;height:40px}.btn{font-size:13px;padding:8px 14px}}
+/* الخانة المطلوب تصحيحها — إطار أخضر يفرزها عن المقفولة الرمادية حواليها */
+.field.is-target>label{color:var(--navy-dark);font-weight:800}
+.field.is-target .input-wrap input,
+.field.is-target .input-wrap .nsel-btn{border-color:var(--navy);box-shadow:0 0 0 3px rgba(22,106,69,.10)}
+
+@media(max-width:768px){.content{padding:16px}.step-indicator{gap:6px}.step{width:30px;height:30px;font-size:12px}}
+@media(max-width:640px){.form-actions{padding:16px}.form-actions .btn{flex:1;padding:0 16px}}
+@media(max-width:414px){.step{width:28px;height:28px;font-size:11px}.step-indicator{gap:4px}.form-card-body{padding:18px}.form-card-header{padding:14px 18px}}
+@media(max-width:375px){.content{padding:12px}}
 </style>
 </head>
 <body>
 <div class="portal-header">
-<img src="../nu-logo.png" alt="جامعة نجران">
-<h1 id="pageTitle">تسجيل الإسكان الجامعي</h1>
-<button class="lang-btn" id="langBtn" onclick="toggleLang()">English</button>
+<img src="../nu-logo.svg" alt="جامعة نجران" data-i18n-alt="Brand_Sub">
+<h1 data-i18n="Brand_Title">بوابة الإسكان الجامعي</h1>
+<!-- ⚠️ data-i18n لا نصّ ثابت: الزرّ كان مكتوب فيه «English» بالإيد، فالطالب
+     اللي بدّل للإنجليزي كان بيلاقي صفحة إنجليزي وزرّ بيعرض عليه «English»
+     تاني - مفيش طريق راجع ظاهر للعربي. المفتاح pt_langToggle قيمته في
+     الملف العربي «English» وفي الإنجليزي «العربية»، يعني نصّه دايمًا اسم
+     اللغة اللي المستخدم رايح لها. -->
+<button class="lang-btn" id="langBtn" type="button" onclick="toggleLang()" data-i18n="pt_langToggle">English</button>
 </div>
 <div class="content">
-<div class="card card-pad-lg">
 <div class="step-indicator">
 <div class="step done"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#067647"/><path d="M4.5 8L7 10.5L11.5 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
 <div class="step done"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#067647"/><path d="M4.5 8L7 10.5L11.5 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
 <div class="step active">3</div>
 <div class="step">4</div>
 </div>
-<h2 style="font-size:18px;font-weight:800;margin-bottom:4px">نموذج التسجيل</h2>
-<p style="font-size:13px;color:var(--gray-500);margin-bottom:20px">يرجى تعبئة البيانات التالية للتسجيل في الإسكان الجامعي</p>
+<div class="reg-head">
+<h2 id="pageTitle" data-i18n="pt_formTitle">نموذج التسجيل</h2>
+<p data-i18n="pt_formSubtitle">يرجى تعبئة البيانات التالية للتسجيل في الإسكان الجامعي</p>
+</div>
 <div id="alertMessage" class="alert"></div>
 <form id="regForm" onsubmit="submitForm(event)">
 
-<div class="form-section">
-<div class="form-section-title">المعلومات الشخصية</div>
-<div class="name-group">
-<span class="group-label">الاسم بالعربية <span>*</span></span>
-<div class="form-row">
-<div class="field">
-<label>الاسم الأول</label>
-<input type="text" id="ar_first" class="form-control" autocomplete="off">
-</div>
-<div class="field wide">
-<label>اسم الأب والجد</label>
-<input type="text" id="ar_middle" class="form-control" autocomplete="off">
-</div>
-<div class="field">
-<label>اسم العائلة</label>
-<input type="text" id="ar_family" class="form-control" autocomplete="off">
-</div>
-</div>
-<span class="field-error" id="err-name_ar">اكتب الاسم بالعربية في الخانات الثلاث</span>
-</div>
-<div class="name-group">
-<span class="group-label">الاسم بالإنجليزية <span>*</span></span>
-<div class="form-row">
-<div class="field">
-<label>First name</label>
-<input type="text" id="en_first" class="form-control" dir="ltr" autocomplete="off">
-</div>
-<div class="field wide">
-<label>Father &amp; grandfather</label>
-<input type="text" id="en_middle" class="form-control" dir="ltr" autocomplete="off">
-</div>
-<div class="field">
-<label>Family name</label>
-<input type="text" id="en_family" class="form-control" dir="ltr" autocomplete="off">
-</div>
-</div>
-<span class="field-error" id="err-name_en">اكتب الاسم بالإنجليزية في الخانات الثلاث</span>
-<span class="field-error" id="val-name_match">يجب تطابق عدد الأسماء في خانة «اسم الأب والجد» بين العربية والإنجليزية</span>
-</div>
-<div class="form-row">
-<div class="field">
-<label>الرقم الجامعي <span>*</span></label>
-<input type="text" id="student_id" class="form-control" maxlength="9" required>
-<span class="field-error" id="err-student_id">حقل مطلوب</span>
-<span class="field-error" id="val-student_id_start">يجب أن يبدأ الرقم الجامعي بالرقم 4</span>
-<span class="field-error" id="val-student_id_length">يجب أن يتكون الرقم الجامعي من 9 أرقام</span>
-</div>
-<div class="field">
-<label>رقم الهوية <span>*</span></label>
-<input type="text" id="national_id" class="form-control" maxlength="10" required>
-<span class="field-error" id="err-national_id">حقل مطلوب</span>
-<span class="field-error" id="val-national_id">يجب أن تتكون الهوية الوطنية من 10 أرقام</span>
-</div>
-<!-- تنبيه التكرار يخصّ الخانتين معًا، فيمتد على عرض الصف تحتهما -->
-<div class="dup-warn" id="dupWarn"></div>
-</div>
-<div class="form-row">
-<div class="field">
-<label>رقم الجوال <span>*</span></label>
-<input type="tel" id="phone" class="form-control" maxlength="12" required>
-<span class="field-error" id="err-phone">حقل مطلوب</span>
-<span class="field-error" id="val-phone">يجب أن يبدأ رقم الجوال بـ 9665 وأن يتكون من 12 رقماً</span>
-</div>
-<div class="field">
-<label>الجنس <span>*</span></label>
-<select id="gender" class="form-control" required>
-<option value="">اختر الجنس</option>
-<option value="male">ذكر</option>
-<option value="female">أنثى</option>
-</select>
-<span class="field-error" id="err-gender">اختر الجنس</span>
-</div>
-</div>
+<!-- ⚠️ لا توجد سمة required على أي حقل عن قصد: مكوّن القائمة NuhSelect يخفي
+     <select> الأصلي بصريًا، والمتصفح لا يستطيع إبراز عنصر مخفٍ فيوقف الإرسال
+     بصمت - يضغط الطالب «تقديم الطلب» فلا يحدث شيء ولا تظهر أي رسالة. التحقق
+     كله في validate() برسائل عربية، وهو نفس ما تفعله شاشة المشرف بالحرف. -->
+<!-- ⚠️ البطاقات الثلاث والأيقونات مطابقة لـ Views/Register/Index.cshtml حرفًا
+     بحرف. المقصود ألا يشعر أحد بفرق بين نفس النموذج عند الطالب وعند المشرف. -->
+<div class="form-card">
+  <div class="form-card-header">
+    <div class="form-card-header-icon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#166a45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </div>
+    <div class="form-card-title" data-i18n="reg_sectionPersonal">المعلومات الشخصية</div>
+  </div>
+  <div class="form-card-body">
+    <div class="form-grid">
+
+      <!-- عنوان مجموعة لا تسمية حقل: الاسم مقسوم لتلات خانات فمفيش حقل واحد
+           يتربط بيه. role="group" + aria-labelledby بيخلّي قارئ الشاشة يقرا
+           «الاسم بالعربية» مرة واحدة قبل التلاتة. -->
+      <div class="field name-group" role="group" aria-labelledby="lblFullNameAr">
+        <label id="lblFullNameAr">الاسم بالعربية<span class="req">*</span></label>
+        <div class="name-row">
+          <div>
+            <label for="ar_first" data-i18n="reg_lblNameFirst">الاسم الأول</label>
+            <div class="input-wrap"><input type="text" id="ar_first" autocomplete="off"></div>
+          </div>
+          <div>
+            <label for="ar_middle" data-i18n="reg_lblNameMiddle">اسم الأب والجد</label>
+            <div class="input-wrap"><input type="text" id="ar_middle" autocomplete="off"></div>
+          </div>
+          <div>
+            <label for="ar_family" data-i18n="reg_lblNameFamily">اسم العائلة</label>
+            <div class="input-wrap"><input type="text" id="ar_family" autocomplete="off"></div>
+          </div>
+        </div>
+        <span class="field-error" id="err-name_ar" data-i18n="pt_errNameAr">اكتب الاسم بالعربية في الخانات الثلاث</span>
+      </div>
+
+      <div class="field name-group" role="group" aria-labelledby="lblFullNameEn">
+        <label id="lblFullNameEn">الاسم بالإنجليزية<span class="req">*</span></label>
+        <div class="name-row">
+          <div>
+            <label for="en_first">First name</label>
+            <div class="input-wrap"><input type="text" id="en_first" dir="ltr" autocomplete="off"></div>
+          </div>
+          <div>
+            <label for="en_middle">Father &amp; grandfather</label>
+            <div class="input-wrap"><input type="text" id="en_middle" dir="ltr" autocomplete="off"></div>
+          </div>
+          <div>
+            <label for="en_family">Family name</label>
+            <div class="input-wrap"><input type="text" id="en_family" dir="ltr" autocomplete="off"></div>
+          </div>
+        </div>
+        <span class="field-error" id="err-name_en" data-i18n="pt_errNameEn">اكتب الاسم بالإنجليزية في الخانات الثلاث</span>
+        <span class="field-error" id="err-name_match" data-i18n="pt_valNameMatch">يجب تطابق عدد الأسماء في خانة «اسم الأب والجد» بين العربية والإنجليزية</span>
+      </div>
+
+      <div class="field">
+        <label for="student_id">الرقم الجامعي<span class="req">*</span></label>
+        <div class="input-wrap with-icon">
+          <input type="text" id="student_id" maxlength="9" inputmode="numeric">
+          <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 3H8a2 2 0 0 0-2 2v2h12V5a2 2 0 0 0-2-2z"/></svg>
+        </div>
+        <span class="field-error" id="err-student_id" data-i18n="reg_errRequired">حقل مطلوب</span>
+        <span class="field-error" id="val-student_id_start" data-i18n="reg_valStudentIdStart">يجب أن يبدأ الرقم الجامعي بالرقم 4</span>
+        <span class="field-error" id="val-student_id_length" data-i18n="reg_valStudentId">يجب أن يتكون الرقم الجامعي من 9 أرقام</span>
+      </div>
+
+      <div class="field">
+        <label for="national_id">رقم الهوية<span class="req">*</span></label>
+        <div class="input-wrap with-icon">
+          <input type="text" id="national_id" maxlength="10" inputmode="numeric">
+          <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        </div>
+        <span class="field-error" id="err-national_id" data-i18n="reg_errRequired">حقل مطلوب</span>
+        <span class="field-error" id="val-national_id" data-i18n="pt_formErrNationalId">يجب أن تتكون الهوية الوطنية من 10 أرقام</span>
+      </div>
+
+      <!-- تنبيه التكرار يخصّ الخانتين معًا، فيمتد على عرض الصف تحتهما -->
+      <div class="dup-warn" id="dupWarn"></div>
+
+      <div class="field">
+        <label for="phone">رقم الجوال<span class="req">*</span></label>
+        <!-- ⚠️ مفتاح +966 ثابت والطالب يكتب ٩ أرقام تبدأ بـ 5 — نفس مكوّن شاشة
+             المشرف. كانت هنا خانة واحدة يُطلب فيها من الطالب كتابة 9665… بيده،
+             فكانت رسالة «يجب أن يبدأ بـ 9665» أكثر ما يوقفه في النموذج. -->
+        <div class="phone-wrap" id="phoneWrap">
+          <span class="cc">+966</span>
+          <input type="tel" id="phone" inputmode="numeric" autocomplete="tel-national" dir="ltr">
+        </div>
+        <span class="field-error" id="err-phone" data-i18n="reg_errRequired">حقل مطلوب</span>
+        <span class="field-error" id="val-phone" data-i18n="pt_formErrPhone">اكتب ٩ أرقام تبدأ بالرقم 5</span>
+      </div>
+
+      <div class="field">
+        <label for="gender">الجنس<span class="req">*</span></label>
+        <div class="input-wrap with-icon">
+          <select id="gender">
+            <option value="" data-i18n="reg_optSelectGender">اختر الجنس</option>
+            <option value="male" data-i18n="reg_optMale">ذكر</option>
+            <option value="female" data-i18n="reg_optFemale">أنثى</option>
+          </select>
+          <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/></svg>
+        </div>
+        <span class="field-error" id="err-gender" data-i18n="reg_optSelectGender">اختر الجنس</span>
+      </div>
+
+    </div>
+  </div>
 </div>
 
-<div class="form-section">
-<div class="form-section-title">المعلومات الأكاديمية</div>
-<div class="form-row">
-<div class="field">
-<label>الكلية <span>*</span></label>
-<select id="college" class="form-control" required>
-<!-- ⚠️ القائمة تُحمَّل من /api/lookups/colleges زي شاشة الموظف بالظبط.
-     كانت مكتوبة ثابتة هنا، فأي كلية تُضاف من «القوائم المرجعية» ما توصلش
-     للطالب — نموذجان مختلفان لنفس البيانات. الخيارات الثابتة اتشالت،
-     ولو الـ API ما ردّش تفضل القائمة على placeholder والحقل مطلوب فالنموذج
-     ما بيتقدّمش ببيانات ناقصة. -->
-<option value="">اختر الكلية</option>
-</select>
-<span class="field-error" id="err-college">اختر الكلية</span>
-</div>
-<div class="field">
-<label>القسم <span>*</span></label>
-<select id="department" class="form-control" required>
-<!-- تتفلتر حسب الكلية المختارة (?collegeId=) -->
-<option value="">اختر القسم</option>
-</select>
-<span class="field-error" id="err-department">اختر القسم</span>
-</div>
-</div>
-<div class="form-row">
-<div class="field">
-<label>المستوى الدراسي <span>*</span></label>
-<select id="academic_level" class="form-control" required>
-<option value="">اختر المستوى</option>
-</select>
-<span class="field-error" id="err-academic_level">اختر المستوى</span>
-</div>
-<div class="field">
-<label>اسم المستخدم</label>
-<!-- اسم مستخدم الشبكة بيتولّد تلقائيًا من الرقم الجامعي (h + الرقم) — للعرض فقط -->
-<input type="text" id="ad_username" class="form-control" readonly tabindex="-1"
-       style="background:#f5f5f6;color:#61646c;cursor:not-allowed">
-</div>
-</div>
+<div class="form-card">
+  <div class="form-card-header">
+    <div class="form-card-header-icon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#166a45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+    </div>
+    <div class="form-card-title" data-i18n="reg_sectionAcademic">المعلومات الأكاديمية</div>
+  </div>
+  <div class="form-card-body">
+    <div class="form-grid">
+
+      <div class="field">
+        <label for="college">الكلية<span class="req">*</span></label>
+        <div class="input-wrap with-icon">
+          <!-- ⚠️ القائمة تُحمَّل من /api/lookups/colleges زي شاشة الموظف بالظبط.
+               كانت مكتوبة ثابتة هنا، فأي كلية تُضاف من «القوائم المرجعية» ما توصلش
+               للطالب — نموذجان مختلفان لنفس البيانات. الخيارات الثابتة اتشالت،
+               ولو الـ API ما ردّش تفضل القائمة على placeholder والحقل مطلوب فالنموذج
+               ما بيتقدّمش ببيانات ناقصة. -->
+          <select id="college">
+            <option value="" data-i18n="reg_optSelectCollege">اختر الكلية</option>
+          </select>
+          <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/></svg>
+        </div>
+        <span class="field-error" id="err-college" data-i18n="reg_optSelectCollege">اختر الكلية</span>
+      </div>
+
+      <div class="field">
+        <label for="department">القسم<span class="req">*</span></label>
+        <div class="input-wrap with-icon">
+          <!-- تتفلتر حسب الكلية المختارة (?collegeId=) -->
+          <select id="department">
+            <option value="" data-i18n="reg_optSelectDepartment">اختر القسم</option>
+          </select>
+          <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/></svg>
+        </div>
+        <span class="field-error" id="err-department" data-i18n="reg_optSelectDepartment">اختر القسم</span>
+      </div>
+
+      <div class="field">
+        <label for="academic_level">المستوى الدراسي<span class="req">*</span></label>
+        <div class="input-wrap with-icon">
+          <select id="academic_level">
+            <option value="" data-i18n="reg_optSelectLevel">اختر المستوى</option>
+          </select>
+          <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/></svg>
+        </div>
+        <span class="field-error" id="err-academic_level" data-i18n="reg_optSelectLevel">اختر المستوى</span>
+      </div>
+
+      <div class="field">
+        <label for="ad_username" data-i18n="reg_lblUsername">اسم المستخدم</label>
+        <div class="input-wrap with-icon">
+          <!-- اسم مستخدم الشبكة بيتولّد تلقائيًا من الرقم الجامعي (h + الرقم) — للعرض فقط -->
+          <input type="text" id="ad_username" readonly tabindex="-1">
+          <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/></svg>
+        </div>
+      </div>
+
+    </div>
+  </div>
 </div>
 
-<div class="form-section">
-<div class="form-section-title">معلومات السكن</div>
-<div class="form-row">
-<div class="field">
-<label>المبنى السكني <span>*</span></label>
-<select id="housing_building" class="form-control" required disabled>
-<option value="">اختر الجنس أولاً</option>
-</select>
-<span class="field-error" id="err-housing_building">اختر المبنى</span>
-</div>
-<div class="field">
-<label>رقم الدور <span>*</span></label>
-<select id="floor_number" class="form-control" required>
-<option value="">اختر الدور</option>
-<option value="0">الأرضي</option>
-<option value="1">1</option>
-<option value="2">2</option>
-<option value="3">3</option>
-<option value="4">4</option>
-</select>
-<span class="field-error" id="err-floor_number">اختر الدور</span>
-</div>
-</div>
-<div class="form-row">
-<div class="field">
-<label>رقم الشقة <span>*</span></label>
-<select id="apartment_number" class="form-control" required disabled>
-<option value="">اختر الدور أولاً</option>
-</select>
-<span class="field-error" id="err-apartment_number">اختر رقم الشقة</span>
-</div>
-<div class="field">
-<label>رقم الغرفة <span>*</span></label>
-<select id="room_number" class="form-control" required>
-<option value="">اختر رقم الغرفة</option>
-</select>
-<span class="field-error" id="err-room_number">اختر رقم الغرفة</span>
-</div>
-</div>
+<div class="form-card">
+  <div class="form-card-header">
+    <div class="form-card-header-icon">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#166a45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+    </div>
+    <div class="form-card-title" data-i18n="reg_sectionHousing">معلومات الإسكان</div>
+  </div>
+  <div class="form-card-body">
+    <div class="form-grid">
+
+      <div class="field">
+        <label for="housing_building">المبنى السكني<span class="req">*</span></label>
+        <div class="input-wrap with-icon">
+          <select id="housing_building" disabled>
+            <option value="" data-i18n="reg_optSelectGenderFirst">اختر الجنس أولاً</option>
+          </select>
+          <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        </div>
+        <span class="field-error" id="err-housing_building" data-i18n="reg_optSelectBuilding">اختر المبنى</span>
+      </div>
+
+      <div class="field">
+        <label for="floor_number">رقم الدور<span class="req">*</span></label>
+        <div class="input-wrap with-icon">
+          <select id="floor_number">
+            <option value="" data-i18n="reg_optSelectFloor">اختر الدور</option>
+            <option value="0" data-i18n="reg_optFloorGround">الأرضي</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+          </select>
+          <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-4h6v4"/></svg>
+        </div>
+        <span class="field-error" id="err-floor_number" data-i18n="reg_optSelectFloor">اختر الدور</span>
+      </div>
+
+      <div class="field">
+        <label for="apartment_number">رقم الشقة<span class="req">*</span></label>
+        <div class="input-wrap with-icon">
+          <select id="apartment_number" disabled>
+            <option value="" data-i18n="reg_optSelectFloorFirst">اختر الدور أولاً</option>
+          </select>
+          <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+        </div>
+        <span class="field-error" id="err-apartment_number" data-i18n="reg_optSelectApartment">اختر رقم الشقة</span>
+      </div>
+
+      <div class="field">
+        <label for="room_number">رقم الغرفة<span class="req">*</span></label>
+        <div class="input-wrap with-icon">
+          <select id="room_number">
+            <option value="" data-i18n="reg_optSelectRoom">اختر رقم الغرفة</option>
+          </select>
+          <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+        </div>
+        <span class="field-error" id="err-room_number" data-i18n="reg_optSelectRoom">اختر رقم الغرفة</span>
+      </div>
+
+    </div>
+  </div>
+  <div class="form-actions">
+    <button type="submit" id="submitBtn" class="btn btn-primary">
+      <span class="btn-text" data-i18n="pt_btnSubmit">تقديم الطلب</span>
+      <div class="spinner"></div>
+    </button>
+  </div>
 </div>
 
-<button type="submit" id="submitBtn" class="btn btn-block btn-primary">تقديم الطلب</button>
 </form>
-</div>
 </div>
 <script>
 setLang(localStorage.getItem('uiLanguage') || 'ar');
@@ -271,29 +388,15 @@ var FEMALE_BUILDINGS = ['40','41','42','43'];
 // المباني المحمّلة من الخادم لكل نوع (تُملأ عند اختيار الجنس)
 var LK_BUILDINGS = { male: null, female: null };
 
-// حروف الاسم. النطاق العربي بيستثني الأرقام العربية (٠-٩ = \u0660-\u0669) عمدًا:
-// التحقق القديم كان بيسمح بـ \u0600-\u06FF كامل، يعني "٣٣" كانت بتعدّي كاسم صحيح.
+// ⚠️ منطق خانات الاسم كان مكتوبًا هنا بالكامل نسخة ثانية من
+// wwwroot/js/name-fields.js: نفس التعبيرات ونفس collapse/join/split/strip.
+// فلمّا سُمحت المسافة في خانة العائلة العربية في الوحدة المشتركة، بقيت هذه
+// الصفحة ترفضها - «آل سوادي» تعمل عند الموظف وتُرفض عند الطالب لنفس النظام.
+// حُذفت النسخة، والصفحة تقرأ الآن من NuhName وحده.
 //
-// خانتا الاسم الأول والعائلة: كلمة واحدة — المسافة نفسها ممنوعة فيهم.
-// السبب إن التفكيك في ADProvisioningService.SplitEnglishName بياخد parts[0] و parts[^1]،
-// فلو خانة العائلة فيها مسافة ("AL SAIARI") هيتحط SAIARI بس في sn.
-//
-// خانة الأب والجد: كلمة أو أكتر — وهي اللي بتستوعب الاسم الخماسي والسداسي.
-// مسموح فيها المسافة العادية بس (مش \s): \s كان بيسمح بـ Tab و NBSP، والـ C#
-// بيقسّم على المسافة العادية، فاللصق من Word كان بيلزّق اسمين في اسم واحد.
-var AR_ONE  = /[^\u0621-\u0652\u0670-\u06D3]/g;
-var AR_MANY = /[^\u0621-\u0652\u0670-\u06D3 ]/g;
-var EN_ONE  = /[^a-zA-Z]/g;
-var EN_MANY = /[^a-zA-Z ]/g;
-
-var NAME_FIELDS = [
-  { id:'ar_first',  re:AR_ONE,  lang:'ar' },
-  { id:'ar_middle', re:AR_MANY, lang:'ar' },
-  { id:'ar_family', re:AR_ONE,  lang:'ar' },
-  { id:'en_first',  re:EN_ONE,  lang:'en', upper:true },
-  { id:'en_middle', re:EN_MANY, lang:'en', upper:true },
-  { id:'en_family', re:EN_ONE,  lang:'en', upper:true }
-];
+// ⚠️ وكذلك normalizeSaudiMobile: كانت نسخة ثانية من قاعدة الجوال المكتوبة في
+// wwwroot/js/phone-field.js، وبصيغة مختلفة (١٢ رقمًا تبدأ بـ 9665 بدل ٩ أرقام
+// تبدأ بـ 5). حُذفت، والصفحة تقرأ من NuhName و NuhPhone و NuhHousing وحدها.
 
 function showAlert(msg, type) {
   var el = document.getElementById('alertMessage');
@@ -301,58 +404,15 @@ function showAlert(msg, type) {
   el.className = 'alert alert-' + type;
 }
 
+// نصّ الزر ومؤشّر الانتظار — نفس مكوّن .form-actions عند المشرف
+function setSubmit(text, busy) {
+  var btn = document.getElementById('submitBtn');
+  if (text != null) btn.querySelector('.btn-text').textContent = text;
+  btn.classList.toggle('loading', !!busy);
+  btn.disabled = !!busy;
+}
+
 function digitsOnly(el) { el.value = el.value.replace(/\D/g,''); }
-
-// بيشيل أي حرف ممنوع فور كتابته أو لصقه، وبيحافظ على مكان المؤشر.
-// من غير حفظ المؤشر، أي تعديل في نص الاسم بيرمي المؤشر لآخر الخانة.
-function collapseSpaces(v) { return v.replace(/ +/g, ' ').trim(); }
-function nameWords(v) { var c = collapseSpaces(v); return c ? c.split(' ') : []; }
-
-// بيلزّق الخانات التلاتة في نص واحد — ده اللي بيتبعت للسيرفر، فشكل البيانات
-// المخزّنة ما اتغيّرش: full_name و full_name_english فاضلين نص واحد زي الأول.
-function joinName(lang) {
-  return [lang + '_first', lang + '_middle', lang + '_family']
-    .map(function (id) { return collapseSpaces(document.getElementById(id).value); })
-    .filter(function (v) { return v.length; })
-    .join(' ');
-}
-
-// عدد أسماء الأب والجد لازم يتطابق بين اللغتين — بيمسك نسيان اسم في لغة واحدة،
-// وده مهم لأن description بياخد العربي و displayName بياخد الإنجليزي.
-function checkNameMatch() {
-  var arEl = document.getElementById('ar_middle');
-  var enEl = document.getElementById('en_middle');
-  var ar = nameWords(arEl.value).length;
-  var en = nameWords(enEl.value).length;
-  var bad = ar > 0 && en > 0 && ar !== en;
-  document.getElementById('val-name_match').classList.toggle('show', bad);
-  arEl.classList.toggle('error', bad);
-  enEl.classList.toggle('error', bad);
-  return !bad;
-}
-
-// الطلبات القديمة اتخزّنت كنص واحد — بنوزّعه على الخانات التلاتة عند التعديل
-function splitIntoFields(full, lang) {
-  var p = nameWords(full || '');
-  var first = '', middle = '', family = '';
-  if (p.length === 1) { first = p[0]; }
-  else if (p.length === 2) { first = p[0]; family = p[1]; }
-  else if (p.length > 2) { first = p[0]; family = p[p.length - 1]; middle = p.slice(1, -1).join(' '); }
-  document.getElementById(lang + '_first').value  = first;
-  document.getElementById(lang + '_middle').value = middle;
-  document.getElementById(lang + '_family').value = family;
-}
-
-function stripChars(el, re, upper) {
-  var before = el.value;
-  var after = before.replace(re, '');
-  if (upper) after = after.toUpperCase();
-  if (after === before) return;
-  var pos = el.selectionStart;
-  el.value = after;
-  var newPos = Math.max(0, pos - (before.length - after.length));
-  try { el.setSelectionRange(newPos, newPos); } catch (e) { /* بعض المتصفحات ماتدعمش */ }
-}
 
 function validateField(id, valId, regex) {
   var el = document.getElementById(id);
@@ -387,9 +447,14 @@ function updateBuildings() {
   select.innerHTML = '';
   var ph = document.createElement('option');
   ph.value = '';
-  ph.setAttribute('data-ar', bldgs.length ? 'اختر المبنى' : 'اختر الجنس أولاً');
-  ph.setAttribute('data-en', bldgs.length ? 'Select building' : 'Select gender first');
-  ph.textContent = (window.currentLang === 'en') ? ph.getAttribute('data-en') : ph.getAttribute('data-ar');
+  // ⚠️ كان هنا data-ar/data-en — آلية ترجمة **ثالثة** في نفس الملف، والنصّ
+  //    الإنجليزي مكتوب فيها بالإيد ('Select building') بدل ما يتقري من
+  //    الـ resx. يعني تعديل النصّ في ملف الترجمة مكانش بيوصل للقائمة دي.
+  //    بقت data-i18n زي باقي النظام: النصّ من الـ resx، وتبديل اللغة
+  //    بيحدّثه من غير كود، ولو القاموس لسه ماوصلش بيتكتب أول ما يوصل.
+  var phKey = bldgs.length ? 'reg_optSelectBuilding' : 'reg_optSelectGenderFirst';
+  ph.setAttribute('data-i18n', phKey);
+  ph.textContent = (typeof t === 'function') ? t(phKey) : '';
   select.appendChild(ph);
 
   bldgs.forEach(function(b) {
@@ -427,8 +492,13 @@ var deptGate = Lookups.dependent({
   child: lkDept,
   url: function (id) { return '/api/lookups/departments' + (id ? ('?collegeId=' + id) : ''); },
   fallbackUrl: '/api/lookups/departments',
-  waitText: 'اختر الكلية أولاً',
-  chooseText: 'اختر القسم'
+  // ⚠️ مفاتيح لا نصوص. السطرين دول بيتنفّذوا وقت قراءة السكربت، والقاموس
+  //    بيوصل من /api/ui/i18n **بعد** كده - فـ t() كانت بترجّع اسم المفتاح،
+  //    والطالب كان بيشوف «reg_optSelectDepartment» مكتوبة في القائمة.
+  //    Lookups.dependent بيقبل المفاتيح أصلًا وبيحطّ data-i18n على الخيار،
+  //    فالنصّ بيتكتب أول ما القاموس يوصل وبيتحدّث لوحده مع تبديل اللغة.
+  waitKey: 'reg_optSelectCollegeFirst',
+  chooseKey: 'reg_optSelectDepartment'
 });
 
 async function lkLoadLevels() {
@@ -451,8 +521,13 @@ document.getElementById('gender').addEventListener('change', function () {
   lkLoadBuildings(this.value);
 });
 
-lkLoadColleges().then(function () { deptGate.refresh(); });
-lkLoadLevels();
+// ⚠️ الوعد محفوظ لا مُهمَل: وضع التعديل بيستنّاه قبل ما يحطّ القيم المحفوظة.
+//    من غيره كانت السلسلة دي بتخلص بعد ما التعديل يحطّ القسم، وبتمسحه —
+//    فالطالب يلاقي «اختر القسم» فاضية ومقفولة ومطلوبة، ويقف.
+var lkReady = Promise.all([
+  lkLoadColleges().then(function () { return deptGate.refresh(); }),
+  lkLoadLevels()
+]).catch(function () { /* فشل قائمة مايوقفش التعبئة — الباقي بيتحط عادي */ });
 
 ['student_id','national_id','phone'].forEach(function(id) {
   document.getElementById(id).addEventListener('input', function() { digitsOnly(this); });
@@ -476,27 +551,15 @@ document.getElementById('student_id').addEventListener('blur', function() {
   ]);
 });
 
-NAME_FIELDS.forEach(function (f) {
-  var el = document.getElementById(f.id);
-  el.addEventListener('input', function () {
-    stripChars(this, f.re, f.upper);
-    document.getElementById('err-name_' + f.lang).classList.remove('show');
-    checkNameMatch();
-  });
-  // دمج المسافات المتكررة عند الخروج — من غيره "وليد  محمد" بيتخزّن بمسافتين
-  // في description و displayName جوه AD
-  el.addEventListener('blur', function () {
-    this.value = collapseSpaces(this.value);
-    checkNameMatch();
-  });
-});
+// ربط خانات الاسم الست بالوحدة المشتركة - بلا بادئة لأن المعرّفات هنا مجرّدة
+NuhName.attach('');
 
 document.getElementById('national_id').addEventListener('input', function() {
-  validateField('national_id','val-national_id',/^\d{10}$/);
+  validateField('national_id','val-national_id',NuhId.NATIONAL_ID);
   var err = document.getElementById('err-national_id'); if (this.value.trim()) err.classList.remove('show');
 });
 document.getElementById('national_id').addEventListener('blur', function() {
-  validateField('national_id','val-national_id',/^\d{10}$/);
+  validateField('national_id','val-national_id',NuhId.NATIONAL_ID);
 });
 
 // ============================================================================
@@ -512,7 +575,7 @@ var dupBlocked = false;
 function setDupBlocked(on, message) {
   dupBlocked = on;
   var box = document.getElementById('dupWarn');
-  box.textContent = on ? (message || 'هذه البيانات مرتبطة بطلب مسجَّل.') : '';
+  box.textContent = on ? (message || t('pt_dupWarn')) : '';
   box.classList.toggle('show', on);
   document.getElementById('student_id').classList.toggle('dup', on);
   document.getElementById('national_id').classList.toggle('dup', on);
@@ -531,7 +594,7 @@ async function runDuplicateCheck() {
   var nid = document.getElementById('national_id').value.trim();
 
   // الفحص لا ينطلق إلا بالحقلين صحيحين معًا
-  if (!/^4\d{8}$/.test(sid) || !/^\d{10}$/.test(nid)) { setDupBlocked(false); return; }
+  if (!NuhId.isStudentId(sid) || !NuhId.isNationalId(nid)) { setDupBlocked(false); return; }
 
   try {
     var r = await fetch('/api/Registration/check-duplicate', {
@@ -564,18 +627,24 @@ function scheduleDuplicateCheck() {
   });
 });
 
+// ⚠️ قاعدة الجوال كلها في js/phone-field.js — نفس ملف شاشة المشرف.
+//    المكوّن يصحّح اللصق (05… / +966… / 00966…) ويلوّن الحاوية.
+NuhPhone.attach({ input: 'phone', wrap: 'phoneWrap' });
 document.getElementById('phone').addEventListener('input', function() {
-  validateField('phone','val-phone',/^9665\d{8}$/);
+  validateField('phone','val-phone', NuhPhone.VALID);
   var err = document.getElementById('err-phone'); if (this.value.trim()) err.classList.remove('show');
 });
 document.getElementById('phone').addEventListener('blur', function() {
-  validateField('phone','val-phone',/^9665\d{8}$/);
+  validateField('phone','val-phone', NuhPhone.VALID);
 });
 
 // الشقة بتتولد من الدور، والغرفة 1-4 — المنطق كله في js/housing-fields.js
 var housingRefresh = NuhHousing.attach({
   floor: 'floor_number', apartment: 'apartment_number', room: 'room_number',
-  labels: { floorFirst: 'اختر الدور أولاً', selectApartment: 'اختر رقم الشقة', selectRoom: 'اختر رقم الغرفة' }
+  // ⚠️ labelKeys لا labels — نفس سبب الأقسام فوق بالظبط: t() هنا بتتنفّذ قبل
+  //    ما القاموس يوصل، فرقم الشقة ورقم الغرفة كانوا بيظهروا للطالب بأسماء
+  //    مفاتيحهم. NuhHousing بيقبل labelKeys وبيحطّ data-i18n على الخيار.
+  labelKeys: { floorFirst: 'reg_optSelectFloorFirst', selectApartment: 'reg_optSelectApartment', selectRoom: 'reg_optSelectRoom' }
 });
 
 ['college','department','academic_level','gender','housing_building','floor_number','apartment_number','room_number'].forEach(function(id) {
@@ -588,15 +657,7 @@ function validate() {
   var ok = true;
 
   // خانات الاسم الستة — كلها مطلوبة، ورسالة واحدة لكل لغة
-  var missing = { ar: false, en: false };
-  NAME_FIELDS.forEach(function (f) {
-    var el = document.getElementById(f.id);
-    if (!collapseSpaces(el.value)) { el.classList.add('error'); missing[f.lang] = true; ok = false; }
-    else el.classList.remove('error');
-  });
-  document.getElementById('err-name_ar').classList.toggle('show', missing.ar);
-  document.getElementById('err-name_en').classList.toggle('show', missing.en);
-  if (!checkNameMatch()) ok = false;
+  if (!NuhName.validate('')) ok = false;
 
   var required = ['student_id','national_id','phone','college','department','academic_level','gender','housing_building','floor_number','apartment_number','room_number'];
   required.forEach(function(id) {
@@ -615,35 +676,199 @@ function validate() {
     { valId: 'val-student_id_start', regex: /^4/ },
     { valId: 'val-student_id_length', regex: /^\d{9}$/ }
   ]);
-  validateField('national_id','val-national_id',/^\d{10}$/);
-  validateField('phone','val-phone',/^9665\d{8}$/);
+  validateField('national_id','val-national_id',NuhId.NATIONAL_ID);
+  // ⚠️ الجوال يُقاس بقاعدة المكوّن المشترك: ٩ أرقام تبدأ بـ 5
+  if (!NuhPhone.isValid(NuhPhone.normalize(document.getElementById('phone').value))) {
+    document.getElementById('val-phone').classList.add('show');
+    document.getElementById('phoneWrap').classList.add('bad');
+    ok = false;
+  }
   var gender = document.getElementById('gender');
   if (!gender.value) { gender.classList.add('error'); document.getElementById('err-gender').classList.add('show'); ok = false; }
   return ok;
 }
 
-function fillForm(data) {
+// ⚠️ ضبط قيمة قائمة منسدلة بعد ما خياراتها توصل.
+//    el.value = x على <select> لسه فاضي مابيعملش حاجة — الخيار لازم يكون
+//    موجود الأول. ده كان أصل العطل: القيم كانت بتتحط في أول fillForm،
+//    والقوائم المعتمدة (القسم/المبنى/الشقة/الغرفة) بتتحمّل بعدها بشوية
+//    وبتكتب فوقها، فتفضل فاضية.
+function setSel(id, val) {
+  var el = document.getElementById(id);
+  if (!el || val === undefined || val === null || val === '') return;
+  el.value = String(val);
+  if (el.selectedIndex < 0) el.selectedIndex = 0;   // القيمة مش في القائمة
+}
+
+async function fillForm(data) {
   if (!data) return;
-  splitIntoFields(data.full_name, 'ar');
-  splitIntoFields(data.full_name_english, 'en');
+  NuhName.fill('', 'ar', data.full_name);
+  NuhName.fill('', 'en', data.full_name_english);
   var map = {
-    student_id: 'student_id', national_id: 'national_id',
-    phone: 'phone', gender: 'gender', college: 'college',
-    department: 'department', academic_level: 'academic_level',
-    housing_building: 'housing_building', floor_number: 'floor_number',
-    room_number: 'room_number', apartment_number: 'apartment_number'
+    student_id: 'student_id', national_id: 'national_id'
   };
   for (var key in map) {
     var el = document.getElementById(map[key]);
     if (el && data[key] !== undefined && data[key] !== null) el.value = data[key];
   }
-  if (data.gender) {
-    updateBuildings();                 // بالاحتياطي فورًا عشان القيمة المحفوظة تظهر
-    lkLoadBuildings(data.gender);      // ثم من الخادم، ويعيد الرسم لوحده
+  // ⚠️ الجوال مخزَّن 9665XXXXXXXX والخانة تعرض ٩ أرقام فقط — التحويل بالمكوّن
+  //    نفسه لا بقاعدة مكتوبة هنا.
+  if (data.phone) {
+    document.getElementById('phone').value = NuhPhone.normalize(data.phone);
+    document.getElementById('phone').dispatchEvent(new Event('input'));
   }
-  // الأقسام المفلترة حسب الكلية المحمَّلة — من غيرها القسم المحفوظ ما يظهرش
-  if (data.college) deptGate.refresh();
-  housingRefresh(); // الشقة بتعتمد على الدور المحمَّل
+  // ⚠️ الترتيب هنا مش تفضيل: كل قائمة بتعتمد على اللي قبلها.
+  //    الجنس ← المباني · الكلية ← الأقسام · الدور ← الشقق.
+  //    وبننتظر التحميل الأول (lkReady) قبل أي حاجة، وإلا خلصت بعدنا ومسحت شغلنا.
+  await lkReady;
+
+  setSel('gender', data.gender);
+  if (data.gender) {
+    updateBuildings();                      // من الكاش فورًا لو موجود
+    await lkLoadBuildings(data.gender);     // ثم من الخادم، وبيعيد الرسم لوحده
+  }
+  setSel('housing_building', data.housing_building);
+
+  setSel('college', data.college);
+  if (data.college) await deptGate.refresh();
+  setSel('department', data.department);
+
+  setSel('academic_level', data.academic_level);
+
+  setSel('floor_number', data.floor_number);
+  housingRefresh();                         // بيملا الشقق حسب الدور والغرف
+  setSel('apartment_number', data.apartment_number);
+  setSel('room_number', data.room_number);
+}
+
+// ============================================================================
+//  قفل الخانات في وضع التعديل
+//  ---------------------------------------------------------------------------
+//  المراجع بيعلّم على الخانات المطلوب من الطالب تصحيحها، والسيرفر بيرفض أي
+//  تغيير برّاها ويرجّع رسالة صريحة (RegistrationFlowService — «قفل الخانات
+//  لازم يكون هنا مش في المتصفح»). لكن الصفحة دي ماكانتش بتقرا القائمة أصلًا،
+//  فالطالب كان بيلاقي النموذج كله مفتوح، يعدّل اللي يعدّله، وبعد ما يضغط
+//  «حفظ وإعادة تقديم» يتفاجأ بالرفض.
+//
+//  ⚠️ القفل هنا راحة للطالب لا حماية: الحُجّة الحقيقية على السيرفر وهي موجودة
+//     فعلًا. أي حد يفتح أدوات المطوّر بيعدّي القفل ده وبيتصدّ هناك.
+// ============================================================================
+var EDIT_FIELD_INPUTS = {
+  full_name:         ['ar_first', 'ar_middle', 'ar_family'],
+  full_name_english: ['en_first', 'en_middle', 'en_family'],
+  national_id:       ['national_id'],
+  gender:            ['gender'],
+  college:           ['college'],
+  department:        ['department'],
+  academic_level:    ['academic_level'],
+  housing_building:  ['housing_building'],
+  floor_number:      ['floor_number'],
+  apartment_number:  ['apartment_number'],
+  room_number:       ['room_number']
+};
+// ⚠️ الجوال مش في الجدول عن قصد: مقفول أصلًا في prefillVerifiedMobile لأنه
+//    الرقم اللي وصله رمز التحقق، والجدول ده بيقفل بس ولا بيفتح.
+//    وهو كمان اتشال من قائمة اختيار المراجع (RegistrationDataMapper).
+
+// ⚠️ مقفولة في وضع التعديل دائمًا، مهما كان اختيار المراجع — ومهما كانت
+//    القائمة فاضية. الرقم الجامعي مش خانة بيانات: هو هوية الطلب نفسه،
+//    وتغييره بيحوّل الطلب لطالب تاني بعد ما المراجع راجعه. الخادم بيرفضه
+//    كمان في مسار إعادة التقديم، والقفل هنا عشان الطالب ما يوصلش للرفض.
+var EDIT_ALWAYS_LOCKED = ['student_id'];
+
+// ⚠️ دي كانت رابع نسخة، وأضعف واحدة فيهم: & < > بس - من غير " ولا '.
+//    ومستعملة في عرض «ملاحظة المراجع» و«الخانات المطلوب تصحيحها»، يعني
+//    نصوص بيكتبها موظف وبتتعرض للطالب. التعريف الوحيد في /js/esc.js.
+function fixEscape(v) { return escHtml(v); }
+
+function fixFieldLabel(el) {
+  var box = el.closest('.field');
+  var lbl = box ? box.querySelector('label') : null;
+  return lbl ? lbl.textContent.replace('*', '').trim() : '';
+}
+
+// ⚠️ الخانات المرتبطة (المبنى / الشقة / القسم) قوائمها بتوصل من الخادم بعد
+//    شوية، وكودها بيفكّ الـ disabled لوحده وقت ما القائمة تتحمّل. فالقفل
+//    المجرّد كان بيتفكّ بعد ثانية من غير ما حد يلمس حاجة. المراقب بيرجّعه.
+function fixHardDisable(el) {
+  el.disabled = true;
+  if (window.MutationObserver) {
+    new MutationObserver(function () { if (!el.disabled) el.disabled = true; })
+      .observe(el, { attributes: true, attributeFilter: ['disabled'] });
+  }
+}
+
+var FIX_PEN_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"' +
+  ' stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">' +
+  '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+
+var FIX_DOC_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"' +
+  ' stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+  '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/>' +
+  '<path d="M14 2v6h6"/><path d="M9 15h6"/></svg>';
+
+function fixShowBanner(labels, notes) {
+  if (!labels.length) return;
+  var host = document.querySelector('.form-card');
+  if (!host || !host.parentNode) return;
+
+  var items = labels.map(function (f) {
+    return '<li>' + FIX_PEN_SVG + fixEscape(f) + '</li>';
+  }).join('');
+
+  var html =
+    '<div class="reg-fix-head">' +
+      '<span class="reg-fix-ic">' + FIX_DOC_SVG + '</span>' +
+      '<b>' + escHtml(t('pt_formFixNeeded')) + '</b>' +
+      '<span class="reg-fix-cnt">' + labels.length + '</span>' +
+    '</div>' +
+    '<div class="reg-fix-body">' +
+      '<ul class="reg-fix-list">' + items + '</ul>' +
+      '<div class="reg-fix-hint">' + escHtml(t('pt_formFixHint')) + ' ' +
+        escHtml(t('pt_formFixAfter')) + '</div>' +
+      (notes ? '<div class="reg-fix-note"><i>' + escHtml(t('pt_formReviewerNote')) + '</i>' + fixEscape(notes) + '</div>' : '') +
+    '</div>';
+
+  var box = document.createElement('div');
+  box.className = 'reg-fix';
+  box.innerHTML = html;
+  host.parentNode.insertBefore(box, host);
+}
+
+function applyEditFieldLocks(allowed, notes) {
+  // القفل الدائم أولًا: مش تابع لاختيار المراجع فبيتنفّذ حتى لو القائمة فاضية.
+  EDIT_ALWAYS_LOCKED.forEach(function (id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.readOnly = true;
+    el.tabIndex = -1;
+  });
+
+  // فاضية = باقي الخانات مفتوحة. ده حال أي طلب اترجّع قبل ما الميزة تتعمل،
+  // ونفس ما بيفترضه السيرفر بالحرف — فما ينفعش نقفل هنا واحنا هناك بنفتح.
+  if (!allowed || !allowed.length) return;
+  var open = [];
+  Object.keys(EDIT_FIELD_INPUTS).forEach(function (key) {
+    var isOpen = allowed.indexOf(key) !== -1;
+    EDIT_FIELD_INPUTS[key].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      if (isOpen) {
+        var box = el.closest('.field');
+        if (box) box.classList.add('is-target');
+      } else if (el.tagName === 'SELECT') {
+        fixHardDisable(el);
+      } else {
+        el.readOnly = true;
+        el.tabIndex = -1;
+      }
+    });
+    if (isOpen) {
+      var first = document.getElementById(EDIT_FIELD_INPUTS[key][0]);
+      if (first) open.push(fixFieldLabel(first));
+    }
+  });
+  fixShowBanner(open, notes);
 }
 
 async function loadEditData() {
@@ -652,27 +877,36 @@ async function loadEditData() {
     var r = await fetch('/api/Registration/my-requests/' + editRequestId, { headers: {'Authorization':'Bearer '+token} });
     if (!r.ok) return;
     var d = await r.json();
-    if (d.status !== 'need_more_info') { showAlert('لا يمكن تعديل هذا الطلب في الوقت الحالي', 'error'); return; }
+    if (d.status !== 'need_more_info') { showAlert(t('pt_msgCannotEdit'), 'error'); return; }
     if (d.registrationData) {
       var regData = typeof d.registrationData === 'string' ? JSON.parse(d.registrationData) : d.registrationData;
-      fillForm(regData);
+      await fillForm(regData);
     }
-    document.getElementById('submitBtn').textContent = 'حفظ وإعادة تقديم';
-    document.getElementById('pageTitle').textContent = 'تعديل طلب التسجيل';
+    // الخانات اللي المراجع طلب تصحيحها — بعد fillForm عشان القفل يقع على
+    // النموذج بعد ما يتعبّى لا قبله.
+    applyEditFieldLocks(d.infoFields || d.InfoFields || [], d.notes || d.Notes || '');
+    setSubmit(t('pt_btnSaveResubmit'), false);
+    // ⚠️ نغيّر المفتاح لا النصّ: __applyLang بيعيد كتابة كل عنصر عنده
+    //    data-i18n عند تبديل اللغة، فكتابة النصّ مباشرة كانت بتتمسح
+    //    ويرجع «نموذج التسجيل» بدل «تعديل الطلب» وسط التعديل.
+    var __pt = document.getElementById('pageTitle');
+    if (__pt) { __pt.setAttribute('data-i18n', 'pt_editTitle'); __pt.textContent = t('pt_editTitle'); }
   } catch(e) {}
 }
 
 async function submitForm(e) {
   e.preventDefault();
   if (!validate()) return;
-  var btn = document.getElementById('submitBtn');
-  btn.disabled = true; btn.textContent = 'جاري التقديم...';
+  var idleLabel = editRequestId ? t('pt_btnSaveResubmit') : t('pt_btnSubmit');
+  setSubmit(t('pt_btnSubmitting'), true);
   var formData = {
-    full_name: joinName('ar'),
-    full_name_english: joinName('en'),
+    full_name: NuhName.join('', 'ar'),
+    full_name_english: NuhName.join('', 'en'),
     student_id: document.getElementById('student_id').value.trim(),
     national_id: document.getElementById('national_id').value.trim(),
-    phone: document.getElementById('phone').value.trim(),
+    // يُرسَل بالصيغة الموحّدة 9665XXXXXXXX — نفس المخزَّن في قاعدة البيانات
+    // ونفس ما ترسله شاشة المشرف بالحرف.
+    phone: NuhPhone.toStorage(document.getElementById('phone').value),
     gender: document.getElementById('gender').value,
     college: document.getElementById('college').value,
     department: document.getElementById('department').value,
@@ -694,24 +928,34 @@ async function submitForm(e) {
       });
       var d = await r.json();
       if (r.ok) {
-        showAlert('تم إعادة تقديم الطلب بنجاح', 'success');
-        btn.disabled=false; btn.textContent='حفظ وإعادة تقديم';
+        showAlert(t('pt_msgResubmitOk'), 'success');
+        setSubmit(idleLabel, false);
         setTimeout(function() { window.location.href = 'my-requests.html'; }, 1500);
       } else {
-        showAlert(d.message || 'فشل إعادة التقديم', 'error');
-        btn.disabled=false; btn.textContent='حفظ وإعادة تقديم';
+        showAlert(d.message || t('pt_msgResubmitFail'), 'error');
+        setSubmit(idleLabel, false);
       }
     } else {
+      // ⚠️ التعهّد بيتبعت **مع** الطلب في نفس النداء، مش في نداء تاني بعده:
+      //    ساعتها كان ممكن الطلب ينجح والتعهّد يفشل (شبكة، قفل تبويب) فيبقى
+      //    في الجدول طلب من غير تعهّد. الشرح في DTOs/Registration.
       var r = await fetch('/api/Registration/start', {
         method:'POST',
         headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
         body:JSON.stringify({
           studentId: document.getElementById('student_id').value.trim(),
-          registrationData: formData
+          registrationData: formData,
+          pledge: readPledge()
         })
       });
       var d = await r.json();
       if (r.ok) {
+        // ⚠️ التعهّد اتخزّن في قاعدة البيانات خلاص — المفاتيح دي مالهاش لازمة
+        //    بعد كده. سيبها معناه إن أي طلب جديد من نفس المتصفح يعدّي بجملة
+        //    مكتوبة من مرة فاتت، وده بيلغي معنى الإقرار المكتوب أصلًا.
+        ['declAccepted','policyAccepted','pledgeTyped','pledgeHash'].forEach(function (k) {
+          try { localStorage.removeItem(k); } catch (e) { }
+        });
         localStorage.setItem('lastRequestId', d.requestId);
         localStorage.setItem('lastRequestNumber', d.requestNumber);
         // ختم وقت التقديم — شاشة تتبع الطلب بتستخدمه عشان تفتح الطلب على طول
@@ -719,40 +963,58 @@ async function submitForm(e) {
         localStorage.setItem('lastRequestAt', String(Date.now()));
         window.location.href = 'register-confirmation.html';
       } else {
-        showAlert(d.message || 'فشل التقديم', 'error');
-        btn.disabled=false; btn.textContent='تقديم الطلب';
+        showAlert(d.message || t('pt_msgSubmitFail'), 'error');
+        setSubmit(idleLabel, false);
       }
     }
   } catch(e) {
-    showAlert('تعذر الاتصال بالخادم', 'error');
-    btn.disabled=false; btn.textContent=editRequestId ? 'حفظ وإعادة تقديم' : 'تقديم الطلب';
+    showAlert(t('reg_toastConnError'), 'error');
+    setSubmit(idleLabel, false);
   }
 }
 
 // الجوال اتحقق منه بالفعل في الخطوة الأولى واتخزّن في regMobile — نعبّيه هنا
-// تلقائيًا بدل ما الطالب يكتبه تاني ويغلط فيه، ونحوّله للصيغة اللي التحقق
-// والـ AD بيتوقعوها: 05XXXXXXXX -> 9665XXXXXXXX
-function normalizeSaudiMobile(v) {
-  var d = String(v == null ? '' : v).replace(/\D/g, '');
-  if (d.indexOf('00966') === 0) d = d.slice(2);   // 00966... -> 966...
-  if (d.indexOf('966') === 0)   d = d.slice(3);   // 966...   -> الجزء المحلي
-  if (d.indexOf('0') === 0)     d = d.slice(1);   // 05...    -> 5...
-  return /^5\d{8}$/.test(d) ? '966' + d : '';
-}
-
+// تلقائيًا بدل ما الطالب يكتبه تاني ويغلط فيه. التحويل لأي صيغة مكتوبة
+// (05… أو +966… أو 00966…) بيتم في NuhPhone.normalize، مش بقاعدة هنا.
 function prefillVerifiedMobile() {
   var el = document.getElementById('phone');
-  var norm = normalizeSaudiMobile(localStorage.getItem('regMobile'));
-  if (!el || !norm) return;
-  el.value = norm;
+  var wrap = document.getElementById('phoneWrap');
+  var local = NuhPhone.normalize(localStorage.getItem('regMobile'));
+  if (!el || !NuhPhone.isValid(local)) return;
+  el.value = local;
   // مقفولة عن قصد: الرقم ده هو اللي وصله رمز التحقق. لو الطالب غيّره هنا
   // يبقى الطلب اتقدّم برقم محدش تحقق منه — والتعديل بيكون بالرجوع للخطوة الأولى.
   el.readOnly = true;
-  el.style.background = 'var(--gray-100)';
-  el.style.cursor = 'not-allowed';
+  el.tabIndex = -1;
+  wrap.classList.add('is-locked');
+  wrap.classList.remove('bad');
   el.classList.remove('error');
   var err = document.getElementById('err-phone'); if (err) err.classList.remove('show');
   var val = document.getElementById('val-phone'); if (val) val.classList.remove('show');
+}
+
+// ============================================================================
+//  التعهّد المحفوظ من شاشة الإقرار.
+//
+//  ⚠️ خطوة الإقرار قبل النموذج في الترتيب، والطلب لسه ماتخلقش وقتها — فالتعهّد
+//     بيستنّى في تخزين المتصفح لخطوة واحدة وبيتبعت هنا. تخزين المتصفح مش
+//     مصدر ثقة: الخادم بيعيد بناء البنود ويحسب البصمة ويقارن الجملة بنفسه،
+//     ويرفض الطلب كله لو حاجة مش مظبوطة (RegistrationFlowService).
+// ============================================================================
+function readPledge() {
+  return {
+    declarationAccepted: localStorage.getItem('declAccepted') === 'true',
+    policyAccepted:      localStorage.getItem('policyAccepted') === 'true',
+    typedConfirmation:   localStorage.getItem('pledgeTyped') || '',
+    termsHash:           localStorage.getItem('pledgeHash') || ''
+  };
+}
+
+// ⚠️ حارس الترتيب: اللي وصل النموذج من غير ما يعدّي على الإقرار (رابط محفوظ،
+//    تخزين اتمسح) بيترجّع للخطوة الصح بدل ما يملا النموذج كله ويترفض في
+//    الآخر. والتعديل (edit) مستثنى — الطلب موجود وتعهّده اتوقّع قبل كده.
+if (!editRequestId && localStorage.getItem('declAccepted') !== 'true') {
+  window.location.replace('register-declarations.html');
 }
 
 if (!token) { window.location.href = 'register-phone.html'; }
@@ -764,6 +1026,7 @@ loadEditData();
 <!-- ===== إنهاء الجلسة عند الخمول =====
      نفس مهلة شاشات الموظفين (Core/SessionPolicy.cs). عند انتهائها تُمسح
      جلسة الطالب من المتصفح ويعود لبوابة الطلاب برسالة واضحة. -->
+<script src="../js/select-field.js"></script>
 <script src="../js/idle-session.js"></script>
 <script>
 NuhIdle.start({
@@ -771,7 +1034,10 @@ NuhIdle.start({
   warnSeconds: 120,
   showExpiredPanel: true,          // تبقى الرسالة على الشاشة بدل تحويل صامت
   homeUrl: 'index.html',
-  homeLabel: 'العودة لبوابة الطلاب',
+  // ⚠️ مفتاح لا t('...'): السطر ده بيتنفّذ وقت تحليل السكربت، والقاموس
+  //    لسه بيتجاب بـ fetch - فـ t() كانت بترجّع «pt_backToPortal» نفسها
+  //    وتتكتب على الزرّ. NuhIdle بقت هي اللي بتترجم وقت العرض.
+  homeLabelKey: 'pt_backToPortal',
   pingHeaders: function () {
     var t = localStorage.getItem('studentToken');
     return t ? { 'Authorization': 'Bearer ' + t } : {};

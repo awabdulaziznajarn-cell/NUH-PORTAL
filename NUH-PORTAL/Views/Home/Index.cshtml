@@ -9,7 +9,26 @@
     var canReviewCyber   = Perm("requests.reviewCyber");
     var canComplete      = Perm("requests.complete");
     var canHousingView   = Perm("housing.view");
+    // ⚠️ دونات «حسابات شبكة السكن» أداة عمل الأمن السيبراني لا معلومة عامة:
+    //    هو من يُنشئ الحساب ويعطّله. والمشرف يملك housing.view ليقرأ بيانات
+    //    السكن، فربط الرسم بها كان يعرض عليه رقمًا لا يفعل به شيئًا ويزاحم
+    //    رسمه هو. الشرط الآن على من يتصرّف في الحساب فعلًا.
+    var canSeeAccountsChart = canReviewCyber || canComplete;
+    // ⚠️ رسم المشرف: «الطلاب حسب المبنى». يظهر لمن يراجع طلبات الإسكان ولا
+    //    يملك أدوات حساب الشبكة - أي المشرف والمشرفة. والمكان واحد لا رسمان:
+    //    لكل دور أداته لا كومة رسوم يتخطّى معظمها.
+    var canSeeBuildingsChart = canReviewHousing && !canSeeAccountsChart;
     var canRegister      = Perm("students.create");
+    // ⚠️ رسم «العمليات آخر ٧ أيام» بياناته من سجل التدقيق، وكان ظاهرًا للكل
+    //    لأن الـ endpoint كان مفتوحًا. اتقفل، فالبطاقة لازم تتبعه — وإلا بقى
+    //    مكانها فاضي عند اللي مالوش الصلاحية.
+    var canSeeOpsChart   = Perm("auditLogs.view");
+    // ⚠️ تقسيم الطلاب/الطالبات يبان للي نطاقه القسمين (الأدمن) وحده.
+    //    المشرف بيشوف قسمه بس، فالرسم عنده هيبقى ١٠٠٪ لقسم و٠٪ للتاني —
+    //    رقم مالوش معنى وبياخد مساحة رسم مفيد. نفس الـ claim اللي بتقرا
+    //    منه التصفية في السيرفر.
+    var __scope = (User.FindFirst(NUH_PORTAL.Core.ClaimConstants.ScopeGender)?.Value ?? "").Trim().ToLowerInvariant();
+    var canSeeGenderSplit = __scope != "male" && __scope != "female";
 
     // الأرقام اللي بتستنى إجراء من المستخدم ده تحديدًا
     var waitHousing  = canReviewHousing ? Model.Stats.submitted : 0;
@@ -47,19 +66,75 @@
   .stat-badge{font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px}
   .stat-num{font-size:32px;font-weight:900;color:var(--navy-dark);line-height:1}
   .stat-label{font-size:13px;color:var(--gray-500);font-weight:500}
+  /* ⚠️ الكارت المنبّه: عدّاد استثناء المفروض يبقى صفر، فلمّا يبقى مش صفر
+     لازم يبان من غير قراءة. والحدّ الكهرماني مع الخلفية الفاتحة - مش أحمر:
+     ده مش عطل، ده شغل مستنّي. */
+  .stat-card.alert{border-color:#fbbf24;background:#fffbeb}
+  .stat-card.alert .stat-num{color:#92400e}
+  /* سطر تحت الرقم لتفصيلة مش داخلة فيه (زي الوحدات خارج الخدمة) */
+  .stat-sub{font-size:11.5px;color:var(--gray-500);font-weight:500;margin-top:-6px}
   .section-heading{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;color:var(--navy-dark);margin-bottom:12px}
   .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
   #chartsRow{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
-  .activity-list{padding:8px 0}
-  .activity-item{display:flex;align-items:flex-start;gap:12px;padding:12px 20px;border-bottom:1px solid var(--gray-100)}
-  .activity-item:last-child{border-bottom:none}
-  .activity-dot{width:8px;height:8px;border-radius:50%;margin-top:6px;flex-shrink:0}
-  .activity-text{font-size:13px;color:var(--navy-dark);font-weight:500;line-height:1.5}
-  .activity-time{font-size:11px;color:var(--gray-500);margin-top:2px}
-  .actions-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:16px}
-  .action-btn{display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px 12px;border-radius:12px;border:1.5px solid var(--gray-100);background:var(--gray-50);cursor:pointer;transition:all .2s;text-decoration:none}
-  .action-btn:hover{border-color:var(--navy);background:var(--white);transform:translateY(-2px);box-shadow:0 4px 12px rgba(16,70,49,.1)}
-  .action-btn span{font-size:12px;font-weight:600;color:var(--navy-dark);text-align:center}
+  /* ⚠️ «الإجراءات السريعة» و«آخر الإشعارات» اتشالوا وستايلهم معاهم: الستة
+     أزرار كلهم موجودين في القائمة الجانبية الظاهرة دايمًا على نفس الشاشة،
+     والإشعارات في جرس الشريط العلوي بعدّادها — الشاشة كانت بتعرض نفس
+     المعلومة مرتين. */
+
+  /* ---------- لوحة «الطلبات الأطول انتظارًا» ----------
+     ⚠️ كانت «آخر الطلبات»: جدول بأربعة أعمدة يعرض أحدث ما وصل. والأحدث هو ما
+        عالجه المستخدم بنفسه للتو — أما اللي بيُنسى فهو الواقف من أيام. القائمة
+        دلوقتي مرتّبة بالأقدم انتظارًا ومحصورة في الطلبات المفتوحة. */
+  .rq-row{display:flex;align-items:center;gap:14px;padding:13px 20px;border-bottom:1px solid var(--gray-100);
+    text-decoration:none;color:inherit;transition:background .15s}
+  .rq-row:last-child{border-bottom:none}
+  .rq-row:hover{background:var(--row-hover)}
+  .rq-num{font-family:Consolas,monospace;font-size:12px;color:var(--gray-500);direction:ltr;flex-shrink:0;width:98px}
+  .rq-main{flex:1;min-width:0}
+  .rq-name{display:block;font-size:13.5px;font-weight:600;color:var(--navy-dark);line-height:1.5;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .rq-stage{display:block;font-size:11.5px;color:var(--gray-500);margin-top:3px}
+  /* شارة العمر تتلوّن بعتبة لا بالحالة: أخضر أقل من يومين، وكهرماني حتى خمسة،
+     وأحمر فوقها — فيُلتقط المتأخّر بالعين قبل قراءة الرقم. */
+  .rq-age{flex-shrink:0;font-size:11.5px;font-weight:700;padding:3px 11px;border-radius:999px;white-space:nowrap}
+  .age-ok{background:var(--green-light);color:var(--green)}
+  .age-warn{background:var(--gold-pale);color:#93370d}
+  .age-bad{background:var(--red-light);color:var(--red)}
+  .rq-go{color:var(--gray-300);flex-shrink:0}
+  .rq-row:hover .rq-go{color:var(--navy)}
+  /* أين يقف الطلب من خطوات المسار الأربع — الرقم من RequestWorkflow.Step */
+  .rq-steps{display:flex;gap:3px;width:78px;flex-shrink:0}
+  .rq-steps i{height:4px;flex:1;border-radius:999px;background:var(--gray-200)}
+  .rq-steps i.on{background:var(--navy)}
+  @@media(max-width:760px){.rq-steps,.rq-num{display:none}}
+  /* ⚠️ حالة الفراغ تقول ما جرى بدل بطاقة بيضاء: «لا يوجد طلب منتظر» جواب مفيد
+     بذاته، والجدول الفارغ بيبان عطل. */
+  .rq-empty{display:flex;flex-direction:column;align-items:center;gap:8px;padding:38px 20px;text-align:center}
+  .rq-empty b{font-size:14px;font-weight:700;color:var(--navy-dark)}
+  .rq-empty span{font-size:12.5px;color:var(--gray-500)}
+
+  /* ---------- الرسوم ---------- */
+  .charts{display:grid;grid-template-columns:1.35fr 1fr;gap:16px;margin-bottom:24px}
+  .charts.one{grid-template-columns:1fr}
+  /* صفّ الدونات: عمودان متساويان — الرسمان هنا متكافئان في الأهمية،
+     بعكس صفّ الرسم الرئيسي اللي بياخد مساحة أكبر من اللي جنبه. */
+  .charts.even{grid-template-columns:1fr 1fr}
+  .chart-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--gray-100)}
+  .chart-head .t{font-size:14px;font-weight:700;color:var(--navy-dark)}
+  .chart-head .pill{font-size:11px;font-weight:600;color:var(--gray-700);background:var(--gray-100);padding:4px 12px;border-radius:999px}
+  .chart-body{padding:14px 12px 10px;height:230px}
+  /* وسيلة الإيضاح أسطر فيها الأرقام: الرقم جزء من القراءة لا في تلميح عائم لا
+     يظهر إلا بالمرور بالفأرة — ولا يظهر أصلًا على الجوال. */
+  .lg{padding:4px 18px 14px;display:flex;flex-direction:column;gap:8px}
+  .lg-row{display:flex;align-items:center;gap:8px;font-size:12.5px}
+  .lg-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+  .lg-name{color:var(--gray-700);font-weight:500}
+  .lg-sep{color:var(--gray-300)}
+  .lg-val{font-weight:700;color:var(--navy-dark);font-variant-numeric:tabular-nums}
+  /* الحالة الوحيدة القابلة للتصرّف تُكتب بالأحمر - الباقي وصف لا عمل */
+  .lg-row.todo .lg-name{color:var(--red);font-weight:700}
+  .lg-note{font-size:11px;color:var(--gray-500);line-height:1.9;padding:10px 18px 14px;border-top:1px dashed var(--gray-200)}
+  @@media(max-width:900px){.charts{grid-template-columns:1fr}}
 </style>
 
 <div class="page-header">
@@ -140,6 +215,12 @@
     <div class="stat-label">@SharedLocalizer["home_totalStudents"]</div>
   </div>
 
+  @* ⚠️ اتشال من هنا كارتا «طلاب» و«طالبات».
+     السبب: دونات «توزيع الطلاب حسب الجنس» على نفس الشاشة تحتهم بتقول نفس
+     الرقمين — وبتقولهم أحسن، لأنها بتوري النسبة. «١١ طالبة» لوحدها
+     مابتقولش إنهم ١١ من ٢٥ ولا من ٥٠٠، والدونات بتقولها بالشكل من غير قراءة.
+     وإجمالي الطلاب فوق باقي لأنه الرقم الأساسي اللي الباقي بيتقاس عليه. *@
+
   <div class="stat-card" style="cursor:pointer" onclick="location.href='/Requests'">
     <div class="stat-top">
       <div class="stat-icon" style="background:#fffaeb">
@@ -150,29 +231,12 @@
     <div class="stat-label">@SharedLocalizer["dash_openRequests"]</div>
   </div>
 
-  @if (canHousingView)
-  {
-    <div class="stat-card" style="cursor:pointer" onclick="location.href='/Housing'">
-      <div class="stat-top">
-        <div class="stat-icon" style="background:#dff6e7">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#067647" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-        </div>
-      </div>
-      <div class="stat-num" id="hs-enabled">0</div>
-      <div class="stat-label">@SharedLocalizer["dash_adEnabled"]</div>
-    </div>
-
-    <div class="stat-card" style="cursor:pointer" onclick="location.href='/Housing'">
-      <div class="stat-top">
-        <div class="stat-icon" style="background:#fef3f2">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#b42318" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-        </div>
-      </div>
-      <div class="stat-num" id="hs-disabled">0</div>
-      <div class="stat-label">@SharedLocalizer["dash_adDisabled"]</div>
-    </div>
-  }
-  else
+  @* ⚠️ اتشال من هنا كارتا «حسابات شبكة مفعّلة» و«معطّلة» — نفس سبب كارتي
+     الجنس فوق: دونات «حسابات شبكة الإسكان الجامعي» على نفس الشاشة بتقول
+     الرقمين وبتوري النسبة بينهم.
+     ⚠️ والكارت البديل للي مالوش housing.view باقي زي ما هو: «طلبات مكتملة»
+        رقم مالوش دونات، فمكانش مكرّرًا أصلًا. *@
+  @if (!canHousingView)
   {
     <div class="stat-card" style="cursor:pointer" onclick="location.href='/Requests'">
       <div class="stat-top">
@@ -184,152 +248,147 @@
       <div class="stat-label">@SharedLocalizer["home_completedRequests"]</div>
     </div>
   }
-</div>
 
-@* ===== آخر الطلاب + آخر الطلبات — من السيرفر ===== *@
-<div class="grid-2">
-  <div class="card">
-    <div class="card-header">
-      <div class="card-title" >@SharedLocalizer["home_latestStudents"]</div>
-      <a class="card-action" href="/Students" >@SharedLocalizer["home_viewAll"]</a>
-    </div>
-    <table>
-      <thead>
-        <tr><th >@SharedLocalizer["home_col_name"]</th><th >@SharedLocalizer["home_col_college"]</th><th >@SharedLocalizer["home_col_building"]</th><th >@SharedLocalizer["home_col_status"]</th></tr>
-      </thead>
-      <tbody>
-        @if (Model.LatestStudents.Count == 0)
-        {
-          <tr><td colspan="4" style="text-align:center;padding:20px;color:var(--gray-500)" >@SharedLocalizer["home_noData"]</td></tr>
-        }
-        @foreach (var s in Model.LatestStudents)
-        {
-          <tr>
-            <td>@s.full_name</td>
-            <td data-lk="college:@s.college">@CollegeName(s.college)</td>
-            <td data-lk="building:@s.housing_building">@s.housing_building</td>
-            <td>
-              @if (s.status == StudentState.left)
-              {
-                <span class="badge badge-left" >@SharedLocalizer["home_badge_statusLeft"]</span>
-              }
-              else
-              {
-                <span class="badge badge-active" >@SharedLocalizer["home_resident"]</span>
-              }
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </div>
-
-  <div class="card">
-    <div class="card-header">
-      <div class="card-title" >@SharedLocalizer["home_latestRequests"]</div>
-      <a class="card-action" href="/Requests" >@SharedLocalizer["home_viewAll"]</a>
-    </div>
-    <table>
-      <thead>
-        <tr><th >@SharedLocalizer["home_col_reqType"]</th><th >@SharedLocalizer["home_col_date"]</th><th >@SharedLocalizer["home_col_status"]</th></tr>
-      </thead>
-      <tbody>
-        @if (Model.LatestRequests.Count == 0)
-        {
-          <tr><td colspan="3" style="text-align:center;padding:20px;color:var(--gray-500)" >@SharedLocalizer["home_noRequests"]</td></tr>
-        }
-        @foreach (var r in Model.LatestRequests)
-        {
-          <tr>
-            <td><span>@SharedLocalizer["home_reqType_" + (r.RequestType?.ToString() ?? "")]</span></td>
-            <td><span data-dt="@DateTime.SpecifyKind(r.SubmittedAt, DateTimeKind.Utc).ToString("o")">@r.SubmittedAt.ToString("yyyy/MM/dd")</span></td>
-            <td><span class="badge @ReqBadge(r.Status)">@SharedLocalizer["home_reqStatus_" + (r.Status?.ToLowerInvariant() ?? "")]</span></td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </div>
-</div>
-
-@* ===== آخر العمليات — JS من سجل العمليات ===== *@
-<div class="grid-2">
-  <div class="card" style="grid-column:1/-1;margin-bottom:0">
-    <div class="card-header">
-      <div class="card-title" >@SharedLocalizer["home_latestOperations"]</div>
-      <a class="card-action" href="/AuditLog" >@SharedLocalizer["home_viewAll"]</a>
-    </div>
-    <table>
-      <thead>
-        <tr><th >@SharedLocalizer["home_col_user"]</th><th >@SharedLocalizer["home_col_action"]</th><th >@SharedLocalizer["home_col_time"]</th></tr>
-      </thead>
-      <tbody id="audit-activity-tbody">
-        <tr><td colspan="3" style="text-align:center;padding:30px;color:var(--gray-500)" >@SharedLocalizer["home_loading"]</td></tr>
-      </tbody>
-    </table>
-  </div>
-</div>
-
-@* ===== الرسوم البيانية ===== *@
-<div class="grid-2" id="chartsRow" style="margin-bottom:24px">
-  <div class="card"><div class="card-header"><div class="card-title" >@SharedLocalizer["home_chartOps7Title"]</div></div><div class="chart-box"><canvas id="chartOps7"></canvas></div></div>
-  <div class="card"><div class="card-header"><div class="card-title" >@SharedLocalizer["home_chartLogins30Title"]</div></div><div class="chart-box"><canvas id="chartLogins30"></canvas></div></div>
-  <div class="card"><div class="card-header"><div class="card-title" >@SharedLocalizer["home_chartStudentsTitle"]</div></div><div class="chart-box"><canvas id="chartStudents"></canvas></div></div>
-  <div class="card"><div class="card-header"><div class="card-title" >@SharedLocalizer["home_chartRequestsTitle"]</div></div><div class="chart-box"><canvas id="chartRequests"></canvas></div></div>
-</div>
-
-@* ===== تنبيهات الأمان + إجراءات سريعة + آخر الإشعارات ===== *@
-<div class="grid-2">
-  <div class="card">
-    <div class="card-header">
-      <div class="card-title" >@SharedLocalizer["home_quickActions"]</div>
-    </div>
-    <div class="actions-grid">
-      @if (canRegister)
+  @* ===== سكن أعضاء هيئة التدريس =====
+     ⚠️ الشرط على null لا على العدد: null معناها المستخدم مالوش صلاحية
+        facultyHousing.view (الكنترولر مابيستعلمش أصلًا)، وصفر معناها مافيش
+        وحدات. الفرق مهم - عرض «٠ وحدات» على حد مالوش صلاحية كذب مش إخفاء. *@
+  @if (Model.FacultyStats is not null)
+  {
+    <div class="stat-card" style="cursor:pointer" onclick="location.href='/FacultyHousing'">
+      <div class="stat-top">
+        <div class="stat-icon" style="background:#eff4ff">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#166a45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>
+        </div>
+      </div>
+      <div class="stat-num">@Model.FacultyStats.ActiveUnits</div>
+      <div class="stat-label">@SharedLocalizer["dash_facultyUnits"]</div>
+      @* ⚠️ الوحدات خارج الخدمة مش داخلة في الرقم فوق (مش قابلة للتسكين)،
+         فبتتقال هنا عشان ما تختفيش من الشاشة خالص. وبتظهر لما تبقى أكبر
+         من صفر بس - سطر بيقول «و٠ خارج الخدمة» ضجيج. *@
+      @if (Model.FacultyStats.OutOfService > 0)
       {
-        <a class="action-btn" href="/Register"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#166a45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg><span >@SharedLocalizer["home_action_register"]</span></a>
+        <div class="stat-sub">@string.Format(SharedLocalizer["dash_facultyOutOfServiceFmt"].Value, Model.FacultyStats.OutOfService)</div>
       }
-      <a class="action-btn" href="/Students"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#166a45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span >@SharedLocalizer["home_action_viewStudents"]</span></a>
-      <a class="action-btn" href="/Requests"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#166a45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg><span >@SharedLocalizer["home_action_allRequests"]</span></a>
-      <a class="action-btn" href="/AuditLog"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#166a45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span >@SharedLocalizer["home_action_exportReport"]</span></a>
-      <a class="action-btn" href="/AuditLog"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#166a45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span >@SharedLocalizer["home_action_auditLog"]</span></a>
-      <a class="action-btn" href="/Reports"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#166a45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg><span >@SharedLocalizer["home_action_reports"]</span></a>
     </div>
-  </div>
 
-  <div class="card">
-    <div class="card-header">
-      <div class="card-title" >@SharedLocalizer["home_latestNotifications"]</div>
+    <div class="stat-card" style="cursor:pointer" onclick="location.href='/FacultyHousing'">
+      <div class="stat-top">
+        <div class="stat-icon" style="background:#dff6e7">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#067647" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4h3a2 2 0 0 1 2 2v14"/><path d="M2 20h3"/><path d="M13 20h9"/><path d="M10 12v.01"/><path d="M13 4.6v16.2a1 1 0 0 1-1.2 1L5 20V5.6a2 2 0 0 1 1.5-1.9l4-1A2 2 0 0 1 13 4.6Z"/></svg>
+        </div>
+      </div>
+      <div class="stat-num">@Model.FacultyStats.Vacant</div>
+      <div class="stat-label">@SharedLocalizer["dash_facultyVacant"]</div>
     </div>
-    <div class="activity-list" id="notif-list"></div>
-  </div>
+
+    @* ⚠️ عدّاد استثناء: المفروض يبقى صفر. بيلبس اللون الكهرماني لما يبقى
+       مش صفر، وبيفضل رمادي هادي وهو صفر. عدّاد بيصرخ طول الوقت بيتجاهَل. *@
+    <div class="stat-card @(Model.FacultyStats.PendingSync > 0 ? "alert" : "")" style="cursor:pointer" onclick="location.href='/FacultyHousing'">
+      <div class="stat-top">
+        <div class="stat-icon" style="background:@(Model.FacultyStats.PendingSync > 0 ? "#fef3c7" : "var(--gray-100)")">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="@(Model.FacultyStats.PendingSync > 0 ? "#b45309" : "#686b72")" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+        </div>
+      </div>
+      <div class="stat-num">@Model.FacultyStats.PendingSync</div>
+      <div class="stat-label">@SharedLocalizer["dash_facultyUnsynced"]</div>
+    </div>
+  }
 </div>
 
-@functions {
-    private static string ReqBadge(string? s) => (s ?? "").ToLowerInvariant() switch
-    {
-        "housing_approved" or "cyber_approved" or "ready_for_provisioning" or "completed" => "badge-approved",
-        "housing_rejected" or "cyber_rejected" => "badge-rejected",
-        _ => "badge-pending"
-    };
+@* ============================================================================
+   ⚠️ اتشال من هنا خمسة أقسام، وسبب واحد يجمعها: كلها كانت بتجاوب على أسئلة
+      إجابتها في شاشة تانية على بُعد ضغطة.
 
-    // كود الكلية (زي ما بيتخزّن من فورم التسجيل) → اسم مترجم؛ وأي نص عربي جاهز يرجع زي ما هو
-    private string CollegeName(string? c)
-    {
-        var key = (c ?? "").Trim().ToLowerInvariant() switch
-        {
-            "engineering" => "reg_collegeEngineering",
-            "medicine" => "reg_collegeMedicine",
-            "cs" => "reg_collegeCS",
-            "science" => "reg_collegeScience",
-            "business" => "reg_collegeBusiness",
-            "arts" => "reg_collegeArts",
-            "education" => "reg_collegeEducation",
-            "pharmacy" => "reg_collegePharmacy",
-            _ => null
-        };
-        return key != null ? SharedLocalizer[key].Value : (c ?? "");
-    }
+      • «آخر الطلاب المسجلين» → خمسة صفوف من شاشة «قائمة الطلاب» كاملة.
+      • «آخر العمليات»        → عشرة صفوف من شاشة «سجل العمليات» بفلاترها.
+      • «نشاط تسجيل الدخول ٣٠ يوم» → كان بيرسم فاضي، وشاشة سجل الدخول موجودة.
+      • «عمليات الطلاب» و«عمليات الطلبات» (دونات) → مجموع كل واحدة ٣ عمليات،
+        والدونات تُقرأ لنسب لا لتلات أرقام.
+      • «إجراءات سريعة» و«آخر الإشعارات» → الأزرار الستة في القائمة الجانبية
+        الظاهرة على نفس الشاشة، والإشعارات في جرس الشريط العلوي بعدّادها.
+
+      وبقي رسمان وقائمة واحدة: «الطلبات الأطول انتظارًا» — وهي السؤال الوحيد
+      اللي مالوش إجابة في أي شاشة تانية، لأن مفيش شاشة بترتّب بالانتظار.
+   ============================================================================ *@
+
+@* ===== السطر التالت: رسم العمليات وحده بعرض الصفحة =====
+   ⚠️ لوحده عن قصد: ده رسم زمني بسبعة أعمدة، ولما كان بيتقاسم الصف مع دونات
+      كانت الأعمدة بتضيق والتواريخ تحتها بتتزاحم. الدونات دايرة صغيرة بتقرا في
+      نص المساحة، والرسم الزمني لأ. *@
+@if (canSeeOpsChart)
+{
+  <div class="charts one">
+    <div class="card">
+      <div class="chart-head">
+        <span class="t" >@SharedLocalizer["dash_chartOpsTitle"]</span>
+        <span class="pill" >@SharedLocalizer["dash_chartOpsUnit"]</span>
+      </div>
+      <div class="chart-body"><canvas id="chartOps7"></canvas></div>
+    </div>
+  </div>
 }
+
+@* ===== السطر الرابع: الدونات جنب بعض بنفس الحجم =====
+   ⚠️ .even لا .charts العادية: دي بتدي الرسم الأول مساحة أكبر (1.35fr)، وهنا
+      الرسمين متكافئين فلازم يتقسموا بالنص. وارتفاع البطاقتين بيتساوى لوحده
+      لأن عناصر الـ grid بتتمدّد لأطول واحدة في الصف. *@
+@{
+    var chartsRow4 = (canSeeGenderSplit ? 1 : 0) + (canSeeAccountsChart ? 1 : 0) + (canSeeBuildingsChart ? 1 : 0);
+    // الصنف محسوب هنا لا جوّه السمة: الاقتباسات جوّه @(...) داخل سمة
+    // بتلخبط محلّل الرازر.
+    var chartsRow4Class = chartsRow4 > 1 ? "charts even" : "charts one";
+}
+@if (chartsRow4 > 0)
+{
+  <div class="@chartsRow4Class">
+    @if (canSeeGenderSplit)
+    {
+      <div class="card">
+        <div class="chart-head">
+          <span class="t" >@SharedLocalizer["dash_chartGenderTitle"]</span>
+          <span class="pill" id="gndTotal"></span>
+        </div>
+        <div class="chart-body" style="height:190px"><canvas id="chartGender"></canvas></div>
+        <div class="lg" id="gndLegend"></div>
+      </div>
+    }
+    @if (canSeeBuildingsChart)
+    {
+      <div class="card">
+        <div class="chart-head">
+          <span class="t" >@SharedLocalizer["dash_chartBuildingsTitle"]</span>
+          <span class="pill" id="bldTotal"></span>
+        </div>
+        <div class="chart-body"><canvas id="chartBuildings"></canvas></div>
+        <div class="lg-note" >@SharedLocalizer["dash_buildingsNote"]</div>
+      </div>
+    }
+    @if (canSeeAccountsChart)
+    {
+      <div class="card">
+        <div class="chart-head">
+          <span class="t" >@SharedLocalizer["dash_chartAccountsTitle"]</span>
+          <span class="pill" id="accTotal"></span>
+        </div>
+        <div class="chart-body" style="height:190px"><canvas id="chartAccounts"></canvas></div>
+        <div class="lg" id="accLegend"></div>
+        <div class="lg-note" >@SharedLocalizer["dash_accNote2"]</div>
+      </div>
+    }
+  </div>
+}
+
+@* ===== الطلبات الأطول انتظارًا ===== *@
+<div class="card" style="margin-bottom:24px">
+  <div class="card-header">
+    <div class="card-title" >@SharedLocalizer["dash_oldestWaiting"]</div>
+    <a class="card-action" href="/Requests" >@SharedLocalizer["home_viewAll"]</a>
+  </div>
+  <div id="waitingList">
+    <div class="rq-empty"><span >@SharedLocalizer["home_loading"]</span></div>
+  </div>
+</div>
 
 @section Scripts {
 @* @@ للهروب من الـ Razor — الرابط النهائي فيه @ عادية زي الصفحة القديمة *@
@@ -338,15 +397,26 @@
    جوّه صفحة فيها جلسة إدارية. النسخة المحلية موجودة أصلًا وشاشة التقارير
    بتستخدمها. *@
 <script src="/js/chart.umd.min.js"></script>
+@* ⚠️ chart-theme.js رجع هنا. كان اتشال بحجّة إن رسوم الشاشة دي «بإعداداتها
+   الخاصة» — وده بالظبط اللي خلّى رسمة العمليات بلون أخضر فاتح مالوش علاقة
+   بلون رسوم التقارير، مع إن الاتنين نفس النوع في نفس النظام.
+   رسمة العمليات بقت بتنادي NuhChart.render، والقيم فوق الأعمدة بقت خيار
+   جوّه الملف المشترك بدل ما تكون سبب لتقسيم الرسوم لنسختين. *@
 <script src="/js/chart-theme.js" asp-append-version="true"></script>
 <script src="/i18n.js"></script>
 <script>
   var CAN_HOUSING = @(canHousingView ? "true" : "false");
+  var CAN_ACC_CHART = @(canSeeAccountsChart ? "true" : "false");
+  var CAN_BLD_CHART = @(canSeeBuildingsChart ? "true" : "false");
+  var CAN_OPS_CHART = @(canSeeOpsChart ? "true" : "false");
+  var CAN_GENDER_SPLIT = @(canSeeGenderSplit ? "true" : "false");
+  var STATS_MALE = @Model.Stats.male, STATS_FEMALE = @Model.Stats.female;
+  var accData = null;
 
   // تواريخ الطلبات — نحولها لتوقيت المتصفح بنفس أسلوب الصفحة القديمة
   document.querySelectorAll('[data-dt]').forEach(function (el) {
     var d = new Date(el.dataset.dt);
-    if (!isNaN(d)) el.textContent = d.toLocaleDateString('ar-EG');
+    if (!isNaN(d)) el.textContent = NuhFmt.date(d);
   });
 
   async function apiFetch(url) {
@@ -371,35 +441,6 @@
     }, 40);
   }
 
-  // ترجمة رمز الإجراء من القاموس (fallback للقيمة الخام لو مفيش مفتاح)
-  function translateAction(a) {
-    var k = 'home_act_' + a;
-    var v = t(k);
-    return v === k ? a : v;
-  }
-
-  var auditActivityData;
-  async function loadAuditActivity() {
-    auditActivityData = await apiFetch('/api/auditlogs?pageSize=10&page=1');
-    renderAuditActivity();
-  }
-  function renderAuditActivity() {
-    if (typeof auditActivityData === 'undefined') return;
-    var tbody = document.getElementById('audit-activity-tbody');
-    if (!tbody) return;
-    var data = auditActivityData;
-    if (!data || !data.data) {
-      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:20px;color:#b42318">' + t('home_loadFailed') + '</td></tr>';
-      return;
-    }
-    var fmt = new Intl.DateTimeFormat('ar-EG', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-    tbody.innerHTML = data.data.slice(0, 10).map(function (r) {
-      var user = (r.user && (r.user.full_name || r.user.username)) || r.user_id;
-      var dt = r.action_at ? fmt.format(new Date(r.action_at)) : '-';
-      return '<tr><td>' + escHtml(user) + '</td><td>' + escHtml(translateAction(r.action)) + '</td><td>' + dt + '</td></tr>';
-    }).join('') || '<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--gray-500)">' + t('home_noOperations') + '</td></tr>';
-  }
-
   async function loadHousingStats() {
     // ملحوظة: النسخة القديمة كان فيها باج (متغير staffToken مش معرّف) فالأرقام دي ما كانتش بتتحمّل — متصلّح هنا
     var data = await apiFetch('/api/HousingAccountManagement/stats');
@@ -416,38 +457,36 @@
       var el = document.getElementById(id);
       if (el) el.textContent = map[id];
     });
+    accData = { enabled: map['hs-enabled'], disabled: map['hs-disabled'], without: map['hs-without'] };
+    if (CAN_ACC_CHART) renderAccounts(accData.enabled, accData.disabled, accData.without);
   }
 
-  var notifData;
-  async function loadNotifCard() {
-    notifData = await apiFetch('/api/notifications?role=' + encodeURIComponent(NUH.role));
-    renderNotifCard();
-  }
-  function renderNotifCard() {
-    if (typeof notifData === 'undefined') return;
-    var list = document.getElementById('notif-list');
-    if (!list) return;
-    var data = notifData;
-    if (!data) {
-      list.innerHTML = '<div style="padding:16px;color:#b42318">' + t('home_notifLoadFailed') + '</div>';
-      return;
-    }
-    list.innerHTML = data.length ? data.slice(0, 8).map(function (n) {
-      return '<div class="activity-item">' +
-        '<div class="activity-dot" style="background:#dba102"></div>' +
-        '<div><div class="activity-text">' + escHtml(n.message) + '</div>' +
-        '<div class="activity-time">' + new Date(n.sent_at || Date.now()).toLocaleDateString('ar-EG') + '</div></div>' +
-      '</div>';
-    }).join('') : '<div style="padding:20px;text-align:center;color:var(--gray-500)">' + t('home_noNotifications') + '</div>';
+  // ⚠️ القيم مكتوبة فوق الأعمدة: القراءة من الشبكة تقريبية والرقم المكتوب دقيق،
+  //    والمحور الرأسي اتشال بعدها لأنه بقى تكرارًا لنفس الأرقام.
+  // ⚠️ plugin الأرقام فوق الأعمدة اتنقل لـ js/chart-theme.js — كان مكتوب هنا
+  //    جنب رسمة Chart.js كاملة بتتعدّى على NuhChart بالكامل.
+
+  // ⚠️ نسبة كبيرة في وسط الدونات بدل المجموع: السؤال هو «كم النسبة المفعّلة»،
+  //    والمجموع مذكور في وسيلة الإيضاح سطرًا سطرًا تحتها.
+  // ⚠️ إضافة «النسبة في الوسط» اتشالت من هنا: كانت نسخة من nuhCenterTotal
+  //    اللي في js/chart-theme.js بفرق إنها بتكتب نسبة بدل مجموع. بقت خيارًا
+  //    في المكوّن (center) فالشاشة مابقتش تكتب رسمًا على الكانفاس بنفسها.
+
+  // ⚠️ صفّ وسيلة الإيضاح - كان مكتوبًا **مرتين** في الملف ده بنفس الـ HTML
+  //    حرفيًا (واحدة للجنس وواحدة للحسابات) والفرق بينهم صنف واحد.
+  function lgRow(color, name, n, todo) {
+    return '<div class="lg-row' + (todo ? ' todo' : '') + '">' +
+           '<span class="lg-dot" style="background:' + color + '"></span>' +
+           '<span class="lg-name">' + escHtml(name) + '</span><span class="lg-sep">-</span>' +
+           '<span class="lg-val">' + t('dash_accStudentsFmt').replace('{0}', n) + '</span></div>';
   }
 
-  @* ⚠️ الدالة دي كانت نسخة تانية من اللي في js/reports-page.js بالحرف —
-     ولو حد عدّل شكل الرسوم في شاشة كان لازم يفتكر يعدّلها في التانية.
-     الشكل الموحّد بقى في js/chart-theme.js. *@
-  function renderChart(id, type, labels, data, bgColors, totalLabel) {
-    return NuhChart.render(id, type, labels, data, bgColors, totalLabel);
+  // ألوان الرسوم من نفس توكنز النظام - NuhChart.colors بيقراها من base.css
+  function chartColor(name, fallback) {
+    return (window.NuhChart && NuhChart.colors && NuhChart.colors[name]) || fallback;
   }
 
+  var opsChart, accChart, gndChart;
   var chartData;
   async function loadCharts() {
     var data = await apiFetch('/api/auditlogs/chart-data');
@@ -457,41 +496,240 @@
   }
   function renderCharts() {
     var data = chartData;
-    if (!data) return;
-    if (data.last7Days && data.last7Days.length) {
-      renderChart('chartOps7', 'bar',
-        data.last7Days.map(function (d) { return d.date.slice(5, 10); }),
-        data.last7Days.map(function (d) { return d.count; }), '#166a45');
-    }
-    if (data.login30 && data.login30.length) {
-      renderChart('chartLogins30', 'line',
-        data.login30.map(function (d) { return d.date.slice(5, 10); }),
-        data.login30.map(function (d) { return d.count; }), '#dba102');
-    }
-    if (data.studentOps && data.studentOps.length) {
-      renderChart('chartStudents', 'doughnut',
-        data.studentOps.map(function (d) { return translateAction(d.action); }),
-        data.studentOps.map(function (d) { return d.count; }), NuhChart.palette, t('chart_total'));
-    }
-    if (data.requestOps && data.requestOps.length) {
-      renderChart('chartRequests', 'doughnut',
-        data.requestOps.map(function (d) { return translateAction(d.action); }),
-        data.requestOps.map(function (d) { return d.count; }), NuhChart.palette, t('chart_total'));
+    if (!data || !data.last7Days || !data.last7Days.length) return;
+    // ⚠️ الرسمة دي كانت مبنية هنا بالإيد: لونها وخطّها ومحاورها وتلميحها —
+    //    نسخة كاملة موازية لـ NuhChart، مع إن التعليق في نفس الملف بيقول إن
+    //    دالة الرسم اتوحّدت في js/chart-theme.js. فكانت رسمة لوحة التحكم
+    //    وحدها بأخضر فاتح (#a9efc5) مالوش علاقة بلون رسوم التقارير.
+    //    بقت بتنادي نفس الدالة، فاللون والخط والتلميح واحد في النظام كله.
+    opsChart = NuhChart.render(
+      'chartOps7', 'bar',
+      data.last7Days.map(function (d) { return d.date.slice(5, 10); }),
+      data.last7Days.map(function (d) { return d.count; }),
+      null, null,
+      { valueLabels: true, hideY: true });
+  }
+
+  // ====================================================================
+  //  دونات حسابات الشبكة — ثلاث حالات لا اثنتان.
+  //
+  //  ⚠️ «مفعّل / معطّل» وحدهما يصفان الموجود ولا يقولان للأمن السيبراني ما
+  //     الذي ينتظره: التعطيل قرار إداري مضى. الحالة الثالثة «بلا حساب» هي
+  //     طابور عمله، فاسمها مكتوب بالأحمر في وسيلة الإيضاح لأنها وحدها
+  //     القابلة للتصرّف.
+  //
+  //  ⚠️ الألوان هنا حالات لا فئات: أخضر يعمل، وأحمر فاتح موقوف، ورمادي غير
+  //     موجود — للحالات ترتيب طبيعي والفئات لا ترتيب لها.
+  //
+  //  ⚠️ الأرقام من نفس نداء بطاقتَي «مفعّلة» و«معطّلة» فوقها، فلا يمكن أن
+  //     يفترق الرسم عن الرقم المكتوب بجانبه.
+  // ====================================================================
+  // ====================================================================
+  //  دونات الطلاب/الطالبات.
+  //
+  //  ⚠️ الأرقام من Model.Stats نفسه اللي البطاقتين فوق بيقروا منه، فمستحيل
+  //     الرسم يفارق الرقم المكتوب جنبه — ومفيش نداء API زيادة عشانه.
+  //
+  //  ⚠️ والرسم للي بيشوف القسمين وحده: المشرف عنده هيبقى ١٠٠٪/٠٪، فالشرط
+  //     في الرازر فوق لا هنا.
+  // ====================================================================
+  function renderGender(male, female) {
+    var el = document.getElementById('chartGender');
+    if (!el || typeof Chart === 'undefined') return;
+    male = male || 0; female = female || 0;
+    var total = male + female;
+    var pct = total ? Math.round(male * 100 / total) : 0;
+
+    var pill = document.getElementById('gndTotal');
+    if (pill) pill.textContent = t('dash_accTotalFmt').replace('{0}', total);
+
+    // ⚠️ الأخضر والذهبي - لونا الجامعة من base.css لا لونين مكتوبين هنا.
+    //    كانوا أزرق #175cd3 وبنفسجي #a4508b: لونين مالهمش وجود في لوحة
+    //    النظام أصلًا، فالرسمة كانت باينة كأنها من نظام تاني.
+    var GND = [chartColor('green', '#067647'), chartColor('gold', '#dba102')];
+
+    gndChart = NuhChart.render('chartGender', 'doughnut',
+      [t('dash_maleStudents'), t('dash_femaleStudents')], [male, female], GND, null,
+      { legend: false, cutout: '72%', center: { value: pct + '%', label: t('dash_maleStudents') } });
+
+    var lg = document.getElementById('gndLegend');
+    if (lg) lg.innerHTML = lgRow(GND[0], t('dash_maleStudents'), male) +
+                           lgRow(GND[1], t('dash_femaleStudents'), female);
+  }
+
+  function renderAccounts(enabled, disabled, without) {
+    var el = document.getElementById('chartAccounts');
+    if (!el || typeof Chart === 'undefined') return;
+    enabled = enabled || 0; disabled = disabled || 0; without = without || 0;
+    var withAcc = enabled + disabled;
+    var total = withAcc + without;
+    var pct = total ? Math.round(withAcc * 100 / total) : 0;
+
+    var pill = document.getElementById('accTotal');
+    if (pill) pill.textContent = t('dash_accTotalFmt').replace('{0}', total);
+
+    // ⚠️ «معطّلة» كانت وردي فاتح #f2a9a2 و«بلا حساب» رمادي فاتح #cecfd2،
+    //    وفرق اللونين بمقياس ΔE كان **١٠٫٣** والحدّ ١٥ - يعني حتى اللي شايف
+    //    الألوان عادي مش فارق معاه الشريحتين. وتباين الاتنين على الأبيض كان
+    //    أقل من ٣:١، فالشريحة نفسها بالكاد بتبان. الدرجتين الجديدتين فرقهم
+    //    ٢٢٫٦ والتلاتة عدّوا ٣:١.
+    // ⚠️ وهي حالات لا فئات: أخضر يعمل، وأحمر موقوف، ورمادي غير موجود.
+    var ACC = [chartColor('green', '#067647'), chartColor('red', '#b42318'),
+               chartColor('gray500', '#85888e')];
+
+    accChart = NuhChart.render('chartAccounts', 'doughnut',
+      [t('dash_accEnabledOne'), t('dash_accDisabledOne'), t('dash_accNoAccount')],
+      [enabled, disabled, without], ACC, null,
+      { legend: false, cutout: '72%', center: { value: pct + '%', label: t('dash_accCoverLabel') } });
+
+    var lg = document.getElementById('accLegend');
+    if (lg) {
+      lg.innerHTML =
+        lgRow(ACC[0], t('dash_accEnabledOne'), enabled, false) +
+        lgRow(ACC[1], t('dash_accDisabledOne'), disabled, false) +
+        lgRow(ACC[2], t('dash_accNoAccount'), without, true);
     }
   }
 
-  // ⚠️ loadAuditStats و loadAlerts اتشالوا مع بطاقاتهم — كانوا بينادوا الـ API
-  //    على كل فتح للصفحة عشان أرقام مالهاش مكان تتعرض فيه.
-  loadAuditActivity();
-  loadNotifCard();
-  loadCharts();
-  if (CAN_HOUSING) loadHousingStats();
+  // ====================================================================
+  //  الطلاب حسب المبنى — رسم المشرف والمشرفة
+  //  ⚠️ التجميع والفلترة بالجنس على الخادم (StudentService.GetCountByBuildingAsync)
+  //     لا هنا: جلب كل الطلاب لعدّهم في المتصفح يعني نقل السجلّ كاملًا لرسم
+  //     فيه أربعة أعمدة، وكان يمرّر بيانات الجنس الآخر إلى الصفحة أصلًا.
+  //  ⚠️ أفقي لا رأسي: أسماء المباني نصّ عربي، ورأسيًا تُقلب أو تُقصّ تحت العمود.
+  // ====================================================================
+  var bldChart, bldData;
+  async function loadBuildings() {
+    bldData = await apiFetch('/api/Students/by-building');
+    renderBuildings();
+  }
+  function renderBuildings() {
+    var el = document.getElementById('chartBuildings');
+    if (!el || typeof Chart === 'undefined' || !Array.isArray(bldData)) return;
+    var rows = bldData.slice(0, 8);
+    var total = bldData.reduce(function (a, x) { return a + (x.count || 0); }, 0);
+    var pill = document.getElementById('bldTotal');
+    if (pill) pill.textContent = t('dash_buildingsUnit').replace('{0}', total);
+    if (bldChart) bldChart.destroy();
+    if (!rows.length) {
+      el.parentNode.innerHTML = '<div class="rq-empty"><span>' + t('dash_noBuildings') + '</span></div>';
+      return;
+    }
+    // ⚠️ العمود كان بأخضر فاتح #a9efc5 وتباينه على الأبيض **1.33:1** - عمود
+    //    بتدوّر عليه بعينك. بقى بلون الهوية (6.60:1). واللون من base.css.
+    // ⚠️ والرسمة كلها كانت مكتوبة هنا بمحاورها وإضافة أرقامها - نسخة تالتة
+    //    من كود موجود في js/chart-theme.js. بقت نداء واحد بخيار horizontal.
+    bldChart = NuhChart.render('chartBuildings', 'bar',
+      rows.map(function (x) { return t('dash_buildingPrefix') + ' ' + x.building; }),
+      rows.map(function (x) { return x.count; }),
+      chartColor('navy', '#166a45'), null,
+      { horizontal: true, valueLabels: true });
+  }
+
+  // ====================================================================
+  //  الطلبات الأطول انتظارًا
+  //  ⚠️ الترتيب والفلترة على الخادم (openOnly + sortAsc): الجدول مقسّم صفحات،
+  //     فترتيبٌ في المتصفح كان هيرتّب أول عشرين صف بس ويسمّيهم «الأقدم».
+  // ====================================================================
+  var waitingData;
+  // ⚠️ waitingFailed مش تفصيلة: apiFetch بترجّع null في حالتين مختلفتين
+  //    تمامًا - «مفيش طلبات» و«النداء فشل». ولو الاتنين اتعاملوا بنفس الشكل،
+  //    عطل في الشبكة أو في الخادم بيظهر للمشرف **علامة صح خضرا** و«لا يوجد
+  //    طلب منتظر». يعني الطابور مليان وهو شايفه فاضي، ومافيش أي إشارة إن في
+  //    حاجة غلط. ده أخطر شكل للعطل: عطل بيتقري كخبر كويس.
+  var waitingFailed = false;
+  async function loadWaiting() {
+    waitingData = await apiFetch('/api/Requests/paged?page=1&pageSize=5&openOnly=true&sortBy=submittedat&sortAsc=true');
+    waitingFailed = (waitingData === null);
+    renderWaiting();
+  }
+
+  // ⚠️ العتبات هنا وحدها: أقل من يومين أخضر، وحتى خمسة كهرماني، وفوقها أحمر.
+  function ageChip(iso) {
+    var days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+    if (!isFinite(days) || days < 0) days = 0;
+    var txt = days === 0 ? t('dash_ageToday')
+            : days === 1 ? t('dash_ageOneDay')
+            : days === 2 ? t('dash_ageTwoDays')
+            : days <= 10 ? t('dash_ageDaysFmt').replace('{0}', days)
+            : t('dash_ageManyDaysFmt').replace('{0}', days);
+    return { txt: txt, cls: days < 2 ? 'age-ok' : (days <= 5 ? 'age-warn' : 'age-bad') };
+  }
+
+  // شريط الخطوات — الرقم من جدول المسار لا من سلّم مكتوب هنا.
+  // ⚠️ need_more_info وحده خارج الجدول (مالوش انتقال، الطلب راجع للطالب)،
+  //    وهو راجع لأول المسار فخطوته ١ — نفس السبب اللي خلّاه استثناءً في
+  //    RequestWorkflow.OpenStatuses.
+  function stepsBar(status) {
+    var wf = (typeof NuhWorkflow !== 'undefined') ? NuhWorkflow.forStatus(status) : null;
+    var step = (wf && wf.step) || (status === 'need_more_info' ? 1 : 0);
+    var html = '<span class="rq-steps">';
+    for (var i = 1; i <= 4; i++) html += '<i class="' + (i <= step ? 'on' : '') + '"></i>';
+    return html + '</span>';
+  }
+
+  function renderWaiting() {
+    var box = document.getElementById('waitingList');
+    if (!box || typeof waitingData === 'undefined') return;
+    var items = (waitingData && waitingData.items) || [];
+
+    // فشل النداء - رسالة عطل بزرار إعادة محاولة، مش حالة فراغ.
+    if (waitingFailed) {
+      box.innerHTML = '<div class="rq-empty">' +
+        '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#b42318" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>' +
+        '<b style="color:#b42318">' + t('dash_waitingError') + '</b>' +
+        '<span>' + t('dash_waitingErrorSub') + '</span>' +
+        '<button type="button" class="pill" style="cursor:pointer;border:1px solid var(--gray-200);background:var(--white);margin-top:4px" onclick="loadWaiting()">' +
+        t('dash_retry') + '</button></div>';
+      return;
+    }
+
+    if (!items.length) {
+      box.innerHTML = '<div class="rq-empty">' +
+        '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#067647" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>' +
+        '<b>' + t('dash_noWaiting') + '</b><span>' + t('dash_noWaitingSub') + '</span></div>';
+      return;
+    }
+    box.innerHTML = items.map(function (r) {
+      var st = (r.status || '').toLowerCase();
+      var age = ageChip(r.submittedAt);
+      var name = (r.student && r.student.full_name) || r.studentId || '';
+      // ⚠️ المفتاح من NuhWorkflow لا مبني هنا — نفس مصدر شاشة الطلبات،
+      //    عشان المرحلة الواحدة ما تظهرش باسمين في شاشتين.
+      var stageKey = NuhWorkflow.stageKey(st);
+      var stage = t(stageKey); if (stage === stageKey) stage = st;
+      return '<a class="rq-row" href="/Requests/Details/' + r.id + '">' +
+        '<span class="rq-num">' + escHtml(r.requestNumber || '-') + '</span>' +
+        '<span class="rq-main"><span class="rq-name">' + escHtml(name) + '</span>' +
+        '<span class="rq-stage">' + escHtml(stage) + '</span></span>' +
+        stepsBar(st) +
+        '<span class="rq-age ' + age.cls + '">' + escHtml(age.txt) + '</span>' +
+        '<span class="rq-go"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>' +
+      '</a>';
+    }).join('');
+  }
+
+  // ⚠️ النداءات اللي اتشالت مع بطاقاتها: loadAuditActivity و loadNotifCard
+  //    و loadAuditStats و loadAlerts — كانت بتضرب الـ API على كل فتح للصفحة
+  //    عشان أرقام مالهاش مكان تتعرض فيه.
+  if (CAN_OPS_CHART) loadCharts();
+  // الأرقام محقونة من الخادم — الرسم بيتبني فورًا بلا انتظار أي نداء.
+  if (CAN_GENDER_SPLIT) renderGender(STATS_MALE, STATS_FEMALE);
+  loadWaiting();
+  if (CAN_BLD_CHART) loadBuildings();
+  // ⚠️ الشرط كان CAN_HOUSING وحده — أي housing.view. ولمّا اتربطت الدونات
+  //    بمن يتصرّف في الحساب (الأمن السيبراني) بقى عنده البطاقة ظاهرة والنداء
+  //    مايتنفّذش أصلًا، فالمكان يفضل فاضي بلا حتى خطأ في الشبكة.
+  if (CAN_HOUSING || CAN_ACC_CHART) loadHousingStats();
 
   // اللغة تتبع ثقافة السيرفر — setLang بيترجم عناصر الترجمة وبيستدعي onLanguageChange
   window.onLanguageChange = function () {
     renderCharts();
-    renderAuditActivity();
-    renderNotifCard();
+    renderWaiting();
+    if (accData && CAN_ACC_CHART) renderAccounts(accData.enabled, accData.disabled, accData.without);
+    if (CAN_BLD_CHART) renderBuildings();
   };
   setLang(localStorage.getItem('uiLanguage') || 'ar');
 </script>

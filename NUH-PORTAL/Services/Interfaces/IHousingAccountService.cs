@@ -17,8 +17,6 @@ namespace NUH_PORTAL.Services.Interfaces
         Task SyncExtensionAttributesAsync(int studentId);
         Task<AdSearchResultDto> SearchADUsersAsync(string? q, int max);
         Task<List<LifecycleLogDto>> GetLifecycleLogsAsync(int studentId, int limit);
-        Task<List<AdConfigurationDto>> GetAdConfigAsync();
-        Task UpdateAdConfigAsync(List<AdConfigDto> configs);
         Task<HousingStatsDto> GetHousingStatsAsync();
         // مزامنة مع الأكتف دايركتوري — قراءة من الدومين وكتابة عندنا بس.
         // LinkNew = ربط طلاب مالهمش حساب مسجّل، RefreshLinked = تحديث حالة المربوطين.

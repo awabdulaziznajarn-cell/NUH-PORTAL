@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" id="html-root">
+<html lang="ar" dir="rtl" id="html-root" data-title-key="pt_cnfPageTitle">
 <head>
 <link rel="icon" href="../favicon.ico">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>تأكيد التسجيل - بوابة السكن الجامعي</title>
+<title>تأكيد التسجيل - بوابة الإسكان الجامعي</title>
 <script src="../i18n.js"></script>
 <link rel="stylesheet" href="../css/portal.css">
   <link rel="stylesheet" href="../css/portal-touch.css">
@@ -15,13 +15,6 @@
 
 
 
-.portal-header{text-align:center;padding:28px 16px 0;width:100%;position:relative}
-.portal-header img{width:80px;height:auto;margin-bottom:10px}
-.portal-header h1{font-size:17px;font-weight:800;color:var(--navy-dark)}
-.lang-btn{position:absolute;top:12px;background:#fff;border:1px solid #dcdfe4;border-radius:6px;padding:6px 14px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;z-index:10}
-[dir="rtl"] .lang-btn{left:12px}
-[dir="ltr"] .lang-btn{right:12px}
-.lang-btn:hover{background:#f5f5f6}
 .content{max-width:560px}
 
 .card:hover{box-shadow:0 4px 20px rgba(16,70,49,0.09)}
@@ -40,16 +33,21 @@
 .info-text{font-size:13px;color:var(--gray-500);line-height:1.8;margin-bottom:24px}
 .actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
 .actions .btn{width:auto;min-width:140px}
-@media(max-width:768px){.portal-header{padding:20px 16px 0}.portal-header img{width:64px}.portal-header h1{font-size:16px}.content{padding:16px}.card{padding:20px}.step-indicator{gap:6px}.step{width:30px;height:30px;font-size:12px}}
+@media(max-width:768px){.content{padding:16px}.card{padding:20px}.step-indicator{gap:6px}.step{width:30px;height:30px;font-size:12px}}
 @media(max-width:414px){.card{border-radius:12px}.step{width:28px;height:28px;font-size:11px}.step-indicator{gap:4px}.actions{flex-direction:column}.actions .btn{width:100%}.request-number{font-size:24px}.info-text{font-size:12px}}
-@media(max-width:375px){.content{padding:12px}.card{padding:16px;border-radius:10px}.btn{padding:10px 16px}.step{width:26px;height:26px;font-size:10px}.success-icon{width:56px;height:56px}.success-icon svg{width:28px;height:28px}.portal-header{padding:16px 12px 0}.portal-header img{width:56px}.portal-header h1{font-size:15px}}
+@media(max-width:375px){.content{padding:12px}.card{padding:16px;border-radius:10px}.btn{padding:10px 16px}.step{width:26px;height:26px;font-size:10px}.success-icon{width:56px;height:56px}.success-icon svg{width:28px;height:28px}}
 </style>
 </head>
 <body>
 <div class="portal-header">
-<img src="../nu-logo.png" alt="جامعة نجران">
-<h1>تم تقديم الطلب</h1>
-<button class="lang-btn" id="langBtn" onclick="toggleLang()">English</button>
+<img src="../nu-logo.svg" alt="جامعة نجران" data-i18n-alt="Brand_Sub">
+<h1 data-i18n="Brand_Title">بوابة الإسكان الجامعي</h1>
+<!-- ⚠️ data-i18n لا نصّ ثابت: الزرّ كان مكتوب فيه «English» بالإيد، فالطالب
+     اللي بدّل للإنجليزي كان بيلاقي صفحة إنجليزي وزرّ بيعرض عليه «English»
+     تاني - مفيش طريق راجع ظاهر للعربي. المفتاح pt_langToggle قيمته في
+     الملف العربي «English» وفي الإنجليزي «العربية»، يعني نصّه دايمًا اسم
+     اللغة اللي المستخدم رايح لها. -->
+<button class="lang-btn" id="langBtn" type="button" onclick="toggleLang()" data-i18n="pt_langToggle">English</button>
 </div>
 <div class="content">
 <div class="card card-pad-lg card-center">
@@ -60,14 +58,14 @@
 <div class="step done"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="8" fill="#067647"/><path d="M4.5 8L7 10.5L11.5 6" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
 </div>
 <div class="success-icon"><svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#067647" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
-<h2 style="font-size:18px;font-weight:800;margin-bottom:4px">تم تقديم الطلب بنجاح</h2>
-<p style="font-size:13px;color:var(--gray-500);margin-bottom:16px">رقم طلبك</p>
+<h2 style="font-size:18px;font-weight:800;margin-bottom:4px" data-i18n="pt_cnfHead">تم تقديم الطلب بنجاح</h2>
+<p style="font-size:13px;color:var(--gray-500);margin-bottom:16px" data-i18n="pt_cnfNumLbl">رقم طلبك</p>
 <div class="request-number" id="requestNumber">---</div>
-<p class="info-text">سيتم مراجعة طلبك من قبل المشرف ومن ثم قسم الأمن السيبراني والإدارة.<br>يمكنك متابعة حالة طلبك عبر صفحة طلباتي أو باستخدام رقم الطلب.</p>
+<p class="info-text"><span data-i18n="pt_cnfInfo">سيتم مراجعة طلبك من قبل المشرف ومن ثم قسم الأمن السيبراني والإدارة.</span><br><span data-i18n="pt_cnfInfo2">يمكنك متابعة حالة طلبك عبر صفحة طلباتي أو باستخدام رقم الطلب.</span></p>
 <div class="actions">
-<a href="my-requests.html" class="btn btn-primary">طلباتي</a>
-<a id="trackBtn" href="track-request.html" class="btn btn-gold">متابعة الطلب</a>
-<a href="index.html" class="btn btn-outline">العودة للرئيسية</a>
+<a href="my-requests.html" class="btn btn-primary" data-i18n="pt_myRequests">طلباتي</a>
+<a id="trackBtn" href="track-request.html" class="btn btn-gold" data-i18n="pt_trackRequest">متابعة الطلب</a>
+<a href="index.html" class="btn btn-outline" data-i18n="pt_backHome">العودة للرئيسية</a>
 </div>
 </div>
 </div>

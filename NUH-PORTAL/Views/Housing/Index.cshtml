@@ -78,21 +78,17 @@
   .badge-disabled{background:var(--red-light);color:var(--red)}
   .badge-unknown{background:var(--gray-200);color:var(--gray-700)}
   .table-wrap{overflow-x:auto}
-  .card-body{padding:20px}
+/* ⚠️ .card-body اتنقلت لـ css/components.css - كانت مكتوبة في شاشتين. */
   .loading{text-align:center;padding:40px;color:var(--gray-500)}
   .loading::after{content:'';display:inline-block;width:24px;height:24px;border:3px solid var(--gray-200);border-top-color:var(--navy);border-radius:50%;animation:spin 1s linear infinite;margin-right:8px;vertical-align:middle}
-  .empty-state{text-align:center;padding:60px 20px;color:var(--gray-500)}
-  .empty-state svg{width:64px;height:64px;stroke:var(--gray-300);margin-bottom:16px}
-  .empty-state p{font-size:14px}
   .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 24px}
   .detail-item label{font-size:11px;color:var(--gray-500);display:block;margin-bottom:2px}
   .detail-item span{font-size:14px;font-weight:600}
   .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;display:none;align-items:center;justify-content:center}
   .modal-overlay.show{display:flex}
   .modal{background:var(--white);border-radius:16px;width:90%;max-width:700px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 48px rgba(0,0,0,.2)}
-  .modal-header{padding:16px 20px;background:#f3fcf6;border-bottom:1px solid #c6ecd6;display:flex;align-items:center;justify-content:space-between}
+  .modal-header{padding:16px 20px;background:var(--tint);border-bottom:1px solid #c6ecd6;display:flex;align-items:center;justify-content:space-between}
   .modal-header h3{font-size:16px;font-weight:700}
-  .modal-close{background:none;border:none;font-size:24px;cursor:pointer;color:var(--gray-500);padding:4px}
   .modal-body{padding:20px}
   .modal-footer{padding:12px 20px;border-top:1px solid var(--gray-100);display:flex;justify-content:flex-end;gap:8px}
 
@@ -105,7 +101,7 @@
   .log-icon{flex-shrink:0;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;background:var(--gray-100);color:var(--gray-500)}
   .log-icon.created,.log-icon.enabled,.log-icon.reprovisioned{background:var(--green-light);color:var(--green)}
   .log-icon.disabled{background:var(--red-light);color:var(--red)}
-  .log-icon.password_reset{background:#fffaeb;color:#7a5c0b}
+  .log-icon.password_reset{background:#fffaeb;color:var(--gold-dark)}
   .log-details{flex:1;min-width:0}
   .log-action{font-size:13.5px;font-weight:700;color:var(--navy);margin-bottom:3px}
   .log-desc{font-size:12.5px;color:var(--gray-700);line-height:1.75;margin-bottom:5px;word-break:break-word}
@@ -119,16 +115,39 @@
         نادرين وليهم أثر حقيقي على الحسابات شكلهم زي فلتر عرض. بقوا لوحة مستقلة
         فوق الجدول: كل إجراء ليه عنوان وسطر بيقول بيعمل إيه بالظبط.
      ============================================================================ */
-  .sync-panel{background:var(--white);border:1px solid var(--gray-100);border-radius:14px;
-              box-shadow:0 2px 8px rgba(16,70,49,.05);margin-bottom:20px;overflow:hidden}
-  /* نفس ترويسة الأقسام في باقي النظام — أزرق فاتح وخط فاصل بنفس الدرجة */
-  .sync-panel-head{display:flex;align-items:center;gap:11px;padding:15px 20px;background:#f3fcf6;border-bottom:1px solid #c6ecd6}
-  .sync-panel-head .ic{width:34px;height:34px;border-radius:10px;background:var(--white);border:1px solid #c6ecd6;color:var(--navy);
+  /* ⚠️ اللوحة دي لونها أزرق مش أخضر النظام — عن قصد.
+        كل حاجة خضرا في الشاشة دي بتشتغل على قاعدة بيانات النظام. اللوحة دي
+        بس هي اللي بتتكلم مع **الدليل النشط**، وهي حاجة تانية خالص: خارج
+        النظام، وبتلمس حسابات دخول حقيقية. اللون بيقول الفرق ده من غير ما
+        الموظف يقرا سطر. والدرجة نفسها المستخدمة في شارة وسيلة الدخول في
+        سجل تسجيل الدخول (.badge-method) — مش لون جديد اخترعناه هنا. */
+  .sync-panel{background:var(--white);border:1px solid #c7d7fe;border-radius:14px;
+              box-shadow:0 2px 8px rgba(24,73,169,.06);margin-bottom:20px;overflow:hidden}
+
+  /* ⚠️ الترويسة بقت <button>: هي مفتاح الطيّ، فلازم تشتغل بالكيبورد وقارئ
+        الشاشة زي أي زرار. <div onclick> كان هيبان زيّها للعين بس. */
+  .sync-panel-head{width:100%;display:flex;align-items:center;gap:11px;padding:15px 20px;
+                   background:var(--blue-light);border:0;border-bottom:1px solid #c7d7fe;
+                   font-family:inherit;text-align:start;cursor:pointer}
+  .sync-panel-head:hover{background:#e6eeff}
+  .sync-panel-head:focus-visible{outline:2px solid var(--blue);outline-offset:-2px}
+  .sync-panel-head .ic{width:34px;height:34px;border-radius:10px;background:var(--white);border:1px solid #c7d7fe;color:var(--blue);
                        display:flex;align-items:center;justify-content:center;flex-shrink:0}
   .sync-panel-head .ic svg{width:17px;height:17px}
-  .sync-panel-head h3{font-size:14.5px;font-weight:700;color:var(--navy-dark);line-height:1.4}
-  .sync-panel-head p{font-size:11.5px;color:var(--gray-500);margin-top:2px;line-height:1.6}
-  .sync-actions{display:grid;grid-template-columns:1fr;gap:14px;padding:18px 20px}
+  .sync-panel-head .txt{flex:1;min-width:0}
+  .sync-panel-head .t{display:block;font-size:14.5px;font-weight:700;color:var(--blue);line-height:1.4}
+  .sync-panel-head .s{display:block;font-size:11.5px;color:var(--gray-500);margin-top:2px;line-height:1.6}
+  /* شارة «قراءة فقط» جنب العنوان: الجملة الكاملة موجودة تحته، والشارة هي اللي
+     بتفضل قدام العين وقت ما اللوحة تكون مطوية. */
+  .sync-panel-head .dom-badge{flex-shrink:0;font-size:10.5px;font-weight:700;padding:3px 10px;
+                              border-radius:999px;background:var(--white);border:1px solid #c7d7fe;color:var(--blue)}
+  .sync-panel-head .chev{width:16px;height:16px;flex-shrink:0;color:var(--blue);transition:transform .2s}
+  .sync-panel.is-open .sync-panel-head .chev{transform:rotate(180deg)}
+
+  /* ⚠️ مطوية افتراضيًا: دي إجراءات إدارية بتتعمل مرة كل فترة، وكانت واخدة
+        تلت الشاشة الأولى فوق الجدول اللي هو شغل الموظف اليومي. */
+  .sync-actions{display:none;grid-template-columns:1fr;gap:14px;padding:18px 20px}
+  .sync-panel.is-open .sync-actions{display:grid}
   @@media(min-width:860px){ .sync-actions{grid-template-columns:1fr 1fr} }
   .sync-action{border:1px solid var(--gray-200);border-radius:12px;padding:16px 17px;
                display:flex;flex-direction:column;gap:9px;transition:border-color .15s,box-shadow .15s}
@@ -139,7 +158,7 @@
   .sync-action p{font-size:11.5px;color:var(--gray-500);line-height:1.75;flex:1;margin:0}
   .sync-action .safe{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;
                      padding:2px 9px;border-radius:999px;background:var(--green-light);color:var(--green);align-self:flex-start}
-  .sync-action .care{background:var(--amber-light,#fffaeb);color:#7a5c0b}
+  .sync-action .care{background:var(--amber-light,#fffaeb);color:var(--gold-dark)}
   .sbtn{display:inline-flex;align-items:center;justify-content:center;gap:8px;align-self:flex-start;
         padding:9px 18px;border-radius:9px;border:1px solid var(--gray-200);background:var(--white);
         color:var(--navy);font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;
@@ -160,7 +179,7 @@
   .sync-section{margin-top:18px}
   .sync-section h4{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px}
   .sync-note{font-size:12px;line-height:1.8;padding:10px 12px;border-radius:8px;margin-bottom:10px}
-  .sync-note.info{background:#eff4ff;color:#175cd3;border:1px solid #d1e0ff}
+  .sync-note.info{background:var(--blue-light);color:var(--blue);border:1px solid var(--blue-pale)}
   .sync-note.danger{background:#fef3f2;color:#b42318;border:1px solid #fecdca}
   .sync-list{max-height:220px;overflow-y:auto;border:1px solid var(--gray-100);border-radius:8px}
   .sync-list .row{display:flex;flex-wrap:wrap;gap:4px 12px;padding:9px 12px;font-size:12.5px;border-bottom:1px solid var(--gray-100)}
@@ -199,7 +218,7 @@
      ============================================================================ */
   .acct-head{display:flex;align-items:center;gap:14px;padding:15px 16px;border:1px solid var(--gray-100);
              border-radius:14px;background:linear-gradient(180deg,#fcfcfd,#fff);margin-bottom:22px}
-  .acct-head .av{width:46px;height:46px;border-radius:12px;background:#d1e0ff;color:var(--navy);
+  .acct-head .av{width:46px;height:46px;border-radius:12px;background:var(--blue-pale);color:var(--navy);
                  display:flex;align-items:center;justify-content:center;flex-shrink:0}
   .acct-head .av svg{width:22px;height:22px}
   .acct-head .who{flex:1;min-width:0;display:flex;flex-direction:column}
@@ -259,18 +278,24 @@
    الاتنين بصلاحية housing.syncAd، والـ API بيتحقق منها كمان. *@
 @if (User.HasClaim("permission", "housing.syncAd"))
 {
-  <div class="sync-panel">
-    <div class="sync-panel-head">
+  <div class="sync-panel" id="adPanel">
+    <button type="button" class="sync-panel-head" id="adPanelToggle"
+            aria-expanded="false" aria-controls="adPanelBody">
       <span class="ic">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>
       </span>
-      <div>
-        <h3>@SharedLocalizer["hm_syncTitle"]</h3>
-        <p>@SharedLocalizer["hm_syncSubtitle"]</p>
-      </div>
-    </div>
+      @* ⚠️ <span> مش <h3>/<p>: العنصر الأب بقى <button>، والزرار مابيقبلش
+         عناصر كتلية جوّاه — متصفحات كتير بتطلّعها بره الزرار وقت التحليل
+         فيتكسر الصف. الحجم والوزن من الـ CSS زي ما كانوا. *@
+      <span class="txt">
+        <span class="t">@SharedLocalizer["hm_syncTitle"]</span>
+        <span class="s">@SharedLocalizer["hm_syncSubtitle"]</span>
+      </span>
+      <span class="dom-badge">@SharedLocalizer["hm_readOnly"]</span>
+      <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
 
-    <div class="sync-actions">
+    <div class="sync-actions" id="adPanelBody">
       <div class="sync-action">
         <b>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
@@ -300,16 +325,37 @@
   </div>
 }
 
+@* ============================================================================
+   شريط الفلاتر - نفس مكوّن .filters-bar المستخدم في سجل تسجيل الدخول وسجل
+   العمليات وسجل الأخطاء. مكتوب مرة واحدة في site.css ومحدش بيكتب ستايل محلي.
+
+   ⚠️ الشاشة دي كانت الوحيدة اللي فلترها قائمة يتيمة في ترويسة البطاقة:
+      بلا خانة بحث خالص، وبلا ترقيم صفحات - بتنادي GET /api/HousingAccountManagement
+      اللي بيرجّع **كل** الحسابات في رد واحد وترسمهم كلهم. مع ٢١ طالب ده
+      شغّال، ومع دفعة قبول كاملة الصفحة بتقف.
+
+   ⚠️ ونقطة /paged كانت موجودة على الخادم من الأصل ومحدش بيناديها.
+   ============================================================================ *@
+<div class="filters-bar">
+  <div class="filter-group">
+    <label for="hsSearch">@SharedLocalizer["hs_search"]</label>
+    <input type="text" id="hsSearch" placeholder='@(SharedLocalizer["hs_searchPlaceholder"].Value)'>
+  </div>
+  <div class="filter-group">
+    <label for="statusFilter">@SharedLocalizer["hs_colStatus"]</label>
+    <select id="statusFilter">
+      <option value="" >@SharedLocalizer["hs_filterAll"]</option>
+      <option value="enabled" >@SharedLocalizer["hs_filterEnabled"]</option>
+      <option value="disabled" >@SharedLocalizer["hs_filterDisabled"]</option>
+      <option value="unknown" >@SharedLocalizer["hs_filterUnknown"]</option>
+    </select>
+  </div>
+</div>
+
 <div class="card">
   <div class="card-header">
     <div class="card-title">@SharedLocalizer["hs_accountsTitle"]</div>
     <div class="card-tools">
-      <select id="statusFilter" onchange="loadAccounts()">
-        <option value="" >@SharedLocalizer["hs_filterAll"]</option>
-        <option value="enabled" >@SharedLocalizer["hs_filterEnabled"]</option>
-        <option value="disabled" >@SharedLocalizer["hs_filterDisabled"]</option>
-        <option value="unknown" >@SharedLocalizer["hs_filterUnknown"]</option>
-      </select>
       @* تحديث عرض الجدول من قاعدة البيانات — مالوش علاقة بالدومين، فأيقونة بس.
          إجراءات المزامنة اتنقلت للوحة مستقلة فوق الجدول. *@
       <button class="tbtn icon-only" onclick="loadAccounts()" title="@SharedLocalizer["hs_refresh"]">
@@ -319,26 +365,28 @@
   </div>
   <div class="card-body">
     <div class="table-wrap">
-      <table>
+      <table id="hsTable">
         <thead>
           <tr>
-            <th class="sortable" onclick="sortHousing('student_id')">@SharedLocalizer["hs_colStudentId"]<span class="sort-ind" id="hsort-student_id"></span></th>
-            <th class="sortable" onclick="sortHousing('full_name_english')">@SharedLocalizer["hs_colNameEn"]<span class="sort-ind" id="hsort-full_name_english"></span></th>
-            <th class="sortable" onclick="sortHousing('college')">@SharedLocalizer["hs_colCollege"]<span class="sort-ind" id="hsort-college"></span></th>
-            <th class="sortable" onclick="sortHousing('ad_status')">@SharedLocalizer["hs_colStatus"]<span class="sort-ind" id="hsort-ad_status"></span></th>
-            <th class="sortable" onclick="sortHousing('ad_username')">@SharedLocalizer["hs_colUsername"]<span class="sort-ind" id="hsort-ad_username"></span></th>
-            <th class="sortable" onclick="sortHousing('ad_last_sync_at')">@SharedLocalizer["hs_colLastSync"]<span class="sort-ind" id="hsort-ad_last_sync_at"></span></th>
+            <th data-sort="student_id">@SharedLocalizer["hs_colStudentId"]</th>
+            <th data-sort="full_name_english">@SharedLocalizer["hs_colNameEn"]</th>
+            <th data-sort="college">@SharedLocalizer["hs_colCollege"]</th>
+            <th data-sort="ad_status">@SharedLocalizer["hs_colStatus"]</th>
+            <th data-sort="ad_username">@SharedLocalizer["hs_colUsername"]</th>
+            <th data-sort="ad_last_sync_at">@SharedLocalizer["hs_colLastSync"]</th>
             <th >@SharedLocalizer["hs_colActions"]</th>
           </tr>
         </thead>
         <tbody id="accountsTableBody"></tbody>
       </table>
     </div>
-    <div class="loading" id="loadingIndicator"></div>
-    <div class="empty-state" id="emptyState" style="display:none">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-      <p >@SharedLocalizer["hs_noStudents"]</p>
-    </div>
+
+    @* حالات الجدول (تحميل / لا نتائج / خطأ) من NuhTable.bind، وصفّ الترقيم من
+       NuhTable.pager - النسخة الوحيدة في النظام (js/table-state.js).
+       ⚠️ اتشالت هنا لوحة .loading و.empty-state المنفصلتين: كانوا تحت الجدول
+          مش جواه، فالمستخدم كان بيشوف ترويسة أعمدة فاضية وتحتها دايرة تحميل
+          في مكان تاني - وباقي شاشات النظام بتعرض الحالة جوّه الجدول نفسه. *@
+    <div id="hsPager" class="in-card"></div>
   </div>
 </div>
 
@@ -346,7 +394,7 @@
   <div class="modal">
     <div class="modal-header">
       <h3 >@SharedLocalizer["hs_manageAccount"]</h3>
-      <button class="modal-close" onclick="closeModal('detailsModal')">&times;</button>
+      <button class="modal-close" onclick="closeModal('detailsModal')" aria-label="@SharedLocalizer["close"]"><span aria-hidden="true">&times;</span></button>
     </div>
     <div class="modal-body" id="detailsModalBody"></div>
     <div class="modal-footer">
@@ -359,7 +407,7 @@
   <div class="modal">
     <div class="modal-header">
       <h3 >@SharedLocalizer["hs_lifecycleLog"]</h3>
-      <button class="modal-close" onclick="closeModal('lifecycleModal')">&times;</button>
+      <button class="modal-close" onclick="closeModal('lifecycleModal')" aria-label="@SharedLocalizer["close"]"><span aria-hidden="true">&times;</span></button>
     </div>
     <div class="modal-body" id="lifecycleModalBody"></div>
     <div class="modal-footer">
@@ -373,7 +421,7 @@
   <div class="modal" style="max-width:720px">
     <div class="modal-header">
       <h3 id="adSyncTitle"></h3>
-      <button class="modal-close" onclick="closeModal('adSyncModal')">&times;</button>
+      <button class="modal-close" onclick="closeModal('adSyncModal')" aria-label="@SharedLocalizer["close"]"><span aria-hidden="true">&times;</span></button>
     </div>
     <div class="modal-body" id="adSyncBody"></div>
     <div class="modal-footer" id="adSyncFooter"></div>
@@ -384,7 +432,7 @@
   <div class="modal" style="max-width:800px">
     <div class="modal-header">
       <h3 >@SharedLocalizer["hs_adSearchTitle"]</h3>
-      <button class="modal-close" onclick="closeModal('adSearchModal')">&times;</button>
+      <button class="modal-close" onclick="closeModal('adSearchModal')" aria-label="@SharedLocalizer["close"]"><span aria-hidden="true">&times;</span></button>
     </div>
     <div class="modal-body">
       <div style="display:flex;gap:8px;margin-bottom:16px">
@@ -401,6 +449,37 @@
 
 @section Scripts {
 <script>
+  // ==========================================================================
+  //  طيّ لوحة الدليل النشط.
+  //
+  //  ⚠️ مطوية افتراضيًا: تحديث الحالات وربط الحسابات إجراءات بتتعمل مرة كل
+  //     فترة، مش شغل يومي — وكانت واخدة تلت الشاشة الأولى فوق الجدول اللي
+  //     الموظف بيفتح الصفحة عشانه.
+  //
+  //  ⚠️ واختيار الموظف بيتحفظ: اللي بيشتغل على المزامنة بيفتحها كل يوم،
+  //     ومش منطقي يطويها له النظام في كل مرة.
+  // ==========================================================================
+  (function () {
+    var panel = document.getElementById('adPanel');
+    if (!panel) return;                       // مفيش صلاحية housing.syncAd
+    var head = document.getElementById('adPanelToggle');
+    var KEY = 'nuhAdPanelOpen';
+
+    function set(open) {
+      panel.classList.toggle('is-open', open);
+      head.setAttribute('aria-expanded', open ? 'true' : 'false');
+      try { localStorage.setItem(KEY, open ? '1' : '0'); } catch (e) { }
+    }
+
+    var saved = null;
+    try { saved = localStorage.getItem(KEY); } catch (e) { }
+    set(saved === '1');
+
+    head.addEventListener('click', function () {
+      set(!panel.classList.contains('is-open'));
+    });
+  })();
+
   // نصوص لوحة المزامنة (من SharedResource) — L.key
   var L = @Html.Raw(__hmL);
 

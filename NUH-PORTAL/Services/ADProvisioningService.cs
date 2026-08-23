@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using NUH_PORTAL.Data;
 using NUH_PORTAL.DTOs.Housing;
@@ -14,13 +14,16 @@ namespace NUH_PORTAL.Services
         private readonly AppDbContext _db;
         private readonly ILogger<ADProvisioningService> _logger;
         private readonly ActiveDirectoryConfig _adConfig;
+        // أماكن الحسابات في الدليل — التعريف الوحيد في Services/AdDirectoryLayout.cs
+        private readonly AdDirectoryLayout _layout;
 
-        public ADProvisioningService(ActiveDirectoryService adService, AppDbContext db, ILogger<ADProvisioningService> logger, IOptions<ActiveDirectoryConfig> adConfig)
+        public ADProvisioningService(ActiveDirectoryService adService, AppDbContext db, ILogger<ADProvisioningService> logger, IOptions<ActiveDirectoryConfig> adConfig, AdDirectoryLayout layout)
         {
             _adService = adService;
             _db = db;
             _logger = logger;
             _adConfig = adConfig.Value;
+            _layout = layout;
         }
 
         public async Task<ADProvisioningResult> ProvisionAsync(Student student, int actorId, string? ipAddress = null, string? userAgent = null)
@@ -31,13 +34,25 @@ namespace NUH_PORTAL.Services
             var upn = $"{samAccountName}@{_adConfig.Domain}";
             var password = Convert.ToBase64String(RandomNumberGenerator.GetBytes(16)) + "!x1";
 
+            // ================================================================
+            //  الحساب موجود في الدليل — نتبنّاه، لا نفشل.
+            //
+            //  ⚠️ كان بيرجّع فشل هنا، والنتيجة إن أي تعثّر *بعد* إنشاء الحساب
+            //     (حفظ قاعدة البيانات، انقطاع، خطأ ٥٠٠) بيقفل الطلب للأبد:
+            //     الحساب اتعمل في الدومين فعلًا، والطلب فضل غير مكتمل، وإعادة
+            //     المحاولة بتصطدم بـ«موجود مسبقًا» فما بتكملش أبدًا — إلا لو
+            //     حد دخل على الأكتف دايركتوري وحذف الحساب بإيده.
+            //
+            //  ⚠️ إنشاء الحساب أثر خارجي مالوش تراجع، ومعاملة قاعدة البيانات
+            //     ما بتلفّهوش. فالحل مش إننا نلفّه في معاملة (مستحيل)، الحل إن
+            //     المحاولة التانية تعدّي على اللي اتعمل وتكمّل الناقص.
+            // ================================================================
             var existing = await _adService.GetUserBySamAccountNameAsync(samAccountName);
             if (existing.Success)
             {
-                result.Success = false;
-                result.Error = $"AD account '{samAccountName}' already exists";
-                _logger.LogWarning("AD provisioning skipped: {Sam} already exists for student {Id}", samAccountName, student.student_id);
-                return result;
+                _logger.LogWarning("AD account {Sam} already exists for student {Id} - adopting it instead of failing",
+                    samAccountName, student.student_id);
+                return await AdoptExistingAccountAsync(student, actorId, ipAddress, userAgent, existing, samAccountName);
             }
 
             var (givenName, initials, sn) = SplitEnglishName(student.full_name_english, samAccountName);
@@ -114,7 +129,92 @@ namespace NUH_PORTAL.Services
             }
 
             await SetExtensionAttributesAsync(userDn, student);
+            await MarkProvisionedAsync(student, actorId, samAccountName, ipAddress, userAgent,
+                "ad_account_created", $"تم إنشاء حساب الشبكة: {samAccountName}");
 
+            result.Success = true;
+            result.SamAccountName = samAccountName;
+            result.UserDn = userDn;
+            result.GroupDn = targetGroup;
+            _logger.LogInformation("AD provisioning succeeded for student {Id}: {Sam} -> {Group}", student.student_id, samAccountName, targetGroup);
+            return result;
+        }
+
+        // ====================================================================
+        //  تبنّي حساب موجود: نكمّل الخطوات الناقصة بدل ما نبدأ من الصفر.
+        //
+        //  ⚠️ فحص الهوية أولًا: اسم الحساب مشتقّ من الرقم الجامعي (h{الرقم})،
+        //     فالمفروض يكون حساب نفس الطالب. لكن لو employeeID في الدليل رقم
+        //     هوية مختلف، ده حساب إنسان تاني — ساعتها بنفشل بصوت عالٍ بدل ما
+        //     نربط طالب بحساب مش بتاعه.
+        // ====================================================================
+        private async Task<ADProvisioningResult> AdoptExistingAccountAsync(
+            Student student, int actorId, string? ipAddress, string? userAgent,
+            ADReadUserResult existing, string samAccountName)
+        {
+            var result = new ADProvisioningResult();
+
+            if (!string.IsNullOrWhiteSpace(existing.EmployeeId)
+                && !string.IsNullOrWhiteSpace(student.national_id)
+                && existing.EmployeeId.Trim() != student.national_id.Trim())
+            {
+                result.Success = false;
+                result.Error = $"حساب '{samAccountName}' موجود في الـAD برقم هوية مختلف - راجع إدارة الـAD";
+                _logger.LogError("AD adoption refused for student {Id}: existing employeeID does not match", student.student_id);
+                return result;
+            }
+
+            var userDn = existing.DistinguishedName;
+            if (string.IsNullOrWhiteSpace(userDn))
+            {
+                result.Success = false;
+                result.Error = $"حساب '{samAccountName}' موجود بلا distinguishedName - تعذّر إكماله";
+                return result;
+            }
+
+            var targetGroup = await GetGroupForStudentAsync(student);
+
+            // الخطوات الناقصة بس — كل واحدة بتتفحص قبل ما تتنفّذ.
+            if (!existing.AccountEnabled)
+            {
+                var uac = await _adService.ModifyUserAccountControlAsync(userDn, 512);
+                if (!uac.Success)
+                {
+                    result.Success = false;
+                    result.Error = $"EnableAccount failed: {uac.Error}";
+                    return result;
+                }
+            }
+
+            // ⚠️ من غير مقارنة نصية على الـ DN: جرّبناها وطلعت غلط — العضوية كانت
+            //    موجودة والمقارنة قالت لأ (المسار المحسوب اختلف نصًّا عن اللي
+            //    راجع من الدليل). AddUserToGroupAsync بقت «تأكّد إنه في المجموعة»
+            //    وبتعتبر «موجود مسبقًا» نجاحًا، فالنداء آمن في كل الأحوال.
+            var grp = await _adService.AddUserToGroupAsync(userDn, targetGroup);
+            if (!grp.Success)
+            {
+                result.Success = false;
+                result.Error = $"AddToGroup failed: {grp.Error}";
+                return result;
+            }
+
+            await SetExtensionAttributesAsync(userDn, student);
+            await MarkProvisionedAsync(student, actorId, samAccountName, ipAddress, userAgent,
+                "ad_account_adopted", $"تم ربط الطالب بحساب شبكة موجود: {samAccountName}");
+
+            result.Success = true;
+            result.SamAccountName = samAccountName;
+            result.UserDn = userDn;
+            result.GroupDn = targetGroup;
+            _logger.LogInformation("AD account adopted for student {Id}: {Sam}", student.student_id, samAccountName);
+            return result;
+        }
+
+        // تسجيل نجاح التزويد في قاعدة البيانات — مسار واحد للإنشاء وللتبنّي،
+        // وإلا اتفارق السجلّان (حالة الطالب أو سطر السجل) عند أول تعديل.
+        private async Task MarkProvisionedAsync(Student student, int actorId, string samAccountName,
+            string? ipAddress, string? userAgent, string auditAction, string lifecycleNote)
+        {
             student.ad_username = samAccountName;
             student.ad_status = AdStatus.enabled;
             student.ad_last_sync_at = DateTime.UtcNow;
@@ -137,12 +237,12 @@ namespace NUH_PORTAL.Services
             statusAction.ADActionCompleted = true;
             statusAction.ADActionDate = DateTime.UtcNow;
 
-            LogLifecycleEvent(student.Id, "provisioned", actorId, $"تم إنشاء حساب الشبكة: {samAccountName}", ipAddress);
+            LogLifecycleEvent(student.Id, "provisioned", actorId, lifecycleNote, ipAddress);
 
             _db.AuditLogs.Add(new AuditLog
             {
                 user_id = actorId,
-                action = "ad_account_created",
+                action = auditAction,
                 target_table = "Students",
                 target_id = student.Id,
                 action_at = DateTime.UtcNow,
@@ -151,13 +251,6 @@ namespace NUH_PORTAL.Services
             });
 
             await _db.SaveChangesAsync();
-
-            result.Success = true;
-            result.SamAccountName = samAccountName;
-            result.UserDn = userDn;
-            result.GroupDn = targetGroup;
-            _logger.LogInformation("AD provisioning succeeded for student {Id}: {Sam} -> {Group}", student.student_id, samAccountName, targetGroup);
-            return result;
         }
 
         public async Task<ADProvisioningResult> ReProvisionAsync(Student student, int actorId, string? ipAddress = null)
@@ -472,7 +565,7 @@ namespace NUH_PORTAL.Services
                     //    ساواهما لا يجد فرقًا. فبدل أن يوثّق التغيير كان يطمسه.
                     if (wasLinked)
                     {
-                        ReconcileStatus(student, lookup.AccountEnabled, actorId, "تحديث الحالات من الدليل");
+                        ReconcileStatus(student, lookup.AccountEnabled, actorId, "تحديث الحالات من الـAD");
                     }
                     else
                     {
@@ -481,7 +574,7 @@ namespace NUH_PORTAL.Services
                         student.ad_last_sync_at = DateTime.UtcNow;
                         LogLifecycleEvent(student.Id,
                             newStatus == AdStatus.enabled ? "enabled" : "disabled", actorId,
-                            $"تم ربط حساب الدليل {lookup.SamAccountName} بالطالب - حالته في الدليل: {newStatus}");
+                            $"تم ربط حساب الـAD {lookup.SamAccountName} بالطالب - حالته في الـAD: {newStatus}");
                     }
 
                     student.ad_username = lookup.SamAccountName;
@@ -539,58 +632,15 @@ namespace NUH_PORTAL.Services
                  .Where(p => p.Length >= 3)
                  .ToHashSet();
 
-        // الـ Base DN بيتبني من الدومين المضبوط في الإعدادات: nuh.edu.sa → DC=nuh,DC=edu,DC=sa
-        // ⚠️ كانت المسارات الاحتياطية مكتوبة صراحةً بـ DC=globalgroups,DC=com — دومين
-        //    قديم. لو صف الإعدادات في جدول ADConfigurations ناقص، النظام كان بيحاول
-        //    ينشئ الحساب في دومين مش موجود من غير ما يقول إنه بيستخدم قيمة احتياطية.
-        private string BaseDn() =>
-            string.Join(",", (_adConfig.Domain ?? "").Split('.', StringSplitOptions.RemoveEmptyEntries)
-                                                    .Select(p => $"DC={p}"));
+        // ⚠️ BaseDn و GetOuForStudentAsync و GetGroupForStudentAsync اتشالوا من
+        //    هنا ونقلوا لـ Services/AdDirectoryLayout.cs. كانوا مكتوبين هنا وفي
+        //    ADSetupService، واتفارقوا: النسخة دي اتصلّحت وبقت تبني المسار من
+        //    الدومين المضبوط، والتانية فضلت على دومين قديم مكتوب بالإيد.
+        private string BaseDn() => _layout.BaseDn();
 
-        private async Task<string> GetOuForStudentAsync(Student student)
-        {
-            var config = await _db.ADConfigurations.FirstOrDefaultAsync(c => c.ConfigKey == ADConfigurationKeys.StudentOuPath);
-            var baseOu = config?.ConfigValue;
-            if (string.IsNullOrWhiteSpace(baseOu))
-            {
-                baseOu = $"OU=New,OU=Students,{BaseDn()}";
-                _logger.LogWarning("ADConfigurations['{Key}'] غير مضبوط - استخدام المسار الافتراضي {Ou}",
-                    ADConfigurationKeys.StudentOuPath, baseOu);
-            }
+        private Task<string> GetOuForStudentAsync(Student student) => _layout.StudentOuAsync(student.gender);
 
-            var isMale = student.gender == Gender.Male;
-            var genderOu = isMale ? "Male" : "Female";
-
-            // ⚠️ المقارنة لازم تتجاهل حالة الحروف: المسار في الأكتف دايركتوري متكتب
-            //    OU=NEW بحروف كبيرة، والفحص القديم كان حرفيًا — فكان بينتج مسار
-            //    فيه OU=New مكررة (OU=Male,OU=New,OU=NEW,OU=STUDENTS,...) وde مسار
-            //    مش موجود. أسماء الـ DN في LDAP مش حساسة لحالة الحروف أصلاً.
-            if (baseOu.Contains("OU=New", StringComparison.OrdinalIgnoreCase))
-            {
-                return $"OU={genderOu},{baseOu}";
-            }
-
-            return $"OU={genderOu},OU=New,{baseOu}";
-        }
-
-        private async Task<string> GetGroupForStudentAsync(Student student)
-        {
-            var configMale = await _db.ADConfigurations.FirstOrDefaultAsync(c => c.ConfigKey == "male_group_dn");
-            var configFemale = await _db.ADConfigurations.FirstOrDefaultAsync(c => c.ConfigKey == "female_group_dn");
-
-            var isMale = student.gender == Gender.Male;
-            var configured = isMale ? configMale?.ConfigValue : configFemale?.ConfigValue;
-            if (!string.IsNullOrWhiteSpace(configured))
-                return configured;
-
-            // نفس الملاحظة اللي فوق: الاحتياطي بيتبني من الدومين المضبوط مش من دومين مكتوب في الكود
-            var fallback = isMale
-                ? $"CN=NUH-Student-B,OU=Groups,{BaseDn()}"
-                : $"CN=NUH-Student-G,OU=Groups,{BaseDn()}";
-            _logger.LogWarning("مجموعة الطلاب ({Gender}) غير مضبوطة في ADConfigurations - استخدام {Group}",
-                isMale ? "male" : "female", fallback);
-            return fallback;
-        }
+        private Task<string> GetGroupForStudentAsync(Student student) => _layout.StudentGroupAsync(student.gender);
 
         // ====================================================================
         //  مصالحة حالة الحساب مع الدليل — القاعدة الوحيدة في النظام.

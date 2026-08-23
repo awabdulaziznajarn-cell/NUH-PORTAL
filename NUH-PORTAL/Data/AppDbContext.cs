@@ -28,7 +28,6 @@ namespace NUH_PORTAL.Data
         public DbSet<StudentDeclaration> StudentDeclarations { get; set; }
         public DbSet<WorkflowHistory> WorkflowHistories { get; set; }
         public DbSet<SMSLog> SMSLogs { get; set; }
-        public DbSet<RequestAttachment> RequestAttachments { get; set; }
         public DbSet<StudentStatusAttachment> StudentStatusAttachments { get; set; }
         public DbSet<HousingTransfer> HousingTransfers { get; set; }
 

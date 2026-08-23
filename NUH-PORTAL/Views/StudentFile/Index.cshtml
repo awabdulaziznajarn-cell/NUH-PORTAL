@@ -1,0 +1,108 @@
+@{
+    ViewData["Title"] = SharedLocalizer["sf_pageTitle"].Value;
+}
+
+@* ⚠️ الشكل كله من site.css و components.css - مفيش <style> هنا غير اللي
+   يخصّ الشاشة دي وحدها ومش هيتكرر في شاشة تانية. *@
+<style>
+  /* شريط البحث */
+  .sf-search{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+    /* ⚠️ flex-basis صريح لا 0: مع basis صفر الحقل بياخد كل المساحة والزرار
+     بيلفّ لسطر لوحده على شاشة ضيّقة. */
+  .sf-search .f{flex:1 1 240px;min-width:180px}
+  .sf-search .sf-btn{flex:0 0 auto}
+  .sf-search label{display:block;font-size:12px;font-weight:700;color:var(--navy-dark);margin-bottom:7px}
+  .sf-search input{width:100%;padding:12px 14px;border:1.5px solid var(--gray-200);border-radius:10px;
+    font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;color:var(--navy-dark)}
+  .sf-search input:focus{outline:none;border-color:var(--navy)}
+  .sf-search input.error{border-color:var(--red)}
+  .sf-btn{padding:12px 26px;background:var(--navy);color:var(--white);border:none;border-radius:10px;
+    font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;font-weight:700;cursor:pointer;
+    transition:opacity .18s}
+  .sf-btn:hover{opacity:.92}
+  .sf-btn:disabled{opacity:.5;cursor:not-allowed}
+  .sf-hint{font-size:11.5px;font-weight:600;color:var(--gray-500);margin-top:12px;line-height:1.9}
+
+  /* ترويسة الملف */
+  .sf-head{display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+    background:linear-gradient(180deg,var(--tint),var(--white));
+    border:1px solid var(--gray-200);border-radius:var(--r-lg);padding:18px 20px;margin-bottom:16px}
+  /* ⚠️ أيقونة على خلفية فاتحة لا حروف على خلفية غامقة: الدايرة الغامقة كانت
+     بتسحب العين لأول حاجة في الشاشة، والأول هو **اسم الطالب** مش علامة
+     مكانه. (والحروف الأولى اتشالت - الشرح في js/student-file-page.js) */
+  .sf-avatar{width:52px;height:52px;border-radius:50%;background:var(--tint);
+    border:1.5px solid var(--gray-200);color:var(--navy);flex-shrink:0;
+    display:flex;align-items:center;justify-content:center}
+  .sf-id h3{font-size:17px;font-weight:800;color:var(--navy-dark)}
+  .sf-id p{font-size:12.5px;font-weight:600;color:var(--gray-500);margin-top:4px}
+  .sf-actions{margin-inline-start:auto;display:flex;gap:9px;flex-wrap:wrap}
+  .sf-act{display:inline-flex;align-items:center;gap:7px;padding:9px 15px;border:1px solid var(--gray-200);
+    background:var(--white);border-radius:9px;font-family:'IBM Plex Sans Arabic',sans-serif;
+    font-size:12px;font-weight:700;color:var(--navy-dark);cursor:pointer;text-decoration:none;
+    transition:background .18s,border-color .18s}
+  .sf-act:hover{background:var(--tint);border-color:var(--navy);color:var(--navy)}
+  .sf-act.primary{background:var(--navy);border-color:var(--navy);color:var(--white)}
+  .sf-act.primary:hover{background:var(--navy-dark);color:var(--white)}
+
+  /* قائمة الطلبات */
+  .sf-reqs{display:flex;flex-direction:column;gap:8px}
+  .sf-req{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 14px;width:100%;
+    border:1.5px solid var(--gray-200);border-radius:11px;cursor:pointer;background:var(--white);
+    font-family:'IBM Plex Sans Arabic',sans-serif;text-align:start;transition:border-color .18s,background .18s}
+  .sf-req:hover{border-color:var(--navy)}
+  .sf-req.is-on{border-color:var(--navy);background:var(--tint)}
+  .sf-req .n{font-size:13px;font-weight:800;color:var(--navy-dark)}
+  .sf-req .sf-reqlbl{font-size:11px;font-weight:600;color:var(--gray-500)}
+  .sf-req .d{font-size:11.5px;font-weight:600;color:var(--gray-500)}
+  .sf-req .s{margin-inline-start:auto;display:flex;align-items:center;gap:8px}
+  .sf-nopledge{font-size:11px;font-weight:700;color:var(--gray-500)}
+
+  /* شريط تسجيل الاطّلاع */
+  .sf-audit{display:flex;gap:9px;align-items:flex-start;padding:11px 14px;border-radius:10px;
+    background:var(--blue-light);border:1px solid var(--blue-pale);color:var(--blue);
+    font-size:12px;font-weight:600;line-height:1.85;margin-bottom:16px}
+  .sf-audit svg{flex-shrink:0;margin-top:2px}
+
+  /* ⚠️ شبكة البيانات (.info-*) في css/components.css - مكوّن واحد لكل الشاشات. */
+  .sf-empty{padding:40px 20px;text-align:center;color:var(--gray-500);font-size:14px;line-height:2}
+  .sf-empty svg{color:var(--gray-300);margin-bottom:12px}
+</style>
+
+<div class="page-header">
+  <h2>@SharedLocalizer["sf_pageTitle"]</h2>
+  <p>@SharedLocalizer["sf_pageSubtitle"]</p>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    @* ⚠️ .ch-title بتلمّ الأيقونة والنصّ في عنصر واحد - من غيرها
+       justify-content:space-between بتاعة .card-header بتباعد بينهم. الشرح
+       في css/components.css *@
+    <div class="ch-title">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+      <span>@SharedLocalizer["sf_searchCard"]</span>
+    </div>
+  </div>
+  <div class="card-body">
+    <form class="sf-search" id="sfForm" autocomplete="off">
+      <div class="f">
+        <label for="sfQuery">@SharedLocalizer["sf_queryLabel"]</label>
+        <input id="sfQuery" name="q" inputmode="numeric" placeholder="@SharedLocalizer["sf_queryPlaceholder"]" required autofocus />
+      </div>
+      <button class="sf-btn" type="submit" id="sfBtn">@SharedLocalizer["sf_search"]</button>
+    </form>
+    <div id="sfAlert" class="alert"></div>
+    <div class="sf-hint">@SharedLocalizer["sf_hint"]</div>
+  </div>
+</div>
+
+<div id="sfResult"></div>
+
+@section Scripts {
+<script src="/i18n.js"></script>
+@* قواعد الرقم الجامعي ورقم الهوية - متولّدة من Core/IdentityRules.cs *@
+<script src="/js/nuh-id.js"></script>
+@* وثيقة التعهّد (العرض + الطباعة) - نفس الوحدة اللي بتستخدمها شاشة تفاصيل الطلب *@
+<script src="/js/pledge-doc.js" asp-append-version="true"></script>
+<script src="/js/student-file-page.js" asp-append-version="true"></script>
+}
