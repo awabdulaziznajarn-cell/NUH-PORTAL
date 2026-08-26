@@ -70,8 +70,11 @@
       display:inline-flex;align-items:center;transition:border-color .18s,background .18s}
     .login-lang:hover{border-color:var(--navy);background:var(--tint)}
     .login-lang:focus-visible{outline:2px solid var(--gold-ink);outline-offset:2px}
-    .login-title{font-size:19px;font-weight:800;color:var(--navy-dark);margin-bottom:6px}
-    .login-sub{font-size:12.5px;color:var(--gray-500);margin-bottom:24px}
+    /* ⚠️ الهامش السفلي كان على .login-sub - سطر «أدخل بيانات حسابك في الدليل
+       النشط» - وقد حُذف: النظام يقبل حسابات الدليل النشط والحسابات المحلية
+       معًا، فالسطر كان يصف نصف الداخلين ويكذّب النصف الآخر. والعنوان وحده
+       يقول ما يلزم، فانتقل الهامش إليه ولم يُترك فراغ محلّه. */
+    .login-title{font-size:19px;font-weight:800;color:var(--navy-dark);margin-bottom:24px}
 
     .field{margin-bottom:16px}
     html[dir=rtl] .field{text-align:right}
@@ -156,7 +159,6 @@
       </div>
 
       <div class="login-title">@SharedLocalizer["login_submit"]</div>
-      <div class="login-sub">@SharedLocalizer["login_formSub"]</div>
 
       @if (ViewData["Error"] is string err && !string.IsNullOrEmpty(err))
       {

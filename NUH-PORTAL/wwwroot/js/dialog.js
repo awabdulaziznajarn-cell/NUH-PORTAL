@@ -1,4 +1,4 @@
-// ==========================================================================
+﻿// ==========================================================================
 //  dialog.js — نوافذ التأكيد والتنبيه والإدخال، بشكل النظام.
 //
 //  ⚠️ تحلّ محل confirm() / alert() / prompt() الأصلية في المتصفح. مشاكلها:
@@ -75,6 +75,10 @@ var NuhDialog = (function () {
       '.nuh-dlg .rows > div{display:flex;gap:8px;font-size:13px;padding:3px 0}' +
       '.nuh-dlg .rows b{color:#85888e;font-weight:600;flex-shrink:0}' +
       '.nuh-dlg .rows span{color:#104631;font-weight:700;word-break:break-word}' +
+      /* ⚠️ سطر التذييل: تفصيلة تقنية يحتاجها من يدقّق ولا يحتاجها من يقرأ.
+         حجمها ولونها يقولان ذلك، فلا تزاحم الاسم في صندوق الصفوق فوقها. */
+      '.nuh-dlg .foot{text-align:start;font-size:11.5px;color:#85888e;margin:-8px 0 16px;' +
+        'line-height:1.8;word-break:break-word}' +
       '.nuh-dlg .btns{display:flex;gap:10px}' +
       '.nuh-dlg button{flex:1;padding:12px;border-radius:10px;border:none;cursor:pointer;' +
         'font-family:inherit;font-size:14px;font-weight:700;transition:all .18s}' +
@@ -103,7 +107,7 @@ var NuhDialog = (function () {
     if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
   }
 
-  // opts: kind(ask|danger|ok|warn) title message confirmLabel cancelLabel input inputType placeholder
+  // opts: kind(ask|danger|ok|warn) title message rows foot confirmLabel cancelLabel input inputType placeholder
   function open(opts) {
     ensureStyles();
     opts = opts || {};
@@ -137,6 +141,7 @@ var NuhDialog = (function () {
           (opts.title ? '<h3 id="nuhDlgTitle">' + esc(opts.title) + '</h3>' : '') +
           (opts.message ? '<p id="nuhDlgMsg">' + esc(opts.message) + '</p>' : '') +
           rowsHtml(opts.rows) +
+          (opts.foot ? '<div class="foot">' + esc(opts.foot) + '</div>' : '') +
           (opts.input ? '<input type="' + esc(opts.inputType || 'text') + '" id="nuhDlgInput" ' +
                         'placeholder="' + esc(opts.placeholder || '') + '">' : '') +
           '<div class="btns">' +

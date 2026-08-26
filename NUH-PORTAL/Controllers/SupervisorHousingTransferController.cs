@@ -1,5 +1,6 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using NUH_PORTAL.Core;
 using NUH_PORTAL.Services.Interfaces;
 
 namespace NUH_PORTAL.Controllers
@@ -51,7 +52,17 @@ namespace NUH_PORTAL.Controllers
         public async Task<IActionResult> GetAttachment(int id, [FromQuery] bool download = false)
         {
             var file = await _service.GetAttachmentAsync(id);
-            return download
+
+            // ⚠️ الطبقة الرابعة - سياسة الردّ نفسها. مصدرها الوحيد
+            //    Core/AttachmentPolicy، وتُنادى قبل بناء الردّ لأن الترويسات
+            //    تُكتب مع بدء إرسال الجسم فلا تُقبل بعده.
+            AttachmentPolicy.ApplyResponseHeaders(Response);
+
+            // ⚠️ التنزيل إجباري لأي نوع خارج قائمة العرض الآمن في
+            //    Core/AttachmentPolicy. المعاينة داخل الصفحة تعني تنفيذ المحتوى
+            //    في أصل الموقع، فما لا يُعرض بأمان يخرج بترويسة تنزيل مهما طلب
+            //    المستخدم. تمرير اسم الملف هو ما يجعلها attachment.
+            return (download || !AttachmentPolicy.CanRenderInline(file.ContentType))
                 ? PhysicalFile(file.FilePath, file.ContentType, file.OriginalFileName)
                 : PhysicalFile(file.FilePath, file.ContentType);
         }

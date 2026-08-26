@@ -115,5 +115,16 @@ namespace NUH_PORTAL.Controllers
         [HttpGet("users")]
         public async Task<IActionResult> GetUsers()
             => Ok(await _service.GetUsersAsync());
+
+        // GET api/AuditLogs/action-groups
+        //
+        // ⚠️ قائمة «العملية» في الفلتر كانت مكتوبة في الواجهة، فكانت تعرض لكل
+        //    دور كل المجموعات - ومنها «مزامنة الدليل النشط» للمشرف الذي لا يرى
+        //    صفًّا واحدًا منها أصلًا (ScopedAsync تُخفي إجراءات الإدارات الأخرى).
+        //    فيختار الموظف خيارًا ويعود بجدول فارغ ويظنّ الشاشة معطّلة.
+        //    القائمة تُحسب هنا مما يراه فعلًا.
+        [HttpGet("action-groups")]
+        public async Task<IActionResult> GetActionGroups([FromQuery] bool excludeLogin = false)
+            => Ok(await _service.GetVisibleActionGroupsAsync(excludeLogin));
     }
 }

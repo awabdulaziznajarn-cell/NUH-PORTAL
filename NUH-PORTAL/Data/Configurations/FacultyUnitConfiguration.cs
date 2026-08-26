@@ -18,6 +18,7 @@ namespace NUH_PORTAL.Data.Configurations
 
             builder.Property(u => u.AdAccount).HasMaxLength(64).IsRequired();
             builder.Property(u => u.AdDistinguishedName).HasMaxLength(512);
+            builder.Property(u => u.AdUserPrincipalName).HasMaxLength(256);
             builder.Property(u => u.LastSyncError).HasMaxLength(1000);
             builder.Property(u => u.Notes).HasMaxLength(1000);
 
@@ -37,6 +38,8 @@ namespace NUH_PORTAL.Data.Configurations
                    .HasForeignKey(u => u.UpdatedBy).OnDelete(DeleteBehavior.NoAction);
 
             builder.Ignore(u => u.DisplayNameAr);
+            // محسوبة من AdUserPrincipalName و AdAccount - لا عمود لها
+            builder.Ignore(u => u.UpnMatchesAccount);
         }
     }
 }

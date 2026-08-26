@@ -31,15 +31,17 @@
     search: NuhUrl.get('q', ''),
     onlyDeviations: NuhUrl.bool('dev', false),
     onlyOuMismatch: NuhUrl.bool('ou', false),
+    onlyDisabled: NuhUrl.bool('off', false),
     tower: NuhUrl.get('tower', ''),
     page: NuhUrl.int('page', 1, 1)
   };
-  var STATE_DEFAULTS = { type: '', status: '', q: '', dev: '', ou: '', tower: '', page: 1, sort: '', asc: '' };
+  var STATE_DEFAULTS = { type: '', status: '', q: '', dev: '', ou: '', off: '', tower: '', page: 1, sort: '', asc: '' };
 
   function syncUrl() {
     NuhUrl.sync({
       type: state.type, status: state.status, q: state.search,
       dev: state.onlyDeviations ? '1' : '', ou: state.onlyOuMismatch ? '1' : '',
+      off: state.onlyDisabled ? '1' : '',
       tower: state.tower, page: state.page,
       sort: fhSort.by(), asc: fhSort.by() ? (fhSort.asc() ? '1' : '0') : ''
     }, STATE_DEFAULTS);
@@ -68,19 +70,6 @@
   // ⚠️ الهوية والجوال بيتعرضوا مقنّعين في القائمة. دي بيانات شخصية بتتعرض على
   //    شاشة مفتوحة، والقيمة الكاملة موجودة في سجل الوحدة لمن يفتحه — يعني
   //    الوصول ليها لسه ممكن، بس مش معروض لأي حد بيعدّي على الشاشة.
-  function mask(v) {
-    if (!v) return '-';
-    var s = String(v).trim();
-    var masked = s.length <= 4 ? s
-      : s.slice(0, 2) + '•'.repeat(Math.max(2, s.length - 4)) + s.slice(-2);
-
-    // ⚠️ لازم يتلف في عنصر اتجاهه LTR ومعزول. النقط (•) محايدة الاتجاه، فجوّه
-    //    صفحة RTL المتصفح بيعيد ترتيب أطراف الرقم: "05••••••37" بتترسم
-    //    "37••••••05" — يعني المستخدم بيقرا رقم مقلوب ويفتكره الرقم الحقيقي.
-    //    unicode-bidi:isolate بتمنع الاندماج ده مع النص العربي حواليه.
-    return '<span class="fh-num">' + esc(masked) + '</span>';
-  }
-
   // ⚠️ الـ enum بييجي من الـ API إما رقم أو نص، والنص بيبقى PascalCase
   //    ("OutOfService") مش زي القيمة المخزّنة في القاعدة ("out_of_service").
   //    المقارنة الحرفية على "out_of_service" كانت بتفشل دايمًا، فكل الصفوف
@@ -120,7 +109,12 @@
       //    هترجع مع شاشة «تأكيد الإشغال» — قبلها هتفضل صفر لسنة كاملة.
       { k: 'pending_sync', num: d.pendingSync, label: T('fh_StPendingSync'), cls: d.pendingSync ? 'bad' : '' },
       { k: 'deviations', num: d.nameDeviations, label: T('fh_StNameDeviations'), cls: d.nameDeviations ? 'warn' : '' },
-      { k: 'ouMismatch', num: d.ouMismatches, label: T('fh_StOuMismatch'), cls: d.ouMismatches ? 'warn' : '' }
+      { k: 'ouMismatch', num: d.ouMismatches, label: T('fh_StOuMismatch'), cls: d.ouMismatches ? 'warn' : '' },
+      // ⚠️ الحساب المُعطَّل حالة قائمة في الدليل قد تكون مقصودة (إيقاف من
+      //    الأمن السيبراني مثلًا)، فنبرته رمادية لا حمراء - نفس منطق شارة
+      //    الصفّ. الأحمر للي محتاج تدخّل، ولو حطّيناه هنا اتعوّد المستخدم
+      //    يتجاهل الأحمر.
+      { k: 'adDisabled', num: d.adDisabled, label: T('fh_StAdDisabled'), cls: '' }
     ];
 
     document.getElementById('fhStats').innerHTML = cards.map(function (c) {
@@ -128,6 +122,7 @@
       //    الحالة بتاعتهم لا من state.status.
       var on = c.k === 'deviations' ? state.onlyDeviations
              : c.k === 'ouMismatch' ? state.onlyOuMismatch
+             : c.k === 'adDisabled' ? state.onlyDisabled
              : (!!c.k && state.status === c.k);
       return '<div class="fh-stat ' + c.cls + (on ? ' is-on' : '') + '" data-k="' + c.k + '">' +
              '<div class="fh-stat-num">' + (c.num || 0) + '</div>' +
@@ -149,11 +144,13 @@
         var prevStatus = state.status;
         var prevDeviations = state.onlyDeviations;
         var prevOu = state.onlyOuMismatch;
+        var prevOff = state.onlyDisabled;
 
         state.page = 1;
         state.status = '';
         state.onlyDeviations = false;
         state.onlyOuMismatch = false;
+        state.onlyDisabled = false;
 
         // ⚠️ كارت «وحدة تنظيمية غير مطابقة» كان بيرجع من غير ما يعمل حاجة:
         //    شكله زي باقي الكروت (مؤشّر يد وحركة عند المرور) فالمستخدم بيدوس
@@ -161,6 +158,7 @@
         //    حساباتها محتاجة تتنقل بين قسمَي الدليل.
         if (k === 'deviations') state.onlyDeviations = !prevDeviations;
         else if (k === 'ouMismatch') state.onlyOuMismatch = !prevOu;
+        else if (k === 'adDisabled') state.onlyDisabled = !prevOff;
         else state.status = (prevStatus === k) ? '' : k;
 
         document.getElementById('fhStatus').value = state.status;
@@ -170,15 +168,23 @@
   }
 
   // ---------- الجدول ----------
-  function renderRows(items) {
+  // ⚠️ بتاخد الاستجابة كاملة لا الصفوف وحدها: عمود التسلسل محتاج رقم الصفحة
+  //    ومقاسها. من غيرهم كان هيبدأ من ١ في كل صفحة، فصفّان مختلفان في
+  //    صفحتين يحملوا نفس الرقم - وde ترقيم بيكدب مش ترقيم.
+  function renderRows(d) {
+    var items = (d && d.items) || [];
     var body = document.getElementById('fhBody');
-    if (!items || !items.length) {
+    if (!items.length) {
       body.innerHTML = '<tr><td colspan="8" class="fh-empty">' + esc(T('fh_NoUnits'))
         + ' ' + esc(T('fh_NoUnitsHint')) + '</td></tr>';
       return;
     }
 
+    // نفس حساب قائمة الطلاب بالحرف
+    var seq = ((d.page || 1) - 1) * (d.pageSize || items.length);
+
     body.innerHTML = items.map(function (u) {
+      seq++;
       var flags = '';
       if (!u.nameMatchesStandard) flags += ' <span class="fh-flag" title="' + esc(T('fh_FlagBadNameTitle')) + '">' + esc(T('fh_FlagBadName')) + '</span>';
       if (u.ouGenderMismatch) flags += ' <span class="fh-flag" title="' + esc(u.ouGenderMismatchNote) + '">' + esc(T('fh_FlagOuMismatch')) + '</span>';
@@ -192,23 +198,59 @@
       //    غياب الشارة.
       if (u.adAccountEnabled === false) flags += ' <span class="fh-flag fh-flag-off" title="' + esc(T('fh_FlagAdDisabledTitle')) + '">' + esc(T('fh_FlagAdDisabled')) + '</span>';
 
+      // ⚠️ الخليّتان من NuhTable.two لا مكتوبتين هنا: هي التعريف الوحيد
+      //    للخليّة ذات السطرين في النظام (js/table-state.js)، وقائمة الطلاب
+      //    بتنادي نفس الدالة بنفس الخيارات. قبل كده كانت كل شاشة بتكتبها
+      //    بإيدها، فافترقن فعلًا: الطلاب .cell-p والوحدات .cell-p2 ومعاه
+      //    .fh-name - نفس الخليّة بوزنين في شاشتين بيتقارنوا كل يوم.
+      // ⚠️ والاسم الإنجليزي تحت العربي لا بدلًا منه في اللغة الإنجليزية:
+      //    مصدره خانة displayName في الدليل، والموظف هنا بيطابق بين المسجَّل
+      //    عندنا والمكتوب في الدليل - فإخفاء أحدهما بحسب لغة الواجهة بيخفي
+      //    نص المقارنة. واسم الشخص بيانات لا ترجمة.
       var occupant = u.occupantName
-        ? '<span>' + esc(u.occupantName) + '</span>'
-        : (isUnassignable(u)
-            ? '<span class="fh-muted">' + esc(T('fh_NotAssignable')) + '</span>'
-            : '<span class="fh-muted">' + esc(T('fh_NoOccupant')) + '</span>');
+        ? NuhTable.two(u.occupantName, u.occupantNameEn, { en: true })
+        : '<div class="cell-q fh-muted">' +
+            esc(isUnassignable(u) ? T('fh_NotAssignable') : T('fh_NoOccupant')) + '</div>';
+
+      // ⚠️ الهوية فوق والجوال تحته في عمود واحد - نفس بناء عمود «الرقم الجامعي
+      //    والجوال» في قائمة الطلاب حرفًا بحرف.
+      // ⚠️ والقيم كاملة لا مقنَّعة: كانت بتتعرض بنقط (10••••••10) وحدها في
+      //    النظام - قائمة الطلاب بتعرض الرقم والجوال كاملين لنفس الموظف
+      //    وبنفس الصلاحية. والتقنيع كان بيخلّي السطرين متفاوتين في الطول
+      //    فيبانوا غير مصطفّين، ومابيحميش حاجة: نفس الشاشة فيها زرّ «السجل»
+      //    بيعرض القيمة كاملة.
+      var idMobile = NuhTable.two(u.occupantNationalId, u.occupantMobile, { num: true });
 
       return '<tr>' +
-        '<td class="fh-unit">' + esc(u.displayName) + '</td>' +
-        '<td><span class="fh-acct">' + esc(u.adAccount) + '</span>' + flags + '</td>' +
-        '<td class="fh-name">' + occupant + '</td>' +
-        '<td>' + mask(u.occupantNationalId) + '</td>' +
-        '<td>' + mask(u.occupantMobile) + '</td>' +
-        '<td>' + (u.occupantSince ? fmtDate(u.occupantSince) : '-') + '</td>' +
+        '<td class="num">' + seq + '</td>' +
+        '<td class="fh-unit"><div class="cell-p cell-nowrap">' + esc(u.displayName) + '</div></td>' +
+        '<td>' + occupant + '</td>' +
+        '<td>' + idMobile + '</td>' +
+        '<td><div class="cell-p2"><span class="fh-acct">' + esc(u.adAccount) + '</span></div>' +
+          (flags ? '<div class="cell-q">' + flags + '</div>' : '') + '</td>' +
+        '<td><div class="cell-p2 cell-num cell-nowrap">' +
+          (u.occupantSince ? fmtDate(u.occupantSince) : '-') + '</div></td>' +
         '<td>' + statusBadge(u) + '</td>' +
-        '<td><div class="row-actions">' +
+        '<td class="num"><div class="row-actions">' +
           (can('manage') && !isUnassignable(u) && u.occupancyId
             ? '<a class="action-btn action-edit" href="/FacultyHousing/Edit/' + u.id + '">' + esc(T('fh_BtnEdit')) + '</a>' : '') +
+          // ⚠️ الزرّ ده محلّ شاشة «اختيار الوحدة» اللي اتشالت: كانت جدولًا
+          //    تانيًا لنفس الوحدات مهمّته الوحيدة إنك تختار وحدة. الاختيار
+          //    هنا والوحدة قدّامك بصفّها كامل - ومافيش جدولين يتصانوا.
+          //
+          // ⚠️ وشرطه **مش** مربوط بوجود ساكن، بخلاف «تعديل»: الوحدة الشاغرة
+          //    محتاجة الزرّ ده أكتر من المشغولة - هي اللي هتتسكّن. الشرط
+          //    الوحيد إن الوحدة قابلة للتسكين أصلًا (مش خارج الخدمة ولا غير
+          //    موجودة). لو ربطناه بـ occupancyId زي «تعديل» كانت الوحدات
+          //    الشاغرة هتفضل بلا أي مدخل بعد ما الشاشة القديمة اتشالت.
+          //
+          // ⚠️ واللافتة بتتغيّر مع الحالة: «تغيير الساكن» لمّا يكون فيه ساكن،
+          //    و«تسكين» لمّا تكون شاغرة. نفس الصفحة ونفس الرابط، بس الشاشة
+          //    نفسها بتفتح على «خدمة جديدة» في الحالة التانية - فلافتة واحدة
+          //    كانت هتوعد بحاجة والشاشة تعمل غيرها.
+          (can('manage') && !isUnassignable(u)
+            ? '<a class="action-btn action-edit" href="/FacultyHousing/Handover/' + u.id + '">' +
+              esc(T(u.occupancyId ? 'fh_BtnHandover' : 'fh_BtnAssign')) + '</a>' : '') +
           // ⚠️ الزرّ ظاهر دائمًا للمخوَّل، مش مربوط بشارة خطأ. كان مربوط
           //    بحالة المزامنة وشارة «وحدة تنظيمية غير مطابقة»، والاتنين
           //    بيتحسبوا من المسار المخزَّن **عندنا** لا من الدليل. فلما
@@ -280,12 +322,13 @@
     if (state.search) qs.set('search', state.search);
     if (state.onlyDeviations) qs.set('onlyDeviations', 'true');
     if (state.onlyOuMismatch) qs.set('onlyOuMismatch', 'true');
+    if (state.onlyDisabled) qs.set('onlyDisabled', 'true');
     if (state.tower) qs.set('tower', state.tower);
     qs.set('page', state.page);
 
     fetch('/api/FacultyHousing/units?' + qs.toString() + fhSort.qs(), { credentials: 'same-origin' })
       .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-      .then(function (d) { renderStats(d); renderTowers(d.towers); renderRows(d.items); renderPager(d); })
+      .then(function (d) { renderStats(d); renderTowers(d.towers); renderRows(d); renderPager(d); })
       .catch(function (e) {
         document.getElementById('fhBody').innerHTML =
           '<tr><td colspan="8" class="fh-empty">' + esc(T('fh_LoadError')) + esc(e.message) + '</td></tr>';
@@ -305,9 +348,20 @@
       .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(function (d) {
         document.getElementById('fhHistTitle').textContent = T('fh_HistoryTitle') + ' - ' + (d.unit.displayName || '');
+        // ⚠️ اسم الدخول (UPN) هنا لا في الجدول: لاحقته «@nuh.edu.sa» واحدة
+        //    في الـ ٢٤٢ وحدة كلها، فتكرارها في كل صفّ حشو لا معلومة. وهنا
+        //    يُسأل عنه فعلًا - وحدة بعينها ومعها مسارها في الدليل.
+        // ⚠️ والشارة تظهر عند اختلاف مقدّمته عن اسم الحساب فقط: النظام يربط
+        //    بـ sAMAccountName، والاختلاف يفسّر أعطال دخول لا يشرحها شيء آخر.
+        var upn = d.unit.adUserPrincipalName;
         document.getElementById('fhHistSub').innerHTML =
           '<span class="fh-acct">' + esc(d.unit.adAccount) + '</span>' +
-          (d.distinguishedName ? ' &nbsp;·&nbsp; <span style="font-family:Consolas,monospace;font-size:10.5px;direction:ltr">'
+          (upn ? ' &nbsp;·&nbsp; <span class="fh-upn">' + esc(upn) + '</span>' +
+                 (d.unit.upnMatchesAccount === false
+                   ? ' <span class="fh-flag" title="' + esc(T('fh_FlagUpnMismatchTitle')) + '">'
+                     + esc(T('fh_FlagUpnMismatch')) + '</span>' : '')
+               : '') +
+          (d.distinguishedName ? ' &nbsp;·&nbsp; <span class="fh-dn-inline">'
             + esc(d.distinguishedName) + '</span>' : '');
 
         if (!d.history || !d.history.length) {
@@ -349,6 +403,8 @@
             '<div class="tl-top"><b>' + esc(o.fullNameAr) + '</b>' +
             (o.isCurrent ? '<span class="badge badge-occupied">' + esc(T('fh_CurrentOccupant')) + '</span>'
                          : '<span class="badge badge-vacant">' + esc(T('fh_EndedOccupancy')) + '</span>') + '</div>' +
+            // الاسم الإنجليزي تحت العربي مباشرةً - نفس بناء الخلية في الجدول
+            (o.fullNameEn ? '<div class="tl-en cell-en">' + esc(o.fullNameEn) + '</div>' : '') +
             '<div class="oc-grid">' + body + '</div>' + warn +
             '</div></div>';
         }).join('') + '</div>';
@@ -768,6 +824,7 @@
       state.status = e.target.value;
       state.onlyDeviations = false;
       state.onlyOuMismatch = false;
+      state.onlyDisabled = false;
       state.page = 1;
       load();
     });

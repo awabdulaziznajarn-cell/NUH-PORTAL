@@ -31,20 +31,37 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);col
    ⚠️ والشعار بقى nu-logo.svg متجه بدل nu-logo.png اللي كان ١٧١×١٣٧ — كان
       بيبان ناعم على أي شاشة ×٢. المتجه حادّ على أي مقاس، فمفيش سقف للتكبير
       غير المساحة المتاحة في الشريط. */
-.sidebar-logo{padding:26px 18px 18px;display:flex;flex-direction:column;align-items:center}
+/* ⚠️ الشعار فوق والاسم تحته، لا صفًّا واحدًا. جُرِّب الصفّ فكان خطأً:
+   ‏nu-logo.svg ليس رمزًا مجرّدًا بل **قفلٌ** يحمل «جامعة نجران / NAJRAN
+   UNIVERSITY» مطبوعًا داخله. وأي قفل لا يُصغَّر تحت الحدّ الذي يُقرأ عنده
+   نصّه - وإلا لم يعد شعارًا بل لطخة. عند ٣٤ بكسل كان نصّه غير مقروء أصلًا.
+   ٨٦ بكسل هو الحدّ الذي يبقى عنده مقروءًا، وهو أصغر من ١١٨ السابقة.
+
+   ⚠️ والارتفاع نزل من ٢٠٠ إلى ١٥٨، والقائمة كاملة تظهر بلا تمرير - قِيس.
+
+   ⚠️ و«جامعة نجران» لا تُكتب تحت الاسم: هي داخل الشعار فوقها مباشرة.
+   ⚠️ والفاصل أبيض باهت بعرض الشريط لا خطًّا ذهبيًّا قصيرًا: الذهبي في هذه
+      القائمة له معنى واحد - شريط الحافة في البند النشط. */
+.sidebar-logo{padding:20px 18px 14px;display:flex;flex-direction:column;align-items:center;gap:12px;
+  border-bottom:1px solid rgba(255,255,255,.08)}
 /* ⚠️ <a> مش <div>: كان عليه transform عند المرور وهو مش رابط ولا زرار —
    حركة بتوعد بحاجة تحصل لما تدوس، وما بيحصلش حاجة. بقى رابط للرئيسية،
    وده اللي أي حد بيتوقّعه من شعار، فالحركة بقت صادقة. */
-.sidebar-logo-image-container{display:block;background:#fff;border-radius:16px;padding:14px 18px;
-  border:1px solid rgba(219,161,2,.2);box-shadow:0 4px 16px rgba(0,0,0,.08),0 0 0 1px rgba(219,161,2,.06);
-  transition:box-shadow .3s ease,transform .3s ease;margin-bottom:14px}
-.sidebar-logo-image-container:hover{box-shadow:0 8px 24px rgba(0,0,0,.12),0 0 0 1px rgba(219,161,2,.15);transform:translateY(-2px)}
+.sidebar-logo-image-container{display:flex;align-items:center;justify-content:center;background:#fff;
+  border-radius:15px;padding:11px 15px;
+  border:1px solid rgba(219,161,2,.2);box-shadow:0 4px 16px rgba(0,0,0,.10);
+  transition:box-shadow .3s ease,transform .3s ease}
+.sidebar-logo-image-container:hover{box-shadow:0 8px 24px rgba(0,0,0,.14),0 0 0 1px rgba(219,161,2,.15);transform:translateY(-2px)}
 .sidebar-logo-image-container:focus-visible{outline:2px solid var(--gold-light);outline-offset:3px}
-.sidebar-logo-image-container img{display:block;width:118px;height:auto}
-.sidebar-logo-title{font-size:15px;font-weight:700;color:var(--white);text-align:center;
-  line-height:1.55;position:relative;padding-bottom:12px}
-/* الخط الذهبي اتنقل من السطر المحذوف لتحت اسم البوابة */
-.sidebar-logo-title::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:32px;height:2px;background:linear-gradient(90deg,var(--gold),var(--gold-light));border-radius:1px}
+.sidebar-logo-image-container img{display:block;width:86px;height:auto}
+/* ⚠️ ١٥٫٥ لا ١٢٫٥: اسم النظام هو أعلى ما في الشريط مرتبةً، وكان أصغر من
+   بنود القائمة نفسها (١٣٫٥) - هرمية مقلوبة تُشعر العين أن شيئًا ما ليس في
+   محلّه قبل أن تعرف ما هو. */
+.sidebar-logo-title{font-size:15.5px;font-weight:700;color:var(--white);text-align:center;line-height:1.5}
+/* ⚠️ الخطّ الذهبي تحت الاسم اتشال، وحلّ محلّه فاصل أبيض باهت بعرض الترويسة
+   كلها (border-bottom على .sidebar-logo). السبب: الذهبي في هذه القائمة صار
+   له معنى واحد - شريط الحافة في البند النشط (.nav-item.active::before).
+   خطٌّ ذهبي ثانٍ في الترويسة يجعل اللون زينةً بعد أن كان إشارة. */
 /* ⚠️ min-height:0 شرط لا زينة: عنصر flex لا ينكمش تحت حجم محتواه افتراضيًّا،
    فبدونه يتمدّد الـ nav ويبقى overflow-y بلا أثر - وكانت دالة revealActive في
    _Sidebar.cshtml تحرّك scrollTop لحاوية لا تُمرَّر أصلًا، فتبدو كأنها تعمل
@@ -86,7 +103,11 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);col
   text-align:center;white-space:pre-line}
 
 .nav-section{font-size:10px;font-weight:600;color:rgba(255,255,255,.3);padding:12px 8px 6px;letter-spacing:1px}
-.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:rgba(255,255,255,.65);font-size:13.5px;font-weight:500;text-decoration:none;cursor:pointer;transition:all .2s}
+/* ⚠️ المستوى الأول (الرئيسية + رؤوس المجموعات) بوزن ٧٠٠ ولون أوضح، والمستوى
+   الثاني تحته أصغر وأبهت (القاعدة في _Sidebar.cshtml). كانت الهرمية مقلوبة:
+   رأس المجموعة بحجم ١١ باهتًا وبنوده تحته بحجم ١٣٫٥ أوضح منه - فيُقرأ الرأس
+   لافتةً وبنودُه هي الأصل، والرأس زرٌّ يُضغط ويفتح، أي بند تنقّل لا لافتة. */
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;color:rgba(255,255,255,.82);font-size:13.5px;font-weight:700;text-decoration:none;cursor:pointer;transition:all .2s}
 .nav-item:hover{background:rgba(255,255,255,.07);color:#fff}
 /* ⚠️ العنصر النشط كان بخلفية ذهبية كاملة. الذهبي لون ثانوي في «كود المنصات»
    مكانه التمييز الخفيف لا المساحات، وتباين الأخضر الداكن عليه ٤٫٧:١ فقط.
@@ -145,7 +166,9 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);col
 /* ---------- الهيكل الرئيسي + التوب بار ---------- */
 .main{margin-right:var(--sidebar-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
 [dir=ltr] .main{margin-right:0;margin-left:var(--sidebar-w)}
-.topbar{background:var(--white);border-bottom:1px solid var(--gray-200);padding:0 28px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;box-shadow:0 1px 8px rgba(16,70,49,.06)}
+/* الشريط العلوي عنصر مرن داخل .main العمودي - بدون flex-shrink:0 كان ينضغط من 64px إلى 41px
+   كلما طال محتوى الصفحة، فيتغير ارتفاعه حسب عدد الصفوف. الآن ثابت في كل الصفحات. */
+.topbar{background:var(--white);border-bottom:1px solid var(--gray-200);padding:0 28px;height:64px;min-height:64px;flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;box-shadow:0 1px 8px rgba(16,70,49,.06)}
 /* ⚠️ يظهر عند التمرير فقط: الشريط ثابت، فعنوانه يفيد حين يغيب رأس الصفحة.
    وعند فتح الصفحة كان يكرّر عنوان الرأس حرفًا بحرف فوقه مباشرة.
    التبديل من _Layout.cshtml بإضافة .is-scrolled - مرة واحدة لكل الشاشات. */
@@ -224,7 +247,22 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);col
 .card{background:var(--white);border-radius:16px;border:1px solid var(--gray-100);box-shadow:0 2px 8px rgba(16,70,49,.05);overflow:hidden}
 /* ⚠️ min-height: الرأس اللي فيه صندوق بحث (٣٣ بكسل) كان أطول ٢ بكسل من الرأس
    اللي فيه زرار بس (٣١ بكسل) — فالجدول بيبدأ من ارتفاع مختلف بين شاشة وشاشة. */
-.card-header{padding:16px 20px;min-height:66px;background:var(--tint);border-bottom:1px solid #c6ecd6;display:flex;align-items:center;justify-content:space-between}
+/* ⚠️ ترويسة البطاقة بيضاء بحدّ رمادي - لا خلفية خضراء.
+   كانت background:var(--tint) و border-bottom:#c6ecd6، وثلاثة أسباب أسقطتها:
+
+   ١) --tint و --row-hover **نفس القيمة** (#f3fcf6 في base.css). فالصفّ تحت
+      المؤشّر كان يصير بلون الترويسة حرفيًّا - فلا الترويسة تبقى ترويسة ولا
+      المرور يبقى مرورًا. اللون الواحد لا يحمل معنيين.
+
+   ٢) الفرق بين #f3fcf6 والأبيض نحو ٢٪ - أضعف من أن يُقرأ شريطًا مقصودًا،
+      فيُقرأ «أبيض متّسخ».
+
+   ٣) الأخضر في هذا النظام يعني: الهوية، والإجراء الأساسي، والحالة. وجعلُه
+      خلفيةً لعنصر إنشائي محايد يُفقده معناه حيث يجب أن يقوى.
+
+   القاعدة: البناء محايد، واللون للمعنى. والترويسة تنفصل بالخطّ وحدٍّ رفيع.
+   و --tint باقٍ - لكن لحالات المرور والتركيز وحدها. */
+.card-header{padding:16px 20px;min-height:66px;background:var(--white);border-bottom:1px solid var(--gray-200);display:flex;align-items:center;justify-content:space-between}
 .card-header > div{font-size:15px;font-weight:700;color:var(--navy)}
 .card-header svg{color:var(--navy)}
 .card-title{font-size:15px;font-weight:700;color:var(--navy)}
@@ -233,15 +271,17 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);col
 
 /* ⚠️ العناصر اللي جوه الترويسة كانت خلفيتها gray-100 (#eceded) — قريبة جدًا من
    لون الترويسة الجديد (#f3fcf6) فكانت هتختفي فيه. بتبقى بيضاء بحدّ واضح. */
-.card-header .card-action{background:var(--white);border:1px solid #c6ecd6}
-.card-header .card-action:hover{background:#dff6e7}
-.card-header .search-wrap input{background:var(--white);border-color:#c6ecd6}
+.card-header .card-action{background:var(--white);border:1px solid var(--gray-200)}
+/* المرور يبقى أخضر - هنا اللون يعني «قابل للضغط» لا «ترويسة» */
+.card-header .card-action:hover{background:var(--tint);border-color:var(--navy)}
+.card-header .search-wrap input{background:var(--white);border-color:var(--gray-200)}
 
 /* ⚠️ .form-card* و .nsel* اتنقلوا لـ css/components.css — مشتركين مع بوابة الطالب. */
 
 /* ---------- ترويسة نافذة التعديل ----------
    ⚠️ كانت مكرّرة في ثلاث شاشات (الأدوار، المستخدمون، الطلاب) بنفس السطر بالضبط. */
-.edit-modal-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:18px 24px;background:var(--tint);border-bottom:1px solid #c6ecd6}
+/* ⚠️ ترويسة نافذة التعديل تتبع .card-header - نفس القاعدة ونفس السبب. */
+.edit-modal-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:18px 24px;background:var(--white);border-bottom:1px solid var(--gray-200)}
 
 /* ---------- مفتاح التفعيل ----------
    ⚠️ كان معرَّفًا في lookup-admin.css باسم .lk-switch، فلا تراه إلا شاشات
@@ -368,6 +408,46 @@ th.col-code,td.col-code{white-space:nowrap}
 .badge-pending,.badge-Pending{background:#fffaeb;color:#93370d}
 .badge-rejected{background:var(--red-light);color:var(--red)}
 .badge-left,.badge-Left,.badge-inactive,.badge-Inactive{background:var(--gray-100);color:var(--gray-500)}
+/* ⚠️ شارة «بلا حساب» في قائمة الطلاب. كهرمانية لا حمراء: الحالة تحتاج متابعة
+   ولا تعني خطأً وقع، والأحمر محجوز لما يوجب التوقّف.
+   ⚠️ ونصّها قصير و nowrap عمدًا: كانت تنزل سطرًا ثانيًا تحت «مقيمة» فيطول
+   الصفّ وحده بين الصفوف ويتكسّر انتظام الجدول. */
+.badge-noacc{background:var(--amber-light);color:var(--amber)}
+.badge{white-space:nowrap}
+/* ====================================================================
+   جدول بخلايا ذات سطرين - قيمة أساسية بارزة وثانوية رمادية تحتها.
+   ⚠️ نمط عام لا خاصّ بشاشة: قوائم النظام كلّها تعاني العدد نفسه من
+      الأعمدة، وأوّل من يستعمله قائمة الطلاب (١٣ عمودًا صارت ٧).
+   ⚠️ والمحاذاة للبداية لا للوسط: القاعدة العامة توسّط كل خليّة، فالأسماء
+      العربية تطفو في عمود عريض بحواف مهلهلة من الجانبين ولا تجد العين خطًّا
+      ترتكز عليه وهي تنزل. الأرقام والأزرار وحدها هي التي تُوسَّط (.num).
+   ==================================================================== */
+.tbl-2line thead th,.tbl-2line tbody td{text-align:start}
+.tbl-2line thead th.num,.tbl-2line tbody td.num{text-align:center}
+.cell-p{font-weight:700;font-size:13.5px;color:var(--navy-dark);line-height:1.65}
+.cell-p2{font-weight:600;font-size:13px;color:var(--navy-dark);line-height:1.65}
+.cell-q{font-size:11.5px;font-weight:500;color:var(--gray-500);line-height:1.6}
+.cell-q:empty{display:none}
+/* أرقام بخطّ جدولي: الخانات تتراصّ تحت بعضها فيُقارَن الطول بالعين */
+.cell-num{font-variant-numeric:tabular-nums;letter-spacing:.2px}
+/* ⚠️ «مبنى 68» كانت تنكسر بين الكلمة والرقم في عمود ضيّق، فيطول الصفّ
+   ويبدو رقم المبنى وكأنه سطر مستقل. الوحدة الواحدة لا تُكسر. */
+.cell-nowrap{white-space:nowrap}
+/* الاسم الإنجليزي داخل خليّة عربية: عزل الاتجاه وإلا انقلب ترتيب كلماته */
+.cell-en{direction:ltr;unicode-bidi:embed;text-align:start}
+
+/* خليّة الحالة: شارتان جنبًا إلى جنب على سطر واحد */
+.status-cell{display:inline-flex;align-items:center;gap:5px;flex-wrap:nowrap}
+/* رقاقة فلتر «بلا حساب» بجانب البحث */
+.fchip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:6px 13px;
+  border-radius:999px;border:1px solid var(--gray-200);background:var(--white);color:var(--gray-700);
+  cursor:pointer;font-family:'IBM Plex Sans Arabic',sans-serif;transition:all .18s;white-space:nowrap}
+.fchip:hover{border-color:var(--gray-300);background:var(--gray-50)}
+.fchip.on{background:var(--amber-light);border-color:var(--amber);color:var(--amber)}
+.fchip .n{background:var(--amber);color:#fff;border-radius:999px;font-size:10.5px;padding:0 6px;
+  min-width:18px;text-align:center;font-variant-numeric:tabular-nums}
+.fchip.on .n{background:var(--amber)}
+.fchip[hidden]{display:none}
 /* ⚠️ .badge-gray كانت معرّفة في سجل العمليات بس، وسجل الأخطاء بيستخدمها كمان
    لطريقة الطلب (GET/POST) — فكانت بتطلع بلا خلفية هناك. */
 .badge-gray{background:var(--gray-100);color:var(--gray-700)}
@@ -552,26 +632,16 @@ html[dir=ltr] .app-shell .main>.topbar,html[dir=ltr] .app-shell .main>.content{d
 .card-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 /* ⚠️ select-field.js يحوّل كل <select> إلى .nsel، وعرض .nsel ١٠٠٪ لأنه مصمَّم
    لحقول النماذج. داخل أي شريط أدوات أفقي كان ذلك يجعل كل قائمة تحتلّ سطرًا
-   كاملًا فينكسر صف الفلاتر — والسطر يبقى فاضي من جنب واحد.
-
-   ⚠️ والحالة دي ظهرت تلات مرات: رأس البطاقة، وصفّ الفلاتر، وشريط أدوات مركز
-      التقارير (.rp-bar). الأولين اتصلّحوا كل واحد في مكانه، والتالت فضل مكسور
-      — قائمتَي «المستخدم» و«الإجراء» كانتا بتاخدا سطرين كاملين والنص الشمال
-      من الشريط فاضي. التلاتة هنا مع بعض عشان الرابع ياخد الحلّ جاهز.
-   ⚠️ و.rp-bar معرّفة في Views/Reports/Index.cshtml، بس القاعدة نفسها مشتركة
-      فمكانها هنا لا هناك. */
-.card-tools .nsel,
-.rp-bar .nsel{width:190px}
+   كاملًا فينكسر الصفّ — والسطر يبقى فاضي من جنب واحد.
+   ⚠️ نفس القاعدة لشريطَي الفلاتر والتقارير، وهي معهما في components.css. */
+.card-tools .nsel{width:190px}
 
 /* ⚠️ و.ndate (حقل التاريخ) ليها نفس العلّة بالحرف — غلافها ١٠٠٪ كمان. مكتوبة
    هنا مع أخواتها لا لما تظهر المشكلة: العرض المرن جوّه شريط أفقي هو القاعدة،
    والاستثناء هو النموذج الرأسي. */
-.card-tools .ndate,
-.rp-bar .ndate,
-.filter-group > .ndate{width:158px}
+.card-tools .ndate{width:158px}
 .req-dates .ndate{width:150px}
 .ndate-btn{min-height:34px}
-.filter-group > .ndate .ndate-btn{min-height:36px}
 
 /* ---------- التبويبات ----------
    ⚠️ كان في تصميمين مختلفين: .tabs/.tab-btn في شاشة الطلبات (أزرار فوق البطاقة)
@@ -698,20 +768,9 @@ select:disabled{background:#eceded;color:var(--gray-500);cursor:not-allowed}
 .e-field[hidden]{display:none}
 @media(max-width:640px){.e-grid{grid-template-columns:1fr}}
 
-/* ---------- شريط الفلاتر فوق الجدول ----------
-   ⚠️ كان مكرّرًا في ثلاث شاشات (سجل العمليات، سجل الدخول، سجل الأخطاء)
-      بقيم متقاربة مش متطابقة (min-width 140 و150 و180) — فعرض خانات الفلترة
-      كان مختلفًا بين شاشة وشاشة من غير سبب. */
-.filters-bar{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px;align-items:end}
-/* ⚠️ flex:0 0 auto وعرض ثابت للقائمة: من غيرهما تتمدّد الخانة لتسع أطول خيار
-      مختار، فتضغط جاراتها تحت حدّها الأدنى - فيكفي أن يُختار «سكن أعضاء هيئة
-      التدريس» في خانة العملية حتى تنكمش خانة المستخدم إلى شريط ضيّق. عرض
-      الخانة ثابت والنص الطويل يُقصّ بثلاث نقاط. */
-.filter-group{display:flex;flex-direction:column;gap:4px;flex:0 0 auto}
-.filter-group > .nsel{width:190px}
-.filter-group label{font-size:11px;font-weight:600;color:var(--gray-500)}
-.filter-group select,.filter-group input{padding:8px 10px;border:1px solid var(--gray-200);border-radius:8px;
-  font-family:inherit;font-size:13px;background:var(--white);color:var(--navy-dark);min-width:150px}
+/* ⚠️ شريط الفلاتر (.filters-bar و.filter-group ومقاس حقولهما) اتنقل بالكامل
+   لـ css/components.css مع شريط مركز التقارير (.rp-bar): المكوّن واحد، وكان
+   مقاس حقله مكتوبًا في ثلاثة أماكن بأرقام لا تتفق. الشرح كامل هناك. */
 
 /* ---------- علبة الرسم البياني ----------
    ⚠️ الارتفاع كان مكتوب style="height:200px" في شاشة التقارير و220px في لوحة

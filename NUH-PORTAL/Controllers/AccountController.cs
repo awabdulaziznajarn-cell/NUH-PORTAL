@@ -53,9 +53,43 @@ namespace NUH_PORTAL.Controllers
         //     Url.IsLocalUrl بترفض أي رابط مطلق أو بروتوكول أو //host وبتقبل
         //     المسارات الداخلية بس — نفس القاعدة المستعملة في CultureController.
         //     ومكتوبة هنا مرة واحدة عشان المسارين ما يفترقوش تاني.
+        //
+        //  ⚠️ والفحص التاني: الرابط الداخلي مش بالضرورة صفحة يرجع لها المستخدم.
+        //
+        //     ده كان بيحصل فعلًا في الإنتاج: الجلسة بتنتهي بالخمول، فسكربت
+        //     الخمول بيبعت نموذج الخروج (POST /Account/Logout). الكوكي راح
+        //     خلاص، فالطلب بيترفض ويتحوّل على:
+        //
+        //         /Account/Login?ReturnUrl=%2FAccount%2FLogout
+        //
+        //     المستخدم بيدخل ببياناته، والدخول **بينجح**، وبعدين صفحة الجسر
+        //     بتنفّذ الرابط ده بـ location.replace - يعني **GET** على مسار
+        //     مالوش إلا POST، فيرد 405 Method Not Allowed. واللي بيشوفه
+        //     المستخدم: كتبت بياناتي صح وطلعتلي صفحة خطأ، وتاني مرة دخلت عادي
+        //     (لأن الرابط المسموم مابقاش في العنوان).
+        //
+        //     ولو المسار قَبِل GET كان الناتج أسوأ: يدخل وتتنفّذ عملية الخروج
+        //     فورًا - «بيدخّلني وبيطلّعني على طول».
+        //
+        //     Url.IsLocalUrl مابتمسكش ده: /Account/Logout **رابط داخلي سليم**.
+        //     السؤال التاني مختلف: هل ده مكان يصحّ إن المستخدم يقف عليه بعد
+        //     الدخول؟ الخروج لا، وصفحة الدخول لا (لوب)، وصفحة الرفض لا.
         // ====================================================================
+        private static readonly string[] NotAReturnDestination =
+            { "/account/logout", "/account/login", "/account/denied" };
+
         private string SafeReturnUrl(string? returnUrl)
-            => !string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl) ? returnUrl : DefaultRedirect;
+        {
+            if (string.IsNullOrEmpty(returnUrl) || !Url.IsLocalUrl(returnUrl))
+                return DefaultRedirect;
+
+            // المسار وحده بلا استعلام ولا مرساة، وبلا شرطة أخيرة
+            var path = returnUrl.Split('?', '#')[0].TrimEnd('/');
+            if (NotAReturnDestination.Contains(path, StringComparer.OrdinalIgnoreCase))
+                return DefaultRedirect;
+
+            return returnUrl;
+        }
 
         // GET /Account/Login
         [AllowAnonymous]
@@ -165,6 +199,22 @@ namespace NUH_PORTAL.Controllers
                 return View();
             }
         }
+
+        // GET /Account/Logout
+        // ----------------------------------------------------------------
+        //  ⚠️ بيحوّل بس ومابيخرّجش. الخروج تغيير حالة، وتغيير الحالة على GET
+        //     معناه إن أي صورة في أي صفحة (<img src=".../Account/Logout">)
+        //     تقدر تخرّج الموظف - فالخروج الحقيقي فاضل POST بعلامة مكافحة
+        //     التزوير زي ما هو.
+        //
+        //  ⚠️ وموجود عشان المستخدم ما يقعش على صفحة 405 خام: العنوان ده بيوصله
+        //     من زرّ الرجوع، أو استعادة تبويبات المتصفح، أو رابط محفوظ. كان
+        //     بيرد «405 Method Not Allowed» - صفحة خطأ متصفح بلا أي طريق
+        //     يرجع منها. دلوقتي بتوصّله لصفحة الدخول وهي المكان اللي رايحه
+        //     أصلًا.
+        [AllowAnonymous]
+        [HttpGet("Logout")]
+        public IActionResult LogoutLanding() => Redirect("/Account/Login");
 
         // POST /Account/Logout
         [HttpPost("Logout")]

@@ -146,7 +146,11 @@
     <table id="reqTable">
       <thead>
         <tr>
-          <th class="col-code">#</th>
+          @* ⚠️ العمود ده فيه رقم الطلب نفسه (2026-000029) مش ترقيم صفوف،
+             فـ«#» كانت بتوصف الشكل لا المحتوى. والمفتاح requestNumber كان
+             موجودًا في ملفات الموارد بلا أي قارئ - استُعمل هنا بدل ما نضيف
+             مفتاحًا تانيًا بنفس المعنى. *@
+          <th class="col-code">@SharedLocalizer["requestNumber"]</th>
           <th >@SharedLocalizer["req_col_type"]</th>
           <th >@SharedLocalizer["req_col_student"]</th>
           <th data-sort="submittedat">@SharedLocalizer["req_col_date"]</th>

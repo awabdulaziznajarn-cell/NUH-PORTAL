@@ -19,13 +19,15 @@ namespace NUH_PORTAL.Controllers.Mvc
         //    والنافذة المنبثقة تضغطه في مساحة لا تكفيه فتتداخل الحقول. وفوق
         //    ذلك للشاشة المستقلة رابط خاص بها، فيمكن فتحها ومشاركتها والرجوع
         //    منها - وهي أمور لا تتيحها النافذة.
-        // ⚠️ نفس المسار بلا رقم وحدة: بند القائمة الجانبية يفتح هنا، فيبحث
-        //    المستخدم عن الوحدة ثم ينتقل إلى Handover/{id}. بند يفتح مباشرة على
-        //    نموذج بلا وحدة محدَّدة لا معنى له، ورابط برقم ثابت في القائمة أسوأ.
-        [HttpGet("Handover")]
-        [Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme, Policy = "facultyHousing.manage")]
-        public IActionResult SelectUnit() => View();
-
+        //
+        // ⚠️ ومسار «Handover» بلا رقم وحدة اتشال ومعاه شاشة اختيار الوحدة
+        //    (SelectUnit.cshtml و js/faculty-housing-select.js وبند القائمة
+        //    الجانبية). كانت جدولًا تانيًا لنفس الـ٢٤٢ وحدة، بنفس البحث
+        //    ونفس الفلاتر ونفس الترقيم، في ملفَّي عرض وملفَّي سكربت منفصلين -
+        //    والفرق الوحيد زرّ الصفّ. وافترقت الشاشتان فعلًا: ترتيب أعمدتها
+        //    اختلف عن القائمة لحد ما اتظبط بإيدنا.
+        //    الإجراء دلوقتي في صفّ القائمة نفسه (زرّ «تغيير الساكن» / «تسكين»)
+        //    جنب «تعديل» - والوحدة قدّامك وإنت بتختار.
         [HttpGet("Handover/{id:int}")]
         [Authorize(AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme, Policy = "facultyHousing.manage")]
         public IActionResult Handover(int id)

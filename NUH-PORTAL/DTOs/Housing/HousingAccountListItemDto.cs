@@ -9,6 +9,9 @@ namespace NUH_PORTAL.DTOs.Housing
         public string? student_id { get; set; }
         public string? full_name { get; set; }
         public string? full_name_english { get; set; }
+        // ⚠️ الجوال يُعرض تحت الرقم الجامعي في الجدول - نفس بناء عمود
+        //    «الرقم الجامعي والجوال» في قائمة الطلاب.
+        public string? phone { get; set; }
         public string? college { get; set; }
         public string? department { get; set; }
         public Gender? gender { get; set; }

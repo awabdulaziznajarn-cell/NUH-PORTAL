@@ -13,9 +13,10 @@
       شاشة «تسجيل طالب جديد» بيضاء وباقي الشاشات زرقاء.
       التعريف هنا مرة واحدة، واتشال من الصفحات الأربع. */
 .form-card{background:var(--white);border-radius:16px;border:1px solid var(--gray-100);box-shadow:0 2px 8px rgba(16,70,49,.05);overflow:hidden;margin-bottom:20px}
-.form-card-header{padding:16px 24px;background:var(--tint);border-bottom:1px solid #c6ecd6;display:flex;align-items:center;gap:10px}
+/* ⚠️ تتبع .card-header في site.css - ترويسة بيضاء بحدّ رمادي. الشرح هناك. */
+.form-card-header{padding:16px 24px;background:var(--white);border-bottom:1px solid var(--gray-200);display:flex;align-items:center;gap:10px}
 /* ⚠️ أيقونة القسم كانت على خلفية gray-100 — تختفي فوق الترويسة الملوّنة. بيضاء بحدّ. */
-.form-card-header-icon{width:36px;height:36px;border-radius:10px;background:var(--white);border:1px solid #c6ecd6;color:var(--navy);display:flex;align-items:center;justify-content:center}
+.form-card-header-icon{width:36px;height:36px;border-radius:10px;background:var(--tint);border:1px solid var(--gray-200);color:var(--navy);display:flex;align-items:center;justify-content:center}
 .form-card-title{font-size:15px;font-weight:700;color:var(--navy)}
 .form-card-body{padding:24px}
 
@@ -59,7 +60,9 @@
 /* اللوحة fixed عشان ما تتقصّش جوّه نافذة منبثقة أو حاوية عندها overflow */
 .nsel-panel{position:fixed;z-index:3000;background:var(--white);border:1px solid var(--gray-200);
   border-radius:12px;box-shadow:0 16px 40px rgba(16,70,49,.18);overflow:hidden;display:flex;flex-direction:column}
-.nsel-search{padding:8px;border-bottom:1px solid var(--gray-100);background:var(--tint)}
+/* ⚠️ رأس القائمة المنسدلة محايد كذلك - رمادي فاتح يفصله عن الخيارات البيضاء
+   بلا أن يزاحم الأخضر الذي يميّز الخيار المحدَّد. */
+.nsel-search{padding:8px;border-bottom:1px solid var(--gray-100);background:var(--gray-50)}
 .nsel-search input{width:100%;padding:8px 12px;border:1px solid var(--gray-200);border-radius:8px;
   font-family:'IBM Plex Sans Arabic',sans-serif;font-size:13px;color:var(--navy-dark);background:var(--white)}
 .nsel-search input:focus{outline:none;border-color:var(--navy)}
@@ -396,7 +399,18 @@ td.fh-unit{white-space:nowrap;font-weight:700;color:var(--navy);width:1%}
       الصفحة لوحده. الحرف → كان هيحتاج نسخة لكل اتجاه، وممكن يطلع مربّع فاضي
       لأن الخط هنا خط عربي مش خط أيقونات.
    ============================================================================ */
-.chg{display:inline-flex;align-items:center;gap:9px;flex-wrap:wrap}
+/* ⚠️ min-width:0 و overflow-wrap: القيمة ممكن تكون مسار حساب في الدليل -
+   نصّ لاتيني متّصل بلا مسافة الطول ٥٦ حرفًا. من غيرهم بيخرج من حدود الصفّ
+   ويتقصّ عند الحافة، يعني نصّ القيمة المسجَّلة مش ظاهر في تقرير مساءلة.
+   (دي الحاجة الوحيدة اللي الجدول القديم كان بيحلّها فعلًا.) */
+.chg{display:inline-flex;align-items:center;gap:9px;flex-wrap:wrap;
+  flex:1;min-width:0;overflow-wrap:anywhere}
+/* ⚠️ ‏unicode-bidi:plaintext على القيمتين: القيمة ممكن تكون عربية وممكن
+   تكون جملة لاتينية (رسالة خطأ من الدليل)، والصفحة عربية. من غيرها
+   بتتقرا الجملة اللاتينية باتجاه الصفحة فالنقطة الأخيرة بتتقدّم لأول
+   السطر: «.LDAP error ...». وplaintext بتحدّد اتجاه كل قيمة من أول حرف
+   قويّ فيها - فالعربي يفضل عربي واللاتيني يترتّب صح، بلا صنف لكل حالة. */
+.chg-old,.chg-new{unicode-bidi:plaintext}
 .chg-old{color:var(--gray-500);font-weight:500;text-decoration:line-through;
   text-decoration-thickness:1px;text-decoration-color:var(--gray-300)}
 .chg-empty{color:var(--gray-300);text-decoration:none}
@@ -407,8 +421,13 @@ td.fh-unit{white-space:nowrap;font-weight:700;color:var(--navy);width:1%}
 /* قايمة تغييرات تحت قيمة مركّبة (السكن: مبنى ودور وشقة وغرفة) */
 .chg-list{display:flex;flex-direction:column;gap:5px;margin-top:8px;
   padding-top:8px;border-top:1px dashed var(--gray-200)}
-.chg-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px}
+.chg-row{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;font-size:12px;min-width:0}
 .chg-lbl{min-width:92px;color:var(--gray-500);font-weight:600}
+/* ⚠️ عمود أوسع في سجل عمليات الوحدة وحده: أسماء حقول الدليل طويلة
+   («الاسم بالإنجليزي في الدليل النشط»)، والعرض الافتراضي كان بيلفّها على
+   سطرين فتنزاح القيم ولا تتراصّ تحت بعضها - وهو نفس الانحراف اللي كان
+   في الجدول القديم بسبب تاني. */
+.chg-list.wide .chg-lbl{min-width:186px}
 
 /* ==========================================================================
    سجل عمليات وحدة السكن — بند واحد ونافذته وسطر «آخر تعديل».
@@ -419,19 +438,14 @@ td.fh-unit{white-space:nowrap;font-weight:700;color:var(--navy);width:1%}
       وتُنسى التانية — نفس السجل بشكلين على بُعد ضغطتين.
       (js/faculty-audit-log.js هو اللي بيرسمهم في الشاشتين.)
    ========================================================================== */
-.ch-item{border:1px solid var(--gray-100);border-radius:12px;padding:12px 15px;
-  margin-bottom:12px;background:var(--white)}
-.ch-item:last-child{margin-bottom:0}
-.ch-top{display:flex;align-items:center;justify-content:space-between;gap:10px;
-  flex-wrap:wrap;margin-bottom:9px}
-.ch-act{font-size:13.5px;font-weight:700;color:var(--navy-dark)}
-.ch-meta{font-size:11.5px;color:var(--gray-500)}
-/* عنوان الجهاز لاتيني جوّه سطر عربي — بيتعزل عشان ترتيب أرقامه مايتقلبش */
-.ch-ip{direction:ltr;display:inline-block;font-family:Consolas,monospace}
+/* ⚠️ ‏.ch-item و.ch-top و.ch-act و.ch-meta و.ch-ip اتشالوا كلهم: البند بقى
+   بند خطّ زمني (.nuh-tl-item) زي سجل إجراءات حساب الطالب بالحرف، وعنوان
+   الجهاز بقى .nuh-tl-ip. مافيش تعريف تاني لنفس المكوّن. */
 
 .fh-modal{background:var(--white);border-radius:16px;width:760px;max-width:94vw;max-height:88vh;
   display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden}
-.fh-modal-head{padding:16px 20px;background:var(--tint);border-bottom:1px solid #c6ecd6;
+/* ⚠️ تتبع .card-header في site.css - ترويسة بيضاء بحدّ رمادي. */
+.fh-modal-head{padding:16px 20px;background:var(--white);border-bottom:1px solid var(--gray-200);
   display:flex;align-items:center;justify-content:space-between;gap:12px}
 .fh-modal-sub{font-size:12px;color:var(--gray-500);margin-top:2px}
 .fh-modal-body{padding:20px;overflow-y:auto;scrollbar-width:thin}
@@ -453,21 +467,19 @@ td.fh-unit{white-space:nowrap;font-weight:700;color:var(--navy);width:1%}
 .fh-lastchg-btn:hover{color:var(--navy-dark)}
 .fh-lastchg-btn:focus-visible{outline:2px solid var(--gold-ink);outline-offset:3px;border-radius:4px}
 
-/* الشكل الجدولي: حقل | قديم | جديد */
-/* ⚠️ table-layout:fixed مع عرض محدَّد لعمود الحقل: من غيره المتصفح بيوزّع
-   العرض حسب المحتوى، فقيمة طويلة بلا مسافات (مسار DN كامل ٥٦ حرفًا) بتاخد
-   الجدول كله وتخنق عمود الحقل لحد ما اسمه يتقطّع حرف في السطر - وde كان
-   باين فعلًا في سطر «مسار الحساب في الدليل النشط». */
-.chg-tbl{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}
-.chg-tbl th{padding:6px 9px;text-align:start;font-weight:700;font-size:11.5px;
-  background:var(--gray-50);color:var(--navy-dark)}
-.chg-tbl td{padding:6px 9px;border-top:1px solid var(--gray-100);vertical-align:top}
-.chg-tbl td:first-child{font-weight:600;color:var(--gray-700);width:34%}
-/* ⚠️ القيم بتتكسّر جوّه الخانة مهما كانت: مسار الدليل نصّ متّصل بلا مسافات،
-   ومن غير الكسر بيخرج من الجدول ويتقصّ عند الحافة - يعني نص القيمة
-   المسجَّلة مش ظاهر في تقرير مساءلة. */
-.chg-tbl td{overflow-wrap:anywhere}
-@media(max-width:640px){.chg-tbl td:first-child{width:40%}}
+/* ⚠️ الجدول (.chg-tbl) اتشال بالكامل. كان تلات أعمدة: حقل | قبل | بعد،
+   ورؤوسه بتبدأ من الحافة وقيمه بتتوسّط - لأن قاعدة عامة في site.css
+   بتوسّط كل خلايا الجداول و.chg-tbl th وحده كان فيه text-align:start.
+   يعني العنوان في مكان وقيمته في مكان تاني. الصفوف دلوقتي .chg-row
+   ومافيش أعمدة أصلًا، فالانحراف ده مايقدرش يتكرّر.
+
+   ⚠️ وكسر القيم الطويلة (مسار الحساب في الدليل) باقٍ في .chg نفسه تحت -
+      ده مكان الحاجة الحقيقية اللي الجدول كان بيحلّها. */
+
+/* ⚠️ الخطّ الزمني جوّه نافذة السجل مايبقاش له شريط تمرير خاصّ به: الجسم
+   (.fh-modal-body) هو اللي بيمرّر، ولو الاتنين مرّروا بقى في شريطين
+   متداخلين والمستخدم بيمسك الغلط منهم. */
+.fh-modal-body .nuh-tl{max-height:none;overflow:visible;padding-inline-end:0}
 
 /* ============================================================================
    عنوان البطاقة (أيقونة + نص).
@@ -981,3 +993,361 @@ body.printing-pledge .pl-sheet .pl-tile .pl-tile-row{gap:54px}
   transition:background .18s,color .18s}
 .modal-close:hover{background:var(--gray-100);color:var(--navy-dark)}
 .modal-close:focus-visible{outline:2px solid var(--gold-ink);outline-offset:2px}
+
+/* ============================================================================
+   لوحة «نظام خارجي» - رأس محايد والأزرق في العلامة وحدها
+   ----------------------------------------------------------------------------
+   ⚠️ تعريف واحد لشاشتين: «إدارة حسابات الإسكان» (.sync-panel) و«سكن أعضاء
+      هيئة التدريس» (.fh-sync). كانت كل شاشة تكتب نسختها داخل <style> في
+      الـView - فاختلفتا: واحدة رأسها أزرق كامل والأخرى رأسها أخضر فاتح،
+      وكلتاهما تفعل الشيء نفسه: تشرح تعاملًا مع الدليل النشط فوق الجدول.
+
+   ⚠️ ولماذا الرأس محايد الآن:
+      • المحتوى **نصّ تعريفي ثابت لا يتغيّر**، وكان معروضًا بوزن **تنبيه**.
+        والتنبيهات لما يتغيّر أو يحتاج انتباهًا - لا لما هو مكتوب منذ سنة.
+      • موضعه بين البطاقات والفلاتر كان يقطع مسار العين: إحصاءات ← جدار
+        ملوّن ← فلاتر ← جدول.
+      • وكان اللون الوحيد من نوعه في الصفحة، فيصرخ أعلى من البيانات نفسها.
+
+   ⚠️ والأزرق **لم يُلغَ**: بقي في الأيقونة والشارة. وهو الصحيح دلاليًّا -
+      الأزرق في base.css موصوف بأنه لون «حاجة من برّه النظام»، والدليل
+      النشط نظام خارجي فعلًا. فاللون يقول معناه بلا أن يحتلّ مساحة.
+
+   ⚠️ ونفس قاعدة .card-header: البناء محايد، واللون للمعنى.
+   ============================================================================ */
+.sync-panel,.fh-sync{background:var(--white);border:1px solid var(--gray-200);border-radius:14px;
+                     box-shadow:0 1px 3px rgba(16,70,49,.05);margin-bottom:20px;overflow:hidden}
+
+/* ⚠️ الترويسة <button> في شاشة حسابات الإسكان: هي مفتاح الطيّ، فلازم تشتغل
+      بالكيبورد وقارئ الشاشة. و.fh-sync-bar <div> لأن أزرارها بداخلها. */
+.sync-panel-head,.fh-sync-bar{width:100%;display:flex;align-items:center;gap:11px;
+                              padding:13px 18px;background:var(--white);border:0;
+                              border-bottom:1px solid var(--gray-200);
+                              font-family:inherit;text-align:start}
+.sync-panel-head{cursor:pointer}
+.sync-panel-head:hover{background:var(--gray-50)}
+.sync-panel-head:focus-visible{outline:2px solid var(--blue);outline-offset:-2px}
+.fh-sync-bar{justify-content:space-between;flex-wrap:wrap;gap:12px}
+
+/* العلامة: مربّع أزرق فاتح - هو ما بقي من اللون */
+.sync-panel-head .ic{width:34px;height:34px;border-radius:10px;background:var(--blue-light);
+                     border:1px solid var(--blue-pale);color:var(--blue);
+                     display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sync-panel-head .ic svg{width:17px;height:17px}
+.sync-panel-head .txt{flex:1;min-width:0}
+.sync-panel-head .t{display:block;font-size:14px;font-weight:600;color:var(--navy-dark);line-height:1.4}
+.sync-panel-head .s{display:block;font-size:11.5px;color:var(--gray-500);margin-top:2px;line-height:1.6}
+
+/* ⚠️ شارة «قراءة فقط» - تبقى قدام العين وقت ما اللوحة تكون مطوية، وهي
+      الموضع الثاني والأخير للأزرق. */
+.sync-panel-head .dom-badge{flex-shrink:0;font-size:10.5px;font-weight:600;padding:3px 10px;
+                            border-radius:999px;background:var(--blue-light);
+                            border:1px solid var(--blue-pale);color:var(--blue)}
+.sync-panel-head .chev{width:16px;height:16px;flex-shrink:0;color:var(--gray-500);transition:transform .2s}
+.sync-panel.is-open .sync-panel-head .chev{transform:rotate(180deg)}
+
+/* شاشة سكن أعضاء هيئة التدريس: العنوان وأيقونته وأزراره */
+.fh-sync-ttl{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:600;color:var(--navy-dark)}
+/* الأيقونة زرقاء - نفس رسالة .ic في الشاشة الأخرى بلا مربّع لأن الشريط أقصر */
+.fh-sync-ttl svg{color:var(--blue);flex-shrink:0}
+.fh-sync-btns{display:flex;gap:9px;align-items:center}
+.fh-sync-x{background:none;border:none;font-size:21px;line-height:1;color:var(--gray-500);cursor:pointer;
+           padding:1px 8px;border-radius:8px;font-family:inherit}
+.fh-sync-x:hover{background:var(--gray-100);color:var(--navy-dark)}
+.fh-sync-x:focus-visible{outline:2px solid var(--gold-ink);outline-offset:2px}
+.fh-sync-panel{padding:16px 18px;border-top:1px solid var(--gray-200)}
+/* ============================================================================
+   شريط الفلاتر - تعريف واحد لكل شاشات النظام
+   ----------------------------------------------------------------------------
+   ⚠️ العلّة التي عالجها هذا الملف: مقاس الحقل كان مكتوبًا **ثلاث مرات** بأرقام
+      لا تتفق:
+
+        .nsel-btn          ارتفاع 44  استدارة 10  خلفية رمادية  خط 14
+        .filter-group input        35           8      بيضاء      13
+        .rp-bar input              36           9      بيضاء    12.5
+
+      وكل قائمة في النظام تمرّ على select-field.js فتصير .nsel - أي أن كل شاشة
+      فيها قائمة بجوار خانة بحث كانت تعرض حقلين بارتفاعين ولونين واستدارتين.
+      وهذا هو مصدر الإحساس بأن الصفّ غير مستوٍ، لا خطأ في المحاذاة.
+
+   ⚠️ وقاعدتا `.filter-group select` و`.rp-bar select` كانتا **ميّتتين**: لا
+      يبقى في الصفحة <select> ظاهر بعد التحويل، فالقاعدتان تصفان عنصرًا مخفيًّا
+      دائمًا. حُذفتا.
+
+   ⚠️ والشريطان في بطاقة بيضاء الآن: شاشة التقارير كانت داخل بطاقة والشاشات
+      الأربع الأخرى عائمة فوق الخلفية - نفس المكوّن بمظهرين.
+
+   يخدم: حسابات الإسكان · سجل العمليات · سجل تسجيل الدخول · سجل الأخطاء ·
+         مركز التقارير.
+   ============================================================================ */
+.filters-bar,.rp-bar{background:var(--white);border:1px solid var(--gray-200);border-radius:14px;
+                     padding:14px 16px;margin-bottom:18px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+/* الشاشات الأربع صفّ واحد؛ ومركز التقارير صفّان يعرّفهما .fbar-row تحت */
+.filters-bar{display:flex;flex-wrap:wrap;align-items:end;gap:11px}
+.fbar-row{display:flex;flex-wrap:wrap;align-items:end;gap:11px}
+
+/* ⚠️ flex:0 0 auto وعرض ثابت: من غيرهما يتمدّد الحقل ليسع أطول خيار مختار،
+      فيضغط جاراته - فيكفي أن يُختار «سكن أعضاء هيئة التدريس» في خانة العملية
+      حتى تنكمش خانة المستخدم إلى شريط ضيّق. */
+.filter-group{display:flex;flex-direction:column;gap:5px;flex:0 0 auto}
+.filter-group > label,.fbar-lbl{font-size:11px;font-weight:700;color:var(--gray-500);padding-inline-start:2px}
+
+/* ---- المقاس الواحد: كل حقل في أي شريط فلاتر ---- */
+.filters-bar input,.filters-bar .nsel-btn,.filters-bar .ndate-btn,
+.rp-bar input,.rp-bar .nsel-btn,.rp-bar .ndate-btn{
+  height:40px;min-height:40px;padding:0 13px;border-radius:10px;
+  background:var(--gray-50);border:1px solid var(--gray-200);
+  font-family:'IBM Plex Sans Arabic',sans-serif;font-size:13px;font-weight:600;
+  color:var(--navy-dark)}
+.filters-bar input::placeholder,.rp-bar input::placeholder{color:var(--gray-500);font-weight:500}
+.filters-bar input:focus,.rp-bar input:focus{outline:none;background:var(--white);
+  border-color:var(--navy);box-shadow:0 0 0 3px rgba(16,70,49,.12)}
+
+/* عرض الحقول - القائمة أعرض لأنها تحمل أسماء موظفين كاملة */
+.filter-group > .nsel,.rp-bar .nsel{width:190px}
+.filter-group > .ndate,.rp-bar .ndate{width:158px}
+.filter-group input,.rp-bar input{width:190px}
+.filters-bar input[type=text],.rp-bar input[type=text]{width:230px}
+
+/* ---- أزرار الشريط: نفس الارتفاع وإلا بان الصفّ متعرّجًا ---- */
+.fbar-apply,.fbar-out{height:40px;border-radius:10px;
+  font-family:'IBM Plex Sans Arabic',sans-serif;font-size:13px;font-weight:700;
+  display:inline-flex;align-items:center;gap:7px;cursor:pointer;white-space:nowrap}
+.fbar-apply{border:0;background:var(--green);color:#fff;padding:0 22px}
+.fbar-apply:hover{background:var(--navy-dark)}
+.fbar-out{border:1px solid var(--gray-200);background:var(--white);color:var(--navy-dark);
+  font-size:12.5px;font-weight:600;padding:0 14px;transition:background .15s,border-color .15s}
+.fbar-out:hover{background:var(--gray-50);border-color:var(--gray-300)}
+
+/* ⚠️ التلوين هنا معناه «نوع الملف» لا «أهمية الزرّ»: الأخضر والأحمر لونا Excel
+      وPDF يعرفهما كل أحد بلا قراءة. و«طباعة» محايد عن قصد - هو ليس ملفًا بل
+      إجراء على الشاشة، ولو تلوّن هو أيضًا صار في الشريط ثلاثة أزرار صارخة
+      تزاحم «تطبيق» وهو الإجراء الأساسي. */
+.fbar-out.is-excel{background:var(--green);border-color:var(--green);color:#fff}
+.fbar-out.is-excel:hover{background:var(--navy-dark);border-color:var(--navy-dark)}
+.fbar-out.is-pdf{background:var(--red);border-color:var(--red);color:#fff}
+.fbar-out.is-pdf:hover{background:#912018;border-color:#912018}
+
+/* ---- مجموعة المدد الجاهزة (مركز التقارير) ---- */
+.date-presets{display:flex;align-items:center;background:var(--gray-100);border-radius:10px;
+              padding:3px;gap:2px;height:40px;flex-wrap:wrap}
+.date-preset-btn{border:0;background:none;font-family:inherit;font-size:12.5px;font-weight:600;
+                 color:var(--gray-500);padding:6px 11px;border-radius:8px;cursor:pointer;white-space:nowrap}
+.date-preset-btn:hover{color:var(--navy-dark)}
+.date-preset-btn.active{background:var(--white);color:var(--navy-dark);font-weight:700;
+                        box-shadow:0 1px 3px rgba(16,24,40,.10)}
+
+/* ---- عنوان المنطقة: «المدى الزمني» / «معايير البحث» ----
+   ⚠️ عنوان أخضر وخطّ فاصل رفيع، بلا خلفية ملوّنة. وde مقصود:
+      • الأخضر في هذه الشاشة معناه «إجراء» - زرّ «تطبيق» وزرّ Excel. ورقاقة
+        خضراء كاملة كانت ستصير أثقل من الزرّ نفسه، فتقرأ العين العنوان قبل
+        الإجراء - وهو عكس ترتيبهما في الأهمية.
+      • والأخضر الفاتح خلفيةً مرفوض هنا لأنه اللون نفسه الذي أُخرج من
+        ترويسات البطاقات (.card-header) - فلا يعود من باب آخر.
+      فاللون في الحرف وحده، والخطّ يفصل العنوان عن حقوله بلا مساحة ملوّنة.
+   ⚠️ وborder-inline-end لا border-left: في العربية يقع الخطّ يسار العنوان
+      وفي الإنجليزية يمينه - الخاصية المنطقية تقلبه وحدها بلا استثناء مكتوب. */
+.fbar-zone{font-size:11px;font-weight:800;color:var(--navy);height:40px;display:inline-flex;
+           align-items:center;justify-content:flex-start;min-width:104px;white-space:nowrap;
+           flex:0 0 auto;padding-inline-start:2px;padding-inline-end:14px;margin-inline-end:2px;
+           border-inline-end:2px solid var(--navy)}
+/* الصفّ الثاني مفصول بخطّ خفيف - «تصفية» و«تصدير» شيئان مختلفان */
+.fbar-row + .fbar-row{margin-top:12px;padding-top:13px;border-top:1px solid var(--gray-100)}
+.fbar-grow{flex:1 1 auto}
+/* ⚠️ الشاشات ذات الصفّ الواحد بلا .fbar-grow: زرّ التصدير كان يقف ملاصقًا
+      لآخر حقل في وسط الشريط وكأنه حقل خامس. الهامش التلقائي يدفعه إلى الطرف
+      حيث تتوقّعه العين - والثاني بعده يلتصق به لا يقفز هو الآخر. */
+.filters-bar > .fbar-out,.filters-bar > .fbar-apply{margin-inline-start:auto}
+.filters-bar > .fbar-out ~ .fbar-out,.filters-bar > .fbar-apply ~ .fbar-out{margin-inline-start:0}
+/* ============================================================================
+   الخطّ الزمني - سجلّ أحداث كائن واحد
+   ----------------------------------------------------------------------------
+   ⚠️ العلّة التي عالجها هذا المكوّن: سجلّ إجراءات الحساب كان قائمةً مسطّحة
+      بخطوط أفقية تفصل كل حدث عمّا بعده، فيُقرأ جدولًا لا تاريخًا. والأيقونات
+      كانت حروف يونيكود (✓ ✕ ↻) تُرسَم بخطّ النظام لا بخطّنا - فيختلف شكلها
+      من متصفّح لآخر ومن ويندوز لماك، وهي أول ما يقول للعين إن الشاشة غير
+      مصقولة.
+
+   ⚠️ والخيط الرأسي هو الفكرة كلها: هو ما يجعل الأحداث سلسلةً واحدة تُقرأ من
+      أعلى لأسفل بدل خمس بطاقات متجاورة. ولا يُرسم تحت آخر حدث - السلسلة
+      تنتهي عنده، وخيطٌ معلّق في الفراغ يوحي بأن هناك المزيد.
+
+   ⚠️ واللون في النقطة وحدها: الأخضر والأحمر هنا معناهما «ماذا جرى للحساب»،
+      وكل ما عداهما حياديّ - وهي القاعدة نفسها في .card-header و.sync-panel.
+
+   ⚠️ وعناوين الأيام لاصقة (sticky) داخل وعاء التمرير: من ينزل في سجلّ طويل
+      يبقى عارفًا في أي يوم هو، بلا أن يُكتب التاريخ كاملًا في كل سطر.
+
+   الاستعمال: .nuh-tl > (.nuh-tl-day)* + .nuh-tl-item*
+   ============================================================================ */
+/* ⚠️ padding على جهة النهاية: شريط التمرير يرسمه المتصفح **فوق** المحتوى
+   في ويندوز، فكان آخر ما في السطر يقع تحته. والمسافة هنا لا في العنصر
+   الداخلي، وإلا لتحرّك الخيط الرأسي معها. */
+.nuh-tl{max-height:56vh;overflow-y:auto;overflow-x:hidden;padding:0 2px;
+        padding-inline-end:10px;scrollbar-width:thin;scrollbar-gutter:stable}
+.nuh-tl-day{display:flex;align-items:center;gap:10px;padding:14px 0 10px;
+            background:var(--white);position:sticky;top:0;z-index:1}
+.nuh-tl-day:first-child{padding-top:2px}
+.nuh-tl-day b{font-size:11px;font-weight:800;color:var(--gray-500);white-space:nowrap}
+.nuh-tl-day i{flex:1;height:1px;background:var(--gray-100)}
+
+.nuh-tl-item{position:relative;display:flex;gap:14px}
+/* الخيط يبدأ تحت النقطة وينتهي عند التي بعدها */
+.nuh-tl-item::before{content:'';position:absolute;inset-inline-start:15px;top:34px;bottom:0;
+                     width:2px;background:var(--gray-100)}
+.nuh-tl-item:last-child::before{display:none}
+
+.nuh-tl-dot{position:relative;z-index:1;flex:0 0 32px;width:32px;height:32px;border-radius:50%;
+            display:flex;align-items:center;justify-content:center;background:var(--white);
+            border:1.5px solid var(--gray-200);color:var(--gray-500)}
+.nuh-tl-dot svg{width:15px;height:15px}
+.nuh-tl-dot.ok{border-color:#a9efc5;background:var(--green-light);color:var(--green)}
+.nuh-tl-dot.bad{border-color:#fecdca;background:var(--red-light);color:var(--red)}
+.nuh-tl-dot.warn{border-color:#fedf89;background:var(--amber-light);color:var(--amber)}
+.nuh-tl-dot.info{border-color:var(--blue-pale);background:var(--blue-light);color:var(--blue)}
+
+.nuh-tl-body{flex:1;min-width:0;padding-bottom:20px}
+.nuh-tl-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.nuh-tl-title{font-size:13.5px;font-weight:700;color:var(--navy-dark)}
+/* ⚠️ بلا direction:ltr هنا: العنصر يقلب اتجاهه فيصير margin-inline-start
+      محسوبًا من اليسار، فلا يندفع الوقت إلى طرف السطر بل يلتصق بالعنوان.
+      unicode-bidi:isolate يعزل الرقم ويُبقي اتجاه العنصر عربيًّا. */
+/* ⚠️ الوقت داخل سطر البيانات لا في طرف سطر العنوان.
+   كان مدفوعًا بـ margin-inline-start:auto إلى أقصى السطر، فنشأ عيبان:
+     • فراغ واسع بين العنوان والوقت يجعل الصفّ يبدو غير مكتمل؛
+     • ووقوعه تحت شريط التمرير فيُقصّ رقمه - وهو ما ظهر فعلًا.
+   ومكانه الطبيعي مع بقية ما يصف الحدث (المنفّذ وعنوان الشبكة): التاريخ
+   يحكمه عنوان اليوم فوقه، والوقت وحده هو ما يخصّ هذا السطر. */
+.nuh-tl-time{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--gray-500);
+             font-variant-numeric:tabular-nums;unicode-bidi:isolate;white-space:nowrap}
+.nuh-tl-time svg{width:13px;height:13px;color:var(--gray-300);flex:none}
+.nuh-tl-desc{font-size:12.5px;color:var(--gray-700);line-height:1.8;margin-top:5px;word-break:break-word}
+.nuh-tl-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;
+             font-size:11.5px;color:var(--gray-500)}
+.nuh-tl-meta svg{width:13px;height:13px;color:var(--gray-300);flex:none}
+.nuh-tl-meta .sp{width:3px;height:3px;border-radius:50%;background:var(--gray-300);flex:none}
+/* عنوان الشبكة: رقاقة هادئة بأرقام جدولية - كان نصًّا سائبًا بادئه «:IP» */
+.nuh-tl-ip{border:1px solid var(--gray-200);background:var(--gray-50);border-radius:6px;
+           padding:1px 7px;font-size:11px;color:var(--gray-500);
+           font-family:ui-monospace,Menlo,Consolas,monospace;direction:ltr;unicode-bidi:embed}
+.nuh-tl-empty{text-align:center;padding:34px 20px;color:var(--gray-500);font-size:13px}
+/* ============================================================================
+   النوافذ المنبثقة + بطاقة «إدارة الحساب»
+   ----------------------------------------------------------------------------
+   ⚠️ ‏.modal ومشتقّاتها كانت مكتوبة داخل <style> في شاشة حسابات الإسكان،
+      ومعها نسختان أخريان في سجل العمليات وسجل الأخطاء بقيم مختلفة (حالة
+      الفتح عندهما .open وهنا .show). هذه الكتلة هي تعريف عائلة نوافذ شاشة
+      الإسكان؛ والشاشتان الأخريان لهما بنية مختلفة (بلا ذيل وبلا غلاف للجسم)
+      فتوحيدهما معها يحتاج تعديل بنيتهما - وهو عمل مستقلّ لا تعديل جانبي.
+
+   ⚠️ وزرّ الإغلاق بـ justify-content:flex-end لا بـ left: خاصية منطقية
+      تنقلب وحدها - يسار في العربية ويمين في الإنجليزية بلا استثناء مكتوب.
+   ============================================================================ */
+.modal-overlay{position:fixed;inset:0;background:rgba(16,24,40,.55);z-index:1000;
+               display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.show{display:flex}
+.modal{background:var(--white);border-radius:16px;width:100%;max-width:700px;max-height:90vh;
+       display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 48px rgba(16,24,40,.20)}
+.modal-header{flex:none;padding:14px 20px;background:var(--white);
+              border-bottom:1px solid var(--gray-200);display:flex;align-items:center;
+              justify-content:space-between;gap:12px}
+.modal-header h3{font-size:15px;font-weight:800;color:var(--navy-dark)}
+.modal-body{flex:1;min-height:0;overflow-y:auto;padding:20px}
+/* الجسم بلا حشو: المحتوى يتولّى حوافّه بنفسه (بطاقة إدارة الحساب) */
+.modal-body.flush{padding:0}
+.modal-footer{flex:none;padding:12px 20px;border-top:1px solid var(--gray-200);
+              display:flex;justify-content:flex-end;gap:8px}
+
+/* ---------------------------------------------------------------------------
+   بطاقة «إدارة الحساب»
+   ⚠️ بلا صناديق متداخلة: كانت ثلاث طبقات حدود - النافذة، وبطاقة الترويسة،
+      وبطاقة لكل قسم - وهي أول ما يجعل الشاشة تبدو غير مصقولة. الفصل هنا
+      بخطوط رفيعة وأرضية واحدة، لا بإطارات.
+   ⚠️ وخمسة حقول حُذفت لأنها كانت مكرّرة حرفًا بحرف بين الترويسة والجدول
+      تحتها: اسم المستخدم، وحالة الحساب، والرقم الجامعي، والاسم العربي،
+      والاسم الإنجليزي.
+   --------------------------------------------------------------------------- */
+.acct-id{display:flex;align-items:center;gap:14px;padding:18px 20px 16px}
+.acct-id .av{width:52px;height:52px;border-radius:14px;flex:none;display:flex;align-items:center;
+             justify-content:center;background:var(--green-light);color:var(--green);border:1px solid #a9efc5}
+.acct-id.is-off .av{background:var(--red-light);color:var(--red);border-color:#fecdca}
+.acct-id .av svg{width:24px;height:24px}
+.acct-id .who{flex:1;min-width:0}
+/* ⚠️ الاسم الإنجليزي تحت العربي وبمحاذاته: unicode-bidi:isolate يعزل ترتيب
+      حروفه بلا قلب اتجاه العنصر. ولو كُتب direction:ltr لانزاح إلى الطرف
+      المقابل وابتعد عن الاسم الذي يصفه. */
+.acct-id .n1{display:block;font-size:17px;font-weight:800;color:var(--navy-dark);line-height:1.4;word-break:break-word}
+.acct-id .n2{display:block;font-size:12px;font-weight:500;color:var(--gray-500);line-height:1.6;
+             margin-top:2px;unicode-bidi:isolate;word-break:break-word}
+
+.acct-cols{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--gray-200)}
+.acct-col{padding:16px 20px 18px;min-width:0}
+.acct-col + .acct-col{border-inline-start:1px solid var(--gray-200)}
+.acct-t{display:block;font-size:10.5px;font-weight:800;color:var(--gray-500);letter-spacing:.4px;margin-bottom:13px}
+.acct-f{margin-bottom:13px;min-width:0}
+.acct-f:last-child{margin-bottom:0}
+.acct-f .k{display:block;font-size:10.5px;color:var(--gray-500);margin-bottom:3px;line-height:1.5}
+.acct-f .v{display:block;font-size:13.5px;font-weight:700;color:var(--navy-dark);line-height:1.55;word-break:break-word}
+.acct-f .v2{display:block;font-size:11.5px;font-weight:500;color:var(--gray-500);line-height:1.55;margin-top:1px}
+.acct-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;direction:ltr;
+           unicode-bidi:embed;display:inline-block;max-width:100%;text-align:left;
+           overflow-wrap:anywhere;font-variant-numeric:tabular-nums;letter-spacing:.1px}
+.acct-tag{display:inline-block;font-size:11px;font-weight:600;background:var(--gray-50);color:var(--gray-700);
+          border:1px solid var(--gray-200);border-radius:6px;padding:2px 9px;margin-inline-end:5px}
+
+/* التفاصيل التقنية مطويّة: يحتاجها الفني عند العطل ولا تزاحم الموظف يوميًا */
+.acct-tech{margin-top:14px}
+.acct-tech summary{cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:6px;
+                   font-size:11.5px;font-weight:600;color:var(--gray-500);user-select:none}
+.acct-tech summary::-webkit-details-marker{display:none}
+.acct-tech summary::before{content:'+';font-weight:800;font-size:13px;line-height:1}
+.acct-tech[open] summary::before{content:'\2212'}
+.acct-tech .in{margin-top:10px}
+
+.acct-acts{border-top:1px solid var(--gray-200);background:var(--gray-50)}
+.acct-acts > .acct-t{padding:14px 20px 0;margin-bottom:0}
+.acct-row{display:flex;align-items:center;gap:13px;padding:11px 20px}
+.acct-row + .acct-row{border-top:1px solid var(--gray-200)}
+.acct-row .ic{width:34px;height:34px;border-radius:10px;flex:none;display:flex;align-items:center;
+              justify-content:center;background:var(--white);border:1px solid var(--gray-200);color:var(--gray-500)}
+.acct-row .ic svg{width:16px;height:16px}
+.acct-row.is-danger .ic{background:var(--red-light);border-color:#fecdca;color:var(--red)}
+.acct-row .tx{flex:1;min-width:0}
+.acct-row .tx b{display:block;font-size:13px;font-weight:700;color:var(--navy-dark);line-height:1.5}
+.acct-row .tx span{display:block;font-size:11.5px;color:var(--gray-500);line-height:1.6}
+/* ---------------------------------------------------------------------------
+   زرّ الإجراء الصغير: زرّ مكوّنَي .sync-panel و.acct-row معًا.
+   ⚠️ كان أساسه في <style> داخل شاشة حسابات الإسكان وحالاته هنا - تعريف
+      واحد موزّع على ملفين، وأول تعديل يُنسى نصفه.
+   --------------------------------------------------------------------------- */
+.sbtn{display:inline-flex;align-items:center;justify-content:center;gap:8px;align-self:flex-start;
+      padding:9px 18px;border-radius:9px;border:1px solid var(--gray-200);background:var(--white);
+      color:var(--navy);font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;
+      transition:background .15s,border-color .15s,box-shadow .15s}
+.sbtn svg{width:14px;height:14px;flex-shrink:0}
+.sbtn:hover{background:var(--gray-50);border-color:var(--gray-300);box-shadow:0 1px 4px rgba(16,70,49,.08)}
+.sbtn.primary{background:var(--navy);border-color:var(--navy);color:#fff}
+.sbtn.primary:hover{background:var(--navy-dark);border-color:var(--navy-dark)}
+.sbtn:disabled{opacity:.55;cursor:default;box-shadow:none}
+.sbtn.is-busy svg{animation:spin 1s linear infinite}
+
+.acct-row .sbtn{flex:none;white-space:nowrap}
+.acct-row .sbtn.danger{background:var(--red);border-color:var(--red);color:#fff}
+.acct-row .sbtn.danger:hover{background:#912018;border-color:#912018}
+.acct-row .sbtn.ok{background:var(--green);border-color:var(--green);color:#fff}
+.acct-row .sbtn.ok:hover{background:#054f30;border-color:#054f30}
+.acct-empty{padding:22px;text-align:center;color:var(--gray-500);font-size:13px}
+
+/* نموذج داخل البطاقة (تعيين كلمة مرور جديدة): نفس الترويسة ونفس الحواف،
+   فلا يحسّ الموظف أنه انتقل إلى شاشة أخرى. */
+.acct-form{border-top:1px solid var(--gray-200);padding:16px 20px 20px}
+.acct-form .k{display:block;font-size:11px;color:var(--gray-500);margin-bottom:6px;line-height:1.5}
+.acct-form input{width:100%;height:44px;padding:0 12px;border:1.5px solid var(--gray-300);
+                 border-radius:10px;font-family:inherit;font-size:14px;
+                 background:var(--gray-50);color:var(--navy-dark)}
+.acct-form input:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(22,106,69,.12)}
+.acct-form .note{font-size:11.5px;color:var(--gray-500);line-height:1.75;margin-top:8px}
+.acct-form .btns{display:flex;gap:10px;margin-top:16px}
+.acct-id.is-plain .av{background:var(--gray-50);color:var(--gray-500);border-color:var(--gray-200)}
+@media(max-width:620px){.acct-cols{grid-template-columns:1fr}
+  .acct-col + .acct-col{border-inline-start:0;border-top:1px solid var(--gray-200)}}

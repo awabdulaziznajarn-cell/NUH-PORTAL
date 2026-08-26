@@ -205,11 +205,18 @@ namespace NUH_PORTAL.Services
             //    أي اسم غلط جاي من الواجهة بيتخزّن ويقفل الطالب على خانة مش موجودة
             //    في الفورم — فيبقى مقفول على كل حاجة ومش فاهم ليه.
             //    فاضية = كل الخانات مفتوحة له (وده حال الطلبات القديمة).
-            var cleaned = fields == null ? null : string.Join(",", fields
-                .Where(f => !string.IsNullOrWhiteSpace(f))
-                .Select(f => RegistrationDataMapper.NormalizeFieldKey(f.Trim()))
-                .Where(RegistrationDataMapper.IsEditableField)
-                .Distinct(StringComparer.OrdinalIgnoreCase));
+            //
+            // ⚠️ ثم WithDependents: الخانة التابعة تُفتح مع أصلها إجباريًّا.
+            //    المراجع يفتح «الكلية» وحدها، والطالب يغيّرها فتصير قائمة الأقسام
+            //    قائمةً أخرى والقسم المحفوظ ليس منها - و«القسم» مقفول لأن المراجع
+            //    لم يختره. فلا الطالب يحفظ ولا المراجع يستقبل، والطلب يقف للأبد.
+            //    وقع فعلًا في الطلب 2026-000029. القاعدة في RegistrationDataMapper
+            //    وحده، فالواجهة تقرأ القائمة الموسَّعة ولا تكرّرها.
+            var cleaned = fields == null ? null : string.Join(",",
+                RegistrationDataMapper.WithDependents(
+                    fields.Where(f => !string.IsNullOrWhiteSpace(f))
+                          .Select(f => RegistrationDataMapper.NormalizeFieldKey(f.Trim()))
+                          .Where(RegistrationDataMapper.IsEditableField)));
 
             var result = await _registration.RequestMoreInfoAsync(requestId, actorId, notes, null,
                 string.IsNullOrWhiteSpace(cleaned) ? null : cleaned);

@@ -69,29 +69,43 @@ namespace NUH_PORTAL.Core
         public static readonly string[] Logout   = { "logout" };
         public static readonly string[] Ad       = { "user_created_ad", "user_updated_ad" };
 
-        // ⚠️ مفاتيح الفلتر في الواجهة (actionGroup=) بتترجم هنا وبس. كانت
-        //    switch جوّه ApplyFilters، فأي مجموعة جديدة كان لازم تتضاف في
-        //    مكانين: تعريف المصفوفة والـ switch.
-        public static string[] ByKey(string? key) => (key ?? "").Trim().ToLowerInvariant() switch
+        // ====================================================================
+        //  الخريطة الوحيدة: مفتاح الفلتر -> إجراءاته. كل ما عداها يقرأ منها.
+        //
+        //  ⚠️ كانت القائمة مكتوبة في **أربعة** مواضع متفارقة: switch هنا،
+        //     ومصفوفة في wwwroot/js/reports-page.js، وأخرى داخل <script> في
+        //     Views/AuditLog/Index.cshtml، ونسخة ثالثة أضيق في ToJson. والفروق
+        //     لم تكن نظرية: «سكن أعضاء هيئة التدريس» كان غائبًا عن شاشة
+        //     التقارير كلّها رغم أن الخادم يدعمه، و«الترتيب» في الشاشتين مختلف،
+        //     وToJson تُسقط ثلاث مجموعات فتعود فارغة لمن يسأل عنها.
+        //
+        //  ⚠️ والترتيب هنا هو ترتيب العرض في الفلتر - القاموس مرتَّب لا مبعثر:
+        //     الأكثر استعمالًا أولًا، والمجموعات الفنية في آخره.
+        // ====================================================================
+        private static readonly Dictionary<string, string[]> Map = new(StringComparer.OrdinalIgnoreCase)
         {
-            "login"    => Login,
-            "student"  => Student,
-            "request"  => Request,
-            "password" => Password,
-            "logout"   => Logout,
-            "ad"       => Ad,
-            "faculty"  => Faculty,
-            _ => Array.Empty<string>()
+            ["student"]  = Student,
+            ["request"]  = Request,
+            ["login"]    = Login,
+            ["logout"]   = Logout,
+            ["faculty"]  = Faculty,
+            ["ad"]       = Ad,
+            ["password"] = Password
         };
+
+        // مفاتيح المجموعات بترتيب العرض. الواجهة تبني الفلتر منها لا من مصفوفة
+        // عندها، ونصّ كل مفتاح في ملف الترجمة باسم agrp_<key>.
+        public static string[] Keys => Map.Keys.ToArray();
+
+        public static string[] ByKey(string? key) =>
+            Map.TryGetValue((key ?? "").Trim(), out var actions) ? actions : Array.Empty<string>();
 
         // بتتحقن في التخطيط كـ window.__AUDIT_GROUPS — الواجهة بتقرا منها
         // ولا تكتب أي قائمة إجراءات بنفسها.
-        public static string ToJson() => JsonSerializer.Serialize(new
-        {
-            student = Student,
-            request = Request,
-            login = Login,
-            faculty = Faculty
-        });
+        //
+        // ⚠️ كل المجموعات لا أربعة منها: النسخة القديمة كانت تُسقط password
+        //    وlogout وad، فأي شاشة تسأل عن واحدة منها تتلقّى فراغًا وترسم
+        //    قائمة خالية بلا شكوى.
+        public static string ToJson() => JsonSerializer.Serialize(Map);
     }
 }

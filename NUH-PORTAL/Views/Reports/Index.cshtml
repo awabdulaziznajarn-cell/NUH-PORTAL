@@ -28,37 +28,10 @@
      في site.css (.tabs/.tab-btn) ومستعمَل في المستخدمين والطلبات وحسابات
      السكن وإسكان أعضاء هيئة التدريس. اتشال، والشاشة بقت على المكوّن المشترك. */
 
-  /* شريط أدوات واحد بدل ثلاثة صفوف */
-  .rp-bar{display:flex;flex-wrap:wrap;align-items:center;gap:9px;background:var(--white);
-          border:1px solid var(--gray-200);border-radius:14px;padding:12px 15px;margin-bottom:18px;
-          box-shadow:0 1px 2px rgba(16,24,40,.04)}
-  .date-presets{display:flex;background:var(--gray-100);border-radius:10px;padding:3px;gap:2px;flex-wrap:wrap}
-  .date-preset-btn{border:0;background:none;font-family:inherit;font-size:12.5px;font-weight:600;
-                   color:var(--gray-500);padding:7px 12px;border-radius:8px;cursor:pointer;white-space:nowrap}
-  .date-preset-btn:hover{color:var(--navy-dark)}
-  .date-preset-btn.active{background:var(--white);color:var(--navy-dark);box-shadow:0 1px 3px rgba(16,24,40,.10)}
-  .rp-bar input,.rp-bar select{height:36px;border:1px solid var(--gray-200);border-radius:9px;background:var(--white);
-                               font-family:inherit;font-size:12.5px;color:var(--navy-dark);padding:0 10px;min-width:132px}
-  .rp-bar input[type=date]{min-width:142px}
-  .rp-grow{flex:1 1 auto}
-  .rp-apply{height:36px;border:0;border-radius:9px;background:var(--green);color:#fff;font-family:inherit;
-            font-size:13px;font-weight:700;padding:0 20px;cursor:pointer;display:flex;align-items:center;gap:6px}
-  .rp-apply:hover{background:var(--navy-dark)}
-  .rp-out{height:36px;border:1px solid var(--gray-200);border-radius:9px;background:var(--white);
-          color:var(--navy-dark);font-family:inherit;font-size:12.5px;font-weight:600;padding:0 13px;
-          cursor:pointer;display:flex;align-items:center;gap:6px;transition:background .15s,border-color .15s,color .15s}
-  .rp-out:hover{background:var(--gray-50);border-color:var(--gray-300)}
-
-  /* ⚠️ التلوين هنا معناه «نوع الملف» لا «أهمية الزرّ»: الأخضر والأحمر دول لونا
-     Excel وPDF اللي أي حد يعرفهما من غير ما يقرا. وعشان كده «طباعة» فضل محايدًا
-     عن قصد — هو مش ملف، هو إجراء على الشاشة اللي قدّامك. ولو اتلوّن هو كمان
-     بقى عندنا تلات أزرار صارخة بتزاحم «تطبيق» وهو الإجراء الأساسي في الشريط.
-     والأخضر ده نفس لون زرّ التصدير في «سجل العمليات» (.export-btn) فما نبقاش
-     بأخضرين مختلفين لنفس المعنى. */
-  .rp-out.is-excel{background:var(--green);border-color:var(--green);color:#fff}
-  .rp-out.is-excel:hover{background:var(--navy-dark);border-color:var(--navy-dark)}
-  .rp-out.is-pdf{background:var(--red);border-color:var(--red);color:#fff}
-  .rp-out.is-pdf:hover{background:#912018;border-color:#912018}
+  /* ⚠️ شريط الأدوات (.rp-bar) ومجموعة المدد (.date-presets) وأزرار التطبيق
+     والتصدير اتنقلوا لـ css/components.css: هو نفس مكوّن .filters-bar المستعمل
+     في حسابات الإسكان وسجلّات العمليات والدخول والأخطاء، وكان مقاس حقله
+     مكتوبًا هنا برقم ثالث لا يوافق أيًّا منهما. الشرح كامل هناك. */
 
   /* اللوحات — واحدة ظاهرة في أي وقت */
   .rp-panel{display:none}
@@ -144,41 +117,70 @@
   <button type="button" class="tab-btn" data-panel="security" data-group="security">@SharedLocalizer["rep_7"]</button>
 </div>
 
+@* ⚠️ الشريط صفّان لا صفّ واحد: كان سبعة حقول متجاورة بلا عنوان، فالعين لا
+   تجد فيه بداية - أيّهما يضيّق المدّة وأيّهما يضيّق النتيجة؟ صار: «المدى
+   الزمني» ثم «التصفية» وفيه زرّ «تطبيق» وأزرار التصدير في آخره، ولكل صفّ
+   رقاقة تسمّيه. وكل حقل عليه عنوانه، فلا تبقى قائمتان تقولان «الكل» ولا
+   يُعرف أيّهما لماذا. *@
 <div class="rp-bar">
-  <div class="date-presets" id="datePresets">
-    <button class="date-preset-btn active" data-days="">@SharedLocalizer["rep_3"]</button>
-    <button class="date-preset-btn" data-days="1">@SharedLocalizer["rep_8"]</button>
-    <button class="date-preset-btn" data-days="7">@SharedLocalizer["rep_9"]</button>
-    <button class="date-preset-btn" data-days="30">@SharedLocalizer["rep_10"]</button>
-    <button class="date-preset-btn" data-days="this-month">@SharedLocalizer["rep_11"]</button>
-    <button class="date-preset-btn" data-days="last-month">@SharedLocalizer["rep_12"]</button>
-    <button class="date-preset-btn" data-days="this-year">@SharedLocalizer["rep_13"]</button>
+  <div class="fbar-row">
+    <span class="fbar-zone">@SharedLocalizer["rpx_zoneRange"]</span>
+    <div class="date-presets" id="datePresets">
+      <button class="date-preset-btn active" data-days="">@SharedLocalizer["rep_3"]</button>
+      <button class="date-preset-btn" data-days="1">@SharedLocalizer["rep_8"]</button>
+      <button class="date-preset-btn" data-days="7">@SharedLocalizer["rep_9"]</button>
+      <button class="date-preset-btn" data-days="30">@SharedLocalizer["rep_10"]</button>
+      <button class="date-preset-btn" data-days="this-month">@SharedLocalizer["rep_11"]</button>
+      <button class="date-preset-btn" data-days="last-month">@SharedLocalizer["rep_12"]</button>
+      <button class="date-preset-btn" data-days="this-year">@SharedLocalizer["rep_13"]</button>
+    </div>
+    <div class="filter-group">
+      <label for="fromDate">@SharedLocalizer["rep_20"]</label>
+      <input type="date" id="fromDate">
+    </div>
+    <div class="filter-group">
+      <label for="toDate">@SharedLocalizer["rep_21"]</label>
+      <input type="date" id="toDate">
+    </div>
   </div>
-  <input type="date" id="fromDate" title="@SharedLocalizer["rep_20"]">
-  <input type="date" id="toDate" title="@SharedLocalizer["rep_21"]">
-  <select id="userFilter" title="@SharedLocalizer["rep_22"]"><option value="">@SharedLocalizer["rep_22"]</option></select>
-  <select id="actionFilter" title="@SharedLocalizer["rep_23"]"></select>
-  <input type="text" id="searchBox" placeholder="@SharedLocalizer["rep_24"]">
-  <button class="rp-apply" onclick="applyFilters()">@SharedLocalizer["rep_25"]</button>
-  <span class="rp-grow"></span>
-  <button type="button" class="rp-out is-excel" onclick="exportExcel()">
-    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"
-         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M8 2v8m0 0L5 7m3 3 3-3M2.5 12.5v1h11v-1"/></svg>
-    <span>@SharedLocalizer["rep_46"]</span>
-  </button>
-  <button type="button" class="rp-out is-pdf" onclick="exportPdf()">
-    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"
-         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M8 2v8m0 0L5 7m3 3 3-3M2.5 12.5v1h11v-1"/></svg>
-    <span>@SharedLocalizer["rep_47"]</span>
-  </button>
-  <button type="button" class="rp-out" onclick="window.print()">
-    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"
-         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M4.5 6V2.5h7V6M4.5 11.5h7v2h-7zM3 6h10a1 1 0 0 1 1 1v3.5h-2.5M3 10.5H2V7a1 1 0 0 1 1-1z"/></svg>
-    <span>@SharedLocalizer["rep_48"]</span>
-  </button>
+
+  <div class="fbar-row">
+    <span class="fbar-zone">@SharedLocalizer["rpx_zoneFilter"]</span>
+    <div class="filter-group">
+      <label for="userFilter">@SharedLocalizer["rep_22"]</label>
+      @* الخيار الأول تكتبه populateUserFilter بـ «كل المستخدمين» *@
+      <select id="userFilter"></select>
+    </div>
+    <div class="filter-group">
+      <label for="actionFilter">@SharedLocalizer["rep_23"]</label>
+      @* الخيارات كلها من الخادم: /api/AuditLogs/action-groups *@
+      <select id="actionFilter"></select>
+    </div>
+    <div class="filter-group">
+      <label for="searchBox">@SharedLocalizer["rep_24"]</label>
+      <input type="text" id="searchBox" placeholder="@SharedLocalizer["rep_24"]">
+    </div>
+    <button class="fbar-apply" onclick="applyFilters()">@SharedLocalizer["rep_25"]</button>
+    <span class="fbar-grow"></span>
+    <button type="button" class="fbar-out is-excel" onclick="exportExcel()">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M8 2v8m0 0L5 7m3 3 3-3M2.5 12.5v1h11v-1"/></svg>
+      <span>@SharedLocalizer["rep_46"]</span>
+    </button>
+    <button type="button" class="fbar-out is-pdf" onclick="exportPdf()">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M8 2v8m0 0L5 7m3 3 3-3M2.5 12.5v1h11v-1"/></svg>
+      <span>@SharedLocalizer["rep_47"]</span>
+    </button>
+    <button type="button" class="fbar-out" onclick="window.print()">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M4.5 6V2.5h7V6M4.5 11.5h7v2h-7zM3 6h10a1 1 0 0 1 1 1v3.5h-2.5M3 10.5H2V7a1 1 0 0 1 1-1z"/></svg>
+      <span>@SharedLocalizer["rep_48"]</span>
+    </button>
+  </div>
 </div>
 
 @* ============================ نظرة عامة ============================ *@
@@ -296,7 +298,7 @@
   </div>
   <div class="rp-card" id="alertsCard">
     <div class="rp-head"><b>@SharedLocalizer["rep_31"]</b>
-      <button class="rp-out" onclick="loadAlerts()">@SharedLocalizer["rep_32"]</button></div>
+      <button class="fbar-out" onclick="loadAlerts()">@SharedLocalizer["rep_32"]</button></div>
     <div class="rp-body" id="alertsBody"><div class="empty-state">@SharedLocalizer["rep_33"]</div></div>
   </div>
 </div>
@@ -320,7 +322,7 @@
     @* ⚠️ مطوي افتراضيًا: الصفحة دي تقارير، والجدول الخام كان بياخد شاشة كاملة
        تحت كل تبويب — وهو أصلًا موجود بشاشته الخاصة (سجل العمليات). الحالة
        متحفوظة، فاللي بيفتحه كل مرة ما يفضلش يفتحه كل مرة. *@
-    <button type="button" class="rp-out" id="logToggle" onclick="toggleLog()"
+    <button type="button" class="fbar-out" id="logToggle" onclick="toggleLog()"
             style="margin-inline-start:auto;height:30px;font-size:12px;padding:0 11px">
       @SharedLocalizer["rpx_showLog"]
     </button>
@@ -331,7 +333,7 @@
          الفرز هي نفسها بالظبط — مش مفاتيح تانية لنفس الأعمدة. عمود «#» بلا
          فرز: ترقيم عرض مش موجود في قاعدة البيانات. *@
       <table id="repTable">
-        <thead><tr><th>#</th><th data-sort="user">@SharedLocalizer["rep_22"]</th><th data-sort="action">@SharedLocalizer["rep_42"]</th><th data-sort="table">@SharedLocalizer["rep_43"]</th><th data-sort="targetid">@SharedLocalizer["rep_44"]</th><th data-sort="date">@SharedLocalizer["rep_45"]</th></tr></thead>
+        <thead><tr><th>@SharedLocalizer["col_seq"]</th><th data-sort="user">@SharedLocalizer["rep_22"]</th><th data-sort="action">@SharedLocalizer["rep_42"]</th><th data-sort="table">@SharedLocalizer["rep_43"]</th><th data-sort="targetid">@SharedLocalizer["rep_44"]</th><th data-sort="date">@SharedLocalizer["rep_45"]</th></tr></thead>
         <tbody id="logTbody"><tr><td colspan="6" style="text-align:center;padding:60px 20px"><div class="spinner"></div></td></tr></tbody>
       </table>
     </div>

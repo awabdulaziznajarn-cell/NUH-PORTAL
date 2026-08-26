@@ -1,4 +1,4 @@
-@model NUH_PORTAL.DTOs.StudentStatus.StudentStatusStatsDto
+﻿@model NUH_PORTAL.DTOs.StudentStatus.StudentStatusStatsDto
 @{
     ViewData["Title"] = SharedLocalizer["Page_StudentStatus"].Value;
 
@@ -281,7 +281,7 @@
           <div class="field full">
             <label for="attachmentFile">@SharedLocalizer["ss_attachDocument"]</label>
             <div class="file-upload-wrap">
-              <input type="file" id="attachmentFile" accept=".pdf,.jpg,.jpeg,.png,.docx" onchange="updateFileName(this)">
+              <input type="file" id="attachmentFile" accept=".pdf,.jpg,.jpeg,.png,.docx" onchange="onFilePicked(this, 'fileName')">
               <div class="file-upload-btn">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                 <span >@SharedLocalizer["ss_chooseFile"]</span>
@@ -427,7 +427,7 @@
           <div class="field full">
             <label for="transferAttachmentFile">@SharedLocalizer["ss_attachDocument"]</label>
             <div class="file-upload-wrap">
-              <input type="file" id="transferAttachmentFile" accept=".pdf,.jpg,.jpeg,.png,.docx" onchange="updateTransferFileName(this)">
+              <input type="file" id="transferAttachmentFile" accept=".pdf,.jpg,.jpeg,.png,.docx" onchange="onFilePicked(this, 'transferFileName')">
               <div class="file-upload-btn">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                 <span >@SharedLocalizer["ss_chooseFile"]</span>
@@ -538,8 +538,43 @@
     });
   });
 
-  function updateFileName(input) {
-    document.getElementById('fileName').textContent = input.files.length > 0 ? input.files[0].name : '';
+  // ====================================================================
+  //  الملف المختار: اسمه ومعاينته ومسحه - دالة واحدة للمنتقيين.
+  //  ⚠️ كان لكل منتقٍ دالة خاصة به تكتب الاسم نصًّا وخلاص: لا معاينة تتأكد
+  //     أن الملف هو المقصود، ولا مسح إن كان غلطًا. والمسح الوحيد كان بإعادة
+  //     تحميل الصفحة أو بإرسال النموذج.
+  //     ونستعمل نفس صفّ المرفق (.att-row) المستعمل في سجل الإجراءات أدناه،
+  //     فشكل الملف واحد قبل الحفظ وبعده.
+  // ====================================================================
+  var pickedObjectUrl = null;
+
+  function releasePickedUrl() {
+    if (pickedObjectUrl) { URL.revokeObjectURL(pickedObjectUrl); pickedObjectUrl = null; }
+  }
+
+  function onFilePicked(input, boxId) {
+    var box = document.getElementById(boxId);
+    if (!box) return;
+    releasePickedUrl();
+
+    var f = input.files && input.files[0];
+    if (!f) { box.innerHTML = ''; return; }
+
+    if (isImageName(f.name)) pickedObjectUrl = URL.createObjectURL(f);
+
+    // نفس البانٍ - فالصفّ قبل الرفع وبعده مكوّن واحد لا نسختان
+    box.innerHTML = attachmentRow({
+      name: f.name,
+      previewUrl: pickedObjectUrl,
+      isLocal: true,
+      removable: true
+    });
+
+    box.querySelector('.att-remove').onclick = function () {
+      input.value = '';
+      releasePickedUrl();
+      box.innerHTML = '';
+    };
   }
 
   var pendingSubmitData = null;
@@ -550,7 +585,8 @@
     document.querySelectorAll('input[name=statusType]').forEach(function (r) { r.checked = false; });
     document.getElementById('notes').value = '';
     document.getElementById('attachmentFile').value = '';
-    document.getElementById('fileName').textContent = '';
+    releasePickedUrl();
+    document.getElementById('fileName').innerHTML = '';
     document.getElementById('studentInfo').style.display = 'none';
     document.getElementById('studentInfoId').textContent = '--';
     document.getElementById('studentInfoName').textContent = '--';
@@ -591,18 +627,30 @@
       pendingSubmitData = { studentNumber: studentNumber, statusType: statusEl.value, notes: notes, file: file };
       window._pendingStatus = pendingSubmitData;
 
-      // ⚠️ بلا حساب شبكة مفيش حاجة تتعطّل - فالعنوان والنصّ والصفّ بتاع اسم
-      //    المستخدم كلهم بيتغيّروا، مابنعرضش تحذير عن إجراء مش هيحصل.
-      //    الصفّ الفاضي بيتشال من المكوّن نفسه فمفيش إخفاء بالإيد.
+      // ====================================================================
+      //  ⚠️ النافذة كانت تعرض اسم المستخدم التقني بالأحمر ولا تعرض اسم الطالب
+      //     إطلاقًا - وأشيع خطأ هنا هو رقم جامعي من تسعة أرقام يُكتب باليد،
+      //     ولحظة التأكيد هي آخر فرصة لالتقاطه. فالاسم أولًا، ثم الرقم، ثم
+      //     السبب، واسم المستخدم ينزل سطر تذييل رماديًّا صغيرًا.
+      //
+      //  ⚠️ ولم تعد danger: الحالات الأربع كلها إجراءات إدارية روتينية يسجّلها
+      //     المشرف أسبوعيًّا وكلها تُغلق الحساب. لو كان كل روتيني أحمر، لم يعد
+      //     الأحمر يعني «قف» في أي مكان آخر في النظام.
+      //
+      //  ⚠️ وحالة «بلا حساب» تُقال صراحةً لا تُخفى: كل طالب في هذه الشاشة
+      //     يُفترض أن له حسابًا، فغيابه شذوذ - غالبًا فشل إنشاء - والمشرف
+      //     والمسؤول يحتاجان معرفته لا تمريره بهدوء.
+      // ====================================================================
       var ok = await NuhDialog.confirm({
-        danger: hasAdAccount,
-        title: hasAdAccount ? t('ss_disableTitle') : t('ss_confirmTitleNoAccount'),
-        message: hasAdAccount ? t('ss_disableIntroFull') : t('ss_proceedQuestion'),
+        title: t('ss_confirmTitleFmt').replace('{0}', getStatusLabel(statusEl.value)),
+        message: hasAdAccount ? t('ss_disableIntroCalm') : t('ss_noAccountNotice'),
         rows: [
-          { label: t('ss_usernameLabel'), value: hasAdAccount ? student.ad_username : '' },
+          { label: t('ss_studentLabel'), value: student.full_name || '' },
+          { label: t('ss_studentIdLabel'), value: student.student_id || '' },
           { label: t('ss_reasonLabel'), value: getStatusLabel(statusEl.value) }
         ],
-        confirmLabel: hasAdAccount ? t('ss_confirmDisableYes') : t('ss_confirmAction'),
+        foot: hasAdAccount ? t('ss_networkAccountFoot').replace('{0}', student.ad_username) : '',
+        confirmLabel: t('ss_confirmAction'),
         cancelLabel: t('ss_cancel')
       });
       if (ok) await executeSubmit();
@@ -810,18 +858,45 @@
   // و«تحميل» بترجع الملف باسمه الأصلي.
   function isImageName(n) { return /\.(png|jpe?g|gif|webp)$/i.test(n || ''); }
 
-  // ⚠️ الأزرار من نظام التصميم (.btn) لا روابط مسطّرة بـ style سطري —
-  //    والشكل نفسه في site.css عشان صف المرفق ما يختلفش بين الشاشتين.
-  function attachmentHtml(url, name) {
+  // ====================================================================
+  //  صفّ المرفق - بانٍ واحد للحالتين: ملف محفوظ على الخادم، وملف اختاره
+  //  المستخدم للتو ولم يُرفع بعد.
+  //
+  //  ⚠️ كان لكل حالة ماركب مكتوب بيده. النتيجة صفّان يُفترض أنهما نفس
+  //     المكوّن ويظهران بشكلين: المحفوظ فيه زر أخضر يعطي الصفّ ثقله، والمختار
+  //     زرّان رماديان يبدوان باهتين بجانبه. أي تعديل على أحدهما كان يترك
+  //     الآخر خلفه - وهذا ما حدث فعلًا.
+  //
+  //  الألوان من لغة النظام لا من الذوق: أخضر للإجراء الأساسي (تحميل)،
+  //  ورمادي للثانوي (معاينة)، وأحمر للهادم (مسح).
+  // ====================================================================
+  function attachmentRow(o) {
+    var canPreview = isImageName(o.name);
     return '<div class="att-row">' +
         '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>' +
-        '<span class="att-name" title="' + escHtml(name) + '">' + escHtml(name) + '</span>' +
-        '<a class="btn btn-cancel att-btn" href="' + escHtml(url) + '" target="_blank" rel="noopener"' +
-          (isImageName(name) ? ' data-preview="' + escHtml(url) + '" data-preview-name="' + escHtml(name) + '"' : '') +
-          '>' + escHtml(SS_PH.preview) + '</a>' +
-        '<a class="btn btn-primary att-btn" href="' + escHtml(url) + '?download=true">' +
-          escHtml(SS_PH.download) + '</a>' +
+        '<span class="att-name" title="' + escHtml(o.name) + '">' + escHtml(o.name) + '</span>' +
+        (canPreview && o.previewUrl
+          ? '<a class="btn btn-cancel att-btn" href="' + escHtml(o.previewUrl) + '"' +
+            (o.isLocal ? '' : ' target="_blank" rel="noopener"') +
+            ' data-preview="' + escHtml(o.previewUrl) + '"' +
+            ' data-preview-name="' + escHtml(o.name) + '"' +
+            (o.isLocal ? ' data-preview-local="1"' : '') + '>' +
+            escHtml(SS_PH.preview) + '</a>'
+          : '') +
+        (o.downloadUrl
+          ? '<a class="btn btn-primary att-btn" href="' + escHtml(o.downloadUrl) + '">' +
+            escHtml(SS_PH.download) + '</a>'
+          : '') +
+        (o.removable
+          ? '<button type="button" class="btn btn-danger att-btn att-remove">' +
+            escHtml(t('ss_removeFile')) + '</button>'
+          : '') +
       '</div>';
+  }
+
+  // المرفق المحفوظ على الخادم: معاينة وتحميل
+  function attachmentHtml(url, name) {
+    return attachmentRow({ name: name, previewUrl: url, downloadUrl: url + '?download=true' });
   }
 
   // معاينة الصور جوه الصفحة — من غير ما المستخدم يسيب الشاشة
@@ -829,10 +904,15 @@
     var link = e.target.closest ? e.target.closest('[data-preview]') : null;
     if (!link) return;
     e.preventDefault();
-    showAttachmentPreview(link.getAttribute('data-preview'), link.getAttribute('data-preview-name'));
+    showAttachmentPreview(
+      link.getAttribute('data-preview'),
+      link.getAttribute('data-preview-name'),
+      link.hasAttribute('data-preview-local'));
   });
 
-  function showAttachmentPreview(url, name) {
+  // isLocal = ملف على جهاز المستخدم لم يُرفع بعد: لا رابط تنزيل له، ورابط
+  //           التنزيل بـ ?download=true لا معنى له على عنوان blob.
+  function showAttachmentPreview(url, name, isLocal) {
     var overlay = document.getElementById('attPreviewOverlay');
     if (!overlay) {
       overlay = document.createElement('div');
@@ -848,7 +928,8 @@
         '<div class="att-prev-head">' +
           '<span class="att-prev-title" title="' + escHtml(name) + '">' + escHtml(name) + '</span>' +
           '<div class="att-prev-actions">' +
-            '<a class="btn btn-primary att-btn" href="' + escHtml(url) + '?download=true">' + escHtml(SS_PH.download) + '</a>' +
+            (isLocal ? '' :
+              '<a class="btn btn-primary att-btn" href="' + escHtml(url) + '?download=true">' + escHtml(SS_PH.download) + '</a>') +
             '<button type="button" id="attPreviewClose" class="btn btn-cancel att-btn">' + escHtml(SS_PH.close) + '</button>' +
           '</div>' +
         '</div>' +
@@ -879,9 +960,6 @@
     btn.style.background = canTransfer ? 'var(--navy)' : 'var(--gray-300)';
   }
 
-  function updateTransferFileName(input) {
-    document.getElementById('transferFileName').textContent = input.files.length > 0 ? input.files[0].name : '';
-  }
 
   function resetTransferForm() {
     ['transferStudentNumber', 'transferNewBuilding', 'transferNewApartment', 'transferNewRoom', 'transferCustomReason'].forEach(function (id) {
@@ -889,7 +967,8 @@
     });
     document.getElementById('transferReason').value = '';
     document.getElementById('transferAttachmentFile').value = '';
-    document.getElementById('transferFileName').textContent = '';
+    releasePickedUrl();
+    document.getElementById('transferFileName').innerHTML = '';
     document.getElementById('transferStudentInfo').style.display = 'none';
     document.getElementById('customReasonField').style.display = 'none';
     document.getElementById('transferOldBuilding').textContent = '--';

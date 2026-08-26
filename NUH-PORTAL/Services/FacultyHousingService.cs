@@ -19,13 +19,21 @@ namespace NUH_PORTAL.Services
     //    وبتحتاج معاملات صريحة على أكتر من جدول في نفس اللحظة.
     public class FacultyHousingService
     {
-        // ⚠️ الخصائص الخمسة دي هي كل اللي النظام بيكتبه في الدومين — لا أكتر.
-        //    displayName و givenName و sn سايبينهم عن قصد: في وحدات السكن
-        //    القيمة بتاعتهم هي اسم الوحدة نفسها (villa08)، مش اسم الساكن.
-        //    لو كتبنا فيهم اسم الدكتور نبقى غيّرنا عرف قايم في الدومين من غير
-        //    سبب، وكسرنا أي حاجة بتعرف الوحدة من اسمها.
+        // ⚠️ الستّ خصائص دي هي كل اللي النظام بيكتبه في الدومين — لا أكتر.
+        //    givenName و sn سايبينهم: القيمة بتاعتهم في وحدات السكن هي اسم
+        //    الوحدة نفسها (villa08) مش اسم الساكن، وكتابة اسم الدكتور فيهم
+        //    بتكسر أي حاجة بتعرف الوحدة من اسمها.
+        //
+        // ⚠️ و displayName كان معاهم في الاستثناء بنفس الحجّة، واتنقل هنا
+        //    بقرار من إدارة النظام: المعتمَد في دليل الجامعة إن displayName
+        //    يحمل اسم الساكن بالإنجليزي. فبقى مصدر الاسم الإنجليزي وقت
+        //    الاستيراد، ووجهته عند الحفظ.
+        // ⚠️ لكن الكتابة فيه مشروطة بوجود قيمة عندنا - انظر PushToAdAsync.
+        //    القيمة الفاضية بتمسح الخاصية في الدليل، و ٢٤٢ وحدة مسجّلة قبل
+        //    التغيير ده مالهاش اسم إنجليزي مخزَّن؛ فأول ضغطة «إعادة مزامنة»
+        //    كانت هتفضّي displayName عند كل واحدة فيهم.
         public static readonly string[] ManagedAttributes =
-            { "description", "employeeID", "mobile", "company", "department" };
+            { "description", "displayName", "employeeID", "mobile", "company", "department" };
 
         // ⚠️ خصائص اسم الكائن — مطلوبة للنقل بين الأقسام لا للاستيراد.
         //    النقل في الدليل عملية ModifyDN بتلمس اسم الكائن، فمنح مقصور على
@@ -195,6 +203,8 @@ namespace NUH_PORTAL.Services
                             Action = ImportRowAction.Ignored,
                             DisplayName = u.SamAccountName,
                             Description = u.Description,
+                            AdDisplayName = u.DisplayName,
+                            AdUserPrincipalName = u.UserPrincipalName,
                             AccountEnabled = u.AccountEnabled,
                             IgnoreReasonKey = "fh_ImpIgnNameMismatch"
                         });
@@ -222,6 +232,19 @@ namespace NUH_PORTAL.Services
                             diffs.Add(parsed.MatchesStandard
                                 ? "fh_ImpChgNameOk"
                                 : "fh_ImpChgNameBad");
+                        // ⚠️ اسم الدخول اتغيّر في الدليل من برّه النظام. مش
+                        //    خطأ يوقف الاستيراد - سطر في المعاينة بيقول
+                        //    للمراجع إن الحساب اتلمس من مكان تاني.
+                        // ⚠️ والشرط بيتخطّى المخزَّن الفاضي: أول استيراد بعد
+                        //    إضافة العمود ده هيلاقيه فاضي في الـ ٢٤٢ وحدة كلها،
+                        //    فالمقارنة المجرّدة كانت هتعلّم كل صفّ «تغيّر اسم
+                        //    الدخول» - تحذير على ٢٤٢ وحدة سليمة معناه إن اللي
+                        //    بيراجع يتعلّم يتجاهل التحذير من أول مرة. الفاضي
+                        //    بيتملى بصمت، والاختلاف بعد كده هو اللي بيتعلّم.
+                        if (!string.IsNullOrWhiteSpace(known.AdUserPrincipalName)
+                            && !string.Equals(known.AdUserPrincipalName, u.UserPrincipalName ?? "",
+                                              StringComparison.OrdinalIgnoreCase))
+                            diffs.Add("fh_ImpChgUpn");
                     }
 
                     var action = known == null
@@ -246,6 +269,8 @@ namespace NUH_PORTAL.Services
                         Deviation = parsed.Deviation,
                         ChangeNoteKeys = diffs,
                         Description = u.Description,
+                        AdDisplayName = u.DisplayName,
+                        AdUserPrincipalName = u.UserPrincipalName,
                         EmployeeId = u.EmployeeId,
                         Mobile = u.Mobile,
                         Company = u.Company,
@@ -321,6 +346,7 @@ namespace NUH_PORTAL.Services
                     }
 
                     unit.AdDistinguishedName = row.DistinguishedName;
+                    unit.AdUserPrincipalName = NullIfBlank(row.AdUserPrincipalName);
                     unit.AdAccountEnabled = row.AccountEnabled;
                     unit.NameMatchesStandard = row.NameMatchesStandard;
                     unit.SyncState = FacultyUnitSyncState.Synced;
@@ -331,13 +357,38 @@ namespace NUH_PORTAL.Services
                     //    مفتوح خلاص مانلمسهوش. إعادة تشغيل الاستيراد مالهاش
                     //    حق تقفل ساكن ولا تفتح صف جديد — دي إجراءات بقرار من
                     //    شاشة التسليم، والاستيراد مجرد قراءة.
-                    var hasOpen = unit.Occupancies.Any(o => o.EndDate == null);
+                    // ⚠️ استثناء واحد على «الاستيراد مجرد قراءة»: الاسم
+                    //    الإنجليزي بيتملى على الصفّ المفتوح **لو كان فاضي**.
+                    //
+                    //    السبب: الخانة دي اتضافت بعد ما الوحدات اتسجّلت، فهي
+                    //    فاضية في كل صفّ مفتوح، ومصدرها الوحيد هو displayName
+                    //    في الدليل. من غير المليان ده كان لازم موظف يفتح ٢٣٩
+                    //    وحدة واحدة واحدة وينسخ الاسم من الدليل بإيده.
+                    //
+                    //  ⚠️ ومابيكتبش فوق قيمة موجودة أبدًا: لو موظف كتب الاسم
+                    //     أو صحّحه، المكتوب عندنا هو المعتمَد - الاستيراد
+                    //     بيملا الفاضي ولا بيراجع المليان. من غير الشرط ده كان
+                    //     كل استيراد بيرجّع تصحيحات الموظفين للحالة القديمة.
+                    var openRow = unit.Occupancies.FirstOrDefault(o => o.EndDate == null);
+                    if (openRow != null
+                        && string.IsNullOrWhiteSpace(openRow.FullNameEn)
+                        && !string.IsNullOrWhiteSpace(row.AdDisplayName))
+                    {
+                        openRow.FullNameEn = row.AdDisplayName!.Trim();
+                    }
+
+                    var hasOpen = openRow != null;
                     if (!hasOpen && !string.IsNullOrWhiteSpace(row.Description))
                     {
                         _db.FacultyOccupancies.Add(new FacultyOccupancy
                         {
                             Unit = unit,
                             FullNameAr = row.Description!.Trim(),
+                            // ⚠️ الاسم الإنجليزي من displayName زي ما هو في
+                            //    الدليل. الفاضي بيفضل فاضي - مابنولّدش اسمًا
+                            //    من العربي، لأن نقحرة مولّدة بتبان كأنها بيانات
+                            //    موثّقة وهي تخمين.
+                            FullNameEn = NullIfBlank(row.AdDisplayName),
                             NationalId = NullIfBlank(row.EmployeeId),
                             Mobile = NullIfBlank(row.Mobile),
                             College = NullIfBlank(row.Company),
@@ -394,6 +445,7 @@ namespace NUH_PORTAL.Services
         public async Task<FacultyUnitsPageDto> GetUnitsAsync(
             string? type = null, string? status = null, string? search = null,
             bool onlyDeviations = false, bool onlyNeedsConfirm = false, bool onlyOuMismatch = false,
+            bool onlyDisabled = false,
             int? tower = null, int page = 1, int pageSize = 50,
             string? sortBy = null, bool sortAsc = false)
         {
@@ -422,6 +474,11 @@ namespace NUH_PORTAL.Services
             }
 
             if (onlyDeviations) q = q.Where(x => !x.Unit.NameMatchesStandard);
+
+            // ⚠️ حسابات مُعطَّلة في الدليل. الشرط على العمود المخزَّن لا على
+            //    قراءة حيّة: القيمة بتتحدّث مع كل مزامنة ومع كل كتابة، وقراءة
+            //    ٢٤٢ حساب من الدليل عشان نفلتر جدول مالهاش معنى.
+            if (onlyDisabled) q = q.Where(x => !x.Unit.AdAccountEnabled);
 
             // ============================================================
             //  فلتر «وحدة تنظيمية غير مطابقة».
@@ -473,7 +530,8 @@ namespace NUH_PORTAL.Services
                             && (!pt.HasValue || x.Unit.TowerNo == pt)
                             && (!pa.HasValue || x.Unit.ApartmentNo == pa))
                         || x.Unit.AdAccount.Contains(s)
-                        || (x.Current != null && x.Current.FullNameAr.Contains(s)));
+                        || (x.Current != null && x.Current.FullNameAr.Contains(s))
+                        || (x.Current != null && x.Current.FullNameEn != null && x.Current.FullNameEn.Contains(s)));
                 }
                 else if (ptype.HasValue)
                 {
@@ -483,8 +541,12 @@ namespace NUH_PORTAL.Services
                 }
                 else
                 {
+                    // ⚠️ الاسم الإنجليزي داخل البحث: الموظف بيقرا السطرين في
+                    //    العمود، فبحث بيلاقي السطر الأول ولا يلاقي التاني
+                    //    بيبان كأن البحث بايظ.
                     q = q.Where(x => x.Unit.AdAccount.Contains(s)
                                      || (x.Current != null && x.Current.FullNameAr.Contains(s))
+                                     || (x.Current != null && x.Current.FullNameEn != null && x.Current.FullNameEn.Contains(s))
                                      || (x.Current != null && x.Current.NationalId != null && x.Current.NationalId.Contains(s))
                                      || (x.Current != null && x.Current.Mobile != null && x.Current.Mobile.Contains(s)));
                 }
@@ -552,6 +614,7 @@ namespace NUH_PORTAL.Services
                     LastSyncError = x.Unit.LastSyncError,
                     OccupancyId = x.Current?.Id,
                     OccupantName = x.Current?.FullNameAr,
+                    OccupantNameEn = x.Current?.FullNameEn,
                     OccupantNationalId = x.Current?.NationalId,
                     OccupantMobile = x.Current?.Mobile,
                     OccupantGender = x.Current?.Gender,
@@ -562,7 +625,9 @@ namespace NUH_PORTAL.Services
                         ? null
                         : (int)((nowUtc - (x.Current.ConfirmedAt ?? x.Current.StartDate)).TotalDays / 30),
                     OuGenderMismatch = CheckOuGender(x.Unit.AdDistinguishedName, x.Current?.Gender).Mismatch,
-                    OuGenderMismatchNote = CheckOuGender(x.Unit.AdDistinguishedName, x.Current?.Gender).Note
+                    OuGenderMismatchNote = CheckOuGender(x.Unit.AdDistinguishedName, x.Current?.Gender).Note,
+                    AdUserPrincipalName = x.Unit.AdUserPrincipalName,
+                    UpnMatchesAccount = x.Unit.UpnMatchesAccount
                 }).ToList()
             };
 
@@ -612,6 +677,7 @@ namespace NUH_PORTAL.Services
             dto.NotExists = await _db.FacultyUnits.CountAsync(u => u.Status == FacultyUnitStatus.NotExists);
             dto.PendingSync = await _db.FacultyUnits.CountAsync(u => u.SyncState != FacultyUnitSyncState.Synced);
             dto.NameDeviations = await _db.FacultyUnits.CountAsync(u => !u.NameMatchesStandard);
+            dto.AdDisabled = await _db.FacultyUnits.CountAsync(u => !u.AdAccountEnabled);
 
             dto.Occupied = await _db.FacultyUnits.CountAsync(u =>
                 u.Status == FacultyUnitStatus.Active && u.Occupancies.Any(o => o.EndDate == null));
@@ -710,6 +776,7 @@ namespace NUH_PORTAL.Services
                     LastSyncError = unit.LastSyncError,
                     OccupancyId = current?.Id,
                     OccupantName = current?.FullNameAr,
+                    OccupantNameEn = current?.FullNameEn,
                     OccupantNationalId = current?.NationalId,
                     OccupantMobile = current?.Mobile,
                     OccupantGender = current?.Gender,
@@ -720,12 +787,15 @@ namespace NUH_PORTAL.Services
                         ? null
                         : (int)((nowUtc - (current.ConfirmedAt ?? current.StartDate)).TotalDays / 30),
                     OuGenderMismatch = CheckOuGender(unit.AdDistinguishedName, current?.Gender).Mismatch,
-                    OuGenderMismatchNote = CheckOuGender(unit.AdDistinguishedName, current?.Gender).Note
+                    OuGenderMismatchNote = CheckOuGender(unit.AdDistinguishedName, current?.Gender).Note,
+                    AdUserPrincipalName = unit.AdUserPrincipalName,
+                    UpnMatchesAccount = unit.UpnMatchesAccount
                 },
                 History = history.Select(o => new OccupancyHistoryItemDto
                 {
                     Id = o.Id,
                     FullNameAr = o.FullNameAr,
+                    FullNameEn = o.FullNameEn,
                     Gender = o.Gender,
                     NationalId = o.NationalId,
                     Mobile = o.Mobile,
@@ -820,6 +890,7 @@ namespace NUH_PORTAL.Services
                     {
                         UnitId = unit.Id,
                         FullNameAr = dto.FullNameAr!.Trim(),
+                        FullNameEn = NullIfBlank(dto.FullNameEn),
                         Gender = dto.Gender,
                         NationalId = dto.NationalId,
                         Mobile = dto.Mobile,
@@ -887,6 +958,7 @@ namespace NUH_PORTAL.Services
             if (opening)
             {
                 hoChanges.Add(new AuditChangeLog { FieldName = "FullNameAr",  OldValue = current?.FullNameAr, NewValue = dto.FullNameAr!.Trim() });
+                hoChanges.Add(new AuditChangeLog { FieldName = "FullNameEn",  OldValue = current?.FullNameEn, NewValue = NullIfBlank(dto.FullNameEn) });
                 hoChanges.Add(new AuditChangeLog { FieldName = "NationalId",  OldValue = current?.NationalId, NewValue = dto.NationalId });
                 hoChanges.Add(new AuditChangeLog { FieldName = "Mobile",      OldValue = current?.Mobile,     NewValue = dto.Mobile });
                 hoChanges.Add(new AuditChangeLog { FieldName = "College",     OldValue = current?.College,    NewValue = NullIfBlank(dto.College) });
@@ -937,6 +1009,7 @@ namespace NUH_PORTAL.Services
                 throw new UserFriendlyException("اسم عضو هيئة التدريس مطلوب", 400);
 
             var newName = dto.FullNameAr.Trim();
+            var newNameEn = NullIfBlank(dto.FullNameEn);
             var newNid = ValidateNationalId(dto.NationalId);
             var newMobile = NormalizeMobile(dto.Mobile);
             var newCollege = NullIfBlank(dto.College);
@@ -951,6 +1024,7 @@ namespace NUH_PORTAL.Services
             }
 
             Track("FullNameAr", current.FullNameAr, newName);
+            Track("FullNameEn", current.FullNameEn, newNameEn);
             Track("NationalId", current.NationalId, newNid);
             Track("Mobile", current.Mobile, newMobile);
             Track("College", current.College, newCollege);
@@ -964,6 +1038,7 @@ namespace NUH_PORTAL.Services
                 return new AdPushResultDto { Success = true, SyncState = unit.SyncState };
 
             current.FullNameAr = newName;
+            current.FullNameEn = newNameEn;
             current.NationalId = newNid;
             current.Mobile = newMobile;
             current.College = newCollege;
@@ -1024,13 +1099,42 @@ namespace NUH_PORTAL.Services
             Line("company", read.Company, current?.College);
             Line("department", read.Department, current?.Department);
 
-            // ⚠️ بتتعرض للتوضيح بس ومابتتكتبش: في وحدات السكن القيمة بتاعتها هي
-            //    اسم الوحدة نفسها (villa08) مش اسم الساكن. لو كتبنا فيها اسم
-            //    الدكتور نبقى كسرنا عرف قايم في الدومين من غير سبب.
+            // ⚠️ ‏displayName بقى خاصية مُدارة (الاسم الإنجليزي للساكن)، لكن
+            //    سطر الفرق بيقول الحقيقة كاملة: لو مافيش اسم إنجليزي مسجَّل
+            //    عندنا فالكتابة بتتخطّاه ولا بتفضّيه. غير كده كان السطر هيقول
+            //    «هيتغيّر من فلان إلى (فارغ)» وهو مش هيحصل - ولوحة الفرق دي
+            //    كل قيمتها إنها تطابق اللي هيتنفّذ.
+            if (current == null || string.IsNullOrWhiteSpace(current.FullNameEn))
+            {
+                dto.Lines.Add(new AdDiffLineDto
+                {
+                    Attribute = "displayName",
+                    CurrentValue = read.DisplayName,
+                    NewValue = read.DisplayName,
+                    WillChange = false,
+                    Note = "لا يتغيّر - لا يوجد اسم إنجليزي مسجَّل"
+                });
+            }
+            else
+            {
+                Line("displayName", read.DisplayName, current.FullNameEn);
+            }
+
+            // ⚠️ اسم الدخول للعرض فقط: النظام مابيكتبش فيه. وبيتعرض عشان
+            //    اختلاف مقدّمته عن اسم الحساب معلومة بتفسّر أعطال دخول،
+            //    ومحدش كان بيشوفها إلا من داخل الدليل نفسه.
+            var upnLocal = (read.UserPrincipalName ?? "").Split('@')[0];
             dto.Lines.Add(new AdDiffLineDto
             {
-                Attribute = "displayName", CurrentValue = read.DisplayName, NewValue = read.DisplayName,
-                WillChange = false, Note = "لا يتغيّر - اسم الوحدة"
+                Attribute = "userPrincipalName",
+                CurrentValue = read.UserPrincipalName,
+                NewValue = read.UserPrincipalName,
+                WillChange = false,
+                Note = string.IsNullOrWhiteSpace(read.UserPrincipalName)
+                    ? "لا يتغيّر - للعرض فقط"
+                    : (string.Equals(upnLocal, unit.AdAccount, StringComparison.OrdinalIgnoreCase)
+                        ? "لا يتغيّر - للعرض فقط"
+                        : "لا يتغيّر - ومقدّمته تخالف اسم الحساب")
             });
 
             // ⚠️ النقل بين الـ OU بيبان في الفرق زي أي تغيير تاني، وقبل الكتابة.
@@ -1121,6 +1225,11 @@ namespace NUH_PORTAL.Services
                     });
             }
 
+            // ⚠️ ‏unit.AdUserPrincipalName بيتحدّث من نفس القراءة: بنقرا الحساب
+            //    أصلًا، فقيمة بايتة عندنا وإحنا ماسكين الحيّة في إيدنا مالهاش
+            //    مبرّر. والفحص (مقدّمته = اسم الحساب؟) محسوب على الموديل.
+            unit.AdUserPrincipalName = NullIfBlank(read.UserPrincipalName);
+
             var attrs = new Dictionary<string, string>
             {
                 ["description"] = current?.FullNameAr ?? "",
@@ -1129,6 +1238,17 @@ namespace NUH_PORTAL.Services
                 ["company"] = current?.College ?? "",
                 ["department"] = current?.Department ?? ""
             };
+
+            // ⚠️ ‏displayName بيتكتب **لو** عندنا اسم إنجليزي مسجَّل. القيمة
+            //    الفاضية في الكتابة بتمسح الخاصية من الدليل، والوحدات المسجّلة
+            //    قبل اعتماد الخاصية دي مالهاش اسم إنجليزي؛ فالسطر غير المشروط
+            //    كان معناه إن أول «إعادة مزامنة» تفضّي displayName عند كل
+            //    وحدة منهم - مسح بيانات في الدليل بضغطة زرّ اسمها «مزامنة».
+            // ⚠️ والتفضية المقصودة (يشيل الاسم عمدًا) مش مسار موجود أصلًا:
+            //    الاسم بيتغيّر مع الساكن، والوحدة الشاغرة بيتقفل صفّها ولا
+            //    بيتكتب فيها اسم فاضي.
+            if (current != null && !string.IsNullOrWhiteSpace(current.FullNameEn))
+                attrs["displayName"] = current.FullNameEn.Trim();
 
             var res = await _ad.SetUserExtensionAttributesAsync(dn!, attrs);
             if (!res.Success)

@@ -318,5 +318,42 @@ var NuhTable = (function () {
     };
   }
 
-  return { bind: bind, pager: pager, sort: sort };
+  // ==========================================================================
+  //  خليّة بسطرين: قيمة أساسية بارزة وثانوية رمادية تحتها.
+  //
+  //  ⚠️ ليه هنا وليه مشتركة:
+  //     الشكل ده هو قاعدة جداول النظام كلها (.tbl-2line)، وكان كل شاشة بتكتبه
+  //     بإيدها فبدأت تفترق فعلًا: قائمة الطلاب بتستعمل .cell-p للسطر الأول،
+  //     وقائمة أعضاء هيئة التدريس كانت بتستعمل .cell-p2 ومعاه صنف زيادة -
+  //     فنفس الخليّة بوزنين مختلفين في شاشتين بيتقارنوا ببعض كل يوم.
+  //     التعريف هنا، والشاشتين بينادوه.
+  //
+  //  ⚠️ والسطر الفارغ مابيتكتبش أصلًا لا بيتساب فاضي: عنصر فاضي في الشبكة
+  //     بياخد ارتفاع سطر، فالصفوف اللي ناقصها القيمة التانية بتبقى أطول من
+  //     غير سبب ظاهر.
+  //
+  //  الاستعمال:
+  //     NuhTable.two(s.full_name, s.full_name_english, { en: true })
+  //     NuhTable.two(s.student_id, s.phone, { num: true })
+  //
+  //  الخيارات:
+  //     num    أرقام بخطّ جدولي (.cell-num) - الخانات بتتراصّ تحت بعضها
+  //     en     السطر التاني لاتيني (.cell-en) - عزل اتجاهه جوّه صفحة عربية
+  //     nowrap الوحدة الواحدة ماتتكسرش على سطرين («مبنى 68»)
+  // ==========================================================================
+  function two(primary, secondary, opts) {
+    opts = opts || {};
+    var p = (primary == null ? '' : String(primary)).trim();
+    var s = (secondary == null ? '' : String(secondary)).trim();
+    if (!p && !s) return '';
+
+    var extra = (opts.num ? ' cell-num' : '') + (opts.nowrap ? ' cell-nowrap' : '');
+    var out = '';
+    if (p) out += '<div class="cell-p' + extra + '">' + escHtml(p) + '</div>';
+    if (s) out += '<div class="cell-q' + extra + (opts.en ? ' cell-en' : '') + '">' +
+                  escHtml(s) + '</div>';
+    return out;
+  }
+
+  return { bind: bind, pager: pager, sort: sort, two: two };
 })();

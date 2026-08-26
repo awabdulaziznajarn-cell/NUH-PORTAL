@@ -370,15 +370,47 @@ namespace NUH_PORTAL.Services
             return true;
         }
 
+        // ================================================================
+        //  ⚠️ بوابة الطلب الواحد - Core/RequestGate.
+        //     الفحص على المرحلة وحده لا يكفي هنا: بين قراءة المرحلة وتثبيت
+        //     المرحلة الجديدة يقع نداء الأكتف دايركتوري، وهو ثوانٍ تبقى فيها
+        //     الحالة في قاعدة البيانات كما هي. فنداء ثانٍ في تلك الثواني -
+        //     ضغطة مزدوجة أو مدير آخر على الشاشة نفسها - يمرّ من الفحص نفسه
+        //     ويُنشئ الحساب مرة ثانية للطالب الواحد.
+        //     الشرح الكامل وسبب اختيار قفل داخل العملية في RequestGate نفسه.
+        // ================================================================
         public async Task<bool> ApproveAsAdminAsync(int requestId, int adminId, string? notes = null)
+        {
+            if (!RequestGate.TryEnter(requestId)) throw RequestGate.Busy();
+            try
+            {
+                return await ApproveAsAdminInternalAsync(requestId, adminId, notes);
+            }
+            finally
+            {
+                RequestGate.Exit(requestId);
+            }
+        }
+
+        private async Task<bool> ApproveAsAdminInternalAsync(int requestId, int adminId, string? notes = null)
         {
             var request = await _context.Requests.FindAsync(requestId);
             if (request == null || request.Status != "ready_for_provisioning")
                 return false;
 
-            request.HousingReviewedBy = adminId;
-            request.HousingReviewedAt = DateTime.UtcNow;
-            request.HousingNotes = notes;
+            // ⚠️ الحقول العامة (ReviewedBy/At/Notes) لا حقول الإسكان.
+            //    كان هنا request.HousingReviewedBy/At/Notes = adminId - وهي مملوءة
+            //    من قبلُ باسم المشرف الذي راجع الإسكان فعلًا وبتاريخ مراجعته
+            //    وملاحظاته، فكانت الكتابة هنا تمحوها الثلاثة. والنتيجة أن «سجل
+            //    المراجعات» يقول إن المدير راجع الإسكان - ولم يفعل - ويختفي من
+            //    راجعه، وتضيع ملاحظاته. سلسلة المساءلة هي غرض السجل كلّه.
+            //
+            //    ونمط الملف واضح في المراحل الأخرى: كل مرحلة تكتب أعمدتها هي
+            //    زائد الأعمدة العامة (شوف ApproveAsSupervisorAsync). ومرحلة
+            //    المدير أعمدتها ReadyForProvisioning* و Completed* تحت.
+            request.ReviewedBy = adminId;
+            request.ReviewedAt = DateTime.UtcNow;
+            request.Notes = notes;
             request.ReadyForProvisioningBy = adminId;
             request.ReadyForProvisioningAt = DateTime.UtcNow;
 
@@ -391,7 +423,13 @@ namespace NUH_PORTAL.Services
                 if (!provResult.Success)
                 {
                     _logger.LogError("AD provisioning FAILED for self-registration student {Id}: {Error}", student.student_id, provResult.Error);
-                    request.Status = "ready_for_provisioning";
+
+                    // ⚠️ كان هنا سطر request.Status = "ready_for_provisioning" - وهو لا
+                    //    يفعل شيئًا: الحالة هي هي أصلًا، والفحص في أول الدالة يضمن ذلك،
+                    //    ولا شيء بينهما يغيّرها. أثرٌ باقٍ من نيّة حجز الحالة قبل نداء
+                    //    الدومين ولم تُنفَّذ، وحجزُها الآن في Core/RequestGate.
+                    //    والحفظ باقٍ: ProvisionAsync قد تكون عدّلت الطالب أو سجلاته قبل
+                    //    أن تفشل، فهذا يثبّت ما تمّ منها فعلًا.
                     await _context.SaveChangesAsync();
 
                     // ⚠️ كان بيرجّع false، والنتيجة إن المستخدم بياخد رسالة
@@ -441,9 +479,13 @@ namespace NUH_PORTAL.Services
                 return false;
 
             request.Status = "rejected";
-            request.HousingReviewedBy = adminId;
-            request.HousingReviewedAt = DateTime.UtcNow;
-            request.HousingNotes = notes;
+            // ⚠️ نفس سبب الاعتماد فوق: الأعمدة العامة لا أعمدة الإسكان.
+            //    وفائدة ثانية: بانر «سبب الرفض» في صفحة الطلب يقرأ Notes حين
+            //    تكون الحالة rejected (request-details-page.js)، فكتابة السبب
+            //    في HousingNotes كانت تعني أنه لا يصل إلى البانر أصلًا.
+            request.ReviewedBy = adminId;
+            request.ReviewedAt = DateTime.UtcNow;
+            request.Notes = notes;
 
             await _context.SaveChangesAsync();
             await _workflowService.LogTransitionAsync(requestId, "ready_for_provisioning", "rejected", adminId, notes);

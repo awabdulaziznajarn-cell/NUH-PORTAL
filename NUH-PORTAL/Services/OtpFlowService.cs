@@ -53,14 +53,17 @@ namespace NUH_PORTAL.Services
             _permissions = permissions;
         }
 
-        // ضمان وجود دور "user" وإسناده للمستخدم
+        // ضمان وجود دور الطالب وإسناده للمستخدم
+        // ⚠️ الاسم من Core/RoleNames لا نصًّا مكتوبًا هنا: نفس الدور تقرأه
+        //    AuditLogQueryService لتستثني الطلاب من قائمة الموظفين، وحرفٌ
+        //    مختلف بين الموضعين يكسر الاستثناء بلا شكوى من المترجم.
         private async Task EnsureUserRoleAsync(User user)
         {
-            if (!await _roleManager.RoleExistsAsync("user"))
-                await _roleManager.CreateAsync(new Role("user"));
+            if (!await _roleManager.RoleExistsAsync(RoleNames.Student))
+                await _roleManager.CreateAsync(new Role(RoleNames.Student));
             var roles = await _userManager.GetRolesAsync(user);
-            if (!roles.Contains("user"))
-                await _userManager.AddToRoleAsync(user, "user");
+            if (!roles.Contains(RoleNames.Student))
+                await _userManager.AddToRoleAsync(user, RoleNames.Student);
         }
 
         // Students.phone متخزّن 9665XXXXXXXX، لكن الطالب بيكتب 05XXXXXXXX في شاشة

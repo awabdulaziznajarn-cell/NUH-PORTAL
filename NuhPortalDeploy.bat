@@ -256,6 +256,10 @@ REM  لو الصفحة مش موجودة لأي سبب، بنرجع للسلوك
 REM  بدل ما ننسخ فوق موقع شغّال — النسخ ساعتها بيفشل على ملفات DLL مقفولة.
 set "usedOfflinePage=0"
 IF EXIST "%maintenancePage%" (
+  REM  ⚠️ سطر الحقوق يُولَّد من SharedResource.resx قبل النسخ - صفحة الصيانة
+  REM     يخدمها IIS والتطبيق متوقّف، فلا يصلها تعديل ملف الترجمة من نفسه.
+  REM     الفشل هنا لا يوقف النشر: الصفحة القديمة أفضل من موقع بلا صفحة صيانة.
+  powershell -NoProfile -ExecutionPolicy Bypass -File "%MainProjectPath%\_maintenance\Sync-MaintenanceCopyright.ps1"
   echo %ESC%[96mTaking site offline  -^>  %siteRoot%\app_offline.htm%ESC%[0m
   copy /Y "%maintenancePage%" "%siteRoot%\app_offline.htm" >nul
   IF NOT ERRORLEVEL 1 set "usedOfflinePage=1"

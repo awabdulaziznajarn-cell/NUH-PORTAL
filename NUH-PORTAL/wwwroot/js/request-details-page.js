@@ -625,13 +625,10 @@ function renderRequest(r) {
     // بدون ليبل، فمحدش يعرف الرقم ده بتاع إيه.
     var housingParts = [];
     if (s.housing_building) housingParts.push(tf('loc_building','مبنى','Building')+' '+escHtml(s.housing_building));
-    // الدور متخزّن كود ("0" = الأرضي) عشان الترتيب يفضل رقمي — بيتترجم هنا بس
-    if (s.floor_number !== null && s.floor_number !== undefined && s.floor_number !== '') {
-      var __fl = String(s.floor_number) === '0' ? tf('reg_optFloorGround', 'الأرضي', 'Ground') : escHtml(s.floor_number);
-      housingParts.push(tf('loc_floor', 'الدور', 'Floor') + ' ' + __fl);
-    }
-    if (s.apartment_number) housingParts.push(tf('loc_apartment','شقة','Apt')+' '+escHtml(s.apartment_number));
-    if (s.room_number) housingParts.push(tf('loc_room','غرفة','Room')+' '+escHtml(s.room_number));
+    // ⚠️ الدور والشقة والغرفة من housingUnitText في i18n.js - نفس الدالة التي
+    //    تقرأ منها قائمة الطلاب. كانت مكتوبة هنا، ونسخُها هناك كان سيفرّقهما.
+    var __unit = housingUnitText(s);
+    if (__unit) housingParts.push(escHtml(__unit));
     housingHtml = infoField(['housing_building','floor_number','apartment_number','room_number'],
       t('rdp_field_housing'), housingParts.join(' · '));
   }

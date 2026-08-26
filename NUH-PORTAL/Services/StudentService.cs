@@ -1,4 +1,4 @@
-using MapsterMapper;
+﻿using MapsterMapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using NUH_PORTAL.Common.Pagination;
@@ -132,6 +132,13 @@ namespace NUH_PORTAL.Services
                     "enabled" => query.Where(s => s.ad_status == AdStatus.enabled),
                     "disabled" => query.Where(s => s.ad_status == AdStatus.disabled),
                     "none" => query.Where(s => s.ad_status == null),
+                    // ⚠️ "missing" غير "none": الأخيرة تعني «بلا حساب» حرفيًّا فتشمل
+                    //    من غادر السكن - وحسابه أُغلق أو لم يُنشأ عمدًا، فلا شيء
+                    //    يُفعل حياله. أما "missing" فهي الحالة الشاذة وحدها:
+                    //    ساكن حالي بلا حساب، وغالبًا فشل إنشاء يحتاج متابعة.
+                    //    وهي القيمة التي تقف خلفها شارة «بلا حساب» في القائمة،
+                    //    فالشارة والفلتر يقرآن التعريف نفسه لا تعريفين متشابهين.
+                    "missing" => query.Where(s => s.ad_status == null && s.status != StudentState.left),
                     "any" => query.Where(s => s.ad_status != null),
                     _ => query
                 };

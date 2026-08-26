@@ -363,6 +363,9 @@
      كتابته هنا رقمًا ثانيًا كان يعني أن يفترق الاثنان مع أول تعديل. *@
   @* نوافذ التأكيد والتنبيه بشكل النظام — بديل confirm/alert/prompt المتصفح *@
   <script src="/js/dialog.js" asp-append-version="true"></script>
+  @* قفل الزر أثناء نداء له أثر — خط الدفاع الأول ضد الضغطة المزدوجة،
+     وخلفه بوابة الطلب في Core/RequestGate على الخادم. *@
+  <script src="/js/busy-button.js" asp-append-version="true"></script>
   <script src="/js/idle-session.js" asp-append-version="true"></script>
   <script>
     NuhIdle.start({

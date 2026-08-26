@@ -152,7 +152,8 @@ namespace NUH_PORTAL.Services
                     return user;
                 }
 
-                _logger.LogWarning("AD login failed for {Username}, IP: {ClientIp}", username, clientIp ?? "unknown");
+                _logger.LogWarning("AD login failed for {Username}, IP: {ClientIp}, subCode: {SubCode}",
+                    username, clientIp ?? "unknown", adResult.ErrorSubCode ?? "(none)");
             }
             else
             {
@@ -160,8 +161,40 @@ namespace NUH_PORTAL.Services
             }
 
             var localUser = lockedUser;
+
+            // ====================================================================
+            //  ⚠️ بوابة المسار المحلي.
+            //
+            //     المسار ده كان **موازيًا دائمًا** لا احتياطيًّا: الكود بيوصله
+            //     حتى لما الدومين يكون شغّالًا ويكون رفض نفس المحاولة بالظبط،
+            //     لأن فرع الـ AD الفاشل بيسجّل تحذيرًا ويكمّل من غير return.
+            //     النتيجة إن أي كلمة مرور محلية متحطّة على حساب موظف بتشتغل
+            //     رغم رفض الدومين لها - فالتحكّم في الهوية بينتقل من الدومين
+            //     إلى صفّ في جدول AspNetUsers. وده كمان كان بيتخطّى حالة
+            //     الحساب في الدومين نفسه (معطَّل / منتهي / مقفول / كلمة مرور
+            //     منتهية)، لأن الدومين بيرفضها كلها بنفس الشكل.
+            //
+            //     المسار المحلي مسموح الآن في ثلاث حالات وبس:
+            //       (١) الدومين غير متاح (مقفول من الإعداد أو الدائرة مفتوحة أو
+            //           تعذّر الاتصال) - وده الغرض الأصلي: دخول طوارئ.
+            //       (٢) الدومين متاح لكنه ردّ بالرمز 525 «لا يوجد مستخدم بهذا
+            //           الاسم» - يعني الحساب غير موجود عنده أصلًا فرفضه لا
+            //           يخصّ كلمة المرور.
+            //       (٣) الحساب محلي صراحةً (auth_source = "local") وهو الحساب
+            //           المُنشأ من شاشة المستخدمين بكلمة مرور - الدومين لا
+            //           يعرفه، والحالة دي احتياط لو تعذّر استخراج الرمز الفرعي.
+            //
+            //     أي حالة غير دي: الدومين قال لأ، والجواب لأ.
+            // ====================================================================
+            var localAllowed = LocalPathAllowed(adResult, localUser);
+
+            if (!localAllowed && localUser != null)
+                _logger.LogWarning(
+                    "Local password path refused for {Username}, IP: {ClientIp} - AD is reachable and rejected the credentials (subCode {SubCode}) and the account is not local (auth_source: {Source})",
+                    username, clientIp ?? "unknown", adResult.ErrorSubCode ?? "(none)", localUser.auth_source ?? "(null)");
+
             // المحذوف بيتعامل زي بيانات غلط على المسار المحلي — مافيش تفرقة تفيد مخمّن
-            if (localUser != null && !localUser.is_deleted && localUser.is_active && await _userManager.CheckPasswordAsync(localUser, password))
+            if (localAllowed && localUser != null && !localUser.is_deleted && localUser.is_active && await _userManager.CheckPasswordAsync(localUser, password))
             {
                 await _userManager.ResetAccessFailedCountAsync(localUser);
                 await AddSignInLogAsync(localUser.Id, localUser.UserName, "login_success", "local", true, null);
@@ -186,11 +219,46 @@ namespace NUH_PORTAL.Services
                 await _userManager.AccessFailedAsync(localUser);
             }
 
-            await AddSignInLogAsync(localUser?.Id, username, "login_failed", adResult.IsAdAvailable ? "ad" : "local", false, "بيانات الدخول غير صحيحة");
+            // ⚠️ السبب في السجل يفرّق بين «كلمة مرور غلط» و«الدومين رفض والمسار
+            //    المحلي ممنوع» - من غير التفرقة دي المسؤول مايعرفش إن الحساب
+            //    اتقفل عليه في الدومين نفسه لا عندنا، فيدوّر في المكان الغلط.
+            //    الرسالة للمستخدم واحدة في الحالتين عمدًا: التفصيل يفيد المخمّن.
+            var failReason = (!localAllowed && localUser != null)
+                ? $"رفض الـAD بيانات الدخول (رمز {adResult.ErrorSubCode ?? "غير معروف"}) - والمسار المحلي غير مسموح لهذا الحساب"
+                : "بيانات الدخول غير صحيحة";
+
+            await AddSignInLogAsync(localUser?.Id, username, "login_failed", adResult.IsAdAvailable ? "ad" : "local", false, failReason);
             await UnitOfWork.SaveAsync();
 
-            _logger.LogWarning("Local fallback login failed for {Username}, IP: {ClientIp}", username, clientIp ?? "unknown");
+            _logger.LogWarning("Login failed for {Username}, IP: {ClientIp} - {Reason}", username, clientIp ?? "unknown", failReason);
             throw new UserFriendlyException("اسم المستخدم أو كلمة المرور غير صحيحة", 401);
+        }
+
+        // ====================================================================
+        //  بوابة المسار المحلي - الشرح الكامل عند نقطة الاستدعاء في AuthenticateAsync
+        // ====================================================================
+
+        // الرمز الفرعي الذي يرسله الدومين حين لا يوجد مستخدم بهذا الاسم أصلًا.
+        // وهو الفرق بين «رفض كلمة المرور» و«لا أعرف هذا الحساب» - والدومين
+        // يردّ على الاثنين بنفس رمز LDAP الرئيسي (49)، فالتمييز من هنا وحده.
+        private const string AdSubCodeNoSuchUser = "525";
+
+        private const string LocalAuthSource = "local";
+
+        private static bool IsLocalAccount(User? user) =>
+            string.Equals(user?.auth_source, LocalAuthSource, StringComparison.OrdinalIgnoreCase);
+
+        private static bool LocalPathAllowed(AdAuthResult adResult, User? user)
+        {
+            // (١) الدومين غير متاح ⇒ دخول الطوارئ، وهو الغرض الأصلي من المسار
+            if (!adResult.IsAdAvailable) return true;
+
+            // (٢) الدومين متاح ويقول إنه لا يعرف هذا الاسم ⇒ رفضه لا يخصّ كلمة المرور
+            if (string.Equals(adResult.ErrorSubCode, AdSubCodeNoSuchUser, StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            // (٣) حساب محلي صراحةً من شاشة المستخدمين
+            return IsLocalAccount(user);
         }
 
         public void RecordActivity()

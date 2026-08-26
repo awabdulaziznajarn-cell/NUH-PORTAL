@@ -13,5 +13,10 @@ namespace NUH_PORTAL.Services.Interfaces
         Task<string> GetReportHtmlAsync(string? type, int? userId, string? fromDate, string? toDate, string lang, string? calendar = null);
         Task<TodayStatsDto> GetTodayStatsAsync(string? fromDate = null, string? toDate = null);
         Task<List<AuditUserOptionDto>> GetUsersAsync();
+
+        // مجموعات الإجراءات التي لهذا الموظف صفوف يراها فيها - لا كل المجموعات.
+        // excludeLoginEvents لشاشة سجل العمليات وحدها: هي تستبعد أحداث الدخول
+        // والخروج من صفوفها، فعرضهما في فلترها يعطي خيارًا لا يُنتج شيئًا.
+        Task<List<string>> GetVisibleActionGroupsAsync(bool excludeLoginEvents);
     }
 }

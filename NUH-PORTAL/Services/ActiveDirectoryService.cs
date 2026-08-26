@@ -1195,6 +1195,27 @@ try
                             //    بخطأ، والنتيجة المطلوبة متحققة سلفًا. تجاهله هنا وحده
                             //    — وبشرط isEmpty — حتى لا يبتلع خطأ كتابة حقيقيًا.
                         }
+                        catch (DirectoryOperationException ex)
+                        {
+                            // ⚠️ اسم الخاصية داخل نصّ الخطأ. الدليل بيردّ
+                            //    «insufficient access rights» بلا ما يقول على أنهي
+                            //    خاصية، والصلاحية في الدليل بتتمنح **لكل خاصية على
+                            //    حدة** - فاللي بيقرا الرسالة كان قدامه ستّ احتمالات
+                            //    وطريقة واحدة يفرّق بينها: يشيلهم واحدة واحدة ويجرّب
+                            //    على بيانات إنتاج. الاسم هنا هو كل المعلومة المطلوبة
+                            //    لكتابة سطر dsacls الصح.
+                            // ⚠️ والوقوف عند أول فشل لا الاستمرار: الخصائص اللي
+                            //    قبلها اتكتبت فعلًا، والاستمرار بعد الفشل بيخلّي
+                            //    النتيجة «نجح جزئيًّا» بلا وصف لأي جزء - والوحدة
+                            //    بتتوسم «بانتظار المزامنة» في الحالتين، والفرق إن
+                            //    الرسالة هنا بتقول إيه اللي وقف بالظبط.
+                            result.Success = false;
+                            result.Error = $"LDAP error on attribute '{key}': {ex.Message}";
+                            result.ErrorDetails = ex.Response != null
+                                ? $"Server error: {ex.Response.ErrorMessage}"
+                                : null;
+                            return result;
+                        }
                     }
 
                     result.Success = true;
@@ -1299,7 +1320,12 @@ try
                         organizationalUnitDn,
                         "(&(objectClass=user)(objectCategory=person))",
                         SearchScope.Subtree,
+                        // ⚠️ الخاصية اللي مش مطلوبة بالاسم بترجع فاضية لا غايبة:
+                        //    الـ LDAP بيرجّع المطلوب بس. displayName مصدر الاسم
+                        //    الإنجليزي في الاستيراد، و userPrincipalName بيتقرا
+                        //    لفحص تطابق مقدّمته مع اسم الحساب - قراءة بلا كتابة.
                         "distinguishedName", "sAMAccountName", "description",
+                        "displayName", "userPrincipalName",
                         "employeeID", "mobile", "company", "department",
                         "userAccountControl", "whenCreated");
 
@@ -1328,6 +1354,8 @@ try
                                 SamAccountName = GetAttributeValue(entry, "sAMAccountName") ?? "",
                                 DistinguishedName = entry.DistinguishedName,
                                 Description = GetAttributeValue(entry, "description"),
+                                DisplayName = GetAttributeValue(entry, "displayName"),
+                                UserPrincipalName = GetAttributeValue(entry, "userPrincipalName"),
                                 EmployeeId = GetAttributeValue(entry, "employeeID"),
                                 Mobile = GetAttributeValue(entry, "mobile"),
                                 Company = GetAttributeValue(entry, "company"),
@@ -1514,6 +1542,10 @@ try
         public string SamAccountName { get; set; } = string.Empty;
         public string? DistinguishedName { get; set; }
         public string? Description { get; set; }
+        // الاسم الإنجليزي للساكن — مصدر FullNameEn وقت الاستيراد
+        public string? DisplayName { get; set; }
+        // اسم الدخول الكامل — بيتقرا للفحص فقط، والنظام مابيكتبش فيه
+        public string? UserPrincipalName { get; set; }
         public string? EmployeeId { get; set; }
         public string? Mobile { get; set; }
         public string? Company { get; set; }

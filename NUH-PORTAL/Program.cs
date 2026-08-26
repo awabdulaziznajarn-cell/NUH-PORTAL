@@ -371,6 +371,32 @@ builder.Services.Configure<IpRateLimitOptions>(options =>
         new RateLimitRule { Endpoint = "POST:/api/Registration/start", Period = "1h", Limit = 10 },
         // الفحص المبكر: سخيّ بما يكفي للتصحيح الطبيعي، وضيّق بما يمنع التجريب بالجملة
         new RateLimitRule { Endpoint = "POST:/api/Registration/check-duplicate", Period = "1h", Limit = 30 },
+        // ⚠️ نقاط الفحص الصحي: مفتوحة بلا مصادقة، وكل نداء عليها **يفتح اتصالًا
+        //    بقاعدة البيانات ويستدعي وحدة التحكم بالنطاق** (CheckSqlHealthAsync
+        //    و CheckHealthAsync معًا في /api/Health و /api/Health/ready). يعني
+        //    طلب واحد رخيص على المهاجم يكلّف الخادم استعلامًا وجلسة LDAP -
+        //    وهذا تضخيم، لا مجرد حِمل. ولا يناديها إنسان أصلًا: مراقبة آلية
+        //    وحدها، وأي مراقب معقول يفحص كل دقيقة أو أقل، فعشرون في الدقيقة
+        //    سقف واسع لها وضيّق على من يكرّرها بالآلاف.
+        new RateLimitRule { Endpoint = "*:/api/Health*", Period = "1m", Limit = 20 },
+        // ⚠️ شبكة الأمان: حدّ عام على كل واجهات الـ API.
+        //
+        //    القواعد فوق تغطّي ست نقاط **بالاسم**. وأي نقطة تُضاف بعد شهر
+        //    تولد بلا حدّ ولن يتذكّرها أحد - وهذا ما حدث فعلًا مع نقاط الفحص
+        //    الصحي، ومع /Account/Login قبلها. القاعدة دي بتغطّي الموجود
+        //    والقادم معًا، والقواعد الأضيق فوقها تبقى هي الحاكمة في نقاطها.
+        //
+        //    ⚠️ /api/* لا *: الثانية تشمل ملفات CSS والخطوط والصور، وتحديث
+        //       صفحة واحد يجلب عشرات منها - فكان المطوّر نفسه يصطدم بالحدّ
+        //       وهو يضغط Ctrl+Shift+R. أما نداءات الـ API فصفحة الموظف تصدر
+        //       خمسة إلى ثمانية عند التحميل، فثلاثمائة في الدقيقة تساوي نحو
+        //       أربعين تحميل صفحة من الجهاز الواحد.
+        //
+        //    ⚠️ والعدّ لكل عنوان IP. تحقّقنا من سجل الدخول: الأجهزة تظهر
+        //       بعناوين مستقلة عبر عدّة شبكات فرعية (10.65.35.x و10.65.36.x
+        //       و10.65.38.x)، فلا NAT يجمع الموظفين في عنوان واحد. لو تغيّر
+        //       ذلك يومًا ووُضع proxy أمام المنصة، فراجع الحدّ ده أول شيء.
+        new RateLimitRule { Endpoint = "*:/api/*", Period = "1m", Limit = 300 },
     };
 });
 builder.Services.AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>();
@@ -577,7 +603,7 @@ try
 
     // إنذار مبكر: دور بلا صلاحيات معناه إن كل صفحاته هترفض المستخدم. ده بالظبط
     // اللي كان بيحصل ومحدش واخد باله، فبنسجّله في السجل بدل ما نستنى شكوى.
-    foreach (var roleName in new[] { "admin", "supervisor", "cyber" })
+    foreach (var roleName in RoleNames.Staff)
     {
         var role = await roleMgr.FindByNameAsync(roleName);
         if (role == null) { app.Logger.LogWarning("Role {Role} is missing entirely.", roleName); continue; }

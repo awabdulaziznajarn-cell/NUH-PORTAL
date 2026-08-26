@@ -48,6 +48,24 @@ function collegeName(c) { var raw = (c == null ? '' : String(c)); var db = lkNam
 function deptName(d) { var raw = (d == null ? '' : String(d)); var db = lkName('department', raw); if (db) return db; var k = DEPT_KEYS[raw.trim().toLowerCase()]; if (!k) return raw; var v = t(k); return v === k ? raw : v; }
 // المباني والمستويات: الاسم من قاعدة البيانات لو موجود، وإلا الكود الخام زي ما هو
 function buildingName(b) { var raw = (b == null ? '' : String(b)); var db = lkName('building', raw); return db ? db : raw; }
+
+// ⚠️ وصف الوحدة داخل المبنى - «الدور 3 · شقة 15 · غرفة 5». التعريف الوحيد.
+//    كان مكتوبًا في request-details-page.js وحده، ثم احتاجته قائمة الطلاب،
+//    فإمّا نسخة ثانية تفارق الأولى عند أول تعديل أو تعريف واحد هنا.
+//    ⚠️ الدور مخزَّن كودًا ("0" = الأرضي) ليبقى الفرز رقميًّا - يُترجَم هنا فقط.
+//    ⚠️ والجزء الفارغ يسقط: طالب بلا شقة يقرأ «الدور 3 · غرفة 5» لا فراغًا
+//       بين نقطتين. والناتج نصّ خام - التهريب على المُستدعي.
+function housingUnitText(s) {
+  if (!s) return '';
+  var parts = [];
+  var f = s.floor_number;
+  if (f !== null && f !== undefined && f !== '')
+    parts.push(tf('loc_floor', 'الدور', 'Floor') + ' ' +
+      (String(f) === '0' ? tf('reg_optFloorGround', 'الأرضي', 'Ground') : f));
+  if (s.apartment_number) parts.push(tf('loc_apartment', 'شقة', 'Apt') + ' ' + s.apartment_number);
+  if (s.room_number) parts.push(tf('loc_room', 'غرفة', 'Room') + ' ' + s.room_number);
+  return parts.join(' · ');
+}
 function levelName(l) { var raw = (l == null ? '' : String(l)); var db = lkName('level', raw); return db ? db : raw; }
 
 // ترقية الخلايا المرندرة من السيرفر (data-lk="college:CODE") لاسم القائمة من قاعدة البيانات لو معروف.
@@ -94,7 +112,15 @@ function __baseSetLang(l) {
       if (child && child.nodeType === Node.TEXT_NODE) child.textContent = newText;
     }
   });
-  document.querySelectorAll('[data-i18n]').forEach(function (el) { el.textContent = t(el.dataset.i18n); });
+  // ⚠️ لا نكتب المفتاح مكان النصّ لو لم يصل القاموس بعد.
+  //    كان السطر يضع t(key) دائمًا، و t() ترجّع المفتاح نفسه عند غيابه -
+  //    فلو سقطت الشبكة قبل /api/ui/i18n رأى الزائر «Brand_Copyright» مكتوبة
+  //    أمامه بدل النصّ العربي المكتوب في الـ HTML. والنصّ ده موجود في الصفحة
+  //    تحديدًا ليكون شبكة الأمان دي، فمسحه كان يلغي الغرض منه.
+  document.querySelectorAll('[data-i18n]').forEach(function (el) {
+    var v = t(el.dataset.i18n);
+    if (v !== el.dataset.i18n) el.textContent = v;
+  });
   document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) { el.placeholder = t(el.dataset.i18nPlaceholder); });
   document.querySelectorAll('[data-i18n-value]').forEach(function (el) { el.value = t(el.dataset.i18nValue); });
   document.querySelectorAll('[data-i18n-title]').forEach(function (el) { el.title = t(el.dataset.i18nTitle); });

@@ -199,9 +199,24 @@ var NuhIdle = (function () {
     if (expired && cfg.showExpiredPanel) { showExpired(); return; }
     if (typeof cfg.onLogout === 'function') { cfg.onLogout(expired); return; }
 
-    // موظف: إرسال نموذج الخروج الموجود في القائمة الجانبية (معه رمز مكافحة التزوير)
-    var f = document.querySelector('form[action="/Account/Logout"]');
-    if (f) { f.submit(); return; }
+    // ⚠️ نموذج الخروج للخروج **اليدوي** وحده. الكوكي وقتها لسه صالح، فالطلب
+    //    بيمرّ وبيتنفّذ الخروج فعلًا.
+    //
+    //    أما الانتهاء بالخمول فالكوكي بيكون انتهى قبلها بلحظة، فإرسال النموذج
+    //    بيترفض ويتحوّل على:
+    //        /Account/Login?ReturnUrl=%2FAccount%2FLogout
+    //    والمستخدم بيدخل ببياناته، وبعد نجاح الدخول صفحة الجسر بتنفّذ الرابط
+    //    ده كـ GET فيرد 405 - أو يخرّجه بمجرد ما دخل. وde كان بيحصل فعلًا في
+    //    الإنتاج، وشكله عند المستخدم: «دخلت وطلعني، وتاني مرة دخل عادي».
+    //
+    //    ⚠️ الحماية مقفولة من الناحيتين: هنا مابنبعتش النموذج أصلًا، وفي
+    //       AccountController.SafeReturnUrl مابنقبلش /Account/Logout كوجهة
+    //       رجوع مهما وصلت منين. القفلة الواحدة كانت هتسيب الباب مفتوح لأي
+    //       مسار تاني يوصّل نفس الرابط.
+    if (!expired) {
+      var f = document.querySelector('form[action="/Account/Logout"]');
+      if (f) { f.submit(); return; }
+    }
     window.location.href = '/Account/Login';
   }
 

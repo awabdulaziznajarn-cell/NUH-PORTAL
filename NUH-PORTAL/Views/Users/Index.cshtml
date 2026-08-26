@@ -81,7 +81,7 @@
     <table class="table-fixed" id="usrTable">
       <thead>
         <tr id="usrHeadRow">
-          <th style="width:56px">#</th>
+          <th style="width:56px">@SharedLocalizer["col_seq"]</th>
           <th data-sort="username" style="width:18%">@SharedLocalizer["usr_col_username"]</th>
           <th data-sort="full_name" style="width:21%">@SharedLocalizer["usr_col_fullName"]</th>
           <th class="col-staff" data-sort="email" style="width:20%">@SharedLocalizer["usr_col_email"]</th>
@@ -354,7 +354,7 @@
         // في تبويب المحذوفين مفيش إلا الاستعادة — التعديل والتفعيل على حساب مقفول
         // بيدّي إحساس إنه شغّال وهو لأ.
         if (PERM.del)
-          actions += '<button class="action-btn action-restore" onclick="restoreUser(' + u.id + ')">' + t('usr_restore') + '</button>';
+          actions += '<button class="action-btn action-restore" onclick="restoreUser(this,' + u.id + ')">' + t('usr_restore') + '</button>';
       } else {
         // ⚠️ حساب الطالب مالوش «تعديل»: بياناته بتيجي من سجل الطالب نفسه، وتعديلها
         //    من هنا هيخلّي الاتنين مختلفين. المتاح تعطيل الدخول بس.
@@ -368,14 +368,14 @@
         // ⚠️ وفي تبويب الطلاب كمان لا الموظفين بس: حساب الطالب بيتقفل بنفس
         //    الطريقة، وهو بالذات مالوش حد يتصل بيه غير الإدارة.
         if (PERM.manage && u.is_locked)
-          actions += '<button class="action-btn action-on" onclick="unlockUser(' + u.id + ')">' + t('usr_unlock') + '</button>';
+          actions += '<button class="action-btn action-on" onclick="unlockUser(this,' + u.id + ')">' + t('usr_unlock') + '</button>';
         if (PERM.manage && tab === 'staff')
           actions += '<button class="action-btn action-edit" onclick="openEdit(' + u.id + ')">' + t('usr_edit') + '</button>';
         // ⚠️ الحذف في تبويب الموظفين بس. حساب الطالب بيتعمل تلقائيًا مع كل تحقق
         //    برمز جوال، فحذفه بيرجع لوحده أول ما الطالب يقدّم طلب تاني — زرار
         //    بيوعد بحاجة النظام نفسه بيلغيها بعد دقيقة.
         if (PERM.del && tab === 'staff')
-          actions += '<button class="action-btn action-delete" onclick="deleteUser(' + u.id + ')">' + t('usr_delete') + '</button>';
+          actions += '<button class="action-btn action-delete" onclick="deleteUser(this,' + u.id + ')">' + t('usr_delete') + '</button>';
       }
 
       var middle = tab === 'students'
@@ -644,34 +644,43 @@
   // ⚠️ فكّ القفل مش نفس التفعيل: بينده endpoint تاني خالص (unlock) لأنه
   //    بيمسح LockoutEnd و AccessFailedCount بتوع Identity، مش عمود is_active.
   //    الاتنين كانوا مخلوطين في دماغ المستخدم - وde كان أول سؤال اتسأل.
-  async function unlockUser(id) {
+  // ⚠️ NuhBusy.run يقفل الزر حتى يرجع الرد - خط الدفاع الأول ضد الضغطة
+  //    المزدوجة. والقفل بعد نافذة التأكيد لا قبلها: النافذة تحجب الضغط
+  //    أصلًا، ولو قفلنا قبلها بقي الزر مقفولًا لو ألغى المستخدم.
+  async function unlockUser(btn, id) {
     if (!await NuhDialog.confirm({ message: t('usr_confirmUnlock') })) return;
-    try {
-      var res = await fetch('/api/Users/' + id + '/unlock', { method: 'POST', headers: NUH.headers() });
-      if (res.status === 401) { window.location.replace('/Account/Login'); return; }
-      if (res.ok) { loadUsers(); showToast(t('usr_unlocked')); }
-      else { var err = await res.json().catch(function () { return {}; }); showToast(err.message || t('usr_saveError'), true); }
-    } catch (e) { showToast(t('usr_saveError'), true); }
+    return NuhBusy.run(btn, async function () {
+      try {
+        var res = await fetch('/api/Users/' + id + '/unlock', { method: 'POST', headers: NUH.headers() });
+        if (res.status === 401) { window.location.replace('/Account/Login'); return; }
+        if (res.ok) { loadUsers(); showToast(t('usr_unlocked')); }
+        else { var err = await res.json().catch(function () { return {}; }); showToast(err.message || t('usr_saveError'), true); }
+      } catch (e) { showToast(t('usr_saveError'), true); }
+    });
   }
 
-  async function deleteUser(id) {
+  async function deleteUser(btn, id) {
     if (!await NuhDialog.confirm({ message: t('usr_confirmDelete'), danger: true })) return;
-    try {
-      var res = await fetch('/api/Users/' + id, { method: 'DELETE', headers: NUH.headers() });
-      if (res.status === 401) { window.location.replace('/Account/Login'); return; }
-      if (res.ok) { loadUsers(); showToast(t('usr_deleted')); }
-      else { var err = await res.json().catch(function () { return {}; }); showToast(err.message || t('usr_saveError'), true); }
-    } catch (e) { showToast(t('usr_saveError'), true); }
+    return NuhBusy.run(btn, async function () {
+      try {
+        var res = await fetch('/api/Users/' + id, { method: 'DELETE', headers: NUH.headers() });
+        if (res.status === 401) { window.location.replace('/Account/Login'); return; }
+        if (res.ok) { loadUsers(); showToast(t('usr_deleted')); }
+        else { var err = await res.json().catch(function () { return {}; }); showToast(err.message || t('usr_saveError'), true); }
+      } catch (e) { showToast(t('usr_saveError'), true); }
+    });
   }
 
-  async function restoreUser(id) {
+  async function restoreUser(btn, id) {
     if (!await NuhDialog.confirm({ message: t('usr_confirmRestore') })) return;
-    try {
-      var res = await fetch('/api/Users/' + id + '/restore', { method: 'POST', headers: NUH.headers() });
-      if (res.status === 401) { window.location.replace('/Account/Login'); return; }
-      if (res.ok) { loadUsers(); showToast(t('usr_restored')); }
-      else { var err = await res.json().catch(function () { return {}; }); showToast(err.message || t('usr_saveError'), true); }
-    } catch (e) { showToast(t('usr_saveError'), true); }
+    return NuhBusy.run(btn, async function () {
+      try {
+        var res = await fetch('/api/Users/' + id + '/restore', { method: 'POST', headers: NUH.headers() });
+        if (res.status === 401) { window.location.replace('/Account/Login'); return; }
+        if (res.ok) { loadUsers(); showToast(t('usr_restored')); }
+        else { var err = await res.json().catch(function () { return {}; }); showToast(err.message || t('usr_saveError'), true); }
+      } catch (e) { showToast(t('usr_saveError'), true); }
+    });
   }
 
   // ---------- الإضافة من الدليل ----------
@@ -704,7 +713,7 @@
           '<td>' + esc(u.displayName) + '</td>' +
           '<td>' + esc(u.samAccountName) + '</td>' +
           '<td>' + esc(u.department) + '</td>' +
-          '<td><div class="row-actions"><button class="action-btn action-edit" onclick="addFromLdap(\'' + esc(u.samAccountName) + '\')">' + t('usr_ldapAdd') + '</button></div></td>' +
+          '<td><div class="row-actions"><button class="action-btn action-edit" onclick="addFromLdap(this,\'' + esc(u.samAccountName) + '\')">' + t('usr_ldapAdd') + '</button></div></td>' +
           '</tr>';
       }).join(''), t('usr_ldapNoResults'));
     } catch (e) {
@@ -712,27 +721,33 @@
     }
   }
 
-  async function addFromLdap(sam) {
+  async function addFromLdap(btn, sam) {
     // ⚠️ بدون «إسناد الأدوار» يُضاف الموظف بالدور الافتراضي (قراءة فقط)،
     //    ويرقّيه بعدها من يملك الصلاحية. وهذا ما يفرضه الخادم أيضًا.
     var role = PERM.assign ? (document.getElementById('ldapRole').value || 'user') : 'user';
     var scope = document.getElementById('ldapScope').value || null;
-    try {
-      var res = await fetch('/api/Users/from-ldap', {
-        method: 'POST',
-        headers: Object.assign({ 'Content-Type': 'application/json' }, NUH.headers()),
-        body: JSON.stringify({ username: sam, role: role, scope_gender: scope })
-      });
-      if (res.status === 401) { window.location.replace('/Account/Login'); return; }
-      if (res.ok) {
-        closeLdap();
-        loadUsers();
-        showToast(t('usr_ldapAdded'));
-      } else {
-        var err = await res.json().catch(function () { return {}; });
-        showToast(err.message || t('usr_ldapError'), true);
-      }
-    } catch (e) { showToast(t('usr_ldapError'), true); }
+    // ⚠️ أطول نداء في هذه الشاشة: يقرأ الحساب من الأكتف دايركتوري ثم ينشئه
+    //    عندنا. والزر كان مفتوحًا طوال ذلك، فالضغطة الثانية تحاول إنشاءه
+    //    مرة أخرى - يردّها الخادم بـ 409 لكن المستخدم يرى رسالة خطأ على
+    //    عملية نجحت فعلًا.
+    return NuhBusy.run(btn, async function () {
+      try {
+        var res = await fetch('/api/Users/from-ldap', {
+          method: 'POST',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, NUH.headers()),
+          body: JSON.stringify({ username: sam, role: role, scope_gender: scope })
+        });
+        if (res.status === 401) { window.location.replace('/Account/Login'); return; }
+        if (res.ok) {
+          closeLdap();
+          loadUsers();
+          showToast(t('usr_ldapAdded'));
+        } else {
+          var err = await res.json().catch(function () { return {}; });
+          showToast(err.message || t('usr_ldapError'), true);
+        }
+      } catch (e) { showToast(t('usr_ldapError'), true); }
+    });
   }
 
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closeModal(); closeLdap(); } });

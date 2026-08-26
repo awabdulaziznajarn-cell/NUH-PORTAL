@@ -519,7 +519,29 @@ namespace NUH_PORTAL.Services
             return Mapper.Map<RequestDto>(request);
         }
 
+        // ================================================================
+        //  ⚠️ بوابة الطلب الواحد - Core/RequestGate.
+        //     الفحص على المرحلة وحده لا يكفي هنا: بين قراءة المرحلة وتثبيت
+        //     المرحلة الجديدة يقع نداء الأكتف دايركتوري، وهو ثوانٍ تبقى فيها
+        //     الحالة في قاعدة البيانات كما هي. فنداء ثانٍ في تلك الثواني -
+        //     ضغطة مزدوجة أو مدير آخر على الشاشة نفسها - يمرّ من الفحص نفسه
+        //     ويُنشئ الحساب مرة ثانية للطالب الواحد.
+        //     الشرح الكامل وسبب اختيار قفل داخل العملية في RequestGate نفسه.
+        // ================================================================
         public async Task<RequestDto> ReviewAsync(int id, ReviewDto dto)
+        {
+            if (!RequestGate.TryEnter(id)) throw RequestGate.Busy();
+            try
+            {
+                return await ReviewInternalAsync(id, dto);
+            }
+            finally
+            {
+                RequestGate.Exit(id);
+            }
+        }
+
+        private async Task<RequestDto> ReviewInternalAsync(int id, ReviewDto dto)
         {
             // ⚠️ ScopeToRole لا GetByIdAsync: الأخيرة بتتجاهل القسم، فمشرفة كانت
             //    تقدر تعتمد أو ترفض طلب طالب مش من قسمها بالمعرّف. الفحص بعدها

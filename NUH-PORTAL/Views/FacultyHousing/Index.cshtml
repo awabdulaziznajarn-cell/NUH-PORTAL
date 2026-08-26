@@ -81,6 +81,7 @@
         ["fh_StPendingSync"] = L("fh_StPendingSync"),
         ["fh_StNameDeviations"] = L("fh_StNameDeviations"),
         ["fh_StOuMismatch"] = L("fh_StOuMismatch"),
+        ["fh_StAdDisabled"] = L("fh_StAdDisabled"),
         ["fh_FlagBadName"] = L("fh_FlagBadName"),
         ["fh_FlagBadNameTitle"] = L("fh_FlagBadNameTitle"),
         ["fh_FlagImported"] = L("fh_FlagImported"),
@@ -88,10 +89,14 @@
         ["fh_FlagAdDisabled"] = L("fh_FlagAdDisabled"),
         ["fh_FlagAdDisabledTitle"] = L("fh_FlagAdDisabledTitle"),
         ["fh_FlagOuMismatch"] = L("fh_FlagOuMismatch"),
+        ["fh_FlagUpnMismatch"] = L("fh_FlagUpnMismatch"),
+        ["fh_FlagUpnMismatchTitle"] = L("fh_FlagUpnMismatchTitle"),
         ["fh_NoOccupant"] = L("fh_NoOccupant"),
         ["fh_NotAssignable"] = L("fh_NotAssignable"),
         ["fh_BtnHistory"] = L("fh_BtnHistory"),
         ["fh_BtnEdit"] = L("fh_BtnEdit"),
+        ["fh_BtnHandover"] = L("fh_BtnHandover"),
+        ["fh_BtnAssign"] = L("fh_BtnAssign"),
         ["fh_Loading"] = L("fh_Loading"),
         ["fh_Working"] = L("fh_Working"),
         ["fh_Applying"] = L("fh_Applying"),
@@ -106,9 +111,6 @@
         ["fh_LastChange"] = L("fh_LastChange"),
         ["fh_ViewFullLog"] = L("fh_ViewFullLog"),
         ["fh_NoAuditLog"] = L("fh_NoAuditLog"),
-        ["fh_ChgField"] = L("fh_ChgField"),
-        ["fh_ChgOld"] = L("fh_ChgOld"),
-        ["fh_ChgNew"] = L("fh_ChgNew"),
         ["fh_ChgEmpty"] = L("fh_ChgEmpty"),
         ["fh_NoHistory"] = L("fh_NoHistory"),
         ["fh_HistoryError"] = L("fh_HistoryError"),
@@ -153,6 +155,7 @@
         ["fh_ImpChgAdDisabled"] = L("fh_ImpChgAdDisabled"),
         ["fh_ImpChgNameOk"] = L("fh_ImpChgNameOk"),
         ["fh_ImpChgNameBad"] = L("fh_ImpChgNameBad"),
+        ["fh_ImpChgUpn"] = L("fh_ImpChgUpn"),
         ["fh_ImpIgnNameMismatch"] = L("fh_ImpIgnNameMismatch"),
         ["fh_HowItWorks"] = L("fh_HowItWorks"),
         ["fh_AccRead"] = L("fh_AccRead"),
@@ -219,6 +222,16 @@
      على حاجة متعمَّدة بيعلّم المستخدم يتجاهل اللون. */
   .fh-flag-off{background:var(--gray-100);color:var(--gray-700)}
 
+  /* ترويسة سجل الوحدة: اسم الدخول ومسار الحساب في الدليل.
+     ⚠️ الاتنين لاتينيان طويلان جوّه صفحة عربية، فالعزل الاتجاهي شرط لا زينة:
+        من غيره بتتقدّم اللاحقة على المقدّمة وتتقرا الحاجة بالمقلوب.
+     ⚠️ وde بدل style مكتوب جوه السكربت: القيمة كانت مكتوبة في نصّ HTML
+        داخل faculty-housing-page.js، فتنسيق الترويسة كان في ملفين. */
+  .fh-upn{font-family:Consolas,'Courier New',monospace;font-size:11.5px;color:var(--gray-700);
+          direction:ltr;unicode-bidi:isolate;display:inline-block;word-break:break-all}
+  .fh-dn-inline{font-family:Consolas,'Courier New',monospace;font-size:10.5px;color:var(--gray-500);
+                direction:ltr;unicode-bidi:isolate;display:inline-block;word-break:break-all}
+
   /* الاستيراد */
   .fh-imp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-bottom:16px}
   .fh-ou{border:1px solid var(--gray-200);border-radius:12px;padding:13px 15px;background:var(--gray-50)}
@@ -233,18 +246,10 @@
   .fh-attr.y{background:var(--green-light);color:var(--green)}
   .fh-attr.n{background:var(--red-light);color:var(--red)}
 
-  /* شريط المزامنة — فوق القائمة، ويفتح في مكانه */
-  .fh-sync{background:var(--white);border:1px solid #c6ecd6;border-radius:16px;margin-bottom:20px;overflow:hidden;
-           box-shadow:0 2px 8px rgba(16,70,49,.05)}
-  .fh-sync-bar{padding:11px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;
-               flex-wrap:wrap;background:var(--tint)}
-  .fh-sync-ttl{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:700;color:var(--navy-dark)}
-  .fh-sync-btns{display:flex;gap:9px;align-items:center}
-  .fh-sync-x{background:none;border:none;font-size:21px;line-height:1;color:var(--gray-500);cursor:pointer;
-             padding:1px 8px;border-radius:8px;font-family:inherit}
-  .fh-sync-x:hover{background:var(--gray-100);color:var(--navy-dark)}
-  .fh-sync-x:focus-visible{outline:2px solid var(--gold-ink);outline-offset:2px}
-  .fh-sync-panel{padding:16px 18px;border-top:1px solid #c6ecd6}
+  /* ⚠️ شريط المزامنة (.fh-sync*) اتنقل لـ css/components.css - تعريف واحد
+        يخدمه ولوحة «إدارة حسابات الإسكان» معًا، بعد ما كانوا نسختين
+        مختلفتين لنفس الفكرة: واحدة رأسها أخضر فاتح والتانية أزرق كامل.
+        الشرح كامل هناك. */
 
   /* نتيجة فحص الصلاحيات — خلاصة ثم جدول */
   .fh-verdict{display:flex;align-items:center;gap:10px;padding:11px 15px;border-radius:12px;
@@ -321,6 +326,8 @@
   .tl-item.now .tl-card{border-color:#a9efc5;background:#f3fcf6}
   .tl-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:5px}
   .tl-top b{font-size:14px;color:var(--navy-dark)}
+  /* الاسم الإنجليزي تحت العربي - عزل الاتجاه من .cell-en في site.css */
+  .tl-en{font-size:11.5px;font-weight:500;color:var(--gray-500);line-height:1.6;margin-top:-2px}
   /* صفوف بيانات الشاغل: عنوان ثابت + قيمة، بدل فقرة نصّ متصلة */
   .oc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:4px 18px;margin-top:8px}
   .oc-row{display:flex;align-items:baseline;gap:8px;padding:3px 0;min-width:0}
@@ -340,11 +347,14 @@
   .fh-tab-rep{margin-inline-start:auto;align-self:center;background:var(--navy);color:#fff;font-size:12px;
     font-weight:700;padding:6px 13px;border-radius:8px;text-decoration:none;margin-bottom:6px}
   .fh-tab-rep:hover{background:var(--navy-dark);color:#fff}
-  /* ⚠️ .ch-item و.ch-top و.ch-act و.ch-meta و.fh-modal* اتشالوا من هنا
-     لـ css/components.css: بقوا مستعملين في شاشة «تغيير بيانات ساكن» كمان،
-     ونسختين لنفس البند كانوا هيفترقوا عند أول تعديل.
-     وجدول التغييرات وقيمه (.chg-tbl و.chg-old و.chg-new) كانوا اتنقلوا قبل
-     كده لنفس السبب — نفس المكوّن اللي بيستخدمه تفاصيل الطلب وسجل العمليات.
+  /* ⚠️ ‏.fh-modal* اتشالوا من هنا لـ css/components.css: بقوا مستعملين في
+     شاشة «تغيير بيانات ساكن» كمان، ونسختين لنفس النافذة كانوا هيفترقوا عند
+     أول تعديل.
+     ⚠️ وبطاقة البند (.ch-*) وجدول التغييرات (.chg-tbl) اتشالوا خالص: تبويب
+     «التعديلات» بقى خطّ زمني (.nuh-tl) زي تبويب «الشاغلون» جنبه وزي سجل
+     إجراءات حساب الطالب - شكل واحد لنفس السؤال في التلات مواضع.
+     وقيم التغيير (.chg-old و.chg-new) باقية في components.css وهي نفس
+     المكوّن اللي بيستخدمه تفاصيل الطلب.
      واللون الأحمر للقيمة القديمة اتشال لأن الأحمر معناه «خطأ» في النظام
      وده تعديل صحيح مش غلط. */
   .tl-meta{font-size:12px;color:var(--gray-500);line-height:1.95}
@@ -416,19 +426,29 @@
     </div>
   </div>
   <div style="overflow-x:auto">
-    <table id="fhTable">
+    @* tbl-2line: محاذاة البداية للخلايا و«.num» في الوسط - نفس قاعدة قائمة الطلاب *@
+    <table id="fhTable" class="tbl-2line">
+      @* ⚠️ ثمانية أعمدة صارت سبعة - نفس قاعدة قائمة الطلاب: كل خلية بسطرين،
+         أساسي غامق وثانوي رمادي.
+         ⚠️ والهوية والجوال عمود **واحد** بسطرين لا عمودان، تمامًا كعمود
+            «الرقم الجامعي والجوال» في قائمة الطلاب - فالشاشتان تُقرآن بالطريقة
+            نفسها. وترتيب الجدول بالهوية الوطنية باقٍ على العمود المدمج.
+         ⚠️ والشارات (مستورد · اسم مخالف · مُعطَّل) نزلت تحت حساب الدومين لا
+            بجانبه، فلا تدفع الحساب بعيدًا عن حافة العمود. *@
       <thead>
         <tr>
-          @* ⚠️ «الجوال» و«إجراءات» بلا data-sort: الجوال بيتقرا مش بيتبحث
-             بيه ترتيبًا، و«إجراءات» مش بيانات أصلًا. *@
+          @* ⚠️ عمود التسلسل بلا data-sort: ترقيم موضع لا بيانات، والترتيب
+             عليه لا معنى له - هو نفسه يتغيّر مع كل ترتيب. ونفس المفتاح
+             المشترك (col_seq) المستعمل في قائمة الطلاب وإدارة الحسابات. *@
+          <th class="num">@SharedLocalizer["col_seq"]</th>
+          @* ⚠️ «إجراءات» بلا data-sort: ليست بيانات أصلًا. *@
           <th data-sort="unit">@SharedLocalizer["fh_ColUnit"]</th>
-          <th data-sort="ad_account">@SharedLocalizer["fh_ColAccount"]</th>
           <th data-sort="occupant">@SharedLocalizer["fh_ColOccupant"]</th>
-          <th data-sort="national_id">@SharedLocalizer["fh_ColNationalId"]</th>
-          <th>@SharedLocalizer["fh_ColMobile"]</th>
+          <th data-sort="national_id">@SharedLocalizer["fh_ColIdMobile"]</th>
+          <th data-sort="ad_account">@SharedLocalizer["fh_ColAccount"]</th>
           <th data-sort="since">@SharedLocalizer["fh_ColSince"]</th>
           <th data-sort="status">@SharedLocalizer["fh_ColStatus"]</th>
-          <th>@SharedLocalizer["fh_ColActions"]</th>
+          <th class="num">@SharedLocalizer["fh_ColActions"]</th>
         </tr>
       </thead>
       <tbody id="fhBody">

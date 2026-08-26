@@ -138,9 +138,11 @@ NuhCode.gate({ button: 'verifyOtpBtn', fields: [{ input: 'otpInput', length: 6, 
 
 NuhPhone.attach({
   input: 'mobileInput', wrap: 'phoneField', hint: 'phoneHint', button: 'sendOtpBtn',
+  // ⚠️ دوال لا نصوص: القاموس يصل بعد تحميل السكربت، فالنداء هنا كان يجمّد
+  //    المفتاح الخام («pt_phStart5») ويعرضه للطالب مكان التنبيه.
   messages: {
-    start:  t('pt_phStart5'),
-    length: t('pt_phLen9')
+    start:  function () { return t('pt_phStart5'); },
+    length: function () { return t('pt_phLen9'); }
   }
 });
 
@@ -324,5 +326,6 @@ function startTimer() {
   }, 1000);
 }
 </script>
+<script src="/js/site-footer.js"></script>
 </body>
 </html>

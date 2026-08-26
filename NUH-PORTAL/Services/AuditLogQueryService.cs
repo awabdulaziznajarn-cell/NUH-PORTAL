@@ -268,7 +268,7 @@ namespace NUH_PORTAL.Services
             {
                 if (string.IsNullOrWhiteSpace(role)) continue;
                 if (string.Equals(role, myRole, StringComparison.OrdinalIgnoreCase)) continue;
-                if (string.Equals(role, "user", StringComparison.OrdinalIgnoreCase)) continue;   // الطلاب
+                if (RoleNames.IsStudent(role)) continue;   // الطلاب - انظر Core/RoleNames
 
                 var users = await _userManager.GetUsersInRoleAsync(role);
                 hidden.AddRange(users.Select(u => u.Id));
@@ -779,11 +779,50 @@ tr:nth-child(even){{background:#f5f5f6}}
                 ? new List<int>()
                 : await HiddenActorIdsAsync();
 
+            // ================================================================
+            //  ⚠️ الموظفون وحدهم في هذه القائمة، لا الطلاب.
+            //
+            //     كانت ترجع كل حساب نشط، وحساب الطالب يُنشأ لحظة تحقّقه برمز
+            //     جواله - فامتلأت القائمة بأسماء الطلاب، وبأربعة صفوف اسمها
+            //     «طالب» (الاسم المؤقّت قبل أن يُرقّى عند تقديم الطلب). ومع
+            //     دفعة قبول كاملة تصير القائمة بالآلاف، فتفقد معناها: هي
+            //     مُعدّة لسؤال «ماذا فعل هذا الموظف؟» لا لتصفّح الطلاب.
+            //
+            //     والشرط بمعرّف دور الطالب وحده لا بقائمة أدوار الموظفين:
+            //     الأول وسيط واحد يترجمه EF إلى EXISTS على المفتاح الأساسي لـ
+            //     AspNetUserRoles، والثاني قائمة تصير OPENJSON بمنحة ذاكرة
+            //     مبالغ فيها - وهي العلّة نفسها الموصوفة في ScopedAsync.
+            //
+            //     ⚠️ والشرط مكتوب «ليس طالبًا **صرفًا**» لا «هو موظف»:
+            //        • حساب له دورا موظف وطالب معًا (حساب المطوّر) يظهر.
+            //        • وحساب بلا أي دور يظهر - وهو الأهمّ: لو خلا جدول
+            //          الأدوار من صفوف الموظفين لسبب ما، فالقائمة تعود كما
+            //          كانت لا فارغة. شرطٌ يُخفي بالخطأ كلَّ الموظفين أسوأ
+            //          من شرطٍ يُظهر حسابًا زائدًا.
+            //
+            //     ⚠️ وصفوف الطلاب تبقى في الجدول: تقديم الطلب ودخول الطالب
+            //        عمليات حقيقية في السجل، وإخفاؤها يُفرغ تقرير «تسجيل
+            //        الدخول» ويُنقص العدّادات. المخفيّ هو اسم الطالب من
+            //        **خانة التصفية** وحدها، والبحث بالاسم لا يزال يجده.
+            // ================================================================
+            var studentRoleId = await _db.Roles
+                .Where(r => r.Name == RoleNames.Student)
+                .Select(r => r.Id)
+                .FirstOrDefaultAsync();
+
+            var query = _users.Query().AsNoTracking().Where(u => u.is_active);
+
+            // studentRoleId = 0 يعني أن الدور غير موجود أصلًا - فلا تصفية،
+            // وهو أأمن من إفراغ القائمة على من ينشئ قاعدة بيانات جديدة.
+            if (studentRoleId != 0)
+                query = query.Where(u =>
+                    !_db.UserRoles.Any(ur => ur.UserId == u.Id)
+                    || _db.UserRoles.Any(ur => ur.UserId == u.Id && ur.RoleId != studentRoleId));
+
             // نفس سبب ScopedAsync: قائمة كوسيط تعني OPENJSON ومنحة ذاكرة مبالغًا
             // فيها. العدد صغير، فالتصفية في الذاكرة بعد جلب الموظفين أرخص وأثبت.
             var hiddenSet = hidden.ToHashSet();
-            var all = await _users.Query().AsNoTracking()
-                .Where(u => u.is_active)
+            var all = await query
                 .Select(u => new AuditUserOptionDto
                 {
                     Id = u.Id,
@@ -793,6 +832,61 @@ tr:nth-child(even){{background:#f5f5f6}}
                 .ToListAsync();
 
             return all.Where(u => !hiddenSet.Contains(u.Id)).ToList();
+        }
+
+        // ====================================================================
+        //  مجموعات الإجراءات التي يراها هذا الموظف فعلًا.
+        //
+        //  ⚠️ لماذا تُحسب من الصفوف لا من جدول «دور -> مجموعات» مكتوب بالإيد:
+        //     النطاق نفسه محسوم أصلًا في ScopedAsync - من لا يملك
+        //     auditLogs.viewAll لا يرى صفوف موظفي الإدارات الأخرى. فالسؤال
+        //     «أيّ مجموعة يراها؟» له جواب واحد صحيح: التي بقي له فيها صفّ.
+        //     وجدول أدوار مكتوب بالإيد كان سيصير المصدر الثاني للحقيقة، ويفترق
+        //     عن النطاق الحقيقي أول ما يُضاف دور أو إجراء - وهي العلّة نفسها
+        //     التي أخرجت هذه القائمة من الواجهة إلى هنا.
+        //
+        //  ⚠️ ونتيجته أن المجموعة تختفي إذا خلا نطاق الموظف منها تمامًا. وهذا
+        //     مقصود: خيار لا يُنتج صفًّا واحدًا ليس خيارًا، هو طريق مسدود
+        //     يبدو صالحًا.
+        //
+        //  ⚠️ والتخزين دقيقة بمفتاح (الدور + viewAll + استبعاد الدخول): القائمة
+        //     تتغيّر ببطء شديد، والاستعلام DISTINCT على عمود action لكل فتحة
+        //     للشاشة بلا داعٍ. ونفس مدّة ScopeCacheFor حتى لا يكون في الشاشة
+        //     رقمان بعمرين.
+        // ====================================================================
+        private const string GroupsCachePrefix = "auditgroups::";
+
+        public async Task<List<string>> GetVisibleActionGroupsAsync(bool excludeLoginEvents)
+        {
+            var role    = UnitOfWork.GetCurrentUserRole() ?? "";
+            var viewAll = UnitOfWork.HasPermission(ApplicationPermissions.ViewAllAuditLogs.Value);
+            var key     = GroupsCachePrefix + role.ToLowerInvariant()
+                        + "|" + (viewAll ? "1" : "0")
+                        + "|" + (excludeLoginEvents ? "1" : "0");
+
+            if (_cache.TryGetValue(key, out List<string>? cached) && cached != null)
+                return cached;
+
+            var q = await ScopedAsync();
+
+            // نفس استبعاد ApplyAllFiltersAsync حرفًا بحرف - وإلا عرض الفلتر
+            // مجموعةً تستبعدها الشاشة عند الجلب.
+            if (excludeLoginEvents)
+                q = q.Where(a => a.action == null || !LoginActions.Contains(a.action));
+
+            var present = await q.Where(a => a.action != null)
+                                 .Select(a => a.action!)
+                                 .Distinct()
+                                 .ToListAsync();
+
+            var set = new HashSet<string>(present, StringComparer.OrdinalIgnoreCase);
+
+            var result = AuditActionGroups.Keys
+                .Where(k => AuditActionGroups.ByKey(k).Any(a => set.Contains(a)))
+                .ToList();
+
+            _cache.Set(key, result, ScopeCacheFor);
+            return result;
         }
 
         // ----------------------------- Helpers -----------------------------

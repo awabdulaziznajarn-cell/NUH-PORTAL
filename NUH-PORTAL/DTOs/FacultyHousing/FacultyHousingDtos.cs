@@ -71,6 +71,12 @@ namespace NUH_PORTAL.DTOs.FacultyHousing
 
         // اللي مكتوب في الدومين دلوقتي
         public string? Description { get; set; }
+        // ⚠️ ‏AdDisplayName لا DisplayName: الحقل اللي فوق اسم **الوحدة**
+        //    المعروض («برج 1 - شقة 3»)، وده اسم **الساكن** بالإنجليزي كما هو
+        //    في الدليل. الاسمان المتشابهان في نفس الكائن كانا هيتبدّلوا في أول
+        //    تعديل، والقيمتان مختلفتان تمامًا في المعنى.
+        public string? AdDisplayName { get; set; }
+        public string? AdUserPrincipalName { get; set; }
         public string? EmployeeId { get; set; }
         public string? Mobile { get; set; }
         public string? Company { get; set; }
@@ -124,6 +130,8 @@ namespace NUH_PORTAL.DTOs.FacultyHousing
         // الساكن الحالي — null يعني الوحدة شاغرة
         public int? OccupancyId { get; set; }
         public string? OccupantName { get; set; }
+        // الاسم الإنجليزي - يُعرض سطرًا ثانيًا تحت العربي في الجدول
+        public string? OccupantNameEn { get; set; }
         public string? OccupantNationalId { get; set; }
         public string? OccupantMobile { get; set; }
         public Gender? OccupantGender { get; set; }
@@ -140,6 +148,12 @@ namespace NUH_PORTAL.DTOs.FacultyHousing
         //    الرقم نفسه هو اللي يقرّر: نسيب التقسيم ولا ندمج.
         public bool OuGenderMismatch { get; set; }
         public string? OuGenderMismatchNote { get; set; }
+
+        // اسم الدخول الكامل في الدليل، وهل مقدّمته تطابق اسم الحساب.
+        // ⚠️ المطابقة true لمّا يكون الـ UPN غير مقروء أصلًا: «ما قريناهوش»
+        //    ليست «مخالف»، وشارة مخالفة على وحدة سليمة أسوأ من غياب الشارة.
+        public string? AdUserPrincipalName { get; set; }
+        public bool UpnMatchesAccount { get; set; } = true;
     }
 
     public class FacultyUnitsPageDto
@@ -155,6 +169,12 @@ namespace NUH_PORTAL.DTOs.FacultyHousing
         public int PendingSync { get; set; }
         public int NameDeviations { get; set; }
         public int OuMismatches { get; set; }
+        // ⚠️ عدّاد استثناء زي PendingSync: حساب الوحدة المفروض يفضل مُفعَّلًا.
+        //    التعطيل بيحصل من الدليل بره النظام (إدارة الدومين أو الأمن
+        //    السيبراني)، والنظام بيعرفه من كل مزامنة وبيخزّنه - وكان بيبان
+        //    كشارة في الصفّ بس، يعني تلاقيه لو بصّيت على الصفّ ولا تعرف
+        //    العدد ولا توصل لهم إلا بالتمرير على ٢٤٢ وحدة.
+        public int AdDisabled { get; set; }
         // أرقام الأبراج الموجودة فعلًا — لملء قائمة الفلتر
         public List<int> Towers { get; set; } = new();
         public int Page { get; set; }
@@ -187,6 +207,7 @@ namespace NUH_PORTAL.DTOs.FacultyHousing
     {
         public int Id { get; set; }
         public string FullNameAr { get; set; } = string.Empty;
+        public string? FullNameEn { get; set; }
         public Gender? Gender { get; set; }
         public string? NationalId { get; set; }
         public string? Mobile { get; set; }
@@ -255,6 +276,8 @@ namespace NUH_PORTAL.DTOs.FacultyHousing
 
         // الساكن الجديد — مطلوب في NewService و ChangeOccupant
         public string? FullNameAr { get; set; }
+        // اختياري: الوحدات المستوردة قبل اعتماد displayName مالهاش اسم إنجليزي
+        public string? FullNameEn { get; set; }
         public Gender? Gender { get; set; }
         public string? NationalId { get; set; }
         public string? Mobile { get; set; }

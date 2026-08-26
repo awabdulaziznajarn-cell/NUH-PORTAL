@@ -57,7 +57,12 @@ var NuhPhone = (function () {
   //   wrap    الحاوية اللي بتتلوّن (تاخد class ok / bad)
   //   hint    عنصر نص التنبيه
   //   button  زر يتقفل لحد ما الرقم يصح
-  //   messages { start, length }
+  //   messages { start, length } — نصّ أو **دالة تُرجع نصًّا**.
+  //
+  //   ⚠️ الدالة ليست ترفًا: صفحات بوابة الطالب تجيب قاموس الترجمة بـ fetch
+  //      بعد تحميل السكربت، فأي t('...') يُنادى وقت بناء الكائن يرجع المفتاح
+  //      الخام ويتجمّد فيه. تمرير دالة يؤجّل الترجمة إلى لحظة عرض التنبيه -
+  //      وهي دائمًا بعد وصول القاموس لأنها تتبع كتابة المستخدم.
   //   onChange(digits, valid)
   function attach(opts) {
     opts = opts || {};
@@ -81,7 +86,8 @@ var NuhPhone = (function () {
         wrap.classList.toggle('bad', !!kind);
       }
       if (hint) {
-        hint.textContent = kind ? (msg[kind] || msg.start || '') : '';
+        var m = kind ? (msg[kind] || msg.start || '') : '';
+        hint.textContent = typeof m === 'function' ? (m() || '') : m;
         hint.classList.toggle('show', !!kind);
       }
       if (btn) {

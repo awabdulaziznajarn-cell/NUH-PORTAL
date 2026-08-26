@@ -1,8 +1,26 @@
-@model NUH_PORTAL.ViewModels.StudentsIndexViewModel
+﻿@model NUH_PORTAL.ViewModels.StudentsIndexViewModel
 @{
     ViewData["Title"] = SharedLocalizer["Page_Students"].Value;
     // الأزرار بتتحكّم فيها الصلاحية مش الدور — والفحص الحقيقي على السيرفر
     // (StudentsController + StudentService)؛ ده إخفاء واجهة بس.
+    // ⚠️ نظير housingUnitText في wwwroot/i18n.js حرفًا بحرف - «الدور 3 · شقة 15 · غرفة 5».
+    //    الصفّ يُرسَم مرتين في هذه الشاشة: من الخادم عند أول فتح، ومن الجافاسكربت
+    //    عند كل بحث أو انتقال صفحة. فالنسختان ضرورة في هذا الجدول (كل خلية فيه
+    //    كذلك)، والمشترك بينهما نصوص loc_* من ملف الترجمة - لا صيغة مكتوبة مرتين.
+    //    ⚠️ والدور مخزَّن كودًا ("0" = الأرضي) ليبقى الفرز رقميًّا - يُترجَم هنا فقط.
+    Func<NUH_PORTAL.DTOs.Students.StudentDto, string> HousingUnit = st =>
+    {
+        var parts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(st.floor_number))
+            parts.Add(SharedLocalizer["loc_floor"].Value + " " +
+                (st.floor_number == "0" ? SharedLocalizer["reg_optFloorGround"].Value : st.floor_number));
+        if (!string.IsNullOrWhiteSpace(st.apartment_number))
+            parts.Add(SharedLocalizer["loc_apartment"].Value + " " + st.apartment_number);
+        if (!string.IsNullOrWhiteSpace(st.room_number))
+            parts.Add(SharedLocalizer["loc_room"].Value + " " + st.room_number);
+        return string.Join(" · ", parts);
+    };
+
     var canEdit = User.HasClaim("permission", "students.edit");
     var canDelete = User.HasClaim("permission", "students.delete");
 
@@ -91,27 +109,40 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         </span>
       </div>
+      @* ⚠️ الرقاقة مخفيّة حتى يصل عددها من الخادم: رقاقة بعدّاد فارغ تُقرأ
+         كأنها معطوبة، ورقاقة بعدد صفر تشغل مكانًا بلا فائدة. *@
+      <button type="button" class="fchip" id="noAccChip" hidden onclick="toggleNoAccount()"
+              title='@(SharedLocalizer["stu_noAdAccountTitle"].Value)'>
+        <span>@SharedLocalizer["stu_filterNoAccount"]</span><span class="n" id="noAccCount">0</span>
+      </button>
       <a class="btn btn-primary" href="/Register" >@SharedLocalizer["stu_addNew"]</a>
     </div>
   </div>
 
   <div style="overflow-x:auto">
-    <table id="stuTable">
+    @* ⚠️ .tbl-2line: خليّة بسطرين - قيمة أساسية بارزة وثانوية رمادية تحتها.
+       كان الجدول ثلاثة عشر عمودًا يتزحلق أفقيًّا، وفيه ثلاثة أعمدة أرقام
+       متجاورة بنفس الشكل (الرقم الجامعي والهوية والجوال) فالعين تعيد قراءة
+       الترويسة في كل صفّ. والاسم العربي والإنجليزي كان بينهما أربعة أعمدة
+       مع أنهما الحقيقة نفسها بلغتين.
+       والهوية الوطنية خرجت من القائمة إلى شاشة التعديل - وهي فيها أصلًا:
+       رقم هوية معروض كاملًا لكل طالب على شاشة مكتب لا داعي له، والنظام
+       يقنّعه فعلًا في شاشة سكن أعضاء هيئة التدريس. *@
+    <table id="stuTable" class="tbl-2line">
       <thead>
         <tr>
-          <th>#</th>
-          <th data-sort="full_name">@SharedLocalizer["stu_col_name"]</th>
-          <th data-sort="student_id">@SharedLocalizer["stu_col_studentId"]</th>
-          <th >@SharedLocalizer["stu_col_nationalId"]</th>
-          <th >@SharedLocalizer["stu_col_phone"]</th>
-          <th data-sort="college">@SharedLocalizer["stu_col_college"]</th>
-          <th >@SharedLocalizer["stu_col_level"]</th>
-          <th >@SharedLocalizer["stu_col_nameEn"]</th>
-          <th >@SharedLocalizer["stu_col_building"]</th>
-          <th >@SharedLocalizer["stu_col_room"]</th>
-          <th >@SharedLocalizer["stu_col_academic"]</th>
+          @* ⚠️ ترقيم صفوف لا رقم بيانات: بيعدّ ١، ٢، ٣ ويكمل عبر الصفحات،
+             ومالوش أي معنى خارج الشاشة. عشان كده «م» (مسلسل) لا «الرقم» -
+             و«الرقم» كانت هتتلبّس بعمود «الرقم الجامعي» اللي جنبها مباشرة.
+             و«م» هي الاصطلاح المستعمل في النظام أصلًا: تصدير سجل العمليات
+             بيسمّي عمود التسلسل بيها (aud_xl_no). *@
+          <th class="num">@SharedLocalizer["col_seq"]</th>
+          <th data-sort="full_name">@SharedLocalizer["stu_col_student"]</th>
+          <th data-sort="student_id">@SharedLocalizer["stu_col_idPhone"]</th>
+          <th data-sort="college">@SharedLocalizer["stu_col_collegeLevel"]</th>
+          <th >@SharedLocalizer["stu_col_housing"]</th>
           <th data-sort="status">@SharedLocalizer["stu_col_status"]</th>
-          <th >@SharedLocalizer["stu_col_actions"]</th>
+          <th class="num">@SharedLocalizer["stu_col_actions"]</th>
         </tr>
       </thead>
       <tbody id="studentsBody">
@@ -120,28 +151,50 @@
         {
           i++;
           <tr>
-            <td>@i</td>
-            <td>@s.full_name</td>
-            <td>@s.student_id</td>
-            <td>@s.national_id</td>
-            <td>@s.phone</td>
-            <td data-lk="college:@s.college">@CollegeName(s.college)</td>
-            <td data-lk="level:@s.academic_level">@s.academic_level</td>
-            <td>@s.full_name_english</td>
-            <td data-lk="building:@s.housing_building">@s.housing_building</td>
-            <td>@s.room_number</td>
-            <td><span>@StudentStatusText(s.student_status)</span></td>
+            <td class="num">@i</td>
             <td>
-              @if (s.status == StudentState.left)
-              {
-                <span class="badge badge-left" >@SharedLocalizer["stu_badge_left"]</span>
-              }
-              else
-              {
-                <span class="badge badge-active" >@ResidentText(s.gender)</span>
-              }
+              @* ⚠️ الرسمة الأولى من الخادم، وما بعدها من NuhTable.two في
+                 السكربت تحت. الأصناف هنا لازم تفضل مطابقة لها بالحرف -
+                 وإلا اختلف شكل الصفحة الأولى عن باقي الصفحات. *@
+              <div class="cell-p">@s.full_name</div>
+              <div class="cell-q cell-en">@s.full_name_english</div>
             </td>
             <td>
+              <div class="cell-p cell-num">@s.student_id</div>
+              <div class="cell-q cell-num">@s.phone</div>
+            </td>
+            <td>
+              <div class="cell-p2" data-lk="college:@s.college">@CollegeName(s.college)</div>
+              <div class="cell-q" data-lk="level:@s.academic_level">@s.academic_level</div>
+            </td>
+            <td>
+              <div class="cell-p2 cell-nowrap" data-lk="building:@s.housing_building">@s.housing_building</div>
+              <div class="cell-q cell-nowrap">@HousingUnit(s)</div>
+            </td>
+            @* ⚠️ الشارتان على سطر واحد داخل .status-cell: النزول سطرًا ثانيًا
+               كان يطيل الصفّ وحده فينكسر انتظام الجدول. ولهذا النصّ قصير.
+               والشرط هو نفسه الذي يقف خلف الفلتر (adStatus=missing): ساكن
+               حالي بلا حساب. من غادر لا شارة له - حسابه أُغلق عن قصد. *@
+            <td>
+              <div>
+                <span class="status-cell">
+                  @if (s.status == StudentState.left)
+                  {
+                    <span class="badge badge-left" >@SharedLocalizer["stu_badge_left"]</span>
+                  }
+                  else
+                  {
+                    <span class="badge badge-active" >@ResidentText(s.gender)</span>
+                    @if (s.ad_status == null)
+                    {
+                      <span class="badge badge-noacc" title='@(SharedLocalizer["stu_noAdAccountTitle"].Value)'>@SharedLocalizer["stu_noAdAccount"]</span>
+                    }
+                  }
+                </span>
+              </div>
+              <div class="cell-q">@StudentStatusText(s.student_status)</div>
+            </td>
+            <td class="num">
               <div class="row-actions">
                 @if (canEdit)
                 {
@@ -455,15 +508,47 @@
     pageSize: @Model.Page.PageSize,
     totalPages: @Model.Page.TotalPages,
     total: @Model.Page.TotalCount,
-    filter: NuhUrl.get('q', '')
+    filter: NuhUrl.get('q', ''),
+    // فلتر «بلا حساب» في الرابط كباقي الفلاتر: الصفحة تُشارَك وتُحدَّث فتعود بحالتها
+    noAccount: NuhUrl.get('noacc', '') === '1'
   };
-  var STATE_DEFAULTS = { page: 1, q: '', sort: '', asc: '' };
+  var STATE_DEFAULTS = { page: 1, q: '', sort: '', asc: '', noacc: '' };
 
   function syncUrl() {
     NuhUrl.sync({
       page: state.page, q: state.filter,
-      sort: stuSort.by(), asc: stuSort.by() ? (stuSort.asc() ? '1' : '0') : ''
+      sort: stuSort.by(), asc: stuSort.by() ? (stuSort.asc() ? '1' : '0') : '',
+      noacc: state.noAccount ? '1' : ''
     }, STATE_DEFAULTS);
+  }
+
+  // ====================================================================
+  //  فلتر «بلا حساب شبكة»
+  //  ⚠️ الفلترة على الخادم لا في المتصفح: الجدول مقسّم صفحات، وفلترةٌ هنا
+  //     كانت ستفلتر الصفحة المعروضة وحدها وتسمّيها «كل من بلا حساب».
+  //     والقيمة adStatus=missing معرَّفة في StudentService، وهي نفسها التي
+  //     تحكم ظهور الشارة - تعريف واحد لا اثنان متشابهان.
+  // ====================================================================
+  function toggleNoAccount() {
+    state.noAccount = !state.noAccount;
+    state.page = 1;
+    document.getElementById('noAccChip').classList.toggle('on', state.noAccount);
+    loadPage();
+  }
+
+  async function loadNoAccountCount() {
+    var chip = document.getElementById('noAccChip');
+    if (!chip) return;
+    try {
+      var r = await fetch('/api/Students/paged?page=1&pageSize=1&adStatus=missing', { headers: NUH.headers() });
+      if (!r.ok) return;
+      var d = await r.json();
+      // صفر = لا شذوذ، فلا داعي لرقاقة تشغل مكانًا لتقول «لا شيء»
+      if (!d.totalCount) return;
+      document.getElementById('noAccCount').textContent = d.totalCount;
+      chip.hidden = false;
+      chip.classList.toggle('on', state.noAccount);
+    } catch (e) { /* صامت: الرقاقة تحسين لا وظيفة أساسية */ }
   }
 
   // الترويسات من NUH.headers في التخطيط — الكوكي بيتبعت لوحده، ومفيش توكن.
@@ -501,7 +586,8 @@
   async function loadPage() {
     syncUrl();
     var url = '/api/Students/paged?page=' + state.page + '&pageSize=' + state.pageSize +
-              '&filterText=' + encodeURIComponent(state.filter) + stuSort.qs();
+              '&filterText=' + encodeURIComponent(state.filter) + stuSort.qs() +
+              (state.noAccount ? '&adStatus=missing' : '');
     var res, data;
     try {
       res = await fetch(url, { headers: NUH.headers() });
@@ -523,29 +609,40 @@
     var i = (data.page - 1) * data.pageSize;
     (data.items || []).forEach(function (s) {
       i++;
+      // ⚠️ نفس ترتيب صفوف Razor أعلاه حرفًا بحرف: أي فرق بينهما يظهر عند أول
+      //    بحث أو ترتيب - الصفحة الأولى من الخادم والبقية من هنا.
       rows += '<tr>' +
-        '<td>' + i + '</td>' +
-        '<td>' + esc(s.full_name) + '</td>' +
-        '<td>' + esc(s.student_id) + '</td>' +
-        '<td>' + esc(s.national_id) + '</td>' +
-        '<td>' + esc(s.phone) + '</td>' +
-        '<td>' + esc(collegeName(s.college)) + '</td>' +
-        '<td>' + esc(levelName(s.academic_level)) + '</td>' +
-        '<td>' + esc(s.full_name_english) + '</td>' +
-        '<td>' + esc(buildingName(s.housing_building)) + '</td>' +
-        '<td>' + esc(s.room_number) + '</td>' +
-        '<td>' + esc(studentStatusText(s.student_status)) + '</td>' +
-        '<td>' + (s.status === 'left'
+        '<td class="num">' + i + '</td>' +
+        @* ⚠️ الخليّتان من NuhTable.two (js/table-state.js) لا مكتوبتين هنا:
+           هي التعريف الوحيد للخليّة ذات السطرين، وقائمة أعضاء هيئة التدريس
+           بتنادي نفس الدالة بنفس الخيارات. كانت مكتوبة بالإيد في الشاشتين
+           فافترقن: هنا .cell-p وهناك .cell-p2 - نفس الخليّة بوزنين. *@
+        '<td>' + NuhTable.two(s.full_name, s.full_name_english, { en: true }) + '</td>' +
+        '<td>' + NuhTable.two(s.student_id, s.phone, { num: true }) + '</td>' +
+        '<td>' +
+          '<div class="cell-p2">' + esc(collegeName(s.college)) + '</div>' +
+          '<div class="cell-q">' + esc(levelName(s.academic_level)) + '</div>' +
+        '</td>' +
+        '<td>' +
+          '<div class="cell-p2 cell-nowrap">' + esc(buildingName(s.housing_building)) + '</div>' +
+          '<div class="cell-q cell-nowrap">' + esc(housingUnitText(s)) + '</div>' +
+        '</td>' +
+        '<td>' +
+          '<div><span class="status-cell">' + (s.status === 'left'
             ? '<span class="badge badge-left">' + t('stu_badge_left') + '</span>'
-            : '<span class="badge badge-active">' + t(normalizeGender(s.gender) === 'female' ? 'stu_residentF' : 'stu_resident') + '</span>') + '</td>' +
-        '<td><div class="row-actions">' +
+            : '<span class="badge badge-active">' + t(normalizeGender(s.gender) === 'female' ? 'stu_residentF' : 'stu_resident') + '</span>' +
+              (s.ad_status ? '' : '<span class="badge badge-noacc" title="' + esc(t('stu_noAdAccountTitle')) + '">' + t('stu_noAdAccount') + '</span>')
+          ) + '</span></div>' +
+          '<div class="cell-q">' + esc(studentStatusText(s.student_status)) + '</div>' +
+        '</td>' +
+        '<td class="num"><div class="row-actions">' +
           (CAN_EDIT ? '<button class="action-btn action-edit" onclick="openEditModal(' + s.id + ')">' + t('stu_edit') + '</button>' : '') +
           (CAN_DELETE ? '<button class="action-btn action-delete" onclick="deleteStudent(' + s.id + ', this)">' + t('stu_delete') + '</button>' : '') +
         '</div></td>' +
       '</tr>';
     });
     document.getElementById('studentsBody').innerHTML = rows ||
-      '<tr><td colspan="13" style="text-align:center;color:var(--gray-500);padding:28px">' + t('stu_noResults') + '</td></tr>';
+      '<tr><td colspan="7" style="text-align:center;color:var(--gray-500);padding:28px">' + t('stu_noResults') + '</td></tr>';
     renderPager();
   }
 
@@ -774,7 +871,8 @@
     if (sb) sb.value = state.filter;
     renderPager();
     // أول صفحة مرسومة من الخادم - مانعيدش تحميلها إلا لو الرابط فيه حالة فعلًا
-    if (state.page > 1 || state.filter || stuSort.by()) loadPage();
+    if (state.page > 1 || state.filter || stuSort.by() || state.noAccount) loadPage();
+    loadNoAccountCount();
   })();
 
   NuhName.attach('e_');

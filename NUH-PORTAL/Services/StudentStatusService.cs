@@ -1,4 +1,4 @@
-using MapsterMapper;
+﻿using MapsterMapper;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -26,12 +26,10 @@ namespace NUH_PORTAL.Services
         private readonly IHttpContextAccessor _http;
         private readonly IAuditService _audit;
 
-        private static readonly HashSet<string> AllowedTypes = new(StringComparer.OrdinalIgnoreCase)
-        {
-            ".pdf", ".jpg", ".jpeg", ".png", ".docx"
-        };
-
-        public const long MaxFileSize = 10 * 1024 * 1024;
+        // ⚠️ قائمة الامتدادات وحدّ الحجم وفحص البصمة كلها في Core/AttachmentPolicy
+        //    الآن. كانت مكتوبة هنا وفي SupervisorHousingTransferService، فاختلف
+        //    المساران في طريقة اشتقاق نوع المحتوى - وهناك وقعت الثغرة.
+        public const long MaxFileSize = AttachmentPolicy.MaxFileSize;
 
         // ⚠️ "other" مضافة هنا كمان — من غيرها الشاشة تبعت القيمة والسيرفر يرفضها.
         private static readonly string[] ValidStatuses = { "graduated", "dismissed", "transferred", "left_housing", "other" };
@@ -122,14 +120,10 @@ namespace NUH_PORTAL.Services
                     $"حالة الطالب مسجّلة بالفعل: {currentAr}. لا يمكن تسجيل حالة نهائية جديدة - راجع مسؤول النظام لتصحيحها.", 400);
             }
 
+            // نوع المحتوى المشتقّ من الامتداد - هو ما يُخزَّن، لا قيمة العميل
+            string? safeContentType = null;
             if (file != null)
-            {
-                var fileExt = Path.GetExtension(file.FileName);
-                if (string.IsNullOrEmpty(fileExt) || !AllowedTypes.Contains(fileExt))
-                    throw new UserFriendlyException($"نوع الملف {fileExt} غير مسموح به. الصيغ المسموحة: PDF, JPG, JPEG, PNG, DOCX", 400);
-                if (file.Length > MaxFileSize)
-                    throw new UserFriendlyException("حجم الملف يتجاوز 10 ميجابايت", 400);
-            }
+                safeContentType = AttachmentPolicy.ValidateAndResolve(file);
 
             var actorId = UnitOfWork.GetCurrentUserId();
             if (actorId == 0)
@@ -251,7 +245,9 @@ namespace NUH_PORTAL.Services
                     StudentStatusActionId = action.Id,
                     FileName = storedPath,
                     OriginalFileName = file.FileName,
-                    ContentType = file.ContentType ?? "application/octet-stream",
+                    // ⚠️ المشتقّ من الامتداد لا file.ContentType: الأخيرة ترويسة
+                    //    يكتبها العميل، وكانت تُخزَّن ثم تُعاد كما هي عند العرض.
+                    ContentType = safeContentType ?? AttachmentPolicy.FallbackContentType,
                     FileSize = file.Length,
                     UploadedBy = actorId,
                     UploadedAt = DateTime.UtcNow
@@ -427,9 +423,10 @@ namespace NUH_PORTAL.Services
             return new DownloadFileDto
             {
                 FilePath = filePath,
-                ContentType = string.IsNullOrWhiteSpace(attachment.ContentType)
-                    ? "application/octet-stream"
-                    : attachment.ContentType,
+                // ⚠️ من مسار الملف لا من عمود ContentType: الصفوف القديمة قد
+                //    تحمل نوعًا كاذبًا خزّنه العميل، فاشتقاقه هنا يُصحّحها كلها
+                //    بلا ترحيل بيانات.
+                ContentType = AttachmentPolicy.ResolveContentType(filePath),
                 OriginalFileName = string.IsNullOrWhiteSpace(attachment.OriginalFileName)
                     ? Path.GetFileName(filePath)
                     : attachment.OriginalFileName

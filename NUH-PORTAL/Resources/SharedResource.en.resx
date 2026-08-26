@@ -133,22 +133,22 @@
     <value>Sets a new password for the account, delivered to the student through the approved channel.</value>
   </data>
   <data name="hs_actRealignDesc" xml:space="preserve">
-    <value>Moves the account back to its correct AD location and group and refreshes its data. Use after a housing transfer or a college change.</value>
+    <value>Moves the account back to its correct directory location and group and refreshes its data. Use after a housing transfer or a college change.</value>
   </data>
   <data name="hs_actSyncDesc" xml:space="preserve">
-    <value>Pushes the current housing data (building, room, level) to AD without changing the account location or group.</value>
+    <value>Pushes the current housing data (building, room, level) to the directory without changing the account location or group.</value>
   </data>
   <data name="hs_dn" xml:space="preserve">
     <value>Account location (DN)</value>
   </data>
   <data name="hs_groups" xml:space="preserve">
-    <value>AD groups</value>
+    <value>Directory groups</value>
   </data>
   <data name="hs_secActions" xml:space="preserve">
     <value>Account actions</value>
   </data>
   <data name="hs_secDirectory" xml:space="preserve">
-    <value>AD account</value>
+    <value>Directory account</value>
   </data>
   <data name="hs_techDetails" xml:space="preserve">
     <value>Technical details</value>
@@ -196,7 +196,7 @@
     <value>Home</value>
   </data>
   <data name="Nav_Housing" xml:space="preserve">
-    <value>Housing Accounts</value>
+    <value>University Housing Accounts Management</value>
   </data>
   <data name="Nav_RegisterSingle" xml:space="preserve">
     <value>Single Student Registration</value>
@@ -241,7 +241,7 @@
     <value>Home</value>
   </data>
   <data name="Page_Housing" xml:space="preserve">
-    <value>Housing Accounts Management</value>
+    <value>University Housing Accounts Management</value>
   </data>
   <data name="Page_Register" xml:space="preserve">
     <value>Register New Student</value>
@@ -355,7 +355,7 @@
     <value>Last Network Sign-in</value>
   </data>
   <data name="adLastLogonHint" xml:space="preserve">
-    <value>Read from AD, which updates this value every 9-14 days rather than on every logon - so the time is a real logon, but not necessarily the latest one.</value>
+    <value>Read from Active Directory, which updates this value every 9-14 days rather than on every logon - so the time is a real logon, but not necessarily the latest one.</value>
   </data>
   <data name="adNeverLoggedIn" xml:space="preserve">
     <value>Never used</value>
@@ -367,7 +367,7 @@
     <value>No Account</value>
   </data>
   <data name="adSearch" xml:space="preserve">
-    <value>AD Search</value>
+    <value>Active Directory Search</value>
   </data>
   <data name="adSearchResults" xml:space="preserve">
     <value>Search Results</value>
@@ -511,10 +511,10 @@
     <value>Update Student Data</value>
   </data>
   <data name="aud_action_user_created_ad" xml:space="preserve">
-    <value>User Created from AD</value>
+    <value>User Created from Active Directory</value>
   </data>
   <data name="aud_action_user_updated_ad" xml:space="preserve">
-    <value>User Updated from AD</value>
+    <value>User Updated from Active Directory</value>
   </data>
   <data name="aud_changeField" xml:space="preserve">
     <value>Field</value>
@@ -545,21 +545,6 @@
   </data>
   <data name="aud_exportBtn" xml:space="preserve">
     <value>Export XLSX</value>
-  </data>
-  <data name="aud_filterAd" xml:space="preserve">
-    <value>AD Sync</value>
-  </data>
-  <data name="aud_filterAll" xml:space="preserve">
-    <value>All</value>
-  </data>
-  <data name="aud_filterPassword" xml:space="preserve">
-    <value>Password Change</value>
-  </data>
-  <data name="aud_filterRequest" xml:space="preserve">
-    <value>Request Operations</value>
-  </data>
-  <data name="aud_filterStudent" xml:space="preserve">
-    <value>Student Operations</value>
   </data>
   <data name="aud_lblAction" xml:space="preserve">
     <value>Operation</value>
@@ -602,9 +587,6 @@
   </data>
   <data name="aud_noRecords" xml:space="preserve">
     <value>No records found</value>
-  </data>
-  <data name="aud_optAll" xml:space="preserve">
-    <value>All</value>
   </data>
   <data name="aud_pageSubtitle" xml:space="preserve">
     <value>A complete audit trail of every operation, its time, and who performed it</value>
@@ -946,13 +928,13 @@
     <value>Confirm Password Reset</value>
   </data>
   <data name="confirmReProvision" xml:space="preserve">
-    <value>Re-align this account in AD? It will be moved to the correct location and group, and its data refreshed.</value>
+    <value>Re-align this account in the directory? It will be moved to the correct location and group, and its data refreshed.</value>
   </data>
   <data name="confirmRestore" xml:space="preserve">
     <value>Are you sure you want to restore this student?</value>
   </data>
   <data name="confirmSync" xml:space="preserve">
-    <value>Update the housing data in AD?</value>
+    <value>Update the housing data in the directory?</value>
   </data>
   <data name="connectionError" xml:space="preserve">
     <value>Connection error, please try again later</value>
@@ -1177,10 +1159,10 @@
     <value>Update Student</value>
   </data>
   <data name="home_act_user_created_ad" xml:space="preserve">
-    <value>Create User from AD</value>
+    <value>Create User from Active Directory</value>
   </data>
   <data name="home_act_user_updated_ad" xml:space="preserve">
-    <value>Update User from AD</value>
+    <value>Update User from Active Directory</value>
   </data>
   <data name="home_action_allRequests" xml:space="preserve">
     <value>All Requests</value>
@@ -1303,7 +1285,7 @@
     <value>Graduated Students</value>
   </data>
   <data name="home_housingAccountStats" xml:space="preserve">
-    <value>Housing Account Statistics</value>
+    <value>University Housing Accounts Statistics</value>
   </data>
   <data name="home_latestNotifications" xml:space="preserve">
     <value>Latest Notifications</value>
@@ -1456,7 +1438,7 @@
     <value>Without Accounts</value>
   </data>
   <data name="housingAccounts" xml:space="preserve">
-    <value>Housing Accounts</value>
+    <value>University Housing Accounts</value>
   </data>
   <data name="housingApprove" xml:space="preserve">
     <value>Housing Admin Approve</value>
@@ -1468,7 +1450,7 @@
     <value>Housing Information</value>
   </data>
   <data name="housingManagement" xml:space="preserve">
-    <value>Housing Account Management</value>
+    <value>University Housing Accounts Management</value>
   </data>
   <data name="housingReject" xml:space="preserve">
     <value>Housing Reject</value>
@@ -1483,10 +1465,10 @@
     <value>Transfer student to new housing and update housing data</value>
   </data>
   <data name="hs_accountsTitle" xml:space="preserve">
-    <value>Housing Accounts</value>
+    <value>University Housing Accounts</value>
   </data>
   <data name="hs_adSearchTitle" xml:space="preserve">
-    <value>AD Search</value>
+    <value>Active Directory Search</value>
   </data>
   <data name="hs_close" xml:space="preserve">
     <value>Close</value>
@@ -1494,23 +1476,11 @@
   <data name="hs_colActions" xml:space="preserve">
     <value>Actions</value>
   </data>
-  <data name="hs_colCollege" xml:space="preserve">
-    <value>College</value>
-  </data>
-  <data name="hs_colLastSync" xml:space="preserve">
-    <value>Last Sync</value>
-  </data>
-  <data name="hs_colNameEn" xml:space="preserve">
-    <value>Name (English)</value>
-  </data>
   <data name="hs_colStatus" xml:space="preserve">
     <value>Account Status</value>
   </data>
   <data name="hs_colStudentId" xml:space="preserve">
     <value>Student ID</value>
-  </data>
-  <data name="hs_colUsername" xml:space="preserve">
-    <value>Username</value>
   </data>
   <data name="hs_filterAll" xml:space="preserve">
     <value>All</value>
@@ -1561,7 +1531,7 @@
     <value>Account Activity Log</value>
   </data>
   <data name="lifecycleLog" xml:space="preserve">
-    <value>Account Activity Log</value>
+    <value>Activity</value>
   </data>
   <data name="loading" xml:space="preserve">
     <value>Loading...</value>
@@ -1675,7 +1645,7 @@
     <value>No results found</value>
   </data>
   <data name="noSecurityAlerts" xml:space="preserve">
-    <value>✓ No security alerts</value>
+    <value>✓ No alerts in the last 30 minutes</value>
   </data>
   <data name="noStudents" xml:space="preserve">
     <value>No students found</value>
@@ -2301,9 +2271,6 @@
   <data name="ss_confirmAction" xml:space="preserve">
     <value>Confirm Action</value>
   </data>
-  <data name="ss_confirmDisableYes" xml:space="preserve">
-    <value>Yes, Disable Account</value>
-  </data>
   <data name="ss_currentApartment" xml:space="preserve">
     <value>Current Apartment No.</value>
   </data>
@@ -2423,9 +2390,6 @@
   </data>
   <data name="ss_pageTitle" xml:space="preserve">
     <value>Update Student Status</value>
-  </data>
-  <data name="ss_proceedQuestion" xml:space="preserve">
-    <value>Do you want to proceed?</value>
   </data>
   <data name="ss_reasonColonLabel" xml:space="preserve">
     <value>Reason for Action:</value>
@@ -2592,6 +2556,15 @@
   <data name="stu_addNew" xml:space="preserve">
     <value>+ Register New Student</value>
   </data>
+  <data name="stu_noAdAccount" xml:space="preserve">
+    <value>No account</value>
+  </data>
+  <data name="stu_noAdAccountTitle" xml:space="preserve">
+    <value>This student has no network account - it was most likely never created</value>
+  </data>
+  <data name="stu_filterNoAccount" xml:space="preserve">
+    <value>No network account</value>
+  </data>
   <data name="stu_badge_left" xml:space="preserve">
     <value>Left</value>
   </data>
@@ -2624,6 +2597,18 @@
   </data>
   <data name="stu_col_room" xml:space="preserve">
     <value>Room</value>
+  </data>
+  <data name="stu_col_student" xml:space="preserve">
+    <value>Student</value>
+  </data>
+  <data name="stu_col_idPhone" xml:space="preserve">
+    <value>ID and mobile</value>
+  </data>
+  <data name="stu_col_collegeLevel" xml:space="preserve">
+    <value>College and level</value>
+  </data>
+  <data name="stu_col_housing" xml:space="preserve">
+    <value>Housing</value>
   </data>
   <data name="stu_col_status" xml:space="preserve">
     <value>Status</value>
@@ -3375,27 +3360,6 @@
   <data name="repj_action_complete_request" xml:space="preserve">
     <value>Complete Request</value>
   </data>
-  <data name="repj_filter_all" xml:space="preserve">
-    <value>All</value>
-  </data>
-  <data name="repj_filter_login" xml:space="preserve">
-    <value>Login</value>
-  </data>
-  <data name="repj_filter_student" xml:space="preserve">
-    <value>Student Operations</value>
-  </data>
-  <data name="repj_filter_request" xml:space="preserve">
-    <value>Request Operations</value>
-  </data>
-  <data name="repj_filter_password" xml:space="preserve">
-    <value>Password Changes</value>
-  </data>
-  <data name="repj_filter_logout" xml:space="preserve">
-    <value>Logout</value>
-  </data>
-  <data name="repj_filter_ad" xml:space="preserve">
-    <value>AD Sync</value>
-  </data>
   <data name="repj_empty_noRecords" xml:space="preserve">
     <value>No records</value>
   </data>
@@ -3883,10 +3847,10 @@
     <value>Disabled</value>
   </data>
   <data name="usr_ldapTitle" xml:space="preserve">
-    <value>Add from AD</value>
+    <value>Add from (Active Directory)</value>
   </data>
   <data name="usr_ldapSub" xml:space="preserve">
-    <value>Search for the user in AD then add with a role</value>
+    <value>Search for the user in the directory then add with a role</value>
   </data>
   <data name="usr_ldapSearchPh" xml:space="preserve">
     <value>Search by username or name</value>
@@ -3916,7 +3880,7 @@
     <value>No results</value>
   </data>
   <data name="usr_ldapError" xml:space="preserve">
-    <value>Failed to connect to AD</value>
+    <value>Failed to connect to the directory</value>
   </data>
   <data name="usr_ldapAdded" xml:space="preserve">
     <value>User added successfully</value>
@@ -4306,19 +4270,19 @@
     <value>Created</value>
   </data>
   <data name="hm_syncTitle" xml:space="preserve">
-    <value>AD synchronisation</value>
+    <value>Active Directory synchronisation</value>
   </data>
   <data name="hm_syncSubtitle" xml:space="preserve">
-    <value>The system reads from AD and updates its own records only - it never creates, disables or edits any AD account.</value>
+    <value>The system reads from the directory and updates its own records only - it never creates, disables or edits any directory account.</value>
   </data>
   <data name="hm_refreshTitle" xml:space="preserve">
-    <value>Refresh statuses from AD</value>
+    <value>Refresh statuses from the directory</value>
   </data>
   <data name="hm_readOnly" xml:space="preserve">
-    <value>Read-only from AD</value>
+    <value>Read-only from directory</value>
   </data>
   <data name="hm_refreshDesc" xml:space="preserve">
-    <value>Reads the status of linked accounts (enabled / disabled) and updates it in the system. Use it when an account was enabled or disabled directly in AD.</value>
+    <value>Reads the status of linked accounts (enabled / disabled) and updates it in the system. Use it when an account was enabled or disabled directly in the directory.</value>
   </data>
   <data name="hm_refreshSafe" xml:space="preserve">
     <value>Links no new accounts</value>
@@ -4351,7 +4315,7 @@
     <value>others</value>
   </data>
   <data name="hm_adError" xml:space="preserve">
-    <value>AD connection error:</value>
+    <value>Directory connection error:</value>
   </data>
   <data name="hm_serverError" xml:space="preserve">
     <value>Could not reach the server</value>
@@ -4375,7 +4339,7 @@
     <value>status changed</value>
   </data>
   <data name="hm_statNotFound" xml:space="preserve">
-    <value>not found in AD</value>
+    <value>not found in the directory</value>
   </data>
   <data name="hm_statFailed" xml:space="preserve">
     <value>lookup failed</value>
@@ -4384,16 +4348,16 @@
     <value>Statuses that were updated</value>
   </data>
   <data name="hm_noteChanged" xml:space="preserve">
-    <value>These changes were made in AD outside the system. The lookup cannot reveal who made them; refer to the security event log on the domain controller.</value>
+    <value>These changes were made in the directory outside the system. The lookup cannot reveal who made them; refer to the security event log on the domain controller.</value>
   </data>
   <data name="hm_secOrphan" xml:space="preserve">
-    <value>Linked accounts missing from AD</value>
+    <value>Linked accounts missing from the directory</value>
   </data>
   <data name="hm_noteOrphan" xml:space="preserve">
-    <value>These accounts are recorded in the system but the lookup did not find them. They were most likely deleted from AD, or the recorded name is wrong.</value>
+    <value>These accounts are recorded in the system but the lookup did not find them. They were most likely deleted from the directory, or the recorded name is wrong.</value>
   </data>
   <data name="hm_refreshResult" xml:space="preserve">
-    <value>AD status refresh result</value>
+    <value>Directory status refresh result</value>
   </data>
   <data name="hm_refreshFailed" xml:space="preserve">
     <value>Refresh failed</value>
@@ -4411,22 +4375,22 @@
     <value>will be linked</value>
   </data>
   <data name="hm_statNoAccount" xml:space="preserve">
-    <value>no AD account</value>
+    <value>no directory account</value>
   </data>
   <data name="hm_secMismatch" xml:space="preserve">
     <value>Mismatched names</value>
   </data>
   <data name="hm_noteMismatch" xml:space="preserve">
-    <value>There is no word in common between the AD account name and the student's name in the system, usually because of a wrong university ID in the file. A wrong link does not surface immediately - it surfaces months later when a graduation record disables someone else's account. Please review before approving.</value>
+    <value>There is no word in common between the directory account name and the student's name in the system, usually because of a wrong university ID in the file. A wrong link does not surface immediately - it surfaces months later when a graduation record disables someone else's account. Please review before approving.</value>
   </data>
   <data name="hm_colSystem" xml:space="preserve">
     <value>System:</value>
   </data>
   <data name="hm_colDirectory" xml:space="preserve">
-    <value>AD:</value>
+    <value>Directory:</value>
   </data>
   <data name="hm_secNoAccount" xml:space="preserve">
-    <value>Students without an AD account</value>
+    <value>Students without a directory account</value>
   </data>
   <data name="hm_previewTitle" xml:space="preserve">
     <value>Account linking preview</value>
@@ -4459,7 +4423,7 @@
     <value>View and edit the records of students registered in housing</value>
   </data>
   <data name="hou_pageSubtitle" xml:space="preserve">
-    <value>Track housing accounts and link them to AD</value>
+    <value>Track housing accounts and link them to Active Directory</value>
   </data>
   <data name="pt_logoAlt" xml:space="preserve">
     <value>Najran University</value>
@@ -4981,7 +4945,7 @@
     <value>Unit</value>
   </data>
   <data name="fh_ColAccount" xml:space="preserve">
-    <value>AD account</value>
+    <value>Domain account</value>
   </data>
   <data name="fh_ColOccupant" xml:space="preserve">
     <value>Faculty member</value>
@@ -5037,12 +5001,6 @@
   <data name="fh_FlagImportedTitle" xml:space="preserve">
     <value>Imported record: tenancy start date is approximate</value>
   </data>
-  <data name="fh_FlagAdDisabled" xml:space="preserve">
-    <value>Disabled</value>
-  </data>
-  <data name="fh_FlagAdDisabledTitle" xml:space="preserve">
-    <value>The unit’s AD account is disabled, as of the last read.</value>
-  </data>
   <data name="fh_FlagOuMismatch" xml:space="preserve">
     <value>OU</value>
   </data>
@@ -5068,7 +5026,7 @@
     <value>No matching units.</value>
   </data>
   <data name="fh_NoUnitsHint" xml:space="preserve">
-    <value>If the import has not run yet, start from the AD Import section below.</value>
+    <value>If the import has not run yet, start from the Domain Import section below.</value>
   </data>
   <data name="fh_LoadError" xml:space="preserve">
     <value>Could not load units: </value>
@@ -5110,22 +5068,22 @@
     <value>Tenancy ended</value>
   </data>
   <data name="fh_ImportedWarn" xml:space="preserve">
-    <value>Imported from AD: the start date is approximate. AD does not retain attribute change history, so earlier residents are unknown.</value>
+    <value>Imported from the domain: the start date is approximate. The directory does not retain attribute change history, so earlier residents are unknown.</value>
   </data>
   <data name="fh_ImportTitle" xml:space="preserve">
-    <value>AD import</value>
+    <value>Domain import</value>
   </data>
   <data name="fh_CheckAccess" xml:space="preserve">
-    <value>Check AD rights</value>
+    <value>Check directory rights</value>
   </data>
   <data name="fh_PreviewImport" xml:space="preserve">
-    <value>Compare with AD</value>
+    <value>Compare with directory</value>
   </data>
   <data name="fh_ApplyImport" xml:space="preserve">
     <value>Approve update</value>
   </data>
   <data name="fh_ImportNote" xml:space="preserve">
-    <value>&lt;b&gt;Import is a read-only operation; it changes nothing in AD.&lt;/b&gt; The system reads unit accounts from the organizational units and opens an occupancy record using the name held in &lt;code&gt;description&lt;/code&gt;, &lt;b&gt;only for units that have no open occupancy record&lt;/b&gt;. The import may therefore be repeated safely: it never closes an existing record nor edits its data.&lt;br&gt;For imported records the tenancy start date is &lt;b&gt;the import date&lt;/b&gt;, not the account creation date, because AD does not retain the resident's move-in date and the account may have been created years ago and held by several residents. These records are marked «Imported» so the date is not later read as verified.</value>
+    <value>&lt;b&gt;Import is a read-only operation; it changes nothing in the domain.&lt;/b&gt; The system reads unit accounts from the organizational units and opens an occupancy record using the name held in &lt;code&gt;description&lt;/code&gt;, &lt;b&gt;only for units that have no open occupancy record&lt;/b&gt;. The import may therefore be repeated safely: it never closes an existing record nor edits its data.&lt;br&gt;For imported records the tenancy start date is &lt;b&gt;the import date&lt;/b&gt;, not the account creation date, because the directory does not retain the resident's move-in date and the account may have been created years ago and held by several residents. These records are marked «Imported» so the date is not later read as verified.</value>
   </data>
   <data name="fh_OuNotConfigured" xml:space="preserve">
     <value>Organizational unit paths are not configured</value>
@@ -5142,108 +5100,6 @@
   <data name="fh_ProbedOn" xml:space="preserve">
     <value>Checked against </value>
   </data>
-  <data name="fh_MoveInOk" xml:space="preserve">
-    <value>Move in: allowed</value>
-  </data>
-  <data name="fh_MoveInNo" xml:space="preserve">
-    <value>Move in: denied</value>
-  </data>
-  <data name="fh_MoveAuthNoRdn" xml:space="preserve">
-    <value>&lt;b&gt;Write rights on the object name are missing.&lt;/b&gt; AD administration needs to grant, on both sections: &lt;code&gt;dsacls "&amp;lt;OU&amp;gt;" /I:S /G "&amp;lt;account&amp;gt;:WP;name;user"&lt;/code&gt; and &lt;code&gt;:SD;;user&lt;/code&gt;</value>
-  </data>
-  <data name="fh_SyncTitle" xml:space="preserve">
-    <value>AD synchronization</value>
-  </data>
-  <data name="fh_AuthCompleteSub" xml:space="preserve">
-    <value>Read, write and move are all permitted.</value>
-  </data>
-  <data name="fh_AuthIncompleteSub" xml:space="preserve">
-    <value>The cells marked red need a grant from AD administration.</value>
-  </data>
-  <data name="fh_MoveVerdictBad" xml:space="preserve">
-    <value>Moves between sections are denied</value>
-  </data>
-  <data name="fh_MoveVerdictBadSub" xml:space="preserve">
-    <value>Import and data updates work; moving an account between the two sections does not.</value>
-  </data>
-  <data name="fh_ImpActChanged" xml:space="preserve">
-    <value>Registered - will be updated</value>
-  </data>
-  <data name="fh_ImpActIgnored" xml:space="preserve">
-    <value>Excluded</value>
-  </data>
-  <data name="fh_ImpActNew" xml:space="preserve">
-    <value>New - will be registered</value>
-  </data>
-  <data name="fh_ImpActUnchanged" xml:space="preserve">
-    <value>Registered - unchanged</value>
-  </data>
-  <data name="fh_ImpChgAdDisabled" xml:space="preserve">
-    <value>Account disabled in AD</value>
-  </data>
-  <data name="fh_ImpChgAdEnabled" xml:space="preserve">
-    <value>Account enabled in AD</value>
-  </data>
-  <data name="fh_ImpChgNameBad" xml:space="preserve">
-    <value>Account name no longer matches the standard</value>
-  </data>
-  <data name="fh_ImpChgNameOk" xml:space="preserve">
-    <value>Account name now matches the standard</value>
-  </data>
-  <data name="fh_ImpChgOuMoved" xml:space="preserve">
-    <value>Account moved to another organizational unit</value>
-  </data>
-  <data name="fh_ImpIgnNameMismatch" xml:space="preserve">
-    <value>Name does not match the housing unit format (tower or villa)</value>
-  </data>
-  <data name="fh_ImportNoteShort" xml:space="preserve">
-    <value>The import is read-only: it changes nothing in AD and repeating it has no effect.</value>
-  </data>
-  <data name="fh_HowItWorks" xml:space="preserve">
-    <value>How does it work?</value>
-  </data>
-  <data name="fh_AccRead" xml:space="preserve">
-    <value>Read</value>
-  </data>
-  <data name="fh_AccWrite" xml:space="preserve">
-    <value>Attribute write</value>
-  </data>
-  <data name="fh_AccMoveIn" xml:space="preserve">
-    <value>Move in</value>
-  </data>
-  <data name="fh_AccRdn" xml:space="preserve">
-    <value>Object name</value>
-  </data>
-  <data name="fh_AccDetails" xml:space="preserve">
-    <value>Details</value>
-  </data>
-  <data name="fh_AccNotSplit" xml:space="preserve">
-    <value>not split</value>
-  </data>
-  <data name="fh_AccAttrs" xml:space="preserve">
-    <value>Attributes</value>
-  </data>
-  <data name="fh_OuTowersMale" xml:space="preserve">
-    <value>Towers - male faculty</value>
-  </data>
-  <data name="fh_OuTowersFemale" xml:space="preserve">
-    <value>Towers - female faculty</value>
-  </data>
-  <data name="fh_OuVillas" xml:space="preserve">
-    <value>Villas</value>
-  </data>
-  <data name="fh_OuVillasMale" xml:space="preserve">
-    <value>Villas - male faculty</value>
-  </data>
-  <data name="fh_OuVillasFemale" xml:space="preserve">
-    <value>Villas - female faculty</value>
-  </data>
-  <data name="fh_MoveAuthPartial" xml:space="preserve">
-    <value>Delete rights on the source section could not be verified: AD offers no way to check them without performing a real move.</value>
-  </data>
-  <data name="fh_MoveAuthNo" xml:space="preserve">
-    <value>&lt;b&gt;Create rights are missing.&lt;/b&gt; AD administration needs to grant, on both sections: &lt;code&gt;dsacls "&amp;lt;OU&amp;gt;" /G "&amp;lt;account&amp;gt;:CCDC;user"&lt;/code&gt;</value>
-  </data>
   <data name="fh_AuthComplete" xml:space="preserve">
     <value>Authorization complete</value>
   </data>
@@ -5254,7 +5110,7 @@
     <value>Read failed; the import was not run.</value>
   </data>
   <data name="fh_PartialWarn" xml:space="preserve">
-    <value>A partial import is worse than none: it records some units and appears to succeed, while the rest look as though they do not exist in AD.</value>
+    <value>A partial import is worse than none: it records some units and appears to succeed, while the rest look as though they do not exist in the domain.</value>
   </data>
   <data name="fh_ChipNew" xml:space="preserve">
     <value>New</value>
@@ -5284,7 +5140,7 @@
     <value>Organizational unit</value>
   </data>
   <data name="fh_PrevOccupant" xml:space="preserve">
-    <value>Faculty member in AD</value>
+    <value>Faculty member in domain</value>
   </data>
   <data name="fh_PrevAction" xml:space="preserve">
     <value>Action</value>
@@ -5347,7 +5203,7 @@
     <value>End current tenancy</value>
   </data>
   <data name="fh_SecDiff" xml:space="preserve">
-    <value>Review changes before writing to AD</value>
+    <value>Review changes before writing to the domain</value>
   </data>
   <data name="fh_Unit" xml:space="preserve">
     <value>Unit</value>
@@ -5421,9 +5277,6 @@
   <data name="fh_ReasonNote" xml:space="preserve">
     <value>Reason details</value>
   </data>
-  <data name="fh_ReasonNoteHint" xml:space="preserve">
-    <value>Enabled only when "Other reason" is selected</value>
-  </data>
   <data name="fh_Save" xml:space="preserve">
     <value>Save change</value>
   </data>
@@ -5431,37 +5284,34 @@
     <value>Cancel</value>
   </data>
   <data name="fh_ApplyToAd" xml:space="preserve">
-    <value>Apply to AD</value>
+    <value>Apply to domain</value>
   </data>
   <data name="fh_Saving" xml:space="preserve">
     <value>Saving…</value>
   </data>
   <data name="fh_SavedPending" xml:space="preserve">
-    <value>The change is saved. Review the edits below, then apply them to AD.</value>
+    <value>The change is saved. Review the edits below, then apply them to the domain.</value>
   </data>
   <data name="fh_DiffAttr" xml:space="preserve">
     <value>Attribute</value>
   </data>
   <data name="fh_DiffCurrent" xml:space="preserve">
-    <value>Current value in AD</value>
+    <value>Current value in domain</value>
   </data>
   <data name="fh_DiffNew" xml:space="preserve">
     <value>New value</value>
   </data>
   <data name="fh_DiffNone" xml:space="preserve">
-    <value>No changes; AD matches the system.</value>
+    <value>No changes; the domain matches the system.</value>
   </data>
   <data name="fh_DiffCount" xml:space="preserve">
     <value>attributes will change</value>
   </data>
   <data name="fh_PushOk" xml:space="preserve">
-    <value>Written to AD successfully.</value>
-  </data>
-  <data name="fh_PushMoved" xml:space="preserve">
-    <value>Account moved to:</value>
+    <value>Written to the domain successfully.</value>
   </data>
   <data name="fh_PushFail" xml:space="preserve">
-    <value>Writing to AD failed. The record is saved and the unit is marked pending sync; you may retry.</value>
+    <value>Writing to the domain failed. The record is saved and the unit is marked pending sync; you may retry.</value>
   </data>
   <data name="fh_BtnRetrySync" xml:space="preserve">
     <value>Retry sync</value>
@@ -5475,9 +5325,6 @@
   <data name="fh_NoCurrentOccupant" xml:space="preserve">
     <value>This unit has no current resident.</value>
   </data>
-  <data name="Nav_FacultyHandover" xml:space="preserve">
-    <value>Change the data of the unit's resident</value>
-  </data>
   <data name="fh_BtnEdit" xml:space="preserve">
     <value>Edit</value>
   </data>
@@ -5488,7 +5335,7 @@
     <value>Recorded details</value>
   </data>
   <data name="fh_SavedEdit" xml:space="preserve">
-    <value>The change is saved. Review the differences below, then apply them to AD.</value>
+    <value>The change is saved. Review the differences below, then apply them to the domain.</value>
   </data>
   <data name="fh_EditNote" xml:space="preserve">
     <value>Correcting the same resident's details without replacing them: no new tenancy record is opened; the existing one is edited. Every change is recorded in the audit log with its old and new value.</value>
@@ -5504,12 +5351,6 @@
   </data>
   <data name="fh_SelectDepartment" xml:space="preserve">
     <value>Select department</value>
-  </data>
-  <data name="fh_SelectUnitSub" xml:space="preserve">
-    <value>Find the unit you need, then select it</value>
-  </data>
-  <data name="fh_BtnSelect" xml:space="preserve">
-    <value>Select</value>
   </data>
   <data name="rd_pageSubtitle" xml:space="preserve">
     <value>View the request details, its workflow and attachments</value>
@@ -5556,41 +5397,11 @@
   <data name="aud_action_faculty_service_stopped" xml:space="preserve">
     <value>Unit service stopped</value>
   </data>
-  <data name="aud_field_distinguishedname" xml:space="preserve">
-    <value>AD account path</value>
-  </data>
-  <data name="aud_val_endreason_contractended" xml:space="preserve">
-    <value>Contract ended</value>
-  </data>
-  <data name="aud_val_endreason_transferred" xml:space="preserve">
-    <value>Transferred to another unit</value>
-  </data>
-  <data name="aud_val_endreason_leftpermanently" xml:space="preserve">
-    <value>Left permanently</value>
-  </data>
-  <data name="aud_val_endreason_other" xml:space="preserve">
-    <value>Other reason</value>
-  </data>
-  <data name="aud_val_status_active" xml:space="preserve">
-    <value>In service</value>
-  </data>
-  <data name="aud_val_status_outofservice" xml:space="preserve">
-    <value>Out of service</value>
-  </data>
-  <data name="aud_val_status_notexists" xml:space="preserve">
-    <value>Does not exist</value>
-  </data>
-  <data name="aud_action_faculty_ad_dn_drift" xml:space="preserve">
-    <value>Unit account path changed in AD</value>
-  </data>
-  <data name="aud_action_faculty_ad_ou_move" xml:space="preserve">
-    <value>Move unit account between AD OUs</value>
-  </data>
   <data name="aud_action_faculty_ad_push" xml:space="preserve">
-    <value>Unit data written to AD</value>
+    <value>Unit data written to Active Directory</value>
   </data>
   <data name="aud_action_faculty_ad_push_failed" xml:space="preserve">
-    <value>AD write failed</value>
+    <value>Active Directory write failed</value>
   </data>
   <data name="aud_action_faculty_import_applied" xml:space="preserve">
     <value>Housing units import applied</value>
@@ -5635,16 +5446,16 @@
     <value>Status</value>
   </data>
   <data name="aud_field_description" xml:space="preserve">
-    <value>Description (AD)</value>
+    <value>Description (Active Directory)</value>
   </data>
   <data name="aud_field_employeeid" xml:space="preserve">
-    <value>Employee ID (AD)</value>
+    <value>Employee ID (Active Directory)</value>
   </data>
   <data name="aud_field_mobile" xml:space="preserve">
     <value>Mobile number</value>
   </data>
   <data name="aud_field_company" xml:space="preserve">
-    <value>Company (AD)</value>
+    <value>Company (Active Directory)</value>
   </data>
   <data name="aud_field_fullnamear" xml:space="preserve">
     <value>Occupant name</value>
@@ -5676,9 +5487,6 @@
   <data name="aud_field_occupanciesopened" xml:space="preserve">
     <value>Occupancies opened</value>
   </data>
-  <data name="aud_filterFaculty" xml:space="preserve">
-    <value>Faculty Housing</value>
-  </data>
   <data name="aud_emptyValue" xml:space="preserve">
     <value>(empty)</value>
   </data>
@@ -5688,23 +5496,8 @@
   <data name="fh_TabChanges" xml:space="preserve">
     <value>Changes</value>
   </data>
-  <data name="fh_ChgField" xml:space="preserve">
-    <value>Field</value>
-  </data>
-  <data name="fh_ChgOld" xml:space="preserve">
-    <value>Before</value>
-  </data>
-  <data name="fh_ChgNew" xml:space="preserve">
-    <value>After</value>
-  </data>
   <data name="fh_ChgEmpty" xml:space="preserve">
     <value>(empty)</value>
-  </data>
-  <data name="fh_LastChange" xml:space="preserve">
-    <value>Last change:</value>
-  </data>
-  <data name="fh_ViewFullLog" xml:space="preserve">
-    <value>View full log</value>
   </data>
   <data name="fh_NoAuditLog" xml:space="preserve">
     <value>No recorded operations for this unit</value>
@@ -5820,29 +5613,14 @@
   <data name="usr_confirmRestore" xml:space="preserve">
     <value>Restore this user and allow sign-in again?</value>
   </data>
-  <data name="usr_locked" xml:space="preserve">
-    <value>Locked</value>
-  </data>
-  <data name="usr_lockedTitle" xml:space="preserve">
-    <value>Locked after failed sign-in attempts — unlocks automatically at</value>
-  </data>
-  <data name="usr_unlock" xml:space="preserve">
-    <value>Unlock</value>
-  </data>
-  <data name="usr_confirmUnlock" xml:space="preserve">
-    <value>Unlock this account and reset the failed-attempt counter?</value>
-  </data>
-  <data name="usr_unlocked" xml:space="preserve">
-    <value>Account unlocked</value>
-  </data>
   <data name="usr_status_deleted" xml:space="preserve">
     <value>Deleted</value>
   </data>
   <data name="usr_srcAd" xml:space="preserve">
-    <value>AD</value>
+    <value>Directory</value>
   </data>
   <data name="usr_srcAdTitle" xml:space="preserve">
-    <value>Account sourced from AD</value>
+    <value>Account sourced from Active Directory</value>
   </data>
   <data name="rdp_lbl_infoFields" xml:space="preserve">
     <value>Fields the student must complete</value>
@@ -5941,7 +5719,7 @@
     <value>System</value>
   </data>
   <data name="aud_action_ad_status_refreshed" xml:space="preserve">
-    <value>Account status refreshed from AD</value>
+    <value>Account status refreshed from directory</value>
   </data>
   <data name="dash_oldestWaiting" xml:space="preserve">
     <value>Longest waiting requests</value>
@@ -5986,7 +5764,7 @@
     <value>{0} accounts</value>
   </data>
   <data name="dash_accNote" xml:space="preserve">
-    <value>A disabled account stays in AD and is not deleted - disabling blocks sign-in while keeping the student linked to their past actions.</value>
+    <value>A disabled account stays in the directory and is not deleted - disabling blocks sign-in while keeping the student linked to their past actions.</value>
   </data>
   <data name="dash_accCenterLabel" xml:space="preserve">
     <value>Enabled</value>
@@ -6002,9 +5780,6 @@
   </data>
   <data name="aud_action_user_deactivated" xml:space="preserve">
     <value>Deactivate user</value>
-  </data>
-  <data name="aud_action_user_unlocked" xml:space="preserve">
-    <value>Unlock user</value>
   </data>
   <data name="aud_action_user_deleted" xml:space="preserve">
     <value>Delete user</value>
@@ -6055,7 +5830,7 @@
     <value>Disabled</value>
   </data>
   <data name="dash_accNote2" xml:space="preserve">
-    <value>A disabled account stays in AD and is not deleted. "No account" are those whose request is complete but whose account has not been created yet.</value>
+    <value>A disabled account stays in the directory and is not deleted. "No account" are those whose request is complete but whose account has not been created yet.</value>
   </data>
   <data name="rpx_topUsers_student" xml:space="preserve">
     <value>Most active staff on student records</value>
@@ -6115,7 +5890,7 @@
     <value>Terms shown at the time of acceptance</value>
   </data>
   <data name="rdp_pledge_typedLbl" xml:space="preserve">
-    <value>Declaration typed by the student</value>
+    <value>Student Electronic Declaration</value>
   </data>
   <data name="rdp_pledge_hash" xml:space="preserve">
     <value>Terms fingerprint</value>
@@ -6241,7 +6016,7 @@
     <value>Never signed in</value>
   </data>
   <data name="sf_adUnavailable" xml:space="preserve">
-    <value>AD unreachable</value>
+    <value>Active Directory unreachable</value>
   </data>
   <data name="sf_noAd" xml:space="preserve">
     <value>No network account linked to this student</value>
@@ -6495,17 +6270,23 @@
   <data name="pt_decKeepGoingMsg" xml:space="preserve">
     <value>Keep going…</value>
   </data>
-  <data name="ss_disableTitle" xml:space="preserve">
-    <value>Disable housing network account</value>
+  <data name="ss_confirmTitleFmt" xml:space="preserve">
+    <value>Confirm: {0}</value>
   </data>
-  <data name="ss_confirmTitleNoAccount" xml:space="preserve">
-    <value>Confirm student status update</value>
+  <data name="ss_disableIntroCalm" xml:space="preserve">
+    <value>This action will be recorded, and the network account will be closed automatically.</value>
   </data>
-  <data name="ss_disableIntroFull" xml:space="preserve">
-    <value>The student's housing network account will be disabled. Do you want to continue?</value>
+  <data name="ss_noAccountNotice" xml:space="preserve">
+    <value>This action will be recorded. No network account is linked to this student.</value>
   </data>
-  <data name="ss_usernameLabel" xml:space="preserve">
-    <value>Username</value>
+  <data name="ss_studentIdLabel" xml:space="preserve">
+    <value>University ID</value>
+  </data>
+  <data name="ss_networkAccountFoot" xml:space="preserve">
+    <value>Network account to be closed: {0}</value>
+  </data>
+  <data name="ss_removeFile" xml:space="preserve">
+    <value>Remove</value>
   </data>
   <data name="ss_reasonLabel" xml:space="preserve">
     <value>Reason</value>
@@ -6550,7 +6331,7 @@
     <value>Staff Portal</value>
   </data>
   <data name="pt_homeStaffTag1" xml:space="preserve">
-    <value>Supervisors</value>
+    <value>Housing Department</value>
   </data>
   <data name="pt_homeStaffTag2" xml:space="preserve">
     <value>Cyber Security</value>
@@ -6565,11 +6346,8 @@
     <value>Start Your Request</value>
   </data>
   <data name="Brand_Copyright" xml:space="preserve">
-    <value>© 2026 Najran University. All rights reserved.
+    <value>All rights reserved © Najran University 2026
 Developed by the Deanship of Digital Transformation and Knowledge Resources</value>
-  </data>
-  <data name="login_formSub" xml:space="preserve">
-    <value>Sign in with your AD account</value>
   </data>
   <data name="dash_facultyUnits" xml:space="preserve">
     <value>Faculty housing units</value>
@@ -6578,7 +6356,7 @@ Developed by the Deanship of Digital Transformation and Knowledge Resources</val
     <value>Vacant units</value>
   </data>
   <data name="dash_facultyUnsynced" xml:space="preserve">
-    <value>Units not synced to AD</value>
+    <value>Units not synced to the directory</value>
   </data>
   <data name="dash_facultyOutOfServiceFmt" xml:space="preserve">
     <value>and {0} out of service</value>
@@ -6591,5 +6369,275 @@ Developed by the Deanship of Digital Transformation and Knowledge Resources</val
   </data>
   <data name="doc_deptHousing" xml:space="preserve">
     <value>إدارة الإسكان الجامعي</value>
+  </data>
+  <data name="usr_locked" xml:space="preserve">
+    <value>Locked</value>
+  </data>
+  <data name="usr_lockedTitle" xml:space="preserve">
+    <value>Locked after failed sign-in attempts — unlocks automatically at</value>
+  </data>
+  <data name="usr_unlock" xml:space="preserve">
+    <value>Unlock</value>
+  </data>
+  <data name="usr_confirmUnlock" xml:space="preserve">
+    <value>Unlock this account and reset the failed-attempt counter?</value>
+  </data>
+  <data name="usr_unlocked" xml:space="preserve">
+    <value>Account unlocked</value>
+  </data>
+  <data name="aud_action_user_unlocked" xml:space="preserve">
+    <value>Unlock user</value>
+  </data>
+  <data name="fh_ReasonNoteHint" xml:space="preserve">
+    <value>Enabled only when "Other reason" is selected</value>
+  </data>
+  <data name="fh_PushMoved" xml:space="preserve">
+    <value>Account moved to:</value>
+  </data>
+  <data name="aud_field_distinguishedname" xml:space="preserve">
+    <value>Directory account path</value>
+  </data>
+  <data name="aud_val_endreason_contractended" xml:space="preserve">
+    <value>Contract ended</value>
+  </data>
+  <data name="aud_val_endreason_transferred" xml:space="preserve">
+    <value>Transferred to another unit</value>
+  </data>
+  <data name="aud_val_endreason_leftpermanently" xml:space="preserve">
+    <value>Left permanently</value>
+  </data>
+  <data name="aud_val_endreason_other" xml:space="preserve">
+    <value>Other reason</value>
+  </data>
+  <data name="aud_val_status_active" xml:space="preserve">
+    <value>In service</value>
+  </data>
+  <data name="aud_val_status_outofservice" xml:space="preserve">
+    <value>Out of service</value>
+  </data>
+  <data name="aud_val_status_notexists" xml:space="preserve">
+    <value>Does not exist</value>
+  </data>
+  <data name="aud_action_faculty_ad_ou_move" xml:space="preserve">
+    <value>Move unit account between directory OUs</value>
+  </data>
+  <data name="fh_LastChange" xml:space="preserve">
+    <value>Last change:</value>
+  </data>
+  <data name="fh_ViewFullLog" xml:space="preserve">
+    <value>View full log</value>
+  </data>
+  <data name="fh_MoveInOk" xml:space="preserve">
+    <value>Move in: allowed</value>
+  </data>
+  <data name="fh_MoveInNo" xml:space="preserve">
+    <value>Move in: denied</value>
+  </data>
+  <data name="fh_MoveAuthPartial" xml:space="preserve">
+    <value>Delete rights on the source section could not be verified: the directory offers no way to check them without performing a real move.</value>
+  </data>
+  <data name="fh_MoveAuthNo" xml:space="preserve">
+    <value>&lt;b&gt;Create rights are missing.&lt;/b&gt; Domain administration needs to grant, on both sections: &lt;code&gt;dsacls "&amp;lt;OU&amp;gt;" /G "&amp;lt;account&amp;gt;:CCDC;user"&lt;/code&gt;</value>
+  </data>
+  <data name="aud_action_faculty_ad_dn_drift" xml:space="preserve">
+    <value>Unit account path changed in the directory</value>
+  </data>
+  <data name="fh_MoveAuthNoRdn" xml:space="preserve">
+    <value>&lt;b&gt;Write rights on the object name are missing.&lt;/b&gt; Domain administration needs to grant, on both sections: &lt;code&gt;dsacls "&amp;lt;OU&amp;gt;" /I:S /G "&amp;lt;account&amp;gt;:WP;name;user"&lt;/code&gt; and &lt;code&gt;:SD;;user&lt;/code&gt;</value>
+  </data>
+  <data name="fh_SyncTitle" xml:space="preserve">
+    <value>Directory synchronization</value>
+  </data>
+  <data name="fh_AuthCompleteSub" xml:space="preserve">
+    <value>Read, write and move are all permitted.</value>
+  </data>
+  <data name="fh_AuthIncompleteSub" xml:space="preserve">
+    <value>The cells marked red need a grant from domain administration.</value>
+  </data>
+  <data name="fh_MoveVerdictBad" xml:space="preserve">
+    <value>Moves between sections are denied</value>
+  </data>
+  <data name="fh_MoveVerdictBadSub" xml:space="preserve">
+    <value>Import and data updates work; moving an account between the two sections does not.</value>
+  </data>
+  <data name="fh_ImportNoteShort" xml:space="preserve">
+    <value>The import is read-only: it changes nothing in the directory and repeating it has no effect.</value>
+  </data>
+  <data name="fh_HowItWorks" xml:space="preserve">
+    <value>How does it work?</value>
+  </data>
+  <data name="fh_AccRead" xml:space="preserve">
+    <value>Read</value>
+  </data>
+  <data name="fh_AccWrite" xml:space="preserve">
+    <value>Attribute write</value>
+  </data>
+  <data name="fh_AccMoveIn" xml:space="preserve">
+    <value>Move in</value>
+  </data>
+  <data name="fh_AccRdn" xml:space="preserve">
+    <value>Object name</value>
+  </data>
+  <data name="fh_AccDetails" xml:space="preserve">
+    <value>Details</value>
+  </data>
+  <data name="fh_AccNotSplit" xml:space="preserve">
+    <value>not split</value>
+  </data>
+  <data name="fh_AccAttrs" xml:space="preserve">
+    <value>Attributes</value>
+  </data>
+  <data name="fh_OuTowersMale" xml:space="preserve">
+    <value>Towers - male faculty</value>
+  </data>
+  <data name="fh_OuTowersFemale" xml:space="preserve">
+    <value>Towers - female faculty</value>
+  </data>
+  <data name="fh_OuVillas" xml:space="preserve">
+    <value>Villas</value>
+  </data>
+  <data name="fh_OuVillasMale" xml:space="preserve">
+    <value>Villas - male faculty</value>
+  </data>
+  <data name="fh_OuVillasFemale" xml:space="preserve">
+    <value>Villas - female faculty</value>
+  </data>
+  <data name="fh_FlagAdDisabled" xml:space="preserve">
+    <value>Disabled</value>
+  </data>
+  <data name="fh_FlagAdDisabledTitle" xml:space="preserve">
+    <value>The unit’s directory account is disabled, as of the last read.</value>
+  </data>
+  <data name="fh_ImpActChanged" xml:space="preserve">
+    <value>Registered - will be updated</value>
+  </data>
+  <data name="fh_ImpActIgnored" xml:space="preserve">
+    <value>Excluded</value>
+  </data>
+  <data name="fh_ImpActNew" xml:space="preserve">
+    <value>New - will be registered</value>
+  </data>
+  <data name="fh_ImpActUnchanged" xml:space="preserve">
+    <value>Registered - unchanged</value>
+  </data>
+  <data name="fh_ImpChgAdDisabled" xml:space="preserve">
+    <value>Account disabled in the directory</value>
+  </data>
+  <data name="fh_ImpChgAdEnabled" xml:space="preserve">
+    <value>Account enabled in the directory</value>
+  </data>
+  <data name="fh_ImpChgNameBad" xml:space="preserve">
+    <value>Account name no longer matches the standard</value>
+  </data>
+  <data name="fh_ImpChgNameOk" xml:space="preserve">
+    <value>Account name now matches the standard</value>
+  </data>
+  <data name="fh_ImpChgOuMoved" xml:space="preserve">
+    <value>Account moved to another organizational unit</value>
+  </data>
+  <data name="fh_ImpIgnNameMismatch" xml:space="preserve">
+    <value>Name does not match the housing unit format (tower or villa)</value>
+  </data>
+  <data name="fh_ColIdMobile" xml:space="preserve">
+    <value>ID and mobile</value>
+  </data>
+  <data name="hs_colAccountSync" xml:space="preserve">
+    <value>Username and last sync</value>
+  </data>
+  <data name="hs_colCollegeDept" xml:space="preserve">
+    <value>College and department</value>
+  </data>
+  <data name="hs_colIdPhone" xml:space="preserve">
+    <value>University ID and mobile</value>
+  </data>
+  <data name="hs_colStudent" xml:space="preserve">
+    <value>Student</value>
+  </data>
+  <data name="agrp_ad" xml:space="preserve">
+    <value>Active Directory Sync</value>
+  </data>
+  <data name="agrp_all" xml:space="preserve">
+    <value>All operations</value>
+  </data>
+  <data name="agrp_allUsers" xml:space="preserve">
+    <value>All users</value>
+  </data>
+  <data name="agrp_faculty" xml:space="preserve">
+    <value>Faculty Housing</value>
+  </data>
+  <data name="agrp_login" xml:space="preserve">
+    <value>Login</value>
+  </data>
+  <data name="agrp_logout" xml:space="preserve">
+    <value>Logout</value>
+  </data>
+  <data name="agrp_password" xml:space="preserve">
+    <value>Password Change</value>
+  </data>
+  <data name="agrp_request" xml:space="preserve">
+    <value>Request Operations</value>
+  </data>
+  <data name="agrp_student" xml:space="preserve">
+    <value>Student Operations</value>
+  </data>
+  <data name="rpx_zoneFilter" xml:space="preserve">
+    <value>Search criteria</value>
+  </data>
+  <data name="rpx_zoneRange" xml:space="preserve">
+    <value>Date range</value>
+  </data>
+  <data name="hs_btnDisable" xml:space="preserve">
+    <value>Disable</value>
+  </data>
+  <data name="hs_btnEnable" xml:space="preserve">
+    <value>Enable</value>
+  </data>
+  <data name="hs_btnRealign" xml:space="preserve">
+    <value>Realign</value>
+  </data>
+  <data name="hs_btnReset" xml:space="preserve">
+    <value>Set</value>
+  </data>
+  <data name="hs_btnSync" xml:space="preserve">
+    <value>Send</value>
+  </data>
+  <data name="hs_collegeLevel" xml:space="preserve">
+    <value>College and level</value>
+  </data>
+  <data name="hs_secStudent" xml:space="preserve">
+    <value>Student details</value>
+  </data>
+  <data name="aud_field_fullnameen" xml:space="preserve">
+    <value>Occupant name (English)</value>
+  </data>
+  <data name="fh_FlagUpnMismatch" xml:space="preserve">
+    <value>Logon name differs</value>
+  </data>
+  <data name="fh_FlagUpnMismatchTitle" xml:space="preserve">
+    <value>The logon name prefix in the directory differs from the account name. The system binds by account name, so a mismatch may explain sign-in failures.</value>
+  </data>
+  <data name="fh_FullNameEn" xml:space="preserve">
+    <value>Full name (English)</value>
+  </data>
+  <data name="fh_FullNameEnHint" xml:space="preserve">
+    <value>Latin letters only. Leave blank if not known.</value>
+  </data>
+  <data name="fh_ImpChgUpn" xml:space="preserve">
+    <value>Logon name changed in the directory</value>
+  </data>
+  <data name="aud_field_displayname" xml:space="preserve">
+    <value>Display name (Active Directory)</value>
+  </data>
+  <data name="fh_StAdDisabled" xml:space="preserve">
+    <value>Disabled accounts</value>
+  </data>
+  <data name="fh_BtnAssign" xml:space="preserve">
+    <value>Assign</value>
+  </data>
+  <data name="fh_BtnHandover" xml:space="preserve">
+    <value>Change occupant</value>
+  </data>
+  <data name="col_seq" xml:space="preserve">
+    <value>No.</value>
   </data>
 </root>

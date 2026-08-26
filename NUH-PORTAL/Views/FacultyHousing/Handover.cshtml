@@ -21,7 +21,9 @@
         "fh_SavedEdit","fh_NoChanges","fh_NoCurrentOccupant",
         "fh_SelectCollege","fh_SelectCollegeFirst","fh_SelectDepartment",
         // سجل العمليات — نفس المفاتيح اللي بتستعملها نافذة السجل في قائمة الوحدات
-        "fh_TabChanges","fh_NoAuditLog","fh_ChgField","fh_ChgOld","fh_ChgNew","fh_ChgEmpty",
+        // ⚠️ ‏fh_ChgField و fh_ChgOld و fh_ChgNew اتشالوا: كانوا رؤوس أعمدة
+        // الجدول القديم، والسجل بقى خطّ زمني بلا أعمدة.
+        "fh_TabChanges","fh_NoAuditLog","fh_ChgEmpty",
         "fh_LastChange","fh_ViewFullLog","fh_PushMoved","close"
     };
     var fhT = JsonSerializer.Serialize(keys.ToDictionary(k => k, k => L(k)));
@@ -41,6 +43,10 @@
     font-size:14px;font-weight:700;color:var(--gray-700);flex-shrink:0}
   .fh-phone .input-wrap{flex:1;min-width:0}
   .fh-phone input{border-radius:0 10px 10px 0 !important;text-align:left}
+  /* ⚠️ خانة الاسم الإنجليزي: نفس فكرة .cell-en في site.css لكن لحقل إدخال -
+     من غير عزل الاتجاه بيبدأ النصّ من اليمين ويقفز المؤشر مع كل مسافة.
+     محليّة لأنها خانة واحدة في شاشة واحدة، ومعها .fh-phone بنفس المنطق. */
+  .fh-en input{direction:ltr;text-align:left}
   .fh-hint{font-size:11.5px;color:var(--gray-500);line-height:1.6}
   .fh-diff td.attr{font-family:Consolas,monospace;direction:ltr;color:var(--gray-700)}
   /* مسار الـ OU: لاتيني وطويل — خطّ أحادي المسافة وبيتكسّر بدل ما يمدّ الجدول */
@@ -117,8 +123,14 @@
       <div class="form-card-title">@SharedLocalizer[isEdit ? "fh_SecEdit" : "fh_SecNew"]</div>
     </div>
     <div class="form-card-body">
+      @* ⚠️ ترتيب الحقول = ترتيب أعمدة قائمة أعضاء هيئة التدريس: الاسم
+         (عربي ثم إنجليزي)، ثم الهوية والجوال، ثم الكلية والقسم، ثم الجنس
+         وتاريخ السكن. الشاشتان تصفان الشخص نفسه، واختلاف الترتيب بينهما كان
+         يجبر الموظف على البحث عن الحقل في كل مرة بدل أن تقع عينه عليه. *@
       <div class="form-grid">
-        <div class="field full">
+        @* ⚠️ الاسمان في صفّ واحد لا الاسم العربي وحده بعرض البطاقة: هما
+           سطرا الخلية الواحدة في الجدول، فيُدخَلان معًا ويُقرآن معًا. *@
+        <div class="field">
           <label for="hoName">@SharedLocalizer["fh_FullNameAr"]<span class="req">*</span></label>
           <div class="input-wrap"><input id="hoName" type="text" maxlength="250"></div>
           @* ⚠️ التلميح اتشال: «يُكتب في خانة description» بيقول للموظف الاسم
@@ -128,6 +140,14 @@
              **إيه يكتب**، مش **الحقل رايح فين**.
              ⚠️ باقي التلميحات في الشاشة قواعد إدخال حقيقية فباقية:
              «أرقام فقط، دون حروف أو رموز» و«يُفتح عند اختيار سبب آخر فقط». *@
+        </div>
+        @* ⚠️ اختياري لا إجباري: الوحدات المسجَّلة قبل اعتماد الخاصية مالهاش
+           اسم إنجليزي، وجعله إجباريًّا كان هيمنع تصحيح رقم جوال لحد ما
+           الموظف يلاقي الاسم الإنجليزي من مكان تاني. *@
+        <div class="field fh-en">
+          <label for="hoNameEn">@SharedLocalizer["fh_FullNameEn"]</label>
+          <div class="input-wrap"><input id="hoNameEn" type="text" maxlength="250"></div>
+          <span class="fh-hint">@SharedLocalizer["fh_FullNameEnHint"]</span>
         </div>
         <div class="field">
           <label for="hoNid">@SharedLocalizer["fh_ColNationalId"]<span class="req">*</span></label>

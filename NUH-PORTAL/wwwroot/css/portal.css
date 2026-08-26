@@ -330,19 +330,10 @@ body{
 .pill-info{background:var(--blue-light);color:var(--blue)}
 
 /* ---------- التذييل ----------
-   ⚠️ سطر الحقوق كان ١١ بكسل بشفافية ٣٥٪ — يعني تباينه على الكحلي أقل من
-      المعيار، وهو السطر اللي بيقول مين الجهة المالكة للنظام. بقى ١٣ بكسل
-      بشفافية ٨٢٪، زيّه زي تذييل الصفحة الرئيسية بالظبط. */
-.pfoot{background:var(--navy-dark);color:rgba(255,255,255,.82);padding:24px 16px;margin-top:36px;text-align:center}
-/* height:auto هنا كمان: 30×30 مع contain كانت بتحجز ٣٠ وترسم ٢٢ */
-.pfoot img{width:34px;height:auto;margin:0 auto 12px;opacity:.7}
-.pfoot-links{display:flex;flex-wrap:wrap;justify-content:center;gap:6px 18px;margin-bottom:12px;font-size:12.5px;font-weight:600}
-.pfoot-links a{color:rgba(255,255,255,.72);transition:color .2s}
-.pfoot-links a:hover{color:var(--gold-light)}
-.pfoot-links a:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:4px}
-.pfoot-line{width:44px;height:1px;background:rgba(255,255,255,.16);margin:0 auto 12px}
-/* ⚠️ white-space:pre-line: سطر الحقوق سطران في مفتاح واحد (Brand_Copyright). */
-.pfoot-copy{font-size:13px;font-weight:600;color:rgba(255,255,255,.82);line-height:1.8;white-space:pre-line}
+   ⚠️ التنسيق مش هنا: التذييل بقى مكوّنًا واحدًا في js/site-footer.js يحقن
+      شكله بنفسه، فالشكل والنصّ لكل صفحات البوابة في ملف واحد. كان هنا
+      .pfoot، وفي شاشة متابعة الطلب .footer بشكل تاني خالص، وفي الصفحة
+      الرئيسية تعديل تالت — وخمس صفحات بلا تذييل أصلًا. */
 
 /* ---------- شاشات أكبر ---------- */
 @media(min-width:640px){

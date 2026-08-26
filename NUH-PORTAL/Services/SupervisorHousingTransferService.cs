@@ -1,8 +1,7 @@
-using MapsterMapper;
+﻿using MapsterMapper;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.StaticFiles;
 using NUH_PORTAL.Core;
 using NUH_PORTAL.Core.Exceptions;
 using NUH_PORTAL.Data.Interfaces;
@@ -24,12 +23,9 @@ namespace NUH_PORTAL.Services
         private readonly IAttachmentStorage _storage;
         private readonly IHttpContextAccessor _http;
 
-        private static readonly HashSet<string> AllowedTypes = new(StringComparer.OrdinalIgnoreCase)
-        {
-            ".pdf", ".jpg", ".jpeg", ".png", ".docx"
-        };
-
-        public const long MaxFileSize = 10 * 1024 * 1024;
+        // ⚠️ القائمة وحدّ الحجم وفحص البصمة في Core/AttachmentPolicy - مصدر واحد
+        //    مشترك مع StudentStatusService بدل نسختين تتفاوتان.
+        public const long MaxFileSize = AttachmentPolicy.MaxFileSize;
 
         public SupervisorHousingTransferService(
             IRepository<Student> students,
@@ -91,14 +87,9 @@ namespace NUH_PORTAL.Services
             var oldApartment = student.apartment_number ?? "";
             var oldRoom = student.room_number ?? "";
 
+            // نفس الفحص الثلاثي: الامتداد ثم الحجم ثم بصمة البايتات الأولى
             if (file != null)
-            {
-                var fileExt = Path.GetExtension(file.FileName);
-                if (string.IsNullOrEmpty(fileExt) || !AllowedTypes.Contains(fileExt))
-                    throw new UserFriendlyException($"نوع الملف {fileExt} غير مسموح به. الصيغ المسموحة: PDF, JPG, JPEG, PNG, DOCX", 400);
-                if (file.Length > MaxFileSize)
-                    throw new UserFriendlyException("حجم الملف يتجاوز 10 ميجابايت", 400);
-            }
+                AttachmentPolicy.ValidateAndResolve(file);
 
             var actorId = UnitOfWork.GetCurrentUserId();
             if (actorId == 0)
@@ -202,13 +193,13 @@ namespace NUH_PORTAL.Services
             var filePath = _storage.ResolveExisting(AttachmentStorage.HousingTransfer, transfer.Id, transfer.AttachmentPath)
                 ?? throw UserFriendlyException.NotFound("الملف غير موجود على الخادم");
 
-            if (!new FileExtensionContentTypeProvider().TryGetContentType(filePath, out var contentType))
-                contentType = "application/octet-stream";
-
+            // ⚠️ كان FileExtensionContentTypeProvider - وهو يعرف مئات الأنواع
+            //    ومنها text/html. القائمة المغلقة أضيق وأأمن: ما ليس فيها يخرج
+            //    كملف ثنائي يُنزَّل ولا يُعرض.
             return new DownloadFileDto
             {
                 FilePath = filePath,
-                ContentType = contentType,
+                ContentType = AttachmentPolicy.ResolveContentType(filePath),
                 OriginalFileName = string.IsNullOrWhiteSpace(transfer.OriginalFileName)
                     ? Path.GetFileName(filePath)
                     : transfer.OriginalFileName

@@ -17,8 +17,9 @@
         بقت نفس لغة الرئيسية: ترويسة بيضا، عنوان وخط ذهبي، وبابان.
 
      ⚠️ ومفيش ستايل خاص بالصفحة هنا خالص. كل المكوّنات (.pbar و.phero و.pdoor
-        و.journey و.pfoot) اتنقلت لـ css/portal.css، لأن الصفحة الرئيسية
-        بتستعمل نفس الأبواب - وتعريفين لنفس المكوّن معناه إنهم هيفترقوا.
+        و.journey) اتنقلت لـ css/portal.css، لأن الصفحة الرئيسية بتستعمل نفس
+        الأبواب - وتعريفين لنفس المكوّن معناه إنهم هيفترقوا. والتذييل بقى
+        مكوّنًا مستقلًّا في js/site-footer.js يحقن تنسيقه بنفسه.
      ============================================================================ -->
 
 <link rel="stylesheet" href="../css/portal.css">
@@ -153,23 +154,12 @@
 
 </main>
 
-<footer class="pfoot">
-  <img src="../nu-logo.svg" alt="جامعة نجران" data-i18n-alt="Brand_Sub">
-  <div class="pfoot-links">
-    <a href="https://www.nu.edu.sa" target="_blank" rel="noopener" data-i18n="Brand_Sub">جامعة نجران</a>
-    <span>•</span>
-    <a href="index.html" data-i18n="pt_footHousing">الإسكان الجامعي</a>
-    <span>•</span>
-    <a href="track-request.html" data-i18n="pt_footTrack">متابعة طلب</a>
-  </div>
-  <div class="pfoot-line"></div>
-  <div class="pfoot-copy" data-i18n="Brand_Copyright">جميع الحقوق محفوظة © جامعة نجران 2026
-تطوير عمادة التحول الرقمي ومصادر المعرفة - إدارة تقنية المعلومات</div>
-</footer>
+<div data-nuh-footer="links"></div>
 
 <script>
   applyLang(localStorage.getItem('uiLanguage') || 'ar');
   function toggleLang() { applyLang(window.currentLang === 'ar' ? 'en' : 'ar'); }
 </script>
+<script src="/js/site-footer.js"></script>
 </body>
 </html>

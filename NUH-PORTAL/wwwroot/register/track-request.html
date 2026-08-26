@@ -118,9 +118,6 @@ h2{font-size:22px;font-weight:800;text-align:center;margin-bottom:4px}
              letter-spacing:1.5px;color:var(--navy-dark)}
 .phone-input::placeholder{font-weight:400;letter-spacing:1px;color:var(--gray-300)}
 .phone-hint{font-size:11.5px;color:var(--red);line-height:1.6;margin-top:6px}
-/* ⚠️ white-space:pre-line لأن سطر الحقوق سطران في مفتاح واحد (Brand_Copyright).
-   ومن غيرها السطرين بيتلزقوا في سطر واحد طويل. */
-.footer{text-align:center;font-size:12px;color:var(--gray-500);padding:20px;border-top:1px solid var(--gray-100);margin-top:auto;width:100%;line-height:1.8;white-space:pre-line}
 .nav-link{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--gray-500);text-decoration:none;margin-bottom:16px}
 .nav-link svg{width:13px;height:13px;flex-shrink:0}
 [dir=rtl] .nav-link svg{transform:scaleX(-1)}
@@ -214,8 +211,6 @@ h2{font-size:22px;font-weight:800;text-align:center;margin-bottom:4px}
 
 </div>
 </div>
-<div class="footer" data-i18n="Brand_Copyright">جميع الحقوق محفوظة © جامعة نجران 2026
-تطوير عمادة التحول الرقمي ومصادر المعرفة - إدارة تقنية المعلومات</div>
 <script>
 setLang(localStorage.getItem('uiLanguage') || 'ar');
 function toggleLang() { applyLang(window.currentLang === 'ar' ? 'en' : 'ar'); }
@@ -391,9 +386,11 @@ NuhCode.gate({ button: 'searchBtnNum', fields: [
 
 NuhPhone.attach({
   input: 'mobileInput', wrap: 'phoneField', hint: 'phoneHint', button: 'searchBtnMob',
+  // ⚠️ دوال لا نصوص - نفس سبب صفحة التحقق من الجوال: القاموس يصل بعد
+  //    تحميل السكربت، فالترجمة تُؤجَّل إلى لحظة العرض.
   messages: {
-    start:  t('pt_phStart5'),
-    length: t('pt_phLen9')
+    start:  function () { return t('pt_phStart5'); },
+    length: function () { return t('pt_phLen9'); }
   }
 });
 
@@ -545,19 +542,15 @@ function renderDetail(d) {
 //    ٢. تفاصيل داخلية لا تخصّ الطالب. أسماء الإدارات ومسار الطلب بينها ترتيب
 //       داخلي — ولنفس السبب شِلنا أسماء الموظفين من مراحل التتبع.
 //    الطالب يحتاج يعرف: وصل فين، ومطلوب منه إيه (غالبًا لا شيء). وده موجود.
+// ⚠️ مفاتيح لا نصوص. الكائن يُبنى وقت تحميل السكربت، والقاموس يصل بعده
+//    بـ fetch من /api/ui/i18n — و t() ترجّع المفتاح نفسه حين لا تجده. فكانت
+//    القيم تتجمّد على المفتاح الخام، ويقرأ الطالب «pt_trkNowReview» مكان
+//    «طلبك عند إدارة الأمن السيبراني» مهما وصل القاموس بعد ذلك.
+//    الترجمة الآن وقت الرسم (renderNowBox) لا وقت البناء.
 var NOW_STATE = {
-  submitted: {
-    title: t('pt_trkNowHousing'),
-    text: t('pt_trkNowReviewTxt')
-  },
-  cyber_review: {
-    title: t('pt_trkNowReview'),
-    text: t('pt_trkNowHousingOk')
-  },
-  cyber_approved: {
-    title: t('pt_trkNowReady'),
-    text: t('pt_trkNowReadyTxt')
-  }
+  submitted:      { title: 'pt_trkNowHousing', text: 'pt_trkNowReviewTxt' },
+  cyber_review:   { title: 'pt_trkNowReview',  text: 'pt_trkNowHousingOk' },
+  cyber_approved: { title: 'pt_trkNowReady',   text: 'pt_trkNowReadyTxt'  }
 };
 NOW_STATE.pending_supervisor = NOW_STATE.submitted;
 NOW_STATE.pending_cyber = NOW_STATE.cyber_review;
@@ -570,8 +563,8 @@ function renderNowBox(status) {
       '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#166a45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
       '<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>' +
       '<div>' +
-        '<div class="now-title">' + info.title + '</div>' +
-        '<div class="now-text">' + info.text + '</div>' +
+        '<div class="now-title">' + t(info.title) + '</div>' +
+        '<div class="now-text">' + t(info.text) + '</div>' +
       '</div>' +
     '</div>';
 }
@@ -635,5 +628,6 @@ document.getElementById('mobileInput').addEventListener('keydown', function (e) 
   if (e.key === 'Enter' && !document.getElementById('searchBtnMob').disabled) trackByMobile();
 });
 </script>
+<script src="/js/site-footer.js"></script>
 </body>
 </html>

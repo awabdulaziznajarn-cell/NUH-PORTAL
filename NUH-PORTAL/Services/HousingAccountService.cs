@@ -56,6 +56,7 @@ namespace NUH_PORTAL.Services
                     student_id = s.student_id,
                     full_name = s.full_name,
                     full_name_english = s.full_name_english,
+                    phone = s.phone,
                     college = s.college,
                     department = s.department,
                     gender = s.gender,
@@ -108,6 +109,7 @@ namespace NUH_PORTAL.Services
                 ("full_name_english", false) => query.OrderByDescending(s => s.full_name_english),
                 ("college", true) => query.OrderBy(s => s.college),
                 ("college", false) => query.OrderByDescending(s => s.college),
+                ("full_name", true) => query.OrderBy(s => s.full_name),
                 ("full_name", false) => query.OrderByDescending(s => s.full_name),
                 _ => query.OrderBy(s => s.full_name)
             };
@@ -119,6 +121,7 @@ namespace NUH_PORTAL.Services
                     student_id = s.student_id,
                     full_name = s.full_name,
                     full_name_english = s.full_name_english,
+                    phone = s.phone,
                     college = s.college,
                     department = s.department,
                     gender = s.gender,

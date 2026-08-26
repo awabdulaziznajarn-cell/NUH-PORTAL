@@ -69,37 +69,54 @@ function setLang(l) {
   rebuildActionFilter();
   var userFilterEl = document.getElementById('userFilter');
   var allOption = userFilterEl.options[0];
-  if (allOption) { allOption.textContent = t('all'); }
+  if (allOption) { allOption.textContent = t('agrp_allUsers'); }
   if (dataLoaded) { updatePagination(totalRecords); renderTable(); }
 }
 
-var actionFilterOptions = [
-  { value: '', label: t('repj_filter_all') },
-  { value: 'login', label: t('repj_filter_login') },
-  { value: 'student', label: t('repj_filter_student') },
-  { value: 'request', label: t('repj_filter_request') },
-  { value: 'password', label: t('repj_filter_password') },
-  { value: 'logout', label: t('repj_filter_logout') },
-  { value: 'ad', label: t('repj_filter_ad') }
-];
+// ⚠️ القائمة من الخادم لا من هنا: /api/AuditLogs/action-groups بترجّع
+//    المجموعات اللي للموظف صفوف يشوفها فيها بس. كانت مصفوفة مكتوبة هنا
+//    بتعرض لكل دور كل المجموعات — فالمشرف كان يلاقي «مزامنة الدليل النشط»
+//    قدّامه وهو لا يرى منها صفًّا واحدًا (ScopedAsync بتخفي إجراءات الإدارات
+//    التانية)، فيختارها ويرجع بجدول فاضي ويفتكر الشاشة بايظة.
+//    ونصّ كل مفتاح في ملف الترجمة باسم agrp_<key> — فمفيش خريطة تانية هنا.
+var actionGroupKeys = [];
+
+async function loadActionGroups() {
+  try {
+    var res = await fetch('/api/auditlogs/action-groups', { credentials: 'same-origin' });
+    if (res.ok) actionGroupKeys = await res.json();
+  } catch (e) { /* الفلتر يفضل على «كل العمليات» — أهون من قائمة مكتوبة بالإيد */ }
+  rebuildActionFilter();
+}
 
 function rebuildActionFilter() {
   var sel = document.getElementById('actionFilter');
+  if (!sel) return;
   var currentVal = sel.value;
   sel.innerHTML = '';
-  (actionFilterOptions || []).forEach(function(opt) {
+
+  var add = function (value, label) {
     var el = document.createElement('option');
-    el.value = opt.value;
-    el.textContent = opt.label;
+    el.value = value;
+    el.textContent = label;
     sel.appendChild(el);
-  });
+  };
+
+  add('', t('agrp_all'));
+  (actionGroupKeys || []).forEach(function (k) { add(k, t('agrp_' + k)); });
+
+  // ⚠️ لو المجموعة المختارة اختفت من النطاق، القيمة بترجع '' لوحدها — يعني
+  //    «كل العمليات» لا خيار ميّت شكله سليم.
   sel.value = currentVal;
+  if (window.NuhSelect && NuhSelect.refresh) NuhSelect.refresh(sel);
 }
 
 function populateUserFilter(users) {
   var sel = document.getElementById('userFilter');
   var currentVal = sel.value;
-  sel.innerHTML = '<option value="">' + t('all') + '</option>';
+  // ⚠️ «كل المستخدمين» لا «الكل»: القائمتان متجاورتان، وكلمة «الكل» فيهما
+  //    معًا لا تقول أيّهما يفلتر المستخدم وأيّهما يفلتر العملية.
+  sel.innerHTML = '<option value="">' + t('agrp_allUsers') + '</option>';
   users.forEach(function(u) {
     var el = document.createElement('option');
     el.value = u.id;
@@ -596,18 +613,20 @@ function applyUserFilter(name) {
   if (user) { document.getElementById('userFilter').value = user.id; onFilterChange(); }
 }
 
+// ⚠️ كانت هنا سلسلة if مكتوبة بالإيد تعيد كتابة كل مجموعة إجراء إجراء —
+//    نسخة خامسة من نفس القوائم، وكانت ناقصة faculty كلها. المصدر الوحيد
+//    __AUDIT_GROUPS المحقونة في التخطيط من Core/AuditActionGroups.
+function groupOfAction(action) {
+  var g = window.__AUDIT_GROUPS || {};
+  for (var k in g) {
+    if (Object.prototype.hasOwnProperty.call(g, k) &&
+        Array.isArray(g[k]) && g[k].indexOf(action) !== -1) return k;
+  }
+  return '';
+}
+
 function applyActionFilter(action) {
-  var val = '';
-  if (action === 'login' || action === 'login_failed' || action === 'login_admin_fallback' || action === 'login_admin_fallback_failed') val = 'login';
-  else if (action === 'logout') val = 'logout';
-  else if (action === 'set_password') val = 'password';
-  else if (action === 'create_student' || action === 'update_student' || action === 'delete_student' || action === 'checkout_student') val = 'student';
-  else if (action === 'create_request' || action === 'approve_request' || action === 'reject_request' ||
-           action === 'housing_approve_request' || action === 'housing_reject_request' ||
-           action === 'submit_cyber_review' ||
-           action === 'cyber_approve_request' || action === 'cyber_reject_request') val = 'request';
-  else if (action === 'user_created_ad' || action === 'user_updated_ad') val = 'ad';
-  document.getElementById('actionFilter').value = val;
+  document.getElementById('actionFilter').value = groupOfAction(action);
   onFilterChange();
 }
 
@@ -643,15 +662,10 @@ function computeKpi() {
 
 function setTxt(id, v) { var e = document.getElementById(id); if (e) e.textContent = v; }
 
-// تصنيف الإجراء لمجموعته — نفس تصنيف فلتر الجدول بالحرف.
-function actionGroup(a) {
-  if (a === 'login' || a === 'login_failed' || a === 'login_admin_fallback' ||
-      a === 'login_admin_fallback_failed' || a === 'logout') return 'login';
-  if (a === 'create_student' || a === 'update_student' || a === 'delete_student' ||
-      a === 'checkout_student') return 'student';
-  if (a && a.indexOf('request') !== -1) return 'request';
-  return 'other';
-}
+// تصنيف الإجراء لمجموعته — من __AUDIT_GROUPS لا من شروط مكتوبة بالإيد.
+// ⚠️ الشرط القديم كان `a.indexOf('request') !== -1` لمجموعة الطلبات: أي إجراء
+//    جديد فيه كلمة request يقع فيها بلا قصد، وأي إجراء طلب لا تحمله لا يقع.
+function actionGroup(a) { return groupOfAction(a) || 'other'; }
 
 /* ====== Phase 6: Drill-down Analytics ====== */
 function applyDrill(type) {
@@ -853,6 +867,7 @@ document.querySelectorAll('.stat-card-clickable').forEach(function(card) {
 loadFromUrlParams();
 setLang(localStorage.getItem('uiLanguage') || 'ar');
 rebuildActionFilter();
+loadActionGroups();
 // ⚠️ الترتيب مقصود: النداءات الست تنطلق معًا، لكن المتصفح يحدّ عدد الاتصالات
 //    المتزامنة لكل خادم. البطاقات الست وتنبيهات الأمان استعلامات صغيرة ويراها
 //    المستخدم أول ما تفتح الصفحة، فتسبق. سجل العمليات والرسوم أثقل فتليها.

@@ -62,6 +62,13 @@ IF NOT EXIST "%maintenancePage%" (
   echo         Without it the site cannot show a styled maintenance page.
   goto :End
 )
+REM  ⚠️ مزامنة سطر الحقوق من ملف الترجمة قبل النسخ.
+REM     صفحة الصيانة يخدمها IIS والتطبيق متوقّف، فنصّها مكتوب داخلها بالضرورة
+REM     ولا يصله تعديل SharedResource.resx. السكربت ده بيولّده منه، فيفضل
+REM     المصدر واحدًا. فشلُه لا يوقف الصيانة - الصفحة القديمة أفضل من لا صفحة.
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0_maintenance\Sync-MaintenanceCopyright.ps1"
+IF ERRORLEVEL 1 echo [WARN] Copyright sync failed - the page will show its previous text.
+
 copy /Y "%maintenancePage%" "%liveFile%" >nul
 IF ERRORLEVEL 1 (
   echo [ERROR] Could not copy the maintenance page to %liveFile%

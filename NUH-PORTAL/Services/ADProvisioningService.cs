@@ -664,7 +664,11 @@ namespace NUH_PORTAL.Services
                 return false;
             }
 
-            var previous = student.ad_status?.ToString() ?? "غير معروفة";
+            // ⚠️ الحالة تُكتب بالعربية لا بقيمة enum خامًا: كان القيد يظهر للموظف
+            //    «(من enabled إلى disabled)» - كلمتان إنجليزيتان داخل جملة عربية،
+            //    يقلب اتجاهُ النصّ ترتيبَهما أحيانًا، ولا تعنيان شيئًا لمن لا
+            //    يعرف مصطلح الدليل النشط.
+            var previous = AdStatusText(student.ad_status);
             student.ad_status = actual;
             student.ad_last_sync_at = DateTime.UtcNow;
 
@@ -674,10 +678,21 @@ namespace NUH_PORTAL.Services
             LogLifecycleEvent(student.Id,
                 actual == AdStatus.enabled ? "enabled" : "disabled",
                 actorId,
-                $"تغيّرت حالة الحساب من خارج النظام (من {previous} إلى {actual}) - اكتُشف عند {discoveredAt}");
+                $"تغيّرت حالة الحساب من خارج النظام (من {previous} إلى {AdStatusText(actual)}) - اكتُشف عند {discoveredAt}");
 
             return true;
         }
+
+        // اسم حالة الحساب كما تُعرَض للموظف.
+        // ⚠️ النصّ هنا لا في ملف الترجمة عن قصد: هو يُخزَّن داخل نصّ القيد ولا
+        //    يُترجَم عند العرض - والقيد سجلّ لما حدث لحظتها، لا يتغيّر بتغيّر لغة
+        //    من يقرؤه بعد سنة.
+        private static string AdStatusText(AdStatus? s) => s switch
+        {
+            AdStatus.enabled  => "مُفعَّل",
+            AdStatus.disabled => "مُعطَّل",
+            _ => "غير معروفة"
+        };
 
         private void LogLifecycleEvent(int studentId, string action, int performedBy, string details, string? ipAddress = null)
         {

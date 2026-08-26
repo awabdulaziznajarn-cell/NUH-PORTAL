@@ -3,10 +3,12 @@
 }
 
 <style>
-  /* خاص بصفحة سجل العمليات — الباقي من site.css */
-  .filter-group input[type=text]{min-width:180px}
-  .export-btn{padding:8px 16px;background:var(--green);color:#fff;border:none;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;height:37px;align-self:end}
-  .export-btn:hover{background:var(--navy)}
+  /* خاص بصفحة سجل العمليات — الباقي من site.css و components.css */
+  /* ⚠️ .export-btn اتشال: كان شكلًا سادسًا لنفس زرّ التصدير (ارتفاع 37 واستدارة
+     8) بينما نظيره في مركز التقارير 36 و9 وباقي حقول الشريط 40 و10. الزرّ بقى
+     .fbar-out.is-excel - نفس تعريف زرّ Excel في التقارير، والأخضر معناه
+     «ملف Excel» لا «زرّ مهمّ». و.filter-group input[type=text] اتشال كمان:
+     العرض بقى موحّدًا لكل الشاشات في components.css. */
   .unit-chip{display:inline-flex;align-items:center;gap:4px;background:var(--green-light);color:var(--green);
     border:1px solid #a9efc5;border-radius:20px;padding:5px 8px 5px 14px;font-size:12.5px;font-weight:600}
   .unit-chip b{color:var(--navy-dark)}
@@ -45,7 +47,7 @@
 <div class="filters-bar">
   <div class="filter-group">
     <label for="userFilter">@SharedLocalizer["aud_lblUser"]</label>
-    <select id="userFilter"><option value="" >@SharedLocalizer["aud_optAll"]</option></select>
+    <select id="userFilter"><option value="">@SharedLocalizer["agrp_allUsers"]</option></select>
   </div>
   <div class="filter-group">
     <label for="actionFilter">@SharedLocalizer["aud_lblAction"]</label>
@@ -63,7 +65,12 @@
     <label for="searchBox">@SharedLocalizer["aud_lblSearch"]</label>
     <input type="text" id="searchBox" placeholder="">
   </div>
-  <button class="export-btn" id="exportBtn">⬇ <span >@SharedLocalizer["aud_exportBtn"]</span></button>
+  <button type="button" class="fbar-out is-excel" id="exportBtn">
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M8 2v8m0 0L5 7m3 3 3-3M2.5 12.5v1h11v-1"/></svg>
+    <span>@SharedLocalizer["aud_exportBtn"]</span>
+  </button>
 </div>
 
 @* ⚠️ التصفية على وحدة سكن لا تظهر في أي خانة من خانات الفلاتر - تأتي من رابط
@@ -89,7 +96,7 @@
     <table id="audTable">
       <thead>
         <tr>
-          <th>#</th>
+          <th>@SharedLocalizer["col_seq"]</th>
           <th data-sort="user">@SharedLocalizer["aud_col_user"]</th>
           <th data-sort="action">@SharedLocalizer["aud_col_action"]</th>
           <th data-sort="table">@SharedLocalizer["aud_col_table"]</th>
@@ -177,19 +184,26 @@
   // شكل التاريخ من NuhFmt — التعريف الوحيد في /js/date-format.js
   function formatDate(v) { return NuhFmt.dateTime(v); }
 
-  // ⚠️ «تسجيل الدخول» و«تسجيل الخروج» ليسا هنا: لهما شاشة مستقلة (سجل الدخول
-  //    والخروج) تقرأ من جدول SignInLogs، وهو أغنى - يسجّل المحاولات الفاشلة
-  //    باسم المستخدم المُدخَل ووسيلة الدخول (الدليل النشط أو محلّي)، وهذا كلّه
-  //    لا يظهر في سجل العمليات. وجودهما في الفلترتين يعني قائمتين لنفس الحدث
-  //    تختلفان في التفاصيل، فيقرأ الموظف الأفقر منهما ويظنّها الكاملة.
-  var actionFilterOptions = [
-    { value: '', i18n: 'aud_filterAll' },
-    { value: 'student', i18n: 'aud_filterStudent' },
-    { value: 'request', i18n: 'aud_filterRequest' },
-    { value: 'password', i18n: 'aud_filterPassword' },
-    { value: 'ad', i18n: 'aud_filterAd' },
-    { value: 'faculty', i18n: 'aud_filterFaculty' }
-  ];
+  // ⚠️ القائمة من الخادم لا مكتوبة هنا: /api/AuditLogs/action-groups بترجّع
+  //    المجموعات اللي للموظف صفوف يشوفها فيها بس. كانت مصفوفة محلّية، فكانت
+  //    تعرض لكل دور كل المجموعات وإن كان لا يرى منها شيئًا. وكان فيها مفتاح
+  //    aud_filterFaculty وهو **غير موجود في ملف الترجمة أصلًا** - فالخيار
+  //    كان يعرض اسم المفتاح نفسه في القائمة.
+  //
+  // ⚠️ و excludeLogin=true: هذه الشاشة تستبعد أحداث الدخول والخروج من صفوفها
+  //    (لهما شاشة مستقلة تقرأ من SignInLogs وهو سجلّ أغنى - يحفظ المحاولات
+  //    الفاشلة باسم المستخدم المُدخَل ووسيلة الدخول). فلو ظهرتا في الفلتر
+  //    لكانتا خيارًا لا يُنتج صفًّا. والاستبعاد صار مكتوبًا في مكان واحد:
+  //    الخادم يستبعدها من الصفوف ومن الفلتر بالشرط نفسه.
+  var actionGroupKeys = [];
+
+  async function loadActionGroups() {
+    try {
+      var res = await fetch('/api/auditlogs/action-groups?excludeLogin=true', { headers: NUH.headers() });
+      if (res.ok) actionGroupKeys = await res.json();
+    } catch (e) { /* الفلتر يفضل على «كل العمليات» */ }
+    rebuildActionFilter();
+  }
 
   // ==========================================================================
   //  التصفية على وحدة سكن - تأتي من الرابط لا من خانة فلترة.
@@ -308,21 +322,31 @@
 
   function rebuildActionFilter() {
     var sel = document.getElementById('actionFilter');
+    if (!sel) return;
     var currentVal = sel.value;
     sel.innerHTML = '';
-    actionFilterOptions.forEach(function (opt) {
+
+    var add = function (value, label) {
       var el = document.createElement('option');
-      el.value = opt.value;
-      el.textContent = t(opt.i18n);
+      el.value = value;
+      el.textContent = label;
       sel.appendChild(el);
-    });
+    };
+
+    // نصّ كل مفتاح في ملف الترجمة باسم agrp_<key> - فمفيش خريطة تانية هنا.
+    add('', t('agrp_all'));
+    (actionGroupKeys || []).forEach(function (k) { add(k, t('agrp_' + k)); });
+
     sel.value = currentVal;
+    if (window.NuhSelect && NuhSelect.refresh) NuhSelect.refresh(sel);
   }
 
   function populateUserFilter(users) {
     var sel = document.getElementById('userFilter');
     var currentVal = sel.value;
-    sel.innerHTML = '<option value="" >@SharedLocalizer["aud_optAll"]</option>';
+    // «كل المستخدمين» لا «الكل»: القائمتان متجاورتان وكلمة «الكل» فيهما معًا
+    // لا تقول أيّهما يفلتر المستخدم وأيّهما يفلتر العملية.
+    sel.innerHTML = '<option value="">@SharedLocalizer["agrp_allUsers"]</option>';
     users.forEach(function (u) {
       var el = document.createElement('option');
       el.value = u.id;
@@ -527,6 +551,7 @@
   };
 
   rebuildActionFilter();
+  loadActionGroups();
   restoreFilters();
   // ⚠️ بعد restoreFilters لا قبلها: القادم من الرابط يقصد شيئًا بعينه الآن،
   //    فلا يصحّ أن يدهسه اختيارٌ محفوظ من زيارة سابقة.

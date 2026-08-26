@@ -64,16 +64,16 @@
   .home-doors{padding:26px 44px 34px;max-width:1080px;margin:0 auto;width:100%}
 
   /* ---------- التذييل ----------
-     ⚠️ التذييل هنا شريط سطر واحد بلا شعار ولا روابط - الصفحة نفسها هي
-        الفهرس، فروابط التذييل كانت هتوّدي لنفس المكان اللي الزائر فيه. */
-  .pfoot{margin-top:0;padding:22px 40px}
+     ⚠️ الشكل والنصّ من js/site-footer.js - مصدر واحد لكل صفحات البوابة.
+        وهنا نلغي margin-top:auto وحده: الصفحة دي .home-main جوّاها flex:1
+        فالتذييل واصل لتحت أصلًا، والـ auto كان بيزوّد فرجة قبله. */
+  .nuh-foot{margin-top:0}
 
   @media(max-width:820px){
     .pbar-in{padding:18px 20px}
     .home-doors{padding:20px}
     .phero{padding:10px 16px 4px}
     .phero h1{font-size:23px}
-    .pfoot{padding:18px 20px}
   }
 </style>
 </head>
@@ -142,10 +142,7 @@
 
 </main>
 
-<div class="pfoot">
-  <div class="pfoot-copy" data-i18n="Brand_Copyright">جميع الحقوق محفوظة © جامعة نجران 2026
-تطوير عمادة التحول الرقمي ومصادر المعرفة - إدارة تقنية المعلومات</div>
-</div>
+<div data-nuh-footer></div>
 
 <script>
   // تبديل اللغة — نفس دالة باقي صفحات البوابة (i18n.js)
@@ -168,5 +165,6 @@
   })();
 </script>
 <script src="VersionInfo.js"></script>
+<script src="/js/site-footer.js"></script>
 </body>
 </html>

@@ -149,6 +149,7 @@
         return;
       }
       el('hoName').value = u.occupantName || '';
+      el('hoNameEn').value = u.occupantNameEn || '';
       el('hoNid').value = u.occupantNationalId || '';
       el('hoMobile').value = localMobile(u.occupantMobile);
       el('hoGender').value = u.occupantGender || '';
@@ -185,6 +186,23 @@
     //    كاملًا أسوأ من منع الخطأ لحظة وقوعه.
     ['hoTicket', 'hoNid'].forEach(function (k) {
       on(k, 'input', function () { this.value = this.value.replace(/\D/g, ''); });
+    });
+
+    // ⚠️ الاسم الإنجليزي: حروف لاتينية ومسافات وشَرْطة وفاصلة عليا فقط.
+    //    القيمة دي بتتكتب في displayName في الدليل، وحرف عربي واحد جوّاها
+    //    بيخلّي الخانة اللي المفروض تكون إنجليزية مخلوطة - ومحدش بياخد باله
+    //    غير لما يبصّ في الدليل نفسه. المنع لحظة الكتابة لا عند الحفظ، زي
+    //    باقي خانات الشاشة.
+    // ⚠️ ومافيش تحويل لحروف كبيرة هنا: الاسم بيتكتب في displayName كنصّ
+    //    واحد بلا تفكيك، فمافيش السبب اللي خلّى خانات الطالب تكبّر الحروف.
+    on('hoNameEn', 'input', function () {
+      var pos = this.selectionStart;
+      var before = this.value;
+      var after = before.replace(/[^A-Za-z .'-]/g, '').replace(/ {2,}/g, ' ');
+      if (after === before) return;
+      this.value = after;
+      try { this.setSelectionRange(pos - (before.length - after.length), pos - (before.length - after.length)); }
+      catch (e) { /* بعض المتصفحات بترفض على خانة مش مركَّز عليها */ }
     });
 
     // ⚠️ الجوال يتولّاه NuhPhone المشترك لا هذه الشاشة: قاعدة الرقم السعودي
@@ -288,6 +306,7 @@
       requestType: type,
       ticketNo: IS_EDIT ? null : val('hoTicket'),
       fullNameAr: stop ? null : val('hoName'),
+      fullNameEn: stop ? null : (val('hoNameEn').trim() || null),
       gender: val('hoGender') || null,
       nationalId: stop ? null : val('hoNid'),
       mobile: stop ? null : phoneValue(),

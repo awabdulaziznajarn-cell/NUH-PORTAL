@@ -133,7 +133,7 @@ var NuhPledgeDoc = (function () {
           '<div class="pl-cap">' + tf('rdp_pledge_termsCap', 'البنود المعروضة وقت الموافقة', 'Terms shown at the time of acceptance') + '</div>' +
           '<ol class="pl-list">' + terms + '</ol>' +
           '<div class="pl-sig">' +
-            '<div class="pl-lbl">' + tf('rdp_pledge_typedLbl', 'الإقرار المكتوب بخطّ الطالب', 'Declaration typed by the student') + '</div>' +
+        '<div class="pl-lbl">' + tf('rdp_pledge_typedLbl', 'الإقرار الإلكتروني للطالب', 'Student Electronic Declaration') + '</div>' +
             '<div class="pl-txt">«' + escHtml(p.typedConfirmation || '') + '»</div>' +
             '<div class="pl-who">' + who.join(' &nbsp;·&nbsp; ') + '<br>' + NuhFmt.dateTime(p.acceptedAt) + '</div>' +
           '</div>' +
@@ -353,7 +353,7 @@ var NuhPledgeDoc = (function () {
           //    التوقيع هي أهم ورقة - وعلامة الورقة الأولى مابتوصلهاش.
           //    العلامة دي بتمشي مع الصندوق في أي ورقة يقع فيها.
           tile(s, p.termsHash, 'pl-tile-sig') +
-          '<div class="pl-sh-siglbl">' + 'الإقرار المكتوب بخطّ الطالب' + '</div>' +
+        '<div class="pl-sh-siglbl">' + 'الإقرار الإلكتروني للطالب' + '</div>' +
           '<div class="pl-sh-sigtxt">«' + escHtml(p.typedConfirmation || '') + '»</div>' +
           '<div class="pl-sh-sigrows">' +
             row('الاسم', escHtml(s.full_name || '-')) +

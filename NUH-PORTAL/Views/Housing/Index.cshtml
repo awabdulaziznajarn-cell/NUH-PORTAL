@@ -81,33 +81,12 @@
 /* ⚠️ .card-body اتنقلت لـ css/components.css - كانت مكتوبة في شاشتين. */
   .loading{text-align:center;padding:40px;color:var(--gray-500)}
   .loading::after{content:'';display:inline-block;width:24px;height:24px;border:3px solid var(--gray-200);border-top-color:var(--navy);border-radius:50%;animation:spin 1s linear infinite;margin-right:8px;vertical-align:middle}
-  .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 24px}
-  .detail-item label{font-size:11px;color:var(--gray-500);display:block;margin-bottom:2px}
-  .detail-item span{font-size:14px;font-weight:600}
-  .modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.5);z-index:1000;display:none;align-items:center;justify-content:center}
-  .modal-overlay.show{display:flex}
-  .modal{background:var(--white);border-radius:16px;width:90%;max-width:700px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 48px rgba(0,0,0,.2)}
-  .modal-header{padding:16px 20px;background:var(--tint);border-bottom:1px solid #c6ecd6;display:flex;align-items:center;justify-content:space-between}
-  .modal-header h3{font-size:16px;font-weight:700}
-  .modal-body{padding:20px}
-  .modal-footer{padding:12px 20px;border-top:1px solid var(--gray-100);display:flex;justify-content:flex-end;gap:8px}
+  /* ⚠️ ‏.modal ومشتقّاتها اتنقلوا لـ css/components.css - تعريف واحد لنوافذ
+     هذه الشاشة، ومعه بطاقة «إدارة الحساب» (.acct-*). الشرح كامل هناك. */
 
-  /* ⚠️ كلاسات سجل دورة الحياة (.log-entry / .log-icon / .log-details ...) كانت
-     مستخدمة في housing-management.js من غير أي CSS في المشروع كله، فالسطور كانت
-     بتطلع ملزوقة في بعضها: الإجراء والتاريخ والمنفّذ و IP في سطر واحد متصل. */
-  .log-list{display:flex;flex-direction:column;max-height:430px;overflow-y:auto;padding-inline-end:6px}
-  .log-entry{display:flex;gap:12px;padding:14px 2px;border-bottom:1px solid var(--gray-100)}
-  .log-entry:last-child{border-bottom:none}
-  .log-icon{flex-shrink:0;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;background:var(--gray-100);color:var(--gray-500)}
-  .log-icon.created,.log-icon.enabled,.log-icon.reprovisioned{background:var(--green-light);color:var(--green)}
-  .log-icon.disabled{background:var(--red-light);color:var(--red)}
-  .log-icon.password_reset{background:#fffaeb;color:var(--gold-dark)}
-  .log-details{flex:1;min-width:0}
-  .log-action{font-size:13.5px;font-weight:700;color:var(--navy);margin-bottom:3px}
-  .log-desc{font-size:12.5px;color:var(--gray-700);line-height:1.75;margin-bottom:5px;word-break:break-word}
-  .log-meta{display:flex;flex-wrap:wrap;gap:2px 16px;font-size:11.5px;color:var(--gray-500)}
-  .log-meta span{white-space:nowrap}
-  .log-meta .log-ip{direction:ltr;unicode-bidi:embed}
+  /* ⚠️ سجلّ دورة الحياة اتنقل لـ css/components.css كمكوّن مشترك (.nuh-tl):
+     كان مكتوبًا هنا وفي Views/Requests/Details.cshtml - نسختان لنفس المكوّن،
+     والثانية بلا أي كود يرسمها أصلًا. الشرح كامل هناك. */
 
   /* ============================================================================
      لوحة المزامنة مع الأكتف دايركتوري
@@ -121,28 +100,9 @@
         النظام، وبتلمس حسابات دخول حقيقية. اللون بيقول الفرق ده من غير ما
         الموظف يقرا سطر. والدرجة نفسها المستخدمة في شارة وسيلة الدخول في
         سجل تسجيل الدخول (.badge-method) — مش لون جديد اخترعناه هنا. */
-  .sync-panel{background:var(--white);border:1px solid #c7d7fe;border-radius:14px;
-              box-shadow:0 2px 8px rgba(24,73,169,.06);margin-bottom:20px;overflow:hidden}
-
-  /* ⚠️ الترويسة بقت <button>: هي مفتاح الطيّ، فلازم تشتغل بالكيبورد وقارئ
-        الشاشة زي أي زرار. <div onclick> كان هيبان زيّها للعين بس. */
-  .sync-panel-head{width:100%;display:flex;align-items:center;gap:11px;padding:15px 20px;
-                   background:var(--blue-light);border:0;border-bottom:1px solid #c7d7fe;
-                   font-family:inherit;text-align:start;cursor:pointer}
-  .sync-panel-head:hover{background:#e6eeff}
-  .sync-panel-head:focus-visible{outline:2px solid var(--blue);outline-offset:-2px}
-  .sync-panel-head .ic{width:34px;height:34px;border-radius:10px;background:var(--white);border:1px solid #c7d7fe;color:var(--blue);
-                       display:flex;align-items:center;justify-content:center;flex-shrink:0}
-  .sync-panel-head .ic svg{width:17px;height:17px}
-  .sync-panel-head .txt{flex:1;min-width:0}
-  .sync-panel-head .t{display:block;font-size:14.5px;font-weight:700;color:var(--blue);line-height:1.4}
-  .sync-panel-head .s{display:block;font-size:11.5px;color:var(--gray-500);margin-top:2px;line-height:1.6}
-  /* شارة «قراءة فقط» جنب العنوان: الجملة الكاملة موجودة تحته، والشارة هي اللي
-     بتفضل قدام العين وقت ما اللوحة تكون مطوية. */
-  .sync-panel-head .dom-badge{flex-shrink:0;font-size:10.5px;font-weight:700;padding:3px 10px;
-                              border-radius:999px;background:var(--white);border:1px solid #c7d7fe;color:var(--blue)}
-  .sync-panel-head .chev{width:16px;height:16px;flex-shrink:0;color:var(--blue);transition:transform .2s}
-  .sync-panel.is-open .sync-panel-head .chev{transform:rotate(180deg)}
+  /* ⚠️ .sync-panel و.sync-panel-head اتنقلوا لـ css/components.css - تعريف
+        واحد يخدم هذه الشاشة وشاشة سكن أعضاء هيئة التدريس معًا، والرأس بقى
+        محايدًا والأزرق في الأيقونة والشارة وحدهما. الشرح هناك. */
 
   /* ⚠️ مطوية افتراضيًا: دي إجراءات إدارية بتتعمل مرة كل فترة، وكانت واخدة
         تلت الشاشة الأولى فوق الجدول اللي هو شغل الموظف اليومي. */
@@ -159,16 +119,8 @@
   .sync-action .safe{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;
                      padding:2px 9px;border-radius:999px;background:var(--green-light);color:var(--green);align-self:flex-start}
   .sync-action .care{background:var(--amber-light,#fffaeb);color:var(--gold-dark)}
-  .sbtn{display:inline-flex;align-items:center;justify-content:center;gap:8px;align-self:flex-start;
-        padding:9px 18px;border-radius:9px;border:1px solid var(--gray-200);background:var(--white);
-        color:var(--navy);font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;
-        transition:background .15s,border-color .15s,box-shadow .15s}
-  .sbtn svg{width:14px;height:14px;flex-shrink:0}
-  .sbtn:hover{background:var(--gray-50,#f5f5f6);border-color:var(--gray-300);box-shadow:0 1px 4px rgba(16,70,49,.08)}
-  .sbtn.primary{background:var(--navy);border-color:var(--navy);color:#fff}
-  .sbtn.primary:hover{background:var(--navy-dark,#104631);border-color:var(--navy-dark,#104631)}
-  .sbtn:disabled{opacity:.55;cursor:default;box-shadow:none}
-  .sbtn.is-busy svg{animation:spin 1s linear infinite}
+  /* ⚠️ ‏.sbtn اتنقل لـ css/components.css: هو زرّ مكوّنَي .sync-panel
+     و‏.acct-row وهما الاتنين هناك، وكان الأساس هنا والحالات هناك. */
 
   /* نتيجة المزامنة — بدل نافذة alert() بتاعة المتصفح */
   .sync-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:18px}
@@ -187,7 +139,6 @@
   .sync-list .row .id{font-weight:700;color:var(--navy);direction:ltr}
   .sync-list .row .muted{color:var(--gray-500)}
   .sync-list .more{padding:8px 12px;font-size:12px;color:var(--gray-500);background:var(--gray-50,#f5f5f6)}
-  .group-tag{display:inline-block;background:var(--gray-100);border-radius:6px;padding:2px 8px;font-size:11px;margin:2px;direction:ltr}
 
   /* ============================================================================
      عمود الإجراءات في الجدول
@@ -207,63 +158,6 @@
   .abtn.primary svg{opacity:1}
   .abtn.primary:hover{background:var(--navy-dark,#104631);border-color:var(--navy-dark,#104631)}
 
-  /* ============================================================================
-     نافذة «إدارة الحساب»
-     ⚠️ كانت شبكة من عناوين تقنية خام (UPN / DN / UAC) بنفس وزن اسم الطالب،
-        وتحتها صفّ أزرار بأربعة ألوان مختلفة بلا أي شرح. الموظف لا يعرف ما الذي
-        يفعله «إعادة التزويد» ولا الفرق بينه وبين «مزامنة الخصائص».
-        التصميم الآن: ترويسة تعرّف الحساب، ثم أقسام معنونة، والتفاصيل التقنية
-        داخل قسم يُطوى، وكل إجراء في بطاقة تشرح أثره قبل الضغط — نفس لغة
-        لوحة المزامنة فوق الجدول حتى لا تبدو الشاشتان من نظامين.
-     ============================================================================ */
-  .acct-head{display:flex;align-items:center;gap:14px;padding:15px 16px;border:1px solid var(--gray-100);
-             border-radius:14px;background:linear-gradient(180deg,#fcfcfd,#fff);margin-bottom:22px}
-  .acct-head .av{width:46px;height:46px;border-radius:12px;background:var(--blue-pale);color:var(--navy);
-                 display:flex;align-items:center;justify-content:center;flex-shrink:0}
-  .acct-head .av svg{width:22px;height:22px}
-  .acct-head .who{flex:1;min-width:0;display:flex;flex-direction:column}
-  .acct-head .u{display:block;font-size:15px;font-weight:700;color:var(--navy-dark);word-break:break-all;line-height:1.5}
-  .acct-head .s{display:block;font-size:12px;color:var(--gray-500);margin-top:3px;line-height:1.7}
-
-  .acct-sec{margin-bottom:22px}
-  .acct-sec:last-child{margin-bottom:0}
-  .acct-sec > h4{font-size:12px;font-weight:700;color:var(--gray-500);margin-bottom:11px;
-                 padding-bottom:7px;border-bottom:1px solid var(--gray-100)}
-  /* auto-fit وليس media query: النافذة عرضها لا يتبع عرض الشاشة، فاستعلام
-     الشاشة كان يفرض عمودين داخل نافذة ضيّقة فتفيض البطاقات خارج حدودها. */
-  .acct-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:13px 24px}
-  .acct-f{min-width:0;overflow-wrap:anywhere}
-  .acct-f .k{display:block;font-size:11px;color:var(--gray-500);margin-bottom:3px}
-  .acct-f .v{display:block;font-size:13.5px;font-weight:600;color:var(--navy-dark);
-             line-height:1.7;word-break:break-word}
-  .acct-f.wide{grid-column:1/-1}
-  .acct-mono{display:block;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-             font-size:11.5px;font-weight:500;line-height:1.85;color:var(--gray-700);
-             background:var(--gray-50,#f5f5f6);border:1px solid var(--gray-100);
-             border-radius:8px;padding:8px 10px;word-break:break-all}
-
-  /* التفاصيل التقنية مطويّة: يحتاجها الفني عند العطل، ولا تزاحم الموظف يوميًا */
-  .acct-tech{margin-top:14px;border:1px solid var(--gray-100);border-radius:10px;overflow:hidden}
-  .acct-tech summary{cursor:pointer;list-style:none;padding:9px 12px;font-size:12px;font-weight:600;
-                     color:var(--gray-700);background:var(--gray-50,#f5f5f6);user-select:none}
-  .acct-tech summary::-webkit-details-marker{display:none}
-  .acct-tech summary::before{content:'+';display:inline-block;width:15px;font-weight:700;color:var(--gray-500)}
-  .acct-tech[open] summary::before{content:'\2212'}
-  .acct-tech .in{padding:14px 13px}
-
-  .acct-actions{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
-  .acct-action{min-width:0;border:1px solid var(--gray-200);border-radius:12px;padding:14px 15px;
-               display:flex;flex-direction:column;gap:9px;transition:border-color .15s,box-shadow .15s}
-  .acct-action:hover{border-color:var(--gray-300);box-shadow:0 2px 10px rgba(16,70,49,.06)}
-  .acct-action p{font-size:11.5px;color:var(--gray-500);line-height:1.75;margin:0;flex:1}
-  .acct-action .sbtn{align-self:flex-start;white-space:nowrap}
-  .acct-action .sbtn.danger{background:var(--red);border-color:var(--red);color:#fff}
-  .acct-action .sbtn.danger:hover{background:#912018;border-color:#912018}
-  .acct-action .sbtn.ok{background:var(--green);border-color:var(--green);color:#fff}
-  .acct-action .sbtn.ok:hover{background:#054f30;border-color:#054f30}
-  .acct-action.warn{border-color:#fecdca;background:linear-gradient(180deg,#fef3f2,#fff)}
-  .acct-empty{padding:22px;text-align:center;color:var(--gray-500);font-size:13px;
-              border:1px dashed var(--gray-200);border-radius:12px}
 </style>
 
 <div class="page-header">
@@ -365,16 +259,23 @@
   </div>
   <div class="card-body">
     <div class="table-wrap">
-      <table id="hsTable">
+      @* ⚠️ سبعة أعمدة بقاعدة السطرين - نفس قائمة الطلاب حرفًا بحرف:
+         الطالب أولًا (عربي فوق وإنجليزي تحته)، ثم الرقم الجامعي والجوال،
+         ثم الكلية والقسم. و«اسم المستخدم» و«آخر مزامنة» عمود واحد: التاريخ
+         ليس حقيقة مستقلّة بل صفة للحساب.
+         ⚠️ والترتيب على عمود «الطالب» بقى بالاسم العربي لا الإنجليزي: هو
+            السطر الأول في الخليّة، والعين تقرأ ترتيبها منه. *@
+      <table id="hsTable" class="tbl-2line">
         <thead>
           <tr>
-            <th data-sort="student_id">@SharedLocalizer["hs_colStudentId"]</th>
-            <th data-sort="full_name_english">@SharedLocalizer["hs_colNameEn"]</th>
-            <th data-sort="college">@SharedLocalizer["hs_colCollege"]</th>
+            @* ترقيم صفوف - نفس المفتاح المشترك المستعمل في قائمة الطلاب *@
+            <th class="num">@SharedLocalizer["col_seq"]</th>
+            <th data-sort="full_name">@SharedLocalizer["hs_colStudent"]</th>
+            <th data-sort="student_id">@SharedLocalizer["hs_colIdPhone"]</th>
+            <th data-sort="college">@SharedLocalizer["hs_colCollegeDept"]</th>
+            <th data-sort="ad_username">@SharedLocalizer["hs_colAccountSync"]</th>
             <th data-sort="ad_status">@SharedLocalizer["hs_colStatus"]</th>
-            <th data-sort="ad_username">@SharedLocalizer["hs_colUsername"]</th>
-            <th data-sort="ad_last_sync_at">@SharedLocalizer["hs_colLastSync"]</th>
-            <th >@SharedLocalizer["hs_colActions"]</th>
+            <th class="num">@SharedLocalizer["hs_colActions"]</th>
           </tr>
         </thead>
         <tbody id="accountsTableBody"></tbody>
@@ -396,7 +297,8 @@
       <h3 >@SharedLocalizer["hs_manageAccount"]</h3>
       <button class="modal-close" onclick="closeModal('detailsModal')" aria-label="@SharedLocalizer["close"]"><span aria-hidden="true">&times;</span></button>
     </div>
-    <div class="modal-body" id="detailsModalBody"></div>
+    @* flush: محتوى البطاقة يتولّى حوافّه بنفسه - انظر .modal-body.flush في components.css *@
+    <div class="modal-body flush" id="detailsModalBody"></div>
     <div class="modal-footer">
       <button class="hbtn btn-outline" onclick="closeModal('detailsModal')" >@SharedLocalizer["hs_close"]</button>
     </div>

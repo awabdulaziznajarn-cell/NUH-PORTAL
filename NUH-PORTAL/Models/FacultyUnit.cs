@@ -37,6 +37,27 @@ namespace NUH_PORTAL.Models
         //    "object not found" ومحدش هيعرف السبب.
         public string? AdDistinguishedName { get; set; }
 
+        // اسم الدخول الكامل (userPrincipalName) زي ما هو في الدليل.
+        // ⚠️ بيتقرا ومابيتكتبش: المعرّف اللي النظام بيربط بيه هو AdAccount
+        //    (sAMAccountName) - منه بيتقرا رقم البرج والشقة والفيلا، وعليه
+        //    بيتم البحث في الدليل. الـ UPN بيتخزّن عشان سؤال واحد: هل مقدّمته
+        //    مطابقة لاسم الحساب؟ اختلافهما بيعني إن حساب اتعمل أو اتعدّل من
+        //    برّه المعيار، وde بيبان كشارة في سجلّ الوحدة لا كخطأ يوقف إجراء.
+        public string? AdUserPrincipalName { get; set; }
+
+        // مقدّمة الـ UPN (قبل @) مطابقة لاسم الحساب؟ محسوبة لا مخزَّنة:
+        // قيمة مشتقّة من عمودين، وتخزينها بيفتح باب إنها تتأخّر عنهما.
+        public bool UpnMatchesAccount
+        {
+            get
+            {
+                if (string.IsNullOrWhiteSpace(AdUserPrincipalName)) return true;
+                var at = AdUserPrincipalName.IndexOf('@');
+                var local = at > 0 ? AdUserPrincipalName[..at] : AdUserPrincipalName;
+                return string.Equals(local, AdAccount, StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
         // ⚠️ مافيش Gender على الوحدة عن قصد. تقسيم MALE/FEMALE في الدومين
         //    تنظيمي بس — الأبراج والفلل مختلطة: نفس الشقة ممكن تكون فيها
         //    دكتورة النهاردة ودكتور بعد سنة. لو خزّنّا الجنس على الوحدة كانت

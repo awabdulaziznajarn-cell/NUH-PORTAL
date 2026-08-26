@@ -1,4 +1,4 @@
-﻿@* السايدبار الموحد — قوائم parent/child بتتفتح وتتقفل (accordion). النصوص من SharedResource (.resx). *@
+@* السايدبار الموحد — قوائم parent/child بتتفتح وتتقفل (accordion). النصوص من SharedResource (.resx). *@
 @* ⚠️ الشاشة اللي شرطها *مركّب* (أكتر من صلاحية) بنسأل عنها نظام الصلاحيات
    نفسه بدل ما نعيد كتابة الشرط هنا. الشاشة اللي شرطها صلاحية واحدة بتفضل
    HasClaim عادي — لأن الفحص ده *هو* السياسة نفسها فمفيش نسختين يفارقوا. *@
@@ -38,9 +38,10 @@
   .sidebar-nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:3px}
   .sidebar-nav:hover::-webkit-scrollbar-thumb{background:rgba(255,255,255,.3)}
   .nav-group{display:flex;flex-direction:column;gap:2px}
-  .nav-group-header{display:flex;align-items:center;gap:10px;width:100%;padding:11px 12px;background:none;border:none;cursor:pointer;font-family:inherit;font-size:11px;font-weight:700;letter-spacing:.5px;color:rgba(255,255,255,.45);border-radius:10px;transition:all .2s;text-align:start}
-  .nav-group-header:hover{background:rgba(255,255,255,.05);color:rgba(255,255,255,.85)}
-  .nav-group-header .ng-icon{width:15px;height:15px;flex-shrink:0;opacity:.85}
+  /* المستوى الأول: نفس مقاس .nav-item ووزنه - رأس المجموعة زرّ تنقّل لا لافتة. */
+  .nav-group-header{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;background:none;border:none;cursor:pointer;font-family:inherit;font-size:13.5px;font-weight:700;color:rgba(255,255,255,.82);border-radius:10px;transition:all .2s;text-align:start}
+  .nav-group-header:hover{background:rgba(255,255,255,.07);color:#fff}
+  .nav-group-header .ng-icon{width:16px;height:16px;flex-shrink:0;opacity:.9}
   .nav-group-header .ng-title{flex:1;text-align:start}
   .nav-group-header .ng-chevron{width:13px;height:13px;flex-shrink:0;transition:transform .22s ease;opacity:.7}
   .nav-group.collapsed .ng-chevron{transform:rotate(-90deg)}
@@ -50,7 +51,14 @@
   .sidebar-nav.no-anim .nav-group-body,
   .sidebar-nav.no-anim .ng-chevron{transition:none}
   .nav-group.collapsed .nav-group-body{max-height:0;padding-top:0}
-  .nav-group-body .nav-item{padding-inline-start:22px}
+  /* المستوى الثاني: أصغر وأبهت من رأسه - هي التي تصنع الشجرة. */
+  .nav-group-body .nav-item{padding-inline-start:22px;font-size:13px;font-weight:500;color:rgba(255,255,255,.62)}
+  .nav-group-body .nav-item:hover{color:#fff}
+  /* ⚠️ لازم صراحةً: ‏.nav-group-body .nav-item و.nav-item.active لهما نفس
+     الأولوية (كلاسان لكلٍّ منهما)، وهذا الملف يُحمَّل بعد site.css - فبلا
+     السطر ده كان لون البند النشط يصير أبيض **على خلفية بيضاء**، أي يختفي
+     نصّه تمامًا. */
+  .nav-group-body .nav-item.active{color:var(--navy);font-weight:700}
 </style>
 <aside class="sidebar">
   <div class="sidebar-logo">
@@ -163,13 +171,11 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="1"/><path d="M9 22v-4h6v4M9 6h.01M15 6h.01M9 10h.01M15 10h.01M9 14h.01M15 14h.01"/></svg>
           <span>@SharedLocalizer["Nav_FacultyUnits"]</span>
         </a>
-        @if (Perm("facultyHousing.manage"))
-        {
-          <a class="nav-item" href="/FacultyHousing/Handover">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-            <span>@SharedLocalizer["Nav_FacultyHandover"]</span>
-          </a>
-        }
+        @* ⚠️ بند «تغيير بيانات ساكن وحدة» اتشال ومعاه شرط الصلاحية اللي كان
+           بيغلّفه وحده: كان بيفتح جدولًا تانيًا لنفس الـ٢٤٢ وحدة عشان تختار
+           منه، والاختيار دلوقتي من صفّ القائمة نفسها (زرّ «تغيير الساكن»
+           للمشغولة و«تسكين» للشاغرة). بند تاني يودّي على نفس الصفحة كان
+           هيبقى تكرارًا من نوع تاني. *@
       </div>
     </div>
     }
@@ -286,6 +292,8 @@
     //    المفتاح بيخلّي المحفوظ القديم يتجاهَل، فالكل يبدأ من نضيف من غير
     //    ما حد يمسح حاجة بإيده.
     var NAV_KEY = 'navGroups2';
+    // موضع تمرير القائمة - يُحفظ لكل تبويب على حدة مثل حالة المجموعات
+    var NAV_SCROLL_KEY = 'navScroll';
     // ⚠️ بنحفظ **المجموعة اللي المستخدم لمسها بس** — مش حالة كل المجموعات.
     //
     //    الغلط اللي كان هنا: الدالة كانت بتمشي على كل المجموعات وتحفظ حالتها
@@ -406,11 +414,30 @@
 
     var navEl = document.querySelector('.sidebar-nav');
     if (navEl) {
+      // ⚠️ استعادة موضع تمرير القائمة قبل أول رسم.
+      //    كل انتقال بين الصفحات يعيد بناء الشريط من الصفر، فكانت القائمة ترجع
+      //    إلى أولها في كل مرة. من يقف على «التقارير» - وهي أسفل القائمة -
+      //    فقائمته مُمرَّرة لأسفل، فإذا ضغط «المستويات الدراسية» رأى القائمة
+      //    تقفز إلى أعلاها فجأة. والبند الذي ضغط عليه كان ظاهرًا أمامه
+      //    بالضرورة، فالإبقاء على الموضع كما هو يعني ألّا تتحرّك القائمة أصلًا.
+      //    والاستعادة قبل revealActive لا بعدها: الأخيرة لا تلمس التمرير ما دام
+      //    البند النشط ظاهرًا، فتصير تصحيحًا للحالات الاستثنائية فقط.
+      try {
+        var savedTop = parseInt(sessionStorage.getItem(NAV_SCROLL_KEY) || '', 10);
+        if (savedTop > 0) navEl.scrollTop = savedTop;
+      } catch (e) { }
+
       // قبل أول رسم: القائمة تبان من أول لحظة على العنصر النشط، مش بتتحرك بعدين
       revealActive(navEl);
       // رفع منع الحركة بعد أول رسم — الضغط اليدوي بعدها يتحرك بسلاسة كالمعتاد
       requestAnimationFrame(function () {
         requestAnimationFrame(function () { navEl.classList.remove('no-anim'); });
+      });
+
+      // ⚠️ pagehide لا beforeunload: الأخيرة لا تُنفَّذ عند الرجوع من ذاكرة
+      //    الصفحات (bfcache) في بعض المتصفحات، فيضيع الموضع مع زر الرجوع.
+      window.addEventListener('pagehide', function () {
+        try { sessionStorage.setItem(NAV_SCROLL_KEY, String(navEl.scrollTop)); } catch (e) { }
       });
     }
 

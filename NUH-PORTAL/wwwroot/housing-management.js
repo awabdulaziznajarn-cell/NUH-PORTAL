@@ -37,6 +37,32 @@ var HM_ACTION_TEXT = {
   left_housing:           { ar: 'ترك السكن',                   en: 'Left housing' }
 };
 
+// ⚠️ أيقونات الخطّ الزمني SVG لا حروف يونيكود: الحرف (✓ ✕ ↻) يُرسَم بخطّ
+//    النظام لا بخطّ الصفحة، فيختلف سمكه وحجمه بين ويندوز وماك وبين متصفّح
+//    وآخر - وهو أول ما يجعل الشاشة تبدو غير مصقولة.
+var TL_ICONS = {
+  _default:               '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>',
+  provisioned:            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  reprovisioned:          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>',
+  enabled:                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+  disabled:               '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>',
+  disable_failed:         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v5"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>',
+  password_reset:         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>',
+  extension_attrs_synced: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>',
+  housing_transfer:       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg>',
+  left_housing:           '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>',
+  person:                 '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+  clock:                  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>'
+};
+
+// نبرة كل إجراء - هي وحدها ما يحمل اللون في الخطّ الزمني.
+var TL_TONE = {
+  provisioned: 'ok', reprovisioned: 'ok', enabled: 'ok',
+  disabled: 'bad', disable_failed: 'bad',
+  password_reset: 'warn', left_housing: 'warn',
+  extension_attrs_synced: 'info', housing_transfer: 'info'
+};
+
 function hmActionLabel(action) {
   var key = HM_ACTION_KEYS[action];
   if (key) {
@@ -62,23 +88,33 @@ var HM_SVG = {
 
 // خانة في نافذة إدارة الحساب. ltr للنصوص اللاتينية (اسم الدخول، DN، التواريخ):
 // <bdi> يعزل ترتيب حروفها من غير ما يقلب محاذاة السطر.
+// حقل واحد: تسمية صغيرة فوق قيمة بارزة، وسطر ثانٍ اختياري تحتها.
+// ⚠️ السطر الثاني هو ما يسمح بدمج حقلين في واحد («الكلية والمستوى»)، وهو
+//    نفس بناء الخلايا ذات السطرين في جداول النظام - قاعدة واحدة لا اثنتان.
 function acctField(label, valueHtml, opts) {
   opts = opts || {};
-  var inner = opts.ltr ? '<bdi>' + valueHtml + '</bdi>' : valueHtml;
-  if (opts.mono) inner = '<code class="acct-mono"><bdi>' + valueHtml + '</bdi></code>';
-  return '<div class="acct-f' + (opts.wide ? ' wide' : '') + '">' +
+  var v = opts.mono ? '<span class="acct-mono">' + valueHtml + '</span>' : valueHtml;
+  return '<div class="acct-f">' +
            '<span class="k">' + label + '</span>' +
-           '<span class="v">' + inner + '</span>' +
+           '<span class="v">' + v + '</span>' +
+           (opts.sub ? '<span class="v2">' + opts.sub + '</span>' : '') +
          '</div>';
 }
 
 // بطاقة إجراء: الوصف قبل الزر. الموظف يقرأ أثر الإجراء قبل أن يضغطه —
 // وده اللي كان ناقص: أربعة أزرار بأربعة ألوان بلا كلمة تشرح الفرق بينها.
-function acctAction(desc, btnClass, icon, label, onclick) {
-  return '<div class="acct-action' + (btnClass === 'danger' ? ' warn' : '') + '">' +
-           '<p>' + desc + '</p>' +
-           '<button class="sbtn ' + btnClass + '" onclick="' + onclick + '">' + icon +
-             '<span>' + label + '</span></button>' +
+// ⚠️ الزر يمرّر نفسه (this) إلى الدالة، والدوال تلفّ عملها بـ NuhBusy.run.
+//    نداءات هذه الشاشة كلها على الأكتف دايركتوري وتستغرق ثوانيَ، والزر كان
+//    يبقى قابلًا للضغط طوالها - فالضغطة الثانية تُنفّذ الإجراء مرة أخرى على
+//    الحساب نفسه. والقفل هنا في مُنشئ الزر لا في كل نداء، فأي إجراء يُضاف
+//    لاحقًا يرثه بلا أن يتذكّره أحد.
+// ⚠️ صفّ لا بطاقة: أربع بطاقات في شبكة عرضها ٢٨٠ للواحدة كانت تنزل صفّين
+//    تحت حدّ الشاشة، فلا يرى الموظف الإجراءات أصلًا إلا إن مرّر لتحت.
+function acctAction(desc, btnClass, icon, label, btnText, onclick) {
+  return '<div class="acct-row' + (btnClass === 'danger' ? ' is-danger' : '') + '">' +
+           '<span class="ic">' + icon + '</span>' +
+           '<span class="tx"><b>' + label + '</b><span>' + desc + '</span></span>' +
+           '<button class="sbtn ' + btnClass + '" onclick="' + onclick + '">' + btnText + '</button>' +
          '</div>';
 }
 
@@ -274,19 +310,26 @@ function renderHousingRows() {
   var i = (hsState.page - 1) * hsState.pageSize;
   var html = (housingAccounts || []).map(function (a) {
     i++;
-    var lastSync = a.ad_last_sync_at ? formatDate(a.ad_last_sync_at) : '-';
+    var lastSync = a.ad_last_sync_at ? formatDate(a.ad_last_sync_at) : '';
     var statusBadge = '<span class="badge ' + getBadgeClass(a.ad_status) + '">' + getStatusText(a.ad_status) + '</span>';
+    // ⚠️ خلايا بسطرين (.cell-p/.cell-q) - نفس بناء قائمة الطلاب وقائمة
+    //    أعضاء هيئة التدريس. السطر الثاني يُكتب دائمًا ويختفي وحده لو فارغ
+    //    (قاعدة .cell-q:empty في site.css)، وإلا صار لكل حقل شرط مكتوب بالإيد.
     return '<tr>' +
-      '<td><bdi>' + hmEsc(a.student_id || '-') + '</bdi></td>' +
-      '<td>' + hmEsc(a.full_name_english || a.full_name || '-') + '</td>' +
-      '<td>' + hmEsc(collegeName(a.college) || '-') + '</td>' +
-      '<td>' + statusBadge + '</td>' +
+      '<td class="num">' + i + '</td>' +
+      '<td><div class="cell-p">' + hmEsc(a.full_name || a.full_name_english || '-') + '</div>' +
+          '<div class="cell-q cell-en">' + hmEsc(a.full_name && a.full_name_english ? a.full_name_english : '') + '</div></td>' +
       // ⚠️ كان style="direction:ltr" مع حساب المحاذاة يدويًا لكل لغة. تعيين dir
       //    على الخانة يقلب معنى محاذاتها، فكان لا بد من استثناء مكتوب بالإيد.
       //    <bdi> يعزل ترتيب الحروف وحده، والمحاذاة تبقى تابعة لاتجاه الصفحة.
-      '<td><bdi>' + hmEsc(a.ad_username || '-') + '</bdi></td>' +
-      '<td><bdi>' + hmEsc(lastSync) + '</bdi></td>' +
-      '<td><div class="ad-actions">' +
+      '<td><div class="cell-p cell-num"><bdi>' + hmEsc(a.student_id || '-') + '</bdi></div>' +
+          '<div class="cell-q cell-num">' + (a.phone ? '<bdi>' + hmEsc(a.phone) + '</bdi>' : '') + '</div></td>' +
+      '<td><div class="cell-p2">' + hmEsc(collegeName(a.college) || '-') + '</div>' +
+          '<div class="cell-q">' + hmEsc(a.department ? deptName(a.department) : '') + '</div></td>' +
+      '<td><div class="cell-p2"><bdi>' + hmEsc(a.ad_username || '-') + '</bdi></div>' +
+          '<div class="cell-q cell-num">' + (lastSync ? '<bdi>' + hmEsc(lastSync) + '</bdi>' : '') + '</div></td>' +
+      '<td>' + statusBadge + '</td>' +
+      '<td class="num"><div class="ad-actions">' +
         '<button class="abtn primary" onclick="openDetails(' + a.id + ')">' + HM_SVG.details + '<span>' + t('details') + '</span></button>' +
         '<button class="abtn" onclick="openLifecycle(' + a.id + ')">' + HM_SVG.log + '<span>' + t('lifecycleLog') + '</span></button>' +
       '</div></td>' +
@@ -345,81 +388,78 @@ async function openDetails(studentId) {
     var statusBadge = '<span class="badge ' + getBadgeClass(s.ad_status) + '">' + getStatusText(s.ad_status) + '</span>';
     var html = '';
 
-    // ---- ترويسة: مين هذا الحساب ولمن. كانت الشاشة تبدأ بجدول UPN/DN بلا اسم.
-    html += '<div class="acct-head">' +
+    // ---- الهوية: الطالب لا الحساب. النافذة عن طالب، والحساب سطر في الدليل.
+    //      ⚠️ خمسة حقول كانت مكرَّرة بينها وبين الجدول تحتها: اسم المستخدم
+    //         وحالة الحساب والرقم الجامعي والاسم العربي والاسم الإنجليزي.
+    //      ⚠️ والاسمان معًا في اللغتين: حساب الدليل يُبنى من الاسم الإنجليزي
+    //         وسجلّ الطالب بالعربي، والموظف هنا يطابق بينهما. إخفاء أحدهما
+    //         بحسب لغة الواجهة يخفي ما جاء يراه - واسم الشخص بيانات لا ترجمة.
+    html += '<div class="acct-id' + (s.ad_status === 'enabled' ? '' : ' is-off') + '">' +
               '<span class="av">' + HM_SVG.user + '</span>' +
               '<span class="who">' +
-                '<span class="u"><bdi>' + hmEsc((ad && ad.samAccountName) || s.ad_username || t('adNoAccount')) + '</bdi></span>' +
-                '<span class="s">' + hmEsc(s.full_name || s.full_name_english || '-') +
-                  ' \u00B7 <bdi>' + hmEsc(s.student_id || '-') + '</bdi></span>' +
+                '<span class="n1">' + hmEsc(s.full_name || s.full_name_english || '-') + '</span>' +
+                (s.full_name && s.full_name_english
+                  ? '<span class="n2">' + hmEsc(s.full_name_english) + '</span>' : '') +
               '</span>' +
               statusBadge +
             '</div>';
 
+    // ---- عمودان: بيانات الطالب | بيانات الحساب في الدليل
+    var stuCol = '<div class="acct-col">' +
+                   '<span class="acct-t">' + t('hs_secStudent') + '</span>' +
+                   acctField(t('studentId'), hmEsc(s.student_id || '-'), { mono: true }) +
+                   acctField(t('hs_collegeLevel'), hmEsc(collegeName(s.college) || '-'),
+                             { sub: s.academic_level ? hmEsc(t('academicLevel') + ' ' + s.academic_level) : '' }) +
+                   acctField(t('gender'), hmEsc(acctGender(s.gender))) +
+                 '</div>';
+
+    var dirCol;
     if (ad) {
       var groups = (ad.memberOf && ad.memberOf.length)
-        ? ad.memberOf.map(function (g) { return '<span class="group-tag"><bdi>' + hmEsc(g) + '</bdi></span>'; }).join('')
+        ? ad.memberOf.map(function (g) { return '<span class="acct-tag">' + hmEsc(g) + '</span>'; }).join('')
         : '-';
-
-      html += '<div class="acct-sec">' +
-                '<h4>' + t('hs_secDirectory') + '</h4>' +
-                '<div class="acct-grid">' +
-                  acctField(t('adUsername'), hmEsc(ad.samAccountName || '-'), { ltr: true }) +
-                  acctField(t('hs_upn'), hmEsc(ad.userPrincipalName || '-'), { ltr: true }) +
-                  acctField(t('adAccountStatus'), statusBadge) +
-                  acctField(t('adLastSync'), hmEsc(s.ad_last_sync_at ? formatDate(s.ad_last_sync_at) : '-'), { ltr: true }) +
-                  acctField(t('hs_groups'), groups, { wide: true }) +
-                '</div>' +
-                // مطويّة: الفني يفتحها عند العطل، والموظف لا تزاحمه كل يوم.
-                '<details class="acct-tech"><summary>' + t('hs_techDetails') + '</summary><div class="in">' +
-                  '<div class="acct-grid">' +
-                    acctField(t('hs_dn'), hmEsc(ad.distinguishedName || '-'), { mono: true, wide: true }) +
-                    acctField(t('hs_uac'), hmEsc(acctUac(ad.userAccountControl))) +
-                  '</div>' +
-                '</div></details>' +
-              '</div>';
+      dirCol = '<div class="acct-col">' +
+                 '<span class="acct-t">' + t('hs_secDirectory') + '</span>' +
+                 acctField(t('adUsername'), hmEsc(ad.samAccountName || '-'), { mono: true }) +
+                 acctField(t('hs_upn'), hmEsc(ad.userPrincipalName || '-'), { mono: true }) +
+                 acctField(t('adLastSync'),
+                           hmEsc(s.ad_last_sync_at ? formatDate(s.ad_last_sync_at) : '-'), { mono: true }) +
+                 acctField(t('hs_groups'), groups) +
+                 // مطويّة: الفني يفتحها عند العطل، والموظف لا تزاحمه كل يوم.
+                 '<details class="acct-tech"><summary>' + t('hs_techDetails') + '</summary><div class="in">' +
+                   acctField(t('hs_dn'), hmEsc(ad.distinguishedName || '-'), { mono: true }) +
+                   acctField(t('hs_uac'), hmEsc(acctUac(ad.userAccountControl))) +
+                 '</div></details>' +
+               '</div>';
     } else {
-      html += '<div class="acct-sec"><h4>' + t('hs_secDirectory') + '</h4>' +
-                '<div class="acct-empty">' + t('adNoAccount') + '</div></div>';
+      dirCol = '<div class="acct-col">' +
+                 '<span class="acct-t">' + t('hs_secDirectory') + '</span>' +
+                 '<div class="acct-empty">' + t('adNoAccount') + '</div>' +
+               '</div>';
     }
+    html += '<div class="acct-cols">' + stuCol + dirCol + '</div>';
 
-    // ---- معلومات الطالب
-    html += '<div class="acct-sec">' +
-              '<h4>' + t('personalInfo') + '</h4>' +
-              '<div class="acct-grid">' +
-                acctField(t('studentId'), hmEsc(s.student_id || '-'), { ltr: true }) +
-                acctField(t('fullName'), hmEsc(s.full_name || '-')) +
-                acctField(t('fullNameEnglish'), hmEsc(s.full_name_english || '-'), { ltr: true }) +
-                acctField(t('college'), hmEsc(collegeName(s.college) || '-')) +
-                acctField(t('gender'), hmEsc(acctGender(s.gender))) +
-                acctField(t('academicLevel'), hmEsc(s.academic_level || '-')) +
-                acctField(t('housingBuilding'), hmEsc(s.housing_building || '-')) +
-                acctField(t('roomNumber'), hmEsc(s.room_number || '-')) +
-              '</div>' +
-            '</div>';
-
-    // ---- الإجراءات: كل واحد ببطاقة تشرح أثره.
-    //      الإخفاء هنا للراحة فقط — الصلاحية تُفحص على السيرفر في كل نداء.
+    // ---- الإجراءات: كل واحد بسطر يشرح أثره.
+    //      الإخفاء هنا للراحة فقط - الصلاحية تُفحص على السيرفر في كل نداء.
     if (ad) {
       var acts = '';
       if (hmCan('housing.manageAccounts')) {
         acts += (s.ad_status === 'enabled')
-          ? acctAction(t('hs_actDisableDesc'), 'danger', HM_SVG.ban, t('disableAccount'),
-                       "performAction(" + studentId + ",'disable')")
-          : acctAction(t('hs_actEnableDesc'), 'ok', HM_SVG.check, t('enableAccount'),
-                       "performAction(" + studentId + ",'enable')");
-        acts += acctAction(t('hs_actPwdDesc'), '', HM_SVG.lock, t('resetPassword'),
+          ? acctAction(t('hs_actDisableDesc'), 'danger', HM_SVG.ban, t('disableAccount'), t('hs_btnDisable'),
+                       "performAction(this," + studentId + ",'disable')")
+          : acctAction(t('hs_actEnableDesc'), 'ok', HM_SVG.check, t('enableAccount'), t('hs_btnEnable'),
+                       "performAction(this," + studentId + ",'enable')");
+        acts += acctAction(t('hs_actPwdDesc'), '', HM_SVG.lock, t('resetPassword'), t('hs_btnReset'),
                            "showResetPassword(" + studentId + ")");
-        acts += acctAction(t('hs_actRealignDesc'), '', HM_SVG.align, t('reProvision'),
-                           "performAction(" + studentId + ",'re-provision')");
+        acts += acctAction(t('hs_actRealignDesc'), '', HM_SVG.align, t('reProvision'), t('hs_btnRealign'),
+                           "performAction(this," + studentId + ",'re-provision')");
       }
       if (hmCan('housing.syncAd')) {
-        acts += acctAction(t('hs_actSyncDesc'), '', HM_SVG.upload, t('syncAttributes'),
-                           "performAction(" + studentId + ",'sync-attrs')");
+        acts += acctAction(t('hs_actSyncDesc'), '', HM_SVG.upload, t('syncAttributes'), t('hs_btnSync'),
+                           "performAction(this," + studentId + ",'sync-attrs')");
       }
       if (acts) {
-        html += '<div class="acct-sec"><h4>' + t('hs_secActions') + '</h4>' +
-                  '<div class="acct-actions">' + acts + '</div></div>';
+        html += '<div class="acct-acts"><span class="acct-t">' + t('hs_secActions') + '</span>' + acts + '</div>';
       }
     }
 
@@ -429,7 +469,7 @@ async function openDetails(studentId) {
   }
 }
 
-async function performAction(studentId, action) {
+async function performAction(btn, studentId, action) {
   var confirmMsgs = {
     'enable': t('confirmEnable'),
     'disable': t('confirmDisable'),
@@ -440,88 +480,97 @@ async function performAction(studentId, action) {
   // الأحمر للإجراء الذي يقطع خدمة عن الطالب فقط. «إعادة ضبط الحساب» إجراء
   // تصحيحي وليس خطرًا، وتلوينه أحمر يعوّد المستخدم على تجاهل اللون الأحمر.
   var dangerous = (action === 'disable');
+  // ⚠️ القفل بعد التأكيد لا قبله: نافذة التأكيد تحجب الضغط أصلًا، ولو قفلنا
+  //    قبلها بقي الزر مقفولًا بلا داعٍ لو ألغى المستخدم.
   if (!await NuhDialog.confirm({ message: confirmMsgs[action] || t('confirm'), danger: dangerous })) return;
 
-  try {
-    var res = await fetch(API + '/' + studentId + '/' + action, {
-      method: 'POST',
-      headers: apiHeaders()
-    });
+  return NuhBusy.run(btn, async function () {
+    try {
+      var res = await fetch(API + '/' + studentId + '/' + action, {
+        method: 'POST',
+        headers: apiHeaders()
+      });
 
-    var data = await res.json();
-    if (res.ok) {
-      showToast(data.message || t('success'), 'success');
-      closeModal('detailsModal');
-      loadAccounts();
-      loadStats();
-    } else {
-      showToast(data.message || data.error || t('errorOccurred'), 'error');
+      var data = await res.json();
+      if (res.ok) {
+        showToast(data.message || t('success'), 'success');
+        closeModal('detailsModal');
+        loadAccounts();
+        loadStats();
+      } else {
+        showToast(data.message || data.error || t('errorOccurred'), 'error');
+      }
+    } catch (e) {
+      showToast(t('apiError'), 'error');
     }
-  } catch (e) {
-    showToast(t('apiError'), 'error');
-  }
+  });
 }
 
 // ⚠️ كانت تمسح محتوى النافذة وتضع حقلًا عاريًا وزرّين بلا أي إطار أو عنوان،
-//    فتبدو كأن الصفحة تعطّلت وظهر نموذج من صفحة أخرى. الآن بطاقة لها ترويسة
-//    وزر رجوع واضح، بنفس لغة باقي الشاشة.
+//    فتبدو كأن الصفحة تعطّلت وظهر نموذج من صفحة أخرى. الآن بنفس بناء بطاقة
+//    إدارة الحساب: ترويسة .acct-id ثم قسم مفصول بخطّ، وزر رجوع واضح.
+// ⚠️ ولا أنماط داخل السمة style: كلّ ما يخصّ شكل النموذج في .acct-form
+//    داخل css/components.css - مكان واحد لا مكانان.
 function showResetPassword(studentId) {
   var body = document.getElementById('detailsModalBody');
   body.innerHTML =
-    '<div class="acct-head">' +
+    '<div class="acct-id is-plain">' +
       '<span class="av">' + HM_SVG.lock + '</span>' +
       '<span class="who">' +
-        '<span class="u">' + t('resetPassword') + '</span>' +
-        '<span class="s">' + t('hs_actPwdDesc') + '</span>' +
+        '<span class="n1">' + t('resetPassword') + '</span>' +
+        '<span class="n2">' + t('hs_actPwdDesc') + '</span>' +
       '</span>' +
     '</div>' +
-    '<div class="acct-sec">' +
-      '<label class="acct-f" style="display:block">' +
+    '<div class="acct-form">' +
+      '<label>' +
         '<span class="k">' + t('newPassword') + '</span>' +
         '<input type="password" id="newPwd" autocomplete="new-password" ' +
-          'style="width:100%;height:44px;padding:0 12px;border:1.5px solid var(--gray-300);' +
-          'border-radius:10px;font-family:inherit;font-size:14px;background:var(--gray-50,#f5f5f6)" ' +
           'data-i18n-placeholder="newPasswordPlaceholder">' +
       '</label>' +
-      '<p style="font-size:11.5px;color:var(--gray-500);line-height:1.75;margin-top:8px">' +
-        (t('passwordMinLength') || '') + '</p>' +
-    '</div>' +
-    '<div style="display:flex;gap:10px">' +
-      '<button class="sbtn primary" onclick="resetPassword(' + studentId + ')">' +
-        HM_SVG.check + '<span>' + t('confirm') + '</span></button>' +
-      '<button class="sbtn" onclick="openDetails(' + studentId + ')">' + t('cancel') + '</button>' +
+      '<p class="note">' + (t('passwordMinLength') || '') + '</p>' +
+      '<div class="btns">' +
+        '<button class="sbtn primary" id="pwdConfirmBtn" onclick="resetPassword(this,' + studentId + ')">' +
+          HM_SVG.check + '<span>' + t('confirm') + '</span></button>' +
+        '<button class="sbtn" onclick="openDetails(' + studentId + ')">' + t('cancel') + '</button>' +
+      '</div>' +
     '</div>';
   var f = document.getElementById('newPwd');
   if (f) {
     // Enter داخل الحقل ينفّذ — كان لازم الوصول للزر بالفأرة كل مرة
-    f.addEventListener('keydown', function (e) { if (e.key === 'Enter') resetPassword(studentId); });
+    // ⚠️ Enter يمرّ من الزر نفسه لا من الحقل، وإلا كان القفل بلا أثر:
+    //    المستخدم يضغط Enter مرتين فينفَّذ الإجراء مرتين.
+    f.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') resetPassword(document.getElementById('pwdConfirmBtn'), studentId);
+    });
     setTimeout(function () { f.focus(); }, 40);
   }
 }
 
-async function resetPassword(studentId) {
+async function resetPassword(btn, studentId) {
   var pwd = document.getElementById('newPwd').value;
   if (!pwd || pwd.length < 8) {
     showToast(t('passwordMinLength') || 'Password must be at least 8 characters', 'error');
     return;
   }
 
-  try {
-    var res = await fetch(API + '/' + studentId + '/reset-password', {
-      method: 'POST',
-      headers: apiHeaders(),
-      body: JSON.stringify({ newPassword: pwd })
-    });
-    var data = await res.json();
-    if (res.ok) {
-      showToast(t('success'), 'success');
-      closeModal('detailsModal');
-    } else {
-      showToast(data.message || data.error || t('errorOccurred'), 'error');
+  return NuhBusy.run(btn, async function () {
+    try {
+      var res = await fetch(API + '/' + studentId + '/reset-password', {
+        method: 'POST',
+        headers: apiHeaders(),
+        body: JSON.stringify({ newPassword: pwd })
+      });
+      var data = await res.json();
+      if (res.ok) {
+        showToast(t('success'), 'success');
+        closeModal('detailsModal');
+      } else {
+        showToast(data.message || data.error || t('errorOccurred'), 'error');
+      }
+    } catch (e) {
+      showToast(t('apiError'), 'error');
     }
-  } catch (e) {
-    showToast(t('apiError'), 'error');
-  }
+  });
 }
 
 async function openLifecycle(studentId) {
@@ -537,36 +586,44 @@ async function openLifecycle(studentId) {
     var logs = data.logs || [];
 
     if (logs.length === 0) {
-      body.innerHTML = '<p style="color:var(--gray-500);text-align:center;padding:20px">' + t('noData') + '</p>';
+      body.innerHTML = '<div class="nuh-tl-empty">' + t('noData') + '</div>';
       return;
     }
 
-    // ⚠️ الكلاسات .log-entry/.log-icon/.log-details مالهاش CSS في المشروع، فكل
-    //    سطر كان بيطلع ملزوق في اللي بعده. الستايل اتضاف في Views/Housing/Index.cshtml،
-    //    والتفاصيل و«مين نفّذ» والتاريخ و IP بقوا في أسطر منفصلة بدل سطر واحد متصل.
-    var ACTION_ICONS = {
-      provisioned: '\u2713', reprovisioned: '\u2713', enabled: '\u2713',
-      disabled: '\u2715', disable_failed: '!', password_reset: '\u26BF',
-      extension_attrs_synced: '\u21BB', housing_transfer: '\u2194', left_housing: '\u2192'
-    };
+    // ⚠️ خطّ زمني (.nuh-tl) لا قائمة مسطّحة: المكوّن مشترك في css/components.css
+    //    والشرح كامل هناك. والأيقونات SVG لا حروف يونيكود (كانت ✓ و✕ و↻)،
+    //    لأن الحرف يُرسَم بخطّ النظام لا بخطّنا فيختلف شكله من جهاز لآخر.
+    var html = '<div class="nuh-tl">';
+    var lastDay = null;
 
-    var html = '<div class="log-list">';
-    logs.forEach(function (l) {
+    logs.forEach(function (l, i) {
       var action = l.action || '';
-      var iconClass = action === 'provisioned' ? 'created' : action;
-      var actionLabel = hmActionLabel(action);
 
-      var meta = '';
-      if (l.performerName) meta += '<span>' + t('by') + ' ' + hmEsc(l.performerName) + '</span>';
-      meta += '<span>' + formatDate(l.performedAt) + '</span>';
-      if (l.ipAddress) meta += '<span class="log-ip">IP: ' + hmEsc(l.ipAddress) + '</span>';
+      // ⚠️ التاريخ يُكتب مرة لكل يوم لا مرة لكل سطر. والمفتاح من NuhFmt.date
+      //    نفسها التي تُكتب بها الترويسة، فلو بدّل الموظف التقويم إلى الهجري
+      //    تغيّر التجميع معه - ولا يبقى عنوان بتقويم وصفوفه بتقويم آخر.
+      var dayKey = NuhFmt.date(l.performedAt);
+      if (dayKey !== lastDay) {
+        lastDay = dayKey;
+        html += '<div class="nuh-tl-day"><b>' + hmEsc(NuhFmt.dateFull(l.performedAt)) + '</b><i></i></div>';
+      }
 
-      html += '<div class="log-entry">' +
-          '<div class="log-icon ' + iconClass + '">' + (ACTION_ICONS[action] || '\u21BB') + '</div>' +
-          '<div class="log-details">' +
-            '<div class="log-action">' + hmEsc(actionLabel) + '</div>' +
-            (l.details ? '<div class="log-desc">' + hmEsc(l.details) + '</div>' : '') +
-            '<div class="log-meta">' + meta + '</div>' +
+      // ⚠️ الوقت أوّل سطر البيانات لا في طرف سطر العنوان: هناك كان يقع تحت
+      //    شريط التمرير فيُقصّ، ويترك فراغًا واسعًا بينه وبين العنوان.
+      var meta = '<span class="nuh-tl-time">' + TL_ICONS.clock +
+                 '<span>' + hmEsc(NuhFmt.time(l.performedAt)) + '</span></span>';
+      if (l.performerName) meta += '<span class="sp"></span>' + TL_ICONS.person +
+                                   '<span>' + hmEsc(l.performerName) + '</span>';
+      if (l.ipAddress) meta += '<span class="sp"></span><span class="nuh-tl-ip">' + hmEsc(l.ipAddress) + '</span>';
+
+      html += '<div class="nuh-tl-item">' +
+          '<div class="nuh-tl-dot ' + (TL_TONE[action] || '') + '">' + (TL_ICONS[action] || TL_ICONS._default) + '</div>' +
+          '<div class="nuh-tl-body">' +
+            '<div class="nuh-tl-top">' +
+              '<span class="nuh-tl-title">' + hmEsc(hmActionLabel(action)) + '</span>' +
+            '</div>' +
+            (l.details ? '<div class="nuh-tl-desc">' + hmEsc(l.details) + '</div>' : '') +
+            '<div class="nuh-tl-meta">' + meta + '</div>' +
           '</div>' +
         '</div>';
     });

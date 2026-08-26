@@ -13,6 +13,7 @@ namespace NUH_PORTAL.Data.Configurations
             builder.HasKey(o => o.Id);
 
             builder.Property(o => o.FullNameAr).HasMaxLength(250).IsRequired();
+            builder.Property(o => o.FullNameEn).HasMaxLength(250);
             builder.Property(o => o.NationalId).HasMaxLength(20);
             builder.Property(o => o.Mobile).HasMaxLength(20);
             builder.Property(o => o.College).HasMaxLength(200);

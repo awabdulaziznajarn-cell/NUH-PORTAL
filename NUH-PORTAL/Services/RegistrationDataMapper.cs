@@ -82,6 +82,60 @@ namespace NUH_PORTAL.Services
         public static string NormalizeFieldKey(string key)
             => string.Equals(key, "mobile", StringComparison.OrdinalIgnoreCase) ? "phone" : key;
 
+        // ==================================================================
+        //  الخانات التابعة - تُفتح مع أصلها إجباريًّا.
+        //
+        //  ⚠️ المشكلة التي وُجدت لأجلها (الطلب 2026-000029):
+        //     المراجع فتح «الكلية» وحدها ليصحّحها الطالب. والطالب غيّر الكلية،
+        //     فصارت قائمة الأقسام قائمة الكلية الجديدة - والقسم المحفوظ لم يعد
+        //     منها. لكن «القسم» مقفول لأن المراجع لم يختره، فلا يستطيع الطالب
+        //     اختيار قسم صالح، ولا يستطيع الحفظ، **ولا يستطيع أحد تحريك الطلب**.
+        //
+        //  ⚠️ وهذا ليس خطأ من المراجع: هو اختار الخانة التي رآها خاطئة، ولا
+        //     يُطلب منه أن يعرف أن القسم مشتقّ منها تقنيًّا. فالنظام هو الذي
+        //     يفتح التابع مع أصله.
+        //
+        //  ⚠️ ومكانها هنا لا في الواجهة: القائمة تُخزَّن في info_fields وتُقرأ
+        //     منها الواجهة. فالتوسيع عند الحفظ يعني أن الواجهة والخادم يريان
+        //     القائمة نفسها بلا أن تكرّر الواجهة القاعدة.
+        //
+        //  السلاسل: الكلية ← القسم · والمبنى ← الدور ← الشقة ← الغرفة.
+        // ==================================================================
+        private static readonly Dictionary<string, string[]> FieldDependents =
+            new(StringComparer.OrdinalIgnoreCase)
+            {
+                ["college"]          = new[] { "department" },
+                ["housing_building"] = new[] { "floor_number", "apartment_number", "room_number" },
+                ["floor_number"]     = new[] { "apartment_number", "room_number" },
+                ["apartment_number"] = new[] { "room_number" }
+            };
+
+        //  بتضيف الخانات التابعة لكل خانة في القائمة، وبتشيل التكرار.
+        //  ⚠️ الترتيب محفوظ: القائمة بتتعرض للطالب كما هي في لافتة «مطلوب
+        //     تصحيحه»، والتابع بيجي بعد أصله فيقرأها مرتَّبة كما يتوقّع.
+        public static List<string> WithDependents(IEnumerable<string> fields)
+        {
+            var outp = new List<string>();
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            void Add(string f)
+            {
+                var k = NormalizeFieldKey((f ?? "").Trim());
+                if (k.Length == 0 || !seen.Add(k)) return;
+                outp.Add(k);
+            }
+
+            foreach (var f in fields ?? Enumerable.Empty<string>())
+            {
+                var k = NormalizeFieldKey((f ?? "").Trim());
+                Add(k);
+                if (FieldDependents.TryGetValue(k, out var deps))
+                    foreach (var d in deps) Add(d);
+            }
+
+            return outp;
+        }
+
         //  ⚠️ بترجّع true للخانات القابلة للاختيار بس. المستدعي الوحيد هو
         //     الفلتر اللي بيحدد إيه اللي يتخزّن في info_fields، فالخانة غير
         //     القابلة للاختيار لازم تتصدّ هنا كمان لا في الواجهة وحدها.

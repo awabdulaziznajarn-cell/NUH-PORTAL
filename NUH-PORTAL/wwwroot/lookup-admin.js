@@ -63,7 +63,8 @@
   function renderHead() {
     var cols = CFG.cols;
     document.getElementById('lkHead').innerHTML =
-      '<tr><th>#</th>' + cols.map(function (c) { return '<th>' + t(COL_LABEL[c]) + '</th>'; }).join('') +
+      '<tr><th>' + t('col_seq') + '</th>' +
+      cols.map(function (c) { return '<th>' + t(COL_LABEL[c]) + '</th>'; }).join('') +
       '<th>' + t('lk_col_actions') + '</th></tr>';
   }
 
