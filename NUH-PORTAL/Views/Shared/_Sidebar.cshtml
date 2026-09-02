@@ -1,10 +1,14 @@
-@* السايدبار الموحد — قوائم parent/child بتتفتح وتتقفل (accordion). النصوص من SharedResource (.resx). *@
+@* السايدبار الموحد - قوائم parent/child بتتفتح وتتقفل (accordion). النصوص من SharedResource (.resx). *@
 @* ⚠️ الشاشة اللي شرطها *مركّب* (أكتر من صلاحية) بنسأل عنها نظام الصلاحيات
    نفسه بدل ما نعيد كتابة الشرط هنا. الشاشة اللي شرطها صلاحية واحدة بتفضل
-   HasClaim عادي — لأن الفحص ده *هو* السياسة نفسها فمفيش نسختين يفارقوا. *@
+   HasClaim عادي - لأن الفحص ده *هو* السياسة نفسها فمفيش نسختين يفارقوا. *@
 @inject IAuthorizationService Authz
+@* ⚠️ نطاق المستخدم عشان بند «قائمة الطلاب» يقول اللي الشاشة نفسها بتقوله.
+   بيتقرا من UnitOfWork لا من الكليم مباشرةً: صلاحية «الطلاب والطالبات معًا»
+   بتتخطّى قسم الحساب، والحساب ده متعمول في مكان واحد. *@
+@inject NUH_PORTAL.Data.Interfaces.IUnitOfWork Uow
 @{
-  // إخفاء عنوان المجموعة نفسه لو المستخدم مالوش أي شاشة جوّاها — عشان مايظهرش قسم فاضي
+  // إخفاء عنوان المجموعة نفسه لو المستخدم مالوش أي شاشة جوّاها - عشان مايظهرش قسم فاضي
   bool Perm(string p) => User.HasClaim("permission", p);
   var canStudents = Perm("students.view") || Perm("students.create")
                     || Perm("students.bulkImport") || Perm("students.changeStatus")
@@ -26,10 +30,10 @@
   /* السايدبار بطول الشاشة، والقائمة بتعمل scroll جوّاها عشان توصل لكل الشاشات (إعدادات النظام تحت) */
   .sidebar{height:100vh}
   /* ⚠️ ::-webkit-scrollbar بتشتغل في كروم وإيدج بس. فايرفوكس بيتجاهلها
-     تمامًا وبيرسم الشريط بعرضه الافتراضي (١٦ بكسل تقريبًا) وبلونه الفاتح —
+     تمامًا وبيرسم الشريط بعرضه الافتراضي (١٦ بكسل تقريبًا) وبلونه الفاتح -
      فالسايدبار كان شكله عريض ومقطوع من الجنب في فايرفوكس بس.
      scrollbar-width و scrollbar-color هما المعياريتين اللي فايرفوكس بيقراهم،
-     ومنطقة المحتوى (.main في site.css) عندها الاتنين أصلاً — عشان كده هي
+     ومنطقة المحتوى (.main في site.css) عندها الاتنين أصلاً - عشان كده هي
      كانت شكلها مظبوط والسايدبار لأ. */
   .sidebar-nav{overflow-y:auto;min-height:0;
     scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.22) transparent}
@@ -62,7 +66,7 @@
 </style>
 <aside class="sidebar">
   <div class="sidebar-logo">
-    @* ⚠️ الشعار رابط للرئيسية — كان <div> عليه حركة عند المرور وهو مش قابل
+    @* ⚠️ الشعار رابط للرئيسية - كان <div> عليه حركة عند المرور وهو مش قابل
        للضغط أصلًا. و«جامعة نجران» اتشالت من تحت العنوان لأنها مطبوعة جوّه
        الصورة نفسها؛ فضلت في alt عشان قارئ الشاشة والصور اللي ما تحمّلش. *@
     <a class="sidebar-logo-image-container" href="/Home" title="@SharedLocalizer["Brand_Title"]">
@@ -82,7 +86,7 @@
     <div class="nav-group collapsed" data-group="students">
       <button class="nav-group-header" type="button" onclick="toggleNavGroup(this)">
         <svg class="ng-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-        <span class="ng-title">@SharedLocalizer["Nav_Section_Students"]</span>
+        <span class="ng-title">@SharedLocalizer[NUH_PORTAL.Core.GenderScope.TitleKey("Nav_Section_Students", Uow.GetGenderScope())]</span>
         <svg class="ng-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
       <div class="nav-group-body">
@@ -90,7 +94,7 @@
         {
           <a class="nav-item" href="/Students">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-            <span>@SharedLocalizer["Nav_StudentsList"]</span>
+            <span>@SharedLocalizer[NUH_PORTAL.Core.GenderScope.TitleKey("Nav_StudentsList", Uow.GetGenderScope())]</span>
           </a>
         }
         @if (User.HasClaim("permission", "students.create"))
@@ -123,7 +127,7 @@
             <span>@SharedLocalizer["Nav_UpdateStatus"]</span>
           </a>
         }
-        @* شاشة «المغادرة والإخلاء» اتشالت — كانت نسخة تانية من نفس الفورم اللي في
+        @* شاشة «المغادرة والإخلاء» اتشالت - كانت نسخة تانية من نفس الفورم اللي في
            /StudentStatus بنفس أنواع الحالات. الرابط القديم بيحوّل عليها من Program.cs *@
       </div>
     </div>
@@ -143,7 +147,7 @@
           <a class="nav-item" href="/Requests">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
             <span>@SharedLocalizer["Nav_AllRequests"]</span>
-            @* عدد الطلبات المستنية إجراء من المستخدم الحالي — بيتملى من الـ API تحت *@
+            @* عدد الطلبات المستنية إجراء من المستخدم الحالي - بيتملى من الـ API تحت *@
             <span id="navRequestsBadge" style="display:none;margin-inline-start:auto;background:#d92d20;color:#fff;font-size:11px;font-weight:700;min-width:20px;height:20px;border-radius:10px;align-items:center;justify-content:center;padding:0 6px;line-height:1"></span>
           </a>
         }
@@ -222,7 +226,7 @@
         <svg class="ng-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
       </button>
       <div class="nav-group-body">
-        @* نفس سياسة ReportsController بالحرف — مش نسخة منها. لو الشرط اتغيّر
+        @* نفس سياسة ReportsController بالحرف - مش نسخة منها. لو الشرط اتغيّر
            في Program.cs، القائمة بتتغيّر معاه من غير ما حد يفتكر يعدّلها. *@
         @if ((await Authz.AuthorizeAsync(User, "reports.page")).Succeeded)
         {
@@ -282,7 +286,7 @@
 </aside>
 
 <script>
-  // فتح/قفل مجموعات السايدبار (accordion) — مع حفظ الحالة وتفعيل المجموعة اللي فيها الصفحة الحالية
+  // فتح/قفل مجموعات السايدبار (accordion) - مع حفظ الحالة وتفعيل المجموعة اللي فيها الصفحة الحالية
   (function () {
     // ⚠️ رقم ٢ في اسم المفتاح مقصود. المنطق القديم كان بيحفظ حالة **كل**
     //    المجموعات مع أي ضغطة، فكانت المجموعات اللي النظام بيفتحها لوحده
@@ -294,11 +298,11 @@
     var NAV_KEY = 'navGroups2';
     // موضع تمرير القائمة - يُحفظ لكل تبويب على حدة مثل حالة المجموعات
     var NAV_SCROLL_KEY = 'navScroll';
-    // ⚠️ بنحفظ **المجموعة اللي المستخدم لمسها بس** — مش حالة كل المجموعات.
+    // ⚠️ بنحفظ **المجموعة اللي المستخدم لمسها بس** - مش حالة كل المجموعات.
     //
     //    الغلط اللي كان هنا: الدالة كانت بتمشي على كل المجموعات وتحفظ حالتها
     //    الحالية مع أي ضغطة. وتحت في init() فيه سطر بيفتح **إجباريًّا**
-    //    المجموعة اللي فيها الصفحة المفتوحة (عشان البند النشط يبان) — والفتح
+    //    المجموعة اللي فيها الصفحة المفتوحة (عشان البند النشط يبان) - والفتح
     //    ده مش اختيار المستخدم.
     //
     //    فكانت النتيجة تتراكم كده:
@@ -355,14 +359,14 @@
       });
       if (bestItem) {
         bestItem.classList.add('active');
-        // ⚠️ الفتح ده عرض مؤقّت عشان البند النشط يبان — **مش** اختيار المستخدم،
+        // ⚠️ الفتح ده عرض مؤقّت عشان البند النشط يبان - **مش** اختيار المستخدم،
         //    فما بيتحفظش. persist بتتنادى من الضغط اليدوي بس.
         var bg = bestItem.closest('.nav-group'); if (bg) bg.classList.remove('collapsed');
       }
     }
     // ⚠️ كل انتقال بين الصفحات بيعيد بناء السايدبار من الصفر، يعني القائمة
-    //    بترجع لأولها. اللي بيختار «المستخدمون» من «إعدادات النظام» — وهي آخر
-    //    مجموعة تحت — كان بيلاقي القائمة رجعت فوق خالص والعنصر اللي لسه مختاره
+    //    بترجع لأولها. اللي بيختار «المستخدمون» من «إعدادات النظام» - وهي آخر
+    //    مجموعة تحت - كان بيلاقي القائمة رجعت فوق خالص والعنصر اللي لسه مختاره
     //    مش باين. بنحرّك القائمة بالقدر اللي يخلّي العنصر النشط ظاهر وبس.
     //    مش scrollIntoView: دي بتحرّك كل العناصر الأب كمان (الصفحة نفسها).
     //    ⚠️ ولم تكن تعمل أصلًا: .sidebar-nav لم يكن لها overflow-y، فلم تكن
@@ -388,7 +392,7 @@
       // ⚠️ البند ظاهر بالكامل أصلًا؟ مانلمسش التمرير خالص.
       //    ده كان ناقص، والنتيجة كانت باينة للمستخدم: تكون واقف في «إدارة
       //    حسابات السكن» وشايف «قائمة أعضاء هيئة التدريس» قدامك في القائمة،
-      //    تدوس عليها — فالقائمة تقفز لآخرها ويختفي نص البنود اللي فوق،
+      //    تدوس عليها - فالقائمة تقفز لآخرها ويختفي نص البنود اللي فوق،
       //    مع إن اللي دوست عليه كان ظاهر من الأصل. القفزة كانت من الشرط
       //    اللي تحت («البند في آخر شاشة → انزل للنهاية») وهو بيتنفّذ من
       //    غير ما حد يسأل الأول: هو محتاج تمرير أصلًا ولا لأ؟
@@ -407,7 +411,7 @@
       else if (ar.top < nr.top + pad) nav.scrollTop -= nr.top - ar.top + pad;
     }
 
-    // ⚠️ كان الاسترجاع ينتظر DOMContentLoaded — أي بعد رسم الصفحة كاملة، فيرى
+    // ⚠️ كان الاسترجاع ينتظر DOMContentLoaded - أي بعد رسم الصفحة كاملة، فيرى
     //    المستخدم الحركة. السكربت هنا بعد <nav> مباشرة، فالعناصر مقروءة بالفعل
     //    ويمكن التنفيذ فورًا قبل أول رسم.
     init();
@@ -429,7 +433,7 @@
 
       // قبل أول رسم: القائمة تبان من أول لحظة على العنصر النشط، مش بتتحرك بعدين
       revealActive(navEl);
-      // رفع منع الحركة بعد أول رسم — الضغط اليدوي بعدها يتحرك بسلاسة كالمعتاد
+      // رفع منع الحركة بعد أول رسم - الضغط اليدوي بعدها يتحرك بسلاسة كالمعتاد
       requestAnimationFrame(function () {
         requestAnimationFrame(function () { navEl.classList.remove('no-anim'); });
       });
@@ -445,11 +449,16 @@
     // جرس الإشعارات ممكن يعدّي من غير ما حد ياخد باله، فبنحط الرقم على الزر نفسه.
     // العدد = الطلبات الواقفة عند مرحلة المستخدم الحالي، فبيقل لوحده مع كل طلب بيتقفل.
     // الكوكي بتتبعت تلقائيًا فمش محتاجين ترويسة توثيق هنا.
-    async function refreshRequestsBadge() {
+    // ⚠️ النداء الدوري بيتبعت بترويسة «نداء خلفي» عشان الخادم ما يحسبهوش نشاطًا
+    //    للمستخدم - الشارة شغّالة كل دقيقة والمستخدم سايب الشاشة، ولو اتحسبت
+    //    نشاطًا فمهلة الخمول عمرها ما هتتحقّق. اسم الترويسة من Core/SessionPolicy.cs.
+    async function refreshRequestsBadge(isPoll) {
       var badge = document.getElementById('navRequestsBadge');
       if (!badge) return;
       try {
-        var res = await fetch('/api/workflow/queue/my-count', { credentials: 'same-origin' });
+        var h = {};
+        if (isPoll === true) h['@NUH_PORTAL.Core.SessionPolicy.BackgroundPollHeader'] = '1';
+        var res = await fetch('/api/workflow/queue/my-count', { credentials: 'same-origin', headers: h });
         if (!res.ok) return;                       // 401/403 - مانعملش حاجة
         var data = await res.json();
         var n = (data && data.count) || 0;
@@ -463,7 +472,7 @@
     }
 
     refreshRequestsBadge();
-    setInterval(refreshRequestsBadge, 60000);
+    setInterval(function () { refreshRequestsBadge(true); }, 60000);
     // بعد أي اعتماد/رفض في نفس التبويب الصفحة بتعيد التحميل، وبيتحدّث الرقم معاها.
     window.refreshRequestsBadge = refreshRequestsBadge;
   })();

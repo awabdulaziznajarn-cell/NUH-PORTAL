@@ -1,4 +1,5 @@
 using MapsterMapper;
+using NUH_PORTAL.Core;
 using NUH_PORTAL.Core.Exceptions;
 using NUH_PORTAL.Data.Interfaces;
 using NUH_PORTAL.DTOs.ADSetup;
@@ -9,13 +10,13 @@ using NUH_PORTAL.Services.Interfaces;
 
 namespace NUH_PORTAL.Services
 {
-    // أدوات تشخيص AD — اتنقلت من ADSetupController
+    // أدوات تشخيص AD - اتنقلت من ADSetupController
     public class ADSetupService : AppServiceBase, IADSetupService
     {
         private readonly IRepository<Student> _students;
         private readonly ActiveDirectoryService _adService;
         private readonly ILogger<ADSetupService> _logger;
-        // ⚠️ أماكن الحسابات في الدليل — التعريف الوحيد في
+        // ⚠️ أماكن الحسابات في الدليل - التعريف الوحيد في
         //    Services/AdDirectoryLayout.cs. كانت مكتوبة في الملف ده بالإيد
         //    على دومين بيئة قديمة بينما الدومين الحقيقي في الإعدادات،
         //    فأدوات التشخيص كانت بتفحص دليلًا تانيًا وترجع «غير موجود».
@@ -47,7 +48,7 @@ namespace NUH_PORTAL.Services
 
                 if (result.ServiceAccount?.BindSuccessful == true)
                 {
-                    // المسارات اللي بينشئ فيها النظام فعلًا — نفس المصدر بالحرف،
+                    // المسارات اللي بينشئ فيها النظام فعلًا - نفس المصدر بالحرف،
                     // فالفحص بيقول لك حالة دليلك أنت لا دليل تاني.
                     result.OUs = new[]
                     {
@@ -85,7 +86,10 @@ namespace NUH_PORTAL.Services
             var targetOu = await _layout.StudentOuAsync(student.gender);
             var targetGroup = await _layout.StudentGroupAsync(student.gender);
 
-            var tempPassword = "NUH@" + student.student_id;
+            // ⚠️ نفس مولّد الإنشاء الحقيقي: الجريان الجاف المفروض يوصف اللي
+            //    هيحصل فعلًا. كان بيعرض "NUH@{الرقم}" وهو شكل مابيتكتبش أصلًا،
+            //    ففحص سياسة كلمات المرور تحته كان بيفحص حاجة تانية.
+            var tempPassword = AdDirectoryLayout.NewTempPassword();
 
             return new ADDryRunResult
             {
@@ -131,18 +135,38 @@ namespace NUH_PORTAL.Services
             };
         }
 
+        // ====================================================================
+        //  ⚠️ الأداة دي بتعمل حساب **حقيقي ومفعّل** في الدليل النشط، فمدخلاتها
+        //     بتتعامل معاملة مدخلات أي مسار إنشاء لا معاملة أداة تشخيص.
+        //
+        //     اللي اتغيّر:
+        //       • مسار المجلد والمجموعة بقوا من الإعدادات لا من العميل. كان
+        //         العميل بيبعت DN وبيتحطّ في CN={الرقم},{DN} وبيتضاف للمجموعة
+        //         اللي بعتها - يعني حساب مفعّل في «Domain Admins» بطلب واحد.
+        //       • الرقم الجامعي بيتفحص بنفس قاعدة النظام (Core/IdentityRules).
+        //         من غير الفحص ده الرقم بيدخل في بناء الـ DN بلا هروب، فيفسد
+        //         اسم الكائن أو يفشل الإنشاء.
+        //       • كلمة المرور عشوائية. كانت "NUH@{الرقم الجامعي}" - والرقم
+        //         مطبوع على كل ورقة في النظام.
+        // ====================================================================
         public async Task<ADTestUserReport> RunTestUserAsync(ADTestUserRequest request)
         {
+            if (!IdentityRules.IsValidStudentId(request.StudentId))
+                throw new UserFriendlyException(IdentityRules.StudentIdError, 400);
+
+            // القسم بيتحوّل لمسار من الإعدادات - ومفيش أي نصّ من العميل بيوصل للدليل.
+            var gender = request.Gender ?? Gender.Male;
+
             var report = new ADTestUserReport
             {
                 RequestedSamAccountName = AdDirectoryLayout.SamAccountNameFor(request.StudentId),
-                TargetOu = request.TargetOu ?? await _layout.StudentOuAsync(Gender.Male),
-                TargetGroup = request.TargetGroup ?? await _layout.StudentGroupAsync(Gender.Male),
+                TargetOu = await _layout.StudentOuAsync(gender),
+                TargetGroup = await _layout.StudentGroupAsync(gender),
                 Timestamp = DateTime.UtcNow
             };
 
             var sAMAccountName = report.RequestedSamAccountName;
-            var password = $"NUH@{request.StudentId}";
+            var password = AdDirectoryLayout.NewTempPassword();
             var targetOu = report.TargetOu;
             var targetGroup = report.TargetGroup;
             var userDn = $"CN={sAMAccountName},{targetOu}";

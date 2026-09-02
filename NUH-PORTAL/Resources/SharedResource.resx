@@ -1188,45 +1188,6 @@
   <data name="home_approvedRequests" xml:space="preserve">
     <value>طلبات معتمدة</value>
   </data>
-  <data name="home_badge_active" xml:space="preserve">
-    <value>نشط</value>
-  </data>
-  <data name="home_badge_approved" xml:space="preserve">
-    <value>معتمد</value>
-  </data>
-  <data name="home_badge_completed" xml:space="preserve">
-    <value>مكتمل</value>
-  </data>
-  <data name="home_badge_cyberReview" xml:space="preserve">
-    <value>مراجعة سيبراني</value>
-  </data>
-  <data name="home_badge_dismissed" xml:space="preserve">
-    <value>مفصول</value>
-  </data>
-  <data name="home_badge_graduated" xml:space="preserve">
-    <value>متخرج</value>
-  </data>
-  <data name="home_badge_housingApproved" xml:space="preserve">
-    <value>موافقة الإسكان</value>
-  </data>
-  <data name="home_badge_housingReview" xml:space="preserve">
-    <value>مراجعة إسكان</value>
-  </data>
-  <data name="home_badge_readyProvision" xml:space="preserve">
-    <value>جاهز للإنشاء</value>
-  </data>
-  <data name="home_badge_statusLeft" xml:space="preserve">
-    <value>غادر</value>
-  </data>
-  <data name="home_badge_today" xml:space="preserve">
-    <value>اليوم</value>
-  </data>
-  <data name="home_badge_total" xml:space="preserve">
-    <value>الإجمالي</value>
-  </data>
-  <data name="home_badge_transferred" xml:space="preserve">
-    <value>منقول</value>
-  </data>
   <data name="home_chartLogins30Title" xml:space="preserve">
     <value>نشاط تسجيل الدخول آخر 30 يوم</value>
   </data>
@@ -1326,12 +1287,6 @@
   <data name="home_notifLoadFailed" xml:space="preserve">
     <value>تعذر تحميل الإشعارات</value>
   </data>
-  <data name="home_pendingCyberReview" xml:space="preserve">
-    <value>بانتظار مراجعة الأمن السيبراني</value>
-  </data>
-  <data name="home_pendingHousingReview" xml:space="preserve">
-    <value>بانتظار مراجعة الإسكان</value>
-  </data>
   <data name="home_quickActions" xml:space="preserve">
     <value>إجراءات سريعة</value>
   </data>
@@ -1340,30 +1295,6 @@
   </data>
   <data name="home_refresh" xml:space="preserve">
     <value>تحديث</value>
-  </data>
-  <data name="home_reqStatus_completed" xml:space="preserve">
-    <value>مكتمل</value>
-  </data>
-  <data name="home_reqStatus_cyber_approved" xml:space="preserve">
-    <value>معتمد</value>
-  </data>
-  <data name="home_reqStatus_cyber_rejected" xml:space="preserve">
-    <value>مرفوض من الأمن السيبراني</value>
-  </data>
-  <data name="home_reqStatus_cyber_review" xml:space="preserve">
-    <value>مراجعة الأمن السيبراني</value>
-  </data>
-  <data name="home_reqStatus_housing_approved" xml:space="preserve">
-    <value>موافقة الإسكان</value>
-  </data>
-  <data name="home_reqStatus_housing_rejected" xml:space="preserve">
-    <value>مرفوض من الإسكان</value>
-  </data>
-  <data name="home_reqStatus_ready_for_provisioning" xml:space="preserve">
-    <value>جاهز لإنشاء الحساب</value>
-  </data>
-  <data name="home_reqStatus_submitted" xml:space="preserve">
-    <value>قيد الانتظار</value>
   </data>
   <data name="home_reqType_bulk_registration" xml:space="preserve">
     <value>تسجيل جماعي</value>
@@ -1689,18 +1620,6 @@
   <data name="passwordPlaceholder" xml:space="preserve">
     <value>••••••••</value>
   </data>
-  <data name="pendingAdmin" xml:space="preserve">
-    <value>بانتظار الإدارة</value>
-  </data>
-  <data name="pendingCyber" xml:space="preserve">
-    <value>بانتظار الأمن السيبراني</value>
-  </data>
-  <data name="pendingRequests" xml:space="preserve">
-    <value>طلبات معلقة</value>
-  </data>
-  <data name="pendingSupervisor" xml:space="preserve">
-    <value>بانتظار المشرف</value>
-  </data>
   <data name="personalInfo" xml:space="preserve">
     <value>المعلومات الشخصية</value>
   </data>
@@ -1735,7 +1654,7 @@
     <value>إعادة المحاولة</value>
   </data>
   <data name="rep_chartsUnavailable" xml:space="preserve">
-    <value>تعذّر تحميل مكتبة الرسوم البيانية، فلا يمكن عرض الرسم. الأرقام والجداول في الصفحة غير متأثرة.</value>
+    <value>تعذّر تحميل مكتبة الرسوم البيانية، فلا يمكن عرض الرسم. الأرقام والجداول في الصفحة غير متأثرة. إن تكرّر ذلك فتأكّد من وجود الملف /js/chart.umd.min.js على الخادم.</value>
   </data>
   <data name="rep_expBlocked" xml:space="preserve">
     <value>منع المتصفح فتح نافذة التقرير. اسمح بالنوافذ المنبثقة لهذا الموقع ثم أعد المحاولة.</value>
@@ -1948,7 +1867,7 @@
     <value>يرجى إدخال الاسم باللغة الإنجليزية فقط</value>
   </data>
   <data name="reg_valNationalId" xml:space="preserve">
-    <value>يجب أن يتكون رقم الهوية من 10 أرقام</value>
+    <value>يجب أن يتكون الهوية الوطنية من 10 أرقام</value>
   </data>
   <data name="reg_valPhone" xml:space="preserve">
     <value>رقم الجوال يجب أن يبدأ بالرقم 5 ويتكوّن من ٩ أرقام</value>
@@ -2053,7 +1972,7 @@
     <value>مراجعة الأمن السيبراني</value>
   </data>
   <data name="req_lbl_housingApproved" xml:space="preserve">
-    <value>موافقة إدارة الإسكان</value>
+    <value>موافقة إدارة الإسكان الجامعي</value>
   </data>
   <data name="req_lbl_readyForProvisioning" xml:space="preserve">
     <value>جاهز لإنشاء الحساب</value>
@@ -2086,25 +2005,25 @@
     <value>مكتمل</value>
   </data>
   <data name="req_stage_cyber_approved" xml:space="preserve">
-    <value>موافقة الأمن السيبراني</value>
+    <value>موافقة إدارة الأمن السيبراني</value>
   </data>
   <data name="req_stage_cyber_rejected" xml:space="preserve">
-    <value>رفض الأمن السيبراني</value>
+    <value>رفض إدارة الأمن السيبراني</value>
   </data>
   <data name="req_stage_cyber_review" xml:space="preserve">
     <value>مراجعة إدارة الأمن السيبراني</value>
   </data>
   <data name="req_stage_housing_approved" xml:space="preserve">
-    <value>موافقة إدارة الإسكان</value>
+    <value>موافقة إدارة الإسكان الجامعي</value>
   </data>
   <data name="req_stage_housing_rejected" xml:space="preserve">
-    <value>رفض إسكان</value>
+    <value>رفض إدارة الإسكان الجامعي</value>
   </data>
   <data name="req_stage_ready_for_provisioning" xml:space="preserve">
     <value>جاهز لإنشاء حساب شبكة الإسكان</value>
   </data>
   <data name="req_stage_submitted" xml:space="preserve">
-    <value>مراجعة إدارة الإسكان</value>
+    <value>مراجعة إدارة الإسكان الجامعي</value>
   </data>
   <data name="req_type_bulk_registration" xml:space="preserve">
     <value>تسجيل جماعي</value>
@@ -2141,9 +2060,6 @@
   </data>
   <data name="requestRejected" xml:space="preserve">
     <value>تم رفض الطلب</value>
-  </data>
-  <data name="requestReview" xml:space="preserve">
-    <value>مراجعة الطلب</value>
   </data>
   <data name="requestSent" xml:space="preserve">
     <value>تم إرسال الطلب</value>
@@ -2466,9 +2382,6 @@
   <data name="ss_studentNumberError" xml:space="preserve">
     <value>الرجاء إدخال رقم جامعي صحيح</value>
   </data>
-  <data name="ss_studentNumberPlaceholder" xml:space="preserve">
-    <value>مثال: 123456789</value>
-  </data>
   <data name="ss_totalLabel" xml:space="preserve">
     <value>إجمالي الطلاب</value>
   </data>
@@ -2534,9 +2447,6 @@
   </data>
   <data name="statusPending" xml:space="preserve">
     <value>معلق</value>
-  </data>
-  <data name="statusReadyForProvisioning" xml:space="preserve">
-    <value>جاهز لإنشاء حساب شبكة الإسكان</value>
   </data>
   <data name="statusRejected" xml:space="preserve">
     <value>مرفوض</value>
@@ -3001,10 +2911,10 @@
     <value>مقدم</value>
   </data>
   <data name="rdp_stage_housingApproved" xml:space="preserve">
-    <value>موافقة إدارة الإسكان</value>
+    <value>موافقة إدارة الإسكان الجامعي</value>
   </data>
   <data name="rdp_stage_housingRejected" xml:space="preserve">
-    <value>رفض إسكان</value>
+    <value>رفض إدارة الإسكان الجامعي</value>
   </data>
   <data name="rdp_stage_cyberReview" xml:space="preserve">
     <value>مراجعة إدارة الأمن السيبراني</value>
@@ -3022,7 +2932,7 @@
     <value>مكتمل</value>
   </data>
   <data name="rdp_stage_pendingSupervisor" xml:space="preserve">
-    <value>موافقة إدارة الإسكان</value>
+    <value>موافقة إدارة الإسكان الجامعي</value>
   </data>
   <data name="rdp_stage_needMoreInfo" xml:space="preserve">
     <value>بحاجة معلومات إضافية</value>
@@ -3073,10 +2983,10 @@
     <value>تقديم الطلب</value>
   </data>
   <data name="rdp_wf_housingApp" xml:space="preserve">
-    <value>موافقة إدارة الإسكان</value>
+    <value>موافقة إدارة الإسكان الجامعي</value>
   </data>
   <data name="rdp_wf_housingPending" xml:space="preserve">
-    <value>مراجعة إدارة الإسكان</value>
+    <value>مراجعة إدارة الإسكان الجامعي</value>
   </data>
   <data name="rdp_wf_cyberApprovedReady" xml:space="preserve">
     <value>موافقة إدارة الأمن السيبراني - جاهز لإنشاء حساب شبكة الإسكان</value>
@@ -3265,7 +3175,7 @@
     <value>معلومات الطالب</value>
   </data>
   <data name="rdp_field_nationalId" xml:space="preserve">
-    <value>الهوية الوطنية</value>
+    <value>الهوية الوطنية / الإقامة</value>
   </data>
   <data name="rdp_field_mobile" xml:space="preserve">
     <value>الجوال</value>
@@ -3280,7 +3190,7 @@
     <value>الجنس</value>
   </data>
   <data name="rdp_housingAccounts" xml:space="preserve">
-    <value>حساب الإسكان</value>
+    <value>حساب الإسكان الجامعي</value>
   </data>
   <data name="rdp_loading" xml:space="preserve">
     <value>جاري التحميل...</value>
@@ -3446,21 +3356,6 @@
   </data>
   <data name="req_type_housing" xml:space="preserve">
     <value>طلب إسكان</value>
-  </data>
-  <data name="home_reqStatus_pending_supervisor" xml:space="preserve">
-    <value>بانتظار الإسكان</value>
-  </data>
-  <data name="home_reqStatus_pending_cyber" xml:space="preserve">
-    <value>بانتظار الأمن السيبراني</value>
-  </data>
-  <data name="home_reqStatus_need_more_info" xml:space="preserve">
-    <value>معلومات إضافية</value>
-  </data>
-  <data name="home_reqStatus_approved" xml:space="preserve">
-    <value>معتمد</value>
-  </data>
-  <data name="home_reqStatus_rejected" xml:space="preserve">
-    <value>مرفوض</value>
   </data>
   <data name="home_reqType_housing" xml:space="preserve">
     <value>طلب إسكان</value>
@@ -4228,25 +4123,19 @@
     <value>يحتاج إجراءك</value>
   </data>
   <data name="dash_waitHousing" xml:space="preserve">
-    <value>بانتظار مراجعة ادارة الإسكان</value>
+    <value>بانتظار مراجعة إدارة الإسكان الجامعي</value>
   </data>
   <data name="dash_waitHousingDesc" xml:space="preserve">
-    <value>طلبات لم تُراجَع بعد من إدارة الإسكان</value>
+    <value>طلبات لم تُراجَع بعد من إدارة الإسكان الجامعي</value>
   </data>
   <data name="dash_waitCyber" xml:space="preserve">
-    <value>بانتظار مراجعة الأمن السيبراني</value>
+    <value>بانتظار مراجعة إدارة الأمن السيبراني</value>
   </data>
   <data name="dash_waitCyberDesc" xml:space="preserve">
-    <value>طلبات اعتمدتها إدارة الإسكان وأُحيلت إليك</value>
-  </data>
-  <data name="dash_waitHandover" xml:space="preserve">
-    <value>بانتظار التحويل للمراجعة الإلكترونية</value>
-  </data>
-  <data name="dash_waitHandoverDesc" xml:space="preserve">
-    <value>معتمدة من إدارة الإسكان وبانتظار الإحالة</value>
+    <value>طلبات اعتمدتها إدارة الإسكان الجامعي وأُحيلت إليك</value>
   </data>
   <data name="dash_waitProvision" xml:space="preserve">
-    <value>جاهز لإنشاء حساب الشبكة</value>
+    <value>جاهز لإنشاء حساب شبكة الإسكان</value>
   </data>
   <data name="dash_waitProvisionDesc" xml:space="preserve">
     <value>الخطوة الأخيرة قبل إغلاق الطلب</value>
@@ -4555,7 +4444,7 @@
     <value>تعبئة البيانات الشخصية والأكاديمية</value>
   </data>
   <data name="pt_stp4" xml:space="preserve">
-    <value>مراجعة إدارة الإسكان</value>
+    <value>مراجعة إدارة الإسكان الجامعي</value>
   </data>
   <data name="pt_stp4s" xml:space="preserve">
     <value>مراجعة الطلب من مشرف الإسكان الجامعي</value>
@@ -4731,30 +4620,6 @@
   <data name="pt_mrView" xml:space="preserve">
     <value>عرض</value>
   </data>
-  <data name="pt_stSubmitted" xml:space="preserve">
-    <value>تم تقديم الطلب</value>
-  </data>
-  <data name="pt_stHousingApproved" xml:space="preserve">
-    <value>تمت موافقة إدارة الإسكان</value>
-  </data>
-  <data name="pt_stCyberReviewed" xml:space="preserve">
-    <value>تمت مراجعة إدارة الأمن السيبراني</value>
-  </data>
-  <data name="pt_stProvisioning" xml:space="preserve">
-    <value>جاري إنشاء حساب شبكة الإسكان</value>
-  </data>
-  <data name="pt_stCompleted" xml:space="preserve">
-    <value>مكتمل</value>
-  </data>
-  <data name="pt_stPendingHousing" xml:space="preserve">
-    <value>بانتظار موافقة إدارة الإسكان</value>
-  </data>
-  <data name="pt_stPendingCyber" xml:space="preserve">
-    <value>بانتظار مراجعة إدارة الأمن السيبراني</value>
-  </data>
-  <data name="pt_stRejected" xml:space="preserve">
-    <value>مرفوض</value>
-  </data>
   <data name="pt_trkTitle" xml:space="preserve">
     <value>تتبع الطلب</value>
   </data>
@@ -4848,18 +4713,6 @@
   <data name="pt_serverError" xml:space="preserve">
     <value>خطأ في الخادم، حاول بعد قليل</value>
   </data>
-  <data name="pt_stNeedInfo" xml:space="preserve">
-    <value>بانتظار استكمال بيانات</value>
-  </data>
-  <data name="pt_stNeedInfo2" xml:space="preserve">
-    <value>مطلوب استكمال بيانات</value>
-  </data>
-  <data name="pt_stAcctCreated" xml:space="preserve">
-    <value>تم إنشاء حساب شبكة الإسكان بنجاح</value>
-  </data>
-  <data name="pt_stCyberApproved" xml:space="preserve">
-    <value>تمت موافقة إدارة الأمن السيبراني</value>
-  </data>
   <data name="pt_trkEnterNumber" xml:space="preserve">
     <value>يرجى إدخال رقم الطلب</value>
   </data>
@@ -4939,7 +4792,7 @@
     <value>برج</value>
   </data>
   <data name="fh_SearchPh" xml:space="preserve">
-    <value>ابحث برقم الوحدة أو اسم الساكن أو رقم الهوية أو الجوال</value>
+    <value>ابحث برقم الوحدة أو اسم الساكن أو الهوية الوطنية أو الجوال</value>
   </data>
   <data name="fh_ColUnit" xml:space="preserve">
     <value>الوحدة</value>
@@ -5449,7 +5302,7 @@
     <value>الوصف في الدليل النشط</value>
   </data>
   <data name="aud_field_employeeid" xml:space="preserve">
-    <value>رقم الهوية في الدليل النشط</value>
+    <value>الهوية الوطنية في الدليل النشط</value>
   </data>
   <data name="aud_field_mobile" xml:space="preserve">
     <value>رقم الجوال</value>
@@ -5635,7 +5488,7 @@
     <value>الاسم بالإنجليزية</value>
   </data>
   <data name="rdp_fld_national_id" xml:space="preserve">
-    <value>رقم الهوية</value>
+    <value>الهوية الوطنية</value>
   </data>
   <data name="rdp_fld_phone" xml:space="preserve">
     <value>رقم الجوال</value>
@@ -5905,7 +5758,7 @@
     <value>عنوان الجهاز</value>
   </data>
   <data name="rdp_pledge_print" xml:space="preserve">
-    <value>طباعة الوثيقة</value>
+    <value>طباعة التعهد</value>
   </data>
   <data name="rdp_pledge_sealTop" xml:space="preserve">
     <value>تعهّد موثّق</value>
@@ -5923,7 +5776,7 @@
     <value>تاريخ الطباعة</value>
   </data>
   <data name="rdp_pledge_sheetTitle" xml:space="preserve">
-    <value>وثيقة تعهّد وإقرار</value>
+    <value>تعهّد وإقرار</value>
   </data>
   <data name="rdp_pledge_sheetCountry" xml:space="preserve">
     <value>المملكة العربية السعودية</value>
@@ -5947,28 +5800,28 @@
     <value>وثيقة مستخرجة من نظام بوابة الإسكان الجامعي بجامعة نجران. للتحقّق من صحتها تُطابَق بصمة البنود أعلاه مع سجل الطلب في النظام.</value>
   </data>
   <data name="Nav_StudentFile" xml:space="preserve">
-    <value>ملف الطالب</value>
+    <value>ملف الطالب والتحقّق</value>
   </data>
   <data name="sf_pageTitle" xml:space="preserve">
-    <value>ملف الطالب</value>
+    <value>ملف الطالب والتحقّق</value>
   </data>
   <data name="sf_pageSubtitle" xml:space="preserve">
-    <value>عرض بيانات الطالب وطلبه وتعهّده الموقّع في صفحة واحدة قابلة للطباعة</value>
+    <value>عرض بيانات الطالب وطلبه وتعهّده الموقّع في صفحة واحدة قابلة للطباعة، أو التحقّق من وثيقة مطبوعة برمزها</value>
   </data>
   <data name="sf_searchCard" xml:space="preserve">
     <value>البحث</value>
   </data>
   <data name="sf_queryLabel" xml:space="preserve">
-    <value>الرقم الجامعي أو رقم الهوية</value>
+    <value>الرقم الجامعي أو رقم الهوية أو رمز التحقّق</value>
   </data>
   <data name="sf_queryPlaceholder" xml:space="preserve">
-    <value>اكتب الرقم الجامعي أو رقم الهوية</value>
+    <value>اكتب الرقم أو الرمز المطبوع على الوثيقة</value>
   </data>
   <data name="sf_search" xml:space="preserve">
     <value>بحث</value>
   </data>
   <data name="sf_hint" xml:space="preserve">
-    <value>يقبل الحقل الرقم الجامعي (٩ أرقام تبدأ بـ ٤) أو رقم الهوية (١٠ أرقام). كل عملية بحث تُسجَّل في سجل العمليات باسم المستخدم ووقتها.</value>
+    <value>يقبل الحقل الرقم الجامعي (٩ أرقام تبدأ بـ ٤) أو الهوية الوطنية / الاقامة (١٠ أرقام) أو رمز التحقّق المطبوع في تذييل الوثيقة. كل عملية بحث تُسجَّل في سجل العمليات باسم المستخدم ووقتها.</value>
   </data>
   <data name="sf_auditNote" xml:space="preserve">
     <value>تم تسجيل فتح هذا الملف في سجل العمليات. الاطّلاع على ملفات الطلاب إجراء موثّق.</value>
@@ -5995,7 +5848,7 @@
     <value>البيانات الأكاديمية والإسكان</value>
   </data>
   <data name="sf_cardAd" xml:space="preserve">
-    <value>حساب الشبكة</value>
+    <value>حساب شبكة الإسكان الجامعي</value>
   </data>
   <data name="sf_adUser" xml:space="preserve">
     <value>اسم المستخدم</value>
@@ -6025,7 +5878,7 @@
     <value>غير مسجَّل في الإسكان الجامعي.</value>
   </data>
   <data name="sf_badQuery" xml:space="preserve">
-    <value>اكتب رقمًا جامعيًا (٩ أرقام تبدأ بـ ٤) أو رقم هوية (١٠ أرقام).</value>
+    <value>اكتب رقمًا جامعيًا (٩ أرقام تبدأ بـ ٤) أو رقم هوية (١٠ أرقام) أو رمز التحقّق المطبوع على الوثيقة.</value>
   </data>
   <data name="sf_forbidden" xml:space="preserve">
     <value>لا تملك صلاحية فتح ملف الطالب.</value>
@@ -6109,7 +5962,7 @@
     <value>بحث...</value>
   </data>
   <data name="pt_status_submitted" xml:space="preserve">
-    <value>بانتظار موافقة إدارة الإسكان</value>
+    <value>بانتظار موافقة إدارة الإسكان الجامعي</value>
   </data>
   <data name="pt_status_cyber_review" xml:space="preserve">
     <value>بانتظار مراجعة إدارة الأمن السيبراني</value>
@@ -6313,7 +6166,7 @@
     <value>إدارة الإسكان الجامعي</value>
   </data>
   <data name="pt_homeStudentTitle" xml:space="preserve">
-    <value>خدمات الطلاب</value>
+    <value>خدمات الطلاب والطالبات</value>
   </data>
   <data name="pt_homeStudentTag1" xml:space="preserve">
     <value>تقديم طلب جديد</value>
@@ -6639,5 +6492,287 @@
   </data>
   <data name="col_seq" xml:space="preserve">
     <value>م</value>
+  </data>
+  <data name="vfy_pageSubtitle" xml:space="preserve">
+    <value>مطابقة وثيقة تعهّد مطبوعة بسجلّها في النظام، عن طريق رمز التحقّق المطبوع في تذييلها.</value>
+  </data>
+  <data name="vfy_brandTitle" xml:space="preserve">
+    <value>التحقّق من وثيقة تعهّد</value>
+  </data>
+  <data name="vfy_brandSub" xml:space="preserve">
+    <value>بوابة الإسكان الجامعي - جامعة نجران</value>
+  </data>
+  <data name="vfy_codeLabel" xml:space="preserve">
+    <value>رمز التحقّق المطبوع على الوثيقة</value>
+  </data>
+  <data name="vfy_codeAria" xml:space="preserve">
+    <value>رمز التحقّق بعد البادئة {0}</value>
+  </data>
+  <data name="vfy_submit" xml:space="preserve">
+    <value>تحقّق</value>
+  </data>
+  <data name="vfy_hint" xml:space="preserve">
+    <value>الرمز مطبوع في تذييل الوثيقة تحت رمز الاستجابة السريعة. اكتب ما بعد {0} فقط - الحروف تكبر والشرطات تُضاف وحدها.</value>
+  </data>
+  <data name="vfy_ok" xml:space="preserve">
+    <value>وثيقة صادرة عن النظام</value>
+  </data>
+  <data name="vfy_none" xml:space="preserve">
+    <value>لا توجد وثيقة بهذا الرمز</value>
+  </data>
+  <data name="vfy_rowRequest" xml:space="preserve">
+    <value>رقم الطلب</value>
+  </data>
+  <data name="vfy_rowName" xml:space="preserve">
+    <value>اسم الطالب</value>
+  </data>
+  <data name="vfy_rowStudentId" xml:space="preserve">
+    <value>الرقم الجامعي</value>
+  </data>
+  <data name="vfy_rowSignedAt" xml:space="preserve">
+    <value>تاريخ التوقيع</value>
+  </data>
+  <data name="vfy_rowVersion" xml:space="preserve">
+    <value>نسخة البنود</value>
+  </data>
+  <data name="vfy_rowTermsCount" xml:space="preserve">
+    <value>عدد البنود</value>
+  </data>
+  <data name="vfy_matchNote" xml:space="preserve">
+    <value>طابِق القيم أعلاه مع الورقة التي بين يديك. أي اختلاف يعني أن الورقة عُدِّلت بعد استخراجها من النظام. ونصّ البنود المُلزِم لهذا الطلب محفوظ في سجلّه، ويُرجَع إليه عند الاختلاف.</value>
+  </data>
+  <data name="vfy_noneNote" xml:space="preserve">
+    <value>راجع الرمز كما هو مطبوع على الوثيقة. إن كان مطابقًا فهذه الورقة لم تُستخرج من نظام بوابة الإسكان الجامعي، ويمكن مراجعة إدارة الإسكان للتأكّد.</value>
+  </data>
+  <data name="vfy_foot" xml:space="preserve">
+    <value>وثيقة التعهّد تُستخرج من نظام بوابة الإسكان الجامعي بجامعة نجران. رمز التحقّق يُولَّد داخل النظام ولا يمكن إنشاؤه من خارجه.</value>
+  </data>
+  <data name="aud_action_pledge_printed" xml:space="preserve">
+    <value>طباعة وثيقة التعهّد</value>
+  </data>
+  <data name="sf_kindStudentId" xml:space="preserve">
+    <value>رقم جامعي</value>
+  </data>
+  <data name="sf_kindNationalId" xml:space="preserve">
+    <value>رقم هوية</value>
+  </data>
+  <data name="sf_kindDocCode" xml:space="preserve">
+    <value>رمز تحقّق</value>
+  </data>
+  <data name="sf_kindOpensFile" xml:space="preserve">
+    <value>يفتح ملف الطالب</value>
+  </data>
+  <data name="sf_kindVerifies" xml:space="preserve">
+    <value>يتحقّق من الوثيقة ثم يفتح ملفها</value>
+  </data>
+  <data name="sf_kindIncomplete" xml:space="preserve">
+    <value>(غير مكتمل)</value>
+  </data>
+  <data name="sf_verifiedTitle" xml:space="preserve">
+    <value>وثيقة صادرة عن النظام</value>
+  </data>
+  <data name="sf_verifiedCode" xml:space="preserve">
+    <value>الرمز</value>
+  </data>
+  <data name="sf_verifiedReq" xml:space="preserve">
+    <value>الطلب</value>
+  </data>
+  <data name="sf_verifiedSigned" xml:space="preserve">
+    <value>وُقّع</value>
+  </data>
+  <data name="sf_verifiedVersion" xml:space="preserve">
+    <value>نسخة البنود</value>
+  </data>
+  <data name="dash_yourAction" xml:space="preserve">
+    <value>بانتظار إجرائك</value>
+  </data>
+  <data name="dash_awaitingOne" xml:space="preserve">
+    <value>طلب واحد بانتظار إجرائك</value>
+  </data>
+  <data name="dash_awaitingTwo" xml:space="preserve">
+    <value>طلبان بانتظار إجرائك</value>
+  </data>
+  <data name="dash_awaitingFmt" xml:space="preserve">
+    <value>{0} طلبات بانتظار إجرائك</value>
+  </data>
+  <data name="dash_inStageFmt" xml:space="preserve">
+    <value>في هذه المرحلة منذ {0}</value>
+  </data>
+  <data name="dash_submittedFmt" xml:space="preserve">
+    <value>قُدِّم في {0}</value>
+  </data>
+  <data name="req_owner_housing" xml:space="preserve">
+    <value>إدارة الإسكان الجامعي</value>
+  </data>
+  <data name="req_owner_cyber" xml:space="preserve">
+    <value>إدارة الأمن السيبراني</value>
+  </data>
+  <data name="req_owner_provisioning" xml:space="preserve">
+    <value>إنشاء حساب الشبكة</value>
+  </data>
+  <data name="req_owner_student" xml:space="preserve">
+    <value>بانتظار الطالب</value>
+  </data>
+  <data name="ss_previewFailed" xml:space="preserve">
+    <value>تعذّر عرض الصورة - حمّل الملف لفتحه على جهازك</value>
+  </data>
+  <data name="dash_accMalesFmt" xml:space="preserve">
+    <value>{0} طالب</value>
+  </data>
+  <data name="dash_accFemalesFmt" xml:space="preserve">
+    <value>{0} طالبة</value>
+  </data>
+  <data name="dash_accPlainFmt" xml:space="preserve">
+    <value>{0}</value>
+  </data>
+  <data name="dash_chartDistTitle" xml:space="preserve">
+    <value>توزيعات الطلاب</value>
+  </data>
+  <data name="Page_Students_f" xml:space="preserve">
+    <value>قائمة الطالبات</value>
+  </data>
+  <data name="Page_Students_all" xml:space="preserve">
+    <value>قائمة الطلاب والطالبات</value>
+  </data>
+  <data name="Nav_StudentsList_f" xml:space="preserve">
+    <value>قائمة الطالبات</value>
+  </data>
+  <data name="Nav_StudentsList_all" xml:space="preserve">
+    <value>قائمة الطلاب والطالبات</value>
+  </data>
+  <data name="stu_registered_f" xml:space="preserve">
+    <value>الطالبات المسجّلات</value>
+  </data>
+  <data name="stu_registered_all" xml:space="preserve">
+    <value>الطلاب والطالبات المسجّلون</value>
+  </data>
+  <data name="stu_total_f" xml:space="preserve">
+    <value>إجمالي الطالبات</value>
+  </data>
+  <data name="stu_total_all" xml:space="preserve">
+    <value>إجمالي الطلاب والطالبات</value>
+  </data>
+  <data name="Nav_Section_Students_f" xml:space="preserve">
+    <value>الطالبات</value>
+  </data>
+  <data name="Nav_Section_Students_all" xml:space="preserve">
+    <value>الطلاب والطالبات</value>
+  </data>
+  <data name="stu_pageSubtitle_f" xml:space="preserve">
+    <value>عرض وتعديل بيانات الطالبات المسجّلات في الإسكان</value>
+  </data>
+  <data name="stu_pageSubtitle_all" xml:space="preserve">
+    <value>عرض وتعديل بيانات الطلاب والطالبات المسجّلين في الإسكان</value>
+  </data>
+  <data name="home_totalStudents_f" xml:space="preserve">
+    <value>إجمالي الطالبات</value>
+  </data>
+  <data name="home_totalStudents_all" xml:space="preserve">
+    <value>إجمالي الطلاب والطالبات</value>
+  </data>
+  <data name="dash_chartBuildingsTitle_f" xml:space="preserve">
+    <value>الطالبات حسب المبنى</value>
+  </data>
+  <data name="dash_chartBuildingsTitle_all" xml:space="preserve">
+    <value>الطلاب والطالبات حسب المبنى</value>
+  </data>
+  <data name="dash_chartDistTitle_f" xml:space="preserve">
+    <value>توزيعات الطالبات</value>
+  </data>
+  <data name="dash_chartDistTitle_all" xml:space="preserve">
+    <value>توزيعات الطلاب والطالبات</value>
+  </data>
+  <data name="dash_accTotalFmt_f" xml:space="preserve">
+    <value>{0} طالبة</value>
+  </data>
+  <data name="dash_accTotalFmt_all" xml:space="preserve">
+    <value>{0} طالبًا وطالبة</value>
+  </data>
+  <data name="hs_footerAudited" xml:space="preserve">
+    <value>كل إجراء يُسجَّل في سجل إجراءات الحساب باسمك ووقته.</value>
+  </data>
+  <data name="hs_footerLog" xml:space="preserve">
+    <value>الأحدث أولًا. السجل لا يُعدَّل ولا يُحذف.</value>
+  </data>
+  <data name="hs_copy" xml:space="preserve">
+    <value>نسخ</value>
+  </data>
+  <data name="sf_housingType" xml:space="preserve">
+    <value>نوع السكن</value>
+  </data>
+  <data name="sf_housingMale" xml:space="preserve">
+    <value>سكن الطلاب</value>
+  </data>
+  <data name="sf_housingFemale" xml:space="preserve">
+    <value>سكن الطالبات</value>
+  </data>
+  <data name="doc_title_pledge" xml:space="preserve">
+    <value>تعهّد وإقرار</value>
+  </data>
+  <data name="doc_title_studentFile" xml:space="preserve">
+    <value>ملف الطالب</value>
+  </data>
+  <data name="doc_secPersonal" xml:space="preserve">
+    <value>البيانات الشخصية</value>
+  </data>
+  <data name="doc_secAcademic" xml:space="preserve">
+    <value>البيانات الأكاديمية</value>
+  </data>
+  <data name="doc_secHousing" xml:space="preserve">
+    <value>الإسكان الجامعي</value>
+  </data>
+  <data name="doc_secAd" xml:space="preserve">
+    <value>حساب شبكة الإسكان الجامعي</value>
+  </data>
+  <data name="doc_secPledge" xml:space="preserve">
+    <value>التعهّد والإقرار</value>
+  </data>
+  <data name="doc_sigTitle" xml:space="preserve">
+    <value>الإقرار الإلكتروني للطالب</value>
+  </data>
+  <data name="doc_fNameAr" xml:space="preserve">
+    <value>الاسم بالعربية</value>
+  </data>
+  <data name="doc_fNameEn" xml:space="preserve">
+    <value>الاسم بالإنجليزية</value>
+  </data>
+  <data name="doc_fNationalId" xml:space="preserve">
+    <value>الهوية الوطنية / الإقامة</value>
+  </data>
+  <data name="doc_fMobile" xml:space="preserve">
+    <value>الجوال</value>
+  </data>
+  <data name="doc_fStudentId" xml:space="preserve">
+    <value>الرقم الجامعي</value>
+  </data>
+  <data name="doc_fCollege" xml:space="preserve">
+    <value>الكلية</value>
+  </data>
+  <data name="doc_fDept" xml:space="preserve">
+    <value>القسم</value>
+  </data>
+  <data name="doc_fLevel" xml:space="preserve">
+    <value>المستوى</value>
+  </data>
+  <data name="doc_fHousingType" xml:space="preserve">
+    <value>نوع السكن</value>
+  </data>
+  <data name="doc_fHousing" xml:space="preserve">
+    <value>السكن</value>
+  </data>
+  <data name="doc_fAdUser" xml:space="preserve">
+    <value>اسم المستخدم</value>
+  </data>
+  <data name="doc_fAdState" xml:space="preserve">
+    <value>حالة الحساب</value>
+  </data>
+  <data name="doc_fAdLast" xml:space="preserve">
+    <value>آخر دخول للشبكة</value>
+  </data>
+  <data name="doc_noAd" xml:space="preserve">
+    <value>لا يوجد حساب شبكة مرتبط بهذا الطالب</value>
+  </data>
+  <data name="ui_trialMode" xml:space="preserve">
+    <value>تشغيل تجريبي</value>
   </data>
 </root>

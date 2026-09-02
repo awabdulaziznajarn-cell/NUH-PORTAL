@@ -10,7 +10,7 @@ using NUH_PORTAL.Services.Interfaces;
 
 namespace NUH_PORTAL.Services
 {
-    // تدفق الـ OTP — اتنقل من OtpController (التوكن بقى من ITokenService الموحّد)
+    // تدفق الـ OTP - اتنقل من OtpController (التوكن بقى من ITokenService الموحّد)
     public class OtpFlowService : AppServiceBase, IOtpFlowService
     {
         private readonly IRepository<Student> _students;
@@ -24,6 +24,7 @@ namespace NUH_PORTAL.Services
         private readonly UserManager<User> _userManager;
         private readonly RoleManager<Role> _roleManager;
         private readonly IPermissionService _permissions;
+        private readonly Microsoft.Extensions.Caching.Memory.IMemoryCache _cache;
 
         public OtpFlowService(
             IRepository<Student> students,
@@ -37,9 +38,11 @@ namespace NUH_PORTAL.Services
             UserManager<User> userManager,
             RoleManager<Role> roleManager,
             IPermissionService permissions,
+            Microsoft.Extensions.Caching.Memory.IMemoryCache cache,
             IUnitOfWork unitOfWork,
             IMapper mapper) : base(unitOfWork, mapper)
         {
+            _cache = cache;
             _students = students;
             _users = users;
             _otpService = otpService;
@@ -68,14 +71,14 @@ namespace NUH_PORTAL.Services
 
         // Students.phone متخزّن 9665XXXXXXXX، لكن الطالب بيكتب 05XXXXXXXX في شاشة
         // التحقق. من غير تطبيع، البحث عن الطالب برقمه بيفشل دايمًا، فبيتعمل حساب
-        // اسمه "طالب" ومربوط بصيغة رقم مختلفة — وده كان بيظهر في مسار الطلب
+        // اسمه "طالب" ومربوط بصيغة رقم مختلفة - وده كان بيظهر في مسار الطلب
         // وبيكسر أي مقارنة لاحقة بين الحسابين.
-        // لاحقة البريد لحسابات الطلاب. مش بريد حقيقي — الطالب بيدخل برمز الجوال،
+        // لاحقة البريد لحسابات الطلاب. مش بريد حقيقي - الطالب بيدخل برمز الجوال،
         // بس Identity محتاج قيمة، والصيغة الموحّدة بتخلّي القائمة مفهومة.
-        // اللاحقة مصدرها StudentLoginIdentity — كانت مكرّرة هنا كثابت مستقل
+        // اللاحقة مصدرها StudentLoginIdentity - كانت مكرّرة هنا كثابت مستقل
         private const string StudentEmailSuffix = StudentLoginIdentity.EmailSuffix;
 
-        // ⚠️ حُذفت النسخة المحلية — القاعدة الوحيدة في Core/IdentityRules.cs.
+        // ⚠️ حُذفت النسخة المحلية - القاعدة الوحيدة في Core/IdentityRules.cs.
         private static string? NormalizeMobile(string? mobile) => IdentityRules.NormalizeMobile(mobile);
 
         private (string? ip, string ua) ClientInfo()
@@ -134,7 +137,7 @@ namespace NUH_PORTAL.Services
             var raw = request.Mobile.Trim();
             var mobile = NormalizeMobile(raw) ?? raw;
 
-            // بنجرّب الصيغة الموحّدة الأول وبعدين اللي اتكتب — عشان أي رمز اتبعت
+            // بنجرّب الصيغة الموحّدة الأول وبعدين اللي اتكتب - عشان أي رمز اتبعت
             // قبل التعديل ده (متخزّن بالصيغة الخام) يفضل يتحقق عادي.
             var valid = await _otpService.VerifyOtpAsync(mobile, request.Code)
                      || (mobile != raw && await _otpService.VerifyOtpAsync(raw, request.Code));
@@ -149,7 +152,7 @@ namespace NUH_PORTAL.Services
 
             if (user == null)
             {
-                // الشكل من StudentLoginIdentity، لا من سطر مكتوب هنا — وإلا صار
+                // الشكل من StudentLoginIdentity، لا من سطر مكتوب هنا - وإلا صار
                 // للقاعدة نسختان: واحدة للإنشاء وأخرى للمزامنة، وتفترقان.
                 var (userName, fullName) = StudentLoginIdentity.Desired(student, mobile);
                 user = new User
@@ -175,6 +178,13 @@ namespace NUH_PORTAL.Services
 
             var perms = await _permissions.GetPermissionsForRolesAsync(new[] { "user" });
             var token = _tokens.GenerateToken(user, new[] { "user" }, perms);
+
+            // ⚠️ جلسة الطالب بتبدأ من هنا، فلازم ختم آخر نشاط القديم يتمسح.
+            //    مفتاح الختم برقم المستخدم لا بالجلسة، فبيعيش بعد انتهاء الجلسة
+            //    السابقة بالخمول - ومن غير المسح ده أول نداء API بعد التحقّق
+            //    بيلاقي ختمًا قديمًا فيقفل الجلسة الجديدة فورًا، والطالب بيشوف
+            //    نفسه اتحقّق وطلع على طول. نفس القاعدة في AccountController للموظفين.
+            _cache.Remove(SessionPolicy.ActivityKey(user.Id));
 
             var (ip, ua) = ClientInfo();
             await _workflow.LogAuditAsync(user.Id, "otp_verified", "OTPVerifications", 0, ip, ua);

@@ -4,11 +4,11 @@
 
 @*
   ============================================================================
-   مركز التقارير — تبويبات حقيقية
+   مركز التقارير - تبويبات حقيقية
   ============================================================================
    ⚠️ الشكل القديم كان: صفّ تبويبات + صفّ مدد + ٦ بطاقات «اليوم» + صفّ فلاتر
       + أربعة رسوم معًا + شريط عدّادات + ملخّص تنفيذي + ثلاث بطاقات + الجدول.
-      كله ظاهر في وقت واحد، والتبويبات كانت بتفلتر الجدول وحده — فالمستخدم
+      كله ظاهر في وقت واحد، والتبويبات كانت بتفلتر الجدول وحده - فالمستخدم
       يقف على «عمليات الطلبات» وقدّامه رسم «تسجيل الدخول» فاضي.
 
    القاعدة هنا: كل تبويب صفحة كاملة بمؤشراته ورسمه، وشريط أدوات واحد وجدول
@@ -21,10 +21,10 @@
 *@
 
 <style>
-  /* ===== مركز التقارير — الباقي من site.css و components.css ===== */
+  /* ===== مركز التقارير - الباقي من site.css و components.css ===== */
 
   /* ⚠️ التبويبات هنا كانت مكتوبة بستايل خاص بالشاشة (.rp-tabs/.report-tab)
-     بخطّ سفلي بدل الحبوب الخضرا — سابع تصميم منفصل لمكوّن موجود أصلًا موحّد
+     بخطّ سفلي بدل الحبوب الخضرا - سابع تصميم منفصل لمكوّن موجود أصلًا موحّد
      في site.css (.tabs/.tab-btn) ومستعمَل في المستخدمين والطلبات وحسابات
      السكن وإسكان أعضاء هيئة التدريس. اتشال، والشاشة بقت على المكوّن المشترك. */
 
@@ -33,16 +33,25 @@
      في حسابات الإسكان وسجلّات العمليات والدخول والأخطاء، وكان مقاس حقله
      مكتوبًا هنا برقم ثالث لا يوافق أيًّا منهما. الشرح كامل هناك. */
 
-  /* اللوحات — واحدة ظاهرة في أي وقت */
+  /* اللوحات - واحدة ظاهرة في أي وقت */
   .rp-panel{display:none}
   .rp-panel.on{display:block}
 
   .rp-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
-  .rp-kpi{background:var(--white);border:1px solid var(--gray-200);border-radius:14px;padding:16px 18px;
-          box-shadow:0 1px 2px rgba(16,24,40,.04)}
-  .rp-kpi .k{font-size:12px;font-weight:600;color:var(--gray-500);margin-bottom:7px}
-  .rp-kpi .v{font-size:27px;font-weight:800;color:var(--navy-dark);line-height:1}
-  .rp-kpi .s{font-size:11.5px;color:var(--gray-500);margin-top:6px}
+  /* ⚠️ شكل .rp-kpi اتشال من هنا: كان النسخة الخامسة من بطاقة المؤشّر.
+     بقى بيقرا من .stat-card في css/components.css - نفس الحدّ ونفس الحشو
+     ونفس الرقم ونفس شريط الحافة والأيقونة الخلفية. */
+  .rp-kpi{position:relative;overflow:hidden;background:var(--white);border:1px solid var(--gray-100);
+          border-radius:14px;padding:15px 17px;box-shadow:0 1px 3px rgba(16,70,49,.04);
+          transition:border-color .18s,box-shadow .18s,transform .18s}
+  .rp-kpi::after{content:"";position:absolute;inset-block-start:0;inset-inline-start:0;
+                 width:3px;height:100%;background:var(--navy);opacity:.9}
+  .rp-kpi .k{position:relative;font-size:12.5px;font-weight:500;color:var(--gray-500);margin-top:4px}
+  .rp-kpi .v{position:relative;font-size:27px;font-weight:700;color:var(--navy-dark);line-height:1.15;
+             letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+  .rp-kpi .s{position:relative;font-size:11.5px;color:var(--gray-500);margin-top:3px;line-height:1.6}
+  .rp-kpi.stat-card-clickable:hover{border-color:#c9d9d1;box-shadow:0 6px 18px rgba(16,70,49,.08);
+                                    transform:translateY(-2px)}
 
   .rp-card{background:var(--white);border:1px solid var(--gray-200);border-radius:14px;overflow:hidden;
            box-shadow:0 1px 2px rgba(16,24,40,.04);margin-bottom:16px}
@@ -55,7 +64,7 @@
   .rp-body{padding:16px 18px}
   .rp-2col{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
 
-  /* أعمدة أفقية — بديل الدونات */
+  /* أعمدة أفقية - بديل الدونات */
   .hb{display:flex;align-items:center;gap:11px;margin-bottom:9px}
   .hb:last-child{margin-bottom:0}
   .hb-l{flex:0 0 168px;font-size:12.5px;color:var(--gray-700);text-align:start;
@@ -198,7 +207,9 @@
 
   <div class="rp-card">
     <div class="rp-head"><b>@SharedLocalizer["rpx_chart_ops"]</b><span class="tot">@SharedLocalizer["rep_9"]</span></div>
-    <div class="rp-body"><div class="chart-box"><canvas id="chartOps7"></canvas></div></div>
+    <div class="rp-body"><div class="chart-box">
+      <span class="chart-ghost" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg></span>
+      <canvas id="chartOps7"></canvas></div></div>
   </div>
 
   <div class="rp-2col">
@@ -227,7 +238,9 @@
   </div>
   <div class="rp-card">
     <div class="rp-head"><b>@SharedLocalizer["rpx_chart_logins"]</b><span class="tot">@SharedLocalizer["rep_10"]</span></div>
-    <div class="rp-body"><div class="chart-box"><canvas id="chartLogins30"></canvas></div></div>
+    <div class="rp-body"><div class="chart-box">
+      <span class="chart-ghost" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg></span>
+      <canvas id="chartLogins30"></canvas></div></div>
   </div>
 </div>
 
@@ -245,7 +258,7 @@
   </div>
   @* ⚠️ عمودين لا عمود واحد: بطاقة التوزيع لوحدها كانت بتمدّ أعمدتها على عرض
      الشاشة كله لقيم من رقم أو رقمين، فنص الشاشة بيفضل فاضي. والأهم إن التبويب
-     كان بيجاوب على «أي إجراء اتعمل» وما بيجاوبش على «مين عمله» — وده السؤال
+     كان بيجاوب على «أي إجراء اتعمل» وما بيجاوبش على «مين عمله» - وده السؤال
      اللي بيتسأل فعلًا. البيانات محمّلة أصلًا (loadTopData)، فمفيش نداء جديد. *@
   <div class="rp-2col">
     <div class="rp-card">
@@ -271,7 +284,7 @@
     <div class="rp-kpi"><div class="k">@SharedLocalizer["rep_30"]</div><div class="v" id="statRequestRecs">0</div>
       <div class="s" data-period='@(SharedLocalizer["rpx_inFilter"].Value)'>@SharedLocalizer["rpx_inFilter"]</div></div>
   </div>
-  @* نفس تقسيم تبويب الطلاب — التبويبين ليهم نفس البنية بالظبط *@
+  @* نفس تقسيم تبويب الطلاب - التبويبين ليهم نفس البنية بالظبط *@
   <div class="rp-2col">
     <div class="rp-card">
       <div class="rp-head"><b>@SharedLocalizer["rpx_breakdown_request"]</b></div>
@@ -320,7 +333,7 @@
     <span class="tot">@SharedLocalizer["rep_29"]: <b id="statStudentRecsMain">0</b></span>
     <span class="tot">@SharedLocalizer["rep_30"]: <b id="statRequestRecsMain">0</b></span>
     @* ⚠️ مطوي افتراضيًا: الصفحة دي تقارير، والجدول الخام كان بياخد شاشة كاملة
-       تحت كل تبويب — وهو أصلًا موجود بشاشته الخاصة (سجل العمليات). الحالة
+       تحت كل تبويب - وهو أصلًا موجود بشاشته الخاصة (سجل العمليات). الحالة
        متحفوظة، فاللي بيفتحه كل مرة ما يفضلش يفتحه كل مرة. *@
     <button type="button" class="fbar-out" id="logToggle" onclick="toggleLog()"
             style="margin-inline-start:auto;height:30px;font-size:12px;padding:0 11px">
@@ -330,7 +343,7 @@
   <div id="logDetails" hidden>
     <div style="overflow-x:auto">
       @* ⚠️ الشاشة دي بتقرا من نفس نقطة «سجل العمليات» (/api/auditlogs)، فمفاتيح
-         الفرز هي نفسها بالظبط — مش مفاتيح تانية لنفس الأعمدة. عمود «#» بلا
+         الفرز هي نفسها بالظبط - مش مفاتيح تانية لنفس الأعمدة. عمود «#» بلا
          فرز: ترقيم عرض مش موجود في قاعدة البيانات. *@
       <table id="repTable">
         <thead><tr><th>@SharedLocalizer["col_seq"]</th><th data-sort="user">@SharedLocalizer["rep_22"]</th><th data-sort="action">@SharedLocalizer["rep_42"]</th><th data-sort="table">@SharedLocalizer["rep_43"]</th><th data-sort="targetid">@SharedLocalizer["rep_44"]</th><th data-sort="date">@SharedLocalizer["rep_45"]</th></tr></thead>
@@ -360,18 +373,31 @@
 
 @section Scripts {
 <script src="/i18n.js"></script>
-@* ⚠️ مكتبة الرسوم محلية و async: الوسم الحاجز كان بيوقف كل جافاسكريبت الصفحة
-   لحد ما تنزل من الإنترنت، والصفحة كلها بياناتها محلية. loadCharts وحدها
-   بتستناها، والـ CDN شبكة أمان لو الملف مانتسخش على الخادم. *@
-<script>
-  function __chartLibFallback() {
-    var s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/chart.js@@4.4.7/dist/chart.umd.min.js';
-    s.async = true;
-    document.head.appendChild(s);
-  }
-</script>
-<script async src="/js/chart.umd.min.js" onerror="__chartLibFallback()"></script>
+@* ============================================================================
+   مكتبة الرسوم - محلية وحدها، و async.
+
+   ⚠️ الوسم الحاجز كان بيوقف كل جافاسكريبت الصفحة لحد ما المكتبة تنزل، وبيانات
+      الصفحة كلها محلية. loadCharts وحدها بتستناها (js/reports-page.js).
+
+   ⚠️ وكان فيه تحميل احتياطي من cdn.jsdelivr.net لو الملف المحلي مش موجود -
+      واتشال. الحجّة كانت «شبكة أمان لو الملف مانتسخش على الخادم»، والثمن كان
+      أكبر من المكسب بكتير:
+
+        • الشرط الوحيد لتشغيله هو **غلطة نشر** - وهي بالظبط الحاجة اللي المفروض
+          تبان عشان تتصلّح، فكان بيغطّي عليها بدل ما يكشفها.
+        • الشاشة دي فيها بيانات الطلاب وسجل العمليات. أي كود بيتحمّل هنا بيشتغل
+          بجلسة الموظف: يقرا الشاشة، وينادي أي /api باسمه. اختراق الـ CDN أو
+          خطف DNS في الشبكة بيكفي.
+        • والثمن الحقيقي لغيابه: رسمان مش هيظهروا لحد ما حد ينسخ ملف - والرسالة
+          اللي بتشرح ده موجودة أصلًا (rep_chartsUnavailable).
+
+      ونفس الحجّة دي هي اللي خلّت js/nuh-qr.js يتكتب من الصفر بدل مكتبة خارجية.
+
+   ⚠️ و onerror بيعلّم الفشل فورًا بدل ما loadCharts تستنى عشر ثوانٍ قدام
+      مربّعات فاضية: غلطة النشر بتبان في ثانية، لا بعد انتظار بيقرا كأنه بطء.
+   ============================================================================ *@
+<script>window.__chartLibFailed = false;</script>
+<script async src="/js/chart.umd.min.js" onerror="window.__chartLibFailed = true"></script>
 <script src="/js/chart-theme.js" asp-append-version="true"></script>
 <script src="/js/reports-page.js" asp-append-version="true"></script>
 }

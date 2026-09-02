@@ -83,7 +83,10 @@ var HM_SVG = {
   ban:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.9" y1="4.9" x2="19.1" y2="19.1"/></svg>',
   check:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
   align:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>',
-  upload:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>'
+  upload:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>',
+  copy:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
+  done:    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+  shield:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.4 8.7 8 10 4.6-1.3 8-5 8-10V6z"/></svg>'
 };
 
 // خانة في نافذة إدارة الحساب. ltr للنصوص اللاتينية (اسم الدخول، DN، التواريخ):
@@ -91,9 +94,40 @@ var HM_SVG = {
 // حقل واحد: تسمية صغيرة فوق قيمة بارزة، وسطر ثانٍ اختياري تحتها.
 // ⚠️ السطر الثاني هو ما يسمح بدمج حقلين في واحد («الكلية والمستوى»)، وهو
 //    نفس بناء الخلايا ذات السطرين في جداول النظام - قاعدة واحدة لا اثنتان.
+// ⚠️ النسخ بيقرا النصّ من العنصر نفسه لا من متغيّر ممرَّر: القيمة معروضة
+//    قدّام الموظف، فاللي بينتسخ هو **اللي شايفه** بالظبط. ولو اتمرّرت
+//    القيمة كنصّ في onclick كانت هتحتاج تهريب تاني وممكن تفارق المعروض.
+// ⚠️ و execCommand احتياطي: الشاشة بتشتغل على http داخل الشبكة، و
+//    navigator.clipboard مش متاح خارج السياق الآمن في أغلب المتصفحات.
+function hmCopy(btn) {
+  var f = btn.closest('.acct-f');
+  var txt = f ? (f.querySelector('.v').textContent || '').trim() : '';
+  if (!txt) return;
+  var done = function () {
+    var old = btn.innerHTML;
+    btn.innerHTML = HM_SVG.done;
+    btn.classList.add('is-done');
+    setTimeout(function () { btn.innerHTML = old; btn.classList.remove('is-done'); }, 1400);
+  };
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(txt).then(done, function () {});
+    return;
+  }
+  var ta = document.createElement('textarea');
+  ta.value = txt; ta.setAttribute('readonly', '');
+  ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); done(); } catch (e) {}
+  document.body.removeChild(ta);
+}
+
 function acctField(label, valueHtml, opts) {
   opts = opts || {};
   var v = opts.mono ? '<span class="acct-mono">' + valueHtml + '</span>' : valueHtml;
+  if (opts.copy) {
+    v += '<button type="button" class="acct-cp" onclick="hmCopy(this)" ' +
+         'title="' + t('hs_copy') + '" aria-label="' + t('hs_copy') + '">' + HM_SVG.copy + '</button>';
+  }
   return '<div class="acct-f">' +
            '<span class="k">' + label + '</span>' +
            '<span class="v">' + v + '</span>' +
@@ -193,16 +227,38 @@ async function loadStats() {
     var data = await res.json();
     var grid = document.getElementById('statsGrid');
     grid.innerHTML = '';
+    // ⚠️ الأيقونة والنغمة جزء من تعريف البطاقة هنا لا CSS في الشاشة: البطاقة
+    //    مكوّن مشترك (.stat-card في css/components.css)، واللي بيفرق بين
+    //    بطاقة وبطاقة هو المعنى - فبيتكتب مع البيانات.
+    var ICON = {
+      users:   '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/>',
+      screen:  '<rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/>',
+      check:   '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
+      ban:     '<circle cx="12" cy="12" r="10"/><line x1="4.9" y1="4.9" x2="19.1" y2="19.1"/>',
+      sync:    '<path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>',
+      missing: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="17" y1="8" x2="23" y2="14"/><line x1="23" y1="8" x2="17" y2="14"/>'
+    };
+
     var stats = [
-      { label: t('totalAccounts'), value: data.withAccounts || data.with_accounts || 0 },
-      { label: t('accountsEnabled'), value: data.enabled || 0 },
-      { label: t('accountsDisabled'), value: data.disabled || 0 },
-      { label: t('syncedToday'), value: data.syncedLast24h || data.synced_last_24h || 0 },
-      { label: t('studentsWithoutAccounts'), value: data.withoutUsername || data.without_username || 0 },
-      { label: t('totalStudents'), value: data.totalStudents || data.total_students || 0 }
+      { label: t('totalAccounts'),            value: data.withAccounts || data.with_accounts || 0,        icon: ICON.screen },
+      { label: t('accountsEnabled'),          value: data.enabled || 0,                                   icon: ICON.check, tone: 'tone-ok' },
+      { label: t('accountsDisabled'),         value: data.disabled || 0,                                  icon: ICON.ban },
+      { label: t('syncedToday'),              value: data.syncedLast24h || data.synced_last_24h || 0,     icon: ICON.sync },
+      // ⚠️ «طلاب بلا حسابات» وحده اللي بياخد نغمة تنبيه لمّا يبقى مش صفر:
+      //    ده الرقم الوحيد في الشاشة اللي بيقول إن في شغل ناقص.
+      { label: t('studentsWithoutAccounts'),  value: data.withoutUsername || data.without_username || 0,  icon: ICON.missing,
+        tone: (data.withoutUsername || data.without_username || 0) > 0 ? 'tone-warn' : '' },
+      { label: t('totalStudents'),            value: data.totalStudents || data.total_students || 0,      icon: ICON.users }
     ];
-    stats.forEach(function(s) {
-      grid.innerHTML += '<div class="stat-card"><div class="stat-label">' + s.label + '</div><div class="stat-value">' + s.value + '</div></div>';
+
+    stats.forEach(function (s) {
+      grid.innerHTML +=
+        '<div class="stat-card ' + (s.tone || '') + '">' +
+          '<span class="stat-ghost" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" ' +
+            'stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + s.icon + '</svg></span>' +
+          '<span class="stat-num">' + s.value + '</span>' +
+          '<span class="stat-label">' + s.label + '</span>' +
+        '</div>';
     });
   } catch (e) {
     console.error('Failed to load stats', e);
@@ -406,7 +462,7 @@ async function openDetails(studentId) {
 
     // ---- عمودان: بيانات الطالب | بيانات الحساب في الدليل
     var stuCol = '<div class="acct-col">' +
-                   '<span class="acct-t">' + t('hs_secStudent') + '</span>' +
+                   '<span class="acct-t">' + HM_SVG.user + t('hs_secStudent') + '</span>' +
                    acctField(t('studentId'), hmEsc(s.student_id || '-'), { mono: true }) +
                    acctField(t('hs_collegeLevel'), hmEsc(collegeName(s.college) || '-'),
                              { sub: s.academic_level ? hmEsc(t('academicLevel') + ' ' + s.academic_level) : '' }) +
@@ -419,21 +475,21 @@ async function openDetails(studentId) {
         ? ad.memberOf.map(function (g) { return '<span class="acct-tag">' + hmEsc(g) + '</span>'; }).join('')
         : '-';
       dirCol = '<div class="acct-col">' +
-                 '<span class="acct-t">' + t('hs_secDirectory') + '</span>' +
-                 acctField(t('adUsername'), hmEsc(ad.samAccountName || '-'), { mono: true }) +
-                 acctField(t('hs_upn'), hmEsc(ad.userPrincipalName || '-'), { mono: true }) +
+                 '<span class="acct-t">' + HM_SVG.shield + t('hs_secDirectory') + '</span>' +
+                 acctField(t('adUsername'), hmEsc(ad.samAccountName || '-'), { mono: true, copy: true }) +
+                 acctField(t('hs_upn'), hmEsc(ad.userPrincipalName || '-'), { mono: true, copy: true }) +
                  acctField(t('adLastSync'),
                            hmEsc(s.ad_last_sync_at ? formatDate(s.ad_last_sync_at) : '-'), { mono: true }) +
                  acctField(t('hs_groups'), groups) +
                  // مطويّة: الفني يفتحها عند العطل، والموظف لا تزاحمه كل يوم.
                  '<details class="acct-tech"><summary>' + t('hs_techDetails') + '</summary><div class="in">' +
-                   acctField(t('hs_dn'), hmEsc(ad.distinguishedName || '-'), { mono: true }) +
+                   acctField(t('hs_dn'), hmEsc(ad.distinguishedName || '-'), { mono: true, copy: true }) +
                    acctField(t('hs_uac'), hmEsc(acctUac(ad.userAccountControl))) +
                  '</div></details>' +
                '</div>';
     } else {
       dirCol = '<div class="acct-col">' +
-                 '<span class="acct-t">' + t('hs_secDirectory') + '</span>' +
+                 '<span class="acct-t">' + HM_SVG.shield + t('hs_secDirectory') + '</span>' +
                  '<div class="acct-empty">' + t('adNoAccount') + '</div>' +
                '</div>';
     }

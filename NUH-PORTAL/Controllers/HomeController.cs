@@ -18,14 +18,17 @@ namespace NUH_PORTAL.Controllers
         private readonly IStudentStatusService _status;
         private readonly IRequestService _requests;
         private readonly FacultyHousingService _faculty;
+        private readonly NUH_PORTAL.Data.Interfaces.IUnitOfWork _uow;
 
         public HomeController(IStudentService students, IStudentStatusService status,
-                              IRequestService requests, FacultyHousingService faculty)
+                              IRequestService requests, FacultyHousingService faculty,
+                              NUH_PORTAL.Data.Interfaces.IUnitOfWork uow)
         {
             _students = students;
             _status = status;
             _requests = requests;
             _faculty = faculty;
+            _uow = uow;
         }
 
         // GET /Home
@@ -39,7 +42,8 @@ namespace NUH_PORTAL.Controllers
                 LatestStudents = (await _students.GetPagedAsync(
                     new QueryParams { Page = 1, PageSize = 6 }, showDeleted: false, adStatus: null)).Items,
                 LatestRequests = (await _requests.GetPagedAsync(
-                    new QueryParams { Page = 1, PageSize = 6 }, status: null, requestType: null)).Items
+                    new QueryParams { Page = 1, PageSize = 6 }, status: null, requestType: null)).Items,
+                Scope = _uow.GetGenderScope()
             };
 
             // ⚠️ الاستعلام مشروط بالصلاحية لا الشاشة: لو اتحسب دايمًا وخبّيناه

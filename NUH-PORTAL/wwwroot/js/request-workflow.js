@@ -103,6 +103,32 @@ var NuhWorkflow = (function () {
   }
 
   // ==========================================================================
+  //  الجهة المسؤولة عن المرحلة، ومفهوم «المراقب».
+  //
+  //  ⚠️ الخريطتين دول جايين من الخادم في نفس الحقنة (owners و
+  //     stagePermissions في Core/RequestWorkflow.ToJson) - مش مبنيين هنا من
+  //     أسماء الصلاحيات. لو اتبنوا هنا كانت أي مرحلة جديدة هتظهر في اللوحة
+  //     بلا جهة، وبلا خطأ يبان.
+  //
+  //  ⚠️ و«المراقب» هو اللي صلاحياته على كل المراحل (المدير): بالنسبة له كل
+  //     صفّ «بانتظار إجرائه»، فوسم كده على كل الصفوف بيفقد معناه. اللوحة
+  //     بتوريه الجهة المسؤولة بدل الوسم.
+  // ==========================================================================
+  function ownerKey(status) {
+    var map = wf().owners || {};
+    return map[String(status || '').toLowerCase()] || '';
+  }
+
+  function isObserver(hasPerm) {
+    var all = wf().stagePermissions;
+    if (!Array.isArray(all) || !all.length || typeof hasPerm !== 'function') return false;
+    for (var i = 0; i < all.length; i++) {
+      if (!hasPerm(all[i])) return false;
+    }
+    return true;
+  }
+
+  // ==========================================================================
   //  نقطة الإرسال — لماذا هي هنا لا في كل شاشة.
   //
   //  ⚠️ للطلب مساران وواجهتان مختلفتان لإرسال القرار: مسار تسجيل الطالب يُرسل
@@ -144,6 +170,8 @@ var NuhWorkflow = (function () {
     badgeKey: badgeKey,
     stageKey: stageKey,
     canAct: canAct,
+    ownerKey: ownerKey,
+    isObserver: isObserver,
     endpointFor: endpointFor,
     labelKey: labelKey
   };

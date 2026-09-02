@@ -16,7 +16,7 @@ using System.Text.RegularExpressions;
 
 namespace NUH_PORTAL.Services
 {
-    // التسجيل الجماعي — اتنقل من BulkRegistrationController (بنفس المنطق والمعاملة transaction)
+    // التسجيل الجماعي - اتنقل من BulkRegistrationController (بنفس المنطق والمعاملة transaction)
     public class BulkRegistrationService : AppServiceBase, IBulkRegistrationService
     {
         private readonly IRepository<Student> _students;
@@ -126,12 +126,18 @@ namespace NUH_PORTAL.Services
                 throw new UserFriendlyException("فشل قراءة الملف. تأكد من صيغة الملف.", 400);
             }
 
+            // ⚠️ السقف قبل أي معالجة: الملف محدود بعشرة ميجا، لكن xlsx عالي
+            //    الضغط بيتمدّد لملايين الصفوف - وقراءتها كلها في DataTable
+            //    بتاكل الذاكرة قبل ما يوصل أول فحص. الرفض هنا بيبقى فوري.
+            if (dt.Rows.Count > MaxRows)
+                throw new UserFriendlyException(TooManyRowsError, 400);
+
             var errors = new List<RowErrorDto>();
             var preview = new List<PreviewDto>();
             int validCount = 0, errorCount = 0;
             var processedStudentIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            // قسم الموظف اللي بيرفع الملف — بيملّي خانة الجنس الفاضية، وبيرفض
+            // قسم الموظف اللي بيرفع الملف - بيملّي خانة الجنس الفاضية، وبيرفض
             // الصف اللي جنسه من القسم التاني. القاعدة في Core/GenderScope.cs.
             var scope = UnitOfWork.GetGenderScope();
             var scopeLabel = scope == Gender.Male ? "الطلاب" : "الطالبات";
@@ -180,19 +186,19 @@ namespace NUH_PORTAL.Services
 
                 if (string.IsNullOrEmpty(nationalId))
                     AddError("NationalID", "رقم الهوية الوطنية مطلوب - " + IdentityRules.NationalIdError);
-                // ⚠️ كانت أي عشرة أرقام — نفس ضعف StudentService. القاعدة الموحّدة
+                // ⚠️ كانت أي عشرة أرقام - نفس ضعف StudentService. القاعدة الموحّدة
                 //    بتمنع رقم الجوال يتحفظ في خانة الهوية من رفع الإكسل كمان.
                 else if (!IdentityRules.IsValidNationalId(nationalId))
                     AddError("NationalID", IdentityRules.NationalIdError);
 
                 if (string.IsNullOrEmpty(fullNameAr))
                     AddError("FullNameArabic", "الاسم العربي مطلوب - يجب إدخال الاسم باللغة العربية");
-                else if (!Regex.IsMatch(fullNameAr, @"^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\s]+$"))
+                else if (!Regex.IsMatch(fullNameAr, ArabicNamePattern))
                     AddError("FullNameArabic", "الاسم العربي يحتوي على أحرف غير عربية - يجب إدخال الاسم باللغة العربية فقط");
 
                 if (string.IsNullOrEmpty(fullNameEn))
                     AddError("FullNameEnglish", "الاسم الإنجليزي مطلوب - يجب إدخال الاسم باللغة الإنجليزية");
-                else if (!Regex.IsMatch(fullNameEn, @"^[a-zA-Z\s]+$"))
+                else if (!Regex.IsMatch(fullNameEn, EnglishNamePattern))
                     AddError("FullNameEnglish", "الاسم الإنجليزي يحتوي على أحرف غير إنجليزية - يجب إدخال الاسم باللغة الإنجليزية فقط");
 
                 if (string.IsNullOrEmpty(mobile))
@@ -201,10 +207,10 @@ namespace NUH_PORTAL.Services
                     AddError("Mobile", IdentityRules.MobileError);
 
                 // ⚠️ كان اختياريًا. الطالب اللي بيتحمّل بلا جنس مايوصلش لا لمشرف
-                //    قسم الطلاب ولا لمشرفة قسم الطالبات — طلبه بيقع في فراغ ومحدش
+                //    قسم الطلاب ولا لمشرفة قسم الطالبات - طلبه بيقع في فراغ ومحدش
                 //    شايفه. الجنس بقى هو اللي بيوجّه الطلب، فبقى إجباريًا.
                 //
-                //  ⚠️ لكن مشرف القسم بيرفع طلاب قسمه هو — فالخانة الفاضية
+                //  ⚠️ لكن مشرف القسم بيرفع طلاب قسمه هو - فالخانة الفاضية
                 //     بتتملي من قسمه بدل ما نرفض الصف ونطلب منه يكتب نفس الكلمة
                 //     في كل سطر. أما لو كتب القسم التاني بإيده فالصف بيترفض ولا
                 //     بنقلب القيمة: الاحتمال الأكبر إنه غلط في السطر نفسه (لصق
@@ -293,6 +299,53 @@ namespace NUH_PORTAL.Services
             };
         }
 
+        // ====================================================================
+        //  قواعد صيغة الصفّ - تعريف واحد يستعمله التحقّق والإنشاء.
+        //
+        //  ⚠️ الفحوص دي كانت في ValidateFileAsync **وبس**، وهي نداء HTTP
+        //     منفصل عن الإنشاء. يعني اللي بيبعت على /create مباشرة كان بيتخطّاها
+        //     كلها: رقم جامعي بأي شكل، اسم بأي حروف، جوال بأي صيغة - وبيتكتبوا
+        //     في قاعدة البيانات زي ما جم.
+        //
+        //  ⚠️ وde مش خطر نظري: الرقم الجامعي بيروح بعدين لبناء اسم الكائن في
+        //     الدليل النشط (ADProvisioningService: CN=h{الرقم},{المسار}) بلا
+        //     هروب، فرقم فيه فاصلة أو باك سلاش بيفسد الـ DN أو يفشل الإنشاء.
+        //
+        //  ⚠️ والقاعدة الأصل: **الفحص على الباب اللي بيكتب**، لا على الباب
+        //     اللي بيسبقه. التحقّق شغلته يوري الموظف الغلط قبل ما يضغط حفظ؛
+        //     أما اللي بيحمي قاعدة البيانات فهو اللي هنا.
+        // ====================================================================
+        private const string ArabicNamePattern  = @"^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\s]+$";
+        private const string EnglishNamePattern = @"^[a-zA-Z\s]+$";
+
+        // ⚠️ سقف الصفوف: الملف محدود بعشرة ميجا، لكن ملف xlsx عالي الضغط
+        //    بيتمدّد لملايين الصفوف - وكلها بتتقرا في الذاكرة وبتتكتب في معاملة
+        //    واحدة. السقف بيخلّي الرفض سريعًا وواضحًا بدل ما السيرفر يقع.
+        public const int MaxRows = 2000;
+
+        // ⚠️ الرسالة مبنية من MaxRows لا مكتوب فيها الرقم: رقم متكرّر في نصّ
+        //    بيفضل مكانه لما القيمة تتغيّر، والموظف بيقرا حدًّا غير الحدّ الفعلي.
+        public static readonly string TooManyRowsError =
+            $"الملف يحتوي على صفوف أكثر من الحد المسموح ({MaxRows} صف). قسّمه على أكثر من ملف.";
+
+        // بترجّع أول مخالفة صيغة في الصفّ، أو null لو سليم.
+        private static string? RowFormatError(BulkStudentDto s)
+        {
+            var studentId  = (s.StudentID ?? "").Trim();
+            var nationalId = (s.NationalID ?? "").Trim();
+            var nameAr     = (s.FullNameArabic ?? "").Trim();
+            var nameEn     = (s.FullNameEnglish ?? "").Trim();
+            var mobile     = (s.Mobile ?? "").Trim();
+
+            if (!IdentityRules.IsValidStudentId(studentId))   return IdentityRules.StudentIdError;
+            if (!IdentityRules.IsValidNationalId(nationalId)) return IdentityRules.NationalIdError;
+            if (!Regex.IsMatch(nameAr, ArabicNamePattern))    return "الاسم العربي غير صالح - يجب إدخال الاسم باللغة العربية فقط";
+            if (!Regex.IsMatch(nameEn, EnglishNamePattern))   return "الاسم الإنجليزي غير صالح - يجب إدخال الاسم باللغة الإنجليزية فقط";
+            if (!Regex.IsMatch(mobile, IdentityRules.StoredMobilePattern)) return IdentityRules.MobileError;
+
+            return null;
+        }
+
         public async Task<BulkCreateResultDto> CreateAsync(BulkCreateDto dto)
         {
             var actorId = UnitOfWork.GetCurrentUserId();
@@ -302,9 +355,25 @@ namespace NUH_PORTAL.Services
             if (dto.Students == null || dto.Students.Count == 0)
                 throw new UserFriendlyException("لا يوجد طلاب صالحون للتسجيل", 400);
 
+            if (dto.Students.Count > MaxRows)
+                throw new UserFriendlyException(TooManyRowsError, 400);
+
+            // ⚠️ فحص الصيغة هنا لا في التحقّق وحده: التحقّق والإنشاء نداءان
+            //    منفصلان، والعميل هو اللي بيبعت القائمة تاني - فاللي اتفحص مش
+            //    بالضرورة اللي وصل. الشرح الكامل عند RowFormatError.
+            var badFormat = dto.Students
+                .Select((s, i) => new { Row = i + 1, s.StudentID, Error = RowFormatError(s) })
+                .Where(x => x.Error != null)
+                .Take(10)
+                .Select(x => $"سطر {x.Row} ({x.StudentID}): {x.Error}")
+                .ToList();
+            if (badFormat.Count > 0)
+                throw new UserFriendlyException(
+                    "بيانات غير صالحة: " + string.Join(" | ", badFormat), 400);
+
             // اللي بيراجع مرحلة الإسكان لما يرفع الملف بنفسه → موافقة الإسكان تلقائيًا
             var isHousingCreator = UnitOfWork.HasPermission("requests.reviewHousing");
-            // الدور بيتخزّن في الطلب كبيانات (مين قدّمه) — مش فحص صلاحية
+            // الدور بيتخزّن في الطلب كبيانات (مين قدّمه) - مش فحص صلاحية
             var role = UnitOfWork.GetCurrentUserRole()?.ToLower();
 
             using var transaction = await UnitOfWork.BeginTransactionAsync();
@@ -321,7 +390,7 @@ namespace NUH_PORTAL.Services
                     throw new UserFriendlyException($"بيانات مكررة في نفس الملف: {string.Join(", ", dupInBatch)}", 409);
 
                 // ⚠️ التحقق (validate) والإنشاء (create) نداءين HTTP منفصلين،
-                //    والعميل هو اللي بيبعت القائمة تاني في التاني — يعني اللي
+                //    والعميل هو اللي بيبعت القائمة تاني في التاني - يعني اللي
                 //    فحصناه في الأول مش بالضرورة اللي وصل هنا. فالفحص ده مش
                 //    تكرار للتحقق، ده الحارس الحقيقي؛ والتحقق شغلته إنه يوري
                 //    الموظف الغلط قبل ما يضغط حفظ.
@@ -427,7 +496,7 @@ namespace NUH_PORTAL.Services
                 await _requests.AddRangeAsync(requests);
                 await UnitOfWork.SaveAsync();
 
-                // إشعارات + سجلات audit (دفعة واحدة وحفظة واحدة — مش حفظة لكل سجل)
+                // إشعارات + سجلات audit (دفعة واحدة وحفظة واحدة - مش حفظة لكل سجل)
                 var ctx = _http.HttpContext;
                 var ip = ctx?.Connection.RemoteIpAddress?.ToString();
                 var ua = ctx?.Request.Headers["User-Agent"].ToString();

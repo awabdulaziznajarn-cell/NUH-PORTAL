@@ -11,13 +11,13 @@ using System.Security.Claims;
 
 namespace NUH_PORTAL.Controllers
 {
-    // دخول/خروج المنصة — بيستخدم نفس IAuthService بتاع الـ API (نفس فلو AD ثم fallback بالحرف).
+    // دخول/خروج المنصة - بيستخدم نفس IAuthService بتاع الـ API (نفس فلو AD ثم fallback بالحرف).
     // بعد النجاح: كوكي لصفحات الـ MVC + توكن JWT بنفس مفاتيح التخزين القديمة عشان الصفحات الحالية
-    // تشتغل بنفس الجلسة — دخول واحد للعالمين القديم والجديد طول فترة التحويل.
+    // تشتغل بنفس الجلسة - دخول واحد للعالمين القديم والجديد طول فترة التحويل.
     [Route("Account")]
     public class AccountController : Controller
     {
-        // بعد ما لوحة التحكم بقت MVC — الدخول بيودّي على /Home (الصفحة القديمة dashboard.html لسه شغالة لحد ما نخلص التحويل)
+        // بعد ما لوحة التحكم بقت MVC - الدخول بيودّي على /Home (الصفحة القديمة dashboard.html لسه شغالة لحد ما نخلص التحويل)
         private const string DefaultRedirect = "/Home";
 
         private readonly IAuthService _auth;
@@ -34,24 +34,24 @@ namespace NUH_PORTAL.Controllers
         }
 
         // ====================================================================
-        //  ⚠️ returnUrl جاي من الرابط — يعني من أي حد، مش من النظام.
+        //  ⚠️ returnUrl جاي من الرابط - يعني من أي حد، مش من النظام.
         //     من غير الفحص ده الرابط ده يشتغل:
         //
         //        https://housing.nuh.edu.sa/Account/Login?returnUrl=https://<موقع-غريب>
         //
         //     الضحية بتشوف دومين الجامعة الحقيقي وصفحة الدخول الحقيقية، وبتدخل
-        //     ببياناتها صح — وبعد نجاح الدخول النظام بنفسه بيرمي متصفحها على
+        //     ببياناتها صح - وبعد نجاح الدخول النظام بنفسه بيرمي متصفحها على
         //     الموقع الغريب (صفحة دخول مقلّدة في العادة، بتقول «الجلسة انتهت،
         //     ادخل تاني»). مفيش أي علامة تخلّيها تشك: الرابط اللي وصلها كان
         //     دومينّا فعلًا.
         //
         //     وكان الفرق بين المسارين إن GET بيستخدم LocalRedirect (بتتحقّق
         //     وترمي استثناء)، وPOST بيحطّ الرابط في BridgeJson وصفحة LoginBridge
-        //     بتنفّذه بـ location.replace بلا أي فحص — فالثغرة كانت في المسار
+        //     بتنفّذه بـ location.replace بلا أي فحص - فالثغرة كانت في المسار
         //     اللي بيحصل بعد إدخال كلمة السر بالظبط.
         //
         //     Url.IsLocalUrl بترفض أي رابط مطلق أو بروتوكول أو //host وبتقبل
-        //     المسارات الداخلية بس — نفس القاعدة المستعملة في CultureController.
+        //     المسارات الداخلية بس - نفس القاعدة المستعملة في CultureController.
         //     ومكتوبة هنا مرة واحدة عشان المسارين ما يفترقوش تاني.
         //
         //  ⚠️ والفحص التاني: الرابط الداخلي مش بالضرورة صفحة يرجع لها المستخدم.
@@ -94,9 +94,25 @@ namespace NUH_PORTAL.Controllers
         // GET /Account/Login
         [AllowAnonymous]
         [HttpGet("Login")]
-        public async Task<IActionResult> Login(string? returnUrl = null)
+        public async Task<IActionResult> Login(string? returnUrl = null, bool expired = false)
         {
             var existing = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+            // ⚠️ expired=1 معناها إن المتصفح أنهى الجلسة للخمول وحوّل هنا.
+            //    لو الكوكي لسه صالح لأي سبب (طلب الخروج اتقطع، أو تبويب تاني
+            //    جدّد الكوكي في نفس اللحظة) فالسطر اللي تحت كان هيرجّع المستخدم
+            //    على /Home مسجّل دخول - وده بالظبط شكل «العدّاد خلص وما حصلش حاجة».
+            //    فبننهي الجلسة هنا كمان، والقفلة بتبقى مقفولة من الناحيتين.
+            if (expired)
+            {
+                if (existing.Succeeded)
+                    await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+                ViewData["Expired"] = true;
+                ViewData["ReturnUrl"] = DefaultRedirect;
+                return View();
+            }
+
             if (existing.Succeeded)
                 return LocalRedirect(SafeReturnUrl(returnUrl));
 
@@ -118,7 +134,7 @@ namespace NUH_PORTAL.Controllers
         //  هنا بنوقف اللوب ونعرض السبب الحقيقي: الدور وعدد صلاحياته.
         //  ⚠️ Policy = "signedIn" لا [Authorize] مجرّد: السياسة الافتراضية بقت
         //     بتطلب علامة «الحساب نشط»، والموظف الموقوف مالوش. ولو الصفحة دي
-        //     رفضته، الرفض بيحوّله عليها هي نفسها — نفس اللوب المشروح فوق
+        //     رفضته، الرفض بيحوّله عليها هي نفسها - نفس اللوب المشروح فوق
         //     بالظبط، بس بسبب تاني.
         [Authorize(Policy = "signedIn")]
         [HttpGet("Denied")]
@@ -144,6 +160,14 @@ namespace NUH_PORTAL.Controllers
             {
                 var user = await _auth.AuthenticateAsync(username, password);
 
+                // ⚠️ جلسة جديدة تبدأ بصفحة بيضا. ختم آخر نشاط مفتاحه رقم المستخدم
+                //    لا الجلسة، فبيفضل موجود بعد ما الجلسة القديمة تنتهي بالخمول.
+                //    من غير السطر ده أول نداء API بعد الدخول بيلاقي ختمًا عمره أكتر
+                //    من مهلة الخمول فيقفل الجلسة الجديدة فورًا - «دخلت وطلعني على
+                //    طول، وتاني مرة دخلت عادي» (تاني مرة بتشتغل لأن الميدلوير مسح
+                //    الختم وهو بيقفل الأولى).
+                _auth.ResetActivity(user.Id);
+
                 var roles = await _userManager.GetRolesAsync(user);
                 if (roles.Count == 0) roles = new List<string> { "user" };
                 var perms = await _permissions.GetPermissionsForRolesAsync(roles);
@@ -166,7 +190,7 @@ namespace NUH_PORTAL.Controllers
                     // IsPersistent = false ← كوكي جلسة: بتتمسح لما المتصفح يتقفل خالص.
                     // كانت true فالمستخدم كان بيرجع يلاقي نفسه داخل بآخر حساب دخل بيه،
                     // وde خطر على أي جهاز مشترك في مكتب الإسكان.
-                    // مدة الخمول نفسها متحددة في Program.cs (ExpireTimeSpan) — مابنحطّش
+                    // مدة الخمول نفسها متحددة في Program.cs (ExpireTimeSpan) - مابنحطّش
                     // ExpiresUtc هنا عشان ما نعملش مدتين مختلفتين تتعارضوا.
                     new AuthenticationProperties
                     {
@@ -224,7 +248,7 @@ namespace NUH_PORTAL.Controllers
         [Authorize(Policy = "signedIn", AuthenticationSchemes = CookieAuthenticationDefaults.AuthenticationScheme)]
         public async Task<IActionResult> Logout()
         {
-            // اخرج (امسح كوكي الجلسة) الأول — ده الأهم. سجل الإجراء best-effort:
+            // اخرج (امسح كوكي الجلسة) الأول - ده الأهم. سجل الإجراء best-effort:
             // أي بطء/تايم-أوت في الداتابيز مايمنعش الخروج نفسه.
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             try { await _auth.LogoutAsync(); } catch { /* سجل الخروج مش لازم يوقف الخروج */ }

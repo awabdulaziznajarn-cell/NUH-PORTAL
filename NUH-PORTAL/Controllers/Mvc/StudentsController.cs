@@ -15,8 +15,13 @@ namespace NUH_PORTAL.Controllers.Mvc
     public class StudentsController : Controller
     {
         private readonly IStudentService _students;
+        private readonly NUH_PORTAL.Data.Interfaces.IUnitOfWork _uow;
 
-        public StudentsController(IStudentService students) => _students = students;
+        public StudentsController(IStudentService students, NUH_PORTAL.Data.Interfaces.IUnitOfWork uow)
+        {
+            _students = students;
+            _uow = uow;
+        }
 
         // GET /Students
         [HttpGet("")]
@@ -25,7 +30,8 @@ namespace NUH_PORTAL.Controllers.Mvc
             var vm = new StudentsIndexViewModel
             {
                 Stats = await _students.GetStatsAsync(),
-                Page = await _students.GetPagedAsync(new QueryParams { Page = 1, PageSize = 20 }, showDeleted: false, adStatus: null)
+                Page = await _students.GetPagedAsync(new QueryParams { Page = 1, PageSize = 20 }, showDeleted: false, adStatus: null),
+                Scope = _uow.GetGenderScope()
             };
             return View(vm);
         }

@@ -23,11 +23,91 @@
 
   var form = document.getElementById('sfForm');
   var input = document.getElementById('sfQuery');
+  var inputBox = document.getElementById('sfInput');
+  var detect = document.getElementById('sfDetect');
   var btn = document.getElementById('sfBtn');
   var alertBox = document.getElementById('sfAlert');
   var result = document.getElementById('sfResult');
 
   var FILE = null;   // آخر ملف اتحمّل
+
+  // ==========================================================================
+  //  تمييز نوع المدخل: رقم جامعي / رقم هوية / رمز تحقّق.
+  //
+  //  ⚠️ الصيغ التلاتة مالهاش أي تداخل، فالموظف مابيختارش نوعًا قبل البحث:
+  //     الرمز وحده هو اللي فيه حروف، والرقم الجامعي ٩ أرقام تبدأ بـ ٤،
+  //     والهوية ١٠ أرقام. والقواعد كلها متولّدة من الخادم (NuhId من
+  //     Core/IdentityRules، وNuhPledge من Core/PledgeRules) - مفيش قاعدة
+  //     مكتوبة هنا تقدر تفارق اللي الخادم بيفحص بيه.
+  //
+  //  ⚠️ والسقف مقصود: من غيره الموظف بيكتب أرقامًا بلا نهاية ويستنى ردًّا
+  //     مرفوضًا. ١٠ أرقام بتغطّي الهوية والرقم الجامعي، والرمز ١٢ خانة.
+  // ==========================================================================
+  var MAX_DIGITS = 10;
+
+  function kindOf(v) {
+    var raw = String(v || '').trim();
+    if (!raw) return { kind: '' };
+
+    if (NuhPledge.looksLikeCode(raw)) {
+      return { kind: 'code', ready: NuhPledge.codeComplete(raw) };
+    }
+    var d = raw.replace(/\D/g, '');
+    if (NuhId.isStudentId(d)) return { kind: 'sid', ready: true };
+    if (NuhId.isNationalId(d)) return { kind: 'nid', ready: true };
+    return { kind: 'partial', digits: d.length };
+  }
+
+  // ⚠️ القناع بيكتب في الحقل وهو بيكتب: حروف كبيرة وشرطات كل أربعة للرمز،
+  //    وأرقام بس بسقف للباقي. الشرطات بتزيد طول النصّ، فموضع المؤشّر بيتحسب
+  //    بعدد الخانات المحفوظة قبله لا بموضعه الخام - من غير كده بيقفز خانة
+  //    كل ما شرطة تتزاد والكتابة بتبقى غير محتملة.
+  function mask() {
+    var before = input.value.slice(0, input.selectionStart || 0);
+    var raw = input.value;
+    var out, kept, pos;
+
+    if (NuhPledge.looksLikeCode(raw)) {
+      kept = NuhPledge.codeNormalize(before).length;
+      out = NuhPledge.codeFormat(raw);
+      pos = kept + Math.max(0, Math.floor((kept - 1) / NuhPledge.CODE.GROUP));
+      if (out !== raw) { input.value = out; try { input.setSelectionRange(pos, pos); } catch (e) { } }
+      return;
+    }
+
+    out = raw.replace(/\D/g, '').slice(0, MAX_DIGITS);
+    if (out !== raw) {
+      kept = Math.min(before.replace(/\D/g, '').length, MAX_DIGITS);
+      input.value = out;
+      try { input.setSelectionRange(kept, kept); } catch (e) { }
+    }
+  }
+
+  var KIND_TEXT = {
+    sid:  ['sid',  ['sf_kindStudentId',  'رقم جامعي', 'Student ID'],
+                   ['sf_kindOpensFile',  'يفتح ملف الطالب', 'Opens the student file']],
+    nid:  ['nid',  ['sf_kindNationalId', 'رقم هوية', 'National ID'],
+                   ['sf_kindOpensFile',  'يفتح ملف الطالب', 'Opens the student file']],
+    code: ['code', ['sf_kindDocCode',    'رمز تحقّق', 'Verification code'],
+                   ['sf_kindVerifies',   'يتحقّق من الوثيقة ثم يفتح ملفها', 'Verifies the document, then opens its file']]
+  };
+
+  function paintDetect() {
+    var r = kindOf(input.value);
+    inputBox.classList.toggle('is-code', r.kind === 'code');
+    inputBox.classList.toggle('is-num', r.kind === 'sid' || r.kind === 'nid' || r.kind === 'partial');
+
+    var t = KIND_TEXT[r.kind];
+    if (!t) { detect.innerHTML = ''; return; }
+
+    detect.innerHTML =
+      '<span class="sf-chip ' + t[0] + '">' +
+        '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>' +
+        tf(t[1][0], t[1][1], t[1][2]) + '</span>' +
+      '<span class="say">' + tf(t[2][0], t[2][1], t[2][2]) + '</span>' +
+      (r.ready ? '' : '<span class="say">' +
+        tf('sf_kindIncomplete', '(غير مكتمل)', '(incomplete)') + '</span>');
+  }
 
   function showAlert(msg, type) {
     if (!msg) { alertBox.className = 'alert'; alertBox.textContent = ''; return; }
@@ -80,6 +160,22 @@
   }
 
   // ---------------------------------------------------------------- الرسم
+  // ⚠️ بيظهر بس لمّا يكون الوصول للملف بـ**رمز**: الملف واحد في الحالتين،
+  //    واللي بيفرق إن الرمز بيجاوب سؤالًا زيادة - «الورقة اللي في إيدي صادرة
+  //    عن النظام؟». في البحث بالرقم مفيش سؤال كده، فمفيش شريط.
+  function verifiedBar(v) {
+    if (!v) return '';
+    return '<div class="sf-verified">' +
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>' +
+      '<span>' + tf('sf_verifiedTitle', 'وثيقة صادرة عن النظام', 'Document issued by the system') +
+        '<span class="sub">' +
+          tf('sf_verifiedCode', 'الرمز', 'Code') + ' ' + escHtml(v.code || '') + ' · ' +
+          tf('sf_verifiedReq', 'الطلب', 'Request') + ' ' + escNum(v.requestNumber) + ' · ' +
+          tf('sf_verifiedSigned', 'وُقّع', 'Signed') + ' ' + NuhFmt.dateTime(v.acceptedAt) + ' · ' +
+          tf('sf_verifiedVersion', 'نسخة البنود', 'Terms version') + ' ' + escHtml(v.policyVersion || '-') +
+        '</span></span></div>';
+  }
+
   function render(file) {
     FILE = file;
     var s = file.student || {};
@@ -89,6 +185,7 @@
       : '';
 
     var head =
+      verifiedBar(file.verified) +
       '<div class="sf-audit">' +
         '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>' +
         '<span>' + tf('sf_auditNote',
@@ -101,7 +198,7 @@
         '<div class="sf-id">' +
           '<h3>' + dash(s.full_name) + deletedTag + '</h3>' +
           '<p>' + tf('rdp_field_studentId', 'الرقم الجامعي', 'Student ID') + ' ' + dash(s.student_id) +
-            ' &nbsp;·&nbsp; ' + tf('rdp_field_nationalId', 'رقم الهوية', 'National ID') + ' ' + dash(s.national_id) + '</p>' +
+            ' &nbsp;·&nbsp; ' + tf('rdp_field_nationalId', 'الهوية الوطنية / الإقامة', 'National ID / Iqama') + ' ' + dash(s.national_id) + '</p>' +
         '</div>' +
         '<div class="sf-actions">' +
           (file.pledge && file.pledge.documented
@@ -127,7 +224,7 @@
       return '<button type="button" class="sf-req' + (on ? ' is-on' : '') + '" data-req="' + r.id + '">' +
         '<span class="n"><span class="sf-reqlbl">' +
           tf('rdp_field_requestNumber', 'رقم الطلب', 'Request No.') + '</span> ' +
-          dash(r.requestNumber) + '</span>' +
+          escNum(r.requestNumber) + '</span>' +
         '<span class="d">' + escHtml(requestTypeName(r.requestType)) + ' · ' + NuhFmt.date(r.submittedAt) + '</span>' +
         '<span class="s">' +
           (r.hasPledge ? '' : '<span class="sf-nopledge">' + tf('sf_noPledgeShort', 'بلا تعهّد', 'No pledge') + '</span>') +
@@ -153,11 +250,29 @@
       '</div></div><div class="card-body"><div class="info-grid">' +
       field(tf('rdp_field_nameAr', 'الاسم بالعربية', 'Name (Arabic)'), dash(s.full_name)) +
       field(tf('rdp_field_nameEn', 'الاسم بالإنجليزية', 'Name (English)'), dash(s.full_name_english)) +
-      field(tf('rdp_field_nationalId', 'رقم الهوية', 'National ID'), dash(s.national_id), true) +
+      field(tf('rdp_field_nationalId', 'الهوية الوطنية / الإقامة', 'National ID / Iqama'), dash(s.national_id), true) +
       field(tf('rdp_field_mobile', 'الجوال', 'Mobile'), dash(s.phone), true) +
       '</div></div></div>';
 
+    // ⚠️ نصوص الورقة المطبوعة من Resources/SharedResource بمفاتيح doc_* -
+    //    والقيمة عربية في ملفّي الترجمة الاتنين، لأن الوثيقة عربية دايمًا.
+    //    الشرح الكامل في js/pledge-doc.js عند tdoc().
+    function tdoc(key, fallback) {
+      try { var v = t(key); if (v && v !== key) return v; } catch (e) { }
+      return fallback;
+    }
+
     // ---------- الأكاديمية والسكن ----------
+    // ⚠️ نوع السكن مشتقّ من جنس الطالب لا حقل مستقلّ في قاعدة البيانات:
+    //    الإسكان مفصول بالجنس أصلًا (Core/GenderScope)، فحقل تاني للنوع
+    //    معناه معلومة واحدة في مكانين ممكن يفترقوا. ودي نفس الدالة اللي
+    //    بتقرا منها الشاشة والورقة المطبوعة - مكان واحد.
+    function housingTypeLabel() {
+      return ((s.gender || '') + '').toLowerCase() === 'female'
+        ? tf('sf_housingFemale', 'سكن الطالبات', "Women's housing")
+        : tf('sf_housingMale', 'سكن الطلاب', "Men's housing");
+    }
+
     var housing = [];
     if (s.housing_building) housing.push(escHtml(buildingName(s.housing_building)));
     if (s.apartment_number) housing.push(tf('loc_apartment', 'شقة', 'Apt') + ' ' + escHtml(s.apartment_number));
@@ -171,6 +286,7 @@
       field(tf('rdp_field_college', 'الكلية', 'College'), escHtml(collegeName(s.college))) +
       field(tf('rdp_field_department', 'القسم', 'Department'), escHtml(deptName(s.department))) +
       field(tf('rdp_field_level', 'المستوى', 'Level'), escHtml(levelName(s.academic_level))) +
+      field(tf('sf_housingType', 'نوع السكن', 'Housing type'), housingTypeLabel()) +
       field(tf('rdp_field_housing', 'السكن', 'Housing'), housing.length ? housing.join(' · ') : '-') +
       '</div></div></div>';
 
@@ -205,11 +321,15 @@
 
     // ---------- التعهّد ----------
     // ⚠️ نفس البطاقة والورقة المطبوعة بتاعة شاشة تفاصيل الطلب بالحرف.
+    // ⚠️ full: true - دي شاشة التحقيق، فهي وحدها اللي بتعرض بصمة البنود
+    //    والنسخة وعدد البنود وعنوان الجهاز. شاشة الطلب بتعرض الرمز بس،
+    //    عشان القيمة الواحدة تفضل معروضة في مكان واحد (الشرح في
+    //    js/pledge-doc.js عند تعريف card).
     var pledgeCard = NuhPledgeDoc.card({
       requestNumber: file.selectedRequestNumber,
       student: s,
       pledge: file.pledge
-    });
+    }, { full: true });
 
     // ⚠️ ورقة الملف الكامل: نفس ورقة التعهّد بأقسام بيانات قبلها. مخفية على
     //    الشاشة (‎.pl-sheet‎) وبتظهر وقت الطباعة بس - الشاشة ليها بطاقاتها فوق.
@@ -221,40 +341,58 @@
       file.pledge,
       {
         id: 'studentFileSheet',
-        title: 'ملف الطالب',
+        title: tdoc('doc_title_studentFile', 'ملف الطالب'),
+        // ⚠️ أربعة أقسام لا تلاتة، وبتترسم في عمودين (pl-sh-grid):
+        //    الشخصية جنب الأكاديمية، والإسكان جنب حساب الشبكة. القسمين
+        //    الأولانيين أربع خانات لكل واحد والتانيين تلاتة، فالصفّين
+        //    متساويين والورقة بتدخل في ورقة واحدة بدل ورقتين.
+        //
+        //    ⚠️ والعناوين هنا عربية مكتوبة مش من ملفات الترجمة: الورقة
+        //       المطبوعة عربية دايمًا مهما كانت لغة الواجهة (الشرح في
+        //       js/pledge-doc.js). الشاشة فوق هي اللي بتترجم.
         sections: [
           {
-            title: 'البيانات الشخصية',
+            title: tdoc('doc_secPersonal', 'البيانات الشخصية'),
             rows: [
-              { k: 'الاسم بالعربية', v: dash(s.full_name) },
-              { k: 'الاسم بالإنجليزية', v: dash(s.full_name_english) },
-              { k: 'الرقم الجامعي', v: dash(s.student_id) },
-              { k: 'رقم الهوية', v: dash(s.national_id) },
-              { k: 'الجوال', v: dash(s.phone) }
+              { k: tdoc('doc_fNameAr', 'الاسم بالعربية'), v: dash(s.full_name) },
+              // ⚠️ wide: الاسم بالإنجليزية أطول قيمة في الورقة، ومن غيرها
+              //    بيلفّ على سطرين جوّه عمود ضيّق.
+              { k: tdoc('doc_fNameEn', 'الاسم بالإنجليزية'), v: dash(s.full_name_english), wide: true },
+              { k: tdoc('doc_fNationalId', 'الهوية الوطنية / الإقامة'), v: dash(s.national_id) },
+              { k: tdoc('doc_fMobile', 'الجوال'), v: dash(s.phone) }
             ]
           },
           {
-            title: 'البيانات الأكاديمية والإسكان',
+            title: tdoc('doc_secAcademic', 'البيانات الأكاديمية'),
             rows: [
-              { k: 'الكلية', v: escHtml(collegeName(s.college)) },
-              { k: 'القسم', v: escHtml(deptName(s.department)) },
-              { k: 'المستوى', v: escHtml(levelName(s.academic_level)) },
-              { k: 'السكن', v: housing.length ? housing.join(' · ') : '-' }
+              // ⚠️ الرقم الجامعي مكانه هنا لا في البيانات الشخصية: هو رقم
+              //    **قيد أكاديمي** تصدره الجامعة، مش هوية شخصية.
+              { k: tdoc('doc_fStudentId', 'الرقم الجامعي'), v: dash(s.student_id) },
+              { k: tdoc('doc_fCollege', 'الكلية'), v: escHtml(collegeName(s.college)) },
+              { k: tdoc('doc_fDept', 'القسم'), v: escHtml(deptName(s.department)) },
+              { k: tdoc('doc_fLevel', 'المستوى'), v: escHtml(levelName(s.academic_level)) }
             ]
           },
           {
-            title: 'حساب الشبكة',
+            title: tdoc('doc_secHousing', 'الإسكان الجامعي'),
+            rows: [
+              { k: tdoc('doc_fHousingType', 'نوع السكن'), v: housingTypeLabel() },
+              { k: tdoc('doc_fHousing', 'السكن'), v: housing.length ? housing.join(' · ') : '-' }
+            ]
+          },
+          {
+            title: tdoc('doc_secAd', 'حساب شبكة الإسكان'),
             rows: ad ? [
-              { k: 'اسم المستخدم', v: dash(ad.username) },
-              file.adUnavailable ? null : { k: 'حالة الحساب',
+              { k: tdoc('doc_fAdUser', 'اسم المستخدم'), v: dash(ad.username) },
+              file.adUnavailable ? null : { k: tdoc('doc_fAdState', 'حالة الحساب'),
                 v: ad.enabled ? 'مفعّل' : 'معطّل' },
-              { k: 'آخر دخول للشبكة',
+              { k: tdoc('doc_fAdLast', 'آخر دخول للشبكة'),
                 v: file.adUnavailable
                      ? 'تعذّر الوصول للـAD'
                      : (ad.lastLogonAt ? NuhFmt.dateTime(ad.lastLogonAt)
                                        : 'لم يسجّل دخولًا') }
-            ] : [ { k: 'حساب الشبكة',
-                    v: 'لا يوجد حساب شبكة مرتبط بهذا الطالب' } ]
+            ] : [ { k: tdoc('doc_secAd', 'حساب شبكة الإسكان'),
+                    v: tdoc('doc_noAd', 'لا يوجد حساب شبكة مرتبط بهذا الطالب') } ]
           }
         ]
       });
@@ -337,7 +475,11 @@
     q = q.trim();
     if (!q) return;
     input.value = q;
-    if (!(NuhId.isStudentId(q) || NuhId.isNationalId(q))) { syncUrl('', null); return; }
+    mask(); paintDetect();
+    // ⚠️ الرمز مقبول هنا زي الرقم: صفحة /Verify بتحوّل الموظف المسجّل على
+    //    الشاشة دي والرمز في الرابط، فلو رفضناه كان هيقف على شاشة فاضية.
+    var k = kindOf(q);
+    if (k.kind === 'partial' || !k.ready) { syncUrl('', null); return; }
     var rid = 0;
     try { rid = parseInt(new URL(window.location.href).searchParams.get('requestId') || '0', 10) || 0; } catch (e) { rid = 0; }
     load(q, rid || null);
@@ -347,21 +489,27 @@
     e.preventDefault();
     var q = input.value.trim();
 
-    // ⚠️ الفحص بنفس قاعدة الخادم بالحرف (NuhId متولّدة من Core/IdentityRules):
-    //    الشاشة بتوفّر على الموظف نداء هيترفض، والخادم هو اللي بيرفض فعلًا.
-    var ok = NuhId.isStudentId(q) || NuhId.isNationalId(q);
-    input.classList.toggle('error', !ok);
+    // ⚠️ الفحص بنفس قواعد الخادم بالحرف (NuhId من Core/IdentityRules،
+    //    وNuhPledge من Core/PledgeRules): الشاشة بتوفّر على الموظف نداء
+    //    هيترفض، والخادم هو اللي بيرفض فعلًا.
+    var k = kindOf(q);
+    var ok = k.ready === true;
+    inputBox.classList.toggle('error', !ok);
     if (!ok) {
       showAlert(tf('sf_badQuery',
-        'اكتب رقمًا جامعيًا (٩ أرقام تبدأ بـ ٤) أو رقم هوية (١٠ أرقام).',
-        'Enter a student ID (9 digits starting with 4) or a national ID (10 digits).'));
+        'اكتب رقمًا جامعيًا (٩ أرقام تبدأ بـ ٤) أو رقم هوية (١٠ أرقام) أو رمز التحقّق المطبوع على الوثيقة.',
+        'Enter a student ID (9 digits starting with 4), a national ID (10 digits), or the verification code printed on the document.'));
       return;
     }
     load(q, null);
   });
 
   input.addEventListener('input', function () {
-    input.classList.remove('error');
+    inputBox.classList.remove('error');
     showAlert('');
+    mask();
+    paintDetect();
   });
+  input.addEventListener('paste', function () { setTimeout(function () { mask(); paintDetect(); }, 0); });
+  paintDetect();
 })();

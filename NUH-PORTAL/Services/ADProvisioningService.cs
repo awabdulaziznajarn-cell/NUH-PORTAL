@@ -14,7 +14,7 @@ namespace NUH_PORTAL.Services
         private readonly AppDbContext _db;
         private readonly ILogger<ADProvisioningService> _logger;
         private readonly ActiveDirectoryConfig _adConfig;
-        // أماكن الحسابات في الدليل — التعريف الوحيد في Services/AdDirectoryLayout.cs
+        // أماكن الحسابات في الدليل - التعريف الوحيد في Services/AdDirectoryLayout.cs
         private readonly AdDirectoryLayout _layout;
 
         public ADProvisioningService(ActiveDirectoryService adService, AppDbContext db, ILogger<ADProvisioningService> logger, IOptions<ActiveDirectoryConfig> adConfig, AdDirectoryLayout layout)
@@ -32,15 +32,16 @@ namespace NUH_PORTAL.Services
 
             var samAccountName = "h" + student.student_id;
             var upn = $"{samAccountName}@{_adConfig.Domain}";
-            var password = Convert.ToBase64String(RandomNumberGenerator.GetBytes(16)) + "!x1";
+            // نفس مولّد أداة التشخيص بالحرف - Services/AdDirectoryLayout.cs
+            var password = AdDirectoryLayout.NewTempPassword();
 
             // ================================================================
-            //  الحساب موجود في الدليل — نتبنّاه، لا نفشل.
+            //  الحساب موجود في الدليل - نتبنّاه، لا نفشل.
             //
             //  ⚠️ كان بيرجّع فشل هنا، والنتيجة إن أي تعثّر *بعد* إنشاء الحساب
             //     (حفظ قاعدة البيانات، انقطاع، خطأ ٥٠٠) بيقفل الطلب للأبد:
             //     الحساب اتعمل في الدومين فعلًا، والطلب فضل غير مكتمل، وإعادة
-            //     المحاولة بتصطدم بـ«موجود مسبقًا» فما بتكملش أبدًا — إلا لو
+            //     المحاولة بتصطدم بـ«موجود مسبقًا» فما بتكملش أبدًا - إلا لو
             //     حد دخل على الأكتف دايركتوري وحذف الحساب بإيده.
             //
             //  ⚠️ إنشاء الحساب أثر خارجي مالوش تراجع، ومعاملة قاعدة البيانات
@@ -145,7 +146,7 @@ namespace NUH_PORTAL.Services
         //
         //  ⚠️ فحص الهوية أولًا: اسم الحساب مشتقّ من الرقم الجامعي (h{الرقم})،
         //     فالمفروض يكون حساب نفس الطالب. لكن لو employeeID في الدليل رقم
-        //     هوية مختلف، ده حساب إنسان تاني — ساعتها بنفشل بصوت عالٍ بدل ما
+        //     هوية مختلف، ده حساب إنسان تاني - ساعتها بنفشل بصوت عالٍ بدل ما
         //     نربط طالب بحساب مش بتاعه.
         // ====================================================================
         private async Task<ADProvisioningResult> AdoptExistingAccountAsync(
@@ -174,7 +175,7 @@ namespace NUH_PORTAL.Services
 
             var targetGroup = await GetGroupForStudentAsync(student);
 
-            // الخطوات الناقصة بس — كل واحدة بتتفحص قبل ما تتنفّذ.
+            // الخطوات الناقصة بس - كل واحدة بتتفحص قبل ما تتنفّذ.
             if (!existing.AccountEnabled)
             {
                 var uac = await _adService.ModifyUserAccountControlAsync(userDn, 512);
@@ -186,7 +187,7 @@ namespace NUH_PORTAL.Services
                 }
             }
 
-            // ⚠️ من غير مقارنة نصية على الـ DN: جرّبناها وطلعت غلط — العضوية كانت
+            // ⚠️ من غير مقارنة نصية على الـ DN: جرّبناها وطلعت غلط - العضوية كانت
             //    موجودة والمقارنة قالت لأ (المسار المحسوب اختلف نصًّا عن اللي
             //    راجع من الدليل). AddUserToGroupAsync بقت «تأكّد إنه في المجموعة»
             //    وبتعتبر «موجود مسبقًا» نجاحًا، فالنداء آمن في كل الأحوال.
@@ -210,7 +211,7 @@ namespace NUH_PORTAL.Services
             return result;
         }
 
-        // تسجيل نجاح التزويد في قاعدة البيانات — مسار واحد للإنشاء وللتبنّي،
+        // تسجيل نجاح التزويد في قاعدة البيانات - مسار واحد للإنشاء وللتبنّي،
         // وإلا اتفارق السجلّان (حالة الطالب أو سطر السجل) عند أول تعديل.
         private async Task MarkProvisionedAsync(Student student, int actorId, string samAccountName,
             string? ipAddress, string? userAgent, string auditAction, string lifecycleNote)
@@ -403,7 +404,7 @@ namespace NUH_PORTAL.Services
             if (parts.Length == 1) return (parts[0], null, parts[0]);
             if (parts.Length == 2) return (parts[0], null, parts[1]);
 
-            // حرف واحد فقط — أول حرف من اسم الأب (الاسم اللي بعد الأول مباشرة).
+            // حرف واحد فقط - أول حرف من اسم الأب (الاسم اللي بعد الأول مباشرة).
             // كان بياخد أول حرف من *كل* الأسماء الوسطى، فاسم زي
             // "MAHMOUD MOHAMED AHMED RASHED" كان بيطلع initials = "MA".
             var middle = char.ToUpperInvariant(parts[1][0]).ToString();
@@ -438,24 +439,24 @@ namespace NUH_PORTAL.Services
         //  مزامنة حسابات الشبكة الموجودة أصلاً
         // ---------------------------------------------------------------------
         //  طلاب الجامعة عندهم حسابات في الأكتف دايركتوري من قبل النظام ده. فلما
-        //  نرفع بياناتهم من إكسل، إحنا مش عايزين ننشئ حسابات جديدة — عايزين
+        //  نرفع بياناتهم من إكسل، إحنا مش عايزين ننشئ حسابات جديدة - عايزين
         //  **نربط** كل طالب بحسابه القائم، عشان إجراءات زي «تخرّج» أو «فصل» تقدر
         //  تعطّل الحساب الصح.
         //
         //  الربط بيتم بصيغة h + الرقم الجامعي، وde المعيار المتفق عليه في الجامعة.
         //  العملية **قراءة فقط** من ناحية الأكتف دايركتوري: مفيش إنشاء ولا تعديل
-        //  ولا تعطيل — بنسجّل بس اسم الحساب وحالته في قاعدة بيانات النظام.
+        //  ولا تعطيل - بنسجّل بس اسم الحساب وحالته في قاعدة بيانات النظام.
         //
         //  قابلة لإعادة التشغيل أي عدد مرات؛ بتحدّث الحالة للمربوطين وبتربط الجداد.
         // ============================================================================
-        //  مزامنة حسابات الشبكة مع الأكتف دايركتوري — قراءة من الدومين وكتابة عندنا بس.
+        //  مزامنة حسابات الشبكة مع الأكتف دايركتوري - قراءة من الدومين وكتابة عندنا بس.
         //  مفيش إنشاء ولا تعطيل ولا تعديل على أي حساب في الدومين هنا إطلاقًا.
         //
         //  وضعين منفصلين عن قصد:
-        //   • RefreshLinked: الطلاب المربوطين بالفعل — بنقرا حالتهم الحقيقية ونحدّثها.
+        //   • RefreshLinked: الطلاب المربوطين بالفعل - بنقرا حالتهم الحقيقية ونحدّثها.
         //     ده اللي بيحل مشكلة «فعّلت الحساب في الدومين والنظام لسه شايفه معطّل».
         //     مالوش أي خطر لأنه مابيربطش حد جديد.
-        //   • LinkNew: الطلاب اللي لسه مالهمش حساب مسجّل — بندوّر على h+الرقم الجامعي
+        //   • LinkNew: الطلاب اللي لسه مالهمش حساب مسجّل - بندوّر على h+الرقم الجامعي
         //     ونربط. ⚠️ ده اللي فيه الخطر: رقم جامعي غلط في الشيت = ربط الطالب بحساب
         //     شخص تاني، وأول «تخرّج» بعدها بيعطّل حساب الغلط. عشان كده فيه معاينة
         //     (dryRun) وفحص تشابه أسماء.
@@ -478,7 +479,7 @@ namespace NUH_PORTAL.Services
 
             foreach (var student in students)
             {
-                // في وضع التحديث بنستخدم اسم الحساب المسجّل فعلاً، مش المحسوب —
+                // في وضع التحديث بنستخدم اسم الحساب المسجّل فعلاً، مش المحسوب -
                 // ممكن يكون اتربط يدويًا باسم مختلف عن h+الرقم.
                 var sam = mode == AdSyncMode.RefreshLinked && !string.IsNullOrWhiteSpace(student.ad_username)
                     ? student.ad_username!
@@ -500,7 +501,7 @@ namespace NUH_PORTAL.Services
 
                 if (!lookup.Success)
                 {
-                    // «مش موجود» مختلف عن «الاستعلام فشل» — الأول بيانات، والتاني عطل.
+                    // «مش موجود» مختلف عن «الاستعلام فشل» - الأول بيانات، والتاني عطل.
                     // بنفرّق بينهم عشان المستخدم يعرف يعمل إيه.
                     if (lookup.Error != null && lookup.Error.Contains("not found", StringComparison.OrdinalIgnoreCase))
                     {
@@ -543,7 +544,7 @@ namespace NUH_PORTAL.Services
                     }
                 }
 
-                // فحص تشابه الاسم — في وضع الربط بس، لأن المربوط بالفعل اتراجع قبل كده
+                // فحص تشابه الاسم - في وضع الربط بس، لأن المربوط بالفعل اتراجع قبل كده
                 if (mode == AdSyncMode.LinkNew && !NamesLookRelated(student.full_name_english, student.full_name, lookup.DisplayName)
                     && result.NameMismatches.Count < 200)
                 {
@@ -560,7 +561,7 @@ namespace NUH_PORTAL.Services
                 {
                     // ⚠️ التحديث كان يكتب الحالة الجديدة بلا أي قيد في السجل، فتفعيل
                     //    أو تعطيل تمّ في الدليل مباشرة كان يختفي أثره: لوحة النتيجة
-                    //    تعرضه ثم تُغلق. والأسوأ أنه كان يمنع المسار الآخر من تسجيله —
+                    //    تعرضه ثم تُغلق. والأسوأ أنه كان يمنع المسار الآخر من تسجيله -
                     //    فحص «تفاصيل» يقارن المسجَّل بالفعلي، وبعد أن يكون التحديث
                     //    ساواهما لا يجد فرقًا. فبدل أن يوثّق التغيير كان يطمسه.
                     if (wasLinked)
@@ -612,7 +613,7 @@ namespace NUH_PORTAL.Services
         // ويخلّيها بلا فايدة. الهدف نمسك الغلط الواضح: "Ahmed Ali" مقابل "Sara Hassan".
         private static bool NamesLookRelated(string? systemNameEn, string? systemNameAr, string? directoryName)
         {
-            if (string.IsNullOrWhiteSpace(directoryName)) return true;   // مفيش اسم نقارن بيه — مانحذّرش
+            if (string.IsNullOrWhiteSpace(directoryName)) return true;   // مفيش اسم نقارن بيه - مانحذّرش
 
             var dirTokens = Tokenize(directoryName);
             if (dirTokens.Count == 0) return true;
@@ -643,11 +644,11 @@ namespace NUH_PORTAL.Services
         private Task<string> GetGroupForStudentAsync(Student student) => _layout.StudentGroupAsync(student.gender);
 
         // ====================================================================
-        //  مصالحة حالة الحساب مع الدليل — القاعدة الوحيدة في النظام.
+        //  مصالحة حالة الحساب مع الدليل - القاعدة الوحيدة في النظام.
         //
         //  ⚠️ كانت مكتوبة مرتين: مرة عند فتح «تفاصيل» الحساب في HousingAccountService،
         //     ومرة هنا في التحديث الجماعي. المقارنة نفسها والتحديث نفسه والصياغة
-        //     نفسها تقريبًا — «تقريبًا» هي المشكلة. أي تعديل لاحق (كلمة في النص،
+        //     نفسها تقريبًا - «تقريبًا» هي المشكلة. أي تعديل لاحق (كلمة في النص،
         //     حقل يُضاف، شرط يتغيّر) كان سيقع في نسخة ويُنسى في الأخرى، فيصير
         //     السجل نفسه بصيغتين حسب أي شاشة اكتشفت التغيير.
         //

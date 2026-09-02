@@ -145,6 +145,12 @@ var NuhDate = (function () {
 
     var panel = null;
     var view = null;                            // الشهر المعروض
+    // ⚠️ مستوى العرض: يوم / شهر / سنة. الوصول لشهر في ٢٠٢٣ كان بيتطلب أكتر
+    //    من ثلاثين ضغطة على السهم - شهرًا شهرًا. بثلاث مستويات بقى ثلاث
+    //    ضغطات: العنوان يفتح السنين، السنة تفتح الشهور، الشهر يرجّع الأيام.
+    //    ⚠️ وبيرجع لـ 'd' مع كل فتحة للتقويم: المستخدم اللي قفل وهو في
+    //       شبكة السنين مش عايز يلاقيها لما يفتح تاني.
+    var level = 'd';
 
     function label() {
       var d = parseIso(input.value);
@@ -180,8 +186,88 @@ var NuhDate = (function () {
       panel.style.left = Math.max(8, left) + 'px';
     }
 
+    // نطاق السنين المعروض: اثنتا عشرة سنة في الصفحة، والصفحة الحالية محسوبة
+    // من سنة العرض فالسنة اللي انت فيها بتبان دايمًا.
+    function yearPage(y) { return Math.floor(y / 12) * 12; }
+
+    // السنة والشهر الجاريان في وضع العرض الحالي (ميلادي أو هجري).
+    function curYM() {
+      if (mode() === 'hijri') {
+        var hv = hijriParts(view) || hijriParts(new Date());
+        return { y: view.__hy || hv.y, m: view.__hm || hv.m };
+      }
+      return { y: view.getFullYear(), m: view.getMonth() + 1 };
+    }
+
+    // ---------------- رسم شبكة السنين ----------------
+    function drawYears() {
+      var L = lang(), c = curYM(), start = yearPage(c.y), out = '';
+      for (var y = start; y < start + 12; y++) {
+        out += '<button type="button" class="ndate-my' + (y === c.y ? ' is-sel' : '') +
+               '" data-year="' + y + '">' + y + '</button>';
+      }
+      panel.innerHTML =
+        '<div class="ndate-nav">' +
+          '<button type="button" class="ndate-arrow" data-page="-12" aria-label="prev">' +
+            '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" ' +
+            'stroke-linecap="round" stroke-linejoin="round"><path d="M6 3l5 5-5 5"/></svg></button>' +
+          '<span class="ndate-title">' + start + ' - ' + (start + 11) + '</span>' +
+          '<button type="button" class="ndate-arrow" data-page="12" aria-label="next">' +
+            '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" ' +
+            'stroke-linecap="round" stroke-linejoin="round"><path d="M10 3L5 8l5 5"/></svg></button>' +
+        '</div>' +
+        '<div class="ndate-mygrid">' + out + '</div>' +
+        '<div class="ndate-foot">' +
+          '<button type="button" class="ndate-link" data-lvl="d">' +
+            tr('date_back', 'رجوع', 'Back') + '</button>' +
+          '<button type="button" class="ndate-link is-strong" data-act="today">' +
+            tr('date_today', 'اليوم', 'Today') + '</button>' +
+        '</div>';
+    }
+
+    // ---------------- رسم شبكة الشهور ----------------
+    function drawMonths() {
+      var L = lang(), hijri = mode() === 'hijri', c = curYM();
+      var names = hijri ? (L === 'en' ? EN_MONTHS_H : AR_MONTHS_H)
+                        : (L === 'en' ? EN_MONTHS_G : AR_MONTHS_G);
+      var out = '';
+      for (var m = 1; m <= 12; m++) {
+        out += '<button type="button" class="ndate-my' + (m === c.m ? ' is-sel' : '') +
+               '" data-month="' + m + '">' + escHtml(names[m - 1]) + '</button>';
+      }
+      panel.innerHTML =
+        '<div class="ndate-nav">' +
+          '<button type="button" class="ndate-arrow" data-year-step="-1" aria-label="prev">' +
+            '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" ' +
+            'stroke-linecap="round" stroke-linejoin="round"><path d="M6 3l5 5-5 5"/></svg></button>' +
+          '<button type="button" class="ndate-title is-btn" data-lvl="y">' + c.y + '</button>' +
+          '<button type="button" class="ndate-arrow" data-year-step="1" aria-label="next">' +
+            '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" ' +
+            'stroke-linecap="round" stroke-linejoin="round"><path d="M10 3L5 8l5 5"/></svg></button>' +
+        '</div>' +
+        '<div class="ndate-mygrid">' + out + '</div>' +
+        '<div class="ndate-foot">' +
+          '<button type="button" class="ndate-link" data-lvl="d">' +
+            tr('date_back', 'رجوع', 'Back') + '</button>' +
+          '<button type="button" class="ndate-link is-strong" data-act="today">' +
+            tr('date_today', 'اليوم', 'Today') + '</button>' +
+        '</div>';
+    }
+
+    // ينقل العرض إلى سنة/شهر محدَّدين في الوضع الحالي.
+    function goto(y, m) {
+      if (mode() === 'hijri') {
+        var g = hijriToGreg(y, m, 1);
+        if (g) { view = g; view.__hy = y; view.__hm = m; }
+      } else {
+        view = new Date(y, m - 1, 1);
+      }
+    }
+
     // ---------------- رسم الشبكة ----------------
     function draw() {
+      if (level === 'y') { drawYears(); return; }
+      if (level === 'm') { drawMonths(); return; }
       var L = lang();
       var hijri = mode() === 'hijri';
       var dow = L === 'en' ? EN_DOW : AR_DOW;
@@ -225,7 +311,7 @@ var NuhDate = (function () {
           '<button type="button" class="ndate-arrow" data-nav="-1" aria-label="prev">' +
             '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" ' +
             'stroke-linecap="round" stroke-linejoin="round"><path d="M6 3l5 5-5 5"/></svg></button>' +
-          '<span class="ndate-title">' + escHtml(head) + '</span>' +
+          '<button type="button" class="ndate-title is-btn" data-lvl="m">' + escHtml(head) + '</button>' +
           '<button type="button" class="ndate-arrow" data-nav="1" aria-label="next">' +
             '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" ' +
             'stroke-linecap="round" stroke-linejoin="round"><path d="M10 3L5 8l5 5"/></svg></button>' +
@@ -268,6 +354,7 @@ var NuhDate = (function () {
       //    بيفتح التقويم عشان يختار من جديد ويلاقي نفسه في يوليو، ولازم يرجّع
       //    شهر بشهر لحد أغسطس. النقطة المرجعية اللي في دماغه هي «النهاردة».
       //    واليوم المختار بيفضل مميّز (is-sel) فما بيضيعش لما يتنقّل.
+      level = 'd';
       var todayD = new Date();
       view = new Date(todayD.getFullYear(), todayD.getMonth(), 1);
       if (mode() === 'hijri') {
@@ -304,6 +391,36 @@ var NuhDate = (function () {
 
         var nv = e.target.closest('[data-nav]');
         if (nv) { nav(parseInt(nv.getAttribute('data-nav'), 10)); place(); return; }
+
+        // تنقّل بين المستويات: العنوان يطلع لفوق، و«رجوع» ينزل للأيام.
+        var lv = e.target.closest('[data-lvl]');
+        if (lv) { level = lv.getAttribute('data-lvl'); draw(); place(); return; }
+
+        var pg = e.target.closest('[data-page]');
+        if (pg) {
+          var cy = curYM();
+          goto(cy.y + parseInt(pg.getAttribute('data-page'), 10), cy.m);
+          draw(); place(); return;
+        }
+
+        var ys = e.target.closest('[data-year-step]');
+        if (ys) {
+          var cy2 = curYM();
+          goto(cy2.y + parseInt(ys.getAttribute('data-year-step'), 10), cy2.m);
+          draw(); place(); return;
+        }
+
+        var yr = e.target.closest('[data-year]');
+        if (yr) {
+          goto(parseInt(yr.getAttribute('data-year'), 10), curYM().m);
+          level = 'm'; draw(); place(); return;
+        }
+
+        var mo = e.target.closest('[data-month]');
+        if (mo) {
+          goto(curYM().y, parseInt(mo.getAttribute('data-month'), 10));
+          level = 'd'; draw(); place(); return;
+        }
 
         var act = e.target.closest('[data-act]');
         if (act) {

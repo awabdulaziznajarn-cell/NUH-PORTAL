@@ -97,19 +97,58 @@
     return isEnum(u.status, 'outofservice', 2) || isEnum(u.status, 'notexists', 3);
   }
 
+  // ==========================================================================
+  //  أيقونة البطاقة الباهتة (.stat-ghost).
+  //
+  //  ⚠️ المقاس واللون والشفافية كلهم في .stat-ghost في components.css - هنا
+  //     الشكل بس. و width=20 في الوسم مقصود زي باقي الشاشات: لو الـCSS
+  //     ما اتحمّلش تفضل الأيقونة بحجم معقول بدل ما تملا الشاشة.
+  //
+  //  ⚠️ والمفتاح هو نفسه مفتاح الفلتر (data-k)، فالأيقونة عايشة جنب تعريف
+  //     البطاقة - أي بطاقة تتضاف بكرة تاخد أيقونتها هنا بدل ما تتكتب في
+  //     مكان تاني ويتنسى.
+  // ==========================================================================
+  function ghost(paths) {
+    return '<span class="stat-ghost" aria-hidden="true">' +
+      '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+      'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + paths + '</svg></span>';
+  }
+
+  var GHOSTS = {
+    // مبنى - إجمالي الوحدات
+    '': '<path d="M3 21h18"/><path d="M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/>' +
+        '<path d="M9 8h1"/><path d="M14 8h1"/><path d="M9 12h1"/><path d="M14 12h1"/><path d="M10 21v-4h4v4"/>',
+    // ساكن مؤكَّد - مشغولة
+    'occupied': '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>' +
+                '<polyline points="17 11 19 13 23 9"/>',
+    // باب - شاغرة
+    'vacant': '<path d="M3 21h18"/><path d="M6 21V4a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v17"/>' +
+              '<circle cx="12" cy="12" r=".9"/>',
+    // دوران - بانتظار المزامنة
+    'pending_sync': '<polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>' +
+                    '<path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/><path d="M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>',
+    // مثلّث تنبيه - أسماء مخالفة للمعيار
+    'deviations': '<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>' +
+                  '<path d="M12 9v4"/><path d="M12 17h.01"/>',
+    // مجلّد - وحدة تنظيمية غير مطابقة
+    'ouMismatch': '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>',
+    // دائرة مشطوبة - حسابات مُعطَّلة
+    'adDisabled': '<circle cx="12" cy="12" r="10"/><path d="M4.93 4.93 19.07 19.07"/>'
+  };
+
   // ---------- الإحصائيات ----------
   function renderStats(d) {
     var cards = [
       { k: '', num: d.totalUnits, label: T('fh_StTotal'), cls: '' },
-      { k: 'occupied', num: d.occupied, label: T('fh_StOccupied'), cls: 'ok' },
+      { k: 'occupied', num: d.occupied, label: T('fh_StOccupied'), cls: 'tone-ok' },
       { k: 'vacant', num: d.vacant, label: T('fh_StVacant'), cls: '' },
       // ⚠️ «غير موجودة» و«خارج الخدمة» و«محتاجة تأكيد» اتشالوا من الكروت.
       //    الأولانيين ما بقاش ليهم معنى بعد ما الاستيراد بقى بيقرا من الدومين:
       //    الوحدة اللي مش موجودة مالهاش حساب أصلًا فمابتظهرش خالص. والتالتة
       //    هترجع مع شاشة «تأكيد الإشغال» — قبلها هتفضل صفر لسنة كاملة.
-      { k: 'pending_sync', num: d.pendingSync, label: T('fh_StPendingSync'), cls: d.pendingSync ? 'bad' : '' },
-      { k: 'deviations', num: d.nameDeviations, label: T('fh_StNameDeviations'), cls: d.nameDeviations ? 'warn' : '' },
-      { k: 'ouMismatch', num: d.ouMismatches, label: T('fh_StOuMismatch'), cls: d.ouMismatches ? 'warn' : '' },
+      { k: 'pending_sync', num: d.pendingSync, label: T('fh_StPendingSync'), cls: d.pendingSync ? 'tone-bad' : '' },
+      { k: 'deviations', num: d.nameDeviations, label: T('fh_StNameDeviations'), cls: d.nameDeviations ? 'tone-warn' : '' },
+      { k: 'ouMismatch', num: d.ouMismatches, label: T('fh_StOuMismatch'), cls: d.ouMismatches ? 'tone-warn' : '' },
       // ⚠️ الحساب المُعطَّل حالة قائمة في الدليل قد تكون مقصودة (إيقاف من
       //    الأمن السيبراني مثلًا)، فنبرته رمادية لا حمراء - نفس منطق شارة
       //    الصفّ. الأحمر للي محتاج تدخّل، ولو حطّيناه هنا اتعوّد المستخدم
@@ -124,13 +163,19 @@
              : c.k === 'ouMismatch' ? state.onlyOuMismatch
              : c.k === 'adDisabled' ? state.onlyDisabled
              : (!!c.k && state.status === c.k);
-      return '<div class="fh-stat ' + c.cls + (on ? ' is-on' : '') + '" data-k="' + c.k + '">' +
-             '<div class="fh-stat-num">' + (c.num || 0) + '</div>' +
-             '<div class="fh-stat-label">' + c.label + '</div></div>';
+      // ⚠️ ‏.stat-card لا .fh-stat: صنف .fh-stat اتشال من الستايل وقت توحيد
+      //    بطاقة المؤشّر (الشرح في <style> بالشاشة)، لكن الوسم هنا فضل
+      //    بيكتبه - فالبطاقات كانت بتطلع **بلا أي تنسيق**: أرقام عارية على
+      //    خلفية الصفحة بلا كارت ولا حدّ ولا شريط حافة. مابانتش قبل كده لأن
+      //    خلفية الصفحة كانت رمادية مسطّحة.
+      return '<div class="stat-card ' + c.cls + (on ? ' is-on' : '') + '" data-k="' + c.k + '">' +
+             ghost(GHOSTS[c.k] || GHOSTS['']) +
+             '<span class="stat-num">' + (c.num || 0) + '</span>' +
+             '<span class="stat-label">' + c.label + '</span></div>';
     }).join('');
 
     // الكارت بيشتغل كفلتر — الضغط عليه تاني بيلغيه
-    Array.prototype.forEach.call(document.querySelectorAll('.fh-stat'), function (el) {
+    Array.prototype.forEach.call(document.querySelectorAll('#fhStats .stat-card'), function (el) {
       el.addEventListener('click', function () {
         var k = el.getAttribute('data-k');
 

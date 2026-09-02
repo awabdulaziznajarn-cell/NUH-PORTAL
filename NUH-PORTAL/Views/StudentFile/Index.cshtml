@@ -16,6 +16,43 @@
     font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;color:var(--navy-dark)}
   .sf-search input:focus{outline:none;border-color:var(--navy)}
   .sf-search input.error{border-color:var(--red)}
+
+  /* ⚠️ الإطار على الحاوية لا على الحقل: البادئة والحقل لازم يبانوا خانة
+     واحدة زي حقل الجوال (+966). ولو كل واحد بإطاره بيبانوا حاجتين. */
+  .sf-input{display:flex;align-items:stretch;border:1.5px solid var(--gray-200);
+    border-radius:10px;overflow:hidden;background:var(--white)}
+  .sf-input:focus-within{border-color:var(--navy)}
+  .sf-input.error{border-color:var(--red)}
+  .sf-input input{border:none!important;border-radius:0;background:transparent}
+  /* البادئة مخفية لحد ما المدخل يبقى رمزًا */
+  .sf-pre{display:none;align-items:center;padding:0 12px;background:var(--gray-50);
+    border-inline-end:1.5px solid var(--gray-200);color:var(--gray-500);flex:none;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:14px;font-weight:800;letter-spacing:.06em;user-select:none}
+  .sf-input.is-code .sf-pre{display:flex}
+  /* ⚠️ الرمز والأرقام لاتينية: الخانة بتنقلب ltr فالبادئة تقع على الشمال
+     والأرقام تتكتب من الشمال لليمين زي ما بتتقرا من الورقة. */
+  .sf-input.is-code,.sf-input.is-num{direction:ltr}
+  .sf-input.is-code input,.sf-input.is-num input{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    letter-spacing:.1em;text-align:left;font-variant-numeric:tabular-nums}
+  .sf-input.is-code input{text-transform:uppercase}
+
+  .sf-detect{display:flex;align-items:center;gap:10px;min-height:0;margin-top:10px;flex-wrap:wrap}
+  .sf-detect:empty{margin-top:0}
+  .sf-chip{display:inline-flex;align-items:center;gap:7px;padding:5px 12px;border-radius:100px;
+    font-size:11.5px;font-weight:800;border:1px solid transparent}
+  .sf-chip.sid{background:var(--tint);color:var(--navy);border-color:rgba(22,106,69,.28)}
+  .sf-chip.nid{background:var(--blue-light);color:var(--blue);border-color:var(--blue-pale)}
+  .sf-chip.code{background:#fffaeb;color:var(--gold-dark);border-color:rgba(143,115,38,.32)}
+  .sf-detect .say{font-size:11.5px;font-weight:600;color:var(--gray-500)}
+
+  /* شريط «وثيقة صادرة عن النظام» - بيظهر فوق الملف لمّا يكون البحث برمز */
+  .sf-verified{display:flex;gap:10px;align-items:flex-start;padding:12px 15px;border-radius:10px;
+    background:var(--tint);border:1px solid rgba(22,106,69,.3);color:var(--navy-dark);
+    font-size:12.5px;font-weight:700;line-height:1.85;margin-bottom:16px}
+  .sf-verified svg{flex-shrink:0;margin-top:3px}
+  .sf-verified .sub{display:block;font-weight:600;color:var(--gray-500);font-size:11.5px}
   .sf-btn{padding:12px 26px;background:var(--navy);color:var(--white);border:none;border-radius:10px;
     font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;font-weight:700;cursor:pointer;
     transition:opacity .18s}
@@ -87,10 +124,19 @@
     <form class="sf-search" id="sfForm" autocomplete="off">
       <div class="f">
         <label for="sfQuery">@SharedLocalizer["sf_queryLabel"]</label>
-        <input id="sfQuery" name="q" inputmode="numeric" placeholder="@SharedLocalizer["sf_queryPlaceholder"]" required autofocus />
+        @* ⚠️ البادئة عنصر عرض لا حقل: مالهاش name فمابتتبعتش، وبتظهر بس لما
+           المدخل يبقى رمزًا (أول حرف أبجدي). الخادم بيقبل الرمز بالبادئة أو
+           من غيرها - PledgeRules.NormalizeDocCode. *@
+        <div class="sf-input" id="sfInput">
+          <span class="sf-pre" id="sfPre" aria-hidden="true">@NUH_PORTAL.Core.PledgeRules.DocCodePrefix</span>
+          <input id="sfQuery" name="q" placeholder="@SharedLocalizer["sf_queryPlaceholder"]"
+                 autocomplete="off" spellcheck="false" maxlength="18" required autofocus />
+        </div>
       </div>
       <button class="sf-btn" type="submit" id="sfBtn">@SharedLocalizer["sf_search"]</button>
     </form>
+    @* شارة نوع المدخل - بتتملى من الجافاسكريبت وهو بيكتب *@
+    <div class="sf-detect" id="sfDetect" aria-live="polite"></div>
     <div id="sfAlert" class="alert"></div>
     <div class="sf-hint">@SharedLocalizer["sf_hint"]</div>
   </div>
@@ -102,7 +148,13 @@
 <script src="/i18n.js"></script>
 @* قواعد الرقم الجامعي ورقم الهوية - متولّدة من Core/IdentityRules.cs *@
 <script src="/js/nuh-id.js"></script>
+@* قواعد رمز التحقّق (الأبجدية والبادئة والطول) - متولّدة من Core/PledgeRules.cs *@
+<script src="/js/nuh-pledge.js"></script>
 @* وثيقة التعهّد (العرض + الطباعة) - نفس الوحدة اللي بتستخدمها شاشة تفاصيل الطلب *@
+@* ⚠️ nuh-qr.js قبل pledge-doc.js: الوثيقة بترسم رمز التحقّق
+   لحظة المعاينة/الطباعة ومابتناديش عليه قبل كده، فلو اتأخّر الرمز بيختفي
+   من غير ما حد ياخد باله - والورقة بتطلع من الطابعة ناقصة. *@
+<script src="/js/nuh-qr.js" asp-append-version="true"></script>
 <script src="/js/pledge-doc.js" asp-append-version="true"></script>
 <script src="/js/student-file-page.js" asp-append-version="true"></script>
 }

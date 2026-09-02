@@ -140,18 +140,27 @@ namespace NUH_PORTAL.Services
             //    على تجميعة نصوص لازم يتترجم لـ SQL - وترجمة زي دي بتفشل وقت
             //    التشغيل لا وقت البناء. نفس الأسلوب اللي كان متّبع مع أسماء
             //    الوحدات فوق (DisplayNameAr خاصية محسوبة مش عمود أصلًا).
-            // ---- الطلبات: رقم الطلب هو اسمه ----
+            // ---- الطلبات: رقم الطلب هو اسمه، وصاحبه معرّفه الفرعي ----
+            //  ⚠️ صاحب الطلب مضاف بعد ما ظهر إن سطر زي «طباعة وثيقة التعهّد»
+            //     كان بيقول رقم الطلب وبس - واللي بيراجع سؤاله «اتطبعت لمين»
+            //     لا «لأي رقم». الرقم لوحده بيخلّيه يفتح شاشة تانية عشان
+            //     يترجمه لاسم، ودي بالظبط اللفّة اللي السجل موجود عشان يوفّرها.
             var reqIds = Ids("Requests");
-            var reqNames = reqIds.Count == 0
-                ? new Dictionary<int, string>()
+            var reqRows = reqIds.Count == 0
+                ? new List<ReqRow>()
                 : (await _db.Requests.AsNoTracking()
                     .Where(r => reqIds.Contains(r.Id))
-                    .Select(r => new { r.Id, r.RequestNumber })
+                    .Select(r => new { r.Id, r.RequestNumber, r.StudentId })
                     .ToListAsync())
-                    .ToDictionary(r => r.Id, r => r.RequestNumber ?? ("#" + r.Id));
+                    .Select(r => new ReqRow(r.Id, r.RequestNumber, r.StudentId))
+                    .ToList();
+            var reqNames = reqRows.ToDictionary(r => r.Id, r => r.Number ?? ("#" + r.Id));
+            var reqStudent = reqRows.ToDictionary(r => r.Id, r => r.StudentId);
 
             // ---- الطلاب: الاسم والرقم الجامعي ----
-            var stuIds = Ids("Students");
+            // ⚠️ الأرقام بتضمّ أصحاب الطلبات كمان: استعلام واحد على الجدول
+            //    بدل اتنين في نفس الصفحة.
+            var stuIds = Ids("Students").Concat(reqStudent.Values).Distinct().ToList();
             var stuNames = stuIds.Count == 0
                 ? new Dictionary<int, string>()
                 : (await _db.Students.AsNoTracking()
@@ -171,21 +180,34 @@ namespace NUH_PORTAL.Services
                     .ToListAsync())
                     .ToDictionary(u => u.Id, u => u.full_name ?? u.UserName ?? ("#" + u.Id));
 
-            return new TargetNames(unitNames, unitAccounts, occToUnit, reqNames, stuNames, usrNames);
+            // صاحب كل طلب بالاسم - بيتبني بعد أسماء الطلاب.
+            var reqOwners = new Dictionary<int, string>();
+            foreach (var kv in reqStudent)
+            {
+                if (stuNames.TryGetValue(kv.Value, out var nm) && !string.IsNullOrWhiteSpace(nm))
+                    reqOwners[kv.Key] = nm;
+            }
+
+            return new TargetNames(unitNames, unitAccounts, occToUnit, reqNames, stuNames, usrNames, reqOwners);
         }
+
+        // صفّ الطلب - نوع مسمّى لا مجهول، عشان يعدّي بين المتغيّرات بلا ما
+        // نفقد أسماء الأعمدة.
+        private sealed record ReqRow(int Id, string? Number, int StudentId);
 
         // خريطة الأسماء المحلولة — الاستعلامات اتعملت مرة واحدة والبحث هنا في الذاكرة.
         private sealed class TargetNames
         {
-            private readonly Dictionary<int, string> _units, _accts, _reqs, _stus, _usrs;
+            private readonly Dictionary<int, string> _units, _accts, _reqs, _stus, _usrs, _reqOwners;
             private readonly Dictionary<int, int> _occToUnit;
 
             public TargetNames(Dictionary<int, string> units, Dictionary<int, string> accts,
                 Dictionary<int, int> occToUnit,
-                Dictionary<int, string> reqs, Dictionary<int, string> stus, Dictionary<int, string> usrs)
+                Dictionary<int, string> reqs, Dictionary<int, string> stus, Dictionary<int, string> usrs,
+                Dictionary<int, string> reqOwners)
             {
                 _units = units; _accts = accts; _occToUnit = occToUnit;
-                _reqs = reqs; _stus = stus; _usrs = usrs;
+                _reqs = reqs; _stus = stus; _usrs = usrs; _reqOwners = reqOwners;
             }
 
             // المعرّف التقني: حساب الدومين لوحدات السكن. غيرها مالهاش معرّف
@@ -196,6 +218,8 @@ namespace NUH_PORTAL.Services
                 if (table == "FacultyUnits") _accts.TryGetValue(id, out acct);
                 else if (table == "FacultyOccupancies" && _occToUnit.TryGetValue(id, out var uid))
                     _accts.TryGetValue(uid, out acct);
+                // صاحب الطلب جنب رقمه - نفس فكرة حساب الدومين جنب اسم الوحدة.
+                else if (table == "Requests") _reqOwners.TryGetValue(id, out acct);
                 return string.IsNullOrWhiteSpace(acct) ? null : acct;
             }
 

@@ -19,5 +19,9 @@ namespace NUH_PORTAL.ViewModels
         //    خالص، وصفر = نعرضها بصفر. لو كانت DTO فاضية بدل null كان
         //    المستخدم اللي مالوش صلاحية هيشوف «٠ وحدات» ويفتكرها حقيقة.
         public FacultyDashboardStatsDto? FacultyStats { get; set; }
+
+        // ⚠️ نطاق المستخدم عشان عناوين اللوحة تقول «الطلاب» أو «الطالبات» أو
+        //    الاتنين - نفس مصدر شاشة قائمة الطلاب (Core/GenderScope.TitleKey).
+        public NUH_PORTAL.Models.Enums.Gender? Scope { get; set; }
     }
 }

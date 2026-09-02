@@ -74,7 +74,11 @@ var NuhChart = (function () {
     if (!ready() || Chart.__nuhThemed) return;
     Chart.defaults.font.family = FONT;
     Chart.defaults.font.size = 11.5;
-    Chart.defaults.color = C.gray500;
+    // ⚠️ ‏gray700 لا gray500: أسماء المحاور (مبنى 40، التواريخ) كانت رمادية
+    //    فاتحة بحجم صغير على أبيض - تباينها تحت الحدّ المقروء، وبيقلّ أكتر لو
+    //    ورا الرسمة خلفية باهتة. اللون ده هو نفسه لون النصّ الثانوي في باقي
+    //    الواجهة، فالرسم بقى بنفس مقروئية اللي حواليه.
+    Chart.defaults.color = C.gray700;
     Chart.defaults.plugins.tooltip.backgroundColor = '#104631';
     Chart.defaults.plugins.tooltip.titleFont = { family: FONT, size: 12, weight: '700' };
     Chart.defaults.plugins.tooltip.bodyFont = { family: FONT, size: 12 };
@@ -119,11 +123,29 @@ var NuhChart = (function () {
         : String((ds.data || []).reduce(function (a, b) { return a + (Number(b) || 0); }, 0));
       var label = (ctr && ctr.label != null) ? ctr.label : (chart.options.__totalLabel || '');
 
+      // ⚠️ الرقم بيعدّ مع امتلاء الدائرة لا بيقف مكتوبًا من أول إطار: دائرة
+      //    بتتملّي جنب رقم ثابت بتبان كأن الرقم مش بتاعها.
+      //    والتقدّم بيتقرا من الأقواس نفسها (مجموع circumference الحالي على
+      //    دورة كاملة) لا من مؤقّت تاني - فمهما اتغيّرت مدّة الحركة أو
+      //    منحناها في Chart.js، الرقم بيمشي معاها بالظبط.
+      var prog = 1;
+      try {
+        var span = 0;
+        for (var ai = 0; ai < m.data.length; ai++) span += Math.abs(m.data[ai].circumference || 0);
+        prog = Math.max(0, Math.min(1, span / (Math.PI * 2)));
+      } catch (e) { }
+      if (prog < 1) {
+        // الصيغة «77%» أو «31» - بنعدّ الجزء الرقمي وبنسيب اللاحقة زي ما هي.
+        value = value.replace(/^(\d+)/, function (_, d) { return String(Math.round(Number(d) * prog)); });
+      }
+
       var x = m.data[0].x, y = m.data[0].y;
       var g = chart.ctx;
       g.save();
       g.textAlign = 'center'; g.textBaseline = 'middle';
-      g.fillStyle = C.navyDark || '#104631';
+      // ⚠️ نفس درجة .stat-num بالظبط (--navy): الرقم ده بيقف جنب أرقام
+      //    البطاقات في نفس الشاشة، فلو فضل --navy-dark هيبان أغمق منها.
+      g.fillStyle = C.navy || '#166a45';
       g.font = '700 20px ' + FONT;
       g.fillText(value, x, y - 2);
       g.font = '500 10px ' + FONT;
@@ -147,6 +169,14 @@ var NuhChart = (function () {
     if (type === 'doughnut') {
       // ⚠️ بلا scales عن قصد — الدونات مالهاش محاور، والنسخة القديمة كانت
       //    بتحط محور رأسي فيه 0 و1 جنب الرسمة.
+      // ⚠️ الدونة ليها مدّتها: ٥٥٠ مللي ثانية كانت بتخلّيها تظهر شبه جاهزة،
+      //    والمطلوب إنها «تتملّي» زي عدّاد البطاقات. والمنحنى هو نفسه بتاع
+      //    js/count-up.js (يبدأ سريع ويهدى بقوّة في الآخر) عشان الحركتين
+      //    اللي على الشاشة الواحدة يبانوا حاجة واحدة.
+      //  ⚠️ و animateScale مقفولة: تكبير الدائرة مع دورانها حركتان في وقت
+      //     واحد، والعين بتتوه بينهم. الدوران وحده هو اللي بيقول «بتتملّي».
+      base.animation = { duration: 1800, easing: 'easeOutQuint',
+                         animateRotate: true, animateScale: false };
       base.cutout = (opts && opts.cutout) || '68%';
       base.__totalLabel = totalLabel || '';
       base.__center = (opts && opts.center) || null;
@@ -191,7 +221,9 @@ var NuhChart = (function () {
       base.scales = {
         x: { display: false, beginAtZero: true, grace: '16%' },
         y: { border: { display: false }, grid: { display: false },
-             ticks: { color: C.gray500, font: { family: FONT, size: 12 } } }
+             // ⚠️ اسم المبنى تسمية بيانات لا زخرفة: بيتقرا مع الرقم اللي جنبه،
+             //    فوزنه أتقل شوية ولونه أغمق من التسميات العادية.
+             ticks: { color: C.gray700, font: { family: FONT, size: 12.5, weight: '600' } } }
       };
       base.plugins.tooltip = {
         rtl: (document.documentElement.getAttribute('dir') !== 'ltr'),

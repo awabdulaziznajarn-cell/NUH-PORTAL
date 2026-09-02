@@ -203,17 +203,15 @@
 }
 <style>
   /* خاص بشاشة سكن أعضاء هيئة التدريس — الباقي من site.css و components.css */
-  .fh-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:22px}
-  .fh-stat{background:var(--white);border-radius:14px;padding:15px 18px;border:1px solid var(--gray-100);
-           box-shadow:0 2px 8px rgba(16,70,49,.05);display:flex;flex-direction:column;gap:5px;
-           cursor:pointer;transition:transform .18s,box-shadow .18s,border-color .18s}
-  .fh-stat:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(16,70,49,.1)}
-  .fh-stat.is-on{border-color:var(--gold-ink);box-shadow:0 0 0 3px rgba(219,161,2,.18)}
-  .fh-stat-num{font-size:25px;font-weight:900;color:var(--navy-dark);line-height:1}
-  .fh-stat-label{font-size:11.5px;color:var(--gray-500);font-weight:500}
-  .fh-stat.ok .fh-stat-num{color:var(--green)}
-  .fh-stat.warn .fh-stat-num{color:#93370d}
-  .fh-stat.bad .fh-stat-num{color:var(--red)}
+  /* ⚠️ ‏.fh-stat اتشال: كان نسخة رابعة من بطاقة المؤشّر (رقم ٢٥ ووزن ٩٠٠).
+     البطاقة دلوقتي .stat-card من css/components.css، والنغمات (tone-ok /
+     tone-warn / tone-bad) وحالة الفلتر (is-on) معرّفة هناك كمان - فبتلوّن
+     الرقم وشريط الحافة والأيقونة مع بعض بدل ما تلوّن الرقم وحده. */
+
+  /* ⚠️ البطاقة هنا **فلتر** لا رابط: الضغط بيصفّي الجدول مش بيفتح شاشة.
+     فمؤشّر اليد أيوه، لكن مش .is-link - دي بتحطّ سهمًا معناه «هتروح لمكان
+     تاني»، والمستخدم بيفضل في نفس الشاشة. */
+  #fhStats .stat-card{cursor:pointer}
 
   .fh-flag{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;
            padding:2px 8px;border-radius:20px;background:var(--gold-pale);color:#93370d;white-space:nowrap}
@@ -368,7 +366,7 @@
   <p>@SharedLocalizer["fh_PageSub"]</p>
 </div>
 
-<div class="fh-stats" id="fhStats"></div>
+<div class="stats-grid" id="fhStats"></div>
 <div id="fhMsg"></div>
 
 @if (canImport)

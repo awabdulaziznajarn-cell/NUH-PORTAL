@@ -4,7 +4,7 @@
 }
 
 <style>
-  /* خاص بصفحة تفاصيل الطلب — الباقي من site.css */
+  /* خاص بصفحة تفاصيل الطلب - الباقي من site.css */
 /* ⚠️ ستايل سجلّ دورة الحياة اتشال من هنا: كان تعريفًا ثانيًا لنفس المكوّن
    المكتوب في شاشة حسابات الإسكان، و**لا شيء في هذه الصفحة يرسمه أصلًا** -
    لا الـcshtml ولا request-details-page.js يكتب .log-entry. كود ميّت
@@ -23,7 +23,7 @@
 .badge-cyber_rejected { background:var(--red-light); color:var(--red); }
 .badge-ready_for_provisioning { background:#fffaeb; color:#93370d; }
 .badge-completed { background:var(--green-light); color:var(--green); }
-/* ⚠️ .badge-pending_supervisor و .badge-pending_cyber اتشالوا — نفس مرحلة
+/* ⚠️ .badge-pending_supervisor و .badge-pending_cyber اتشالوا - نفس مرحلة
    submitted و cyber_review بمسمّى المسار التاني، وكانوا بلونين مختلفين
    لنفس الموقف. الصنف بقى بيتبني من RequestWorkflow.Canonical. */
 .badge-pending_admin { background:var(--purple-light); color:var(--purple); }
@@ -49,7 +49,7 @@
 .review-option input[type="radio"] { width:18px; height:18px; accent-color:var(--navy); cursor:pointer; }
 .review-option-text { font-size:14px; font-weight:600; color:var(--navy-dark); }
 .review-option-desc { font-size:12px; color:var(--gray-500); }
-/* صندوق اختيار الخانات المطلوب تصحيحها — يظهر مع «طلب معلومات إضافية» فقط.
+/* صندوق اختيار الخانات المطلوب تصحيحها - يظهر مع «طلب معلومات إضافية» فقط.
    ⚠️ البادئة fieldpick- مقصودة. أول نسخة كانت مسمّية عنصر الاختيار .info-field،
       وده اسم مستخدم فوق في نفس الملف لصفوف بيانات الطلب. القاعدة الجديدة كانت
       بعده فغلبته، فصفوف البيانات كلها بقت مربعات بإطار ومحتواها في النص بدل
@@ -73,7 +73,7 @@
 .submit-review-btn { padding:12px 28px; background:var(--navy); color:var(--white); border:none; border-radius:10px; font-family:'IBM Plex Sans Arabic',sans-serif; font-size:14px; font-weight:600; cursor:pointer; transition:all 0.2s; box-shadow:0 2px 8px rgba(16,70,49,0.2); }
 .submit-review-btn:hover { opacity:0.92; transform:translateY(-1px); box-shadow:0 4px 12px rgba(16,70,49,0.3); }
 .submit-review-btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; box-shadow:none; }
-/* ⚠️ .rejection-info اتشال — كان تصميم تالت لصندوق الملاحظة/السبب.
+/* ⚠️ .rejection-info اتشال - كان تصميم تالت لصندوق الملاحظة/السبب.
    التعريف الوحيد .note-block في css/components.css، والشاشة بتحمّله من التخطيط. */
 .workflow-bar { display:flex; align-items:flex-start; justify-content:space-around; padding:12px 0 4px; position:relative; overflow:visible; }
 .workflow-bar::before { content:''; position:absolute; top:22px; left:30px; right:30px; height:3px; background:var(--gray-200); z-index:0; border-radius:2px; }
@@ -111,13 +111,17 @@
 
 @section Scripts {
 <script>var __REQ_ID = @reqId;</script>
-@* صلاحيات المستخدم للواجهة — الأزرار بتظهر أو تختفي على أساسها.
+@* صلاحيات المستخدم للواجهة - الأزرار بتظهر أو تختفي على أساسها.
    الفحص الحقيقي على السيرفر في كل نداء؛ ده تحسين شكل مش حماية. *@
 <script>window.NUH_PERMS = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
     User.FindAll("permission").Select(c => c.Value).ToArray()));</script>
 <script src="/i18n.js"></script>
 @* ⚠️ وثيقة التعهّد (العرض + الطباعة) - مشتركة مع شاشة «ملف الطالب».
    لازم تتحمّل قبل سكربت الشاشة لأن الشاشة بتناديها وقت الرندر. *@
+@* ⚠️ nuh-qr.js قبل pledge-doc.js: الوثيقة بترسم رمز التحقّق
+   لحظة المعاينة/الطباعة ومابتناديش عليه قبل كده، فلو اتأخّر الرمز بيختفي
+   من غير ما حد ياخد باله - والورقة بتطلع من الطابعة ناقصة. *@
+<script src="/js/nuh-qr.js" asp-append-version="true"></script>
 <script src="/js/pledge-doc.js" asp-append-version="true"></script>
 <script src="/js/request-details-page.js"></script>
 }

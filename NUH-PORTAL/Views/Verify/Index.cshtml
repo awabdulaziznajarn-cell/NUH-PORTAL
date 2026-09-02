@@ -1,0 +1,289 @@
+@using NUH_PORTAL.DTOs.Registration
+@{
+    var code = ViewData["Code"] as string ?? string.Empty;
+    var wasChecked = ViewData["Checked"] is true;
+    var result = ViewData["Result"] as PledgeVerifyDto;
+    ViewData["Title"] = SharedLocalizer["vfy_brandTitle"].Value;
+
+    // ⚠️ تخطيط الزائر دايمًا: الموظف المسجّل مابيوصلش للصفحة دي أصلًا -
+    //    VerifyController بيحوّله على «ملف الطالب» والرمز مُعبَّى، فيلاقي
+    //    الملف كامل بدل ستة صفوف مقنّعة.
+    Layout = "_VerifyPublic";
+
+    // ⚠️ نفس النصّ اللي بيطلع من الـ API بالحرف: صفحة تفاصيل الطلب بتعرض
+    //    التاريخ بـ NuhFmt.dateTime على القيمة دي، والورقة المطبوعة كمان.
+    //    لو كوّنّا النصّ هنا على الخادم، أي فرق في المنطقة الزمنية بين
+    //    الطريقتين بيخلّي الصفحة تقول ساعة والورقة تقول ساعة تانية - والمطابقة
+    //    هي كل الغرض من الصفحة دي.
+    var acceptedIso = result == null
+        ? string.Empty
+        : System.Text.Json.JsonSerializer.Serialize(result.AcceptedAt).Trim('"');
+
+    // ========================================================================
+    //  ⚠️ البادئة NUH ثابتة جنب الحقل لا مكتوبة جوّاه - نفس فكرة +966 في حقل
+    //     الجوال. اللي بيكتب الرمز من ورقة بيكتب اللي بيتغيّر بس، والبادئة
+    //     مابتتحذفش بالغلط ومابتتكتبش مرتين.
+    //
+    //  ⚠️ والقيمة اللي بترجع في الرابط ممكن تيجي بالبادئة (من رمز الـ QR) أو
+    //     من غيرها (من النموذج). بنطبّعها بنفس قاعدة الخادم ونعيد تجميعها
+    //     أرباعًا - فالحقل بيبان بنفس شكل الورقة مهما كان اللي وصلنا.
+    var __payload = NUH_PORTAL.Core.PledgeRules.NormalizeDocCode(code);
+    var __field = "";
+    for (var i = 0; i < __payload.Length; i++)
+    {
+        if (i > 0 && i % 4 == 0) __field += "-";
+        __field += __payload[i];
+    }
+}
+@*
+    ============================================================================
+      التحقّق من وثيقة تعهّد مطبوعة.
+
+      ⚠️ محتوى الصفحة عربي وحده زي الورقة بالظبط، لا لأن الترجمة صعبة: الوثيقة
+         المطبوعة عربية دايمًا مهما كانت لغة الواجهة (الشرح في js/pledge-doc.js
+         - النصّ المُلزِم عربي والبصمة محسوبة عليه). الصفحة دي بتتقرا **جنب
+         الورقة**، فلغتان مختلفتان بين الورقة والشاشة بتصعّب المطابقة بدل ما
+         تسهّلها.
+    ============================================================================
+*@
+<style>
+  .vf{width:560px;max-width:100%;background:#fff;border:1px solid var(--gray-200);
+    border-radius:18px;overflow:hidden;box-shadow:0 20px 50px rgba(16,70,49,.12)}
+  .vf-head{background:linear-gradient(160deg,var(--navy) 0%,var(--navy-dark) 100%);
+    color:#fff;padding:26px 28px;display:flex;align-items:center;gap:16px}
+  .vf-head img{width:52px;height:auto;filter:brightness(0) invert(1);flex:none}
+  .vf-head h1{font-size:18px;font-weight:800;line-height:1.5;margin:0 0 4px}
+  .vf-head p{font-size:12.5px;color:rgba(255,255,255,.82);margin:0;line-height:1.7}
+
+  .vf-body{padding:26px 28px 30px}
+
+  .vf-form{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap}
+  .vf-form label{display:block;font-size:12.5px;font-weight:700;color:var(--navy-dark);
+    margin-bottom:8px;width:100%}
+  /* ⚠️ ltr و tabular-nums: الرمز لاتيني وبيتقرا حرفًا حرفًا من ورقة. في حقل
+     عربي الاتجاه بيقلب الشرطات، واللي بيراجع بيفتكر إنه كتب غلط. */
+  /* ⚠️ الإطار على الحاوية لا على الحقل: البادئة والحقل لازم يبانوا خانة واحدة
+     زي حقل الجوال (+966). لو كل واحد بإطاره بيبانوا حاجتين منفصلتين، واللي
+     بيكتب بيفتكر إن البادئة قائمة اختيار. */
+  .vf-code{flex:1 1 260px;min-width:0;display:flex;align-items:stretch;
+    border:1.5px solid var(--gray-200);border-radius:10px;overflow:hidden;background:#fff}
+  .vf-code:focus-within{border-color:var(--navy)}
+  .vf-code-pre{display:flex;align-items:center;padding:0 12px;background:var(--gray-50);
+    border-inline-end:1.5px solid var(--gray-200);color:var(--gray-500);
+    font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:15px;font-weight:700;
+    letter-spacing:.08em;user-select:none;flex:none}
+  .vf-form input{flex:1 1 auto;min-width:0;padding:13px 15px;border:none;background:transparent;
+    font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:16px;
+    letter-spacing:.12em;color:var(--navy-dark);direction:ltr;text-align:left;
+    font-variant-numeric:tabular-nums;text-transform:uppercase}
+  .vf-form input:focus{outline:none}
+  .mono-lite{font-family:'IBM Plex Mono',ui-monospace,monospace;font-weight:700;
+    color:var(--navy-dark);direction:ltr;unicode-bidi:isolate}
+  .vf-form button{flex:0 0 auto;padding:13px 28px;background:var(--navy);color:#fff;border:none;
+    border-radius:10px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:14px;
+    font-weight:700;cursor:pointer;transition:opacity .18s}
+  .vf-form button:hover{opacity:.92}
+  .vf-form button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+  .vf-hint{font-size:12px;color:var(--gray-500);line-height:1.9;margin-top:12px}
+
+  /* ---------------- النتيجة ---------------- */
+  .vf-res{margin-top:24px;padding-top:22px;border-top:1px solid var(--gray-200)}
+
+  .vf-badge{display:inline-flex;align-items:center;gap:9px;padding:9px 16px;border-radius:100px;
+    font-size:13.5px;font-weight:700;margin-bottom:18px}
+  .vf-badge.ok{background:var(--tint);color:var(--navy);border:1px solid rgba(22,106,69,.28)}
+  .vf-badge.no{background:var(--red-light);color:var(--red);border:1px solid rgba(180,35,24,.25)}
+
+
+  .vf-rows{display:grid;grid-template-columns:auto 1fr;gap:1px;background:var(--gray-200);
+    border:1px solid var(--gray-200);border-radius:12px;overflow:hidden}
+  .vf-rows .c{background:#fff;padding:12px 16px;font-size:13.5px}
+  .vf-rows .c.k{color:var(--gray-500);white-space:nowrap}
+  .vf-rows .c.v{color:var(--navy-dark);font-weight:600}
+  .vf-rows .c.v.mono{font-family:'IBM Plex Mono',ui-monospace,monospace;direction:ltr;
+    text-align:right;letter-spacing:.05em;font-variant-numeric:tabular-nums}
+
+  .vf-note{font-size:12px;color:var(--gray-500);line-height:1.95;margin-top:16px}
+
+
+  .vf-foot{padding:16px 28px;background:var(--gray-50);border-top:1px solid var(--gray-200);
+    font-size:11.5px;color:var(--gray-500);line-height:1.8}
+
+  @@media (max-width:520px){
+    .vf-head{padding:20px}
+    .vf-body{padding:20px}
+    .vf-form button{width:100%}
+  }
+</style>
+
+<div class="vf">
+  <div class="vf-head">
+      <img src="/nu-logo.svg" alt="@SharedLocalizer["vfy_brandSub"]" />
+      <div>
+        <h1>@SharedLocalizer["vfy_brandTitle"]</h1>
+        <p>@SharedLocalizer["vfy_brandSub"]</p>
+      </div>
+  </div>
+
+  <div class="vf-body">
+    @* ⚠️ GET لا POST: الرابط اللي في رمز الـ QR بيفتح الصفحة بالنتيجة على
+       طول، ولازم يبقى نفس المسار اللي بيطلع من النموذج - مسارين لنفس
+       التحقّق معناهم حدّان لازم يفضلوا مظبوطين. *@
+    <form class="vf-form" method="get" action="/Verify">
+      <label for="c">@SharedLocalizer["vfy_codeLabel"]</label>
+      <div class="vf-code">
+        @* ⚠️ البادئة عنصر عرض لا حقل: مالهاش name فمابتتبعتش، والخادم بيقبل
+           الرمز بالبادئة أو من غيرها (PledgeRules.NormalizeDocCode). *@
+        <span class="vf-code-pre" aria-hidden="true">@NUH_PORTAL.Core.PledgeRules.DocCodePrefix</span>
+        <input id="c" name="c" value="@__field" placeholder="0000-0000-0000"
+               autocomplete="off" spellcheck="false"
+               maxlength="14" autofocus
+               aria-label="@SharedLocalizer["vfy_codeAria", NUH_PORTAL.Core.PledgeRules.DocCodePrefix]" />
+      </div>
+      <button type="submit">@SharedLocalizer["vfy_submit"]</button>
+    </form>
+    <p class="vf-hint">
+      @SharedLocalizer["vfy_hint", NUH_PORTAL.Core.PledgeRules.DocCodePrefix]
+    </p>
+
+    @if (wasChecked && result != null)
+    {
+      <div class="vf-res">
+        <div class="vf-badge ok">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 6L9 17l-5-5" /></svg>
+          @SharedLocalizer["vfy_ok"]
+        </div>
+
+
+        <div class="vf-rows">
+          <div class="c k">@SharedLocalizer["vfy_rowRequest"]</div>
+          <div class="c v mono">@result.RequestNumber</div>
+
+          @* ⚠️ نفس الخانة في الحالتين: الخدمة هي اللي بتقرّر مقنّع ولا كامل
+             (PledgeService.VerifyDocumentAsync). شرط في الـ Razor هنا معناه
+             احتمال سهو يسرّب الاسم الكامل لأي حد معاه رمز. *@
+          <div class="c k">@SharedLocalizer["vfy_rowName"]</div>
+          <div class="c v">@result.StudentName</div>
+
+          <div class="c k">@SharedLocalizer["vfy_rowStudentId"]</div>
+          <div class="c v mono">@result.StudentIdTail</div>
+
+          <div class="c k">@SharedLocalizer["vfy_rowSignedAt"]</div>
+          <div class="c v mono" data-dt="@acceptedIso">-</div>
+
+          <div class="c k">@SharedLocalizer["vfy_rowVersion"]</div>
+          <div class="c v mono">@result.PolicyVersion</div>
+
+          <div class="c k">@SharedLocalizer["vfy_rowTermsCount"]</div>
+          <div class="c v mono">@result.TermsCount</div>
+        </div>
+
+        @* ⚠️ الصفحة بتقول «صادرة عن النظام» لا «صحيحة»: هي بتثبت إن وثيقة
+           بالبيانات دي طلعت من النظام فعلًا، مش إن الورقة اللي في إيدك هي
+           النسخة الوحيدة. حدّ الحلّ مكتوب للي بيقرا لا مسكوت عنه. *@
+        <p class="vf-note">
+          @SharedLocalizer["vfy_matchNote"]
+        </p>
+
+      </div>
+    }
+    else if (wasChecked)
+    {
+      @* ⚠️ رسالة واحدة لكل أسباب الفشل - رمز مش مقروء، رقم طلب مش موجود،
+         بصمة ما طابقتش. أي تفريق بينهم بيحوّل الصفحة لأداة استعلام: اللي
+         بيجرّب رموز بيعرف من اختلاف الرد إن رقم الطلب ده موجود فعلًا. *@
+      <div class="vf-res">
+        <div class="vf-badge no">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10" /><line x1="15" y1="9" x2="9" y2="15" />
+            <line x1="9" y1="9" x2="15" y2="15" /></svg>
+          @SharedLocalizer["vfy_none"]
+        </div>
+        <p class="vf-note">
+          @SharedLocalizer["vfy_noneNote"]
+        </p>
+      </div>
+    }
+  </div>
+
+  <div class="vf-foot">
+    @SharedLocalizer["vfy_foot"]
+  </div>
+</div>
+
+@section Scripts {
+  @* ⚠️ التاريخ بيتنسّق بنفس ملف الواجهة اللي بينسّق الورقة المطبوعة - مش
+     بنصّ مكوَّن على الخادم. الصفحة والورقة لازم يقولوا نفس الساعة بالحرف.
+     الملف نفسه بيتحمّل من التخطيط (النظام بيحمّله أصلًا، و_VerifyPublic
+     بيحمّله للزائر) - فمفيش نسختين منه في أي حالة. *@
+  <script>
+    (function () {
+      var el = document.querySelector('[data-dt]');
+      if (el && window.NuhFmt) el.textContent = NuhFmt.dateTime(el.getAttribute('data-dt'));
+    })();
+
+    // ========================================================================
+    //  قناع حقل الرمز - الشرطات بتتحط لوحدها والحروف بتكبر وهو بيكتب.
+    //
+    //  ⚠️ الأبجدية نفس اللي في Core/PledgeRules بالحرف (بلا I و L و O و U):
+    //     اللي بيكتب من ورقة بيبدّل O بـ 0 و I بـ 1 على طول، فبنردّهم لأقرب
+    //     رقم بدل ما نرفض قراءة صحيحة. ونفس الردّ ده بيتعمل على الخادم كمان
+    //     (NormalizeDocCode) - القناع تسهيل مش تحقّق.
+    //
+    //  ⚠️ ولزق الرمز كامل من مكان تاني بيشتغل: البادئة بتتشال لو اتلزقت معاه،
+    //     والحروف اللي مش في الأبجدية بتتجاهل. اللي بينسخ من إيميل أو رسالة
+    //     مابيقعدش يشيل الشرطات بإيده.
+    // ========================================================================
+    (function () {
+      var input = document.getElementById('c');
+      if (!input) return;
+
+      var ALPHABET = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
+      var PREFIX = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(NUH_PORTAL.Core.PledgeRules.DocCodePrefix));
+      var MAX = 12;                       // جيل (١) + رقم الطلب (٤) + البصمة (٧)
+      var SWAP = { 'O': '0', 'I': '1', 'L': '1', 'U': 'V' };
+
+      function clean(v) {
+        var s = String(v || '').toUpperCase().replace(/\s+/g, '');
+        if (s.indexOf(PREFIX) === 0) s = s.slice(PREFIX.length);
+        var out = '';
+        for (var i = 0; i < s.length && out.length < MAX; i++) {
+          var ch = SWAP[s[i]] || s[i];
+          if (ALPHABET.indexOf(ch) >= 0) out += ch;
+        }
+        return out;
+      }
+
+      function group(s) {
+        var out = '';
+        for (var i = 0; i < s.length; i++) {
+          if (i > 0 && i % 4 === 0) out += '-';
+          out += s[i];
+        }
+        return out;
+      }
+
+      function format() {
+        // ⚠️ عدد الحروف (لا الشرطات) قبل المؤشّر هو اللي بيتحفظ: إعادة البناء
+        //    بتغيّر أماكن الشرطات، ولو رجّعنا المؤشّر لمكانه الرقمي بيقفز
+        //    حرفًا كل ما شرطة تتزاد - والكتابة بتبقى غير محتملة.
+        var before = input.value.slice(0, input.selectionStart || 0);
+        var kept = clean(before).length;
+
+        var value = group(clean(input.value));
+        if (value !== input.value) input.value = value;
+
+        var pos = kept + Math.max(0, Math.floor((kept - 1) / 4));
+        try { input.setSelectionRange(pos, pos); } catch (e) { }
+      }
+
+      input.addEventListener('input', format);
+      input.addEventListener('paste', function () { setTimeout(format, 0); });
+      format();
+    })();
+  </script>
+}

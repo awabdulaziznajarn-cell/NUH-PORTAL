@@ -96,9 +96,15 @@ const stageNames = {
 // المشرف بيوافق وهو واقف على pending_supervisor فالطلب بينتقل لـ pending_cyber —
 // التسمية بالـ toStage كانت بتكتب "مراجعة الأمن السيبراني" على إجراء إدارة الإسكان،
 // يعني بتنسب الخطوة للجهة اللي لسه ماعملتش حاجة.
+// ⚠️ المفاتيح بالمسمّى الموحّد (canonical) لا بمسمّى مسار الطالب:
+//    canonical بترجّع sameStageAs، و sameStageAs في الجدول بيوحّد ناحية
+//    مسمّيات مسار الموظف - pending_supervisor بتبقى submitted و pending_cyber
+//    بتبقى cyber_review. فلمّا كانت المفاتيح هنا بمسمّى الطالب، البحث كان
+//    بيفشل ويقع على الاسم الاحتياطي (المرحلة اللي **راح** لها بدل اللي
+//    اتعمل فيها الإجراء) - فكل سطر كان بياخد اسم السطر اللي بعده.
 const actionNames = {
-  pending_supervisor:     { ok: 'rdp_stage_housingApproved',       no: 'rdp_stage_housingRejected' },
-  pending_cyber:          { ok: 'rdp_stage_cyberApproved',         no: 'rdp_stage_cyberRejected'   },
+  submitted:              { ok: 'rdp_stage_housingApproved',       no: 'rdp_stage_housingRejected' },
+  cyber_review:           { ok: 'rdp_stage_cyberApproved',         no: 'rdp_stage_cyberRejected'   },
   pending_admin:          { ok: 'rdp_stage_readyForProvisioning',  no: 'rdp_stage_rejected'        },
   ready_for_provisioning: { ok: 'rdp_stage_completed',             no: 'rdp_stage_rejected'        },
   // ⚠️ اللي بيتصرّف وهو واقف على need_more_info هو *الطالب* لا المشرف —
@@ -200,12 +206,14 @@ async function loadRequest() {
         if (bulkRes.ok) r.bulkDetails = await bulkRes.json();
       } catch(e) { console.error('Failed to load bulk details:', e); }
     }
-    if (r.requestType === 'self_registration') {
-      try {
-        var regRes = await fetch('/api/Registration/my-requests/' + requestId, { headers: authHeaders() });
-        if (regRes.ok) { var regData = await regRes.json(); r._regHistory = regData.history || []; }
-      } catch(e) { r._regHistory = []; }
-    }
+    // ⚠️ لكل أنواع الطلبات لا للتسجيل الذاتي وحده: سجل المراحل (WorkflowHistory)
+    //    بقى بيتكتب للمسارين من زمان، وطلب الموظف كان لسه بيتعرض من تواريخ
+    //    الطلب - وده اللي كان بيوّرث السطر الشبح. الخدمة نفسها بترجع للتواريخ
+    //    لو السجل فاضي (الطلبات القديمة)، فمفيش داتا محتاجة ترحيل.
+    try {
+      var regRes = await fetch('/api/Registration/my-requests/' + requestId, { headers: authHeaders() });
+      if (regRes.ok) { var regData = await regRes.json(); r._regHistory = regData.history || []; }
+    } catch(e) { r._regHistory = []; }
     renderRequest(r);
   } catch(e) {
     document.getElementById('loading-state').style.display = 'none';
@@ -292,9 +300,17 @@ function infoField(fieldKeys, label, valueHtml) {
 //     الطريقة. لو فضلت مكتوبة في الشاشة دي، الشاشة التانية كانت هتاخد نسخة -
 //     ونسختين لنفس الوثيقة بيفترقوا مع أول تعديل، والوثيقة دي بالذات وثيقة
 //     رسمية بتتطبع وتتحطّ في ملفات.
+//
+//  ⚠️ من غير ‎{ full: true }‎ عن قصد: الشاشة دي بتراجع الطلب، فبتعرض حالة
+//     التعهّد ورمز التحقّق وزرار الطباعة وبس. بصمة البنود والنسخة وعدد
+//     البنود وعنوان الجهاز تفاصيل تحقيق، ومكانها الوحيد «ملف الطالب» -
+//     كانت معروضة في الشاشتين، ونفس القيمة في مكانين معناها إن حد هيعدّل
+//     واحدة وينسى التانية.
 // ============================================================================
+//  ⚠️ ومحصلش هنا printPledge: طباعة الوثيقة إجراء واحد ومكانه واحد -
+//     ترويسة «ملف الطالب». زرّ تاني هنا كان بيخلّي نفس الورقة تتطبع من
+//     مكانين، والورقة دي بتتسجّل في سجل العمليات وبتتحطّ في ملفات.
 function pledgeCardHtml(r) { return NuhPledgeDoc.card(r); }
-function printPledge() { NuhPledgeDoc.print(); }
 
 function renderRequest(r) {
   buildEditMap(r.studentEdits);
@@ -304,7 +320,7 @@ function renderRequest(r) {
   // ماتخترعش رقم طلب — الرقم المصنوع هنا مكانش متخزّن، والطالب كان بيكتبه في
   // صفحة التتبع فمايتلاقاش. الرقم بقى بيتولّد ويتخزّن وقت إنشاء الطلب.
   var reqNum = r.requestNumber || '-';
-  var __pt = document.getElementById('pageTitle'); if (__pt) __pt.textContent = t('rdp_pageTitle')+' - '+reqNum;
+  var __pt = document.getElementById('pageTitle'); if (__pt) __pt.innerHTML = escHtml(t('rdp_pageTitle'))+' - '+escNum(reqNum);
 
   var s = r.student || {};
   var st = (r.status||'').toLowerCase();
@@ -386,7 +402,12 @@ function renderRequest(r) {
 
   /* --- Review history entries (enterprise timeline) --- */
   var historyEntries = [];
-  if (r.requestType === 'self_registration' && r._regHistory) {
+  // ⚠️ الشرط بقى «فيه صفوف» لا «نوع الطلب تسجيل ذاتي»:
+  //    طلب الموظف كان بيتبني من تواريخ الطلب، وموافقة الأمن السيبراني بتنقل
+  //    الطلب مرحلتين في نقرة واحدة فبيتختم تاريخان بنفس اليوزر ونفس اللحظة -
+  //    فيتعرض سطران لإجراء واحد. الصفوف الحقيقية فيها انتقال واحد صحيح،
+  //    والأسماء بتيجي من نفس الخريطة، فالمساران بقوا سطرًا بسطر.
+  if (Array.isArray(r._regHistory) && r._regHistory.length) {
     r._regHistory.forEach(function(h, idx) {
       var wasRejected = NuhWorkflow.isRejected(h.toStage);
       // «طلب معلومات إضافية» مش موافقة ولا رفض — كانت بتتسمّى بالخطأ
@@ -399,7 +420,11 @@ function renderRequest(r) {
       } else if (isInfo) {
         hlbl = t('rdp_stage_needMoreInfo');
       } else {
-        var act = actionNames[h.fromStage];
+        // ⚠️ canonical لا h.fromStage الخام: نفس المرحلة ليها مسمّيان
+        //    (pending_supervisor للطالب و submitted للموظف)، والخريطة تحت
+        //    فيها مسمّى واحد. التوحيد بيقرا sameStageAs من نفس جدول
+        //    RequestWorkflow، فمفيش خريطة تانية تتفارق مع أول مرحلة جديدة.
+        var act = actionNames[NuhWorkflow.canonical(h.fromStage)];
         // احتياطي للسجلات القديمة اللي مالهاش fromStage محفوظ
         var key = act ? (wasRejected ? act.no : act.ok) : stageNames[h.toStage];
         hlbl = key ? t(key) : (h.toStage || '');
@@ -638,7 +663,7 @@ function renderRequest(r) {
     '<div class="card"><div class="card-header">'+
       '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'+
       t('rdp_card_requestInfo')+'</div><div class="card-body"><div class="info-grid">'+
-      '<div class="info-field"><span class="info-label">'+t('rdp_field_requestNumber')+'</span><span class="info-value">'+reqNum+'</span></div>'+
+      '<div class="info-field"><span class="info-label">'+t('rdp_field_requestNumber')+'</span><span class="info-value">'+escNum(reqNum)+'</span></div>'+
       '<div class="info-field"><span class="info-label">'+t('rdp_field_requestType')+'</span><span class="info-value">'+escHtml(requestTypeName(r.requestType))+'</span></div>'+
       '<div class="info-field"><span class="info-label">'+t('rdp_field_status')+'</span><span class="info-value"><span class="badge badge-'+NuhWorkflow.canonical(st)+'">'+(statusMap[st]?t(statusMap[st]):r.status)+'</span></span></div>'+
       '<div class="info-field"><span class="info-label">'+t('rdp_field_submittedBy')+'</span><span class="info-value">'+escHtml(submittedByDisplay)+'</span></div>'+
@@ -662,7 +687,7 @@ function renderRequest(r) {
         '<div class="card"><div class="card-header">'+
           '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'+
           t('rdp_card_bulkDetails')+'</div><div class="card-body"><div class="info-grid">'+
-          '<div class="info-field"><span class="info-label">'+t('rdp_field_brqNumber')+'</span><span class="info-value">'+escHtml(bd.requestNumber||reqNum)+'</span></div>'+
+          '<div class="info-field"><span class="info-label">'+t('rdp_field_brqNumber')+'</span><span class="info-value">'+escNum(bd.requestNumber||reqNum)+'</span></div>'+
           '<div class="info-field"><span class="info-label">'+t('rdp_field_fileName')+'</span><span class="info-value">'+escHtml(bd.fileName||'')+'</span></div>'+
           '<div class="info-field"><span class="info-label">'+t('rdp_field_totalStudents')+'</span><span class="info-value">'+total+'</span></div>'+
           '<div class="info-field"><span class="info-label">'+t('rdp_field_validCount')+'</span><span class="info-value">'+(bd.validCount||0)+'</span></div>'+
@@ -717,7 +742,17 @@ function renderRequest(r) {
       infoField('gender',         t('rdp_field_gender'),     escHtml((genderMap[s.gender]&&t(genderMap[s.gender]))||s.gender||''))+
     '</div></div></div>'+
 
-    /* 3b - Housing Account Card
+    /* 4 - وثيقة التعهّد
+       ⚠️ مكانها هنا مقصود: ترتيب الصفحة بيمشي مع خطوات المراجِع نفسه -
+          مين الطالب (شخصي + أكاديمي) ← إيه اللي وقّع عليه (الوثيقة) ←
+          إيه اللي النظام عمله (حساب الإسكان) ← فين الطلب في المسار
+          (سير العمل) ← إيه اللي حصل بالتفصيل (سجل المراجعات) ← إيه
+          اللي هعمله (إجراءات المراجعة). كانت تحت بين سير العمل والسجل،
+          يعني المراجِع بيقرأ المسار والسجل قبل ما يشوف الوثيقة اللي
+          الطلب كله قايم عليها. */
+    pledgeCardHtml(r)+
+
+    /* 5 - Housing Account Card
        ⚠️ البطاقة دي كانت بكلاسات detail-card / detail-card-header /
           detail-card-content — وهي أسماء **مالهاش أي CSS في المشروع كله**،
           ومستعملة في المكان ده وحده. فالنتيجة إنها كانت تطلع بلا إطار ولا
@@ -736,7 +771,7 @@ function renderRequest(r) {
       '</div>'+
     '</div>'+
 
-    /* 4 - Workflow Timeline (horizontal bar) */
+    /* 6 - Workflow Timeline (horizontal bar) */
     '<div class="card"><div class="card-header">'+
       '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>'+
       t('rdp_card_workflow')+'</div><div class="card-body">'+
@@ -744,7 +779,7 @@ function renderRequest(r) {
       rejectionHtml+
     '</div></div>'+
 
-    /* 4b - Completion success message (only for completed/approved) */
+    /* 6b - Completion success message (only for completed/approved) */
     (st === 'completed' || st === 'approved' ? '<div class="card" style="border:2px solid var(--green);background:var(--green-light)"><div class="card-body" style="text-align:center;padding:24px">'+
       '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#067647" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'+
       '<h3 style="font-size:18px;color:var(--green);margin-bottom:8px">'+t('rdp_msg_accountCreated')+'</h3>'+
@@ -752,17 +787,14 @@ function renderRequest(r) {
       '<p style="font-size:12px;color:var(--gray-500);margin-top:8px">'+t('rdp_msg_credentialsSms')+'</p>'+
     '</div></div>' : '')+
 
-    /* 4c - وثيقة التعهّد */
-    pledgeCardHtml(r)+
-
-    /* 5 - Review History */
+    /* 7 - Review History */
     '<div class="card"><div class="card-header">'+
       '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>'+
       t('rdp_card_reviewHistory')+'</div><div class="card-body"><div class="review-timeline">'+
       historyHtml+
     '</div></div></div>'+
 
-    /* 6 - Review Actions */
+    /* 8 - Review Actions */
     reviewHtml;
 
   loadHousingAccount(s.id);
@@ -832,7 +864,12 @@ async function loadHousingAccount(studentId) {
       //    دقيق للدقيقة يوحي بدقّة مش موجودة.
       adField(t('adLastLogon'), lastLogon, true, t('adLastLogonHint')) +
       adField(t('adLastSync'), s.ad_last_sync_at ? NuhFmt.dateTime(s.ad_last_sync_at) : '-', true) +
-      adField(t('college'), escHtml(collegeName(s.college) || '-')) +
+      // ⚠️ كان فيه سطر «الكلية» هنا واتشال: الكلية بيانات **أكاديمية** لا بيانات
+      //    حساب شبكة، وهي معروضة أصلًا في بطاقة «البيانات الأكاديمية» فوق في
+      //    نفس الصفحة. يعني نفس القيمة كانت مكتوبة مرتين على شاشة واحدة -
+      //    والقارئ بيقارن السطرين بدل ما يقراهم.
+      //    وكانت بتقرا من مفتاح ترجمة تاني (college) غير اللي البطاقة الأكاديمية
+      //    بتقرا منه (rdp_field_college) - مفتاحين لنفس التسمية.
     '</div>';
 
   // ⚠️ إجراءات الحساب (تعطيل/تفعيل الحساب، إعادة تعيين كلمة المرور، سجل إجراءات

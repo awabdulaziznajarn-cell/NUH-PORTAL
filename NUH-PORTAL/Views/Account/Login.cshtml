@@ -53,7 +53,8 @@
        الغامق، والقلب لأبيض هو المعالجة المتعارف عليها للشعار على خلفية غامقة. */
     .login-brand img{width:96px;height:auto;margin-bottom:22px;filter:brightness(0) invert(1)}
     .login-brand h1{font-size:24px;font-weight:800;line-height:1.5;margin-bottom:12px}
-    .login-brand .rule{width:56px;height:3px;background:var(--gold);border-radius:2px;margin-bottom:16px}
+    /* ⚠️ الشريط الذهبي تحت العنوان اتشال - مفيش خطوط ذهبية زخرفية في النظام. */
+    .login-brand .rule{display:none}
     /* ⚠️ شفافية ٨٢٪ لا ٧٢٪: عند ٧٢٪ التباين على الطرف الفاتح من التدرّج
        ٤٫٢٧:١، والمطلوب ٤٫٥:١ للنصّ العادي. */
     .login-brand p{font-size:13.5px;line-height:1.9;color:rgba(255,255,255,.82)}
@@ -129,7 +130,7 @@
   </style>
 </head>
 <body>
-  @* ⚠️ الغطاء هنا مخفي في الأول (is-done) وبيظهر عند إرسال النموذج فقط —
+  @* ⚠️ الغطاء هنا مخفي في الأول (is-done) وبيظهر عند إرسال النموذج فقط -
      مش عند فتح الصفحة. صفحة الدخول مالهاش انتظار، الانتظار بيبدأ لما
      الخادم يروح يتحقّق من كلمة المرور في الدليل النشط. *@
   <div class="nuh-boot is-done" id="nuhBoot">
@@ -160,6 +161,13 @@
 
       <div class="login-title">@SharedLocalizer["login_submit"]</div>
 
+      @* ⚠️ سبب الخروج يتقال للمستخدم. من غير السطر ده بيلاقي نفسه على شاشة
+           الدخول فجأة وهو فاكر إنه شغّال، فيفتكرها عطل في النظام. *@
+      @if (ViewData["Expired"] is true)
+      {
+        <div class="login-error">@SharedLocalizer["pt_idleOverText"]</div>
+      }
+
       @if (ViewData["Error"] is string err && !string.IsNullOrEmpty(err))
       {
         <div class="login-error">@err</div>
@@ -179,7 +187,7 @@
           <label for="password">@SharedLocalizer["login_password"]</label>
           <div class="input-wrap">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            @* ⚠️ كان الـ placeholder نقطًا ‎••••••••‎ — بيبان كأن الخانة متملّية بكلمة مرور
+            @* ⚠️ كان الـ placeholder نقطًا ‎••••••••‎ - بيبان كأن الخانة متملّية بكلمة مرور
                فعلًا، فالمستخدم يضغط «دخول» على خانة فاضية. نصّ صريح زي خانة اسم المستخدم. *@
             <input id="password" name="password" type="password" placeholder="@__passwordPh" autocomplete="current-password" required />
           </div>
@@ -189,7 +197,7 @@
 
       @* ⚠️ السهم كان محرف «←» مكتوب في النصّ، وشكله ثابت مهما كانت اللغة.
          سهم «رجوع» المفروض يشاور ناحية بداية القراءة: يمين في العربي وشمال
-         في الإنجليزي. المحرف الثابت كان صح في العربي وغلط في الإنجليزي —
+         في الإنجليزي. المحرف الثابت كان صح في العربي وغلط في الإنجليزي -
          بيشاور «للأمام» على رابط اسمه «رجوع». بقى SVG بينقلب مع الاتجاه. *@
       <a class="login-back" href="/">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
@@ -217,7 +225,7 @@
 <script>
   // ⚠️ الغطاء بيظهر عند الإرسال ومالوش وقت انتهاء: بيفضل لحد ما المتصفح
   //    ينتقل لصفحة الرد. لو الدليل النشط رد بسرعة بيختفي فورًا مع الانتقال،
-  //    ولو كان بطيء بيفضل مكانه — فمفيش انتظار مصطنع في الحالتين.
+  //    ولو كان بطيء بيفضل مكانه - فمفيش انتظار مصطنع في الحالتين.
   // ⚠️ ومعاه قفل الزرار: من غيره الموظف بيدوس مرتين على «تسجيل الدخول» لما
   //    يحسّ إنها وقفت، فيتبعت طلبين تحقّق للدليل بدل واحد.
   (function () {
@@ -229,10 +237,13 @@
       var b = f.querySelector('button[type=submit],.login-btn');
       if (b) setTimeout(function () { b.disabled = true; }, 0);
     });
-    // ⚠️ الرجوع بزرار Back بيرجّع الصفحة من ذاكرة التنقّل والغطاء لسه ظاهر —
+    // ⚠️ الرجوع بزرار Back بيرجّع الصفحة من ذاكرة التنقّل والغطاء لسه ظاهر -
     //    فبنقفله من جديد، وإلا الموظف يلاقي شاشة بيضا فيها شعار بلا سبب.
     window.addEventListener('pageshow', function () { boot.classList.add('is-done'); });
   })();
 </script>
+  @* ⚠️ نفس السكربت المتولّد اللي بتستعمله صفحات البوابة العامة: صفحة الدخول
+     مالهاش شريط علوي، والشارة لازم تبقى في نفس المكان زي باقي الصفحات. *@
+  <script src="/js/nuh-trial.js"></script>
 </body>
 </html>

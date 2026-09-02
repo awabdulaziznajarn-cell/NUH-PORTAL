@@ -38,7 +38,7 @@ if (connStr.Contains("#{DB_PASSWORD}#"))
     Console.WriteLine("WARNING: Database connection string still contains the default password placeholder. Replace #{DB_PASSWORD}# with the actual password in production.");
 }
 
-// ✅ Localization (.resx) — العربية هي اللغة المحايدة/الافتراضية + الإنجليزية
+// ✅ Localization (.resx) - العربية هي اللغة المحايدة/الافتراضية + الإنجليزية
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 
 // ✅ Controllers with JSON options + توطين الـ Views و DataAnnotations
@@ -48,20 +48,20 @@ builder.Services.AddControllersWithViews()
         options.JsonSerializerOptions.Converters.Add(new UtcDateTimeConverter());
         // gender يفضل "male"/"female" في الـ JSON رغم إنه بقى enum
         options.JsonSerializerOptions.Converters.Add(new NUH_PORTAL.Common.Json.GenderJsonConverter());
-        // باقي الـ enums (أسماؤها snake_case مطابقة للنص) تتسلسل بالاسم — فالـ JSON يفضل زي ما هو
+        // باقي الـ enums (أسماؤها snake_case مطابقة للنص) تتسلسل بالاسم - فالـ JSON يفضل زي ما هو
         options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
     })
     .AddViewLocalization()
     .AddDataAnnotationsLocalization();
 
-// ✅ الثقافات المدعومة — العربية افتراضيًا، واختيار المستخدم (كوكي) يتغلّب على لغة المتصفح
+// ✅ الثقافات المدعومة - العربية افتراضيًا، واختيار المستخدم (كوكي) يتغلّب على لغة المتصفح
 builder.Services.Configure<RequestLocalizationOptions>(options =>
 {
     var supportedCultures = new[] { new CultureInfo("ar"), new CultureInfo("en") };
     options.DefaultRequestCulture = new RequestCulture("ar");
     options.SupportedCultures = supportedCultures;
     options.SupportedUICultures = supportedCultures;
-    // الترتيب الافتراضي للمزوّدات: QueryString ثم Cookie ثم Accept-Language — الكوكي بيتغلّب على المتصفح، وده المطلوب.
+    // الترتيب الافتراضي للمزوّدات: QueryString ثم Cookie ثم Accept-Language - الكوكي بيتغلّب على المتصفح، وده المطلوب.
 });
 
 // ✅ Swagger
@@ -115,14 +115,14 @@ if (jwtKey == "#{JWT_SECRET}#")
 }
 
 
-// ✅ Authentication — سكيم ذكي بيختار تلقائيًا: كوكي MVC (NUH.Auth) لو موجود، وإلا JWT (للـ API/الأدوات).
-// بكده كل الـ [Authorize] — العادية واللي عليها Roles — بتتوثّق بالكوكي من صفحات الـ MVC حتى لو توكن الـ JWT
+// ✅ Authentication - سكيم ذكي بيختار تلقائيًا: كوكي MVC (NUH.Auth) لو موجود، وإلا JWT (للـ API/الأدوات).
+// بكده كل الـ [Authorize] - العادية واللي عليها Roles - بتتوثّق بالكوكي من صفحات الـ MVC حتى لو توكن الـ JWT
 // (staffToken) قديم/منتهي. (الإصلاح القديم بالـ DefaultPolicy كان بيمسك [Authorize] العادية بس، مش اللي عليها Roles.)
-// ✅ ASP.NET Identity (Core) — مخزن المستخدمين/الأدوار/الصلاحيات (زي الـ permit).
+// ✅ ASP.NET Identity (Core) - مخزن المستخدمين/الأدوار/الصلاحيات (زي الـ permit).
 // المصادقة نفسها فاضلة على JWT/Cookie تحت؛ Identity بيوفّر UserManager/RoleManager + الهاشر.
 builder.Services.AddIdentityCore<User>(opt =>
 {
-    // ⚠️ كانت ٦ أحرف بلا أي شرط — يعني "123456" مقبولة. الحسابات المحلية دي
+    // ⚠️ كانت ٦ أحرف بلا أي شرط - يعني "123456" مقبولة. الحسابات المحلية دي
     //    مسار احتياطي بيشتغل لما الأكتف دايركتوري ما يردّش، وساعتها هي الحارس
     //    الوحيد على النظام كله. الشروط دي حد أدنى معقول مش تشديد.
     opt.Password.RequireDigit = true;
@@ -132,12 +132,12 @@ builder.Services.AddIdentityCore<User>(opt =>
     opt.User.RequireUniqueEmail = false;
 
     // ====================================================================
-    //  ⚠️ قفل الحساب — ماكانش موجود خالص.
+    //  ⚠️ قفل الحساب - ماكانش موجود خالص.
     //
     //     النتيجة اللي كانت قائمة: محاولات تخمين بلا أي حد ولا قفل على
     //     نموذج دخول الموظفين. ومسار المصادقة كان بيستخدم
     //     UserManager.CheckPasswordAsync وهي **لا** بتزوّد عدّاد الفشل
-    //     ولا بتفحص القفل — فحتى لو كان مفعّلًا ماكانش هيشتغل.
+    //     ولا بتفحص القفل - فحتى لو كان مفعّلًا ماكانش هيشتغل.
     //
     //     تلات محاولات وربع ساعة: بتوقّف التخمين الآلي عمليًا، وبتسيب مجالًا
     //     للموظف اللي بيغلط في كلمة مروره من غير ما يتقفل عليه يوم كامل.
@@ -162,7 +162,7 @@ builder.Services.AddAuthentication(options =>
         // ⚠️ الترتيب هنا مهم جدًا: هيدر Authorization: Bearer له الأولوية على الكوكي.
         //
         //    قبل كده كان الكوكي بيكسب دايمًا. النتيجة: موظف داخل بحسابه في نفس
-        //    المتصفح (كوكي NUH.Auth موجود) يفتح صفحة تتبع الطالب — الصفحة بتبعت
+        //    المتصفح (كوكي NUH.Auth موجود) يفتح صفحة تتبع الطالب - الصفحة بتبعت
         //    توكن الطالب في الهيدر، لكن السيرفر كان بيتجاهله ويتعامل معاه كأدمن.
         //    فبيرجّعله كل طلبات النظام بدل طلبات صاحب الجوال اللي اتحقق منه.
         //
@@ -193,7 +193,7 @@ builder.Services.AddAuthentication(options =>
         };
 
     })
-    // ✅ Cookie auth لصفحات الـ MVC — جنب الـ JWT (الـ API فاضل زي ما هو على الـ JWT)
+    // ✅ Cookie auth لصفحات الـ MVC - جنب الـ JWT (الـ API فاضل زي ما هو على الـ JWT)
     .AddCookie(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme, options =>
     {
         options.LoginPath = "/Account/Login";
@@ -230,23 +230,23 @@ builder.Services.AddAuthentication(options =>
     });
 
 // ملاحظة: السكيم الذكي "NUH_Smart" فوق بيوثّق كل الـ [Authorize] (العادية واللي
-// عليها Roles) بالكوكي أو الـ JWT حسب الطلب — ده جزء *التوثيق* (إنت مين).
+// عليها Roles) بالكوكي أو الـ JWT حسب الطلب - ده جزء *التوثيق* (إنت مين).
 // أما جزء *التصريح* (هل مسموح لك) فله DefaultPolicy مخصّصة تحت، وسببها مشروح
 // عندها: التوثيق بيقول إن الكوكي صالح، وما بيقولش إن الحساب لسه نشط.
 
-// ✅ Authorization — policy لكل صلاحية (permission)، الكنترولر بيستخدم [Authorize(Policy = "users.manage")]
+// ✅ Authorization - policy لكل صلاحية (permission)، الكنترولر بيستخدم [Authorize(Policy = "users.manage")]
 builder.Services.AddAuthorization(options =>
 {
     foreach (var permission in ApplicationPermissions.All)
         options.AddPolicy(permission.Value, policy => policy.RequireClaim(ClaimConstants.Permission, permission.Value));
 
     // ========================================================================
-    //  ⚠️ السياسة الافتراضية — كل [Authorize] مكتوب بلا Policy بيمرّ من هنا.
+    //  ⚠️ السياسة الافتراضية - كل [Authorize] مكتوب بلا Policy بيمرّ من هنا.
     //
     //     العيب اللي بتقفله: إيقاف الموظف بقى بيشيل أدواره وصلاحياته
     //     (PermissionClaimsTransformation)، فأي شاشة محميّة بصلاحية بترفضه.
-    //     لكن عشر كنترولرات في النظام محميّة بـ [Authorize] مجرّد — يعني
-    //     «أي حد مسجّل دخول» — وأهمها HomeController: لوحة التحكم بتقرا
+    //     لكن عشر كنترولرات في النظام محميّة بـ [Authorize] مجرّد - يعني
+    //     «أي حد مسجّل دخول» - وأهمها HomeController: لوحة التحكم بتقرا
     //     إحصائيات الطلاب وآخر ٦ طلاب بأسمائهم وآخر ٦ طلبات وبترندرهم من
     //     السيرفر. فالموظف الموقوف كان لسه بيشوف الأسماء دي، والقائمة
     //     الجانبية فاضية فمفيش حتى إشارة إنه المفروض مطرود.
@@ -260,7 +260,7 @@ builder.Services.AddAuthorization(options =>
         .Build();
 
     // ⚠️ الاستثناء الوحيد، وهو مقصود مش ثغرة: دي الصفحتان اللي *لازم* الموظف
-    //    الموقوف يوصلهم وهو بلا أي سلطة —
+    //    الموقوف يوصلهم وهو بلا أي سلطة -
     //      • /Account/Denied  لو اتقفلت، رفضها بيحوّل عليها هي نفسها = لوب
     //        تحويل لا نهائي، والمستخدم بيشوفه كأن الصفحة بتعيد تحميل نفسها.
     //      • /Account/Logout  لو اتقفلت، مايقدرش يمسح الكوكي بنفسه ويفضل
@@ -268,7 +268,7 @@ builder.Services.AddAuthorization(options =>
     //    الاتنين مالهمش أي بيانات، فمفيش حاجة تتسرّب منهم.
     options.AddPolicy("signedIn", policy => policy.RequireAuthenticatedUser());
 
-    // ⚠️ السياسة المركّبة الوحيدة في النظام — دونات «حسابات شبكة السكن» في لوحة
+    // ⚠️ السياسة المركّبة الوحيدة في النظام - دونات «حسابات شبكة السكن» في لوحة
     //    التحكم. كل ما فوق صلاحية = سياسة، وده لا يعبّر عن "أو". والدونات دي
     //    أداة الأمن السيبراني: هو من يُنشئ الحساب ويعطّله، لكنه لا يملك
     //    housing.view (شاشة إدارة الحسابات)، فكانت البطاقة تظهر له والطلب
@@ -285,13 +285,30 @@ builder.Services.AddAuthorization(options =>
     //    معاه reports.view وحدها كان بيفتحها ويلاقي نصّها شغّال ونصّها
     //    «تعذر الاتصال بالخادم». والمفارقة إن الأجزاء اللي كانت بتشتغل هي
     //    بالظبط الـ endpoints المفتوحة بلا صلاحية، واللي كان بيفشل هو
-    //    المحميّ صح — يعني الشاشة كانت «شغّالة» بقدر الثغرة فيها.
+    //    المحميّ صح - يعني الشاشة كانت «شغّالة» بقدر الثغرة فيها.
     //    الشرطان معًا: إما تشتغل كاملة أو ما تظهرش أصلًا.
     //    ومكانها هنا لا كصلاحية جديدة في قاعدة البيانات: صلاحية جديدة تحتاج
     //    إسنادًا يدويًا لكل دور وتُنسى مع أول دور يُضاف.
     options.AddPolicy("reports.page", policy => policy.RequireAssertion(ctx =>
         ctx.User.HasClaim(ClaimConstants.Permission, "reports.view") &&
         ctx.User.HasClaim(ClaimConstants.Permission, "auditLogs.view")));
+
+    // ====================================================================
+    //  تسجيل طباعة وثيقة التعهّد (api/PledgeDoc).
+    //
+    //  ⚠️ «أو» لا «و»: الوثيقة بتتطبع من شاشتين - تفاصيل الطلب (requests.view)
+    //     وملف الطالب (students.investigate) - والموظف عنده واحدة منهم مش
+    //     الاتنين بالضرورة. لو طلبنا الاتنين، الأمن السيبراني بيطبع الورقة
+    //     والطباعة مابتتسجّلش، وسجل التحقيق بيبقى ناقص من غير ما حد يلاحظ.
+    //
+    //  ⚠️ ومكانها هنا لا كصلاحية جديدة في قاعدة البيانات: هي مشتقّة من
+    //     صلاحيات موجودة - «اللي بيقدر يفتح الوثيقة يقدر يسجّل طباعتها».
+    //     صلاحية مستقلة كانت هتحتاج إسنادًا يدويًا لكل دور وتُنسى مع أول دور
+    //     جديد. (نفس منطق reports.page فوق.)
+    // ====================================================================
+    options.AddPolicy("pledge.print", policy => policy.RequireAssertion(ctx =>
+        ctx.User.HasClaim(ClaimConstants.Permission, "requests.view") ||
+        ctx.User.HasClaim(ClaimConstants.Permission, "students.investigate")));
 });
 
 // ✅ CORS
@@ -309,7 +326,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-// ✅ Data Protection — تشفير كوكي الجلسة ورموز مكافحة التزوير (AntiForgery)
+// ✅ Data Protection - تشفير كوكي الجلسة ورموز مكافحة التزوير (AntiForgery)
 // من غير الإعداد ده، الـ IIS بيحاول يخزّن المفاتيح في سجل ويندوز تحت ملف تعريف
 // حساب الـ Application Pool. النتيجة:
 //   • لو Load User Profile مقفول → استثناء عند توليد رمز AntiForgery
@@ -320,7 +337,7 @@ var keysPath = Path.Combine(builder.Environment.ContentRootPath, "keys");
 Directory.CreateDirectory(keysPath);
 builder.Services.AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(keysPath))
-    // اسم ثابت — عشان المفاتيح تفضل صالحة حتى لو اتغيّر مسار التطبيق
+    // اسم ثابت - عشان المفاتيح تفضل صالحة حتى لو اتغيّر مسار التطبيق
     .SetApplicationName("NUH-PORTAL");
 
 // ✅ Rate Limiting
@@ -328,14 +345,14 @@ builder.Services.AddMemoryCache();
 
 // ⚠️ الصلاحيات تُقرأ من الدور في كل طلب بدل أن تُطبع في الكوكي/التوكن لحظة
 //    الدخول. بدونها: إضافة صلاحية لا تصل لمن هو مسجَّل دخوله (403 حتى يخرج
-//    ويدخل)، وسحب صلاحية لا يُطبَّق فورًا — وهذه ثغرة لا مجرد إزعاج.
+//    ويدخل)، وسحب صلاحية لا يُطبَّق فورًا - وهذه ثغرة لا مجرد إزعاج.
 builder.Services.AddScoped<Microsoft.AspNetCore.Authentication.IClaimsTransformation,
                            NUH_PORTAL.Core.PermissionClaimsTransformation>();
 
-// ✅ ضغط الردود — الموقع كان بيبعت كل حاجة بدون ضغط.
+// ✅ ضغط الردود - الموقع كان بيبعت كل حاجة بدون ضغط.
 //    صفحة الموظف الواحدة فيها قاموس ترجمة محقون بالـ inline، وده لوحده كان
 //    ~142 كيلوبايت خام لكل تنقّل. مع Brotli بينزل لأقل من 15.
-//    EnableForHttps = true مطلوب لأن الموقع كله HTTPS — من غيرها الضغط
+//    EnableForHttps = true مطلوب لأن الموقع كله HTTPS - من غيرها الضغط
 //    مبيشتغلش أصلاً. (خطر BREACH نظري هنا: توكن الـ antiforgery في
 //    ASP.NET Core متعشّى عشوائيًا في كل رد، والنظام داخلي خلف جدار الجامعة.)
 builder.Services.AddResponseCompression(options =>
@@ -354,20 +371,31 @@ builder.Services.Configure<IpRateLimitOptions>(options =>
     options.RealIpHeader = "X-Real-IP";
     options.GeneralRules = new List<RateLimitRule>
     {
-        // تسجيل الدخول — مكافحة تخمين كلمة المرور
+        // تسجيل الدخول - مكافحة تخمين كلمة المرور
         // ⚠️ القاعدة كانت على /api/Auth/Login بس، ومفيش أي واجهة بتستخدم المسار ده.
         //    نموذج دخول الموظفين الفعلي بيرسل على POST /Account/Login (Views/Account/Login.cshtml)
-        //    وكان بلا أي حد — يعني الحماية كانت على باب مقفول والباب المفتوح جنبه.
-        // ⚠️ القاعدة على /api/Auth/Login اتشالت مع المسار نفسه — الحدّ على مسار
+        //    وكان بلا أي حد - يعني الحماية كانت على باب مقفول والباب المفتوح جنبه.
+        // ⚠️ القاعدة على /api/Auth/Login اتشالت مع المسار نفسه - الحدّ على مسار
         //    مش موجود بيوهم إن الحماية مضاعفة وهي على باب متشال أصلًا.
         new RateLimitRule { Endpoint = "POST:/Account/Login", Period = "1m", Limit = 10 },
-        // إرسال OTP — مكافحة سبام الرسائل وتعداد الأرقام (الخدمة كمان بتمنع طلب قبل مرور دقيقة)
+        // إرسال OTP - مكافحة سبام الرسائل وتعداد الأرقام (الخدمة كمان بتمنع طلب قبل مرور دقيقة)
         new RateLimitRule { Endpoint = "POST:/api/Otp/send", Period = "10m", Limit = 5 },
-        // التحقق من OTP — مكافحة التخمين (الخدمة كمان بتقفل بعد 3 محاولات)
+        // التحقق من OTP - مكافحة التخمين (الخدمة كمان بتقفل بعد 3 محاولات)
         new RateLimitRule { Endpoint = "POST:/api/Otp/verify", Period = "10m", Limit = 10 },
-        // التتبع العام — مكافحة تعداد الطلبات بالأرقام المتسلسلة أو بالموبايل
+        // التتبع العام - مكافحة تعداد الطلبات بالأرقام المتسلسلة أو بالموبايل
         new RateLimitRule { Endpoint = "*:/api/RequestTracking/*", Period = "1m", Limit = 20 },
-        // بدء التسجيل الذاتي — مكافحة السبام
+        // ====================================================================
+        //  التحقّق من وثيقة التعهّد - صفحة عامة بتقرا رمزًا مطبوعًا.
+        //
+        //  ⚠️ الحدّ ده جزء أصيل من قوة الرمز لا إضافة احترازية: بصمة الرمز
+        //     ٣٥ بت، يعني التخمين محتاج مليارات المحاولات - وde آمن **لأن**
+        //     المحاولات محدودة. من غير الحدّ، الصفحة بتبقى أداة تخمين شغّالة
+        //     على مدار الساعة.
+        //  ⚠️ والحدّ على المسار كله (GET الصفحة): مفيش مسار API منفصل عن قصد،
+        //     عشان مايبقاش فيه باب تاني لنفس التحقّق بلا نفس الحدّ.
+        // ====================================================================
+        new RateLimitRule { Endpoint = "*:/Verify*", Period = "1m", Limit = 12 },
+        // بدء التسجيل الذاتي - مكافحة السبام
         new RateLimitRule { Endpoint = "POST:/api/Registration/start", Period = "1h", Limit = 10 },
         // الفحص المبكر: سخيّ بما يكفي للتصحيح الطبيعي، وضيّق بما يمنع التجريب بالجملة
         new RateLimitRule { Endpoint = "POST:/api/Registration/check-duplicate", Period = "1h", Limit = 30 },
@@ -418,11 +446,11 @@ if (adConfig.Port != 636)
 }
 builder.Services.Configure<ActiveDirectoryConfig>(builder.Configuration.GetSection("ActiveDirectory"));
 builder.Services.Configure<ADServiceAccountConfig>(builder.Configuration.GetSection("ADServiceAccount"));
-// سكن أعضاء هيئة التدريس — مسارات الـ OU. في الإعدادات مش في الكود عشان نقل
+// سكن أعضاء هيئة التدريس - مسارات الـ OU. في الإعدادات مش في الكود عشان نقل
 // أو تصحيح اسم OU في الدومين يبقى تعديل إعداد، مش build ونشر.
 builder.Services.Configure<FacultyHousingConfig>(builder.Configuration.GetSection("FacultyHousing"));
 builder.Services.AddSingleton<ActiveDirectoryService>();
-// أماكن حسابات الطلاب في الدليل — مصدر واحد لخدمة الإنشاء ولأدوات التشخيص.
+// أماكن حسابات الطلاب في الدليل - مصدر واحد لخدمة الإنشاء ولأدوات التشخيص.
 // Scoped لأنه بيقرا من ADConfigurations (AppDbContext).
 builder.Services.AddScoped<AdDirectoryLayout>();
 builder.Services.AddScoped<ADProvisioningService>();
@@ -432,7 +460,7 @@ builder.Services.AddScoped<SmsService>();
 builder.Services.AddScoped<IWorkflowService, WorkflowService>();
 builder.Services.AddScoped<IRegistrationService, RegistrationService>();
 
-// ✅ Layered architecture (Repository + UnitOfWork + Mapster) — نمط permits
+// ✅ Layered architecture (Repository + UnitOfWork + Mapster) - نمط permits
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton(Mapster.TypeAdapterConfig.GlobalSettings);
 builder.Services.AddScoped<MapsterMapper.IMapper, MapsterMapper.ServiceMapper>();
@@ -447,7 +475,7 @@ builder.Services.AddScoped<IRequestService, RequestService>();
 builder.Services.AddScoped<IStudentStatusService, StudentStatusService>();
 builder.Services.AddScoped<IWorkflowActionService, WorkflowActionService>();
 builder.Services.AddScoped<ILookupService, LookupService>();
-// بيانات إقلاع الواجهة (قاموس الترجمة + خريطة القوائم) — مخزّنة في IMemoryCache
+// بيانات إقلاع الواجهة (قاموس الترجمة + خريطة القوائم) - مخزّنة في IMemoryCache
 // بدل ما تتبني من الأول في كل طلب صفحة. راجع UiBootstrapService للتفاصيل.
 builder.Services.AddScoped<IUiBootstrapService, UiBootstrapService>();
 builder.Services.AddScoped<ILookupAdminService, LookupAdminService>();
@@ -456,7 +484,7 @@ builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.AddScoped<IRoleAdminService, RoleAdminService>();
 builder.Services.AddScoped<IHousingAccountService, HousingAccountService>();
 builder.Services.AddScoped<ISupervisorHousingTransferService, SupervisorHousingTransferService>();
-// مكان تخزين المرفقات — Singleton لأنه بيقرأ الإعدادات مرة واحدة وبعدها بيحسب مسارات بس.
+// مكان تخزين المرفقات - Singleton لأنه بيقرأ الإعدادات مرة واحدة وبعدها بيحسب مسارات بس.
 // المسار بيتظبط من Storage:AttachmentsRoot في appsettings.
 builder.Services.AddSingleton<IAttachmentStorage, AttachmentStorage>();
 builder.Services.AddScoped<IAuditLogQueryService, AuditLogQueryService>();
@@ -476,7 +504,7 @@ if (svcAcct == null || string.IsNullOrEmpty(svcAcct.Username) || svcAcct.Usernam
     Console.WriteLine("WARNING: ADServiceAccount is not configured. AD management operations (OU validation, account creation) will be unavailable until a service account is configured.");
 }
 
-// ✅ Forwarded Headers — مطلوب عشان يكون الشغل ورا IIS ARR
+// ✅ Forwarded Headers - مطلوب عشان يكون الشغل ورا IIS ARR
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
@@ -485,18 +513,18 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 
 var app = builder.Build();
 
-// ⚠️ مسح ترويسات عنوان العميل اللي بتجي من برّا — لازم يكون أول حاجة خالص.
+// ⚠️ مسح ترويسات عنوان العميل اللي بتجي من برّا - لازم يكون أول حاجة خالص.
 //
 // التطبيق مش ورا أي reverse proxy: IIS مربوط عليه in-process والـ bindings
 // مباشرة (‎:80 و:443)، يعني مفيش حد موثوق بيضيف X-Real-IP أو X-Forwarded-For.
 // ومع كده AspNetCoreRateLimit مضبوط على RealIpHeader = "X-Real-IP" وبيصدّق الترويسة
 // زي ما هي. فأي حد يبعت X-Real-IP بقيمة مختلفة مع كل محاولة يبقى عميل
-// جديد في نظر الحد، وحد الـ 10 محاولات/دقيقة على الدخول يبقى بلا معنى — وكذلك
+// جديد في نظر الحد، وحد الـ 10 محاولات/دقيقة على الدخول يبقى بلا معنى - وكذلك
 // حدود OTP والتتبع والتسجيل الذاتي. بنمسحهم فيبقى المصدر الوحيد للعنوان
 // هو عنوان الاتصال الحقيقي (Connection.RemoteIpAddress) اللي ماينفعش يتزوّر.
 //
 // لو اتحط قدّام المنصة proxy فعلي يوم من الأيام، امسح الـ middleware دي
-// وضيف عنوان الـ proxy في KnownProxies فوق — ماتسيبهمش مفتوحين للكل.
+// وضيف عنوان الـ proxy في KnownProxies فوق - ماتسيبهمش مفتوحين للكل.
 app.Use(async (ctx, next) =>
 {
     ctx.Request.Headers.Remove("X-Real-IP");
@@ -506,36 +534,36 @@ app.Use(async (ctx, next) =>
     await next();
 });
 
-// ✅ Forwarded Headers — لازم يكون أول Middleware
+// ✅ Forwarded Headers - لازم يكون أول Middleware
 app.UseForwardedHeaders();
 
 // ====================================================================
-//  ⏱️ قياس زمن الخادم — يُكتب في ترويسة كل رد.
+//  ⏱️ قياس زمن الخادم - يُكتب في ترويسة كل رد.
 //
 //  ⚠️ ليه ده موجود:
 //     «الصفحة بطيئة» جملة مش قابلة للإصلاح لوحدها. الوقت اللي بيحسّه المستخدم
 //     مجموع ثلاث حاجات مختلفة تمامًا في العلاج: زمن الخادم (استعلام/كود)،
 //     وزمن الشبكة، وزمن المتصفح (رسم وجافاسكريبت). ومن غير رقم، أي إصلاح
-//     بيبقى تخمين — وبيتصلّح الجزء الغلط.
+//     بيبقى تخمين - وبيتصلّح الجزء الغلط.
 //
 //     الترويسة دي بتفصل الجزء الأول عن الباقي: تفتح F12 ← Network ← أي نداء،
 //     ولو Server-Timing قال ٢٠ مللي والنداء واخد ثانيتين، فالمشكلة مش في
 //     الخادم. Server-Timing ترويسة قياسية والمتصفح بيعرضها في تبويب Timing.
 //
 //     وأي طلب بيعدّي الحد المسموح بيتسجّل في **سجل الأخطاء** برسالة عربية
-//     تقول المدة والسبب المرجّح — فالبطء بيبان لوحده بدل ما المستخدم يقول
+//     تقول المدة والسبب المرجّح - فالبطء بيبان لوحده بدل ما المستخدم يقول
 //     «في تأخير» ونفضل نخمّن. الحد من الإعدادات: Diagnostics:SlowRequestMs.
 //
 //  ⚠️ أول middleware عمليًا (بعد ترويسات البروكسي) عشان يقيس كل اللي بعده.
 // ====================================================================
-// الحد الفاصل بين «بطيء» و«طبيعي» — من الإعدادات، الافتراضي ٣ ثوانٍ.
+// الحد الفاصل بين «بطيء» و«طبيعي» - من الإعدادات، الافتراضي ٣ ثوانٍ.
 var slowRequestMs = builder.Configuration.GetValue("Diagnostics:SlowRequestMs", 3000);
 
 app.Use(async (context, next) =>
 {
     var started = System.Diagnostics.Stopwatch.GetTimestamp();
 
-    // الترويسة لازم تتكتب قبل ما يبدأ الرد يتبعت — OnStarting هي اللحظة دي.
+    // الترويسة لازم تتكتب قبل ما يبدأ الرد يتبعت - OnStarting هي اللحظة دي.
     context.Response.OnStarting(() =>
     {
         var ms = System.Diagnostics.Stopwatch.GetElapsedTime(started).TotalMilliseconds;
@@ -550,7 +578,7 @@ app.Use(async (context, next) =>
 
     if (total > slowRequestMs)
     {
-        app.Logger.LogWarning("SLOW {Method} {Path} — {Ms:F0} ms",
+        app.Logger.LogWarning("SLOW {Method} {Path} - {Ms:F0} ms",
             context.Request.Method, context.Request.Path.Value, total);
 
         // يُكتب في سجل الأخطاء برسالة عربية. مؤجّل عن مسار الرد فلا يؤخّر المستخدم.
@@ -560,25 +588,25 @@ app.Use(async (context, next) =>
 });
 
 // ====================================================================
-//  ضغط الردود — قابل للإطفاء من الإعدادات بلا إعادة بناء.
+//  ضغط الردود - قابل للإطفاء من الإعدادات بلا إعادة بناء.
 //
 //  ⚠️ السبب: السجل أثبت إن النداءات ذات الرد الكبير (سجل العمليات، سجل
 //     الأخطاء، سجل الدخول، المستخدمون) بتدخل التطبيق (REQ-IN) وما بتخرجش
 //     أبدًا (لا REQ-OUT)، بينما النداءات ذات الرد الصغير (الإشعارات،
-//     الأدوار، قائمة مستخدمي الفلتر) بترجع في ٤–٣٤ مللي. الحجم هو الفيصل
-//     الوحيد — لا الاستعلام ولا الدور ولا الشاشة.
+//     الأدوار، قائمة مستخدمي الفلتر) بترجع في ٤-٣٤ مللي. الحجم هو الفيصل
+//     الوحيد - لا الاستعلام ولا الدور ولا الشاشة.
 //
 //     ودي بصمة تعارض في الضغط: التطبيق بيضغط الرد و IIS بيضغطه كمان،
 //     فالرد الصغير بيعدّي (تحت عتبة IIS) والكبير بيقف. إطفاء طبقة واحدة
-//     بيحسم السبب، ولو اتأكد يفضل الضغط عند IIS وحده — وده أكفأ أصلًا
+//     بيحسم السبب، ولو اتأكد يفضل الضغط عند IIS وحده - وده أكفأ أصلًا
 //     لأنه بيحصل خارج عملية التطبيق.
 //
 //     ⚠️ النتيجة بعد التجربة: الضغط لم يكن السبب. السبب كان منحة ذاكرة
 //        ضخمة في SQL Server (RESOURCE_SEMAPHORE) من وسيط قائمة يُترجَم إلى
 //        OPENJSON. فعاد الضغط للعمل داخل التطبيق، وأُطفئ الضغط الديناميكي في
-//        IIS من web.config — طبقة واحدة تضغط، لا اثنتان.
+//        IIS من web.config - طبقة واحدة تضغط، لا اثنتان.
 //
-//     المفتاح: "ResponseCompression:Enabled" في appsettings — الافتراضي true.
+//     المفتاح: "ResponseCompression:Enabled" في appsettings - الافتراضي true.
 // ====================================================================
 if (builder.Configuration.GetValue("ResponseCompression:Enabled", true))
     app.UseResponseCompression();
@@ -590,10 +618,10 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 // التعديلات اللي كانت بتتنفّذ هنا وقت التشغيل (drop CHECK / add bulk_request_id / varchar→nvarchar)
 // أصبحت متضمّنة في الـ migrations واتشالت. لتهيئة قاعدة بيانات جديدة استخدم: dotnet ef database update
 
-// ✅ الأدوار وصلاحياتها — في كل البيئات، لأنها بيانات أساسية مش بيانات تطوير.
+// ✅ الأدوار وصلاحياتها - في كل البيئات، لأنها بيانات أساسية مش بيانات تطوير.
 // من غيرها جدول AspNetRoleClaims بيفضل فاضي، فكل [Authorize(Policy = "...")] بيفشل،
 // وبما إن AccessDeniedPath تحت هو نفسه صفحة الدخول، المستخدم بيبان كأنه بيتسجّل
-// خروج فور ما يدخل — وهو في الحقيقة داخل بس بصفر صلاحيات.
+// خروج فور ما يدخل - وهو في الحقيقة داخل بس بصفر صلاحيات.
 // try/catch عشان لو الـ migration لسه ماتطبّقتش مايكسرش الإقلاع.
 try
 {
@@ -616,11 +644,11 @@ try
 }
 catch (Exception ex)
 {
-    app.Logger.LogWarning(ex, "Role/permission seeding skipped — run 'dotnet ef database update' first.");
+    app.Logger.LogWarning(ex, "Role/permission seeding skipped - run 'dotnet ef database update' first.");
 }
 
-// ✅ Seed dev users (Development فقط) — للدخول عبر local fallback من غير AD
-// بينشئ: admin / cyber / supervisor / user — كلهم بالباسورد Test@123
+// ✅ Seed dev users (Development فقط) - للدخول عبر local fallback من غير AD
+// بينشئ: admin / cyber / supervisor / user - كلهم بالباسورد Test@123
 if (app.Environment.IsDevelopment())
 {
     using var seedScope = app.Services.CreateScope();
@@ -641,15 +669,15 @@ if (app.Environment.IsDevelopment())
 //
 //    والتعليق اللي كان فوقها بيوضّح إزاي حصل ده: هي اتكتبت لمّا كان الـ seeder
 //    بيشتغل في بيئة التطوير بس، فكان لازم حاجة تستكمل صلاحيات admin في
-//    الإنتاج. بعدين الـ seeder اتنقل يشتغل في كل البيئات — والكتلة دي فضلت
+//    الإنتاج. بعدين الـ seeder اتنقل يشتغل في كل البيئات - والكتلة دي فضلت
 //    مكانها، وبقت الصلاحية بتتمنح مرتين من مكانين مالهمش علاقة ببعض.
 //
 //    والحاجة اللي كانت بتحلّها لسه متحلّة: صلاحية جديدة في نسخة أحدث لازم
-//    توصل admin وإلا الشاشة الجديدة تفضل مقفولة على الكل — بس دي بقت في
+//    توصل admin وإلا الشاشة الجديدة تفضل مقفولة على الكل - بس دي بقت في
 //    GrantNewPermissionsToAdminAsync، وبطريقة بتفرّق بين «صلاحية جديدة على
 //    النظام» و«صلاحية اتشالت بإيد مدير النظام».
 
-// ✅ زرع القوائم المرجعية (lookups) — في كل البيئات لأنها بيانات أساسية.
+// ✅ زرع القوائم المرجعية (lookups) - في كل البيئات لأنها بيانات أساسية.
 // try/catch عشان لو الـ migration الخاصة بالقوائم لسه ماتطبّقتش مايكسرش الإقلاع.
 try
 {
@@ -660,7 +688,7 @@ try
 }
 catch (Exception ex)
 {
-    app.Logger.LogWarning(ex, "Lookup seeding skipped — run 'dotnet ef database update' first (lookup tables may not exist yet).");
+    app.Logger.LogWarning(ex, "Lookup seeding skipped - run 'dotnet ef database update' first (lookup tables may not exist yet).");
 }
 
 // ====================================================================
@@ -670,13 +698,13 @@ catch (Exception ex)
 //     الأكواد (زي ad_provisioning أو user_created) بتتولد في الكود C#،
 //     ونصوصها المعروضة عايشة في ملف ترجمة منفصل. مفيش رابط بين الاتنين،
 //     فلو كود اتضاف من غير مفتاح ترجمة، الشاشة بتعرض الكود الخام للمستخدم
-//     — وماحدش بيعرف غير لما حد يشوفه بعينه في الإنتاج. وده اللي حصل فعلًا.
+//     - وماحدش بيعرف غير لما حد يشوفه بعينه في الإنتاج. وده اللي حصل فعلًا.
 //
 //     الفحص ده بيقرأ الأكواد *الموجودة فعلًا في قاعدة البيانات* (مش من قراءة
 //     الكود، عشان ما يفوتوش حاجة)، ويقارنها بملف الترجمة، ويكتب تحذيرًا في
 //     السجل بأي كود بلا نص. فالنقص بيبان في سجل الأخطاء بدل شاشة المستخدم.
 //
-//  استعلامان صغيران مرة واحدة عند الإقلاع — بلا أي تكلفة على الطلبات.
+//  استعلامان صغيران مرة واحدة عند الإقلاع - بلا أي تكلفة على الطلبات.
 // ====================================================================
 try
 {
@@ -708,7 +736,7 @@ try
 
     if (missing.Count > 0)
         app.Logger.LogWarning(
-            "MISSING UI TEXT — {Count} code(s) appear on screen as raw codes because they have no key in SharedResource.resx: {Keys}",
+            "MISSING UI TEXT - {Count} code(s) appear on screen as raw codes because they have no key in SharedResource.resx: {Keys}",
             missing.Count, string.Join(", ", missing));
 }
 catch (Exception ex)
@@ -722,7 +750,7 @@ catch (Exception ex)
 //  ⚠️ العيب اللي بيعالجه:
 //     كل [Authorize(Policy = "...")] بيشاور على اسم نصّي، والأسماء دي
 //     بتتسجّل من ApplicationPermissions.All فوق. لو الاسم في الكنترولر
-//     مش موجود في القائمة، ASP.NET بيرمي استثناء وقت الطلب — يعني الشاشة
+//     مش موجود في القائمة، ASP.NET بيرمي استثناء وقت الطلب - يعني الشاشة
 //     بترجّع 500 والمستخدم مايعرفش السبب، والمطوّر مايكتشفش غير بالصدفة.
 //
 //     وده حصل فعلًا: "requests.process" و "students.manage" كانوا مكتوبين
@@ -757,23 +785,95 @@ try
 
     if (unknown.Count > 0)
         app.Logger.LogError(
-            "UNKNOWN AUTHORIZATION POLICY — {Count} policy name(s) used in controllers do not exist in ApplicationPermissions.All. Every endpoint using them returns 500: {Names}",
+            "UNKNOWN AUTHORIZATION POLICY - {Count} policy name(s) used in controllers do not exist in ApplicationPermissions.All. Every endpoint using them returns 500: {Names}",
             unknown.Count, string.Join(", ", unknown));
     else
-        app.Logger.LogInformation("Authorization policy check passed — {Count} permissions registered.", known.Count);
+        app.Logger.LogInformation("Authorization policy check passed - {Count} permissions registered.", known.Count);
 }
 catch (Exception ex)
 {
     app.Logger.LogWarning(ex, "Authorization policy check skipped.");
 }
 
-// ✅ Security headers — حماية أساسية على مستوى كل الردود
+// ============================================================================
+//  ترويسات الأمان - على كل ردّ.
+//
+//  ⚠️ سياسة المحتوى (CSP) اتضافت لأن الواجهة بتبني HTML بـ innerHTML في ١٢٣
+//     موضع. الهروب (escHtml) مطبَّق في كل موضع منهم - اتفحصوا واحدًا واحدًا -
+//     لكن ده بيعتمد على إن كل تعديل جاي يفتكر يستعمله. الـ CSP هي الشبكة اللي
+//     بتمسك أول سهو، والفرق بينها وبين الهروب إنها بتشتغل من غير ما حد يفتكرها.
+//
+//  ⚠️ السياسة المطبَّقة فيها 'unsafe-inline' للسكربتات **مؤقتًا**: التخطيط
+//     والشاشات فيها سكربتات مكتوبة جوّه الصفحات، ومنعها النهاردة بيكسر النظام.
+//     ومع ذلك هي مش بلا قيمة - من غير أي تعديل تاني هي بتمنع:
+//       • تحميل سكربت من دومين تاني (فحقن XSS مايقدرش يجيب حمولته من بره)
+//       • إرسال أي نموذج لدومين تاني (سرقة بيانات النماذج)
+//       • حقن <base> اللي بيحوّل كل الروابط النسبية لدومين المهاجم
+//       • الإضافات والكائنات المدمجة (object/embed)
+//       • تضمين الصفحة في إطار من دومين تاني
+//
+//  ⚠️ والترويسة التانية (Report-Only) هي السياسة **المستهدَفة** بلا
+//     'unsafe-inline': مابتمنعش حاجة، بتسجّل المخالفات في وحدة تحكّم المتصفح
+//     بس. تشغّل النظام يومين، تشوف قدّ إيه سكربت داخلي محتاج نقل لملف أو
+//     nonce، وبعدين تتحوّل السياسة الأولى للمستهدَفة وتتشال دي.
+//     من غير الخطوة دي كان لازم نختار بين سياسة بتكسر شاشات لا حد يعرف
+//     أنهي واحدة، وسياسة مابتحميش - والاتنين غلط.
+//
+//  ⚠️ ومفيش أي دومين خارجي مسموح: النظام كله بيحمّل من نفسه. كان فيه استثناء
+//     واحد لـ cdn.jsdelivr.net في شاشة التقارير واتشال مع التحميل الاحتياطي
+//     نفسه (الشرح في Views/Reports/Index.cshtml). القاعدة دي هي أقوى حاجة في
+//     السياسة: حقن XSS مايقدرش يجيب حمولته من بره مهما كان.
+// ============================================================================
+
+// المطبَّقة دلوقتي - مافيهاش أي احتمال كسر
+const string CspEnforced =
+    "default-src 'self'; " +
+    "script-src 'self' 'unsafe-inline'; " +
+    "style-src 'self' 'unsafe-inline'; " +
+    // ⚠️ blob: مطلوبة لمعاينة المرفق قبل رفعه: الشاشة بتعمل
+    //    URL.createObjectURL للملف اللي المستخدم اختاره وبتعرضه في <img>،
+    //    والعنوان ده blob: لا 'self'. من غيرها الصورة كانت بتتحجب بصمت -
+    //    نافذة المعاينة بتفتح وفيها اسم الملف بس (نصّ alt لصورة مكسورة)،
+    //    ومفيش أي رسالة تقول إن السبب سياسة المحتوى.
+    // ⚠️ وهي مش توسعة للسياسة: عناوين blob: بتتولّد جوّه الصفحة نفسها من
+    //    ملف في يد المستخدم، فمالهاش مصدر خارجي أصلًا.
+    "img-src 'self' data: blob:; " +
+    "font-src 'self' data:; " +
+    "connect-src 'self'; " +
+    "object-src 'none'; " +
+    "base-uri 'self'; " +
+    "form-action 'self'; " +
+    "frame-ancestors 'self'";
+
+// المستهدَفة - بتتسجّل بس، والفرق الوحيد إن السكربتات الداخلية ممنوعة
+const string CspTarget =
+    "default-src 'self'; " +
+    "script-src 'self'; " +
+    "style-src 'self' 'unsafe-inline'; " +
+    "img-src 'self' data: blob:; " +
+    "font-src 'self' data:; " +
+    "connect-src 'self'; " +
+    "object-src 'none'; " +
+    "base-uri 'self'; " +
+    "form-action 'self'; " +
+    "frame-ancestors 'self'";
+
 app.Use(async (context, next) =>
 {
     var h = context.Response.Headers;
     h["X-Content-Type-Options"] = "nosniff";                  // منع المتصفح من تخمين نوع المحتوى
     h["X-Frame-Options"] = "SAMEORIGIN";                      // منع تضمين الصفحات في إطارات خارجية (clickjacking)
     h["Referrer-Policy"] = "strict-origin-when-cross-origin";
+
+    // ⚠️ الصلاحيات دي النظام مابيستعملهاش، وقفلها بيمنع أي سكربت محقون
+    //    يطلبها من المستخدم باسم الموقع.
+    h["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=(), usb=()";
+
+    // ⚠️ مسار المرفقات بيحطّ سياسته الأشدّ (default-src 'none') بعد كده
+    //    وبيستبدل دي - وde مقصود: ملف مرفوع من مستخدم مالوش يشغّل أي حاجة.
+    h["Content-Security-Policy"] = CspEnforced;
+    h["Content-Security-Policy-Report-Only"] = CspTarget;
+
     await next();
 });
 
@@ -790,7 +890,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-// ✅ HttpsRedirection — يتفعّل فقط لو التطبيق مش ورا Proxy بيعمل TLS termination
+// ✅ HttpsRedirection - يتفعّل فقط لو التطبيق مش ورا Proxy بيعمل TLS termination
 var httpsRedirectEnabled = builder.Configuration.GetValue<bool?>("HttpsRedirect:Enabled");
 if (httpsRedirectEnabled == true)
 {
@@ -802,23 +902,23 @@ app.UseIpRateLimiting();
 
 app.UseCors("AllowFrontend");
 
-// ✅ توطين الطلب — يحدد ثقافة الطلب من الكوكي قبل ترندرة أي صفحة MVC (لازم قبل الـ endpoints)
+// ✅ توطين الطلب - يحدد ثقافة الطلب من الكوكي قبل ترندرة أي صفحة MVC (لازم قبل الـ endpoints)
 app.UseRequestLocalization();
 
 // ✅ الترتيب مهم
 app.UseAuthentication();
 
-// ✅ Session activity middleware — bقفل نداءات الـ API بعد 15 دقيقة خمول
+// ✅ Session activity middleware - bقفل نداءات الـ API بعد 15 دقيقة خمول
 //
 // ⚠️⚠️ باج أقفل النظام على كل المستخدمين (٤ أغسطس ٢٠٢٦):
 //    الكود القديم كان بيرجّع 401 ويعمل return **قبل** ما يحدّث أو يمسح القيمة
 //    المخزّنة، والقيمة دي عمرها كان ٨ ساعات. النتيجة: أول ما مستخدم يعدّي ١٥ دقيقة
-//    خمول، القيمة القديمة بتفضل مكانها وكل نداء بعد كده بيقع في نفس الشرط —
+//    خمول، القيمة القديمة بتفضل مكانها وكل نداء بعد كده بيقع في نفس الشرط -
 //    حتى بعد تسجيل دخول جديد بكوكي جديد، لأن المفتاح مربوط برقم المستخدم مش
 //    بالجلسة. يعني المستخدم بيتقفل ٨ ساعات كاملة أو لحد ما التطبيق يعيد التشغيل.
 //
 //    الأعراض كانت مضلّلة: صفحات الـ MVC بتفتح 200 عادي (الفحص ده على /api بس)
-//    وكل نداء API بيرجّع 401، والجافاسكريبت بيحوّل على صفحة الدخول — فالمستخدم
+//    وكل نداء API بيرجّع 401، والجافاسكريبت بيحوّل على صفحة الدخول - فالمستخدم
 //    بيشوف نفسه «بيدخل ويطلع» وهو في الحقيقة داخل وجلسته سليمة.
 //
 //    الإصلاح: امسح القيمة وقت انتهاء الجلسة (فتسجيل الدخول التالي يشتغل عادي)،
@@ -830,29 +930,41 @@ app.Use(async (context, next) =>
         !context.Request.Path.StartsWithSegments("/api/Auth/Ping"))
     {
         var userId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (userId != null)
+        // ⚠️ TryParse لا Parse: العلامة دي جاية من التوكن/الكوكي، وأي قيمة مش
+        //    رقمية كانت هترمي استثناء في الميدلوير - يعني 500 على كل نداء API.
+        if (int.TryParse(userId, out var activityUserId))
         {
             var cache = context.RequestServices.GetRequiredService<IMemoryCache>();
-            var cacheKey = "activity_" + userId;
+            var cacheKey = NUH_PORTAL.Core.SessionPolicy.ActivityKey(activityUserId);
             // لو فيه نشاط سابق مسجّل وعدّت عليه مهلة الخمول → اقفل الجلسة.
-            // الرقم من Core/SessionPolicy.cs — نفس اللي بتقراه الواجهة، فما يفترقوش.
+            // الرقم من Core/SessionPolicy.cs - نفس اللي بتقراه الواجهة، فما يفترقوش.
             if (cache.TryGetValue(cacheKey, out DateTime lastActivity) &&
                 (DateTime.UtcNow - lastActivity).TotalMinutes > NUH_PORTAL.Core.SessionPolicy.IdleTimeoutMinutes)
             {
-                // امسح العدّاد الأول — من غير السطر ده المستخدم يفضل مقفول حتى بعد
+                // امسح العدّاد الأول - من غير السطر ده المستخدم يفضل مقفول حتى بعد
                 // ما يسجّل دخول من جديد، وده بالظبط اللي كان بيحصل.
                 cache.Remove(cacheKey);
 
-                // انتهت الجلسة بعدم النشاط — نسجّل خروج كوكي الـ MVC كمان عشان صفحة الدخول
+                // انتهت الجلسة بعدم النشاط - نسجّل خروج كوكي الـ MVC كمان عشان صفحة الدخول
                 // متردّش المستخدم على الصفحة تاني (كسر لوب التحويل)، ونرجّع 401 للنداء الحالي.
                 await context.SignOutAsync(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme);
                 context.Response.StatusCode = 401;
                 return;
             }
-            // حدّث آخر نشاط على كل طلب مُصادَق عليه (نافذة منزلقة) — مش معتمد على /Ping بس.
+            // حدّث آخر نشاط على كل طلب مُصادَق عليه (نافذة منزلقة) - مش معتمد على /Ping بس.
             // العمر ساعة: أطول من نافذة الخمول بكتير فالفحص شغّال، وقصير كفاية إن أي
             // قيمة عالقة تختفي لوحدها بدل ما تقفل مستخدم يوم شغل كامل.
-            cache.Set(cacheKey, DateTime.UtcNow, TimeSpan.FromHours(1));
+            //
+            // ⚠️ استثناء النداءات الخلفية: جرس الإشعارات بينادي كل ٣٠ ثانية وشارة
+            //    الطلبات كل ٦٠ ثانية، وهما شغّالين والمستخدم سايب الشاشة. لو جدّدنا
+            //    وقت النشاط منهم، «آخر نشاط» عمره ما هيعدّي ٣٠ ثانية ومهلة الخمول
+            //    عمرها ما هتتحقّق ما دام التبويب مفتوح - وده اللي كان بيمنع الخروج
+            //    التلقائي أصلًا. النداء الخلفي بيتفحص عادي (فبياخد 401 لما تنتهي
+            //    الجلسة) لكنه ما بيمدّهاش.
+            var isBackgroundPoll = context.Request.Headers
+                .ContainsKey(NUH_PORTAL.Core.SessionPolicy.BackgroundPollHeader);
+            if (!isBackgroundPoll)
+                cache.Set(cacheKey, DateTime.UtcNow, TimeSpan.FromHours(1));
         }
     }
     await next();
@@ -863,9 +975,9 @@ app.UseAuthorization();
 app.MapControllers();
 
 // ✅ تحويلات الصفحات القديمة → صفحات الـ MVC الجديدة
-// الملفات القديمة لسه موجودة على الديسك كباك أب، بس أي رابط ليها بيترمي على الجديد —
+// الملفات القديمة لسه موجودة على الديسك كباك أب، بس أي رابط ليها بيترمي على الجديد -
 // كده السايدبار والشكل موحدين في كل الشاشات مهما كان مصدر الرابط (هيستوري/بوكمارك/لينك جوه صفحة قديمة).
-// (index.html بوابة الدخول بره الخريطة دي عمدًا — هي نقطة البداية زي ما هي)
+// (index.html بوابة الدخول بره الخريطة دي عمدًا - هي نقطة البداية زي ما هي)
 var legacyPageMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
 {
     ["/dashboard.html"] = "/Home",
@@ -878,7 +990,7 @@ var legacyPageMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreC
     ["/reports.html"] = "/Reports",
     ["/auditlog.html"] = "/AuditLog",
     // شاشة المغادرة اتشالت بالكامل (محتواها كان مكرّرًا حرفيًا في /StudentStatus)
-    // ومحدش كان بيستخدم روابطها، فمفيش تحويل — /Departure بترجع 404.
+    // ومحدش كان بيستخدم روابطها، فمفيش تحويل - /Departure بترجع 404.
     ["/login.html"] = "/Account/Login",
     ["/login-v2.html"] = "/Account/Login",
     ["/login-lang.html"] = "/Account/Login",
@@ -895,7 +1007,7 @@ app.Use(async (context, next) =>
 {
     var path = context.Request.Path.Value ?? string.Empty;
 
-    // تفاصيل الطلب القديمة بتشيل الـ id من الكويري — ننقله للراوت الجديد
+    // تفاصيل الطلب القديمة بتشيل الـ id من الكويري - ننقله للراوت الجديد
     if (path.Equals("/request-details.html", StringComparison.OrdinalIgnoreCase))
     {
         var id = context.Request.Query["id"].ToString();
@@ -917,7 +1029,7 @@ app.Use(async (context, next) =>
 //    الوصول المشروع كله بيعدّي من كنترولرات بتتحقق من الصلاحية:
 //      /api/supervisor/housing-transfer/{id}/attachment
 //      /api/student-status/{actionId}/attachment
-//    فالمسار المباشر مقفول هنا. 404 مش 403 — عشان ما نأكّدش وجود الملف أصلًا.
+//    فالمسار المباشر مقفول هنا. 404 مش 403 - عشان ما نأكّدش وجود الملف أصلًا.
 app.Use(async (context, next) =>
 {
     if (context.Request.Path.StartsWithSegments("/uploads", StringComparison.OrdinalIgnoreCase))
@@ -937,19 +1049,19 @@ app.UseStaticFiles(new StaticFileOptions
     OnPrepareResponse = ctx =>
     {
         var path = ctx.Context.Request.Path;
-        // "no-store" كانت بتمنع المتصفح من تخزين أي ملف — يعني site.css وكل ملفات
+        // "no-store" كانت بتمنع المتصفح من تخزين أي ملف - يعني site.css وكل ملفات
         // الـ JS بتتحمّل من الأول مع كل تنقّل بين الصفحات (request-details-page.js
         // لوحده 47 كيلوبايت). ده كان السبب الظاهر لإحساس "الصفحة بتعمل load".
         //
         // "no-cache" لوحدها بتخلّي المتصفح يخزّن الملف *و* يسأل السيرفر كل مرة
         // بـ If-None-Match؛ لو الملف ما اتغيّرش السيرفر بيرد 304 من غير جسم
-        // (~200 بايت بدل 47 كيلوبايت). يعني نفس أمان النشر بالظبط — مفيش نسخة
-        // قديمة بتتقدّم بعد أي publish — بس من غير إعادة التحميل.
+        // (~200 بايت بدل 47 كيلوبايت). يعني نفس أمان النشر بالظبط - مفيش نسخة
+        // قديمة بتتقدّم بعد أي publish - بس من غير إعادة التحميل.
         if (path.HasValue && (path.Value.EndsWith(".html") || path.Value.EndsWith(".js") || path.Value.EndsWith(".css")))
         {
             // الـ .html فاضلة "no-store" زي ما كانت: دي كمان بتعطّل الـ bfcache، يعني
             // زر Back بعد تسجيل الخروج ما يقدرش يرجّع صفحة محمية من ذاكرة التنقّل.
-            // مفيش مكسب أداء ضايع هنا — صفحات الموظفين MVC مش ملفات ثابتة أصلاً.
+            // مفيش مكسب أداء ضايع هنا - صفحات الموظفين MVC مش ملفات ثابتة أصلاً.
             var isHtml = path.Value.EndsWith(".html");
             ctx.Context.Response.Headers.Append("Cache-Control",
                 isHtml ? "no-cache, no-store, must-revalidate" : "no-cache, must-revalidate");
@@ -959,9 +1071,9 @@ app.UseStaticFiles(new StaticFileOptions
                 ctx.Context.Response.Headers.Append("Expires", "0");
             }
         }
-        // الخطوط والصور مابتتغيّرش — بنخلّي المتصفح يخزّنها بدل ما يسألنا عنها كل مرة.
+        // الخطوط والصور مابتتغيّرش - بنخلّي المتصفح يخزّنها بدل ما يسألنا عنها كل مرة.
         // خطوط IBM Plex Arabic لوحدها ~٩٠ كيلوبايت، ولحد ما تتحمّل النص العربي بيبان
-        // بخط بديل أو مايبانش خالص — وde شكله للمستخدم "الصفحة بتعمل load".
+        // بخط بديل أو مايبانش خالص - وde شكله للمستخدم "الصفحة بتعمل load".
         // ملحوظة: Ctrl+F5 بيتخطّى الكاش دايمًا، فالقياس الصح يبقى بـ F5 عادية.
         if (path.HasValue)
         {
@@ -971,7 +1083,7 @@ app.UseStaticFiles(new StaticFileOptions
                        || p2.EndsWith(".gif") || p2.EndsWith(".svg") || p2.EndsWith(".ico");
 
             // الخطوط: ٣٠ يوم + immutable (عمرها ما بتتغيّر).
-            // الصور: ٧ أيام — لو غيّرت الشعار هيتحدّث خلال أسبوع أو مع أول Ctrl+F5.
+            // الصور: ٧ أيام - لو غيّرت الشعار هيتحدّث خلال أسبوع أو مع أول Ctrl+F5.
             if (isFont)
                 ctx.Context.Response.Headers.Append("Cache-Control", "public, max-age=2592000, immutable");
             else if (isImage)

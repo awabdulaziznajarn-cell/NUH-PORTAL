@@ -1,6 +1,9 @@
 ﻿@model NUH_PORTAL.ViewModels.StudentsIndexViewModel
 @{
-    ViewData["Title"] = SharedLocalizer["Page_Students"].Value;
+    // ⚠️ العنوان من Core/GenderScope.TitleKey لا شرط مكتوب هنا - نفس القرار
+    //    بيتكرّر في أربع مواضع في الشاشة والقائمة الجانبية.
+    var titleKey = NUH_PORTAL.Core.GenderScope.TitleKey("Page_Students", Model.Scope);
+    ViewData["Title"] = SharedLocalizer[titleKey].Value;
     // الأزرار بتتحكّم فيها الصلاحية مش الدور — والفحص الحقيقي على السيرفر
     // (StudentsController + StudentService)؛ ده إخفاء واجهة بس.
     // ⚠️ نظير housingUnitText في wwwroot/i18n.js حرفًا بحرف - «الدور 3 · شقة 15 · غرفة 5».
@@ -76,32 +79,40 @@
 @* ⚠️ الشاشتين دول (الطلاب وحسابات السكن) كانوا الوحيدين من غير ترويسة صفحة
    (عنوان + وصف)، فالمحتوى كان بيبدأ من مكان مختلف عن باقي الشاشات. *@
 <div class="page-header">
-  <h2>@SharedLocalizer["Page_Students"]</h2>
-  <p>@SharedLocalizer["stu_pageSubtitle"]</p>
+  <h2>@SharedLocalizer[titleKey]</h2>
+  <p>@SharedLocalizer[NUH_PORTAL.Core.GenderScope.TitleKey("stu_pageSubtitle", Model.Scope)]</p>
 </div>
 
-<div class="stats-row">
-  <div class="stat-pill">
-    <div class="stat-pill-num" id="cnt-total">@Model.Stats.total</div>
-    <div class="stat-pill-label" >@SharedLocalizer["stu_total"]</div>
+@* ⚠️ .stat-card من css/components.css لا .stat-pill المحلية: كانت مكوّنًا
+   تانيًا بمقاسات تانية (رقم ٢٨ ووزن ٩٠٠ وحشو ١٨/٢٤) - فبطاقات الشاشة دي
+   كانت مختلفة عن بطاقات الرئيسية بلا سبب، وأي تعديل على واحدة بيسيب التانية.
+   والأيقونة الخلفية جزء من المكوّن، فبتيجي معاه بلا CSS إضافي هنا. *@
+<div class="stats-grid">
+  <div class="stat-card">
+    <span class="stat-ghost" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+    <span class="stat-num" id="cnt-total">@Model.Stats.total</span>
+    <span class="stat-label" >@SharedLocalizer[NUH_PORTAL.Core.GenderScope.TitleKey("stu_total", Model.Scope)]</span>
   </div>
-  <div class="stat-pill">
-    <div class="stat-pill-num" style="color:#0F6E56" id="cnt-active">@Model.Stats.active</div>
-    <div class="stat-pill-label" >@SharedLocalizer["stu_active"]</div>
+  <div class="stat-card">
+    <span class="stat-ghost" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></span>
+    <span class="stat-num" id="cnt-active">@Model.Stats.active</span>
+    <span class="stat-label" >@SharedLocalizer["stu_active"]</span>
   </div>
-  <div class="stat-pill">
-    <div class="stat-pill-num" style="color:#92400E" id="cnt-pending">@Model.Stats.submitted</div>
-    <div class="stat-pill-label" >@SharedLocalizer["stu_pending"]</div>
+  <div class="stat-card">
+    <span class="stat-ghost" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+    <span class="stat-num" id="cnt-pending">@Model.Stats.submitted</span>
+    <span class="stat-label" >@SharedLocalizer["stu_pending"]</span>
   </div>
-  <div class="stat-pill">
-    <div class="stat-pill-num" style="color:#8891A8" id="cnt-left">@Model.Stats.left</div>
-    <div class="stat-pill-label" >@SharedLocalizer["stu_leftLabel"]</div>
+  <div class="stat-card">
+    <span class="stat-ghost" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
+    <span class="stat-num" id="cnt-left">@Model.Stats.left</span>
+    <span class="stat-label" >@SharedLocalizer["stu_leftLabel"]</span>
   </div>
 </div>
 
 <div class="card">
   <div class="card-header">
-    <div >@SharedLocalizer["stu_registered"]</div>
+    <div >@SharedLocalizer[NUH_PORTAL.Core.GenderScope.TitleKey("stu_registered", Model.Scope)]</div>
     <div class="card-tools">
       <div class="search-wrap">
         <input id="searchBox" type="text" placeholder='@(SharedLocalizer["stu_searchPlaceholder"].Value)' />
@@ -150,7 +161,11 @@
         @foreach (var s in Model.Page.Items)
         {
           i++;
-          <tr>
+          @* ⚠️ ‏is-warn: شريط كهرماني على حافة الصفّ - ساكن حالي بلا حساب شبكة.
+             الشرط هو **نفسه** اللي وراء شارة «بلا حساب» تحت وفلتر
+             adStatus=missing: مش حالة تانية، هي نفس الحالة مقروءة من بعيد.
+             ومن غادر لا شريط له - حسابه أُغلق عن قصد، فمش ناقص حاجة. *@
+          <tr class="@(s.status != StudentState.left && s.ad_status == null ? "is-warn" : "")">
             <td class="num">@i</td>
             <td>
               @* ⚠️ الرسمة الأولى من الخادم، وما بعدها من NuhTable.two في
@@ -611,7 +626,9 @@
       i++;
       // ⚠️ نفس ترتيب صفوف Razor أعلاه حرفًا بحرف: أي فرق بينهما يظهر عند أول
       //    بحث أو ترتيب - الصفحة الأولى من الخادم والبقية من هنا.
-      rows += '<tr>' +
+      // ⚠️ نفس شرط Razor فوق بالحرف - وإلا الصفحة الأولى فيها الشريط
+      //    والصفحة التانية لأ، وهو نفس الطالب.
+      rows += '<tr' + ((s.status !== 'left' && !s.ad_status) ? ' class="is-warn"' : '') + '>' +
         '<td class="num">' + i + '</td>' +
         @* ⚠️ الخليّتان من NuhTable.two (js/table-state.js) لا مكتوبتين هنا:
            هي التعريف الوحيد للخليّة ذات السطرين، وقائمة أعضاء هيئة التدريس

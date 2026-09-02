@@ -3,20 +3,20 @@ using System.Text.Json;
 namespace NUH_PORTAL.Core
 {
     // ============================================================================
-    //  مجموعات إجراءات السجل — أي إجراء يخصّ الطلاب، وأيّها يخصّ الطلبات... إلخ.
+    //  مجموعات إجراءات السجل - أي إجراء يخصّ الطلاب، وأيّها يخصّ الطلبات... إلخ.
     //  ده التعريف الوحيد في النظام.
     //
     //  ⚠️ العيب اللي عالجه الملف ده:
     //     المجموعات كانت مكتوبة جوّه AuditLogQueryService كمصفوفات خاصّة،
     //     ومستعملة في تسع مواضع في نفس الملف. تمانية منهم بيقولوا
-    //     StudentActions.Contains(...) — والتاسع، اللي بيبني رسم «توزيع عمليات
+    //     StudentActions.Contains(...) - والتاسع، اللي بيبني رسم «توزيع عمليات
     //     الطلاب»، كان بيكتب الشرط بالإيد:
     //
     //         a.action == "create_student" || a.action == "update_student"
     //                                      || a.action == "delete_student"
     //
     //     وناسي "checkout_student". يعني كل عمليات إخلاء الطلاب للسكن كانت
-    //     **مش موجودة في الرسم** — والرسم مالوش أي علامة إنه ناقص، فالمشرف
+    //     **مش موجودة في الرسم** - والرسم مالوش أي علامة إنه ناقص، فالمشرف
     //     بيقرا التوزيع ويفتكره كامل. وأسوأ حاجة في العدّاد الناقص إنه ما بيبانش
     //     غلط: بيبان رقمًا أصغر وبس.
     //
@@ -38,7 +38,11 @@ namespace NUH_PORTAL.Core
             "create_request", "approve_request", "reject_request",
             "housing_approve_request", "housing_reject_request",
             "submit_cyber_review",
-            "cyber_approve_request", "cyber_reject_request"
+            "cyber_approve_request", "cyber_reject_request",
+            // ⚠️ طباعة وثيقة التعهّد. الورقة دي بتتطبع وقت التحقيق وبتدخل
+            //    المحضر، فسؤال «مين طبع النسخة دي وامتى؟» بيتسأل فعلًا - وكان
+            //    النظام مايعرفش يجاوبه: فتح ملف الطالب متسجّل والطباعة لأ.
+            "pledge_printed"
         };
 
         public static readonly string[] Login =
@@ -100,7 +104,7 @@ namespace NUH_PORTAL.Core
         public static string[] ByKey(string? key) =>
             Map.TryGetValue((key ?? "").Trim(), out var actions) ? actions : Array.Empty<string>();
 
-        // بتتحقن في التخطيط كـ window.__AUDIT_GROUPS — الواجهة بتقرا منها
+        // بتتحقن في التخطيط كـ window.__AUDIT_GROUPS - الواجهة بتقرا منها
         // ولا تكتب أي قائمة إجراءات بنفسها.
         //
         // ⚠️ كل المجموعات لا أربعة منها: النسخة القديمة كانت تُسقط password

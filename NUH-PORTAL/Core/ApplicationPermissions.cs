@@ -65,6 +65,12 @@ namespace NUH_PORTAL.Core
         public static readonly ApplicationPermission ReviewHousing = new("مراجعة إدارة الإسكان", "requests.reviewHousing", RequestsGroup, "المرحلة الأولى: اعتماد أو رفض أو طلب معلومات إضافية على الطلب وهو عند إدارة الإسكان");
         public static readonly ApplicationPermission ReviewCyber = new("مراجعة الأمن السيبراني", "requests.reviewCyber", RequestsGroup, "المرحلة الثانية: اعتماد أو رفض الطلب بعد موافقة إدارة الإسكان عليه وإحالته إلى الأمن السيبراني");
         public static readonly ApplicationPermission CompleteRequests = new("إكمال الطلب وإنشاء الحساب", "requests.complete", RequestsGroup, "المرحلة الأخيرة: إغلاق الطلب وإنشاء حساب الشبكة للطالب فعليًا في Active Directory");
+        // ⚠️ مفيش صلاحية مستقلة للتحقّق من وثيقة، وde مقصود: التحقّق بقى مدخلًا
+        //    تالتًا في شاشة «ملف الطالب» (رقم جامعي / رقم هوية / رمز تحقّق)،
+        //    وصلاحيتها students.investigate. وصلاحية منفصلة كانت هتدّي **أقلّ**
+        //    ممّا تدّيه الموجودة عند اللي بيتحقّق فعلًا - يعني بند زيادة في شاشة
+        //    الأدوار بلا أي قدرة زيادة. والصفحة العامة /Verify مالهاش صلاحية
+        //    أصلًا: مفتوحة لأي حد معاه الرمز، ببيانات مقنّعة.
 
         // السكن وحسابات الشبكة
         public static readonly ApplicationPermission ViewHousing = new("عرض السكن والحسابات", "housing.view", HousingGroup, "شاشة «إدارة حسابات السكن» في القائمة الجانبية: عرض المباني والوحدات وحسابات الشبكة وحالتها (قراءة فقط)");
@@ -92,7 +98,7 @@ namespace NUH_PORTAL.Core
         public static readonly ApplicationPermission AdSetup = new("أدوات الأكتف دايركتوري", "system.adSetup", SystemGroup, "فحص جاهزية الاتصال بالأكتف دايركتوري وإنشاء مستخدم تجريبي حقيقي فيه - أداة تشخيص حسّاسة، لمدير النظام فقط");
 
         // ⚠️ أي صلاحية مش مذكورة في القائمة دي مالهاش policy في Program.cs،
-        //    ومحدش يقدر ياخدها — لا الأدمن من DbSeeder ولا من شاشة الأدوار
+        //    ومحدش يقدر ياخدها - لا الأدمن من DbSeeder ولا من شاشة الأدوار
         //    (RoleAdminService بيفلتر بالقائمة دي). كانت ViewAllAuditLogs
         //    ناقصة، فخيار «كل الإدارات» في سجل الإجراءات كان معطّلًا نهائيًا
         //    وغير قابل للتفعيل من أي مكان.

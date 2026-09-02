@@ -185,7 +185,9 @@ textarea:-webkit-autofill{
 .nuh-boot .nuh-boot-bar{width:180px;height:3px;background:var(--gray-100);
   border-radius:2px;overflow:hidden;opacity:0;animation:nuhBarIn .3s .7s forwards}
 .nuh-boot .nuh-boot-bar i{display:block;height:100%;width:34%;border-radius:2px;
-  background:linear-gradient(90deg,var(--gold),var(--gold-light));
+  /* ⚠️ كحلي لا ذهبي - مفيش خطوط ذهبية في النظام. وde شريط تحميل (مؤشّر
+     «لسه شغّال») مش خطًّا زخرفيًّا، فاتغيّر لونه ولا اتشال. */
+  background:linear-gradient(90deg,var(--navy),var(--navy-light));
   animation:nuhSweep 1s ease-in-out infinite}
 @keyframes nuhBarIn{to{opacity:1}}
 @keyframes nuhSweep{0%{transform:translateX(-120%)}100%{transform:translateX(420%)}}

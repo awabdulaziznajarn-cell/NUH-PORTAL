@@ -1,13 +1,19 @@
 @inject NUH_PORTAL.Services.Interfaces.IUiBootstrapService UiBootstrap
+@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
 @{
     // ثقافة الطلب الحالية (من كوكي .AspNetCore.Culture عبر UseRequestLocalization)
     var __lang = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "en" ? "en" : "ar";
     var __isAr = __lang == "ar";
+
+    // ⚠️ شارة «تشغيل تجريبي» - من appsettings لا من الكود، عشان تتقفل يوم
+    //    الإطلاق بتغيير إعداد واحد بلا بِلد ولا تعديل شاشة. وهي مابتتطبعش:
+    //    القاعدة في css/site.css تحت .topbar-trial.
+    var __trial = Configuration.GetValue<bool>("Trial:Enabled");
     var __dir = __isAr ? "rtl" : "ltr";
     // نرجّع المستخدم لنفس الصفحة بعد تبديل اللغة
     var __returnUrl = Uri.EscapeDataString(Context.Request.Path.ToString() + Context.Request.QueryString.ToString());
 
-    // هوية المستخدم للشريط العلوي. الحرفان الأولان من الاسم يصنعان الأيقونة —
+    // هوية المستخدم للشريط العلوي. الحرفان الأولان من الاسم يصنعان الأيقونة -
     // أوضح من أيقونة عامة موحّدة لكل المستخدمين، ولا تحتاج رفع صورة.
     var __fullName = User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "";
     var __roleName = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "";
@@ -16,9 +22,9 @@
         : (__nameParts.Length == 1 ? __nameParts[0].Substring(0, 1)
         : __nameParts[0].Substring(0, 1) + __nameParts[1].Substring(0, 1));
 
-    // قاموس الترجمة + خريطة القوائم — الاتنين بيتبنوا مرة واحدة ويتخزّنوا في الكاش.
+    // قاموس الترجمة + خريطة القوائم - الاتنين بيتبنوا مرة واحدة ويتخزّنوا في الكاش.
     // قبل كده كانوا بيتبنوا من الأول في كل طلب: قراءة 1380 مورد من الـ resx +
-    // أربع استعلامات قاعدة بيانات، لكل ضغطة على أي صفحة — وده كان سبب التأخير
+    // أربع استعلامات قاعدة بيانات، لكل ضغطة على أي صفحة - وده كان سبب التأخير
     // اللي بيحسّه مستخدمو الموظفين بس (صفحات الطالب HTML ثابت ومش بتعدّي على الـ Layout).
     // معالجة الأخطاء اتنقلت جوه الخدمة نفسها وبترجع "{}" زي السلوك القديم.
     var __i18nJson = UiBootstrap.GetI18nJson();
@@ -32,25 +38,54 @@
   <title>@ViewData["Title"] - @SharedLocalizer["AppTitleSuffix"]</title>
   @* ⚠️ asp-append-version بتضيف بصمة محتوى الملف في الرابط، فالمتصفح يجيب
      النسخة الجديدة أول ما تتغيّر ويفضل مخزّنها لحد ما تتغيّر تاني.
-     من غيرها كان لازم Ctrl+Shift+R بعد كل نشر عشان تشوف تعديل التصميم —
+     من غيرها كان لازم Ctrl+Shift+R بعد كل نشر عشان تشوف تعديل التصميم -
      وده مستحيل تطلبه من كل موظف. كل ملفات الجافاسكريبت كانت عليها البصمة
      وده الملف الوحيد اللي كان ناقصها. *@
   <link rel="stylesheet" href="/css/site.css" asp-append-version="true" />
-  @* ⚠️ components.css لازم يتحمّل بعد site.css — فيه ستايلات المكوّنات المشتركة
+  @* ⚠️ components.css لازم يتحمّل بعد site.css - فيه ستايلات المكوّنات المشتركة
      (بطاقة النموذج .form-card / شبكة الحقول .form-grid / الحقل .field /
      أزرار إجراءات الصف .action-* / القائمة المنسدلة المخصّصة .nsel-*).
      الستايلات دي كانت مكرّرة بالحرف جوه الشاشات واتنقلت هنا، لكن الربط اتضاف
-     في register-form.html بس واتنسي في الـ Layout — فكل شاشات الموظفين فقدت
+     في register-form.html بس واتنسي في الـ Layout - فكل شاشات الموظفين فقدت
      تنسيقها: القوائم المنسدلة بتظهر مرتين (المخصّصة + الأصلية اللي .nsel-native
      بتخفيها)، وأزرار تعديل/حذف بتبان نصًّا عاريًا، والنماذج بتتفكّك. *@
   <link rel="stylesheet" href="/css/components.css" asp-append-version="true" />
 </head>
-<body class="app-shell">
+@{
+    // ⚠️ رقم ترتيب الشفق - مشتقّ من اسم الشاشة لا عشوائي.
+    //    عشوائي كان معناه إن نفس الشاشة شكلها يتغيّر كل فتحة، وده بيتقري
+    //    عطلًا لا تصميمًا. ومشتقّ لا مكتوب في قائمة، عشان أي شاشة تتضاف
+    //    بكرة تاخد ترتيبها وحدها بلا سطر جديد هنا.
+    var __ctrl = (ViewContext.RouteData.Values["controller"] as string) ?? "";
+    var __sum = 0;
+    foreach (var __ch in __ctrl) { __sum += __ch; }
+    var __aurora = (__sum % 4) + 1;
+}
+<body class="app-shell" data-aurora="@__aurora">
+  @* خلفية النظام الملوّنة - التعريف في css/site.css تحت .aurora، والوسم هنا
+     مرة واحدة لكل الشاشات. aria-hidden لأنها زخرفة خالصة: قارئ الشاشة
+     مالوش أي حاجة يقولها عنها. *@
+  <div class="aurora" aria-hidden="true">
+    <i class="b1 g"></i><i class="b2 y"></i><i class="b3 g"></i><i class="b4 y"></i>
+  </div>
+
   <partial name="_Sidebar" />
 
   <div class="main">
     <div class="topbar">
-      <div class="topbar-title">@ViewData["Title"]</div>
+      <div class="topbar-head">
+        @if (__trial)
+        {
+            @* ⚠️ الشارة **قبل** العنوان لا بعده: عنوان الشاشة بيتغيّر طوله من
+               شاشة للتانية، فلو الشارة بعده كان مكانها بيتزحلق مع كل تنقّل
+               ويحسّ اللي بيستعمل النظام إن حاجة بتتحرك. وهي كمان قبل ظهور
+               العنوان (اللي بيبان عند التمرير بس) فمكانها كان بيتغيّر مع
+               التمرير نفسه. دلوقتي هي أول عنصر في الشريط، فحافتها على حافة
+               الشريط بالظبط في كل شاشة وفي كل حالة. *@
+            <span class="topbar-trial">@SharedLocalizer["ui_trialMode"]</span>
+        }
+        <div class="topbar-title">@ViewData["Title"]</div>
+      </div>
       <div class="topbar-right">
         @* ⚠️ زرّ واحد بيوَدّي للّغة التانية، بدل قطعتين (ع | EN) واحدة مضيّئة.
            السبب توحيد لا تجميل: نفس الوظيفة كان ليها تلات أشكال في النظام -
@@ -108,48 +143,54 @@
     </div>
   </div>
 
-  @* تهريب HTML (escHtml) — التعريف الوحيد في النظام.
+  @* تهريب HTML (escHtml) - التعريف الوحيد في النظام.
      ⚠️ أول سكربت خالص عن قصد: السكربت اللي تحته بينادي escHtml وقت التحميل
         (جرس الإشعارات)، وباقي الملفات المشتركة بتناديه وقت بناء الصفوف. *@
   <script src="/js/esc.js" asp-append-version="true"></script>
 
-  @* شكل التاريخ في كل الواجهة (NuhFmt) — التعريف الوحيد في js/date-format.js.
+  @* شكل التاريخ في كل الواجهة (NuhFmt) - التعريف الوحيد في js/date-format.js.
      ⚠️ بدري كده عن قصد: شاشات بتنادي NuhFmt وقت التحميل لا وقت الحدث، وحقل
         التاريخ (date-field.js) بيقرا منه كمان. *@
   <script src="/js/date-format.js" asp-append-version="true"></script>
 
-  @* حالة الشاشة في الرابط (NuhUrl) — التعريف الوحيد في js/url-state.js.
+  @* عدّ تصاعدي لأرقام البطاقات (NuhCount) - التعريف الوحيد في js/count-up.js.
+     ⚠️ محمّل في كل الشاشات لا في الرئيسية وحدها: الملف بيراقب الصفحة بنفسه
+        وبيمسك أي رقم بطاقة، سواء جه من الخادم مع الصفحة أو من نداء API
+        بعدين. فالشاشة الجديدة بتاخد الحركة بلا سطر واحد فيها. *@
+  <script src="/js/count-up.js" asp-append-version="true"></script>
+
+  @* حالة الشاشة في الرابط (NuhUrl) - التعريف الوحيد في js/url-state.js.
      ⚠️ قبل قسم Scripts عن قصد: الشاشات بتقرا الحالة من الرابط **وهي**
         بتتهيّأ، يعني قبل أول نداء للـ API لا بعده. *@
   <script src="/js/url-state.js" asp-append-version="true"></script>
 
-  @* قواعد الرقم الجامعي والهوية والجوال (NuhId) — **متولّدة** من
+  @* قواعد الرقم الجامعي والهوية والجوال (NuhId) - **متولّدة** من
      Core/IdentityRules.cs عن طريق UiController، مش ملف ثابت.
      ⚠️ مفيش asp-append-version هنا: ده راوت مش ملف على القرص. تحديث
         القاعدة بيوصل بالـ ETag اللي الراوت بيرجّعه. *@
   <script src="/js/nuh-id.js"></script>
 
   <script>
-    // قاموس الترجمة كامل (مصدره ملفات .resx) — المصدر الوحيد لنصوص الـ JS الديناميكية عبر t()
+    // قاموس الترجمة كامل (مصدره ملفات .resx) - المصدر الوحيد لنصوص الـ JS الديناميكية عبر t()
     window.__I18N = @Html.Raw(__i18nJson);
-    // خريطة القوائم (كود → اسم) — i18n.js بيقرأ منها في collegeName()/deptName()
+    // خريطة القوائم (كود → اسم) - i18n.js بيقرأ منها في collegeName()/deptName()
     window.__LKMAP = @Html.Raw(__lkMapJson);
-    // ⚠️ جدول انتقالات مسار الطلب — تعريفه الوحيد Core/RequestWorkflow.cs.
+    // ⚠️ جدول انتقالات مسار الطلب - تعريفه الوحيد Core/RequestWorkflow.cs.
     //    js/request-workflow.js يقرأ منه، وكان السطر ده ناقص أصلًا: فالملف
     //    بيقرا مصفوفة فاضية، و NuhWorkflow.forStatus بيرجع null دايمًا.
     //    النتيجة إن صفوف شاشة الطلبات المرسومة بالجافاسكربت (بعد تبديل تبويب
     //    أو بحث أو تغيير صفحة) كانت بتطلع بلا أزرار إجراء وبلا تمييز للصف،
-    //    بينما أول رسمة من السيرفر بتطلع صح — فالأزرار «تختفي» بعد أول ضغطة.
+    //    بينما أول رسمة من السيرفر بتطلع صح - فالأزرار «تختفي» بعد أول ضغطة.
     window.__WF = @Html.Raw(NUH_PORTAL.Core.RequestWorkflow.ToJson());
-    @* مجموعات إجراءات السجل (أي إجراء يخصّ الطلاب/الطلبات) — تعريفها الوحيد
+    @* مجموعات إجراءات السجل (أي إجراء يخصّ الطلاب/الطلبات) - تعريفها الوحيد
        Core/AuditActionGroups.cs. شاشة التقارير بتقرا منها بدل ما تكتب القوائم
        بنفسها، وإلا كانت نسخة تفترق أول ما يتضاف إجراء جديد. *@
     window.__AUDIT_GROUPS = @Html.Raw(NUH_PORTAL.Core.AuditActionGroups.ToJson());
 
-    // حاجات مشتركة لكل صفحات الـ MVC — الدور من كليم السيرفر.
+    // حاجات مشتركة لكل صفحات الـ MVC - الدور من كليم السيرفر.
     // ⚠️ headers() كانت ترسل staffToken من localStorage في ترويسة Authorization.
     //    لم يعد أي كود يكتب هذا المفتاح بعد توحيد الدخول على الكوكي، وأي بقيّة
-    //    قديمة منه في متصفح مستخدم كانت تُرسَل كتوكن منتهٍ — والترويسة تسبق
+    //    قديمة منه في متصفح مستخدم كانت تُرسَل كتوكن منتهٍ - والترويسة تسبق
     //    الكوكي في سياسة NUH_Smart، فيُرفَض النداء بـ 401 بينما الصفحة نفسها
     //    مفتوحة بكوكي سليم. الكوكي يُرسَل تلقائيًا لنفس الأصل، فلا ترويسة أصلًا.
     //    الدالة باقية (ترجع {}) لأن شاشات كثيرة تدمجها بـ Object.assign.
@@ -180,18 +221,27 @@
           (User.IsInRole("admin") ? SharedLocalizer["doc_deptIT"]
           : User.IsInRole("cyber") ? SharedLocalizer["doc_deptCyber"]
           : SharedLocalizer["doc_deptHousing"]).Value)),
+      @* ⚠️ اسم المستخدم والاسم الكامل - وثيقة التعهّد بتطبعهم على الورقة:
+         الاسم الكامل في سطر «طُبعت بواسطة» في التذييل، واسم المستخدم داخل
+         العلامة المائية. السبب إن التذييل بيروح مع أول قصّ أو تصوير للورقة،
+         والعلامة بتفضل - فالنسخة المسرّبة بتفضل شايلة مين طبعها.
+         ⚠️ والأثر الرسمي مش هنا: هو pledge_printed في سجل العمليات. اللي على
+            الورقة ردع وتسهيل قراءة، لا مصدر إثبات. *@
+      printUser: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(User.Identity?.Name ?? "")),
+      printUserName: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+          User.FindFirst("FullName")?.Value ?? User.Identity?.Name ?? "")),
       token: function () { return ''; },
       headers: function () { return {}; }
     };
 
     // ⚠️ تنظيف نهائي لمفاتيح الدخول القديمة. محدش بيكتبها من يوم ما الدخول اتوحّد
     //    على الكوكي، لكن أي متصفح موظف شغّال من قبل التوحيد لسه شايلها. وطول ما
-    //    هي موجودة، أي كود قديم يقراها هيبعت توكن منتهي في ترويسة Authorization —
+    //    هي موجودة، أي كود قديم يقراها هيبعت توكن منتهي في ترويسة Authorization -
     //    والترويسة بتسبق الكوكي، فالنداء يترفض ٤٠١ والجلسة سليمة. السطر ده بيموّتها
     //    في كل متصفح من غير ما حد يمسح بياناته بإيده.
     try { localStorage.removeItem('staffToken'); localStorage.removeItem('staffUser'); } catch (e) { }
 
-    // مزامنة لغة الواجهة مع ثقافة السيرفر — عشان صفحات i18n.js (تقارير/تفاصيل الطلب/المغادرة) تتبع نفس الاختيار
+    // مزامنة لغة الواجهة مع ثقافة السيرفر - عشان صفحات i18n.js (تقارير/تفاصيل الطلب/المغادرة) تتبع نفس الاختيار
     try { localStorage.setItem('uiLanguage', '@__lang'); } catch (e) { }
 
     // نصوص الإشعارات المترجمة (الجرس موحّد في كل الصفحات ويُبنى بالـ JS)
@@ -205,9 +255,15 @@
     document.getElementById('dateNow').textContent = NuhFmt.dateFull(new Date());
 
     // ===== جرس الإشعارات (موحّد في كل الصفحات) =====
-    async function loadUnreadCount() {
+    // ⚠️ النداء الدوري (كل ٣٠ ثانية) بيتبعت بترويسة "نداء خلفي" عشان الخادم
+    //    ما يحسبهوش نشاطًا للمستخدم. من غيرها الجرس وحده كان بيبقّي الجلسة حيّة
+    //    للأبد ما دام التبويب مفتوح، ومهلة الخمول عمرها ما بتتحقّق.
+    //    الاستدعاء اللي وراه ضغطة من المستخدم بيتبعت بدون الترويسة - ده نشاط حقيقي.
+    async function loadUnreadCount(isPoll) {
       try {
-        var res = await fetch('/api/notifications/unread-count?role=' + encodeURIComponent(NUH.role), { headers: NUH.headers() });
+        var h = NUH.headers() || {};
+        if (isPoll === true) h['@NUH_PORTAL.Core.SessionPolicy.BackgroundPollHeader'] = '1';
+        var res = await fetch('/api/notifications/unread-count?role=' + encodeURIComponent(NUH.role), { headers: h });
         if (!res.ok) return;
         var data = await res.json();
         var badge = document.getElementById('notif-badge');
@@ -308,7 +364,7 @@
       if (!e.target.closest('.notif-wrapper')) {
         document.querySelectorAll('.notif-dropdown.open').forEach(function (d) { d.classList.remove('open'); });
       }
-      // الضغط على الجرس يقفل قائمة المستخدم والعكس — القائمتان لا تفتحان معًا
+      // الضغط على الجرس يقفل قائمة المستخدم والعكس - القائمتان لا تفتحان معًا
       if (!e.target.closest('.user-menu')) setUserMenu(false);
     });
 
@@ -319,51 +375,53 @@
     });
 
     loadUnreadCount();
-    setInterval(loadUnreadCount, 30000);
+    // ⚠️ true = نداء خلفي: بيتفحص الجلسة لكن ما بيمدّهاش (شوف SessionPolicy).
+    //    setInterval بيمرّر رقم الاستدعاء كمعامل، فلازم دالة لفّ صريحة هنا.
+    setInterval(function () { loadUnreadCount(true); }, 30000);
   </script>
-  @* حالات الجداول (تحميل / لا توجد نتائج / خطأ) — تعريف واحد لكل الشاشات.
+  @* حالات الجداول (تحميل / لا توجد نتائج / خطأ) - تعريف واحد لكل الشاشات.
      ⚠️ لازم قبل قسم Scripts: الشاشات بتنادي NuhTable.bind وقت التحميل لا وقت الحدث. *@
   <script src="/js/table-state.js" asp-append-version="true"></script>
 
-  @* مفتاح التفعيل/التعطيل المشترك (NuhSwitch) — نفس سبب table-state.js: الشاشات
+  @* مفتاح التفعيل/التعطيل المشترك (NuhSwitch) - نفس سبب table-state.js: الشاشات
      بتناديه وقت بناء صفوف الجدول لا وقت الحدث، فلازم قبل قسم Scripts.
      ⚠️ الملف كان اتعمل ومحدّش بيحمّله: فـ NuhSwitch كان undefined، و
-     NuhSwitch.cell() جوّه بناء الصف كان بيرمي استثناء في نص renderTable —
+     NuhSwitch.cell() جوّه بناء الصف كان بيرمي استثناء في نص renderTable -
      فالرأس بيتكتب والجسم لأ. ده سبب إن القوائم المرجعية وشاشة المستخدمين
      كانت بترجع الداتا 200 من الـ API وتفضل الجداول فاضية. *@
   <script src="/js/switch-field.js" asp-append-version="true"></script>
 
-  @* منطق مراحل الطلب (NuhWorkflow) — بتستخدمه الرئيسية وشاشة الطلبات، وبيقرأ
+  @* منطق مراحل الطلب (NuhWorkflow) - بتستخدمه الرئيسية وشاشة الطلبات، وبيقرأ
      خريطة المراحل المكتوبة فوق في نفس الـ Layout. كان هو كمان مش متحمَّل. *@
   <script src="/js/request-workflow.js" asp-append-version="true"></script>
 
-  @* مسمّيات الإجراءات والحقول في السجلات (NuhAudit) — رابع ملف من نفس النوع.
+  @* مسمّيات الإجراءات والحقول في السجلات (NuhAudit) - رابع ملف من نفس النوع.
      كان متحمَّل في شاشة «سجل العمليات» وحدها، بينما faculty-housing-page.js
-     بينادي NuhAudit.actionText/fieldText كمان — فنافذة «سجل إشغال الوحدة» في
+     بينادي NuhAudit.actionText/fieldText كمان - فنافذة «سجل إشغال الوحدة» في
      سكن أعضاء هيئة التدريس كانت بترمي «NuhAudit is not defined» وتفضل فاضية.
      مكانه هنا لا في الشاشتين: التحميل في شاشة والاستدعاء في تانية هو بالظبط
      اللي وقّعنا في switch-field و request-workflow قبل كده. *@
   <script src="/js/audit-labels.js" asp-append-version="true"></script>
 
-  @* قائمة الاختيار بشكل النظام بدل قائمة نظام التشغيل — بتشتغل تلقائيًا على
+  @* قائمة الاختيار بشكل النظام بدل قائمة نظام التشغيل - بتشتغل تلقائيًا على
      كل <select>. بعد قسم Scripts عمدًا: الشاشات بتبني قوائمها في القسم ده،
      فلازم تكون موجودة قبل ما نلفّ عليها. *@
 
   @await RenderSectionAsync("Scripts", required: false)
   <script src="/js/select-field.js" asp-append-version="true"></script>
 
-  @* حقل التاريخ بشكل النظام بدل تقويم ويندوز (NuhDate) — نفس سبب
+  @* حقل التاريخ بشكل النظام بدل تقويم ويندوز (NuhDate) - نفس سبب
      select-field.js بالظبط، وبيشتغل تلقائيًا على كل <input type="date">.
      ⚠️ بعد قسم Scripts زيّه: الشاشات اللي بتبني حقول بالجافاسكريبت بتنادي
         NuhDate.enhance بنفسها. *@
   <script src="/js/date-field.js" asp-append-version="true"></script>
 
   @* ===== إنهاء الجلسة عند الخمول =====
-     المهلة تأتي من Core/SessionPolicy.cs — نفس الرقم الذي يفحص به الخادم.
+     المهلة تأتي من Core/SessionPolicy.cs - نفس الرقم الذي يفحص به الخادم.
      كتابته هنا رقمًا ثانيًا كان يعني أن يفترق الاثنان مع أول تعديل. *@
-  @* نوافذ التأكيد والتنبيه بشكل النظام — بديل confirm/alert/prompt المتصفح *@
+  @* نوافذ التأكيد والتنبيه بشكل النظام - بديل confirm/alert/prompt المتصفح *@
   <script src="/js/dialog.js" asp-append-version="true"></script>
-  @* قفل الزر أثناء نداء له أثر — خط الدفاع الأول ضد الضغطة المزدوجة،
+  @* قفل الزر أثناء نداء له أثر - خط الدفاع الأول ضد الضغطة المزدوجة،
      وخلفه بوابة الطلب في Core/RequestGate على الخادم. *@
   <script src="/js/busy-button.js" asp-append-version="true"></script>
   <script src="/js/idle-session.js" asp-append-version="true"></script>

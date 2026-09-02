@@ -10,6 +10,61 @@
 @import url('base.css');
 body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);color:var(--navy-dark);min-height:100vh;display:flex}
 
+/* ============================================================================
+   الشفق - خلفية النظام الملوّنة. التعريف الوحيد، وكل الشاشات بتاخده بلا سطر.
+   ============================================================================
+   ⚠️ طبقة واحدة ورا كل حاجة، والبطاقات معتمة فوقها. مش جوّه البطاقات:
+      البقع مموّهة ومتدرّجة، يعني اللون بيتغيّر من نقطة للنقطة اللي جنبها.
+      لو قعدت تحت بيانات، نسبة التباين تبقى مختلفة عند كل حرف - فمستحيل
+      نضمن الرقم اللي حسبناه (٧٫١:١ للسطر الثانوي، ٦٫٦:١ للأرقام). فوق
+      طبقة معتمة، الأرقام دي محفوظة بالظبط في كل شاشة.
+
+   ⚠️ ثابتة (fixed) لا ماشية مع المحتوى: بترسم مرة واحدة. التمويه ٧٠ بكسل
+      عملية تقيلة، ولو اتحرّكت مع السكرول كانت هتترسم كل إطار - والشاشة
+      اللي فيها ٢٤٢ صفّ هتقطّع على أجهزة المكاتب.
+
+   ⚠️ والمواضع **مكتوبة لا عشوائية**، بتتنوّع من شاشة لشاشة بس. العشوائي كان
+      هيدّي مشكلتين: نفس الشاشة شكلها مختلف كل فتحة - وده بيتقري عطل لا
+      تصميم؛ وبقعة ذهبية ممكن تقع بالظبط ورا رقاقة كهرمانية، فيبقى كهرمانيان
+      فوق بعض واللون اللي معناه «انتبه» يفقد معناه.
+      الرقم في data-aurora بيتولّد من اسم الشاشة في _Layout - فكل شاشة ليها
+      ترتيبها، ونفس الشاشة تفضل ثابتة، وأي شاشة جديدة بتاخد واحدًا من غير
+      ما حد يكتب لها سطر.
+
+   ⚠️ وبتختفي مع prefers-reduced-motion؟ لأ - مفيش حركة أصلًا. بتختفي عند
+      الطباعة، لأن الطابعة بتحوّل التدرّج ده لرمادي متسخ. */
+.aurora{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;contain:strict}
+.aurora i{position:absolute;display:block;border-radius:50%;filter:blur(70px)}
+.aurora .g{background:radial-gradient(closest-side,rgba(37,147,95,.30),transparent 70%)}
+.aurora .y{background:radial-gradient(closest-side,rgba(219,161,2,.22),transparent 70%)}
+
+/* الترتيب ١ - افتراضي */
+.aurora .b1{inset-block-start:-8%;inset-inline-start:-6%;width:44vw;height:38vw}
+.aurora .b2{inset-block-start:-14%;inset-inline-end:20%;width:36vw;height:30vw}
+.aurora .b3{inset-block-end:-16%;inset-inline-start:26%;width:40vw;height:32vw;opacity:.72}
+.aurora .b4{inset-block-end:4%;inset-inline-end:-10%;width:30vw;height:26vw;opacity:.8}
+
+body[data-aurora="2"] .aurora .b1{inset-block-start:-16%;inset-inline-start:24%;width:40vw;height:34vw}
+body[data-aurora="2"] .aurora .b2{inset-block-start:-6%;inset-inline-end:-8%;width:38vw;height:32vw}
+body[data-aurora="2"] .aurora .b3{inset-block-end:-10%;inset-inline-start:-10%;width:36vw;height:30vw;opacity:.7}
+body[data-aurora="2"] .aurora .b4{inset-block-end:18%;inset-inline-end:30%;width:28vw;height:24vw;opacity:.75}
+
+body[data-aurora="3"] .aurora .b1{inset-block-start:-12%;inset-inline-end:-6%;width:42vw;height:36vw}
+body[data-aurora="3"] .aurora .b2{inset-block-start:6%;inset-inline-start:-12%;width:34vw;height:30vw}
+body[data-aurora="3"] .aurora .b3{inset-block-end:-14%;inset-inline-end:22%;width:38vw;height:32vw;opacity:.68}
+body[data-aurora="3"] .aurora .b4{inset-block-end:-6%;inset-inline-start:8%;width:30vw;height:26vw;opacity:.8}
+
+body[data-aurora="4"] .aurora .b1{inset-block-start:-4%;inset-inline-start:12%;width:38vw;height:34vw}
+body[data-aurora="4"] .aurora .b2{inset-block-start:-18%;inset-inline-start:-14%;width:40vw;height:34vw}
+body[data-aurora="4"] .aurora .b3{inset-block-end:-12%;inset-inline-end:-8%;width:40vw;height:34vw;opacity:.7}
+body[data-aurora="4"] .aurora .b4{inset-block-end:22%;inset-inline-start:34%;width:26vw;height:24vw;opacity:.72}
+
+/* ⚠️ .main فوق الطبقة، وخلفيته شفّافة عشان اللون يبان في الهوامش وحوالين
+      البطاقات. البطاقات نفسها بيضا معتمة - وده اللي بيحمي البيانات. */
+.app-shell .main{position:relative;z-index:1}
+
+@media print{.aurora{display:none}}
+
 /* ---------- السايدبار ---------- */
 /* ⚠️ height لا min-height: الشريط position:fixed، فـ min-height تسمح له بالنموّ
    خارج الشاشة ويصير ما تحته غير قابل للوصول إطلاقًا - وهو ما كان يحدث مع
@@ -68,6 +123,20 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);col
    وهي لا تفعل شيئًا. */
 .sidebar-nav{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;
   padding:16px 12px;display:flex;flex-direction:column;gap:4px;scroll-behavior:smooth}
+/* ==========================================================================
+   ⚠️ العناصر مابتتضغطش لما القائمة تطول.
+
+      ‏.sidebar-nav حاوية flex عمودية، وعناصر الـ flex بتتقلّص افتراضيًّا
+      (flex-shrink:1) لما المحتوى يزيد عن الحاوية. فأول ما المستخدم يفتح
+      مجموعة أو اتنين وتطول القائمة، المتصفح كان بيقلّل ارتفاع كل بند بدل
+      ما يعمل scroll - وأوضح مكان بيبان فيه ده هو البند النشط، لأن ليه
+      خلفية بيضا فبتتنكمش قدّام العين («الرئيسية» في الصورة).
+
+      والـ overflow-y:auto فوق مامنعش ده: التمرير بيشتغل بعد ما العناصر
+      تكون وصلت أقصى انكماش، مش قبله. flex-shrink:0 بيخلّي المحتوى يفيض
+      من الأول فيشتغل التمرير على طول والارتفاعات تفضل ثابتة.
+   ========================================================================== */
+.sidebar-nav > *{flex-shrink:0}
 /* أول رسم: قفزة فورية إلى العنصر النشط بلا حركة يراها المستخدم */
 .sidebar-nav.no-anim{scroll-behavior:auto}
 /* شريط تمرير خافت على الخلفية الداكنة - يظهر عند الحاجة ولا يزاحم النصّ */
@@ -115,8 +184,10 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);col
    ويبقى الذهبي شريطًا على الحافة فلا يغيب اللون الثانوي من القائمة. */
 .nav-item.active{background:var(--white);color:var(--navy);font-weight:700;
   position:relative;overflow:hidden}
+/* ⚠️ الشريط بقى كحليًّا لا ذهبيًّا: مفيش خطوط ذهبية في النظام. وهو مؤشّر
+   **حالة** (أنت في الصفحة دي) مش زخرفة، فاتغيّر لونه ولا اتشال. */
 .nav-item.active::before{content:'';position:absolute;inset-inline-start:0;top:0;bottom:0;
-  width:4px;background:var(--gold)}
+  width:4px;background:var(--navy)}
 .nav-item svg{flex-shrink:0}
 /* ---------- قائمة المستخدم في الشريط العلوي ---------- */
 /* ⚠️ كانت بطاقة المستخدم وزر «تسجيل الخروج» ملصقين أسفل القائمة الجانبية.
@@ -175,6 +246,24 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);col
 .topbar-title{font-size:18px;font-weight:800;color:var(--navy-dark);
   opacity:0;transform:translateY(-6px);transition:opacity .18s ease,transform .18s ease}
 .topbar.is-scrolled .topbar-title{opacity:1;transform:none}
+
+/* ============================================================================
+   شارة «تشغيل تجريبي».
+   ⚠️ في صفّ مع العنوان لا جواه: العنوان نفسه بيبان عند التمرير بس (القاعدة
+      فوق)، والشارة لازم تفضل ظاهرة على طول - فلو كانت جواه كانت هتختفي معاه
+      وأول شاشة يفتحها الموظف مافيهاش أي إشارة إن ده تشغيل تجريبي.
+   ⚠️ ولون تنبيه لا لون هوية: دي **حالة مؤقّتة** للنظام، ولو اتلوّنت بالأخضر
+      كانت هتتقري كأنها جزء ثابت من الواجهة.
+   ⚠️ ومابتتطبعش: الوثائق الرسمية بتخرج نضيفة منها (القاعدة في @media print
+      تحت)، وكمان أي طباعة عادية لأي شاشة.
+   ⚠️ ونصّها من Resources/SharedResource (ui_trialMode) وظهورها من
+      appsettings (Trial:Enabled) - يوم الإطلاق بتتقفل من إعداد واحد.
+   ============================================================================ */
+.topbar-head{display:flex;align-items:center;gap:12px;min-width:0}
+.topbar-trial{flex:none;font-size:11.5px;font-weight:800;line-height:1.6;
+  padding:4px 12px;border-radius:99px;white-space:nowrap;
+  background:var(--amber-light);color:var(--amber);border:1px solid #f0dfa4}
+@media print{.topbar-trial{display:none !important}}
 /* ⚠️ كان ١٢ بكسل بلون --gray-500 — أبهت من أي نصّ في الشريط، مع إنه
    معلومة بيتبص عليها كل شوية (وبتتقلب ميلادي/هجري مع مفتاح التقويم).
    بقى ١٢٫٥ بوزن ٦٠٠ وباللون الرمادي الغامق: باين من غير ما ينافس العنوان. */
@@ -230,10 +319,9 @@ body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--gray-50);col
 .page-header p{font-size:13px;color:var(--gray-500)}
 
 /* ---------- إحصائيات (أقراص) ---------- */
-.stats-row{display:flex;gap:16px;margin-bottom:24px}
-.stat-pill{background:var(--white);border-radius:16px;padding:18px 24px;border:1px solid var(--gray-100);flex:1;box-shadow:0 2px 8px rgba(16,70,49,.05);display:flex;flex-direction:column;gap:4px}
-.stat-pill-num{font-size:28px;font-weight:900;color:var(--navy-dark);line-height:1}
-.stat-pill-label{font-size:12px;color:var(--gray-500);font-weight:500}
+/* ⚠️ ‏.stats-row / .stat-pill اتشالوا: كانوا مكوّنًا تانيًا لنفس بطاقة
+   المؤشّر بمقاسات مختلفة (رقم ٢٨ ووزن ٩٠٠ مقابل ٢٧ و٧٠٠)، ومستعملين في
+   شاشة واحدة بس. المكوّن الوحيد دلوقتي .stat-card في css/components.css. */
 
 /* ---------- الكروت ----------
    ⚠️ ترويسة القسم على خلفية زرقاء فاتحة، والبيانات على أبيض.
@@ -358,6 +446,27 @@ tbody tr:last-child td{border-bottom:none}
    بطاقة النموذج وخيار القائمة المنسدلة عند المرور، فالتظليل في كل النظام
    لون واحد. الرمادي كان يبدو تعطيلًا لا تحديدًا. */
 tbody tr:hover{background:var(--row-hover)}
+/* ============================================================================
+   صفّ الجدول - تناوب خفيف + شريط حالة على الحافة.
+   ⚠️ التناوب بديل الخطوط الفاصلة الكتيرة: في جدول بستة أعمدة، العين بتقفز
+      لعمود تاني وهي نازلة. الدرجة #fbfcfb شبه غير مرئية لوحدها، لكنها
+      بتدّي الصفّ خطًّا تمشي عليه.
+   ⚠️ والشريط على الحافة هو **نفس** ‎.stat-card::after‎ بالحرف - نفس العرض
+      ونفس الشفافية. يعني الجدول بيتكلّم لغة البطاقات: اللي اتعلّم إن
+      الكهرماني معناه «انتبه» في البطاقة بيقراها في الجدول بلا ما نعلّمه.
+   ⚠️ الأخضر افتراضي بلا أي تعديل في الشاشات. الكهرماني بيتحطّ بـ .is-warn
+      على الصفّ، والشاشة هي اللي بتقرّر إمتى - ولو اتحطّ على كل حاجة بيفقد
+      معناه ويرجع زينة (نفس قاعدة tone-warn). */
+tbody td:first-child{position:relative}
+tbody td:first-child::before{content:"";position:absolute;inset-block:6px;inset-inline-start:0;
+  width:3px;border-radius:2px;background:var(--navy);opacity:.85}
+tbody tr.is-warn td:first-child::before{background:var(--gold);opacity:1}
+tbody tr.is-bad td:first-child::before{background:var(--red);opacity:1}
+tbody tr:nth-child(even){background:#fbfcfb}
+tbody tr:nth-child(even):hover{background:var(--row-hover)}
+/* الجدول اللي مالوش عمود ترقيم مايتحطّش عليه شريط - الشريط بيبقى على أول
+   خلية، ولو كانت خلية بيانات بيقطع نصّها. */
+table.no-rail tbody td:first-child::before{display:none}
 /* ⚠️ عرض الأعمدة كان بيتحسب من المحتوى، فعمود «#» بياخد عرض مختلف في كل شاشة
    وعمود «إجراءات» بيتمطّ حسب عدد الأزرار. تثبيت الطرفين بيخلّي إطار الجدول
    واحدًا في كل الشاشات، والأعمدة اللي جوّه بتتوزّع طبيعي. */
@@ -426,7 +535,11 @@ th.col-code,td.col-code{white-space:nowrap}
 .tbl-2line thead th.num,.tbl-2line tbody td.num{text-align:center}
 .cell-p{font-weight:700;font-size:13.5px;color:var(--navy-dark);line-height:1.65}
 .cell-p2{font-weight:600;font-size:13px;color:var(--navy-dark);line-height:1.65}
-.cell-q{font-size:11.5px;font-weight:500;color:var(--gray-500);line-height:1.6}
+/* ⚠️ ١٢٫٥ لا ١١٫٥، و--gray-600 لا --gray-500: ده أصغر نصّ في الشاشة كلها،
+   وبيحمل الاسم الإنجليزي ورقم الجوال ورقم الغرفة - يعني بيانات لها لزمة لا
+   حاشية. والمقاس الصغير مع اللون الفاتح مع زحام الأعمدة كانوا بيخلّوه
+   يتقرا «كلام مش مهم». التفاصيل في --gray-600 في base.css. */
+.cell-q{font-size:12.5px;font-weight:500;color:var(--gray-600);line-height:1.65}
 .cell-q:empty{display:none}
 /* أرقام بخطّ جدولي: الخانات تتراصّ تحت بعضها فيُقارَن الطول بالعين */
 .cell-num{font-variant-numeric:tabular-nums;letter-spacing:.2px}
@@ -643,22 +756,9 @@ html[dir=ltr] .app-shell .main>.topbar,html[dir=ltr] .app-shell .main>.content{d
 .req-dates .ndate{width:150px}
 .ndate-btn{min-height:34px}
 
-/* ---------- التبويبات ----------
-   ⚠️ كان في تصميمين مختلفين: .tabs/.tab-btn في شاشة الطلبات (أزرار فوق البطاقة)
-      و .usr-tabs/.usr-tab في شاشة المستخدمين (تبويبات بخط سفلي جوّه البطاقة).
-      بقى مكوّن واحد فوق البطاقة، والعدّاد اختياري بـ .tab-count. */
-.tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
-.tab-btn{display:inline-flex;align-items:center;gap:8px;padding:8px 20px;border-radius:10px;
-  border:1.5px solid var(--gray-200);background:var(--white);font-family:'IBM Plex Sans Arabic',sans-serif;
-  font-size:13px;font-weight:600;cursor:pointer;color:var(--gray-500);transition:all .2s}
-.tab-btn:hover{border-color:var(--navy)}
-.tab-btn.active{background:var(--navy);color:var(--white);border-color:var(--navy)}
-.tab-count{background:var(--gray-100);color:var(--gray-500);border-radius:999px;padding:1px 8px;font-size:11.5px;font-weight:700}
-.tab-btn.active .tab-count{background:rgba(255,255,255,.2);color:var(--white)}
-/* ⚠️ الصفر يبقى ظاهرًا باهتًا لا يُخفى: إخفاء التبويب الفارغ يجعل الشاشة تتغيّر
-      شكلها كلما تحرّك رقم، والصفر نفسه معلومة - يقول «هذا الطابور فارغ». */
-.tab-count.zero{background:var(--gray-50);color:var(--gray-300)}
-.tab-btn.active .tab-count.zero{background:rgba(255,255,255,.14);color:rgba(255,255,255,.6)}
+/* ⚠️ التبويبات (.tabs / .tab-btn / .tab-count) اتنقلت لـ css/components.css
+   جنب بطاقة المؤشّر: الاتنين بيتشاركوا نفس لغة الشكل (نصف القطر، شكل الرقم،
+   حالة الفراغ)، وبعدهم عن بعض في ملفين هو اللي خلّاهم يفترقوا أصلًا. */
 
 /* ---------- ترتيب الأعمدة ---------- */
 /* ⚠️ العمود القابل للفرز بيتعرّف من data-sort لوحدها — لا class="sortable"

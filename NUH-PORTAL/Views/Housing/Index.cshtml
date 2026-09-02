@@ -301,6 +301,9 @@
     <div class="modal-body flush" id="detailsModalBody"></div>
     <div class="modal-footer">
       <button class="hbtn btn-outline" onclick="closeModal('detailsModal')" >@SharedLocalizer["hs_close"]</button>
+      @* ⚠️ التلميحة بتربط النافذتين: الموظف بيعرف إن اللي هيضغطه هنا هيبان
+         في «سجل إجراءات الحساب» باسمه - وده بيخلّيه ياخد باله قبل ما يضغط. *@
+      <span class="hint">@SharedLocalizer["hs_footerAudited"]</span>
     </div>
   </div>
 </div>
@@ -314,6 +317,7 @@
     <div class="modal-body" id="lifecycleModalBody"></div>
     <div class="modal-footer">
       <button class="hbtn btn-outline" onclick="closeModal('lifecycleModal')" >@SharedLocalizer["hs_close"]</button>
+      <span class="hint">@SharedLocalizer["hs_footerLog"]</span>
     </div>
   </div>
 </div>

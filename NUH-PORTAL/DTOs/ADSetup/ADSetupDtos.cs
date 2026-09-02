@@ -28,11 +28,28 @@ namespace NUH_PORTAL.DTOs.ADSetup
         public object? PasswordPolicyCheck { get; set; }
     }
 
+    // ========================================================================
+    //  طلب إنشاء حساب اختباري في الدليل.
+    //
+    //  ⚠️ كان فيه TargetOu و TargetGroup بيتاخدوا من العميل زي ما هما. الخدمة
+    //     كانت بتبني CN={الرقم},{TargetOu} وتعمل الحساب **وتفعّله** وتضيفه
+    //     للمجموعة اللي العميل بعتها. يعني صاحب صلاحية system.adSetup يبعت
+    //     "CN=Domain Admins,CN=Users,DC=..." فيطلع حساب مفعّل في مجموعة مديري
+    //     الدومين - تصعيد من أدمن بوابة لأدمن دومين، محدود بس بصلاحيات حساب
+    //     الخدمة في الدليل.
+    //
+    //  ⚠️ والحقلان اتشالوا خالص لا اتتجاهلوا: حقل بيتبعت وبيتتجاهل بيوهم اللي
+    //     بيقرا الـ API إنه شغّال. المسارات دلوقتي بتتقرا من الإعدادات
+    //     (Services/AdDirectoryLayout) زي مسار الإنشاء الحقيقي بالظبط، واللي
+    //     العميل بيقدر يختاره هو **القسم** وبس.
+    // ========================================================================
     public class ADTestUserRequest
     {
         public string StudentId { get; set; } = string.Empty;
-        public string? TargetOu { get; set; }
-        public string? TargetGroup { get; set; }
+
+        // اختياري - الافتراضي قسم الطلاب. القيمة بتتحوّل لمسار من الإعدادات،
+        // ومابتوصلش للدليل كنصّ.
+        public NUH_PORTAL.Models.Enums.Gender? Gender { get; set; }
     }
 
     public class ADTestUserReport

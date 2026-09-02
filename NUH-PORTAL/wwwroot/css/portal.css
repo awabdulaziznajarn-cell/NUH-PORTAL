@@ -104,7 +104,8 @@ body{
    العنوان ثم خط ذهبي قصير ثم سطر التعريف — نفس ترتيب الصفحة الرئيسية. */
 .phero{text-align:center;padding:26px 16px 6px}
 .phero h1{font-size:23px;font-weight:800;letter-spacing:-.3px;color:var(--navy-dark);line-height:1.45}
-.phero .rule{width:56px;height:3px;background:var(--gold);margin:12px auto;border-radius:2px}
+/* ⚠️ الشريط الذهبي تحت العنوان اتشال - مفيش خطوط ذهبية زخرفية في النظام. */
+.phero .rule{display:none}
 .phero p{font-size:13.5px;color:var(--gray-500);font-weight:500;line-height:1.9;max-width:620px;margin:0 auto}
 
 /* ============================================================================

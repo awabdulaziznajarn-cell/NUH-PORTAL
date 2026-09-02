@@ -1,6 +1,6 @@
 /* ============================================================================
    مكوّنات مشتركة بين واجهة الموظفين (site.css) وبوابة الطالب (portal.css).
-   ⚠️ الكتلتين دول كانوا في site.css بس — فبوابة الطالب ما كانتش شايفاهم:
+   ⚠️ الكتلتين دول كانوا في site.css بس - فبوابة الطالب ما كانتش شايفاهم:
       قوائم الاختيار عندها كانت لسه بشكل ويندوز، وعناوين أقسام نموذج التسجيل
       كانت سطر أبيض بخط تحته بدل الترويسة الزرقاء.
       المكان ده بيتحمّل في الاتنين، فأي تعديل بيوصل للطرفين مرة واحدة.
@@ -9,13 +9,13 @@
 /* ---------- بطاقة النموذج (form-card) ----------
    ⚠️ الكتلة دي كانت **مكرّرة حرفًا بحرف في أربع صفحات**: تسجيل طالب جديد،
       والتسجيل الجماعي، وتحديث حالة الطالب، والمغادرة. فأي تعديل في الشكل كان
-      لازم يتكرر أربع مرات — ولما اتغيّر لون ترويسة .card ما وصلش لها، فبانت
+      لازم يتكرر أربع مرات - ولما اتغيّر لون ترويسة .card ما وصلش لها، فبانت
       شاشة «تسجيل طالب جديد» بيضاء وباقي الشاشات زرقاء.
       التعريف هنا مرة واحدة، واتشال من الصفحات الأربع. */
 .form-card{background:var(--white);border-radius:16px;border:1px solid var(--gray-100);box-shadow:0 2px 8px rgba(16,70,49,.05);overflow:hidden;margin-bottom:20px}
 /* ⚠️ تتبع .card-header في site.css - ترويسة بيضاء بحدّ رمادي. الشرح هناك. */
 .form-card-header{padding:16px 24px;background:var(--white);border-bottom:1px solid var(--gray-200);display:flex;align-items:center;gap:10px}
-/* ⚠️ أيقونة القسم كانت على خلفية gray-100 — تختفي فوق الترويسة الملوّنة. بيضاء بحدّ. */
+/* ⚠️ أيقونة القسم كانت على خلفية gray-100 - تختفي فوق الترويسة الملوّنة. بيضاء بحدّ. */
 .form-card-header-icon{width:36px;height:36px;border-radius:10px;background:var(--tint);border:1px solid var(--gray-200);color:var(--navy);display:flex;align-items:center;justify-content:center}
 .form-card-title{font-size:15px;font-weight:700;color:var(--navy)}
 .form-card-body{padding:24px}
@@ -40,7 +40,7 @@
       تصميم النظام ونصّها من تصميم ويندوز.
       الحل في js/select-field.js: العنصر الأصلي بيفضل في الصفحة (فكل الكود
       القديم وإرسال النموذج شغّالين زي ما هم) لكنه بيتخفي بصريًا، وبنرسم فوقه
-      الواجهة دي. ⚠️ ما نستخدمش display:none — عشان required والتركيز
+      الواجهة دي. ⚠️ ما نستخدمش display:none - عشان required والتركيز
       والوصولية يفضلوا شغّالين. */
 .nsel{position:relative;width:100%}
 .nsel-native{position:absolute;inset:0;width:100%;height:100%;opacity:0;pointer-events:none;z-index:-1}
@@ -76,7 +76,7 @@
    اللي بيفرّق للعين بين «ده اختيار» و«ده نص إرشادي» من غير ما القائمة تحتاج
    تعرف الفرق. ولمّا يبقى هو المختار بياخد نفس تمييز الاختيار عشان الموظف
    يشوف إن الفلتر فعلًا على «الكل».
-   ⚠️ بدون font-style:italic — الميلان في نصّ عربي بيوحي إنه نصّ ناقص أو
+   ⚠️ بدون font-style:italic - الميلان في نصّ عربي بيوحي إنه نصّ ناقص أو
       معطّل، والفرق في اللون كفاية. */
 .nsel-opt.is-ph{color:var(--gray-500);font-weight:500}
 .nsel-opt.is-ph.is-sel{color:var(--navy);font-weight:700}
@@ -88,12 +88,12 @@
 .nsel-list::-webkit-scrollbar-thumb:hover{background:var(--gray-300)}
 
 /* ============================================================================
-   حقول النماذج — تعريف واحد لواجهة الموظفين وبوابة الطالب.
+   حقول النماذج - تعريف واحد لواجهة الموظفين وبوابة الطالب.
    ⚠️ الكتلة دي كانت مكرّرة: نسخة في «تسجيل طالب فردي»، ونسخة في «تحديث حالة
       الطالب»، ونسخة (خانة الجوال والاسم) في «قائمة الطلاب»، ونسخة رابعة
       مختلفة تمامًا في نموذج الطالب بالبوابة (.form-control بدل .input-wrap).
       النتيجة اللي كانت باينة: نفس النموذج بالظبط شكله مختلف عند الطالب عن
-      عند المشرف — خانات بيضا ضيّقة بدل الرمادية العريضة، وخانة جوال بلا
+      عند المشرف - خانات بيضا ضيّقة بدل الرمادية العريضة، وخانة جوال بلا
       مفتاح +966.
    ============================================================================ */
 .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
@@ -102,12 +102,12 @@
 .field{display:flex;flex-direction:column;gap:7px}
 .field label{font-size:13px;font-weight:600;color:var(--gray-700)}
 /* ⚠️ علامة الحقل المطلوب لازم يكون ليها كلاس صريح.
-   القاعدة كانت `.field label span` — أي span جوّه التسمية بياخد الأحمر.
+   القاعدة كانت `.field label span` - أي span جوّه التسمية بياخد الأحمر.
    أول ما لفّينا نصّ التسمية في span عشان الترجمة (data-i18n)، التسمية
    كلها بقت حمرا في نموذج الطالب. `.req` بتقول اللي المقصود بالظبط. */
 .field label .req{color:#d92d20;margin-inline-start:2px}
 .field.full{grid-column:1/-1}
-/* الحشو من فراغ الشبكة — أي هامش سفلي موروث بيبوّظ المحاذاة بين العمودين */
+/* الحشو من فراغ الشبكة - أي هامش سفلي موروث بيبوّظ المحاذاة بين العمودين */
 .form-grid .field,.form-grid-3 .field{margin-bottom:0}
 
 .input-wrap{position:relative}
@@ -127,7 +127,7 @@
    ليه. القفل لازم يتقرا بالعين قبل ما يتجرّب بالكيبورد. */
 .input-wrap input[readonly],
 .input-wrap input:disabled{background:#eceded;color:var(--gray-500);cursor:not-allowed}
-/* ⚠️ الأيقونة اختيارية. الحشو الافتراضي من غير مساحة محجوزة — أغلب الشاشات
+/* ⚠️ الأيقونة اختيارية. الحشو الافتراضي من غير مساحة محجوزة - أغلب الشاشات
    مالهاش أيقونات، ولو حجزنا 40px فيها بيبان فراغ كبير جوّه كل خانة.
    الشاشة اللي فيها أيقونة بتحط with-icon على الغلاف. */
 .input-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--gray-300);pointer-events:none}
@@ -184,7 +184,7 @@
 @media(max-width:768px){.form-grid,.form-grid-3{grid-template-columns:1fr}}
 @media(max-width:700px){.name-row{grid-template-columns:1fr}}
 
-/* ⚠️ الحركتين دول كانوا في site.css، وبوابة الطالب مبتحمّلوش — فمؤشر الحفظ
+/* ⚠️ الحركتين دول كانوا في site.css، وبوابة الطالب مبتحمّلوش - فمؤشر الحفظ
    جوّه الزرار كان بيقف ساكن عندها. مكانهم هنا عشان الطرفين ياخدوا منهم. */
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes spin2{to{transform:rotate(360deg)}}
@@ -193,7 +193,7 @@
    أزرار إجراءات الصف في الجداول (.row-actions)
 
    ⚠️ .action-btn كان مكتوبًا بالحرف في أربع شاشات: المستخدمون، الطلاب،
-      الأدوار، والقوائم المرجعية. أما .row-actions — الحاوية اللي بتصفّهم —
+      الأدوار، والقوائم المرجعية. أما .row-actions - الحاوية اللي بتصفّهم -
       فكانت متعرّفة في شاشة القوائم المرجعية وحدها، ودي اتمسحت. فباقي
       الشاشات الـ div بتاعها فضل بلا تخطيط (display:block الافتراضي)،
       والأزرار بتسيل برّه عرض العمود بدل ما تتصفّ جنب بعض. ده كان سبب إن
@@ -224,7 +224,7 @@
 .row-actions .action-delete{background:var(--red-light);color:var(--red)}
 .row-actions .action-delete:hover{background:#fee4e2}
 
-/* بادنغ أقل لخانة الإجراءات وحدها — بيدّي الأزرار ١٢ بكسل زيادة من غير ما
+/* بادنغ أقل لخانة الإجراءات وحدها - بيدّي الأزرار ١٢ بكسل زيادة من غير ما
    العمود يتوسّع. قاعدة تحسينية: المتصفح اللي مايعرفش :has() بيتجاهلها
    والعرض لسه كافي، فمفيش كسر. */
 tbody td:has(> .row-actions){padding-inline:10px}
@@ -246,7 +246,7 @@ tbody td:has(> .row-actions){padding-inline:10px}
 /* ⚠️ المختار أخضر لا أبيض. النظام كله بيعلّم الاختيار بنفس الطريقة:
    .tab-btn.active في تبويبات الطلبات، و.lang-btn.active في مفتاح ع/EN،
    الاتنين background:var(--navy) مع نصّ أبيض. الأبيض على الرمادي هنا كان
-   بيخلّي «الكل» تبان زي الزرار المعطّل مش زي المختار — ودي أزرار فلترة
+   بيخلّي «الكل» تبان زي الزرار المعطّل مش زي المختار - ودي أزرار فلترة
    المستخدم بيبص عليها عشان يعرف هو واقف فين. */
 .fh-seg button.is-on{background:var(--navy);color:var(--white);box-shadow:0 2px 8px rgba(16,70,49,.2)}
 
@@ -270,13 +270,13 @@ td.fh-unit{white-space:nowrap;font-weight:700;color:var(--navy);width:1%}
 .badge-sync{background:#dff6e7;color:var(--navy)}
 
 /* ==========================================================================
-   صندوق الملاحظة / السبب — التعريف الوحيد في النظام.
+   صندوق الملاحظة / السبب - التعريف الوحيد في النظام.
 
    ⚠️ كان في **أربع** تصاميم منفصلة لنفس الحاجة:
         .tl-notes        صندوق رمادي في الخط الزمني (site.css)
         .rejection-info  صندوق أحمر بأيقونة (Requests/Details.cshtml)
         .reject-box      صندوق أحمر (بوابة الطالب - track-request.html)
-        .fh-note         خطّ جانبي + خلفية (هنا) — إسكان هيئة التدريس
+        .fh-note         خطّ جانبي + خلفية (هنا) - إسكان هيئة التدريس
       نفس المعنى بأربع أشكال، والموظف بيقرا سبب الرفض بشكل في شاشة وشكل تاني
       في التانية. ده التعريف الوحيد دلوقتي والباقي بيستعمله.
 
@@ -294,7 +294,7 @@ td.fh-unit{white-space:nowrap;font-weight:700;color:var(--navy);width:1%}
 .note-block b,
 .fh-note b{color:var(--navy)}
 
-/* عنوان صغير فوق النصّ — «سبب الرفض» بدل كلمة «الملاحظات» العامة.
+/* عنوان صغير فوق النصّ - «سبب الرفض» بدل كلمة «الملاحظات» العامة.
    ⚠️ العنوان بيقول *محتوى* الصندوق مش نوعه: «الملاحظات: ...» ما بتقولش حاجة
       عن اللي جوّه، و«سبب الرفض» بتقول. */
 .note-block-cap{font-size:10.5px;font-weight:700;color:var(--gray-500);margin-bottom:3px;line-height:1.5}
@@ -306,7 +306,7 @@ td.fh-unit{white-space:nowrap;font-weight:700;color:var(--navy);width:1%}
 .note-block.in-tl{margin:10px 0 0;padding:10px 13px}
 
 /* ==========================================================================
-   حقل التاريخ (NuhDate) — js/date-field.js
+   حقل التاريخ (NuhDate) - js/date-field.js
 
    ⚠️ نفس علّة .nsel بالظبط: <input type="date"> تقويمه من نظام التشغيل، يعني
       إنجليزي دايمًا وسط شاشة عربية، وصيغته بتتغيّر من جهاز للتاني حسب إعدادات
@@ -336,7 +336,7 @@ td.fh-unit{white-space:nowrap;font-weight:700;color:var(--navy);width:1%}
   border:1px solid var(--gray-200);border-radius:14px;padding:10px;
   box-shadow:0 12px 32px rgba(16,24,40,.14);font-family:'IBM Plex Sans Arabic',sans-serif}
 
-/* ⚠️ مفتاح واحد وشبكة واحدة تتبدّل — مش شبكتين جنب بعض. الاتنين مع بعض
+/* ⚠️ مفتاح واحد وشبكة واحدة تتبدّل - مش شبكتين جنب بعض. الاتنين مع بعض
    بيخلّوا المستخدم يقارن بدل ما يختار، والمطلوب هنا اختيار. */
 .ndate-modes{display:flex;background:var(--gray-100);border-radius:9px;padding:3px;gap:2px;margin-bottom:8px}
 .ndate-mode{flex:1;border:0;background:none;font-family:inherit;font-size:12px;font-weight:700;
@@ -376,24 +376,24 @@ td.fh-unit{white-space:nowrap;font-weight:700;color:var(--navy);width:1%}
 .ndate-link.is-strong{color:var(--green)}
 
 /* ============================================================================
-   تغيّر قيمة: «كانت كذا وبقت كذا» — التعريف الوحيد في النظام.
+   تغيّر قيمة: «كانت كذا وبقت كذا» - التعريف الوحيد في النظام.
 
    ⚠️ نفس الفكرة كانت متكتبة بتلات تصاميم مختلفة:
 
-      • تفاصيل الطلب  — القيمة الجديدة في سطر، وتحتها سطر رمادي ١١٫٥ بكسل
+      • تفاصيل الطلب  - القيمة الجديدة في سطر، وتحتها سطر رمادي ١١٫٥ بكسل
         «قبل التعديل: ...» جوّاه <del> أحمر. والستايل ده مكانش في CSS أصلًا:
         كان بيتحقن من request-details-page.js كنصّ فيه ألوان مكتوبة بالإيد
-        (#fffaeb و#dba102 و#b42318) — مكوّن تصميم مخبّي جوّه ملف سلوك.
+        (#fffaeb و#dba102 و#b42318) - مكوّن تصميم مخبّي جوّه ملف سلوك.
 
-      • سجل وحدات أعضاء هيئة التدريس — جدول .ch-old (أحمر مشطوب) و.ch-new
+      • سجل وحدات أعضاء هيئة التدريس - جدول .ch-old (أحمر مشطوب) و.ch-new
         (أخضر عريض).
 
-      • سجل العمليات — نفس الجدول، بس بستايلات inline مكتوبة في الجافاسكريبت
+      • سجل العمليات - نفس الجدول، بس بستايلات inline مكتوبة في الجافاسكريبت
         (color:var(--red) و color:var(--green)).
 
    ⚠️ والقديم مابقاش أحمر: الأحمر في النظام كله معناه «خطأ» أو «مرفوض»، وده
       تعديل صحيح مش غلط. القيمة القديمة رمادية مشطوبة، والجديدة غامقة عريضة،
-      وبينهم سهم — فالعلاقة بينهم تتقرا في نظرة واحدة.
+      وبينهم سهم - فالعلاقة بينهم تتقرا في نظرة واحدة.
 
    ⚠️ والسهم مرسوم بحدود CSS ومتجهه بـ border-inline-start، فبيقلب مع اتجاه
       الصفحة لوحده. الحرف → كان هيحتاج نسخة لكل اتجاه، وممكن يطلع مربّع فاضي
@@ -430,12 +430,12 @@ td.fh-unit{white-space:nowrap;font-weight:700;color:var(--navy);width:1%}
 .chg-list.wide .chg-lbl{min-width:186px}
 
 /* ==========================================================================
-   سجل عمليات وحدة السكن — بند واحد ونافذته وسطر «آخر تعديل».
+   سجل عمليات وحدة السكن - بند واحد ونافذته وسطر «آخر تعديل».
 
    ⚠️ الأصناف دي كانت مكتوبة في Views/FacultyHousing/Index.cshtml وحدها،
       وبقت مطلوبة في شاشة «تغيير بيانات ساكن» كمان بعد ما السجل ظهر فيها.
       نسخها في الشاشتين كان معناه إن أول تعديل على شكل البند يتعمل في واحدة
-      وتُنسى التانية — نفس السجل بشكلين على بُعد ضغطتين.
+      وتُنسى التانية - نفس السجل بشكلين على بُعد ضغطتين.
       (js/faculty-audit-log.js هو اللي بيرسمهم في الشاشتين.)
    ========================================================================== */
 /* ⚠️ ‏.ch-item و.ch-top و.ch-act و.ch-meta و.ch-ip اتشالوا كلهم: البند بقى
@@ -537,7 +537,7 @@ td.fh-unit{white-space:nowrap;font-weight:700;color:var(--navy);width:1%}
 }
 
 /* ---------- الصف اللي اتعدّل في شاشة تفاصيل الطلب ---------- */
-/* ⚠️ border-inline-start واحدة بدل قاعدتين [dir=rtl] و[dir=ltr] — بتقلب لوحدها */
+/* ⚠️ border-inline-start واحدة بدل قاعدتين [dir=rtl] و[dir=ltr] - بتقلب لوحدها */
 .info-field.edited{background:var(--amber-light);border-radius:8px;padding:8px 12px;
   margin:-8px -4px;border-inline-start:3px solid var(--gold)}
 .edited-tag{display:inline-block;margin-inline-start:6px;padding:1px 8px;border-radius:20px;
@@ -548,13 +548,13 @@ td.fh-unit{white-space:nowrap;font-weight:700;color:var(--navy);width:1%}
 .edits-banner svg{flex-shrink:0;margin-top:2px}
 
 /* ============================================================================
-   وثيقة التعهّد — بطاقة تفاصيل الطلب ونسخة الطباعة.
+   وثيقة التعهّد - بطاقة تفاصيل الطلب ونسخة الطباعة.
 
    ⚠️ ليه المكوّن هنا مش في ستايل الشاشة:
       الشكل ده وثيقة مش قسم في صفحة. لو اتكتب جوّه <style> بتاع
       Views/Requests/Details.cshtml كان هيفضل حبيس الشاشة دي، وأول ما نحتاج
       نعرض نفس الوثيقة في مكان تاني (تتبّع الطلب للطالب مثلًا) هتتنسخ.
-      ومعاها قواعد الطباعة — ودي بالذات لازم تبقى في مكان واحد.
+      ومعاها قواعد الطباعة - ودي بالذات لازم تبقى في مكان واحد.
 
    ⚠️ والألوان توكنز كلها: الوثيقة دي هتتطبع وتتحطّ في ملف رسمي، فلو الهوية
       اتغيّرت لازم تتغيّر معاها من غير ما حد يفتكر الملف ده.
@@ -563,7 +563,7 @@ td.fh-unit{white-space:nowrap;font-weight:700;color:var(--navy);width:1%}
   background:var(--white);overflow:hidden}
 
 /* ---------- ترويسة الوثيقة ---------- */
-/* ⚠️ z-index:3 فوق العلامة المتكرّرة — الترويسة والتذييل ملهمش علاقة بالنصّ
+/* ⚠️ z-index:3 فوق العلامة المتكرّرة - الترويسة والتذييل ملهمش علاقة بالنصّ
    الموقَّع، فما ينفعش العلامة تعدّي من تحتيهم وتبان كأنها جزء منهم. */
 .pl-top{display:flex;align-items:center;gap:11px;padding:16px 18px;position:relative;z-index:3;
   background:linear-gradient(180deg,var(--tint) 0%,rgba(255,255,255,.88) 100%);
@@ -598,7 +598,7 @@ td.fh-unit{white-space:nowrap;font-weight:700;color:var(--navy);width:1%}
 
 /* ⚠️ الترقيم من CSS مش من النصّ: النصّ المحفوظ في قاعدة البيانات مرقّم أصلًا،
    والترقيم اتشال منه وقت العرض (PledgeService) عشان ما يطلعش رقمين لبند واحد.
-   والمصدر واحد — العدّاد بيمشي على نفس ترتيب السطور المحفوظة. */
+   والمصدر واحد - العدّاد بيمشي على نفس ترتيب السطور المحفوظة. */
 .pl-list{list-style:none;counter-reset:plt;margin:0;padding:0}
 .pl-list li{counter-increment:plt;position:relative;padding-inline-start:36px;margin-bottom:11px;
   font-size:13.5px;line-height:2;color:var(--gray-700)}
@@ -621,14 +621,14 @@ td.fh-unit{white-space:nowrap;font-weight:700;color:var(--navy);width:1%}
   position:relative;z-index:3;background:var(--gray-50);border-top:1px solid var(--gray-100)}
 .pl-meta>div{font-size:10.5px;font-weight:700;color:var(--gray-500)}
 .pl-meta b{display:block;margin-top:3px;font-size:12.5px;font-weight:700;color:var(--navy-dark)}
-/* ⚠️ البصمة والعناوين نصّ لاتيني جوّه صفحة عربية — من غير العزل ده ترتيب
+/* ⚠️ البصمة والعناوين نصّ لاتيني جوّه صفحة عربية - من غير العزل ده ترتيب
    المقاطع بينعكس بصريًّا، فالمراجع يقارن بصمتين مختلفتين شكلًا وهما واحدة. */
 .pl-meta .pl-mono{direction:ltr;unicode-bidi:isolate;
   font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px}
 
 /* ---------- الختم ---------- */
 /* ⚠️ باهت عن قصد (١٧٪): علامة خلفية لا عنصر يتقرا. ومكانه جنب التوقيع
-   بالظبط زي الختم على أي خطاب رسمي — مش في النص ولا في الترويسة. */
+   بالظبط زي الختم على أي خطاب رسمي - مش في النص ولا في الترويسة. */
 .pl-seal{position:absolute;inset-inline-end:38px;bottom:100px;width:152px;height:152px;
   border-radius:50%;border:2px solid var(--navy);outline:1px solid var(--navy);outline-offset:6px;
   z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
@@ -638,7 +638,7 @@ td.fh-unit{white-space:nowrap;font-weight:700;color:var(--navy);width:1%}
 
 /* ---------- العلامة المتكرّرة ---------- */
 /* ⚠️ اسم الطالب ورقمه وبصمة البنود، مكرّرين ومايلين على كل الوثيقة. الغرض
-   منها ردع بصري لا حماية تقنية: أي صورة أو نسخة — حتى لو مقصوصة — بتفضل
+   منها ردع بصري لا حماية تقنية: أي صورة أو نسخة - حتى لو مقصوصة - بتفضل
    شايلة اسم صاحبها وبصمة بنوده. اللي عنده أدوات يقدر يشيلها، والحماية
    الحقيقية هي البصمة المخزّنة في قاعدة البيانات.
    ⚠️ وما فيهاش لوجو عن قصد: اللوجو الصغير المتكرّر بيطلع لطخة رمادية على
@@ -647,16 +647,21 @@ td.fh-unit{white-space:nowrap;font-weight:700;color:var(--navy);width:1%}
    القصّ كان على .pl-sheet نفسها، و overflow:hidden على عنصر بيتقسّم على أكتر
    من صفحة بيخلّي المتصفح **يقصّه عند حدّ الصفحة** بدل ما يكمّله في اللي
    بعدها - فملف الطالب كان بيتطبع ورقة واحدة والتوقيع والختم مقصوصين. */
+/* ⚠️ overflow:hidden بيقصّ العلامة عند حدود أبوها - وأبوها بقى صندوق المتن
+   (.pl-sh-box) لا الورقة كلها، فالعلامة بقت **جوّه إطار الوثيقة** وبس.
+   قبل كده كانت بتغطّي الترويسة والتذييل والهوامش، فالورقة كانت شكلها
+   مبقّعة والزخرفة والترويسة بيتنافسوا معاها. */
 .pl-tile{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;opacity:.05}
+/* ⚠️ الوحدة بقت لاتينية قصيرة (رقم جامعي · رمز الوثيقة · اسم المستخدم)،
+   فالحجم والتباعد نزلوا عشان تتكرّر أكتر وتملى الورقة. الشرح في
+   js/pledge-doc.js عند tile(). */
 .pl-tile .pl-tile-in{position:absolute;inset:-45% -30%;transform:rotate(-24deg);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:66px}
-.pl-tile .pl-tile-row{display:flex;align-items:center;gap:78px;white-space:nowrap}
-.pl-tile .pl-tile-unit{font-size:13px;font-weight:700;color:var(--navy)}
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:34px}
+.pl-tile .pl-tile-row{display:flex;align-items:center;gap:40px;white-space:nowrap}
+.pl-tile .pl-tile-unit{font-size:11px;font-weight:700;color:var(--navy);
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  direction:ltr;unicode-bidi:isolate}
 
-/* ⚠️ علامة تانية جوّه صندوق التوقيع: لما الملف ياخد ورقتين، ورقة التوقيع
-   هي أهم ورقة - وعلامة الورقة الأولى مابتوصلهاش. مخفية على الشاشة. */
-.pl-tile-sig{display:none;z-index:0}
-body.printing-pledge .pl-tile-sig{display:block}
 
 /* ⚠️ نصّ صندوق التوقيع لازم يعلى فوق العلامة: العنصر الموضَّع بـ z-index:0
    بيترسم **فوق** المحتوى العادي، فمن غير السطر ده العلامة كانت هتغطّي
@@ -671,43 +676,76 @@ body.printing-pledge .pl-tile-sig{display:block}
 .pl-empty svg{color:var(--gray-300);margin-bottom:10px}
 
 /* ---------- ترويسة وتذييل الورقة ---------- */
-/* مخفيّة على الشاشة تمامًا — الشاشة فيها ترويسة النظام أصلًا. */
+/* مخفيّة على الشاشة تمامًا - الشاشة فيها ترويسة النظام أصلًا. */
 .pl-paper{display:none}
 
 /* ============================================================================
-   ورقة التعهّد المطبوعة — تخطيط مستقل عن بطاقة الشاشة.
+   ورقة التعهّد المطبوعة - تخطيط مستقل عن بطاقة الشاشة.
 
    ⚠️ ليه تخطيط تاني بدل ما نطبع البطاقة نفسها:
       اللي على الشاشة **واجهة استخدام**: شارة خضرا بحالة الطلب، ترويسة بطاقة،
       خلفيات ملوّنة، حواف مدوّرة، أرقام في دواير. الحاجات دي بتقول للموظف
       «إنت في نظام». نفس الحاجات مطبوعة بتقول للي ماسك الورقة «دي صورة شاشة»
-      — مش وثيقة رسمية.
+      - مش وثيقة رسمية.
 
       فالورقة ليها تخطيطها: ترويسة جهة، عنوان بخط فاصل ذهبي، ديباجة «أقر أنا
       الموقّع أدناه»، بنود بترقيم عربي (١، ٢، ٣)، صندوق توقيع بختم، وتذييل
       فيه البصمة وطريقة التحقّق.
 
-      والاتنين بيتبنوا من **نفس البيانات** في pledgeCardHtml — مفيش نصّ
+      والاتنين بيتبنوا من **نفس البيانات** في pledgeCardHtml - مفيش نصّ
       مكتوب مرتين، الاختلاف في العرض بس.
 
    ⚠️ والقواعد دي مش جوّه @media print عن قصد:
       printPledge محتاجة تقيس ارتفاع الورقة **بمقاس A4** قبل الطباعة عشان
       تعرف هل تصغّرها لتدخل في صفحة واحدة. والقياس ده مستحيل جوّه @media
-      print — المتصفح مابيدّيش الجافاسكريبت مقاسات تخطيط الطباعة خالص.
+      print - المتصفح مابيدّيش الجافاسكريبت مقاسات تخطيط الطباعة خالص.
       فالوضع مربوط بـ .printing-pledge على <body>، وبيتطبّق على الشاشة
       **للحظة** قبل ما نافذة الطباعة تفتح: الورقة تاخد عرضها الحقيقي، تتقاس،
       تتظبط، وبعدين نطبع. اللي بيتقاس هو اللي بيتطبع بالحرف.
 
    ⚠️ ولازم إعادة تصفير الآباء (.pl-print-keep): إخفاء القائمة الجانبية
-      مابيشلش **مساحتها** — الحاوية الرئيسية عندها هامش بعرض القائمة
+      مابيشلش **مساحتها** - الحاوية الرئيسية عندها هامش بعرض القائمة
       (--sidebar-w) وسقف عرض (--page-max)، والاتنين بيفضلوا شغّالين في
       الطباعة. النتيجة اللي كانت بتحصل: الوثيقة بتتطبع في تلتين عرض الورقة،
       فبتطول وتتقسم على ورقتين.
    ============================================================================ */
 .pl-print-hide{display:none !important}
 
-/* الورقة مخفية تمامًا على الشاشة — تظهر في وضع الطباعة بس. */
-.pl-sheet{display:none}
+/* الورقة مخفية تمامًا على الشاشة - تظهر في وضع الطباعة بس. */
+/* ============================================================================
+   خطّ الوثيقة المطبوعة - Almarai.
+   ⚠️ ليه خطّ تاني غير خطّ النظام: الورقة دي بتتقدّم بترويسة الجامعة الرسمية،
+      وخطّ الترويسة المعتمد (GE SS) خطّ مرخَّص تجاريًّا - مانقدرش نضمّنه.
+      Almarai أقرب خطّ حرّ لشكله، فالورقة المطبوعة بتطلع شبه الورق الرسمي،
+      والشاشة بتفضل على IBM Plex Sans Arabic زي ما هي.
+   ⚠️ وملفّات حقيقية لا base64 داخل الـCSS: المتصفح بيخزّنها مرة واحدة ويعيد
+      استعمالها، ومابيحمّلهاش أصلًا إلا لما عنصر بالخطّ ده يترسم - يعني عند
+      فتح المعاينة أو الطباعة، مش مع كل صفحة في النظام.
+   ============================================================================ */
+@font-face{font-family:'NUH Doc';font-style:normal;font-weight:400;font-display:swap;
+  src:url('/fonts/almarai-arabic-400-normal.woff2') format('woff2');
+  unicode-range:U+0600-06FF,U+0750-077F,U+0870-088E,U+08A0-08FF,U+FB50-FDFF,U+FE70-FEFF}
+@font-face{font-family:'NUH Doc';font-style:normal;font-weight:400;font-display:swap;
+  src:url('/fonts/almarai-latin-400-normal.woff2') format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212}
+@font-face{font-family:'NUH Doc';font-style:normal;font-weight:700;font-display:swap;
+  src:url('/fonts/almarai-arabic-700-normal.woff2') format('woff2');
+  unicode-range:U+0600-06FF,U+0750-077F,U+0870-088E,U+08A0-08FF,U+FB50-FDFF,U+FE70-FEFF}
+@font-face{font-family:'NUH Doc';font-style:normal;font-weight:700;font-display:swap;
+  src:url('/fonts/almarai-latin-700-normal.woff2') format('woff2');
+  unicode-range:U+0000-00FF,U+0131,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212}
+
+/* ⚠️ الخطّ على الورقة وحدها لا على الشاشة: .pl-doc (بطاقة التعهّد في الشاشة)
+   بتفضل بخطّ النظام. */
+/* ⚠️ ‎--pl-fx‎ = الحشو الأفقي للإطار الداخلي، و‎--pl-padx‎ = الحشو الجانبي
+   للورقة نفسها (بيتحطّ من js/pledge-doc.js وقت الطباعة من PL_PAD_X، وصفر
+   في المعاينة). الاتنين متعرّفين هنا عشان الزخرفة الممتدّة تلغيهم بحساب
+   واحد بدل ما الأرقام تتكتب تاني في مكان تاني.
+   ⚠️ و‎--pl-fx‎ بقى ٨ بدل ٢٢: الورق الرسمي هوامشه الجانبية ضيّقة جدًّا،
+      والإطار الداخلي كان بيضيف ٢٢ بكسل على كل جنب فوق حشو الورقة - فكانت
+      بتطلع مساحة بيضا واضحة يمين وشمال مش موجودة في الأصل. */
+.pl-sheet{display:none;font-family:'NUH Doc','IBM Plex Sans Arabic',sans-serif;
+  --pl-fx:8px;--pl-padx:0px}
 
 /* ---------- المعاينة قبل الطباعة ----------
    ⚠️ الورقة display:none على الشاشة عن قصد - مالهاش مكان في التخطيط. الكلاس
@@ -739,14 +777,20 @@ body.printing-pledge .pl-doc{display:none}          /* بطاقة الشاشة �
 body.printing-pledge .card{border:none;box-shadow:none;background:transparent;margin:0}
 body.printing-pledge .card-body{padding:0}
 
-/* ⚠️ التصفير على سلسلة الآباء بس (الجافاسكريبت بيعلّمها) — مش قاعدة عامة
+/* ⚠️ التصفير على سلسلة الآباء بس (الجافاسكريبت بيعلّمها) - مش قاعدة عامة
    بتضرب كل عناصر الصفحة. */
+/* ⚠️ overflow و height و max-height لازم يتصفّروا كمان - وde كان ناقص وهو
+   السبب الحقيقي اللي كان بيخلّي الملف الكامل يخرج **مقصوص** من الطابعة:
+   أي بطاقة أو حاوية في الطريق عندها overflow:hidden بتقصّ الوثيقة عند حدّ
+   الصفحة الأولى، والمتصفح بيقول «ورقة واحدة» وهو مش قادر يقسّم أصلًا.
+   ورقة التعهّد لوحدها كانت داخلة في صفحة فمحدّش واخد باله. */
 body.printing-pledge .pl-print-keep{display:block;margin:0;padding:0;
-  width:auto;max-width:none;min-width:0;border:0;background:none;box-shadow:none}
+  width:auto;max-width:none;min-width:0;border:0;background:none;box-shadow:none;
+  overflow:visible !important;height:auto !important;max-height:none !important}
 
 /* ⚠️ عرض ثابت بمقاس منطقة الطباعة في A4 (٢١٠مم ناقص هامشين ١٤مم). المتصفح
    بيحوّل المليمتر لبكسل بنفسه، فاللي بيتقاس على الشاشة هو نفسه اللي على
-   الورق — ودي الحتة اللي بتخلّي القياس يطلع صح. */
+   الورق - ودي الحتة اللي بتخلّي القياس يطلع صح. */
 /* ⚠️ الخط مكتوب صراحةً هنا: الورقة بتتطبع من سياق الطباعة، وبعض المتصفحات
    بترجع للخط الافتراضي لو الوراثة اتقطعت - والنتيجة وثيقة رسمية بخط تاني
    غير خط النظام كله. */
@@ -765,13 +809,19 @@ body.printing-pledge .pl-print-keep{display:block;margin:0;padding:0;
    الصفحة كلها إنجليزي، فالمحاذاة لازم تتبع الورقة لا الصفحة. */
 body.printing-pledge .pl-sheet.is-printing{display:block;position:relative;text-align:start;
   width:auto;max-width:100%;margin:0 auto;background:var(--white);color:var(--navy-dark);
-  font-family:'IBM Plex Sans Arabic',sans-serif;
+  /* ⚠️ 'NUH Doc' الأول: القاعدة دي كانت بتكتب 'IBM Plex Sans Arabic' لوحده،
+     وبما إنها أخصّ من ‎.pl-sheet‎ كانت بتغلبها - فالمعاينة كانت بخطّ الوثيقة
+     والورقة الخارجة من الطابعة بخطّ النظام. نفس السلسلة في المكانين. */
+  font-family:'NUH Doc','IBM Plex Sans Arabic',sans-serif;
   }
 
-/* ⚠️ الإطار على الطبقة الداخلية لا على الورقة: الطبقة دي هي اللي بتتصغّر،
-   والإطار جزء من الوثيقة فلازم يتصغّر معاها. والورقة نفسها مجرد صندوق
-   بياخد ارتفاعه من المحتوى بعد التصغير (الشرح في js/pledge-doc.js). */
-.pl-sh-scale{border:3px solid var(--navy);position:relative}
+/* ⚠️ الطبقة دي هي اللي بتتصغّر وقت الطباعة، والورقة نفسها مجرد صندوق بياخد
+   ارتفاعه من المحتوى بعد التصغير (الشرح في js/pledge-doc.js).
+   ⚠️ الإطار الأخضر السميك (3px) اللي كان هنا اتشال: كان بيحوّط **الورقة
+      كلها** بالترويسة والتذييل، وde شكل مطبوعة من موقع. الورق الرسمي إطاره
+      خيط كحلي رفيع بيحوّط **متن الخطاب وحده** - تحت خطّ الترويسة وفوق سطر
+      الشعار. الإطار ده بقى .pl-sh-box تحت. */
+.pl-sh-scale{position:relative}
 
 /* ============================================================================
    إطار الوثيقة - خطّ واحد.
@@ -779,7 +829,38 @@ body.printing-pledge .pl-sheet.is-printing{display:block;position:relative;text-
    ⚠️ الإطار على .pl-sheet والحشو على .pl-sh-frame: الفصل ده بيخلّي المسافة
       بين الخطّ والنصّ تتغيّر من غير ما نلمس الخطّ نفسه.
    ============================================================================ */
-.pl-sh-frame{position:relative;padding:20px 22px 18px}
+.pl-sh-frame{position:relative;padding:20px var(--pl-fx) 18px}
+
+/* ============================================================================
+   صندوق المتن - خيط كحلي رفيع بيحوّط **الخطاب** لا الورقة.
+   ⚠️ سطر الإدارة قاعد على ضلعه العلوي ناحية اليمين، والخلفية البيضا بتقطع
+      الخطّ تحته فيبان مركوبًا عليه - زي «وحدة التدريب وتنمية المهارات» في
+      الورق الرسمي بالحرف.
+   ⚠️ وأركانه مدوّرة شوية (2.5px) زي الأصل - مش زوايا حادّة.
+   ============================================================================ */
+.pl-sh-box{position:relative;z-index:2;border:1px solid #1f3864;border-radius:2.5px;
+  margin-top:0;padding:16px 18px 20px}
+/* ⚠️ ذهبي #a67c00 لا الذهبي الفاتح: الفاتح تباينه على الأبيض ‎2.4:1‎ - يبان
+   على الشاشة ويبهت على طابعة الليزر. ده نفس اللون بالعين وتباينه ‎5.0:1‎. */
+/* ============================================================================
+   سطر الإدارة - راكب على ضلع الصندوق العلوي، ومتوسّط على **نفس مركز كتلة
+   الترويسة** فوقه.
+   ⚠️ الحاوية هي .pl-lh-org نفسها (position:relative)، و‎inset-inline:0‎ مع
+      ‎margin-inline:auto‎ و‎width:max-content‎ بتوسّط صندوقًا مطلقًا داخلها.
+      يعني السطر بياخد مركز عمود الجهة بالظبط - وهو **نفس** المركز اللي
+      السطور الأربعة متوسّطة عليه.
+   ⚠️ ليه كده لا بإزاحة ثابتة من حافة الصندوق: كتلة الترويسة متوسّطة داخل
+      عمود عرضه 1fr، فموضعها بيتغيّر مع عرض الورقة - المعاينة ١٨٢مم والطباعة
+      ٢١٠مم. أي رقم ثابت بيظبط في واحدة ويغلط في التانية، وde اللي خلّى
+      السطر يطلع مرة بارز يمين ومرة داخل لجوّه. دلوقتي الاتنين بياخدوا
+      مركزهم من نفس العنصر، فبيتحاذوا في أي عرض.
+   ⚠️ ذهبي #a67c00 لا الفاتح: الفاتح تباينه على الأبيض ‎2.4:1‎ - يبان على
+      الشاشة ويبهت على طابعة الليزر. ده نفس اللون بالعين وتباينه ‎5.0:1‎.
+   ============================================================================ */
+.pl-lh-dept{position:absolute;inset-inline:0;margin-inline:auto;width:max-content;
+  inset-block-end:-19px;z-index:5;
+  background:var(--white);padding:0 10px;font-size:15.5px;font-weight:700;
+  color:#a67c00;line-height:1.4;white-space:nowrap}
 
 /* ---------- ترويسة المعاملات الرسمية ----------
    ⚠️ ثلاثة أعمدة زي ورق المراسلات المعتمد: الجهة يمين، الشعار في النص، وخانات
@@ -787,14 +868,25 @@ body.printing-pledge .pl-sheet.is-printing{display:block;position:relative;text-
       وتحته ثلاثة سطور - شكل مطبوعة من موقع لا شكل معاملة.
    ⚠️ والأعمدة الجانبية بعرض متساوٍ (1fr) عشان الشعار يقع في **نص الورقة**
       بالظبط مهما طال اسم الإدارة. لو كانت auto كان الشعار بيزحف مع كل اسم. */
+/* ⚠️ كحلي #1f3864 لا أخضر: ده لون الترويسة الرسمية المعتمدة ولون اللوجو
+   نفسه. الأخضر لون **النظام**، والورقة دي مخاطبة بترويسة **الجامعة**.
+   ⚠️ ومافيش border-bottom هنا: الخطّ اللي تحت الترويسة هو **ضلع صندوق المتن
+      العلوي** (.pl-sh-box) لا خطًّا مستقلًّا - كده زي الورق الرسمي بالظبط،
+      وسطر الإدارة قاعد عليه. كان عندنا خطّين فوق بعض: واحد للترويسة وواحد
+      للصندوق. */
 .pl-lh{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;
-  padding:0 0 12px;border-bottom:2.5px solid var(--navy);position:relative;z-index:2}
-.pl-lh-org{font-size:13px;font-weight:700;color:var(--gray-700);line-height:2;text-align:start}
-.pl-lh-org span{display:block}
-.pl-lh-org b{display:block;font-size:16.5px;font-weight:800;color:var(--navy-dark);line-height:1.85}
-.pl-lh-dept{color:var(--navy);font-weight:700}
+  padding:0 0 7px;position:relative;z-index:4}
+/* ⚠️ الكتلة **متوسّطة** لا مصفّاة على حافة: في الورق الرسمي سطر «المملكة
+   العربية السعودية» أعرض من اللي تحته والسطور الباقية متوسّطة تحته. قِست
+   مراكز السطور التلاتة في الورقة الأصلية فطلعوا على بعضهم في حدود بكسلين.
+   ⚠️ والتمديد بالكشيدة (ـ U+0640) مكتوب في **النصّ نفسه** في
+      js/pledge-doc.js - لا letter-spacing ولا text-align:justify. الكشيدة
+      حرف عربي بيمدّ وصلة الحروف؛ والبديلين بيفرّقوا الكلمات على طرفَي السطر
+      أو بيباعدوا الحروف المنفصلة كمان، والاتنين شكلهم غلط. */
+.pl-lh-org{position:relative;color:#1f3864;line-height:1.6;text-align:center}
+.pl-lh-org span,.pl-lh-org b{display:block;font-size:17px;font-weight:700;white-space:nowrap}
 .pl-lh-logo{align-self:center}
-.pl-lh-logo img{width:124px;height:auto;display:block}
+.pl-lh-logo img{width:156px;height:auto;display:block}
 
 /* خانات القيد
    ⚠️ text-align:end و justify-content:flex-end - وde هو اللي بيخلّي الكتلة
@@ -812,31 +904,34 @@ body.printing-pledge .pl-sheet.is-printing{display:block;position:relative;text-
       حافة الورقة الخارجية، في مقابل عمود الجهة اللي لازق في اليمين. */
 .pl-lh-refs{display:grid;grid-template-columns:auto auto auto;column-gap:4px;
   justify-content:end;align-items:center;
-  font-size:12.5px;font-weight:700;color:var(--gray-700);line-height:2}
+  font-size:15px;font-weight:700;color:#1f3864;line-height:2.05}
 .pl-lh-row{display:contents}
 .pl-lh-row .k{letter-spacing:.5px;white-space:nowrap}
 .pl-lh-row .c{margin-inline-end:2px}
 /* ⚠️ gap:5px و flex-wrap:nowrap: زرّ التقويم كان بيركب على خانة السنة
    لمّا تتملا بأربع خانات (١٤٤٨). */
 .pl-lh-date{display:inline-flex;align-items:center;gap:4px;flex-wrap:nowrap}
-.pl-lh-date i{font-style:normal;color:var(--gray-300);padding:0 1px}
-.pl-lh-cal{font-weight:800;color:var(--navy-dark);margin-inline-start:3px}
+.pl-lh-date i{font-style:normal;color:#1f3864;padding:0 2px}
+.pl-lh-cal{font-weight:700;color:#1f3864;margin-inline-start:3px}
 
-/* ⚠️ الخانة القابلة للكتابة: خطّ منقّط على الشاشة يقول «اكتب هنا»، وخطّ
-   متّصل رفيع على الورق زي الفراغ في النموذج الورقي. من غير حدّ ظاهر
-   الموظف مابيعرفش إنها قابلة للكتابة أصلًا. */
-.pl-lh-f{display:inline-block;min-height:15px;padding:0 3px;
-  border-bottom:1px dotted var(--gray-300);color:var(--navy-dark);font-weight:800;
-  outline:none;text-align:center}
-.pl-lh-f:focus{border-bottom-color:var(--navy);background:var(--tint)}
+/* ============================================================================
+   خانات القيد بلا خطوط.
+   ⚠️ الخطوط اللي كانت تحت رقم الطلب والتاريخ والمرفقات اتشالت: الورق الرسمي
+      مافيهوش خطوط تحت الخانات دي - القيمة بتقعد بعد النقطتين وخلاص، والخطّ
+      كان بيدّي الورقة شكل «نموذج يُملأ باليد» بدل وثيقة مستخرجة من نظام.
+   ⚠️ وفضل خطّ منقّط خفيف على خانة المرفقات **في المعاينة وحدها**: هي الخانة
+      الوحيدة اللي الموظف بيكتبها بإيده قبل الطباعة، ومن غير أي علامة مش
+      هيعرف إنها قابلة للكتابة أصلًا. وبما إنه محصور في .is-preview، الورقة
+      المطبوعة بتخرج نضيفة زي الورق الرسمي.
+   ============================================================================ */
+.pl-lh-f{display:inline-block;min-height:15px;min-width:70px;padding:0 3px;
+  color:#1f3864;font-weight:700;outline:none;text-align:center}
+.pl-sheet.is-preview .pl-lh-f{border-bottom:1px dotted var(--gray-300)}
+.pl-sheet.is-preview .pl-lh-f:focus{border-bottom-color:var(--navy);background:var(--tint)}
 
-/* ⚠️ خانة قيمة النظام (رقم الطلب، التاريخ): خطّ **متّصل** لا منقّط.
-   الخطّ المنقّط في النظام كله معناه «الخانة دي فاضية وانت اللي هتملاها»،
-   فلمّا كان تحت رقم الطلب كان بيدعو الموظف يكتب فوق رقم صح.
-   والخطّ فضل موجود عشان الصفوف التلاتة تفضل متحاذية زي النموذج الورقي. */
 .pl-lh-v{display:inline-block;min-height:15px;padding:0 3px;
-  border-bottom:1px solid var(--gray-200);color:var(--navy-dark);font-weight:800;
-  text-align:center}
+  color:#1f3864;font-weight:700;text-align:center;
+  font-variant-numeric:tabular-nums;unicode-bidi:isolate}
 .pl-lh-swap{margin-inline-start:5px;border:1px solid var(--gray-200);background:var(--white);
   color:var(--gray-700);border-radius:6px;padding:0 5px;font-size:11px;line-height:1.6;
   cursor:pointer;font-family:inherit}
@@ -845,10 +940,11 @@ body.printing-pledge .pl-sheet.is-printing{display:block;position:relative;text-
 /* ---------- العنوان ---------- */
 /* ⚠️ الهامش السفلي ٢٠ لا صفر: سطر المراجع اللي كان تحت العنوان كان بيدّي
    الفراغ ده بـ margin-top بتاعه. اتشال، فالفراغ بقى مسؤولية العنوان. */
-.pl-sh-title{text-align:center;margin:18px 0 20px;font-size:21.5px;font-weight:800;
+/* ⚠️ الهامش العلوي صغير عن قصد: كل ما العنوان يطلع لفوق، كل اللي تحته
+   بيترحّل معاه - وde بيدّي الورقة سطور زيادة قبل ما تضطر تنزل على ورقة
+   تانية. المسافة اللي فاضلة كفاية إنه مايلزقش في ضلع الصندوق. */
+.pl-sh-title{text-align:center;margin:6px 0 16px;font-size:21.5px;font-weight:800;
   color:var(--navy-dark);position:relative;z-index:2}
-.pl-sh-title::after{content:'';display:block;width:66px;height:2.5px;border-radius:2px;
-  background:var(--gold);margin:9px auto 0}
 /* ---------- الجسم ---------- */
 .pl-sh-body{position:relative;z-index:2}
 .pl-sh-pre{font-size:14px;font-weight:600;line-height:2.15;color:var(--gray-700);margin-bottom:14px}
@@ -856,19 +952,97 @@ body.printing-pledge .pl-sheet.is-printing{display:block;position:relative;text-
 /* ---------- أقسام البيانات (ملف الطالب المطبوع) ---------- */
 /* ⚠️ خانات بخطّ منقّط تحت القيمة زي النماذج الورقية الرسمية: العين بتفرّق
    بين «عنوان: قيمة» وبين خانة في نموذج، والوثيقة دي بتروح لملف قضية. */
-.pl-sh-sec{margin-bottom:15px}
-.pl-sh-sectitle{font-size:12.5px;font-weight:800;color:var(--navy);
-  margin-bottom:9px;padding-bottom:5px;border-bottom:1px solid var(--gray-200)}
-.pl-sh-rows{display:grid;grid-template-columns:1fr 1fr;gap:7px 26px}
-.pl-sh-row{display:flex;gap:8px;align-items:baseline;font-size:12.5px;line-height:1.95}
-.pl-sh-row .k{color:var(--gray-500);font-weight:600;white-space:nowrap}
+/* ============================================================================
+   أقسام البيانات في عمودين.
+   ⚠️ ملف الطالب **بطاقة سجلّ** لا خطاب: قيمه قصيرة (اسم، رقم، كلية) وكانت
+      قاعدة في عمود واحد بعرض الورقة، فنصّ كل سطر فاضي - والملف كان بياخد
+      ورقتين بلا داعي. عمودين بيخلّوه يدخل في ورقة واحدة ويتقرا أسرع.
+   ⚠️ والعمودين مش متساويين (1.13 / 0.87): عمود البيانات الشخصية فيه الاسم
+      بالإنجليزية وهو أطول قيمة في الورقة، والعمود التاني قيمه قصيرة. لما
+      كانوا متساويين كان الاسم بيلفّ على سطرين والعمود التاني فاضي.
+   ============================================================================ */
+/* ============================================================================
+   ورقة ملف الطالب وحدها (.is-file) - ضغط رأسي.
+   ⚠️ ليه محصور في ملف الطالب: ورقة التعهّد لوحدها محتواها قليل وبتملا
+      الصفحة بمسافاتها الأصلية. لما الضغط كان عامًّا، ورقة التعهّد اتكمشت في
+      تلتين الصفحة وباقي الورقة فاضي - يعني إصلاح ورقة كسر التانية.
+      الضغط ده لازم لملف الطالب وحده عشان يدخل في ورقة واحدة.
+   ⚠️ ومافيش أي مقاس خطّ اتغيّر غير البنود: المسافات الفاضية بس.
+   ============================================================================ */
+/* ⚠️ صندوق ورقة التعهّد بيملا الصفحة: محتوى التعهّد قليل، وبلا الحدّ الأدنى
+   ده كان الإطار بينتهي في نصّ الورقة والباقي أبيض - شكل ورقة مقصوصة لا
+   وثيقة رسمية. الورق الرسمي إطاره بيوصل لقرب حافة الصفحة.
+   ⚠️ و١٩٦مم رقم **محافظ**: مع الترويسة (~٣٠مم) والتذييل (~٢٥مم) المجموع
+      أقلّ من أضيق منطقة طباعة واقعية، فمستحيل يخرّج الورقة لصفحة تانية.
+      وهو min لا height - لو البنود كترت الصندوق بيطول عادي.
+   ⚠️ ومش على ملف الطالب: صندوقه أصلًا بيملا الصفحة، وأي زيادة عليه بتخرّجه
+      لورقة تانية. */
+body.printing-pledge .pl-sheet:not(.is-file) .pl-sh-box{min-height:196mm}
+
+.pl-sheet.is-file .pl-sh-box{padding:12px 16px 12px}
+.pl-sheet.is-file .pl-sh-title{margin:2px 0 8px}
+.pl-sheet.is-file .pl-sh-pre{font-size:13px;line-height:1.95;margin-bottom:10px}
+.pl-sheet.is-file .pl-sh-list{margin-bottom:10px}
+.pl-sheet.is-file .pl-sh-list li{font-size:13px;line-height:1.95;margin-bottom:6px}
+.pl-sheet.is-file .pl-sh-list li::before{font-size:13px}
+.pl-sheet.is-file .pl-sh-sig{padding:9px 12px 10px;min-height:0}
+.pl-sheet.is-file .pl-sh-sig .pl-sh-sigtxt{margin-bottom:10px}
+/* ⚠️ زوجين في السطر لا زوج واحد، واسم الطالب بياخد الصفّ كله: أربع خانات
+   فوق بعض كانت بتاخد أربع سطور والختم جنبها فاضي. والحشو من ناحية النهاية
+   بيفضّي مكان الختم - من غيره صفوف العمود التاني بتعدّي تحته. */
+.pl-sheet.is-file .pl-sh-sig .pl-sh-sigrows{
+  grid-template-columns:auto minmax(0,1fr) auto minmax(0,1fr);gap:5px 18px;
+  align-items:baseline;padding-inline-end:132px}
+.pl-sheet.is-file .pl-sh-sig .pl-sh-sigrows > div:nth-child(2){grid-column:2 / -1}
+.pl-sheet.is-file .pl-sh-foot{margin-top:10px;padding-top:6px}
+.pl-sheet.is-file .pl-sh-code{gap:12px;margin-bottom:6px}
+.pl-sheet.is-file .pl-sh-qr{width:82px;height:82px;padding:5px}
+.pl-sheet.is-file .pl-sh-fp{margin-bottom:4px}
+.pl-sheet.is-file .pl-sh-by{line-height:1.6;margin-bottom:2px}
+.pl-sheet.is-file .pl-sh-note{line-height:1.7}
+.pl-sheet.is-file .pl-sh-contact{margin-top:8px}
+.pl-sheet.is-file .pl-sh-zig{height:20px;margin-top:8px;background-size:auto 20px}
+
+.pl-sh-grid{display:grid;grid-template-columns:1.13fr 0.87fr;gap:0 26px}
+/* ⚠️ جوّه الشبكة الصفوف عمودين (تسمية · قيمة) لا أربعة: العمود ضيّق أصلًا. */
+.pl-sh-grid .pl-sh-rows{grid-template-columns:auto minmax(0,1fr);gap:5px 10px}
+.pl-sh-grid .pl-sh-sec{margin-bottom:9px}
+/* ⚠️ القيمة اللي مالهاش تلفّ (الاسم بالإنجليزية): سطر واحد زي الاسم العربي. */
+.pl-sh-v.is-wide{white-space:nowrap}
+
+.pl-sh-sec{margin-bottom:10px}
+/* ⚠️ inline-block عشان الخطّ يقع تحت **نصّ** العنوان وبس لا بعرض القسم:
+   الخطّ الممتدّ كان بيقسّم الورقة لشرايح أفقية، والورقة فيها أربع أقسام
+   في عمودين فبقى فيه خطوط كتير بتتنافس مع إطار الوثيقة نفسه. */
+.pl-sh-sectitle{display:inline-block;font-size:12.5px;font-weight:800;color:var(--navy);
+  margin-bottom:6px;padding-bottom:3px;border-bottom:1px solid var(--gray-200)}
+/* ============================================================================
+   شبكة بيانات الوثيقة.
+
+   ⚠️ الخطّ المنقّط اللي كان تحت كل قيمة اتشال. سببه كان غلطة في المعنى:
+      الخطّ المنقّط في أي نموذج ورقي معناه «اكتب هنا»، والقيم دي **النظام
+      عارفها** ومطبوعة خلاص. نفس التفريق مكتوب في js/pledge-doc.js بين
+      fld() (خانة الموظف بيملاها) و val() (قيمة النظام) - والشبكة دي كانت
+      بتستعمل شكل الأولى لمحتوى التانية. النتيجة: خمستاشر خطّ على ورقة فيها
+      تلات معلومات، والعين بتقرا الخطوط قبل البيانات.
+
+   ⚠️ والصفّ بقى **خانتين في شبكة واحدة** لا عنصر flex مستقلّ: قبل كده كل
+      صفّ بيوزّع مساحته لوحده، فبداية القيمة بتختلف من سطر لسطر حسب طول
+      عنوانه - وde كان مصدر الإحساس بعدم الترتيب. دلوقتي كل العناوين في عمود
+      وكل القيم في عمود، عمودين لكل سطر.
+
+   الخطّ الوحيد الباقي هو خطّ عنوان القسم - وهو اللي بيقسّم الورقة فعلًا.
+   ============================================================================ */
+.pl-sh-rows{display:grid;grid-template-columns:auto minmax(0,1fr) auto minmax(0,1fr);
+  gap:6px 12px;align-items:baseline;font-size:12.5px;line-height:1.9}
+.pl-sh-k{color:var(--gray-500);font-weight:600;white-space:nowrap}
 /* ⚠️ العزل بلا direction:ltr: الأرقام ترتيبها يفضل صح والمحاذاة تفضل مع
    الاتجاه العام - نفس القاعدة اللي في شاشة ملف الطالب. */
-.pl-sh-row .v{flex:1;min-width:0;font-weight:700;color:var(--navy-dark);
-  unicode-bidi:isolate;word-break:break-word;border-bottom:1px dotted var(--gray-300)}
+.pl-sh-v{font-weight:700;color:var(--navy-dark);
+  unicode-bidi:isolate;word-break:break-word;padding-inline-end:20px}
 
 /* ⚠️ ترقيم عربي (١، ٢، ٣) لا لاتيني: ورقة رسمية بالعربي، والترقيم جزء من
-   لغتها. ومن الـ CSS مش من النصّ — النصّ المحفوظ مرقّم أصلًا والترقيم اتشال
+   لغتها. ومن الـ CSS مش من النصّ - النصّ المحفوظ مرقّم أصلًا والترقيم اتشال
    منه وقت العرض (PledgeService) عشان مايطلعش رقمين لبند واحد. */
 .pl-sh-list{list-style:none;counter-reset:shl;margin:0 0 20px;padding:0}
 .pl-sh-list li{counter-increment:shl;position:relative;padding-inline-start:32px;
@@ -889,18 +1063,28 @@ body.printing-pledge .pl-sheet.is-printing{display:block;position:relative;text-
 .pl-sh-sig .pl-sh-siglbl{font-size:11.5px;font-weight:700;color:var(--gray-500);margin-bottom:8px}
 .pl-sh-sig .pl-sh-sigtxt{font-size:17px;font-weight:800;line-height:1.95;margin-bottom:15px;
   color:var(--navy-dark)}
+/* ⚠️ زوجين في السطر (أربعة أعمدة) لا زوج واحد: أربع خانات فوق بعض كانت
+   بتاخد أربع سطور والختم جنبها فاضي. كده سطرين والورقة بتكسب مكان.
+   ⚠️ واسم الطالب بياخد الصفّ كله (‎grid-column:2/-1‎): هو أطول قيمة في
+      الصندوق، ولو اتحشر في نصّ العرض بيلفّ على سطرين - والاسم على وثيقة
+      موقّعة مايتقسّمش.
+   ⚠️ والحشو من ناحية النهاية بيفضّي مكان الختم: من غيره صفوف العمود التاني
+      كانت بتعدّي تحته. */
 .pl-sh-sig .pl-sh-sigrows{display:grid;grid-template-columns:auto auto;gap:6px 28px;
   justify-content:start;font-size:13px;font-weight:600;color:var(--gray-700)}
 .pl-sh-sig .pl-sh-sigrows b{color:var(--navy-dark);font-weight:800}
 
-/* الختم جنب التوقيع — أغمق من الشاشة لأن الورق بيفتّح الباهت. */
+/* الختم جنب التوقيع - أغمق من الشاشة لأن الورق بيفتّح الباهت. */
 /* ⚠️ الإزاحة ٤٢ بكسل لا ٢٠: الختم بحدّ خارجي (outline بإزاحة ٥) فمساحته
    الحقيقية أكبر من عرضه بـ ١٢ بكسل من كل ناحية. على ٢٠ كان الحدّ الخارجي
    بيخرج بره الصندوق ويتقصّ عند الطباعة - وده اللي كان باين في الورقة. */
-.pl-sh-seal{position:absolute;inset-inline-end:42px;bottom:16px;width:112px;height:112px;
+/* ⚠️ متوسّط رأسيًّا في الصندوق لا لاصق في قاعه: كان bottom:16px فبيقع تحت
+   خالص وبيقرا كأنه واقع من مكانه، والمساحة فوقه فاضية. النصّ في الصندوق
+   محاذي لجهة البداية، والنص الفاضي في المنتصف هو مكان الختم الطبيعي. */
+.pl-sh-seal{position:absolute;inset-inline-end:42px;top:50%;width:112px;height:112px;
   border-radius:50%;border:1.5px solid var(--navy);outline:1px solid var(--navy);outline-offset:5px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
-  opacity:.4;transform:rotate(-9deg);padding:10px;pointer-events:none}
+  opacity:.4;transform:translateY(-50%) rotate(-9deg);padding:10px;pointer-events:none}
 .pl-sh-seal img{width:58px;height:auto;display:block}
 .pl-sh-seal span{font-size:7.5px;font-weight:800;color:var(--navy);text-align:center;line-height:1.5}
 
@@ -914,21 +1098,92 @@ body.printing-pledge .pl-sheet.is-printing{display:block;position:relative;text-
   direction:ltr;unicode-bidi:isolate}
 .pl-sh-note{font-size:11px;font-weight:600;color:var(--gray-500);line-height:1.95}
 
+/* ============================================================================
+   تذييل الورقة الرسمي - الشعار المؤسّسي وبيانات التواصل والزخرفة.
+   ⚠️ بعد رمز التحقّق لا قبله: التحقّق يخصّ **الوثيقة**، والتذييل ده يخصّ
+      **الجهة** - فالترتيب من الخاصّ للعامّ زي الورق الرسمي.
+   ⚠️ والزخرفة SVG مكرَّرة أفقيًّا لا صورة: بتتمدّد على أي عرض ورق بلا ما
+      تتبكسل، وبتتطبع بلون واحد.
+   ============================================================================ */
+/* ⚠️ مافيش border-top هنا: الخطّ اللي الشعار قاعد عليه هو **ضلع الصندوق
+   السفلي** نفسه (.pl-sh-box) لا خطًّا تاني تحته. الهامش السالب بيرفع السطر
+   نصّ ارتفاعه فوق الضلع، والخلفية البيضا بتقطع الضلع تحته فيبان مركوبًا
+   عليه - نفس حيلة سطر الإدارة على الضلع العلوي بالظبط. */
+.pl-sh-org{margin-top:-12px;text-align:center;position:relative;z-index:3}
+.pl-sh-slogan{display:inline-block;background:var(--white);padding:0 20px;
+  font-size:17px;font-weight:700;color:#a67c00;letter-spacing:.2px;line-height:1.45}
+/* ⚠️ شبكة ‎1fr auto 1fr‎ لا flex متوسّط: العناصر التلاتة عرضهم مختلف، ومع
+   التوسيط بالـflex كان مركز الصفّ بيقع بين عنصرين - فـ«تويتر» ماكانش تحت
+   «تعليمنا يُحقق الرؤية» بالظبط. العمودان الجانبيان متساويان (1fr)، يعني
+   العمود الأوسط مركزه = مركز الصفّ = مركز الشعار فوقه مهما طالت الأطراف. */
+.pl-sh-contact{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;
+  gap:4px 34px;margin-top:16px;font-size:14px;font-weight:700;color:#1f3864}
+.pl-sh-contact > span:first-child{justify-self:start}
+.pl-sh-contact > span:last-child{justify-self:end}
+.pl-sh-contact span{white-space:nowrap}
+/* ⚠️ bidi-override لا embed/isolate: الفاكس «٠١٧ - ٠٥٤١٧٦٦٤» رقمين
+   بأرقام هندية مفصولين بشرطة. الأرقام الهندية صنفها AN، والشرطة مابتوصّلش
+   بين رقمين AN - فالمتصفح بيعتبرهم كتلتين وبيرتّبهم من اليمين، والنتيجة
+   مفتاح المدينة بيطلع بعد الرقم. bidi-override بيثبّت الترتيب زي ما هو
+   مكتوب. آمن هنا لأن الجوّه أرقام وحروف لاتينية وبس - مفيش نصّ عربي. */
+.pl-sh-contact i{font-style:normal;direction:ltr;unicode-bidi:bidi-override;
+  font-variant-numeric:tabular-nums;margin-inline-start:6px}
+/* ============================================================================
+   الزخرفة أسفل الورقة.
+   ⚠️ دي مش مثلثات: النقش المعتمد شكل «Y» مكرَّر - نفس عنصر شعار الجامعة -
+      محفور بالأبيض في شريط كحلي مصمت. المثلثات اللي كانت هنا كانت شبهه من
+      بعيد وبس، وde باين في المقارنة مع الورقة الرسمية.
+   ⚠️ والنقش متتبَّع من الورقة الرسمية نفسها ومحوَّل لمسارات SVG - يعني بيتطبع
+      حادًّا على أي دقّة، ومابيتبكسلش زي الصورة.
+   ⚠️ data URI لا ملف: خلفيات الطباعة بتتحمّل من سياق الطباعة، وملف خارجي
+      ممكن ماينزلش في وقته فيخرج الشريط فاضي على ورقة رسمية. */
+/* ⚠️ ممتدّة لحرف الورقة: هامش سالب بيلغي حشو الإطار وحشو الورقة - زي الورق
+   الرسمي اللي الزخرفة فيه واصلة للحافة (full bleed) بلا فراغ يمين وشمال. */
+.pl-sh-zig{height:26px;margin-top:16px;
+  margin-inline:calc(-1 * (var(--pl-fx) + var(--pl-padx)));
+  background-repeat:repeat-x;background-position:right top;background-size:auto 26px;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='70.000000' height='57.000000' viewBox='0 0 70.000000 57.000000'><g transform='translate(0.000000,57.000000) scale(0.100000,-0.100000)' fill='%231f3864'><path d='M50 560 c0 -14 86 -183 118 -234 37 -57 140 -194 152 -201 7 -4 10 72 10 219 l0 226 -140 0 c-88 0 -140 -4 -140 -10z M380 324 c0 -135 3 -243 8 -241 4 3 45 29 92 59 47 29 104 62 128 72 42 19 42 19 42 188 l0 168 -135 0 -135 0 0 -246z M0 283 l0 -283 165 0 c165 0 165 0 165 23 0 13 -15 38 -36 58 -92 88 -202 258 -261 404 -33 80 -33 80 -33 -202z M555 127 c-94 -49 -175 -104 -175 -117 0 -6 56 -10 135 -10 l135 0 0 85 c0 47 -3 85 -7 85 -5 0 -44 -20 -88 -43z'/></g></svg>")}
+/* ⚠️ «طُبعت بواسطة» أغمق من باقي التذييل: ده السطر اللي بيتسأل عنه في أي
+   مراجعة للورقة، ومش المفروض يتقرا كملاحظة هامشية. */
+.pl-sh-by{font-size:11px;font-weight:700;color:var(--navy-dark);line-height:1.95;
+  margin-bottom:4px}
+.pl-sh-by b{font-weight:800}
+
+/* ---------- رمز التحقّق في التذييل ---------- */
+/* ⚠️ الرمز ده هو اللي بيربط الورقة بسجلّها. بصمة البنود اللي كانت مكانه
+   محسوبة على نصّ البنود وحده، يعني واحدة لكل الطلاب اللي وقّعوا على نفس
+   النسخة - فما كانتش بتفرّق بين ورقة صحيحة وورقة ملفّقة. (Core/PledgeRules) */
+.pl-sh-code{display:flex;align-items:center;gap:14px;margin-bottom:8px}
+/* ⚠️ الرمز هو الحتّة الوحيدة في الورقة اللي **ممنوع** تعدّي تحتها علامة:
+   العلامة بتملى الورقة كلها من فوق لتحت، والقارئ محتاج تباينًا كاملًا -
+   أي نقطة رمادية جوّه المربّع بتخلّي قراءات كتير تفشل، خصوصًا مطبوعة.
+   الخلفية البيضا الصريحة + طبقة أعلى + حشو ٦ بكسل بتقطع العلامة عند حدّه
+   وبتسيب هامشًا أبيض حواليه. */
+.pl-sh-qr{position:relative;z-index:4;flex:none;width:92px;height:92px;padding:6px;
+  background:#fff;border:1px solid var(--gray-300)}
+/* ⚠️ pixelated لا الافتراضي: الرسم بخانة واحدة لكل بكسل ثم بيتكبّر بالـ CSS.
+   بالتنعيم بيطلع رماديًّا على الحواف، وكتير من القارئات بتفشل فيه مطبوعًا. */
+.pl-sh-qr canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
+.pl-sh-codebox{display:flex;flex-direction:column;gap:3px;min-width:0}
+.pl-sh-codelbl{font-size:9.5px;font-weight:800;color:var(--gold-dark);letter-spacing:.04em}
+/* ⚠️ حروف كبيرة ومسافة بين الخانات: الرمز بيتقرا من الورق ويتكتب بالإيد. */
+.pl-sh-codeval{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:16px;font-weight:800;letter-spacing:.12em;color:var(--navy-dark);
+  direction:ltr;unicode-bidi:isolate;text-align:start}
+
 /* ---------- العلامة المتكرّرة على الورقة ---------- */
 /* أكثف وأغمق من الشاشة: الورقة هي اللي محتاجة الحماية. */
-/* ⚠️ position:fixed في الطباعة: كروم بيرسم العنصر الثابت على **كل** ورقة.
-   مع absolute كانت العلامة بتظهر في الورقة الأولى بس - والورقة التانية هي
-   اللي فيها التوقيع، يعني أهم ورقة كانت هتطلع بلا علامة. */
-/* ⚠️ الثابتة للعلامة الكبيرة بس (الابن المباشر للورقة). لو اتطبّقت على
-   علامة صندوق التوقيع كمان كانت هتسيب مكانها وتتثبّت على الصفحة. */
-/* ⚠️ العلامة الكبيرة بقت جوّه .pl-sh-scale، فالمحدِّد بقى ابنها المباشر. */
-body.printing-pledge .pl-sh-scale > .pl-tile{position:absolute}
+/* ⚠️ العلامة بقت جوّه .pl-sh-box بـ position:absolute، فهي بتاخد حدوده
+   بالظبط وبتتقصّ عندها. القاعدة اللي كانت هنا كانت بتخلّيها fixed عشان
+   كروم يرسمها على كل ورقة - بس ساعتها كانت بتغطّي الصفحة كلها بما فيها
+   الهوامش وبرّه الإطار، وde اللي اتشال عن قصد. */
+/* ⚠️ الطباعة بتغمّق الحبر وبس: الورق بيفتّح الباهت، فاللي بيبان على الشاشة
+   بيختفي على الورقة. أما التباعد فواحد في الحالتين - المعاينة هي اللي
+   الموظف بيحكم منها، ولو الورقة طلعت أكثف منها بيبقى شاف حاجة وطبع غيرها. */
 body.printing-pledge .pl-sheet .pl-tile{opacity:.085}
-body.printing-pledge .pl-sheet .pl-tile .pl-tile-in{gap:46px}
-body.printing-pledge .pl-sheet .pl-tile .pl-tile-row{gap:54px}
 
 @media print{
-  /* ⚠️ من غير الأمر ده المتصفح بيشيل كل الخلفيات في الطباعة — يعني الختم
+  /* ⚠️ من غير الأمر ده المتصفح بيشيل كل الخلفيات في الطباعة - يعني الختم
      والعلامة المتكرّرة والخطوط الملوّنة بيختفوا، وتطلع ورقة بيضا. */
   body.printing-pledge .pl-sheet{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 
@@ -940,11 +1195,14 @@ body.printing-pledge .pl-sheet .pl-tile .pl-tile-row{gap:54px}
   body.printing-pledge .pl-sh-sec{break-inside:avoid}
   body.printing-pledge .pl-sh-sectitle{break-after:avoid}
   body.printing-pledge .pl-lh{break-after:avoid}
+  /* ⚠️ التذييل الرسمي كتلة واحدة مايتقسّمش: لو اتقسّم بيطلع الشعار في آخر
+     ورقة والزخرفة في أول اللي بعدها. */
+  body.printing-pledge .pl-sh-org{break-inside:avoid}
 
-  /* ⚠️ الخانات المكتوبة بالإيد: خطّ متّصل رفيع على الورق بدل المنقّط،
-     وبلا خلفية تركيز - ده فراغ في نموذج رسمي لا حقل إدخال. */
-  body.printing-pledge .pl-lh-f{border-bottom:1px solid var(--gray-700);background:none}
-  body.printing-pledge .pl-lh-v{border-bottom:1px solid var(--gray-700)}
+  /* ⚠️ القاعدتين اللي كانوا هنا اتشالوا: كانوا بيرجّعوا خطًّا تحت رقم الطلب
+     والتاريخ والمرفقات **في الطباعة وحدها**. النتيجة كانت وثيقة بتبان نضيفة
+     في المعاينة وبتخرج من الطابعة بخطوط - والورق الرسمي مافيهوش خطوط تحت
+     الخانات دي أصلًا. */
   /* أي عنصر أداة (زرّ تبديل التقويم) مايوصلش الورق */
   body.printing-pledge .pl-noprint{display:none !important}
 
@@ -972,12 +1230,12 @@ body.printing-pledge .pl-sheet .pl-tile .pl-tile-row{gap:54px}
 .tbl-retry:hover{background:var(--tint);border-color:var(--navy);color:var(--navy)}
 
 /* ==========================================================================
-   زرّ إغلاق النافذة (×) — التعريف الوحيد في النظام.
+   زرّ إغلاق النافذة (×) - التعريف الوحيد في النظام.
 
    ⚠️ كان معرَّفًا **خمس مرات** بتلات مقاسات مختلفة: 20px في سجل العمليات
       والتقارير وسجل الأخطاء، و22px في سكن الهيئة (باسم .fh-x)، و24px في
       الإسكان. وواحد بس منهم كان فيه استجابة عند مرور الماوس، وواحد بلا حشوة
-      خالص فمنطقة الضغط عنده كانت أصغر من الباقي. مفيش قرار وراهم — كل واحد
+      خالص فمنطقة الضغط عنده كانت أصغر من الباقي. مفيش قرار وراهم - كل واحد
       اتكتب في شاشته ومحدش قارن.
 
    ⚠️ 30×30: الرمز نفسه 20px (المقاس الأغلب)، لكن الزرّ بقى مربّعًا بمساحة
@@ -1185,10 +1443,14 @@ body.printing-pledge .pl-sheet .pl-tile .pl-tile-row{gap:54px}
    الداخلي، وإلا لتحرّك الخيط الرأسي معها. */
 .nuh-tl{max-height:56vh;overflow-y:auto;overflow-x:hidden;padding:0 2px;
         padding-inline-end:10px;scrollbar-width:thin;scrollbar-gutter:stable}
-.nuh-tl-day{display:flex;align-items:center;gap:10px;padding:14px 0 10px;
+/* فاصل اليوم لاصق: السجل بيطول، والتاريخ لازم يفضل ظاهر وانت نازل فيه. */
+.nuh-tl-day{position:sticky;inset-block-start:0;z-index:2;
+            background:linear-gradient(var(--white) 68%,rgba(255,255,255,0));
+            display:flex;align-items:center;gap:10px;padding:10px 0;
             background:var(--white);position:sticky;top:0;z-index:1}
 .nuh-tl-day:first-child{padding-top:2px}
-.nuh-tl-day b{font-size:11px;font-weight:800;color:var(--gray-500);white-space:nowrap}
+.nuh-tl-day b{font-size:11.5px;font-weight:700;color:var(--navy);background:var(--tint);
+              border:1px solid #d6ecdf;border-radius:99px;padding:4px 12px;white-space:nowrap}
 .nuh-tl-day i{flex:1;height:1px;background:var(--gray-100)}
 
 .nuh-tl-item{position:relative;display:flex;gap:14px}
@@ -1206,7 +1468,10 @@ body.printing-pledge .pl-sheet .pl-tile .pl-tile-row{gap:54px}
 .nuh-tl-dot.warn{border-color:#fedf89;background:var(--amber-light);color:var(--amber)}
 .nuh-tl-dot.info{border-color:var(--blue-pale);background:var(--blue-light);color:var(--blue)}
 
-.nuh-tl-body{flex:1;min-width:0;padding-bottom:20px}
+/* ⚠️ كل حدث بطاقة بحدّ: كان سطرين عايمين جنب نقطة، فالأحداث بتسيح في بعضها
+      والسجل بيبان مسوَّدة. */
+.nuh-tl-body{flex:1;min-width:0;margin-bottom:14px;background:var(--white);
+             border:1px solid var(--gray-200);border-radius:11px;padding:10px 13px}
 .nuh-tl-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .nuh-tl-title{font-size:13.5px;font-weight:700;color:var(--navy-dark)}
 /* ⚠️ بلا direction:ltr هنا: العنصر يقلب اتجاهه فيصير margin-inline-start
@@ -1222,7 +1487,10 @@ body.printing-pledge .pl-sheet .pl-tile .pl-tile-row{gap:54px}
              font-variant-numeric:tabular-nums;unicode-bidi:isolate;white-space:nowrap}
 .nuh-tl-time svg{width:13px;height:13px;color:var(--gray-300);flex:none}
 .nuh-tl-desc{font-size:12.5px;color:var(--gray-700);line-height:1.8;margin-top:5px;word-break:break-word}
-.nuh-tl-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;
+/* ⚠️ رقاقات لا نصّ متتابع: «مين» و«إمتى» و«من أي جهاز» تلات معلومات مختلفة،
+      وكانوا مكتوبين ورا بعض بنفس اللون فبيتقروا جملة واحدة. */
+.nuh-tl-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:9px;
+             padding-top:8px;border-top:1px solid var(--gray-100);
              font-size:11.5px;color:var(--gray-500)}
 .nuh-tl-meta svg{width:13px;height:13px;color:var(--gray-300);flex:none}
 .nuh-tl-meta .sp{width:3px;height:3px;border-radius:50%;background:var(--gray-300);flex:none}
@@ -1248,15 +1516,35 @@ body.printing-pledge .pl-sheet .pl-tile .pl-tile-row{gap:54px}
 .modal-overlay.show{display:flex}
 .modal{background:var(--white);border-radius:16px;width:100%;max-width:700px;max-height:90vh;
        display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 48px rgba(16,24,40,.20)}
-.modal-header{flex:none;padding:14px 20px;background:var(--white);
-              border-bottom:1px solid var(--gray-200);display:flex;align-items:center;
+/* ⚠️ أرضية خضرا فاتحة وخيط ذهبي تحتها لا أبيض على أبيض: الترويسة البيضا
+      فوق جسم أبيض مافيش بينهم غير خطّ رمادي رفيع، فالنافذة بتبان ورقة
+      واحدة طويلة بلا رأس. والخيط الذهبي هو **نفسه** اللي تحت الشريط العلوي
+      وتحت اللوجو في القائمة الجانبية - الهوية بتقول «هنا يبدأ شيء» في
+      الشاشة والنافذة بنفس المفردة.
+   ⚠️ والقاعدة دي على .modal-header نفسها، فكل نافذة في النظام بتاخدها من
+      غير سطر واحد في شاشتها. */
+.modal-header{position:relative;flex:none;padding:15px 20px;background:var(--tint);
+              border-bottom:1px solid #d6ecdf;display:flex;align-items:center;
               justify-content:space-between;gap:12px}
-.modal-header h3{font-size:15px;font-weight:800;color:var(--navy-dark)}
+/* ⚠️ الخيط الذهبي اللي كان تحت رأس النافذة اتشال - اتقرّر إن مفيش خطوط
+   ذهبية زخرفية في النظام. الحدّ السفلي الأخضر الفاتح كفاية لفصل الرأس. */
+.modal-header h3{font-size:15px;font-weight:800;color:var(--navy-dark);line-height:1.5}
+/* سطر تعريفي تحت العنوان: «سجل إجراءات الحساب» لوحده مابيقولش سجل مين. */
+.modal-header .sub{display:block;font-size:11.5px;font-weight:500;color:var(--gray-600);
+              line-height:1.6;margin-top:2px}
+.modal-header > *{position:relative;z-index:1}
 .modal-body{flex:1;min-height:0;overflow-y:auto;padding:20px}
 /* الجسم بلا حشو: المحتوى يتولّى حوافّه بنفسه (بطاقة إدارة الحساب) */
 .modal-body.flush{padding:0}
-.modal-footer{flex:none;padding:12px 20px;border-top:1px solid var(--gray-200);
-              display:flex;justify-content:flex-end;gap:8px}
+/* ⚠️ أرضية رمادية: التذييل أبيض بين جسم أبيض وحافة النافذة كان بيبان جزءًا
+      من المحتوى، فالزرّ بيتلخبط مع آخر عنصر فوقه. */
+.modal-footer{flex:none;padding:12px 20px;background:var(--gray-50);
+              border-top:1px solid var(--gray-200);
+              display:flex;align-items:center;justify-content:flex-end;gap:10px}
+/* تلميحة على يمين التذييل: مساحة كانت فاضية، وفيها المكان الطبيعي للجملة
+   اللي بتقول للموظف نتيجة ما هيعمله (زي «كل إجراء يُسجَّل باسمك»). */
+.modal-footer .hint{flex:1;font-size:11.5px;color:var(--gray-600);line-height:1.6;
+              text-align:start}
 
 /* ---------------------------------------------------------------------------
    بطاقة «إدارة الحساب»
@@ -1267,36 +1555,68 @@ body.printing-pledge .pl-sheet .pl-tile .pl-tile-row{gap:54px}
       تحتها: اسم المستخدم، وحالة الحساب، والرقم الجامعي، والاسم العربي،
       والاسم الإنجليزي.
    --------------------------------------------------------------------------- */
-.acct-id{display:flex;align-items:center;gap:14px;padding:18px 20px 16px}
-.acct-id .av{width:52px;height:52px;border-radius:14px;flex:none;display:flex;align-items:center;
-             justify-content:center;background:var(--green-light);color:var(--green);border:1px solid #a9efc5}
+/* ⚠️ صفّ الهوية بقى **رأس** النافذة لا أول عنصر في جسمها: أرضية وخيط ذهبي
+      زي .modal-header بالظبط. قبل كده كان الاسم مركونًا في نص بياض النافذة
+      والشارة سايبة في آخر الطرف التاني، فالاتنين مايبانوش إنهم بيوصفوا
+      نفس الشخص. */
+.acct-id{position:relative;display:flex;align-items:center;gap:13px;padding:15px 20px 14px;
+         background:var(--tint);border-bottom:1px solid #d6ecdf}
+/* ⚠️ نفس السبب: بلا خيط ذهبي. */
+.acct-id > *{position:relative;z-index:1}
+.acct-id .av{width:44px;height:44px;border-radius:13px;flex:none;display:flex;align-items:center;
+             justify-content:center;background:var(--navy);color:#fff;border:1px solid var(--navy)}
 .acct-id.is-off .av{background:var(--red-light);color:var(--red);border-color:#fecdca}
-.acct-id .av svg{width:24px;height:24px}
+.acct-id .av svg{width:22px;height:22px}
 .acct-id .who{flex:1;min-width:0}
 /* ⚠️ الاسم الإنجليزي تحت العربي وبمحاذاته: unicode-bidi:isolate يعزل ترتيب
       حروفه بلا قلب اتجاه العنصر. ولو كُتب direction:ltr لانزاح إلى الطرف
       المقابل وابتعد عن الاسم الذي يصفه. */
-.acct-id .n1{display:block;font-size:17px;font-weight:800;color:var(--navy-dark);line-height:1.4;word-break:break-word}
+.acct-id .n1{display:block;font-size:15.5px;font-weight:700;color:var(--navy-dark);line-height:1.5;word-break:break-word}
 .acct-id .n2{display:block;font-size:12px;font-weight:500;color:var(--gray-500);line-height:1.6;
              margin-top:2px;unicode-bidi:isolate;word-break:break-word}
 
-.acct-cols{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--gray-200)}
-.acct-col{padding:16px 20px 18px;min-width:0}
-.acct-col + .acct-col{border-inline-start:1px solid var(--gray-200)}
-.acct-t{display:block;font-size:10.5px;font-weight:800;color:var(--gray-500);letter-spacing:.4px;margin-bottom:13px}
-.acct-f{margin-bottom:13px;min-width:0}
-.acct-f:last-child{margin-bottom:0}
-.acct-f .k{display:block;font-size:10.5px;color:var(--gray-500);margin-bottom:3px;line-height:1.5}
-.acct-f .v{display:block;font-size:13.5px;font-weight:700;color:var(--navy-dark);line-height:1.55;word-break:break-word}
-.acct-f .v2{display:block;font-size:11.5px;font-weight:500;color:var(--gray-500);line-height:1.55;margin-top:1px}
+/* ⚠️ بطاقتان بحدّ ورأس، لا عمودان مفصولان بخطّ: عنوان القسم كان نصًّا صغيرًا
+      عائمًا فوق كومة الحقول، فمش باين إنه بيغطّي أنهي حقول بالظبط. */
+.acct-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:18px 20px}
+.acct-col{min-width:0;border:1px solid var(--gray-200);border-radius:12px;overflow:hidden;
+          background:var(--white)}
+.acct-t{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--gray-50);
+        border-bottom:1px solid var(--gray-200);font-size:12.5px;font-weight:700;
+        color:var(--navy);letter-spacing:0}
+.acct-t svg{width:15px;height:15px;flex:none}
+.acct-col > .acct-f,
+.acct-col > .acct-tech{margin-inline:14px}
+
+/* ⚠️ شبكة تعريف لا كومة: التسمية بعرض ثابت والقيمة قصادها على خطّ واحد.
+      قبل كده كانت التسمية سطرًا فوق القيمة، فكل قيمة بتبدأ من مكان مختلف
+      حسب طول تسميتها - والعين بتلفّ على كل حقل لوحده بدل ما تنزل على عمود
+      واحد. الخيط الفاصل بيكمّل الشغل: بيقول فين ينتهي الحقل. */
+.acct-f{display:grid;grid-template-columns:96px 1fr;align-items:baseline;gap:10px;
+        padding:9px 0;border-bottom:1px solid var(--gray-100);min-width:0}
+.acct-f:last-child{border-bottom:none;padding-bottom:12px}
+.acct-f .k{font-size:12px;font-weight:500;color:var(--gray-600);line-height:1.6}
+.acct-f .v{font-size:13px;font-weight:700;color:var(--navy-dark);line-height:1.6;
+           display:flex;align-items:center;gap:7px;flex-wrap:wrap;min-width:0;word-break:break-word}
+.acct-f .v2{grid-column:2;font-size:11.5px;font-weight:500;color:var(--gray-600);
+            line-height:1.6;margin-top:-3px}
+/* زرّ نسخ جنب القيمة: اسم المستخدم واسم الدخول بيتنسخوا فعلًا، وكانوا
+   بيتكتبوا بالإيد - وده مكان بيتولد فيه غلط. */
+.acct-cp{width:22px;height:22px;flex:none;border-radius:6px;border:1px solid var(--gray-200);
+         background:var(--white);color:var(--gray-500);cursor:pointer;
+         display:inline-flex;align-items:center;justify-content:center;transition:all .15s}
+.acct-cp svg{width:13px;height:13px}
+.acct-cp:hover{border-color:var(--navy);color:var(--navy);background:var(--tint)}
+.acct-cp.is-done{border-color:var(--green);color:var(--green);background:var(--green-light)}
 .acct-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;direction:ltr;
            unicode-bidi:embed;display:inline-block;max-width:100%;text-align:left;
            overflow-wrap:anywhere;font-variant-numeric:tabular-nums;letter-spacing:.1px}
-.acct-tag{display:inline-block;font-size:11px;font-weight:600;background:var(--gray-50);color:var(--gray-700);
-          border:1px solid var(--gray-200);border-radius:6px;padding:2px 9px;margin-inline-end:5px}
+/* ⚠️ رقاقة المجموعة بلون الهوية لا رمادية: دي قيمة بيانات مش نصّ ثانوي. */
+.acct-tag{display:inline-block;font-size:11.5px;font-weight:600;background:var(--tint);color:var(--navy);
+          border:1px solid #d6ecdf;border-radius:7px;padding:2px 9px;margin-inline-end:5px;
+          direction:ltr;unicode-bidi:embed}
 
 /* التفاصيل التقنية مطويّة: يحتاجها الفني عند العطل ولا تزاحم الموظف يوميًا */
-.acct-tech{margin-top:14px}
+.acct-tech{margin-top:2px;padding-top:9px;padding-bottom:11px;border-top:1px dashed var(--gray-200)}
 .acct-tech summary{cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:6px;
                    font-size:11.5px;font-weight:600;color:var(--gray-500);user-select:none}
 .acct-tech summary::-webkit-details-marker{display:none}
@@ -1304,17 +1624,34 @@ body.printing-pledge .pl-sheet .pl-tile .pl-tile-row{gap:54px}
 .acct-tech[open] summary::before{content:'\2212'}
 .acct-tech .in{margin-top:10px}
 
-.acct-acts{border-top:1px solid var(--gray-200);background:var(--gray-50)}
-.acct-acts > .acct-t{padding:14px 20px 0;margin-bottom:0}
-.acct-row{display:flex;align-items:center;gap:13px;padding:11px 20px}
-.acct-row + .acct-row{border-top:1px solid var(--gray-200)}
+/* ⚠️ الإجراءات بقت بطاقات مستقلّة بدل قائمة مفصولة بخطوط: كل إجراء نداء
+      منفصل على الدليل بنتيجة منفصلة، فالفصل بينهم لازم يبان. */
+.acct-acts{border-top:1px solid var(--gray-200);padding:16px 20px 18px;background:var(--white)}
+.acct-acts > .acct-t{background:none;border:none;padding:0 0 10px;margin:0;
+              font-size:12.5px;color:var(--navy)}
+.acct-row{display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--white);
+          border:1px solid var(--gray-200);border-radius:11px;margin-bottom:8px}
+.acct-row:last-child{margin-bottom:0}
 .acct-row .ic{width:34px;height:34px;border-radius:10px;flex:none;display:flex;align-items:center;
-              justify-content:center;background:var(--white);border:1px solid var(--gray-200);color:var(--gray-500)}
+              justify-content:center;background:var(--tint);border:1px solid #d6ecdf;color:var(--navy)}
 .acct-row .ic svg{width:16px;height:16px}
-.acct-row.is-danger .ic{background:var(--red-light);border-color:#fecdca;color:var(--red)}
+
+/* ⚠️ منطقة الخطر: الإجراء اللي مالوش رجعة بينزل في صندوق أحمر خفيف في
+      الآخر، مش في نص القائمة. قبل كده كان الزرّ الأحمر أول حاجة العين تقع
+      عليها أول ما النافذة تفتح - وهو أخطر ما فيها. والحدّ الأحمر بيقول
+      «انتبه» قبل ما الموظف يقرا الزرّ نفسه.
+   ⚠️ والفصل بالـCSS لا بصندوق في الوسم: الصنف .is-danger موجود أصلًا على
+      الصفّ، فأي إجراء خطر يتضاف بكرة بياخد المعاملة دي وحده. */
+.acct-row.is-danger{background:var(--red-light);border-color:#f2b8b5;margin-top:16px;
+          padding-top:34px;position:relative}
+.acct-row.is-danger::before{content:"إجراء لا يُتراجع عنه تلقائيًّا";
+          position:absolute;inset-block-start:11px;inset-inline-start:14px;
+          font-size:11px;font-weight:700;color:#912018}
+[lang="en"] .acct-row.is-danger::before{content:"This action cannot be undone automatically"}
+.acct-row.is-danger .ic{background:var(--white);border-color:#f2b8b5;color:var(--red)}
 .acct-row .tx{flex:1;min-width:0}
 .acct-row .tx b{display:block;font-size:13px;font-weight:700;color:var(--navy-dark);line-height:1.5}
-.acct-row .tx span{display:block;font-size:11.5px;color:var(--gray-500);line-height:1.6}
+.acct-row .tx span{display:block;font-size:11.5px;color:var(--gray-600);line-height:1.65;margin-top:1px}
 /* ---------------------------------------------------------------------------
    زرّ الإجراء الصغير: زرّ مكوّنَي .sync-panel و.acct-row معًا.
    ⚠️ كان أساسه في <style> داخل شاشة حسابات الإسكان وحالاته هنا - تعريف
@@ -1351,3 +1688,184 @@ body.printing-pledge .pl-sheet .pl-tile .pl-tile-row{gap:54px}
 .acct-id.is-plain .av{background:var(--gray-50);color:var(--gray-500);border-color:var(--gray-200)}
 @media(max-width:620px){.acct-cols{grid-template-columns:1fr}
   .acct-col + .acct-col{border-inline-start:0;border-top:1px solid var(--gray-200)}}
+
+/* ==========================================================================
+   بطاقة مؤشّر (.stat-card) - التعريف الوحيد في النظام.
+
+   ⚠️ كانت مكتوبة **مرتين**: في Views/Home/Index.cshtml وفي
+      Views/StudentStatus/Index.cshtml. ونفس اللي بيحصل دايمًا حصل - النسختان
+      تفارقتا: نصف قطر ١٦ مقابل ١٤، وحشو ٢٠ مقابل ١٦، ورقم ٣٢ مقابل ٢٦.
+      يعني نفس المكوّن بمقاسين في نفس النظام، والفرق مابيبانش غير لو حد فتح
+      الشاشتين جنب بعض.
+
+   الشكل: مضغوط، الرقم أولًا، والأيقونة خلفية خفيفة.
+
+   ⚠️ الأيقونة نزلت خلفية بدل ما تكون في صفّ لوحدها فوق: الصفّ ده كان بياخد
+      ٤٤ بكسل من ارتفاع كل بطاقة ومعاه فراغ ٧٠٪ - مساحة بلا معلومة. وخلفيتها
+      بلون البطاقة نفسه، فبتدّي إحساس الموضوع من غير ما تزاحم الرقم.
+
+   ⚠️ والرقم قبل الليبل عن قصد: الرقم هو اللي المستخدم بيمسح الشاشة عشانه،
+      والليبل بيقرأه لما يقف عند رقم يهمّه.
+
+   ⚠️ ولون واحد لكل الأيقونات - أخضر النظام. كانت بألوان مختلفة (أزرق للطلاب،
+      كهرماني للطلبات، أخضر للمكتمل) بلا أي معنى ورا الاختلاف. اللون في
+      الواجهة لازم يقول حالة، ولمّا يتصرف في التزيين بيفقد قدرته على التنبيه
+      وقت ما نحتاجه - والحاجة دي موجودة فعلًا في .alert تحت.
+   ========================================================================== */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:24px}
+
+.stat-card{position:relative;overflow:hidden;background:var(--white);border:1px solid var(--gray-100);
+  border-radius:14px;padding:15px 17px;box-shadow:0 1px 3px rgba(16,70,49,.04);
+  text-decoration:none;color:inherit;display:block;
+  transition:border-color .18s,box-shadow .18s,transform .18s}
+
+/* شريط الحافة: أخضر عادي، كهرماني في حالة التنبيه - هو اللي بيخلّي الحالة
+   تتقري من بعيد بلا ما نقرا الرقم. */
+.stat-card::after{content:"";position:absolute;inset-block-start:0;inset-inline-start:0;
+  width:3px;height:100%;background:var(--navy);opacity:.9}
+
+/* ⚠️ الأيقونة مش عنصر في التخطيط: خارج التدفّق تمامًا وبـ pointer-events:none،
+   فلا بتزوّد ارتفاع البطاقة ولا بتاخد ضغطة من ورا الرقم. */
+.stat-ghost{position:absolute;inset-block-end:-14px;inset-inline-end:-8px;color:var(--navy);
+  opacity:.13;pointer-events:none;line-height:0}
+/* المقاس من هنا لا من خصائص الـ svg: الوسم بيكتب 20×20 عشان الأيقونة تفضل
+   مقروءة لو الـ CSS ما اتحمّلش، والقاعدة دي بتكبّرها لحجم الخلفية. */
+.stat-ghost svg{width:66px;height:66px}
+
+/* ⚠️ display:block على التلاتة: البطاقة أحيانًا <a> وأجزاؤها <span>، والـ
+   span الافتراضي inline فكانوا بيتلموا في سطر واحد. */
+.stat-num{display:block;position:relative;font-size:27px;font-weight:700;color:var(--navy-dark);line-height:1.15;
+  letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.stat-label{display:block;position:relative;font-size:12.5px;color:var(--gray-500);font-weight:500;margin-top:4px}
+/* سطر تحت الرقم لتفصيلة مش داخلة فيه (زي الوحدات خارج الخدمة، أو شرح المهمّة) */
+.stat-sub{display:block;position:relative;font-size:11.5px;color:var(--gray-500);font-weight:500;
+  margin-top:3px;line-height:1.6}
+
+/* ==========================================================================
+   بطاقة مهمّة - «يحتاج إجراءك».
+   ⚠️ هي **نفس** البطاقة بلا أي فرق في المقاسات: نفس الأصناف ونفس الحشو ونفس
+      الرقم ونفس الليبل. الزيادة الوحيدة is-idle لمّا العدّاد يبقى صفر.
+   ⚠️ وقبل كده كانت مكوّنًا مستقلًّا (.todo-card) بأرقام مختلفة: ٣٤ ووزن ٨٠٠
+      مقابل ٢٧ ووزن ٧٠٠، وبلا أرقام ثابتة العرض، وبحشو وشريط حافة مختلفين -
+      فصفّان فوق بعض في نفس الشاشة بيبانوا من عيلتين.
+   ⚠️ وسطر الشرح اللي كان تحت العنوان اتشال من البطاقة ونزل في title: هو اللي
+      كان بيزوّد ارتفاعها سطرًا كاملًا فوق بطاقات «نظرة عامة»، ونصّه كان
+      بيعيد العنوان («بانتظار مراجعة إدارة الإسكان» / «طلبات لم تُراجَع بعد من
+      إدارة الإسكان»). التفصيلة موجودة لمن يقف بالماوس، والصفّان بقوا بارتفاع
+      واحد.
+   ========================================================================== */
+
+/* ==========================================================================
+   نغمات البطاقة - لون الرقم وشريط الحافة والأيقونة معًا.
+   ⚠️ الصنف بيلوّن التلاتة مرة واحدة: قبل كده كل شاشة كانت بتلوّن الرقم وحده
+      بقاعدة محلية، فالشريط بيفضل أخضر تحت رقم أحمر - إشارتان متناقضتان في
+      بطاقة واحدة.
+   ⚠️ والنغمة تُختار بالمعنى لا بالشكل: bad للي محتاج تدخّل، warn للي محتاج
+      نظرة، ok للحالة السليمة. ولو اتحطّت للتزيين بتفقد قدرتها على التنبيه.
+   ========================================================================== */
+.stat-card.tone-ok::after{background:var(--green)}
+.stat-card.tone-ok .stat-num{color:var(--green)}
+.stat-card.tone-ok .stat-ghost{color:var(--green)}
+.stat-card.tone-warn::after{background:#fbbf24;opacity:1}
+.stat-card.tone-warn .stat-num{color:#93370d}
+.stat-card.tone-warn .stat-ghost{color:#93370d}
+.stat-card.tone-bad::after{background:var(--red)}
+.stat-card.tone-bad .stat-num{color:var(--red)}
+.stat-card.tone-bad .stat-ghost{color:var(--red)}
+
+/* البطاقة اللي بتشتغل فلتر - وهي مضلّلة دلوقتي. */
+.stat-card.is-on{border-color:var(--gold-ink);box-shadow:0 0 0 3px rgba(219,161,2,.18)}
+
+/* «مفيش شغل مستنّي» - بيتقري من غير قراءة: البطاقة بتبهت والشريط بيرمدّ. */
+.stat-card.is-idle{opacity:.6}
+.stat-card.is-idle::after{background:var(--gray-300);opacity:1}
+.stat-card.is-idle .stat-num{color:var(--gray-300)}
+.stat-card.is-idle .stat-ghost{color:var(--gray-500);opacity:.09}
+
+/* ⚠️ البطاقة اللي بتفتح شاشة بتقول كده قبل ما المستخدم يجرّب: سهم خفيف
+   وحدّ بيغمق مع المرور. قبل كده كان cursor:pointer مكتوب في ستايل كل بطاقة،
+   والإشارة الوحيدة إنها بترتفع بعد ما الماوس يعدّي - يعني بعد المحاولة.
+   ⚠️ والسهم بيتقلب مع اللغة: «‹» بتشاور للأمام في العربي و«›» في الإنجليزي. */
+.stat-card.is-link{cursor:pointer}
+.stat-card.is-link::before{content:"‹";position:absolute;inset-block-start:11px;inset-inline-end:13px;
+  color:var(--gray-300);font-size:17px;line-height:1;transition:color .18s}
+[dir=ltr] .stat-card.is-link::before{content:"›"}
+.stat-card.is-link:hover{border-color:#c9d9d1;box-shadow:0 6px 18px rgba(16,70,49,.08);transform:translateY(-2px)}
+.stat-card.is-link:hover::before{color:var(--navy)}
+
+/* ⚠️ الكارت المنبّه: عدّاد استثناء المفروض يبقى صفر، فلمّا يبقى مش صفر لازم
+   يبان من غير قراءة. كهرماني لا أحمر - ده مش عطل، ده شغل مستنّي. */
+.stat-card.alert{border-color:#fbbf24;background:#fffbeb}
+.stat-card.alert::after{background:#fbbf24;opacity:1}
+.stat-card.alert .stat-num{color:#92400e}
+.stat-card.alert .stat-ghost{color:#92400e;opacity:.15}
+
+/* ==========================================================================
+   التبويبات - التعريف الوحيد في النظام.
+
+   ⚠️ مكانها هنا جنب .stat-card عن قصد: الاتنين مكوّنان مختلفان في الوظيفة -
+      البطاقة رقم بيتقرا، والتبويب اختيار من مجموعة واحد بس مضلّل فيها - لكنهم
+      بيتشاركوا نفس لغة الشكل. وفصلهم في ملفين هو اللي خلّى نصف القطر يبقى ١٠
+      هنا و١٤ هناك، والعدّاد يقفز بينما أرقام نفس الشاشة بتعدّ.
+
+   ⚠️ وماتحوّلش لبطاقات: التبويب المتلاصق في صفّ بيقول «دول بدائل لبعض» من غير
+      ما حد يشرح، والبطاقة المتفرّقة بتقول العكس. وتمانية تبويبات كبطاقات
+      بتاخد ٣-٤ أضعاف الارتفاع فينزل الجدول - وهو الشاشة نفسها - تحت الطيّة.
+   ========================================================================== */
+.tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
+.tab-btn{display:inline-flex;align-items:center;gap:8px;padding:8px 18px;border-radius:14px;
+  border:1.5px solid var(--gray-200);background:var(--white);font-family:'IBM Plex Sans Arabic',sans-serif;
+  font-size:13px;font-weight:600;cursor:pointer;color:var(--gray-500);
+  transition:border-color .18s,background .18s,color .18s,opacity .18s}
+.tab-btn:hover{border-color:var(--navy)}
+.tab-btn.active{background:var(--navy);color:var(--white);border-color:var(--navy)}
+
+/* ⚠️ الرقم بعرض ثابت زي أرقام البطاقات: العدّاد بيتغيّر مع الفلترة والتحديث،
+   ومن غير tabular-nums عرض التبويب بيترجرج والصفّ كله بيتزحلق معاه. */
+.tab-count{background:var(--gray-100);color:var(--gray-500);border-radius:999px;padding:1px 8px;
+  font-size:11.5px;font-weight:700;font-variant-numeric:tabular-nums}
+.tab-btn.active .tab-count{background:rgba(255,255,255,.2);color:var(--white)}
+
+/* ⚠️ الصفر يبقى ظاهرًا باهتًا لا يُخفى: إخفاء التبويب الفارغ يجعل الشاشة تتغيّر
+   شكلها كلما تحرّك رقم، والصفر نفسه معلومة - يقول «هذا الطابور فارغ». */
+.tab-count.zero{background:var(--gray-50);color:var(--gray-300)}
+.tab-btn.active .tab-count.zero{background:rgba(255,255,255,.14);color:rgba(255,255,255,.6)}
+
+/* ⚠️ والتبويب الفاضي كله يبهت لا عدّاده وحده - نفس منطق .stat-card.is-idle:
+   «مفيش شغل هنا» لازم يتقري من ثقل العنصر قبل ما العين توصل للرقم.
+   والمُضلّل مستثنى: هو مختار المستخدم مهما كان عدّاده.
+   ⚠️ ‏:has() بتقرا من العدّاد جوّه بدل صنف يتحطّ على الزرّ من الخادم: الصنف ده
+   كان هيتكتب في تمانية أزرار وييتنسى في واحد. ولو المتصفح ما يدعمهاش، اللي
+   بيضيع هو البهتان بس - التبويب بيفضل شغّال وعدّاده باهت زي ما هو. */
+.tab-btn:has(.tab-count.zero):not(.active){opacity:.62}
+
+/* ==========================================================================
+   خلفية بطاقة الرسم - نفس فكرة .stat-ghost لكن ورا رسمة لا ورا رقم.
+   ⚠️ كانت مكتوبة في Views/Home/Index.cshtml وحدها، فشاشة التقارير - وفيها
+      رسمان بنفس الشكل - فضلت بلا خلفية. مكانها هنا عشان أي رسم جديد ياخدها.
+   ⚠️ والشفافية أقلّ من .stat-ghost: اللي فوقها رسمة ملوّنة لا رقم.
+   ========================================================================== */
+.chart-ghost{position:absolute;inset-block-end:2px;inset-inline-end:8px;z-index:0;
+  color:var(--navy);opacity:.10;pointer-events:none;line-height:0}
+.chart-ghost svg{width:78px;height:78px}
+/* ⚠️ الكانفاس فوق الخلفية: العنصر ذو الموضع بيترسم فوق الساكن مهما كان
+   ترتيبه في الوسم، فالرسمة كانت هتختفي وراها. */
+.chart-body,.chart-box{position:relative}
+.chart-body canvas,.chart-box canvas{position:relative;z-index:1}
+
+/* ==========================================================================
+   ⚠️ ‏.rp-kpi في شاشة التقارير كانت النسخة الخامسة من بطاقة المؤشّر. مابقتش
+      تعرّف شكلها بنفسها - بتقرا من نفس المكوّن، والفرق الوحيد إن ترتيب
+      عناصرها في الوسم عنوان ثم رقم، فبنعكسه بـ order بدل ما نعيد كتابة
+      ستّة عشر بلوك ماركب.
+   ========================================================================== */
+.rp-kpi{display:flex;flex-direction:column}
+.rp-kpi .v{order:1}
+.rp-kpi .k{order:2}
+.rp-kpi .s{order:3}
+
+/* ⚠️ الخلفية بتنزل وتصغّر في الرسم الأفقي: أسماء المباني بتتكتب على حافّة
+   الرسمة من نفس الناحية، والخلفية كانت واقفة وراها فبتقلّل تباينها.
+   والصنف على الحاوية لا على الخلفية نفسها عشان الشاشة تقوله مرة واحدة. */
+.chart-body.is-hbar .chart-ghost{opacity:.06;inset-block-end:-10px;inset-inline-end:-10px}
+.chart-body.is-hbar .chart-ghost svg{width:64px;height:64px}

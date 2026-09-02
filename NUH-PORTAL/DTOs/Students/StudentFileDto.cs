@@ -36,6 +36,25 @@ namespace NUH_PORTAL.DTOs.Students
         //    والخانة دي بتقول للشاشة تعرض «تعذّر الوصول للدليل» بدل ما تعرض
         //    فراغ يتقري كأن الطالب مالوش حساب.
         public bool AdUnavailable { get; set; }
+
+        // ====================================================================
+        //  نتيجة التحقّق - بتتملى لمّا يكون البحث برمز مطبوع على وثيقة.
+        //
+        //  ⚠️ الملف واحد سواء وصلنا له برقم جامعي أو برمز؛ اللي بيفرق إن
+        //     الوصول بالرمز بيجاوب سؤالًا زيادة: «الورقة اللي في إيدي صادرة
+        //     عن النظام؟». الشاشة بتعرض الإجابة دي فوق الملف، وبتفضل null في
+        //     البحث العادي فمفيش شريط بيظهر بلا سبب.
+        // ====================================================================
+        public StudentFileVerifiedDto? Verified { get; set; }
+    }
+
+    public class StudentFileVerifiedDto
+    {
+        public string? Code { get; set; }
+        public string? RequestNumber { get; set; }
+        public DateTime AcceptedAt { get; set; }
+        public string? PolicyVersion { get; set; }
+        public int TermsCount { get; set; }
     }
 
     public class StudentFileRequestDto

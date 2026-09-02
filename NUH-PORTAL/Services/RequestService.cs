@@ -267,6 +267,17 @@ namespace NUH_PORTAL.Services
                 ("requestnumber", true) => query.OrderBy(r => r.RequestNumber),
                 ("requestnumber", false) => query.OrderByDescending(r => r.RequestNumber),
                 ("submittedat", true) => query.OrderBy(r => r.SubmittedAt),
+
+                // ⚠️ ترتيب بمدّة الوقوف في المرحلة الحالية لا بعمر الطلب -
+                //    تستعمله لوحة «الطلبات الأطول انتظارًا». نفس السلسلة
+                //    المكتوبة في RequestDto.StageSince بالحرف: هي بتحسب القيمة
+                //    اللي بتتعرض، ودي بترتّب بيها، فلو اتفارقوا كانت اللوحة
+                //    هتوري خمس صفوف مرتّبة بحاجة والأرقام اللي فيها بتقول حاجة
+                //    تانية. و COALESCE هو الشكل الوحيد اللي بيترجم لـ SQL هنا.
+                ("stagesince", true) => query.OrderBy(r =>
+                    r.ReadyForProvisioningAt ?? r.CyberReviewedAt ?? r.HousingReviewedAt ?? r.SubmittedAt),
+                ("stagesince", false) => query.OrderByDescending(r =>
+                    r.ReadyForProvisioningAt ?? r.CyberReviewedAt ?? r.HousingReviewedAt ?? r.SubmittedAt),
                 _ => query.OrderByDescending(r => r.SubmittedAt)
             };
 

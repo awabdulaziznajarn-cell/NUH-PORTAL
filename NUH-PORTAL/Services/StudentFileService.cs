@@ -50,26 +50,70 @@ namespace NUH_PORTAL.Services
 
         public const string NotRegisteredMessage = "غير مسجَّل في السكن الجامعي.";
         public const string BadQueryMessage =
-            "اكتب رقمًا جامعيًا (٩ أرقام تبدأ بـ ٤) أو رقم هوية (١٠ أرقام).";
+            "اكتب رقمًا جامعيًا (٩ أرقام تبدأ بـ ٤) أو رقم هوية (١٠ أرقام) أو رمز التحقّق المطبوع على الوثيقة.";
 
+        public const string DocCodeNotFoundMessage = "لا توجد وثيقة بهذا الرمز.";
+
+        // ====================================================================
+        //  ⚠️ ثلاثة مداخل لباب واحد: رقم جامعي، رقم هوية، ورمز تحقّق مطبوع.
+        //
+        //     الموظف اللي بيفتح الشاشة دي واقف دايمًا بنفس الموقف: معاه حاجة
+        //     مكتوبة وعايز يوصل للملف. مرة رقم من نظام تاني، ومرة ورقة في إيده.
+        //     كانوا شاشتين وحقلين وصلاحيتين، والفرق بينهم شكل المدخل وبس.
+        //
+        //  ⚠️ والصيغ التلاتة مالهاش أي تداخل، فالتمييز مضمون بلا ما نطلب من
+        //     الموظف يختار نوعًا قبل البحث: الرمز وحده هو اللي فيه حروف،
+        //     والرقم الجامعي ٩ أرقام تبدأ بـ ٤، والهوية ١٠ أرقام.
+        //
+        //  ⚠️ والنطاق (Scoped) بيتطبّق على الرمز زي الرقم بالظبط: مشرفة قسم
+        //     الطالبات معاها رمز وثيقة طالب مابتفتحش ملفه. الرمز بيثبت إن
+        //     الورقة حقيقية، مش إن اللي ماسكها يستحقّ يشوف صاحبها.
+        // ====================================================================
         public async Task<StudentFileDto> GetAsync(string query, int? requestId)
         {
             var q = (query ?? string.Empty).Trim();
 
-            // ⚠️ نفس قواعد Core/IdentityRules: الشاشة بتفحص بنفس القاعدة قبل
-            //    ما تبعت، فالرسالة هنا للي بيبعت من بره الشاشة.
-            var byStudentId = IdentityRules.IsValidStudentId(q);
-            var byNationalId = !byStudentId && IdentityRules.IsValidNationalId(q);
-            if (!byStudentId && !byNationalId)
-                throw new UserFriendlyException(BadQueryMessage, 400);
+            Student? student;
+            StudentFileVerifiedDto? verified = null;
 
-            // ⚠️ Scoped: مشرفة قسم الطالبات مابتشوفش ملف طالب، والعكس. الفحص
-            //    ده مش في الشاشة - في الاستعلام نفسه.
-            // ⚠️ والمحذوف داخل النتيجة عن قصد (مفيش !IsDeleted): التحقيق بيبدأ
-            //    غالبًا بعد ما الطالب يتشال، والشاشة بتعلّم السجل إنه محذوف.
-            var student = byStudentId
-                ? await Scoped(_students.Query().AsNoTracking()).FirstOrDefaultAsync(s => s.student_id == q)
-                : await Scoped(_students.Query().AsNoTracking()).FirstOrDefaultAsync(s => s.national_id == q);
+            if (PledgeRules.TryParseDocCode(q, out _, out _, out _))
+            {
+                var doc = await _pledge.ResolveDocCodeAsync(q)
+                    ?? throw UserFriendlyException.NotFound(DocCodeNotFoundMessage);
+
+                // الرمز بيحدّد الطلب كمان، فالشاشة بتفتح على تعهّده هو لا على
+                // أحدث طلب - وهو الطلب اللي الورقة اللي في إيد الموظف بتاعته.
+                requestId = doc.RequestId;
+
+                student = await Scoped(_students.Query().AsNoTracking())
+                    .FirstOrDefaultAsync(s => s.Id == doc.StudentId);
+
+                verified = new StudentFileVerifiedDto
+                {
+                    Code = q,
+                    RequestNumber = doc.RequestNumber,
+                    AcceptedAt = doc.AcceptedAt,
+                    PolicyVersion = doc.PolicyVersion,
+                    TermsCount = doc.TermsCount
+                };
+            }
+            else
+            {
+                // ⚠️ نفس قواعد Core/IdentityRules: الشاشة بتفحص بنفس القاعدة قبل
+                //    ما تبعت، فالرسالة هنا للي بيبعت من بره الشاشة.
+                var byStudentId = IdentityRules.IsValidStudentId(q);
+                var byNationalId = !byStudentId && IdentityRules.IsValidNationalId(q);
+                if (!byStudentId && !byNationalId)
+                    throw new UserFriendlyException(BadQueryMessage, 400);
+
+                // ⚠️ Scoped: مشرفة قسم الطالبات مابتشوفش ملف طالب، والعكس. الفحص
+                //    ده مش في الشاشة - في الاستعلام نفسه.
+                // ⚠️ والمحذوف داخل النتيجة عن قصد (مفيش !IsDeleted): التحقيق بيبدأ
+                //    غالبًا بعد ما الطالب يتشال، والشاشة بتعلّم السجل إنه محذوف.
+                student = byStudentId
+                    ? await Scoped(_students.Query().AsNoTracking()).FirstOrDefaultAsync(s => s.student_id == q)
+                    : await Scoped(_students.Query().AsNoTracking()).FirstOrDefaultAsync(s => s.national_id == q);
+            }
 
             if (student == null)
                 throw UserFriendlyException.NotFound(NotRegisteredMessage);
@@ -77,7 +121,8 @@ namespace NUH_PORTAL.Services
             var file = new StudentFileDto
             {
                 Student = Mapper.Map<StudentDto>(student),
-                IsDeleted = student.IsDeleted
+                IsDeleted = student.IsDeleted,
+                Verified = verified
             };
 
             // ---------- الطلبات ----------

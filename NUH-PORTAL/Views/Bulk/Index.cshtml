@@ -39,9 +39,8 @@
   .alert-error{background:var(--red-light);color:var(--red)}
   .alert-info{background:#dff6e7;color:#175cd3}
   .summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
-  .summary-card{background:var(--gray-50);border-radius:12px;padding:20px;text-align:center}
-  .summary-card-value{font-size:28px;font-weight:800;color:var(--navy-dark)}
-  .summary-card-label{font-size:12px;color:var(--gray-500);margin-top:4px}
+  /* ⚠️ ‏.summary-card اتشال: كان النسخة السادسة من بطاقة المؤشّر. البطاقات
+     دلوقتي .stat-card من css/components.css بأيقونتها الخلفية ونغماتها. */
   .table-wrapper{overflow-x:auto}
   .error-row{background:#fef3f2}
   .error-msg{color:var(--red);font-size:12px}
@@ -166,7 +165,7 @@
     <div class="form-card-body" style="text-align:center;padding:40px 24px">
       <div style="font-size:48px;margin-bottom:16px">✅</div>
       <h3 style="font-size:20px;font-weight:800;color:var(--green);margin-bottom:8px" >@SharedLocalizer["bulk_s5_heading"]</h3>
-      <p style="font-size:14px;color:var(--gray-500);margin-bottom:8px"><span >@SharedLocalizer["bulk_s5_requestNumber"]</span> <strong id="createdRequestNumber" style="color:var(--navy-dark);font-size:18px"></strong></p>
+      <p style="font-size:14px;color:var(--gray-500);margin-bottom:8px"><span >@SharedLocalizer["bulk_s5_requestNumber"]</span> <strong id="createdRequestNumber" dir="ltr" style="color:var(--navy-dark);font-size:18px"></strong></p>
       <p style="font-size:13px;color:var(--gray-500);margin-bottom:24px" id="createdStats"></p>
       <div class="btn-row center">
         <button class="bbtn bbtn-primary" onclick="resetWizard()" >@SharedLocalizer["bulk_s5_newFile"]</button>
@@ -180,6 +179,21 @@
 @section Scripts {
 <script src="/i18n.js"></script>
 <script>
+  // ==========================================================================
+  //  بطاقة ملخّص - بانٍ واحد للمواضع اللي كانت بتكتب الماركب بإيدها.
+  //  ⚠️ البطاقة هي .stat-card المشتركة (css/components.css): نفس المقاسات
+  //     والأيقونة الخلفية والنغمات. قبل كده كانت .summary-card محلية برقم ٢٨
+  //     ووزن ٨٠٠ - نسخة سادسة من نفس المكوّن.
+  // ==========================================================================
+  function summaryCard(value, label, tone, iconPath) {
+    return '<div class="stat-card ' + (tone || '') + '">' +
+      '<span class="stat-ghost" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" ' +
+        'fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" ' +
+        'stroke-linejoin="round">' + iconPath + '</svg></span>' +
+      '<span class="stat-num">' + value + '</span>' +
+      '<span class="stat-label">' + label + '</span></div>';
+  }
+
   var selectedFile = null;
   var validationResult = null;
   var createdRecordCount = null;
@@ -281,9 +295,14 @@
 
   function showValidationResult(data) {
     document.getElementById('validationSummary').innerHTML =
-      '<div class="summary-card"><div class="summary-card-value">' + data.totalRecords + '</div><div class="summary-card-label">' + t('bulk_totalRecords') + '</div></div>' +
-      '<div class="summary-card"><div class="summary-card-value" style="color:var(--green)">' + data.validRecords + '</div><div class="summary-card-label">' + t('bulk_validRecords') + '</div></div>' +
-      '<div class="summary-card"><div class="summary-card-value" style="color:var(--red)">' + data.errorRecords + '</div><div class="summary-card-label">' + t('bulk_errorRecords') + '</div></div>';
+      // ⚠️ النغمة صنف لا لون مكتوب في السمة: tone-* بيلوّن الرقم وشريط الحافة
+      //    والأيقونة مع بعض، واللون المكتوب كان بيلوّن الرقم وحده.
+      summaryCard(data.totalRecords, t('bulk_totalRecords'), '',
+        '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>') +
+      summaryCard(data.validRecords, t('bulk_validRecords'), 'tone-ok',
+        '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>') +
+      summaryCard(data.errorRecords, t('bulk_errorRecords'), data.errorRecords > 0 ? 'tone-bad' : '',
+        '<path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/>');
 
     var alertEl = document.getElementById('validationAlert');
     if (data.errorRecords > 0) {
@@ -313,9 +332,12 @@
     var totalValid = data.validRecords || 0;
     var displayCount = Math.min(20, allRecords.length);
     document.getElementById('previewSummary').innerHTML =
-      '<div class="summary-card"><div class="summary-card-value">' + data.totalRecords + '</div><div class="summary-card-label">' + t('bulk_totalRecords') + '</div></div>' +
-      '<div class="summary-card"><div class="summary-card-value" style="color:var(--green)">' + totalValid + '</div><div class="summary-card-label">' + t('bulk_validRecordsLabel') + '</div></div>' +
-      '<div class="summary-card"><div class="summary-card-value" style="color:var(--navy-dark)">' + t('bulk_firstNRecordsFmt').replace('{0}', displayCount) + '</div><div class="summary-card-label">' + t('bulk_currentlyShown') + '</div></div>';
+      summaryCard(data.totalRecords, t('bulk_totalRecords'), '',
+        '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>') +
+      summaryCard(totalValid, t('bulk_validRecordsLabel'), 'tone-ok',
+        '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>') +
+      summaryCard(t('bulk_firstNRecordsFmt').replace('{0}', displayCount), t('bulk_currentlyShown'), '',
+        '<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>');
     document.getElementById('previewTotalCount').textContent = totalValid;
     var tbEl = document.getElementById('previewTableBody');
     if (displayCount > 0) {

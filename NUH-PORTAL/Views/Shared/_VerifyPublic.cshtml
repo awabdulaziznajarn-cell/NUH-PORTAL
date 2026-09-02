@@ -1,0 +1,50 @@
+@{
+    Layout = null;
+    // ⚠️ الاتجاه من اللغة لا مثبَّتًا: الصفحة دي بتتقرا بالإنجليزية كمان
+    //    (زرّ اللغة بيغيّر الثقافة لأي زائر)، ولو الاتجاه اتثبّت rtl بيطلع
+    //    نصّ إنجليزي بتخطيط من اليمين لليسار.
+    var __lang = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "en" ? "en" : "ar";
+    var __dir = __lang == "en" ? "ltr" : "rtl";
+}
+@*
+    ============================================================================
+      تخطيط صفحة التحقّق للزائر من **خارج** النظام.
+
+      ⚠️ ليه تخطيط تاني بدل تخطيط النظام:
+         اللي بيفتح الصفحة دي من رمز على ورقة مطبوعة ساعات جهة من بره الجامعة
+         مالهاش حساب أصلًا. تخطيط الموظفين فيه القائمة الجانبية وجرس الإشعارات
+         وقائمة المستخدم وزرّ الخروج - عناصر بتنادي /api بكوكي مش موجود
+         (فبترجع 401 وتفضل فاضية)، وبتقول للزائر إنه واقف جوّه نظام داخلي.
+
+      ⚠️ والموظف المسجّل مابيوصلش للصفحة دي أصلًا: VerifyController بيحوّله
+         على «ملف الطالب» والرمز مُعبَّى، فيلاقي الملف كامل بدل ستة صفوف
+         مقنّعة. التخطيط ده للي **مالوش** حساب - وهو جمهور الصفحة الحقيقي.
+    ============================================================================
+*@
+<!DOCTYPE html>
+<html lang="@__lang" dir="@__dir">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>@ViewData["Title"] - @SharedLocalizer["AppTitleSuffix"]</title>
+  @* ⚠️ مافيش فهرسة: الصفحة دي مالهاش لازمة في نتائج البحث، ووجودها فيها
+     بيدعو للتجريب على الرموز من غير ما حد يدوّر عليها أصلًا. *@
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="stylesheet" href="/css/site.css" asp-append-version="true" />
+  <link rel="stylesheet" href="/css/components.css" asp-append-version="true" />
+  <style>
+    /* توسيط البطاقة في الصفحة - للزائر وحده. جوّه تخطيط النظام البطاقة
+       بتقع في منطقة المحتوى زي أي شاشة تانية. */
+    body{min-height:100vh;display:flex;align-items:flex-start;justify-content:center;
+      background:var(--gray-50);padding:40px 20px}
+  </style>
+</head>
+<body>
+  @RenderBody()
+
+  @* التاريخ بيتنسّق بنفس ملف الواجهة اللي بينسّق الورقة المطبوعة. جوّه تخطيط
+     النظام الملف ده محمّل أصلًا، فبيتحمّل هنا بس. *@
+  <script src="/js/date-format.js" asp-append-version="true"></script>
+  @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

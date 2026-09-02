@@ -3,11 +3,11 @@
 //
 //    1) كان يقرأ staffToken من localStorage ويرسله في ترويسة Authorization.
 //       لم يعد أي كود يكتب هذا المفتاح بعد توحيد الدخول على الكوكي، فالنتيجة
-//       إمّا تحويل فوري إلى صفحة الدخول، أو إرسال "Bearer null" — والترويسة
+//       إمّا تحويل فوري إلى صفحة الدخول، أو إرسال "Bearer null" - والترويسة
 //       تسبق الكوكي في سياسة NUH_Smart، فيُرفض كل نداء بـ 401 وتظل الشاشة أصفارًا.
 //    2) كان setLang يكتب في sidebar-user-name و sidebar-user-role، وهما عنصران
 //       من القائمة الجانبية القديمة لا وجود لهما في تخطيط MVC. فيرمي TypeError،
-//       و setLang أول سطر في التهيئة — فيتوقف كل ما بعده: الجدول والعدّادات
+//       و setLang أول سطر في التهيئة - فيتوقف كل ما بعده: الجدول والعدّادات
 //       والرسوم و«تنبيهات الأمان» تبقى على «جاري التحميل...» بلا نهاية.
 //
 //    الكوكي يُرسَل تلقائيًا مع كل نداء لنفس الأصل، فلا حاجة لأي ترويسة.
@@ -63,7 +63,7 @@ async function apiFetch(url) {
 function setLang(l) {
   __baseSetLang(l);
   // ⚠️ نسخة تانية من ترويسة التاريخ اللي في التخطيط، وبـ ar-SA اللي بترجّع
-  //    هجري في متصفحات — فالشاشة دي وحدها كانت ممكن تعرض تاريخ هجري في
+  //    هجري في متصفحات - فالشاشة دي وحدها كانت ممكن تعرض تاريخ هجري في
   //    الترويسة والباقي ميلادي.
   document.getElementById('dateNow').textContent = NuhFmt.dateFull(new Date());
   rebuildActionFilter();
@@ -75,17 +75,17 @@ function setLang(l) {
 
 // ⚠️ القائمة من الخادم لا من هنا: /api/AuditLogs/action-groups بترجّع
 //    المجموعات اللي للموظف صفوف يشوفها فيها بس. كانت مصفوفة مكتوبة هنا
-//    بتعرض لكل دور كل المجموعات — فالمشرف كان يلاقي «مزامنة الدليل النشط»
+//    بتعرض لكل دور كل المجموعات - فالمشرف كان يلاقي «مزامنة الدليل النشط»
 //    قدّامه وهو لا يرى منها صفًّا واحدًا (ScopedAsync بتخفي إجراءات الإدارات
 //    التانية)، فيختارها ويرجع بجدول فاضي ويفتكر الشاشة بايظة.
-//    ونصّ كل مفتاح في ملف الترجمة باسم agrp_<key> — فمفيش خريطة تانية هنا.
+//    ونصّ كل مفتاح في ملف الترجمة باسم agrp_<key> - فمفيش خريطة تانية هنا.
 var actionGroupKeys = [];
 
 async function loadActionGroups() {
   try {
     var res = await fetch('/api/auditlogs/action-groups', { credentials: 'same-origin' });
     if (res.ok) actionGroupKeys = await res.json();
-  } catch (e) { /* الفلتر يفضل على «كل العمليات» — أهون من قائمة مكتوبة بالإيد */ }
+  } catch (e) { /* الفلتر يفضل على «كل العمليات» - أهون من قائمة مكتوبة بالإيد */ }
   rebuildActionFilter();
 }
 
@@ -105,7 +105,7 @@ function rebuildActionFilter() {
   add('', t('agrp_all'));
   (actionGroupKeys || []).forEach(function (k) { add(k, t('agrp_' + k)); });
 
-  // ⚠️ لو المجموعة المختارة اختفت من النطاق، القيمة بترجع '' لوحدها — يعني
+  // ⚠️ لو المجموعة المختارة اختفت من النطاق، القيمة بترجع '' لوحدها - يعني
   //    «كل العمليات» لا خيار ميّت شكله سليم.
   sel.value = currentVal;
   if (window.NuhSelect && NuhSelect.refresh) NuhSelect.refresh(sel);
@@ -150,8 +150,8 @@ function badgeClass(action) {
   return map[action] || 'badge-gray';
 }
 
-// شكل التاريخ من NuhFmt — التعريف الوحيد في /js/date-format.js
-// ⚠️ كانت الصيغة بتتقلب mm/dd في الإنجليزي — يعني 08/09 تتقرا ٨ سبتمبر عند
+// شكل التاريخ من NuhFmt - التعريف الوحيد في /js/date-format.js
+// ⚠️ كانت الصيغة بتتقلب mm/dd في الإنجليزي - يعني 08/09 تتقرا ٨ سبتمبر عند
 //    واحد و٩ أغسطس عند التاني على نفس الشاشة. صيغة واحدة في اللغتين دلوقتي.
 function formatDate(v) { return NuhFmt.dateTime(v); }
 
@@ -165,7 +165,7 @@ function getFilters() {
   };
 }
 
-// ترتيب الأعمدة من نسخة واحدة في النظام — NuhTable.sort. الأعمدة معرّفة بـ
+// ترتيب الأعمدة من نسخة واحدة في النظام - NuhTable.sort. الأعمدة معرّفة بـ
 // data-sort على الـ <th>، والخادم بيرتّب على كل السجلات مش الصفحة المعروضة.
 var repSort = NuhTable.sort('repTable', function () { loadLogs(1, currentPageSize); },
   { by: NuhUrl.get('sort', ''), asc: NuhUrl.get('asc', '1') === '1' });
@@ -179,6 +179,61 @@ function buildUrl(p, ps) {
   if (f.toDate) url += '&toDate=' + encodeURIComponent(f.toDate);
   if (f.search) url += '&search=' + encodeURIComponent(f.search);
   return url + repSort.qs();
+}
+
+// ============================================================================
+//  أيقونة الخلفية لبطاقات المؤشّر في هذه الشاشة.
+//
+//  ⚠️ الخريطة هنا لا ستّة عشر <svg> مكتوبة في الوسم: البطاقات في أربع لوحات
+//     وبعضها مكرّر بنفس المعنى (عمليات اليوم في ثلاث لوحات). خريطة واحدة
+//     بتخلّي المعنى الواحد ياخد أيقونة واحدة مهما اتكرّر مكانه.
+//  ⚠️ والحقن من السكربت لا من الوسم: الأيقونة زخرفة صامتة (aria-hidden)
+//     مالهاش محتوى، فوجودها في الوسم بيزوّده بلا فايدة.
+// ============================================================================
+var RP_ICON = (function () {
+  var P = {
+    ops:      '<path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/>',
+    avg:      '<line x1="3" y1="12" x2="21" y2="12"/><path d="M7 8v8"/><path d="M12 5v14"/><path d="M17 9v6"/>',
+    peak:     '<path d="M3 18l6-8 4 5 3-4 5 7z"/>',
+    users:    '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/>',
+    student:  '<path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>',
+    request:  '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>',
+    kinds:    '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/>',
+    fail:     '<path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+    del:      '<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/>',
+    records:  '<ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.7-4 3-9 3s-9-1.3-9-3"/><path d="M3 5v14c0 1.7 4 3 9 3s9-1.3 9-3V5"/>'
+  };
+  var BY_ID = {
+    statTotOps: P.ops, kpiDailyAvg: P.avg, kpiPeakDay: P.peak,
+    statUsers: P.users, statUsersSec: P.users, kpiActiveUsers: P.users,
+    kpiStudentTotal: P.student, statStudentOps: P.student, statStudentRecs: P.student,
+    kpiRequestTotal: P.request, statRequestOps: P.request, statRequestRecs: P.request,
+    kpiStudentKinds: P.kinds, kpiRequestKinds: P.kinds,
+    statFailedSec: P.fail, statDeletes: P.del, statTotalRecords: P.records
+  };
+
+  function paint() {
+    var cards = document.querySelectorAll('.rp-kpi');
+    for (var i = 0; i < cards.length; i++) {
+      var c = cards[i];
+      if (c.querySelector('.chart-ghost')) continue;
+      var v = c.querySelector('.v');
+      var path = (v && BY_ID[v.id]) || P.ops;   // الافتراضي: رسم بياني
+      var g = document.createElement('span');
+      g.className = 'chart-ghost';
+      g.setAttribute('aria-hidden', 'true');
+      g.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" ' +
+                    'stroke-linecap="round" stroke-linejoin="round">' + path + '</svg>';
+      c.appendChild(g);
+    }
+  }
+  return { paint: paint };
+})();
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', RP_ICON.paint);
+} else {
+  RP_ICON.paint();
 }
 
 function renderTable() {
@@ -196,7 +251,15 @@ function renderTable() {
     '</td><td>' + escHtml(l.user?.full_name ?? l.user?.username ?? l.user_id) +
     '</td><td><span class="badge ' + bCls + '">' + bLabel + '</span>' +
     '</td><td>' + escHtml(l.target_table || '') +
-    '</td><td>' + escHtml(String(l.target_id || '')) +
+    // ⚠️ الاسم لا الرقم: الخادم بيحلّ (جدول + رقم) لاسم مقروء - اسم الطالب
+    //    ورقمه الجامعي، أو رقم الطلب، أو «برج 6 - شقة 20». الشاشة دي كانت
+    //    بتعرض الرقم الخام وبس، فسطر زي «طباعة وثيقة التعهّد /
+    //    StudentDeclarations / 31» مكانش بيقول اتطبعت لمين - وده بالظبط
+    //    السؤال اللي السجل موجود عشانه. شاشة «سجل العمليات» كانت بتعرضه
+    //    صح، ودي كانت النسخة اللي اتنسيت.
+    '</td><td title="' + escHtml(String(l.target_id || '')) + '">' +
+      escHtml(l.target_name || String(l.target_id || '')) +
+      (l.target_sub ? ' <bdi class="fh-acct">' + escHtml(l.target_sub) + '</bdi>' : '') +
     '</td><td>' + formatDate(l.action_at) +
     '</td></tr>';
   }).join('');
@@ -230,10 +293,10 @@ function updatePagination(recs) {
 }
 
 // ⚠️ كانت هنا updateStats تكتب في statTotalRecords / statStudentRecs /
-//    statRequestRecs — ثلاثة معرّفات لا وجود لها في الصفحة إطلاقًا (بطاقات
+//    statRequestRecs - ثلاثة معرّفات لا وجود لها في الصفحة إطلاقًا (بطاقات
 //    العدّادات اسمها statTotOps / statStudentOps / statRequestOps). فكانت ترمي
 //    TypeError داخل loadLogs بعد رسم الجدول مباشرة، فيُبتلع في catch ويُستبدل
-//    الجدول برسالة «خطأ اتصال» — والسبب الحقيقي لا علاقة له بالشبكة.
+//    الجدول برسالة «خطأ اتصال» - والسبب الحقيقي لا علاقة له بالشبكة.
 //    البطاقات الست تملأها loadSummaryStats من /api/auditlogs/today-stats.
 
 function openModal(record) {
@@ -241,7 +304,13 @@ function openModal(record) {
   document.getElementById('modalUser').textContent = record.user?.full_name ?? record.user?.username ?? record.user_id;
   document.getElementById('modalAction').innerHTML = escHtml(translateAction(record.action));
   document.getElementById('modalTable').textContent = record.target_table || '';
-  document.getElementById('modalTargetId').textContent = String(record.target_id || '');
+  // ⚠️ الاسم والرقم مع بعض في النافذة: النافذة هي المكان اللي بيتفتح لمّا
+  //    السطر يبقى محلّ سؤال، فالاتنين مطلوبين - الاسم للي بيراجع، والرقم
+  //    للي بيتتبّع تقنيًّا.
+  var tgt = document.getElementById('modalTargetId');
+  tgt.innerHTML = escHtml(record.target_name || String(record.target_id || '')) +
+    (record.target_sub ? ' <bdi class="fh-acct">' + escHtml(record.target_sub) + '</bdi>' : '') +
+    ' <span style="color:var(--gray-500);font-size:12px">#' + escHtml(String(record.target_id || '')) + '</span>';
   document.getElementById('modalDate').textContent = formatDate(record.action_at);
   document.getElementById('detailModal').classList.add('open');
 }
@@ -287,15 +356,15 @@ async function loadAuditUsers() {
 
 function applyFilters() {
   // ⚠️ الفلترة بتفتح السجل التفصيلي غصب. السجل مطوي افتراضيًا عشان الصفحة
-  //    تقارير لا جدول خام، بس اللي بيضغط «تطبيق» طالب نتيجة بعينها — ولو
+  //    تقارير لا جدول خام، بس اللي بيضغط «تطبيق» طالب نتيجة بعينها - ولو
   //    فضلت في جدول مخفي بيقرا ده على إن الفلتر مرجّعش حاجة.
   if (typeof toggleLog === 'function') toggleLog(true);
   reloadAll();
 }
 
 // ⚠️ الصفحة كلها بتتبع الفلتر مش الجدول وحده. قبل كده «تطبيق» كان بيحدّث آخر
-//    جدول بس، والبطاقات والرسم والقوائم فوقه يفضلوا على «اليوم» و«آخر ٧ أيام» —
-//    فالمستخدم يختار ١١–١٦ أغسطس ويشوف عمودًا على ١٨ أغسطس فوق نتيجة صحيحة
+//    جدول بس، والبطاقات والرسم والقوائم فوقه يفضلوا على «اليوم» و«آخر ٧ أيام» -
+//    فالمستخدم يختار ١١-١٦ أغسطس ويشوف عمودًا على ١٨ أغسطس فوق نتيجة صحيحة
 //    تحت. صفحة اسمها «مركز التقارير» وفلترها بيحرّك خُمسها.
 function reloadAll() {
   topDataLoaded = false;
@@ -312,7 +381,7 @@ function onFilterChange() {
 
 // ⚠️ لاحقة المدة مكتوبة مرة واحدة: البطاقات والرسوم والقوائم والجدول لازم
 //    يقيسوا نفس المدة بالحرف. لو كل نداء بنى الوسائط بنفسه كان الجدول يقول
-//    ١٩ عملية والرسم يرسم عمودًا في يوم بره المدة — والمستخدم يقرا ده على إن
+//    ١٩ عملية والرسم يرسم عمودًا في يوم بره المدة - والمستخدم يقرا ده على إن
 //    الفلتر مشتغلش أصلًا.
 function rangeQs(prefix) {
   var f = document.getElementById('fromDate').value;
@@ -338,7 +407,7 @@ async function loadSummaryStats() {
   applyPeriodLabels();
 }
 
-// ⚠️ البطاقة اللي مكتوب تحتها «اليوم» بتقيس المدة المختارة لمّا تتحدّد — فلو
+// ⚠️ البطاقة اللي مكتوب تحتها «اليوم» بتقيس المدة المختارة لمّا تتحدّد - فلو
 //    النصّ فضل «اليوم» كان الرقم يتقرا غلط تمامًا. النصّ بيتبع المصدر.
 function applyPeriodLabels() {
   var txt = hasRange() ? t('rpx_inRange') : null;
@@ -352,9 +421,16 @@ function applyPeriodLabels() {
 function waitForChartLib(maxMs) {
   return new Promise(function (resolve) {
     if (typeof Chart !== 'undefined') { resolve(true); return; }
+
+    // ⚠️ الملف نفسه فشل في التحميل (onerror في الصفحة) - مفيش فايدة من
+    //    الانتظار. من غير الفحص ده الموظف بيقعد عشر ثوانٍ قدام مربّعات فاضية
+    //    ويقراها بطئًا، وهي في الحقيقة ملف ناقص على الخادم.
+    if (window.__chartLibFailed) { resolve(false); return; }
+
     var waited = 0, step = 120;
     var iv = setInterval(function () {
       if (typeof Chart !== 'undefined') { clearInterval(iv); resolve(true); }
+      else if (window.__chartLibFailed) { clearInterval(iv); resolve(false); }
       else if ((waited += step) >= maxMs) { clearInterval(iv); resolve(false); }
     }, step);
   });
@@ -365,8 +441,9 @@ async function loadCharts() {
   if (!data) return;
   cachedChartData = data;
 
-  // ⚠️ مكتبة الرسوم تُحمَّل من CDN خارجي (cdn.jsdelivr.net) بوسم async، فقد
-  //    تصل بعد البيانات. ننتظرها هنا وحدها — لا توقف بقية الصفحة.
+  // ⚠️ المكتبة محلية وبوسم async، فقد تصل بعد البيانات. ننتظرها هنا وحدها
+  //    لا توقف بقية الصفحة. (التحميل الاحتياطي من الإنترنت اتشال -
+  //    الشرح في Views/Reports/Index.cshtml.)
   //    وإن لم تصل (خادم أو جهاز بلا منفذ للإنترنت) تبقى المربعات الأربعة فارغة
   //    بلا كلمة تشرح السبب، فيظن المستخدم أن لا بيانات لديه. نقولها صراحة.
   if (!(await waitForChartLib(10000))) {
@@ -394,7 +471,7 @@ async function loadCharts() {
     renderChart('chartLogins30', 'line', labels, counts, '#dba102');
   }
   // ⚠️ كانت دونات. اتحوّلت أعمدة أفقية لسببين: الدونة على ٢-٣ أرقام بترسم
-  //    تلات شرايح وتحتاج وسيلة إيضاح تحتها عشان تقراها — الأعمدة بتكتب الاسم
+  //    تلات شرايح وتحتاج وسيلة إيضاح تحتها عشان تقراها - الأعمدة بتكتب الاسم
   //    والرقم جنب بعض. وأسماء الإجراءات عربية، فالأعمدة الرأسية كانت هتقصّها.
   renderHBars('barsStudents', data.studentOps, 'kpiStudentTotal', 'kpiStudentKinds');
   renderHBars('barsRequests', data.requestOps, 'kpiRequestTotal', 'kpiRequestKinds');
@@ -403,13 +480,13 @@ async function loadCharts() {
 
 // ⚠️ الدالة دي كانت مكتوبة هنا وفي لوحة التحكم بنفس السطور بالظبط، وكانت
 //    بتحط محاور على الدونات كمان (فبيظهر جنبها محور رأسي فيه 0 و1 بلا معنى).
-//    بقت في js/chart-theme.js — شكل واحد لكل رسوم النظام.
+//    بقت في js/chart-theme.js - شكل واحد لكل رسوم النظام.
 function renderChart(id, type, labels, data, bgColors, totalLabel) {
   return NuhChart.render(id, type, labels, data, bgColors, totalLabel);
 }
 
 // أعمدة أفقية بديلة عن الدونة لما التصنيفات قليلة وأسماؤها عربية طويلة.
-// rows = [{action, count}] — بترجّع الإجمالي وعدد الأنواع للمؤشرات فوقها.
+// rows = [{action, count}] - بترجّع الإجمالي وعدد الأنواع للمؤشرات فوقها.
 function renderHBars(hostId, rows, totalId, kindsId) {
   var host = document.getElementById(hostId);
   if (!host) return;
@@ -486,7 +563,7 @@ function exportPdf() {
   var reportType = typeMap[activeGroup] || 'activity';
 
   // ⚠️ كان يرسل النوع فقط. المستخدم يحصر النتائج في آخر ٧ أيام أو في مستخدم
-  //    بعينه ثم يضغط «PDF» فيخرج له التقرير كاملًا بلا أي فلتر — والفرق لا
+  //    بعينه ثم يضغط «PDF» فيخرج له التقرير كاملًا بلا أي فلتر - والفرق لا
   //    يظهر إلا لمن يقرأ التقرير بعناية. الخادم يقبل هذه الفلاتر أصلًا.
   var f = getFilters();
   var url = '/api/auditlogs/report-html?type=' + encodeURIComponent(reportType);
@@ -555,7 +632,7 @@ function computeTopWidgets() {
   var userMap = {};
   var actionMap = {};
   source.forEach(function(r) {
-    // ⚠️ String(null) = "null" — وده اللي كان بيظهر في «أكثر المستخدمين نشاطًا».
+    // ⚠️ String(null) = "null" - وده اللي كان بيظهر في «أكثر المستخدمين نشاطًا».
     //    العمليات اللي بينفّذها النظام نفسه (إرسال رمز تحقق مثلًا) مالهاش مستخدم.
     var name = r.user?.full_name || r.user?.username ||
                (r.user_id ? String(r.user_id) : t('rpx_systemUser'));
@@ -581,7 +658,7 @@ function computeTopWidgets() {
 
 // ⚠️ قايمة إجراءات المجموعة من __AUDIT_GROUPS المحقونة في التخطيط، ومصدرها
 //    Core/AuditActionGroups.cs. لو اتكتبت هنا كانت هتبقى نسخة تانية تفترق أول
-//    ما يتضاف إجراء جديد — وده حصل فعلًا في السيرفر قبل كده.
+//    ما يتضاف إجراء جديد - وده حصل فعلًا في السيرفر قبل كده.
 function actionsInGroup(group) {
   var g = (window.__AUDIT_GROUPS || {})[group];
   return Array.isArray(g) ? g : [];
@@ -613,7 +690,7 @@ function applyUserFilter(name) {
   if (user) { document.getElementById('userFilter').value = user.id; onFilterChange(); }
 }
 
-// ⚠️ كانت هنا سلسلة if مكتوبة بالإيد تعيد كتابة كل مجموعة إجراء إجراء —
+// ⚠️ كانت هنا سلسلة if مكتوبة بالإيد تعيد كتابة كل مجموعة إجراء إجراء -
 //    نسخة خامسة من نفس القوائم، وكانت ناقصة faculty كلها. المصدر الوحيد
 //    __AUDIT_GROUPS المحقونة في التخطيط من Core/AuditActionGroups.
 function groupOfAction(action) {
@@ -645,7 +722,7 @@ function computeKpi() {
   var userCount = new Set((cachedTopData.length ? cachedTopData : (cachedData || [])).map(function(r) { return r.user_id; })).size;
   document.getElementById('kpiActiveUsers').textContent = userCount || document.getElementById('statUsers').textContent || '0';
 
-  // إجمالي السبع أيام تحت بطاقة «إجمالي العمليات اليوم» — الرقم اليومي وحده
+  // إجمالي السبع أيام تحت بطاقة «إجمالي العمليات اليوم» - الرقم اليومي وحده
   // مايقولش إذا كان اليوم ده عالي ولا واطي.
   setTxt('kpiTotal7', total7 + ' ' + t('rpx_inLast7'));
 
@@ -662,7 +739,7 @@ function computeKpi() {
 
 function setTxt(id, v) { var e = document.getElementById(id); if (e) e.textContent = v; }
 
-// تصنيف الإجراء لمجموعته — من __AUDIT_GROUPS لا من شروط مكتوبة بالإيد.
+// تصنيف الإجراء لمجموعته - من __AUDIT_GROUPS لا من شروط مكتوبة بالإيد.
 // ⚠️ الشرط القديم كان `a.indexOf('request') !== -1` لمجموعة الطلبات: أي إجراء
 //    جديد فيه كلمة request يقع فيها بلا قصد، وأي إجراء طلب لا تحمله لا يقع.
 function actionGroup(a) { return groupOfAction(a) || 'other'; }
@@ -735,7 +812,7 @@ function loadFromUrlParams() {
 /* ====== Phase 8: Executive Summary ====== */
 function generateExecSummary() {
   // ⚠️ اتوقّفت عن قصد. كانت بتعيد كتابة نفس أرقام البطاقات اللي فوقها في جملة
-  //    («إجمالي العمليات 129، بمتوسط 26 يوميًا، عدد عمليات اليوم 52…») —
+  //    («إجمالي العمليات 129، بمتوسط 26 يوميًا، عدد عمليات اليوم 52…») -
   //    تكرار بيطوّل الصفحة ولا بيضيف معلومة. الدالة والعنصر باقيان عشان أي
   //    نداء قديم ما يرميش، ولو احتجناها ترجع بسطر واحد.
   return;
@@ -788,14 +865,14 @@ document.getElementById('searchBox').addEventListener('keyup', function(e) {
   searchDebounce = setTimeout(function() { onFilterChange(); }, 400);
 });
 
-// زر الخروج بقى فورم /Account/Logout في اللياوت الموحد — مفيش override هنا
+// زر الخروج بقى فورم /Account/Logout في اللياوت الموحد - مفيش override هنا
 
 // ⚠️ مفيش مستمعات للسابق/التالي/عدد الصفوف هنا: صفّ الترقيم بيربطها بنفسه
 //    وقت الرسم (NuhTable.pager)، فلو اتكتبت هنا كمان هتشتغل مرتين.
 
 // ⚠️ السجل التفصيلي مطوي افتراضيًا: الصفحة تقارير، والجدول الخام له شاشته
 //    الخاصة (سجل العمليات). الحالة متحفوظة عشان اللي محتاجه مفتوح ما يفتحهوش
-//    كل مرة — والبيانات بتتحمّل في الحالتين لأن الأعداد في الرأس بتتغذّى منها.
+//    كل مرة - والبيانات بتتحمّل في الحالتين لأن الأعداد في الرأس بتتغذّى منها.
 function toggleLog(force) {
   var box = document.getElementById('logDetails');
   var btn = document.getElementById('logToggle');
@@ -820,7 +897,7 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') closeModal();
 });
 
-// ⚠️ التبويب كان بيغيّر فلتر الجدول وبس، وباقي الصفحة يفضل زي ما هو — فتقف
+// ⚠️ التبويب كان بيغيّر فلتر الجدول وبس، وباقي الصفحة يفضل زي ما هو - فتقف
 //    على «عمليات الطلبات» وقدّامك رسم «تسجيل الدخول» فاضي. بقى بيبدّل لوحة
 //    كاملة: مؤشرات التبويب ورسمه، والجدول تحت بيتفلتر معاه.
 function showReportPanel(name) {
@@ -841,7 +918,7 @@ document.querySelectorAll('.tab-btn').forEach(function(tab) {
     if (group === 'security') {
       loadAlerts();
       // ⚠️ الجدول مابيتفضّاش هنا زي الأول: تنبيهات الأمان بقى لها مكانها في
-      //    لوحة الأمان، والجدول تحتها بيفضل شغّال بفلتره — إفراغه كان بيخلّي
+      //    لوحة الأمان، والجدول تحتها بيفضل شغّال بفلتره - إفراغه كان بيخلّي
       //    التبويب ده الوحيد اللي بيوقف السجل بلا سبب.
       document.getElementById('actionFilter').value = '';
     } else {
@@ -861,7 +938,7 @@ document.querySelectorAll('.stat-card-clickable').forEach(function(card) {
 
 // ⚠️ كانت هنا نسخة كاملة من كود الإشعارات (fetchNotifs / loadNotifDropdown /
 //    loadUnreadCount / toggleNotifDropdown / markNotifRead / markAllNotifRead)
-//    تعيد تعريف نفس الدوال الموجودة في التخطيط المشترك وتعمل على نفس عناصره —
+//    تعيد تعريف نفس الدوال الموجودة في التخطيط المشترك وتعمل على نفس عناصره -
 //    نسختان من منطق واحد ومؤقّتان يعملان معًا. حُذفت، والتخطيط هو المسؤول.
 
 loadFromUrlParams();

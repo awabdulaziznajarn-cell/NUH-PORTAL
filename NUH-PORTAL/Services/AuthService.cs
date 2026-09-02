@@ -12,7 +12,7 @@ using NUH_PORTAL.Services.Interfaces;
 
 namespace NUH_PORTAL.Services
 {
-    // منطق المصادقة — AD أولًا (لو متاح) → مزامنة المستخدم عبر UserManager → توكن.
+    // منطق المصادقة - AD أولًا (لو متاح) → مزامنة المستخدم عبر UserManager → توكن.
     // لو AD فشل/مش متاح → fallback محلي عبر UserManager.CheckPasswordAsync (هاشر Identity).
     public class AuthService : AppServiceBase, IAuthService
     {
@@ -61,7 +61,7 @@ namespace NUH_PORTAL.Services
         //
         //  كانت بتتكتب في الجدولين: SignInLogs بالتفصيل الكامل، و AuditLogs
         //  بأسماء زي login و login_failed و login_local_fallback و logout
-        //  و user_updated_ad. والنسخة اللي في AuditLogs أفقر — مافيهاش طريقة
+        //  و user_updated_ad. والنسخة اللي في AuditLogs أفقر - مافيهاش طريقة
         //  الدخول ولا النتيجة ولا الـ IP، يعني الحاجات اللي بتفيد في التحقيق.
         //  فكانت بتزحم شاشة «سجل العمليات» بضجيج والمعلومة الكاملة في الشاشة
         //  المخصصة ليها. و user_updated_ad تحديدًا كانت بتتكتب مع *كل* تسجيل
@@ -69,7 +69,7 @@ namespace NUH_PORTAL.Services
         //
         //  القسمة دلوقتي: سجل العمليات للتغييرات على البيانات، وسجل الدخول
         //  والخروج للحسابات. كل معلومة في مكان واحد.
-        //  (set_password فاضل في سجل العمليات — ده تغيير بيانات مش حدث دخول.)
+        //  (set_password فاضل في سجل العمليات - ده تغيير بيانات مش حدث دخول.)
         // ====================================================================
         public async Task<User> AuthenticateAsync(string username, string password)
         {
@@ -79,13 +79,13 @@ namespace NUH_PORTAL.Services
             var (clientIp, _) = ClientInfo();
 
             // ====================================================================
-            //  ⚠️ قفل الحساب — الفحص قبل أي محاولة مصادقة.
+            //  ⚠️ قفل الحساب - الفحص قبل أي محاولة مصادقة.
             //
             //     ماكانش في أي قفل: عدد المحاولات مفتوح على الآخر، ومسار
             //     المصادقة بيستخدم CheckPasswordAsync اللي **لا** بتزوّد عدّاد
             //     الفشل ولا بتفحص القفل. فالتخمين كان بلا سقف.
             //
-            //     بنفحص هنا قبل ما نبعت أي شيء للأكتف دايركتوري كمان — عشان
+            //     بنفحص هنا قبل ما نبعت أي شيء للأكتف دايركتوري كمان - عشان
             //     محاولات التخمين ما تستهلكش سياسة القفل بتاعة الدومين وتقفل
             //     حساب الموظف في الشبكة كلها لا في نظامنا وحده.
             // ====================================================================
@@ -109,7 +109,7 @@ namespace NUH_PORTAL.Services
             {
                 if (adResult.IsAuthenticated && adResult.Details != null)
                 {
-                    // ⚠️ الدومين أكّد إن الباسورد صح — وده لوحده مش كفاية.
+                    // ⚠️ الدومين أكّد إن الباسورد صح - وده لوحده مش كفاية.
                     //    الحساب لازم يكون متضاف عندنا من شاشة «إدارة المستخدمين»
                     //    (زرار «إضافة من الدليل»). قبل كده أي موظف على الدومين يعرف
                     //    الرابط كان يدخل والنظام يعمله حساب تلقائي من غير موافقة حد،
@@ -124,10 +124,10 @@ namespace NUH_PORTAL.Services
                         throw new UserFriendlyException("حسابك غير مسجّل في نظام إسكان الطلاب. راجع مدير النظام لإضافة حسابك.", 403);
                     }
 
-                    // ⚠️ حساب متوقّف أو محذوف مايدخلش — حتى لو الدومين قال إن الباسورد صح.
+                    // ⚠️ حساب متوقّف أو محذوف مايدخلش - حتى لو الدومين قال إن الباسورد صح.
                     //    مسار الدخول المحلي تحت بيفحص is_active، ومسار الـ AD ماكانش
                     //    بيفحصه خالص. يعني زرار «تعطيل» في شاشة المستخدمين مكانش
-                    //    بيعمل أي حاجة لأي موظف بيدخل عبر الدومين — وهم كل الموظفين.
+                    //    بيعمل أي حاجة لأي موظف بيدخل عبر الدومين - وهم كل الموظفين.
                     if (known.is_deleted || !known.is_active)
                     {
                         var reason = known.is_deleted ? "الحساب محذوف" : "الحساب متوقّف";
@@ -135,13 +135,13 @@ namespace NUH_PORTAL.Services
                         await UnitOfWork.SaveAsync();
                         _logger.LogWarning("Login blocked ({Reason}): {Username}, IP: {ClientIp}", reason, username, clientIp ?? "unknown");
                         // ⚠️ نفس الرسالة للحالتين: المستخدم مايعرفش من الرسالة إن الحساب
-                        //    اتحذف بالذات ولا اتعطّل — السبب الدقيق في السجل للمسؤول بس.
+                        //    اتحذف بالذات ولا اتعطّل - السبب الدقيق في السجل للمسؤول بس.
                         throw new UserFriendlyException("هذا الحساب غير مفعّل. راجع مدير النظام.", 403);
                     }
 
                     var user = await SyncAdUserAsync(adResult);
 
-                    // دخول ناجح يمسح تاريخ الفشل — وإلا محاولات متفرقة على مدى
+                    // دخول ناجح يمسح تاريخ الفشل - وإلا محاولات متفرقة على مدى
                     // أيام بتتجمّع وتقفل حساب موظف شغّال عادي.
                     await _userManager.ResetAccessFailedCountAsync(user);
 
@@ -193,7 +193,7 @@ namespace NUH_PORTAL.Services
                     "Local password path refused for {Username}, IP: {ClientIp} - AD is reachable and rejected the credentials (subCode {SubCode}) and the account is not local (auth_source: {Source})",
                     username, clientIp ?? "unknown", adResult.ErrorSubCode ?? "(none)", localUser.auth_source ?? "(null)");
 
-            // المحذوف بيتعامل زي بيانات غلط على المسار المحلي — مافيش تفرقة تفيد مخمّن
+            // المحذوف بيتعامل زي بيانات غلط على المسار المحلي - مافيش تفرقة تفيد مخمّن
             if (localAllowed && localUser != null && !localUser.is_deleted && localUser.is_active && await _userManager.CheckPasswordAsync(localUser, password))
             {
                 await _userManager.ResetAccessFailedCountAsync(localUser);
@@ -208,7 +208,7 @@ namespace NUH_PORTAL.Services
             //
             // ⚠️ والسطر اللي قبله ضروري كمان: Identity بيقفل الحساب بس لو
             //    LockoutEnabled = true عليه. الإعداد في Program.cs بيطبّق على
-            //    المستخدمين الجدد وقت الإنشاء بس — أما الصفوف الموجودة من قبل
+            //    المستخدمين الجدد وقت الإنشاء بس - أما الصفوف الموجودة من قبل
             //    فقيمتها متخزّنة في قاعدة البيانات زي ما هي. من غير التفعيل ده
             //    العدّاد بيزيد والقفل ما بيجيش أبدًا للمستخدمين الحاليين.
             if (localUser != null)
@@ -265,19 +265,36 @@ namespace NUH_PORTAL.Services
         {
             var userId = UnitOfWork.GetCurrentUserId();
             if (userId > 0)
-                _cache.Set("activity_" + userId, DateTime.UtcNow, TimeSpan.FromMinutes(30));
+                _cache.Set(NUH_PORTAL.Core.SessionPolicy.ActivityKey(userId), DateTime.UtcNow, TimeSpan.FromMinutes(30));
+        }
+
+        // ====================================================================
+        //  مسح ختم آخر نشاط.
+        //
+        //  ⚠️ المفتاح "activity_{userId}" مربوط برقم المستخدم مش بالجلسة، وعمره
+        //     أطول من الجلسة نفسها. فلو الجلسة انتهت بالخمول والختم القديم فضل
+        //     مكانه، أول نداء API بعد **دخول جديد بكوكي جديد** بيلاقي ختمًا عمره
+        //     أكتر من مهلة الخمول فيقفل الجلسة فورًا.
+        //     شكلها عند المستخدم بالحرف: «دخلت وطلعني على طول، وتاني مرة دخلت
+        //     عادي» - تاني مرة بتشتغل لأن الميدلوير مسح الختم وهو بيقفلها.
+        //     فالمسح هنا عند بداية الجلسة وعند نهايتها، لا عند الانهيار.
+        // ====================================================================
+        public void ResetActivity(int userId)
+        {
+            if (userId > 0) _cache.Remove(NUH_PORTAL.Core.SessionPolicy.ActivityKey(userId));
         }
 
         public async Task LogoutAsync()
         {
             var userId = UnitOfWork.GetCurrentUserId();
+            ResetActivity(userId);
             await AddSignInLogAsync(userId, _http.HttpContext?.User?.Identity?.Name, "logout", "session", true, null);
             await UnitOfWork.SaveAsync();
         }
 
         // ----------------------------- Helpers -----------------------------
 
-        // تسجيل الدخول/الخروج best-effort على سياق منفصل — أي فشل (زي إن جدول SignInLogs
+        // تسجيل الدخول/الخروج best-effort على سياق منفصل - أي فشل (زي إن جدول SignInLogs
         // لسه ماتعملّوش migration) ميكسرش تسجيل الدخول/الخروج نفسه.
         private async Task AddSignInLogAsync(int? userId, string? username, string eventType, string method, bool success, string? detail)
         {
@@ -302,7 +319,7 @@ namespace NUH_PORTAL.Services
             }
             catch
             {
-                // متعمّد: السجل best-effort — تسجيل الدخول/الخروج ما ينفعش يقع بسببه.
+                // متعمّد: السجل best-effort - تسجيل الدخول/الخروج ما ينفعش يقع بسببه.
             }
         }
 
@@ -312,7 +329,7 @@ namespace NUH_PORTAL.Services
         //    • الإنشاء: الحساب لازم يكون متضاف من شاشة «إدارة المستخدمين».
         //    • الدور: مصدره الشاشة. كان بيتعاد حسابه من مجموعات الـ AD مع كل دخول
         //      وبيمسح اللي المسؤول حدّده، ولأن مجموعات Housing_* مش متعمولة على
-        //      الدومين كانت النتيجة دايمًا "user" — فالموظف يختفي من الشاشة.
+        //      الدومين كانت النتيجة دايمًا "user" - فالموظف يختفي من الشاشة.
         //    • is_active: قرار إداري من الشاشة، مش حاجة الدليل بيقولها.
         //    الدليل مسؤوليته: يتأكد من الباسورد، ويجيب البيانات الشخصية. وبس.
         private async Task<User> SyncAdUserAsync(AdAuthResult adResult)
@@ -326,7 +343,7 @@ namespace NUH_PORTAL.Services
             user.Email = details.Email;
             user.department = details.Department;
             // ⚠️ AdUserDetails.Mobile قيمته الافتراضية "" مش null. والجوال عليه فهرس
-            //    فريد مُصفّى بيستثني NULL بس، فالنص الفاضي بيدخله عادي — يعني تاني
+            //    فريد مُصفّى بيستثني NULL بس، فالنص الفاضي بيدخله عادي - يعني تاني
             //    موظف دومين ملوش جوال في الدليل كان دخوله هيفشل بخطأ قاعدة بيانات،
             //    مش بخطأ مصادقة. فاضي = NULL.
             user.mobile = string.IsNullOrWhiteSpace(details.Mobile) ? null : details.Mobile.Trim();

@@ -1188,45 +1188,6 @@
   <data name="home_approvedRequests" xml:space="preserve">
     <value>Approved Requests</value>
   </data>
-  <data name="home_badge_active" xml:space="preserve">
-    <value>Active</value>
-  </data>
-  <data name="home_badge_approved" xml:space="preserve">
-    <value>Approved</value>
-  </data>
-  <data name="home_badge_completed" xml:space="preserve">
-    <value>Completed</value>
-  </data>
-  <data name="home_badge_cyberReview" xml:space="preserve">
-    <value>Cyber Review</value>
-  </data>
-  <data name="home_badge_dismissed" xml:space="preserve">
-    <value>Dismissed</value>
-  </data>
-  <data name="home_badge_graduated" xml:space="preserve">
-    <value>Graduated</value>
-  </data>
-  <data name="home_badge_housingApproved" xml:space="preserve">
-    <value>Housing Approval</value>
-  </data>
-  <data name="home_badge_housingReview" xml:space="preserve">
-    <value>Housing Review</value>
-  </data>
-  <data name="home_badge_readyProvision" xml:space="preserve">
-    <value>Ready to Create</value>
-  </data>
-  <data name="home_badge_statusLeft" xml:space="preserve">
-    <value>Left</value>
-  </data>
-  <data name="home_badge_today" xml:space="preserve">
-    <value>Today</value>
-  </data>
-  <data name="home_badge_total" xml:space="preserve">
-    <value>Total</value>
-  </data>
-  <data name="home_badge_transferred" xml:space="preserve">
-    <value>Transferred</value>
-  </data>
   <data name="home_chartLogins30Title" xml:space="preserve">
     <value>Login Activity Last 30 Days</value>
   </data>
@@ -1326,12 +1287,6 @@
   <data name="home_notifLoadFailed" xml:space="preserve">
     <value>Failed to load notifications</value>
   </data>
-  <data name="home_pendingCyberReview" xml:space="preserve">
-    <value>Awaiting Cyber Security Review</value>
-  </data>
-  <data name="home_pendingHousingReview" xml:space="preserve">
-    <value>Awaiting Housing Review</value>
-  </data>
   <data name="home_quickActions" xml:space="preserve">
     <value>Quick Actions</value>
   </data>
@@ -1340,30 +1295,6 @@
   </data>
   <data name="home_refresh" xml:space="preserve">
     <value>Refresh</value>
-  </data>
-  <data name="home_reqStatus_completed" xml:space="preserve">
-    <value>Completed</value>
-  </data>
-  <data name="home_reqStatus_cyber_approved" xml:space="preserve">
-    <value>Approved</value>
-  </data>
-  <data name="home_reqStatus_cyber_rejected" xml:space="preserve">
-    <value>Rejected by Cyber Security</value>
-  </data>
-  <data name="home_reqStatus_cyber_review" xml:space="preserve">
-    <value>Cyber Security Review</value>
-  </data>
-  <data name="home_reqStatus_housing_approved" xml:space="preserve">
-    <value>Housing Approved</value>
-  </data>
-  <data name="home_reqStatus_housing_rejected" xml:space="preserve">
-    <value>Rejected by Housing</value>
-  </data>
-  <data name="home_reqStatus_ready_for_provisioning" xml:space="preserve">
-    <value>Ready for Account Creation</value>
-  </data>
-  <data name="home_reqStatus_submitted" xml:space="preserve">
-    <value>Pending</value>
   </data>
   <data name="home_reqType_bulk_registration" xml:space="preserve">
     <value>Bulk Registration</value>
@@ -1689,18 +1620,6 @@
   <data name="passwordPlaceholder" xml:space="preserve">
     <value>••••••••</value>
   </data>
-  <data name="pendingAdmin" xml:space="preserve">
-    <value>Pending Admin</value>
-  </data>
-  <data name="pendingCyber" xml:space="preserve">
-    <value>Pending Cyber Security</value>
-  </data>
-  <data name="pendingRequests" xml:space="preserve">
-    <value>Pending Requests</value>
-  </data>
-  <data name="pendingSupervisor" xml:space="preserve">
-    <value>Pending Supervisor</value>
-  </data>
   <data name="personalInfo" xml:space="preserve">
     <value>Personal Information</value>
   </data>
@@ -1735,7 +1654,7 @@
     <value>Retry</value>
   </data>
   <data name="rep_chartsUnavailable" xml:space="preserve">
-    <value>The charting library could not be loaded, so this chart cannot be drawn. The figures and tables on this page are unaffected.</value>
+    <value>The charting library could not be loaded, so this chart cannot be drawn. The figures and tables on this page are unaffected. If this persists, check that /js/chart.umd.min.js exists on the server.</value>
   </data>
   <data name="rep_expBlocked" xml:space="preserve">
     <value>The browser blocked the report window. Allow pop-ups for this site and try again.</value>
@@ -2053,7 +1972,7 @@
     <value>Cyber Security Review</value>
   </data>
   <data name="req_lbl_housingApproved" xml:space="preserve">
-    <value>Housing Admin Approval</value>
+    <value>University Housing Approval</value>
   </data>
   <data name="req_lbl_readyForProvisioning" xml:space="preserve">
     <value>Ready for Account Creation</value>
@@ -2086,25 +2005,25 @@
     <value>Completed</value>
   </data>
   <data name="req_stage_cyber_approved" xml:space="preserve">
-    <value>Cyber Security Approval</value>
+    <value>Cybersecurity Administration Approval</value>
   </data>
   <data name="req_stage_cyber_rejected" xml:space="preserve">
-    <value>Cyber Security Rejected</value>
+    <value>Rejected by Cybersecurity Administration</value>
   </data>
   <data name="req_stage_cyber_review" xml:space="preserve">
     <value>Cyber Security Review</value>
   </data>
   <data name="req_stage_housing_approved" xml:space="preserve">
-    <value>Housing Admin Approval</value>
+    <value>University Housing Approval</value>
   </data>
   <data name="req_stage_housing_rejected" xml:space="preserve">
-    <value>Housing Rejected</value>
+    <value>Rejected by University Housing</value>
   </data>
   <data name="req_stage_ready_for_provisioning" xml:space="preserve">
     <value>Ready For Housing Network Account Creation</value>
   </data>
   <data name="req_stage_submitted" xml:space="preserve">
-    <value>Housing Review</value>
+    <value>University Housing Review</value>
   </data>
   <data name="req_type_bulk_registration" xml:space="preserve">
     <value>Bulk Registration</value>
@@ -2141,9 +2060,6 @@
   </data>
   <data name="requestRejected" xml:space="preserve">
     <value>Request rejected</value>
-  </data>
-  <data name="requestReview" xml:space="preserve">
-    <value>Request Review</value>
   </data>
   <data name="requestSent" xml:space="preserve">
     <value>Request sent</value>
@@ -2466,9 +2382,6 @@
   <data name="ss_studentNumberError" xml:space="preserve">
     <value>Please enter a valid student ID</value>
   </data>
-  <data name="ss_studentNumberPlaceholder" xml:space="preserve">
-    <value>e.g. 123456789</value>
-  </data>
   <data name="ss_totalLabel" xml:space="preserve">
     <value>Total Students</value>
   </data>
@@ -2534,9 +2447,6 @@
   </data>
   <data name="statusPending" xml:space="preserve">
     <value>Pending</value>
-  </data>
-  <data name="statusReadyForProvisioning" xml:space="preserve">
-    <value>Ready For Housing Network Account Creation</value>
   </data>
   <data name="statusRejected" xml:space="preserve">
     <value>Rejected</value>
@@ -3001,10 +2911,10 @@
     <value>Submitted</value>
   </data>
   <data name="rdp_stage_housingApproved" xml:space="preserve">
-    <value>Housing Approved</value>
+    <value>University Housing Approval</value>
   </data>
   <data name="rdp_stage_housingRejected" xml:space="preserve">
-    <value>Housing Rejected</value>
+    <value>Rejected by University Housing</value>
   </data>
   <data name="rdp_stage_cyberReview" xml:space="preserve">
     <value>Cyber Review</value>
@@ -3022,7 +2932,7 @@
     <value>Completed</value>
   </data>
   <data name="rdp_stage_pendingSupervisor" xml:space="preserve">
-    <value>Housing Approval</value>
+    <value>University Housing Approval</value>
   </data>
   <data name="rdp_stage_needMoreInfo" xml:space="preserve">
     <value>Need More Info</value>
@@ -3073,13 +2983,13 @@
     <value>Submitted</value>
   </data>
   <data name="rdp_wf_housingApp" xml:space="preserve">
-    <value>Housing App.</value>
+    <value>University Housing Approval</value>
   </data>
   <data name="rdp_wf_housingPending" xml:space="preserve">
-    <value>Housing Review</value>
+    <value>University Housing Review</value>
   </data>
   <data name="rdp_wf_cyberApprovedReady" xml:space="preserve">
-    <value>Cyber App. - Ready Housing</value>
+    <value>Cybersecurity Approval - Ready for Housing Account</value>
   </data>
   <data name="rdp_wf_readyHousing" xml:space="preserve">
     <value>Ready Housing</value>
@@ -3265,7 +3175,7 @@
     <value>Student Information</value>
   </data>
   <data name="rdp_field_nationalId" xml:space="preserve">
-    <value>National ID</value>
+    <value>National ID / Iqama</value>
   </data>
   <data name="rdp_field_mobile" xml:space="preserve">
     <value>Mobile</value>
@@ -3280,7 +3190,7 @@
     <value>Gender</value>
   </data>
   <data name="rdp_housingAccounts" xml:space="preserve">
-    <value>Housing Account</value>
+    <value>University Housing Account</value>
   </data>
   <data name="rdp_loading" xml:space="preserve">
     <value>Loading...</value>
@@ -3446,21 +3356,6 @@
   </data>
   <data name="req_type_housing" xml:space="preserve">
     <value>Housing Request</value>
-  </data>
-  <data name="home_reqStatus_pending_supervisor" xml:space="preserve">
-    <value>Pending Housing</value>
-  </data>
-  <data name="home_reqStatus_pending_cyber" xml:space="preserve">
-    <value>Pending Cyber</value>
-  </data>
-  <data name="home_reqStatus_need_more_info" xml:space="preserve">
-    <value>More Info</value>
-  </data>
-  <data name="home_reqStatus_approved" xml:space="preserve">
-    <value>Approved</value>
-  </data>
-  <data name="home_reqStatus_rejected" xml:space="preserve">
-    <value>Rejected</value>
   </data>
   <data name="home_reqType_housing" xml:space="preserve">
     <value>Housing Request</value>
@@ -4228,25 +4123,19 @@
     <value>Needs your action</value>
   </data>
   <data name="dash_waitHousing" xml:space="preserve">
-    <value>Awaiting review by the Housing Department</value>
+    <value>Awaiting University Housing Administration review</value>
   </data>
   <data name="dash_waitHousingDesc" xml:space="preserve">
-    <value>Requests not yet reviewed by Housing</value>
+    <value>Requests not yet reviewed by University Housing Administration</value>
   </data>
   <data name="dash_waitCyber" xml:space="preserve">
-    <value>Awaiting cybersecurity review</value>
+    <value>Awaiting Cybersecurity Administration review</value>
   </data>
   <data name="dash_waitCyberDesc" xml:space="preserve">
-    <value>Approved by Housing and referred to you</value>
-  </data>
-  <data name="dash_waitHandover" xml:space="preserve">
-    <value>Awaiting referral to electronic review</value>
-  </data>
-  <data name="dash_waitHandoverDesc" xml:space="preserve">
-    <value>Approved by Housing, awaiting referral</value>
+    <value>Approved by University Housing Administration and referred to you</value>
   </data>
   <data name="dash_waitProvision" xml:space="preserve">
-    <value>Ready for network account creation</value>
+    <value>Ready for housing network account creation</value>
   </data>
   <data name="dash_waitProvisionDesc" xml:space="preserve">
     <value>Final step before closing the request</value>
@@ -4555,7 +4444,7 @@
     <value>Fill in your personal and academic details</value>
   </data>
   <data name="pt_stp4" xml:space="preserve">
-    <value>Housing administration review</value>
+    <value>University Housing Review</value>
   </data>
   <data name="pt_stp4s" xml:space="preserve">
     <value>Your request is reviewed by the housing supervisor</value>
@@ -4731,30 +4620,6 @@
   <data name="pt_mrView" xml:space="preserve">
     <value>View</value>
   </data>
-  <data name="pt_stSubmitted" xml:space="preserve">
-    <value>Request submitted</value>
-  </data>
-  <data name="pt_stHousingApproved" xml:space="preserve">
-    <value>Approved by the Housing Administration</value>
-  </data>
-  <data name="pt_stCyberReviewed" xml:space="preserve">
-    <value>Reviewed by Cybersecurity</value>
-  </data>
-  <data name="pt_stProvisioning" xml:space="preserve">
-    <value>Creating the housing network account</value>
-  </data>
-  <data name="pt_stCompleted" xml:space="preserve">
-    <value>Completed</value>
-  </data>
-  <data name="pt_stPendingHousing" xml:space="preserve">
-    <value>Awaiting Housing Administration approval</value>
-  </data>
-  <data name="pt_stPendingCyber" xml:space="preserve">
-    <value>Awaiting Cybersecurity review</value>
-  </data>
-  <data name="pt_stRejected" xml:space="preserve">
-    <value>Rejected</value>
-  </data>
   <data name="pt_trkTitle" xml:space="preserve">
     <value>Track request</value>
   </data>
@@ -4847,18 +4712,6 @@
   </data>
   <data name="pt_serverError" xml:space="preserve">
     <value>Server error, please try again shortly</value>
-  </data>
-  <data name="pt_stNeedInfo" xml:space="preserve">
-    <value>Awaiting additional information</value>
-  </data>
-  <data name="pt_stNeedInfo2" xml:space="preserve">
-    <value>Additional information required</value>
-  </data>
-  <data name="pt_stAcctCreated" xml:space="preserve">
-    <value>Housing network account created</value>
-  </data>
-  <data name="pt_stCyberApproved" xml:space="preserve">
-    <value>Approved by Cybersecurity</value>
   </data>
   <data name="pt_trkEnterNumber" xml:space="preserve">
     <value>Please enter the request number</value>
@@ -5947,28 +5800,28 @@
     <value>Document extracted from the University Housing Portal at Najran University. To verify, match the fingerprint above against the request record in the system.</value>
   </data>
   <data name="Nav_StudentFile" xml:space="preserve">
-    <value>Student file</value>
+    <value>Student file &amp; verification</value>
   </data>
   <data name="sf_pageTitle" xml:space="preserve">
-    <value>Student file</value>
+    <value>Student file &amp; verification</value>
   </data>
   <data name="sf_pageSubtitle" xml:space="preserve">
-    <value>View a student's data, request and signed pledge on one printable page</value>
+    <value>View a student's data, request and signed pledge on one printable page, or verify a printed document by its code</value>
   </data>
   <data name="sf_searchCard" xml:space="preserve">
     <value>Search</value>
   </data>
   <data name="sf_queryLabel" xml:space="preserve">
-    <value>Student ID or national ID</value>
+    <value>Student ID, national ID, or verification code</value>
   </data>
   <data name="sf_queryPlaceholder" xml:space="preserve">
-    <value>Enter the student ID or national ID</value>
+    <value>Enter the number, or the code printed on the document</value>
   </data>
   <data name="sf_search" xml:space="preserve">
     <value>Search</value>
   </data>
   <data name="sf_hint" xml:space="preserve">
-    <value>Accepts a student ID (9 digits starting with 4) or a national ID (10 digits). Every search is recorded in the audit log with the user's name and time.</value>
+    <value>The field accepts either the university ID number (9 digits starting with 4), the national ID/residence permit number (10 digits), or the verification code printed in the document footer. Each search is recorded in the transaction log with the username and time.</value>
   </data>
   <data name="sf_auditNote" xml:space="preserve">
     <value>Opening this file has been recorded in the audit log. Viewing student files is a logged action.</value>
@@ -5977,7 +5830,7 @@
     <value>Deleted record</value>
   </data>
   <data name="sf_printPledge" xml:space="preserve">
-    <value>Print pledge document</value>
+    <value>Print the undertaking document</value>
   </data>
   <data name="sf_openRequest" xml:space="preserve">
     <value>Open request</value>
@@ -5995,7 +5848,7 @@
     <value>Academic and housing</value>
   </data>
   <data name="sf_cardAd" xml:space="preserve">
-    <value>Network account</value>
+    <value>University Housing Network Account</value>
   </data>
   <data name="sf_adUser" xml:space="preserve">
     <value>Username</value>
@@ -6025,7 +5878,7 @@
     <value>Not registered in university housing.</value>
   </data>
   <data name="sf_badQuery" xml:space="preserve">
-    <value>Enter a student ID (9 digits starting with 4) or a national ID (10 digits).</value>
+    <value>Enter a student ID (9 digits starting with 4), a national ID (10 digits), or the verification code printed on the document.</value>
   </data>
   <data name="sf_forbidden" xml:space="preserve">
     <value>You do not have permission to open student files.</value>
@@ -6109,7 +5962,7 @@
     <value>Search...</value>
   </data>
   <data name="pt_status_submitted" xml:space="preserve">
-    <value>Awaiting Housing Administration approval</value>
+    <value>Awaiting University Housing Administration approval</value>
   </data>
   <data name="pt_status_cyber_review" xml:space="preserve">
     <value>Awaiting Cyber Security Administration review</value>
@@ -6639,5 +6492,287 @@ Developed by the Deanship of Digital Transformation and Knowledge Resources</val
   </data>
   <data name="col_seq" xml:space="preserve">
     <value>No.</value>
+  </data>
+  <data name="vfy_pageSubtitle" xml:space="preserve">
+    <value>Match a printed pledge document against its record in the system, using the verification code printed in its footer.</value>
+  </data>
+  <data name="vfy_brandTitle" xml:space="preserve">
+    <value>Pledge document verification</value>
+  </data>
+  <data name="vfy_brandSub" xml:space="preserve">
+    <value>University Housing Portal - Najran University</value>
+  </data>
+  <data name="vfy_codeLabel" xml:space="preserve">
+    <value>Verification code printed on the document</value>
+  </data>
+  <data name="vfy_codeAria" xml:space="preserve">
+    <value>Verification code after the {0} prefix</value>
+  </data>
+  <data name="vfy_submit" xml:space="preserve">
+    <value>Verify</value>
+  </data>
+  <data name="vfy_hint" xml:space="preserve">
+    <value>The code is printed in the document footer, under the QR code. Type only what comes after {0} - letters are capitalised and dashes are added for you.</value>
+  </data>
+  <data name="vfy_ok" xml:space="preserve">
+    <value>Document issued by the system</value>
+  </data>
+  <data name="vfy_none" xml:space="preserve">
+    <value>No document matches this code</value>
+  </data>
+  <data name="vfy_rowRequest" xml:space="preserve">
+    <value>Request number</value>
+  </data>
+  <data name="vfy_rowName" xml:space="preserve">
+    <value>Student name</value>
+  </data>
+  <data name="vfy_rowStudentId" xml:space="preserve">
+    <value>Student ID</value>
+  </data>
+  <data name="vfy_rowSignedAt" xml:space="preserve">
+    <value>Signed on</value>
+  </data>
+  <data name="vfy_rowVersion" xml:space="preserve">
+    <value>Terms version</value>
+  </data>
+  <data name="vfy_rowTermsCount" xml:space="preserve">
+    <value>Terms count</value>
+  </data>
+  <data name="vfy_matchNote" xml:space="preserve">
+    <value>Compare the values above with the paper in your hand. Any difference means the paper was altered after it was issued. The binding terms text for this request is stored in its record and is the reference in case of dispute.</value>
+  </data>
+  <data name="vfy_noneNote" xml:space="preserve">
+    <value>Check the code exactly as printed on the document. If it matches, this paper was not issued by the University Housing Portal; you may contact the housing administration to confirm.</value>
+  </data>
+  <data name="vfy_foot" xml:space="preserve">
+    <value>Pledge documents are issued by the University Housing Portal at Najran University. The verification code is generated inside the system and cannot be produced outside it.</value>
+  </data>
+  <data name="aud_action_pledge_printed" xml:space="preserve">
+    <value>Pledge document printed</value>
+  </data>
+  <data name="sf_kindStudentId" xml:space="preserve">
+    <value>Student ID</value>
+  </data>
+  <data name="sf_kindNationalId" xml:space="preserve">
+    <value>National ID</value>
+  </data>
+  <data name="sf_kindDocCode" xml:space="preserve">
+    <value>Verification code</value>
+  </data>
+  <data name="sf_kindOpensFile" xml:space="preserve">
+    <value>Opens the student file</value>
+  </data>
+  <data name="sf_kindVerifies" xml:space="preserve">
+    <value>Verifies the document, then opens its file</value>
+  </data>
+  <data name="sf_kindIncomplete" xml:space="preserve">
+    <value>(incomplete)</value>
+  </data>
+  <data name="sf_verifiedTitle" xml:space="preserve">
+    <value>Document issued by the system</value>
+  </data>
+  <data name="sf_verifiedCode" xml:space="preserve">
+    <value>Code</value>
+  </data>
+  <data name="sf_verifiedReq" xml:space="preserve">
+    <value>Request</value>
+  </data>
+  <data name="sf_verifiedSigned" xml:space="preserve">
+    <value>Signed</value>
+  </data>
+  <data name="sf_verifiedVersion" xml:space="preserve">
+    <value>Terms version</value>
+  </data>
+  <data name="dash_yourAction" xml:space="preserve">
+    <value>Awaiting your action</value>
+  </data>
+  <data name="dash_awaitingOne" xml:space="preserve">
+    <value>1 request awaiting your action</value>
+  </data>
+  <data name="dash_awaitingTwo" xml:space="preserve">
+    <value>2 requests awaiting your action</value>
+  </data>
+  <data name="dash_awaitingFmt" xml:space="preserve">
+    <value>{0} requests awaiting your action</value>
+  </data>
+  <data name="dash_inStageFmt" xml:space="preserve">
+    <value>In this stage for {0}</value>
+  </data>
+  <data name="dash_submittedFmt" xml:space="preserve">
+    <value>Submitted on {0}</value>
+  </data>
+  <data name="req_owner_housing" xml:space="preserve">
+    <value>University Housing Administration</value>
+  </data>
+  <data name="req_owner_cyber" xml:space="preserve">
+    <value>Cybersecurity Administration</value>
+  </data>
+  <data name="req_owner_provisioning" xml:space="preserve">
+    <value>Network account provisioning</value>
+  </data>
+  <data name="req_owner_student" xml:space="preserve">
+    <value>Awaiting the student</value>
+  </data>
+  <data name="ss_previewFailed" xml:space="preserve">
+    <value>Could not display the image - download the file to open it</value>
+  </data>
+  <data name="dash_accMalesFmt" xml:space="preserve">
+    <value>{0} students</value>
+  </data>
+  <data name="dash_accFemalesFmt" xml:space="preserve">
+    <value>{0} students</value>
+  </data>
+  <data name="dash_accPlainFmt" xml:space="preserve">
+    <value>{0}</value>
+  </data>
+  <data name="dash_chartDistTitle" xml:space="preserve">
+    <value>Student distributions</value>
+  </data>
+  <data name="Page_Students_f" xml:space="preserve">
+    <value>Female Students List</value>
+  </data>
+  <data name="Page_Students_all" xml:space="preserve">
+    <value>Students List</value>
+  </data>
+  <data name="Nav_StudentsList_f" xml:space="preserve">
+    <value>Female Students List</value>
+  </data>
+  <data name="Nav_StudentsList_all" xml:space="preserve">
+    <value>Students List</value>
+  </data>
+  <data name="stu_registered_f" xml:space="preserve">
+    <value>Registered Female Students</value>
+  </data>
+  <data name="stu_registered_all" xml:space="preserve">
+    <value>Registered Students</value>
+  </data>
+  <data name="stu_total_f" xml:space="preserve">
+    <value>Total Female Students</value>
+  </data>
+  <data name="stu_total_all" xml:space="preserve">
+    <value>Total Students</value>
+  </data>
+  <data name="Nav_Section_Students_f" xml:space="preserve">
+    <value>Female Students</value>
+  </data>
+  <data name="Nav_Section_Students_all" xml:space="preserve">
+    <value>Students</value>
+  </data>
+  <data name="stu_pageSubtitle_f" xml:space="preserve">
+    <value>View and edit the records of female students registered in housing</value>
+  </data>
+  <data name="stu_pageSubtitle_all" xml:space="preserve">
+    <value>View and edit the records of students registered in housing</value>
+  </data>
+  <data name="home_totalStudents_f" xml:space="preserve">
+    <value>Total Female Students</value>
+  </data>
+  <data name="home_totalStudents_all" xml:space="preserve">
+    <value>Total Students</value>
+  </data>
+  <data name="dash_chartBuildingsTitle_f" xml:space="preserve">
+    <value>Female students by building</value>
+  </data>
+  <data name="dash_chartBuildingsTitle_all" xml:space="preserve">
+    <value>Students by building</value>
+  </data>
+  <data name="dash_chartDistTitle_f" xml:space="preserve">
+    <value>Female student distributions</value>
+  </data>
+  <data name="dash_chartDistTitle_all" xml:space="preserve">
+    <value>Student distributions</value>
+  </data>
+  <data name="dash_accTotalFmt_f" xml:space="preserve">
+    <value>{0} students</value>
+  </data>
+  <data name="dash_accTotalFmt_all" xml:space="preserve">
+    <value>{0} students</value>
+  </data>
+  <data name="hs_footerAudited" xml:space="preserve">
+    <value>Every action is recorded in the account activity log with your name and time.</value>
+  </data>
+  <data name="hs_footerLog" xml:space="preserve">
+    <value>Newest first. The log cannot be edited or deleted.</value>
+  </data>
+  <data name="hs_copy" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="sf_housingType" xml:space="preserve">
+    <value>Housing type</value>
+  </data>
+  <data name="sf_housingMale" xml:space="preserve">
+    <value>Men's housing</value>
+  </data>
+  <data name="sf_housingFemale" xml:space="preserve">
+    <value>Women's housing</value>
+  </data>
+  <data name="doc_title_pledge" xml:space="preserve">
+    <value>تعهّد وإقرار</value>
+  </data>
+  <data name="doc_title_studentFile" xml:space="preserve">
+    <value>ملف الطالب</value>
+  </data>
+  <data name="doc_secPersonal" xml:space="preserve">
+    <value>البيانات الشخصية</value>
+  </data>
+  <data name="doc_secAcademic" xml:space="preserve">
+    <value>البيانات الأكاديمية</value>
+  </data>
+  <data name="doc_secHousing" xml:space="preserve">
+    <value>الإسكان الجامعي</value>
+  </data>
+  <data name="doc_secAd" xml:space="preserve">
+    <value>University Housing Network Account</value>
+  </data>
+  <data name="doc_secPledge" xml:space="preserve">
+    <value>التعهّد والإقرار</value>
+  </data>
+  <data name="doc_sigTitle" xml:space="preserve">
+    <value>الإقرار الإلكتروني للطالب</value>
+  </data>
+  <data name="doc_fNameAr" xml:space="preserve">
+    <value>الاسم بالعربية</value>
+  </data>
+  <data name="doc_fNameEn" xml:space="preserve">
+    <value>الاسم بالإنجليزية</value>
+  </data>
+  <data name="doc_fNationalId" xml:space="preserve">
+    <value>الهوية الوطنية / الإقامة</value>
+  </data>
+  <data name="doc_fMobile" xml:space="preserve">
+    <value>الجوال</value>
+  </data>
+  <data name="doc_fStudentId" xml:space="preserve">
+    <value>الرقم الجامعي</value>
+  </data>
+  <data name="doc_fCollege" xml:space="preserve">
+    <value>الكلية</value>
+  </data>
+  <data name="doc_fDept" xml:space="preserve">
+    <value>القسم</value>
+  </data>
+  <data name="doc_fLevel" xml:space="preserve">
+    <value>المستوى</value>
+  </data>
+  <data name="doc_fHousingType" xml:space="preserve">
+    <value>نوع السكن</value>
+  </data>
+  <data name="doc_fHousing" xml:space="preserve">
+    <value>السكن</value>
+  </data>
+  <data name="doc_fAdUser" xml:space="preserve">
+    <value>اسم المستخدم</value>
+  </data>
+  <data name="doc_fAdState" xml:space="preserve">
+    <value>حالة الحساب</value>
+  </data>
+  <data name="doc_fAdLast" xml:space="preserve">
+    <value>آخر دخول للشبكة</value>
+  </data>
+  <data name="doc_noAd" xml:space="preserve">
+    <value>لا يوجد حساب شبكة مرتبط بهذا الطالب</value>
+  </data>
+  <data name="ui_trialMode" xml:space="preserve">
+    <value>Trial run</value>
   </data>
 </root>

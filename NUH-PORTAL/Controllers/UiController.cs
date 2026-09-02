@@ -25,8 +25,18 @@ namespace NUH_PORTAL.Controllers
     public class UiController : ControllerBase
     {
         private readonly IUiBootstrapService _boot;
+        private readonly IConfiguration _config;
+        private readonly Microsoft.Extensions.Localization.IStringLocalizer<SharedResource> _t;
 
-        public UiController(IUiBootstrapService boot) => _boot = boot;
+        public UiController(
+            IUiBootstrapService boot,
+            IConfiguration config,
+            Microsoft.Extensions.Localization.IStringLocalizer<SharedResource> t)
+        {
+            _boot = boot;
+            _config = config;
+            _t = t;
+        }
 
         // GET /api/ui/i18n?lang=ar|en
         // متاحة بلا مصادقة عن قصد: صفحة تسجيل الطالب نفسها متاحة قبل الدخول،
@@ -84,6 +94,71 @@ namespace NUH_PORTAL.Controllers
         [HttpGet("/js/nuh-pledge.js")]
         [Produces("application/javascript")]
         public IActionResult PledgeRulesScript() => GeneratedScript(Core.PledgeRules.ToJavaScript());
+
+        // ====================================================================
+        //  GET /js/nuh-trial.js — شارة «تشغيل تجريبي» لصفحات البوابة العامة.
+        //
+        //  ⚠️ ليه ملف متولّد لا سطر HTML في كل صفحة:
+        //     شاشات الموظفين بتترندر من السيرفر فـ _Layout بيقرا الإعداد
+        //     بنفسه. لكن الصفحة الرئيسية وبوابة الطالب صفحات HTML **ثابتة** -
+        //     مابتعرفش تقرا appsettings. لو كتبنا الشارة فيها بالإيد، كان يوم
+        //     الإطلاق لازم نفتكر نشيلها من تسع صفحات، والصفحة اللي تتنسي
+        //     هتفضل مكتوب عليها «تشغيل تجريبي» بعد الإطلاق بشهور.
+        //
+        //     كده الظهور من إعداد واحد (Trial:Enabled) والنصّ من ملف الترجمة
+        //     الواحد (ui_trialMode) - نفس منطق nuh-id.js و nuh-pledge.js.
+        //
+        //  ⚠️ لو الوضع مقفول بيرجّع سكربت فاضي لا 404: الصفحة مالهاش دخل،
+        //     وطلب بيرجع 404 في كونسول كل زائر بيبان كأنه عطل.
+        //
+        //  ⚠️ position:fixed لا في ترويسة الصفحة: الصفحات العامة ترويساتها
+        //     مختلفة (الرئيسية فيها شريط، صفحة الدخول مفيهاش)، والمطلوب إن
+        //     الشارة تبقى في **نفس المكان** في كل شاشة.
+        //
+        //  ⚠️ والطباعة بتخفيها: الوثائق الرسمية بتخرج نضيفة منها.
+        // ====================================================================
+        [AllowAnonymous]
+        [HttpGet("/js/nuh-trial.js")]
+        [Produces("application/javascript")]
+        public IActionResult TrialBadgeScript([FromQuery] string? lang = null)
+        {
+            // ⚠️ اللغة من الاستعلام زي /api/ui/i18n: صفحات البوابة العامة
+            //    مابتعدّيش على كوكي الثقافة، ولغتها محفوظة في المتصفح عندها.
+            if (lang != null)
+            {
+                var ci = new CultureInfo(lang == "en" ? "en" : "ar");
+                CultureInfo.CurrentCulture = ci;
+                CultureInfo.CurrentUICulture = ci;
+            }
+
+            if (!_config.GetValue<bool>("Trial:Enabled"))
+                return GeneratedScript("/* Trial:Enabled = false */\n");
+
+            var ar = System.Text.Json.JsonSerializer.Serialize(_t["ui_trialMode"].Value);
+
+            var js =
+                "(function(){'use strict';\n" +
+                "  if (document.getElementById('nuh-trial')) return;\n" +
+                "  var css = '#nuh-trial{position:fixed;top:12px;inset-inline-end:16px;z-index:9000;'\n" +
+                "    + 'font-family:inherit;font-size:11.5px;font-weight:800;line-height:1.6;'\n" +
+                "    + 'padding:4px 12px;border-radius:99px;white-space:nowrap;pointer-events:none;'\n" +
+                "    + 'background:#fffaeb;color:#93370d;border:1px solid #f0dfa4;'\n" +
+                "    + 'box-shadow:0 1px 3px rgba(16,24,40,.08)}'\n" +
+                "    + '@media print{#nuh-trial{display:none !important}}';\n" +
+                "  var s = document.createElement('style'); s.textContent = css;\n" +
+                "  document.head.appendChild(s);\n" +
+                "  function add(){\n" +
+                "    if (document.getElementById('nuh-trial')) return;\n" +
+                "    var b = document.createElement('div');\n" +
+                "    b.id = 'nuh-trial'; b.textContent = " + ar + ";\n" +
+                "    document.body.appendChild(b);\n" +
+                "  }\n" +
+                "  if (document.body) add();\n" +
+                "  else document.addEventListener('DOMContentLoaded', add);\n" +
+                "})();\n";
+
+            return GeneratedScript(js);
+        }
 
         // ⚠️ الترويسات مكتوبة مرة واحدة للاتنين: النصّ مابيتغيّرش إلا مع نشر
         //    جديد، والـ ETag بيخلّي المتصفح يتأكد بطلب فاضي بدل ما يستنّى

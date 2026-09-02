@@ -46,33 +46,23 @@
   .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}
 
   /* بطاقات «يحتاج إجراءك» — أكبر وقابلة للضغط، ودي أهم حاجة في الشاشة */
-  .todo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin-bottom:8px}
-  .todo-card{display:flex;align-items:center;gap:16px;background:var(--white);border:1px solid var(--gray-200);
-             border-inline-start:4px solid var(--navy);border-radius:14px;padding:18px 20px;
-             text-decoration:none;color:inherit;transition:box-shadow .18s,transform .18s,border-color .18s}
-  .todo-card:hover{box-shadow:0 8px 24px rgba(16,70,49,.11);transform:translateY(-2px);border-color:var(--navy)}
-  .todo-card .n{font-size:34px;font-weight:800;color:var(--navy-dark);line-height:1;min-width:52px}
-  .todo-card .t{flex:1;min-width:0}
-  .todo-card .t b{display:block;font-size:13.5px;font-weight:700;color:var(--navy-dark);line-height:1.5}
-  .todo-card .t span{display:block;font-size:11.5px;color:var(--gray-500);margin-top:2px;line-height:1.6}
-  .todo-card .go{color:var(--gray-300);flex-shrink:0}
-  .todo-card:hover .go{color:var(--navy)}
-  .todo-card.zero{border-inline-start-color:var(--gray-200);opacity:.72}
-  .todo-card.zero .n{color:var(--gray-300)}
-  .stat-card{background:var(--white);border-radius:16px;padding:20px;border:1px solid var(--gray-100);box-shadow:0 2px 8px rgba(16,70,49,.05);display:flex;flex-direction:column;gap:12px;transition:transform .2s,box-shadow .2s}
-  .stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(16,70,49,.1)}
-  .stat-top{display:flex;align-items:center;justify-content:space-between}
-  .stat-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center}
-  .stat-badge{font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px}
-  .stat-num{font-size:32px;font-weight:900;color:var(--navy-dark);line-height:1}
-  .stat-label{font-size:13px;color:var(--gray-500);font-weight:500}
-  /* ⚠️ الكارت المنبّه: عدّاد استثناء المفروض يبقى صفر، فلمّا يبقى مش صفر
-     لازم يبان من غير قراءة. والحدّ الكهرماني مع الخلفية الفاتحة - مش أحمر:
-     ده مش عطل، ده شغل مستنّي. */
-  .stat-card.alert{border-color:#fbbf24;background:#fffbeb}
-  .stat-card.alert .stat-num{color:#92400e}
-  /* سطر تحت الرقم لتفصيلة مش داخلة فيه (زي الوحدات خارج الخدمة) */
-  .stat-sub{font-size:11.5px;color:var(--gray-500);font-weight:500;margin-top:-6px}
+  .todo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:8px}
+  /* ⚠️ ‏.todo-card اتشالت هي كمان: كانت مكوّنًا سادسًا لنفس البطاقة (رقم ٣٤
+     ووزن ٨٠٠، وحدّ ٤ بكسل على الحافة، وسطر شرح تحت العنوان) - فصفّ «يحتاج
+     إجراءك» وصفّ «نظرة عامة» فوق بعض في نفس الشاشة كانوا بيبانوا من عيلتين.
+     البطاقة دلوقتي .stat-card من components.css، وحالة الصفر .is-idle،
+     والسهم .is-link - كلهم معرّفين هناك. وسطر الشرح نزل في title زي ما
+     المكوّن بيقول: هو اللي كان بيزوّد ارتفاع الصفّ سطرًا كاملًا فوق الصفّ
+     اللي تحته. */
+  /* ⚠️ ‏.stat-card ومشتقّاتها (‏.stat-top و.stat-icon و.stat-num و.stat-label
+     و.stat-sub و.stat-badge و.stat-card.alert) اتشالوا من هنا: كانوا **نسخة
+     كاملة** من بطاقة المؤشّر مكتوبة جوّه <style> الشاشة - رقم ٣٢ ووزن ٩٠٠
+     مقابل ٢٧ و٧٠٠ في المكوّن، وأيقونة في صندوق ٤٤ فوق الرقم مقابل أيقونة
+     باهتة في خلفية البطاقة.
+     ⚠️ والستايل الداخلي بيغلب الملف الخارجي (بيجي بعده في الصفحة)، فالشاشة
+     دي كانت بتتجاهل components.css تمامًا وهي شكلها ماشي مع الباقي - لحد ما
+     الأيقونة الباهتة اختفت وبانت.
+     التعريف الوحيد دلوقتي في css/components.css زي كل الشاشات. */
   .section-heading{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;color:var(--navy-dark);margin-bottom:12px}
   .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
   #chartsRow{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
@@ -92,6 +82,13 @@
   .rq-num{font-family:Consolas,monospace;font-size:12px;color:var(--gray-500);direction:ltr;flex-shrink:0;width:98px}
   .rq-main{flex:1;min-width:0}
   .rq-name{display:block;font-size:13.5px;font-weight:600;color:var(--navy-dark);line-height:1.5;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* ⚠️ الاسم الإنجليزي تحت العربي: نفس قاعدة الجداول - اسم الشخص بيانات لا
+     ترجمة، فالشاشة الإنجليزية ماتخفيهوش. و unicode-bidi:isolate يعزل ترتيب
+     حروفه بلا ما يزيح السطر للطرف التاني (لو اتكتب direction:ltr كان هيبعد
+     عن الاسم اللي بيوصفه). */
+  .rq-name-en{display:block;font-size:11.5px;font-weight:500;color:var(--gray-600);
+    line-height:1.5;margin-top:1px;unicode-bidi:isolate;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .rq-stage{display:block;font-size:11.5px;color:var(--gray-500);margin-top:3px}
   /* شارة العمر تتلوّن بعتبة لا بالحالة: أخضر أقل من يومين، وكهرماني حتى خمسة،
@@ -166,18 +163,20 @@
   <div class="todo-grid">
       @if (canReviewHousing)
       {
-        <a class="todo-card @(waitHousing == 0 ? "zero" : "")" href="/Requests">
-          <span class="n">@waitHousing</span>
-          <span class="t"><b>@SharedLocalizer["dash_waitHousing"]</b><span>@SharedLocalizer["dash_waitHousingDesc"]</span></span>
-          <span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
+        <a class="stat-card is-link @(waitHousing == 0 ? "is-idle" : "")" href="/Requests"
+           title="@SharedLocalizer["dash_waitHousingDesc"]">
+          <span class="stat-ghost" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg></span>
+          <span class="stat-num">@waitHousing</span>
+          <span class="stat-label">@SharedLocalizer["dash_waitHousing"]</span>
         </a>
       }
       @if (canReviewCyber)
       {
-        <a class="todo-card @(waitCyber == 0 ? "zero" : "")" href="/Requests">
-          <span class="n">@waitCyber</span>
-          <span class="t"><b>@SharedLocalizer["dash_waitCyber"]</b><span>@SharedLocalizer["dash_waitCyberDesc"]</span></span>
-          <span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
+        <a class="stat-card is-link @(waitCyber == 0 ? "is-idle" : "")" href="/Requests"
+           title="@SharedLocalizer["dash_waitCyberDesc"]">
+          <span class="stat-ghost" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.4 8.7 8 10 4.6-1.3 8-5 8-10V6z"/><path d="M9 12.2 11 14l4-4.2"/></svg></span>
+          <span class="stat-num">@waitCyber</span>
+          <span class="stat-label">@SharedLocalizer["dash_waitCyber"]</span>
         </a>
       }
       @if (canComplete)
@@ -189,10 +188,11 @@
            فالبطاقة كانت صفر دايمًا وبتاخد ربع صف «يحتاج إجراءك» من غير فايدة.
            معالجة الحالة نفسها اتسابت في شاشة الطلبات كشبكة أمان لأي صف قديم
            اتخزّن قبل التحويل ده — فمفيش طلب هيضيع. *@
-        <a class="todo-card @(waitProvision == 0 ? "zero" : "")" href="/Requests">
-          <span class="n">@waitProvision</span>
-          <span class="t"><b>@SharedLocalizer["dash_waitProvision"]</b><span>@SharedLocalizer["dash_waitProvisionDesc"]</span></span>
-          <span class="go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg></span>
+        <a class="stat-card is-link @(waitProvision == 0 ? "is-idle" : "")" href="/Requests"
+           title="@SharedLocalizer["dash_waitProvisionDesc"]">
+          <span class="stat-ghost" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg></span>
+          <span class="stat-num">@waitProvision</span>
+          <span class="stat-label">@SharedLocalizer["dash_waitProvision"]</span>
         </a>
       }
   </div>
@@ -205,14 +205,10 @@
 </div>
 
 <div class="stats-grid">
-  <div class="stat-card" style="cursor:pointer" onclick="location.href='/Students'">
-    <div class="stat-top">
-      <div class="stat-icon" style="background:#eff4ff">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#166a45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      </div>
-    </div>
-    <div class="stat-num">@Model.Stats.total</div>
-    <div class="stat-label">@SharedLocalizer["home_totalStudents"]</div>
+  <div class="stat-card is-link" onclick="location.href='/Students'">
+    <span class="stat-ghost" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+    <span class="stat-num">@Model.Stats.total</span>
+    <span class="stat-label">@SharedLocalizer["home_totalStudents"]</span>
   </div>
 
   @* ⚠️ اتشال من هنا كارتا «طلاب» و«طالبات».
@@ -221,14 +217,10 @@
      مابتقولش إنهم ١١ من ٢٥ ولا من ٥٠٠، والدونات بتقولها بالشكل من غير قراءة.
      وإجمالي الطلاب فوق باقي لأنه الرقم الأساسي اللي الباقي بيتقاس عليه. *@
 
-  <div class="stat-card" style="cursor:pointer" onclick="location.href='/Requests'">
-    <div class="stat-top">
-      <div class="stat-icon" style="background:#fffaeb">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#93370d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-      </div>
-    </div>
-    <div class="stat-num">@openRequests</div>
-    <div class="stat-label">@SharedLocalizer["dash_openRequests"]</div>
+  <div class="stat-card is-link" onclick="location.href='/Requests'">
+    <span class="stat-ghost" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+    <span class="stat-num">@openRequests</span>
+    <span class="stat-label">@SharedLocalizer["dash_openRequests"]</span>
   </div>
 
   @* ⚠️ اتشال من هنا كارتا «حسابات شبكة مفعّلة» و«معطّلة» — نفس سبب كارتي
@@ -238,14 +230,10 @@
         رقم مالوش دونات، فمكانش مكرّرًا أصلًا. *@
   @if (!canHousingView)
   {
-    <div class="stat-card" style="cursor:pointer" onclick="location.href='/Requests'">
-      <div class="stat-top">
-        <div class="stat-icon" style="background:#dff6e7">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#067647" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
-        </div>
-      </div>
-      <div class="stat-num">@Model.Stats.completed</div>
-      <div class="stat-label">@SharedLocalizer["home_completedRequests"]</div>
+    <div class="stat-card is-link" onclick="location.href='/Requests'">
+      <span class="stat-ghost" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+      <span class="stat-num">@Model.Stats.completed</span>
+      <span class="stat-label">@SharedLocalizer["home_completedRequests"]</span>
     </div>
   }
 
@@ -255,43 +243,34 @@
         وحدات. الفرق مهم - عرض «٠ وحدات» على حد مالوش صلاحية كذب مش إخفاء. *@
   @if (Model.FacultyStats is not null)
   {
-    <div class="stat-card" style="cursor:pointer" onclick="location.href='/FacultyHousing'">
-      <div class="stat-top">
-        <div class="stat-icon" style="background:#eff4ff">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#166a45" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg>
-        </div>
-      </div>
-      <div class="stat-num">@Model.FacultyStats.ActiveUnits</div>
-      <div class="stat-label">@SharedLocalizer["dash_facultyUnits"]</div>
+    <div class="stat-card is-link" onclick="location.href='/FacultyHousing'">
+      <span class="stat-ghost" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/></svg></span>
+      <span class="stat-num">@Model.FacultyStats.ActiveUnits</span>
+      <span class="stat-label">@SharedLocalizer["dash_facultyUnits"]</span>
       @* ⚠️ الوحدات خارج الخدمة مش داخلة في الرقم فوق (مش قابلة للتسكين)،
          فبتتقال هنا عشان ما تختفيش من الشاشة خالص. وبتظهر لما تبقى أكبر
          من صفر بس - سطر بيقول «و٠ خارج الخدمة» ضجيج. *@
       @if (Model.FacultyStats.OutOfService > 0)
       {
-        <div class="stat-sub">@string.Format(SharedLocalizer["dash_facultyOutOfServiceFmt"].Value, Model.FacultyStats.OutOfService)</div>
+        <span class="stat-sub">@string.Format(SharedLocalizer["dash_facultyOutOfServiceFmt"].Value, Model.FacultyStats.OutOfService)</span>
       }
     </div>
 
-    <div class="stat-card" style="cursor:pointer" onclick="location.href='/FacultyHousing'">
-      <div class="stat-top">
-        <div class="stat-icon" style="background:#dff6e7">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#067647" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4h3a2 2 0 0 1 2 2v14"/><path d="M2 20h3"/><path d="M13 20h9"/><path d="M10 12v.01"/><path d="M13 4.6v16.2a1 1 0 0 1-1.2 1L5 20V5.6a2 2 0 0 1 1.5-1.9l4-1A2 2 0 0 1 13 4.6Z"/></svg>
-        </div>
-      </div>
-      <div class="stat-num">@Model.FacultyStats.Vacant</div>
-      <div class="stat-label">@SharedLocalizer["dash_facultyVacant"]</div>
+    <div class="stat-card is-link" onclick="location.href='/FacultyHousing'">
+      <span class="stat-ghost" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4h3a2 2 0 0 1 2 2v14"/><path d="M2 20h3"/><path d="M13 20h9"/><path d="M10 12v.01"/><path d="M13 4.6v16.2a1 1 0 0 1-1.2 1L5 20V5.6a2 2 0 0 1 1.5-1.9l4-1A2 2 0 0 1 13 4.6Z"/></svg></span>
+      <span class="stat-num">@Model.FacultyStats.Vacant</span>
+      <span class="stat-label">@SharedLocalizer["dash_facultyVacant"]</span>
     </div>
 
     @* ⚠️ عدّاد استثناء: المفروض يبقى صفر. بيلبس اللون الكهرماني لما يبقى
        مش صفر، وبيفضل رمادي هادي وهو صفر. عدّاد بيصرخ طول الوقت بيتجاهَل. *@
-    <div class="stat-card @(Model.FacultyStats.PendingSync > 0 ? "alert" : "")" style="cursor:pointer" onclick="location.href='/FacultyHousing'">
-      <div class="stat-top">
-        <div class="stat-icon" style="background:@(Model.FacultyStats.PendingSync > 0 ? "#fef3c7" : "var(--gray-100)")">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="@(Model.FacultyStats.PendingSync > 0 ? "#b45309" : "#686b72")" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
-        </div>
-      </div>
-      <div class="stat-num">@Model.FacultyStats.PendingSync</div>
-      <div class="stat-label">@SharedLocalizer["dash_facultyUnsynced"]</div>
+    <div class="stat-card is-link @(Model.FacultyStats.PendingSync > 0 ? "alert" : "")" onclick="location.href='/FacultyHousing'">
+      @* ⚠️ اللون مش مكتوب هنا: صنف .alert في components.css بيلوّن الرقم
+         وشريط الحافة والأيقونة مع بعض. كان مكتوب inline بلونين مختلفين
+         حسب العدد - يعني قاعدة تانية جنب القاعدة. *@
+      <span class="stat-ghost" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg></span>
+      <span class="stat-num">@Model.FacultyStats.PendingSync</span>
+      <span class="stat-label">@SharedLocalizer["dash_facultyUnsynced"]</span>
     </div>
   }
 </div>
@@ -639,14 +618,31 @@
   //    حاجة غلط. ده أخطر شكل للعطل: عطل بيتقري كخبر كويس.
   var waitingFailed = false;
   async function loadWaiting() {
-    waitingData = await apiFetch('/api/Requests/paged?page=1&pageSize=5&openOnly=true&sortBy=submittedat&sortAsc=true');
+    // ⚠️ ‏stagesince لا submittedat: اللوحة بتقول «الأطول انتظارًا» - يعني
+    //    أطول واحد **واقف في مرحلته الحالية**، مش أقدم طلب في النظام. طلب
+    //    قديم اتحرّك امبارح مش متأخّر، وطلب جديد واقف من ساعة ما اتقدّم هو
+    //    اللي محتاج دفعة. المفتاح معرَّف في RequestService بنفس سلسلة
+    //    COALESCE اللي في RequestDto.StageSince بالحرف.
+    waitingData = await apiFetch('/api/Requests/paged?page=1&pageSize=5&openOnly=true&sortBy=stagesince&sortAsc=true');
     waitingFailed = (waitingData === null);
     renderWaiting();
   }
 
   // ⚠️ العتبات هنا وحدها: أقل من يومين أخضر، وحتى خمسة كهرماني، وفوقها أحمر.
+  // ⚠️ فرق **أيام التقويم** لا قسمة على ٢٤ ساعة: القسمة كانت بتقول «اليوم»
+  //    عن طلب اتقدّم امبارح الساعة ٨ مساءً وانت بتبصّ الساعة ٩ صباحًا - لأن
+  //    اللي عدّى ١٣ ساعة، و floor(13/24) = 0. والموظف بيقرا التاريخ لا
+  //    الساعات: بالنسبة له ده امبارح. المقارنة دلوقتي بين منتصف ليل اليوم
+  //    ومنتصف ليل يوم الحدث بالتوقيت المحلي، فـ«اليوم» معناها اليوم فعلًا.
   function ageChip(iso) {
-    var days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
+    var d = new Date(iso);
+    var days = NaN;
+    if (!isNaN(d.getTime())) {
+      var a = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      var n = new Date();
+      var b = new Date(n.getFullYear(), n.getMonth(), n.getDate());
+      days = Math.round((b - a) / 86400000);
+    }
     if (!isFinite(days) || days < 0) days = 0;
     var txt = days === 0 ? t('dash_ageToday')
             : days === 1 ? t('dash_ageOneDay')
@@ -694,8 +690,12 @@
     }
     box.innerHTML = items.map(function (r) {
       var st = (r.status || '').toLowerCase();
-      var age = ageChip(r.submittedAt);
+      // ⚠️ نفس حقل الترتيب بالظبط: لو الشارة قرأت submittedAt والترتيب قرأ
+      //    stageSince، اللوحة بتوري خمس صفوف مرتّبة بحاجة وأرقامها بتقول
+      //    حاجة تانية - وده مكتوب حرفيًّا في تعليق RequestDto.StageSince.
+      var age = ageChip(r.stageSince || r.submittedAt);
       var name = (r.student && r.student.full_name) || r.studentId || '';
+      var nameEn = (r.student && r.student.full_name_english) || '';
       // ⚠️ المفتاح من NuhWorkflow لا مبني هنا — نفس مصدر شاشة الطلبات،
       //    عشان المرحلة الواحدة ما تظهرش باسمين في شاشتين.
       var stageKey = NuhWorkflow.stageKey(st);
@@ -703,6 +703,7 @@
       return '<a class="rq-row" href="/Requests/Details/' + r.id + '">' +
         '<span class="rq-num">' + escHtml(r.requestNumber || '-') + '</span>' +
         '<span class="rq-main"><span class="rq-name">' + escHtml(name) + '</span>' +
+        (nameEn ? '<span class="rq-name-en">' + escHtml(nameEn) + '</span>' : '') +
         '<span class="rq-stage">' + escHtml(stage) + '</span></span>' +
         stepsBar(st) +
         '<span class="rq-age ' + age.cls + '">' + escHtml(age.txt) + '</span>' +

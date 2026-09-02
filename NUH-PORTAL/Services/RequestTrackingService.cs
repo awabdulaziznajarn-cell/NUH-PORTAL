@@ -37,22 +37,19 @@ namespace NUH_PORTAL.Services
         //
         //     شاشة تتبع الطلب متاحة بلا تسجيل دخول، وفيها بحث برقم الجوال بلا
         //     عامل تحقق. الاسم الكامل في الرد كان بيحوّل «رقم جوال مجهول» إلى
-        //     «فلان الفلاني، ساكن في السكن الجامعي، وطلبه في المرحلة كذا» —
+        //     «فلان الفلاني، ساكن في السكن الجامعي، وطلبه في المرحلة كذا» -
         //     يعني أداة لربط الأرقام بالهويات لأي حد بيجرّب أرقام.
         //
         //     الاسم الأول يظهر كاملًا، وباقي الأسماء بأول حرف فقط. الاسم الأول
         //     وحده شائع جدًا فلا يميّز شخصًا بعينه، لكنه يكفي صاحب الطلب ليطمئن
-        //     أن الطلب طلبه — وكان الإخفاء الكامل يجعل الشاشة غير مفهومة له.
+        //     أن الطلب طلبه - وكان الإخفاء الكامل يجعل الشاشة غير مفهومة له.
         //     اسم الأب والجد والعائلة هي التي تربط الرقم بالهوية، وتبقى مخفية.
+        //
+        //  ⚠️ القاعدة نفسها اتنقلت لـ Core/PublicMasking لما بقى فيه صفحة عامة
+        //     تانية (التحقّق من وثيقة التعهّد). لو كل صفحة أخفت بطريقتها،
+        //     الأرخم بتفضح اللي التانية بتخفيه.
         // ====================================================================
-        private static string? MaskName(string? name)
-        {
-            if (string.IsNullOrWhiteSpace(name)) return name;
-
-            var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            return string.Join(' ', parts.Select((p, i) =>
-                i == 0 || p.Length <= 1 ? p : p[0] + new string('*', Math.Min(p.Length - 1, 4))));
-        }
+        private static string? MaskName(string? name) => PublicMasking.Name(name);
 
         public async Task<List<TrackedRequestDto>> TrackByMobileAsync(string mobile)
         {
@@ -73,7 +70,7 @@ namespace NUH_PORTAL.Services
                 .Include(r => r.Student)
                 // ⚠️ لازم النوعين: الطالب لما يسجّل بنفسه بيتعمل self_registration،
                 //    ولما المشرف يسجّله بيتعمل housing. الاتنين طلب سكن لنفس الطالب
-                //    وبيمشوا في نفس دورة الاعتماد — فمن وجهة نظر الطالب مفيش فرق،
+                //    وبيمشوا في نفس دورة الاعتماد - فمن وجهة نظر الطالب مفيش فرق،
                 //    وماكانش ينفع طلب المشرف يفضل غير قابل للتتبع.
                 .Where(r => (r.RequestType == RequestType.self_registration || r.RequestType == RequestType.housing)
                             && studentIds.Contains(r.StudentId))
@@ -83,7 +80,7 @@ namespace NUH_PORTAL.Services
                     RequestNumber = r.RequestNumber,
                     Status = r.Status,
                     SubmittedAt = r.SubmittedAt,
-                    StudentName = r.Student!.full_name   // بيتخفي بعد الجلب — EF مايترجمش MaskName لـ SQL
+                    StudentName = r.Student!.full_name   // بيتخفي بعد الجلب - EF مايترجمش MaskName لـ SQL
                 })
                 .ToListAsync();
 
@@ -115,11 +112,11 @@ namespace NUH_PORTAL.Services
 
             var history = await _workflow.GetHistoryAsync(request.Id);
 
-            // ⚠️ الطلبات اللي بيعملها موظف مالهاش صفوف في WorkflowHistory — التسجيل
+            // ⚠️ الطلبات اللي بيعملها موظف مالهاش صفوف في WorkflowHistory - التسجيل
             //    ده موجود في مسار تسجيل الطالب بس. شاشة الموظف بتخفي الفرق لأنها
             //    بتبني المسار من تواريخ الطلب نفسه، فصفحة التتبع كانت الوحيدة اللي
             //    بتبيّن الفراغ: الطلب بيظهر من غير أي مسار.
-            //    بنبني نفس المسار هنا من التواريخ لما السجل يبقى فاضي — بيغطّي
+            //    بنبني نفس المسار هنا من التواريخ لما السجل يبقى فاضي - بيغطّي
             //    الطلبات القديمة كمان، ومش محتاج أي تعديل في البيانات.
             List<TrackingHistoryItemDto> items;
             if (history.Count > 0)
@@ -147,7 +144,7 @@ namespace NUH_PORTAL.Services
             };
         }
 
-        // مسار الطلب مبنيًا من تواريخ الطلب — نفس المراحل اللي بتظهر لموظف الإسكان.
+        // مسار الطلب مبنيًا من تواريخ الطلب - نفس المراحل اللي بتظهر لموظف الإسكان.
         // الملاحظات بتتعرض للطالب في خطوات الرفض بس؛ ملاحظات الموافقة داخلية.
         // المسارين بيسمّوا نفس المرحلة باسمين: تسجيل الطالب = pending_supervisor،
         // ومسار الموظف = submitted. الاتنين معناهم "الطلب اتقدّم".
@@ -172,14 +169,14 @@ namespace NUH_PORTAL.Services
 
         // ⚠️ ماكانتش async فعلًا: الاستعلام الوحيد اللي كان جوّاها اتشال مع
         //    ActorName (المسار عام بلا مصادقة فمينفعش يخرج منه اسم موظف)،
-        //    وفضل التوقيع async بلا await — الدالة بتشتغل تزامنيًا ومغلّفة
+        //    وفضل التوقيع async بلا await - الدالة بتشتغل تزامنيًا ومغلّفة
         //    في Task بلا داعي. بقت متزامنة زي ما هي فعلًا.
         private static List<TrackingHistoryItemDto> BuildHistoryFromTimestamps(Models.Request r)
         {
             var list = new List<TrackingHistoryItemDto>();
             var status = r.Status ?? "";
 
-            // (كان هنا استعلام بيجيب أسماء المراجعين. اتشال مع ActorName —
+            // (كان هنا استعلام بيجيب أسماء المراجعين. اتشال مع ActorName -
             //  المسار ده عام بدون مصادقة فمينفعش يخرج منه اسم موظف.)
 
             list.Add(new TrackingHistoryItemDto
@@ -233,7 +230,7 @@ namespace NUH_PORTAL.Services
         // ----------------------------- Helpers -----------------------------
 
         // 05XXXXXXXX أو 5XXXXXXXX → 9665XXXXXXXX (نفس منطق الكنترولر القديم)
-        // ⚠️ حُذفت النسخة المحلية — القاعدة الوحيدة في Core/IdentityRules.cs.
+        // ⚠️ حُذفت النسخة المحلية - القاعدة الوحيدة في Core/IdentityRules.cs.
         private static string NormalizePhone(string mobile) => IdentityRules.NormalizeMobileOrDigits(mobile);
     }
 }

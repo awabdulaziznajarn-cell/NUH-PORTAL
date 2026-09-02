@@ -65,6 +65,13 @@ namespace NUH_PORTAL.Core
             // حتى لا ينقسم عدّاد المرحلة الواحدة على مسمّيين.
             public string? SameStageAs { get; set; }
 
+            // ⚠️ الجهة الواقف عندها الطلب في هذه المرحلة - مفتاح نصّ في
+            //    SharedResource لا اسم مكتوب. مكانه هنا لا في الواجهة: لوحة
+            //    المؤشّرات بتوسم كل صفّ بالجهة المسؤولة، ولو الوسم اتبنى من
+            //    اسم الصلاحية في الجافاسكربت كان بقى عندنا خريطة تانية
+            //    تفارق الجدول أول ما تتضاف مرحلة.
+            public string OwnerKey { get; set; } = "";
+
             // ⚠️ ترتيب المرحلة من أربع خطوات (1..4) - يقرأه شريط التقدّم في
             //    الصفحة الرئيسية. مكانه هنا لا في الواجهة: لو أُضيفت مرحلة
             //    جديدة يتغيّر رقمها في مكان واحد بدل أن يُكتب سلّم ثانٍ في
@@ -77,7 +84,7 @@ namespace NUH_PORTAL.Core
             // ---------- مسار تسجيل الطالب (/api/Workflow) ----------
             new Transition
             {
-                Status = "pending_supervisor", Step = 1,
+                Status = "pending_supervisor", Step = 1, OwnerKey = OwnerHousing,
                 Permissions = new[] { "requests.reviewHousing" },
                 ApproveTo = "pending_cyber", ApproveKey = "req_act_housing_approved",
                 RejectTo = "rejected",       RejectKey = "req_act_housing_rejected",
@@ -85,7 +92,7 @@ namespace NUH_PORTAL.Core
             },
             new Transition
             {
-                Status = "pending_cyber", Step = 2,
+                Status = "pending_cyber", Step = 2, OwnerKey = OwnerCyber,
                 Permissions = new[] { "requests.reviewCyber" },
                 ApproveTo = "ready_for_provisioning", ApproveKey = "req_act_cyber_approved",
                 RejectTo = "rejected",                RejectKey = "req_act_cyber_rejected",
@@ -93,7 +100,7 @@ namespace NUH_PORTAL.Core
             },
             new Transition
             {
-                Status = "ready_for_provisioning", Step = 3,
+                Status = "ready_for_provisioning", Step = 3, OwnerKey = OwnerProvisioning,
                 Permissions = new[] { "requests.complete" },
                 ApproveTo = "completed", ApproveKey = "req_act_completed",
                 RejectTo = "rejected",   RejectKey = "req_act_rejected",
@@ -103,7 +110,7 @@ namespace NUH_PORTAL.Core
             // ---------- مسار طلب الموظف (/api/Requests/{id}/review) ----------
             new Transition
             {
-                Status = "submitted", Step = 1,
+                Status = "submitted", Step = 1, OwnerKey = OwnerHousing,
                 Permissions = new[] { "requests.reviewHousing" },
                 ApproveTo = "housing_approved", ApproveKey = "req_act_housing_approved",
                 RejectTo = "housing_rejected",  RejectKey = "req_act_housing_rejected",
@@ -111,7 +118,7 @@ namespace NUH_PORTAL.Core
             },
             new Transition
             {
-                Status = "cyber_review", Step = 2,
+                Status = "cyber_review", Step = 2, OwnerKey = OwnerCyber,
                 Permissions = new[] { "requests.reviewCyber" },
                 ApproveTo = "cyber_approved", ApproveKey = "req_act_cyber_approved",
                 RejectTo = "cyber_rejected",  RejectKey = "req_act_cyber_rejected",
@@ -122,14 +129,14 @@ namespace NUH_PORTAL.Core
             //    التوحيد يجب أن تبقى قابلة للتحريك، وإلا بقيت عالقة للأبد.
             new Transition
             {
-                Status = "housing_approved", Step = 2,
+                Status = "housing_approved", Step = 2, OwnerKey = OwnerProvisioning,
                 Permissions = new[] { "requests.complete" },
                 ApproveTo = "cyber_review", ApproveKey = "req_act_cyber_review",
                 Api = Apis.Review
             },
             new Transition
             {
-                Status = "cyber_approved", Step = 3,
+                Status = "cyber_approved", Step = 3, OwnerKey = OwnerProvisioning,
                 Permissions = new[] { "requests.reviewCyber", "requests.complete" },
                 ApproveTo = "ready_for_provisioning", ApproveKey = "req_act_ready_for_provisioning",
                 Api = Apis.Review
@@ -144,6 +151,53 @@ namespace NUH_PORTAL.Core
         //     pending_cyber والجدول لا يعرفهما، فيُحسب الطلب في العدّاد ويظهر
         //     في التبويب بلا زر. الاشتقاق يمنع تكرار الخطأ من أصله.
         // ====================================================================
+        // ====================================================================
+        //  الجهة المسؤولة عن كل مرحلة - مفاتيح نصّ في SharedResource.
+        //
+        //  ⚠️ ليه مفاتيح لا أسماء: اللوحة عربية وإنجليزية، والاسم المكتوب هنا
+        //     كان هيظهر عربيًّا في الشاشة الإنجليزية.
+        //
+        //  ⚠️ و need_more_info مالوش انتقال في الجدول (الطلب راجع للطالب، مفيش
+        //     موظف يقدر يحرّكه)، ومع ذلك بيظهر في اللوحة لأنه أطول ما يقف بلا
+        //     حركة. فجهته مضافة هنا صراحةً - الواجهة مالهاش أن تعرف اسم الحالة
+        //     دي عشان توسمها.
+        // ====================================================================
+        public const string OwnerHousing      = "req_owner_housing";
+        public const string OwnerCyber        = "req_owner_cyber";
+        public const string OwnerProvisioning = "req_owner_provisioning";
+        public const string OwnerStudent      = "req_owner_student";
+
+        private static Dictionary<string, string>? _owners;
+        public static Dictionary<string, string> Owners => _owners ??= BuildOwners();
+
+        private static Dictionary<string, string> BuildOwners()
+        {
+            var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var t in Transitions)
+            {
+                if (!string.IsNullOrEmpty(t.OwnerKey)) map[t.Status] = t.OwnerKey;
+            }
+            map["need_more_info"] = OwnerStudent;
+            return map;
+        }
+
+        public static string? OwnerKeyFor(string? status)
+            => string.IsNullOrWhiteSpace(status) ? null
+             : (Owners.TryGetValue(status.Trim(), out var k) ? k : null);
+
+        // ====================================================================
+        //  كل الصلاحيات اللي بتخوّل التصرّف في أي مرحلة - مشتقّة من الجدول.
+        //
+        //  ⚠️ اللوحة بتستعملها عشان تعرف المستخدم اللي صلاحياته على **كل**
+        //     المراحل (المدير): بالنسبة له كل صفّ «بانتظار إجرائه»، فالوسم
+        //     بيفقد معناه ولازم يشوف الجهة المسؤولة بدله.
+        // ====================================================================
+        private static string[]? _allStagePermissions;
+        public static string[] AllStagePermissions => _allStagePermissions ??= Transitions
+            .SelectMany(t => t.Permissions)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
         public static string[] StagesFor(bool canHousing, bool canCyber, bool canComplete)
         {
             bool Has(string p) =>
@@ -312,7 +366,9 @@ namespace NUH_PORTAL.Core
             return _json ??= JsonSerializer.Serialize(new
             {
                 transitions = Transitions,
-                rejected = Aliases("rejected")
+                rejected = Aliases("rejected"),
+                owners = Owners,
+                stagePermissions = AllStagePermissions
             }, new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
