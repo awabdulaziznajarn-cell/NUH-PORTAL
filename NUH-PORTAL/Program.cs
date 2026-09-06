@@ -484,6 +484,10 @@ builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.AddScoped<IRoleAdminService, RoleAdminService>();
 builder.Services.AddScoped<IHousingAccountService, HousingAccountService>();
 builder.Services.AddScoped<ISupervisorHousingTransferService, SupervisorHousingTransferService>();
+// خريطة إشغال المباني - قراءة فقط، بتشتقّ الإشغال من صفوف الطلاب في كل نداء.
+builder.Services.AddScoped<IHousingOccupancyService, HousingOccupancyService>();
+// حارس سعة الغرفة - نفس القاعدة في مسارات الكتابة الخمسة كلها.
+builder.Services.AddScoped<IHousingCapacityGuard, HousingCapacityService>();
 // مكان تخزين المرفقات - Singleton لأنه بيقرأ الإعدادات مرة واحدة وبعدها بيحسب مسارات بس.
 // المسار بيتظبط من Storage:AttachmentsRoot في appsettings.
 builder.Services.AddSingleton<IAttachmentStorage, AttachmentStorage>();

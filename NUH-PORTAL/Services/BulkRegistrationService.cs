@@ -28,6 +28,10 @@ namespace NUH_PORTAL.Services
         private readonly IHttpContextAccessor _http;
         private readonly ILogger<BulkRegistrationService> _logger;
         private readonly ILookupResolver _lookups;
+        // ⚠️ الإكسل أخطر مسار في موضوع السعة: شيت واحد ممكن يحطّ عشرة في غرفة
+        //    واحدة، وكلهم لسه مش في الجدول - فالعدّ من قاعدة البيانات وحده كان
+        //    هيقول إنها فاضية عشر مرات.
+        private readonly IHousingCapacityGuard _capacity;
 
         public BulkRegistrationService(
             IRepository<Student> students,
@@ -39,6 +43,7 @@ namespace NUH_PORTAL.Services
             IHttpContextAccessor http,
             ILogger<BulkRegistrationService> logger,
             ILookupResolver lookups,
+            IHousingCapacityGuard capacity,
             IUnitOfWork unitOfWork,
             IMapper mapper) : base(unitOfWork, mapper)
         {
@@ -51,6 +56,7 @@ namespace NUH_PORTAL.Services
             _http = http;
             _logger = logger;
             _lookups = lookups;
+            _capacity = capacity;
         }
 
         public FileResultDto GetTemplate()
@@ -76,17 +82,6 @@ namespace NUH_PORTAL.Services
                 FileName = "BulkRegistrationTemplate.xlsx",
                 ContentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             };
-        }
-
-        // نفس قاعدة SupervisorHousingTransferService: 4 شقق في كل دور.
-        private const int ApartmentsPerFloor = 4;
-
-        private static bool ApartmentBelongsToFloor(string? floor, string? apartment)
-        {
-            if (!int.TryParse(floor, out var f) || f < 0) return false;
-            if (!int.TryParse(apartment, out var a)) return false;
-            var start = f * ApartmentsPerFloor + 1;
-            return a >= start && a < start + ApartmentsPerFloor;
         }
 
         public async Task<BulkValidationResultDto> ValidateFileAsync(IFormFile? file)
@@ -136,6 +131,10 @@ namespace NUH_PORTAL.Services
             var preview = new List<PreviewDto>();
             int validCount = 0, errorCount = 0;
             var processedStudentIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            // الأماكن المحجوزة داخل الشيت نفسه: مفتاحها مبنى/دور/شقة/غرفة،
+            // وبتتزوّد مع كل صفّ سليم فالصفّ اللي بعده بيشوف المكان مشغول.
+            var sheetRooms = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
             // قسم الموظف اللي بيرفع الملف - بيملّي خانة الجنس الفاضية، وبيرفض
             // الصف اللي جنسه من القسم التاني. القاعدة في Core/GenderScope.cs.
@@ -229,6 +228,11 @@ namespace NUH_PORTAL.Services
                 if (!string.IsNullOrEmpty(academicLevel) && !Regex.IsMatch(academicLevel, @"^[1-5]$"))
                     AddError("AcademicLevel", "المستوى الدراسي غير صحيح - يجب أن يكون رقماً بين 1 و 5");
 
+                // ⚠️ أسلوب ترقيم المبنى بيتجاب مرة واحدة للصفّ: فحوص الدور والشقة
+                //    والغرفة تحت كلها بتتوقف عليه، و«شقة ٢ في الدور ٣» صحيحة في
+                //    سكن الطالبات وغلط في سكن الطلاب.
+                var rowScheme = await _lookups.NumberingForBuildingAsync(buildingNumber);
+
                 if (string.IsNullOrEmpty(buildingNumber))
                     AddError("BuildingNumber", "رقم المبنى السكني مطلوب");
                 else
@@ -250,15 +254,40 @@ namespace NUH_PORTAL.Services
                     AddError("ApartmentNumber", "رقم الشقة مطلوب");
                 else if (!Regex.IsMatch(apartmentNumber, @"^\d+$"))
                     AddError("ApartmentNumber", "رقم الشقة غير صحيح - يجب أن يكون رقماً فقط");
-                // نفس قاعدة شاشة النقل: كل دور فيه 4 شقق (الأرضي 1-4، الأول 5-8 ...).
+                // القاعدة من Core/HousingStructure - نفس المصدر اللي بتقرا منه الشاشة.
                 // من غير الفحص ده الشيت ممكن يسكّن طالب في شقة مش موجودة في دوره.
-                else if (!ApartmentBelongsToFloor(floorNumber, apartmentNumber))
-                    AddError("ApartmentNumber", $"رقم الشقة {apartmentNumber} لا ينتمي للدور {floorNumber} - كل دور يحتوي على 4 شقق (الأرضي: 1-4، الأول: 5-8، الثاني: 9-12، الثالث: 13-16، الرابع: 17-20)");
+                else if (!HousingStructure.ApartmentBelongsToFloor(rowScheme, floorNumber, apartmentNumber))
+                {
+                    int.TryParse(floorNumber, out var rowFloor);
+                    AddError("ApartmentNumber", $"رقم الشقة {apartmentNumber} لا ينتمي للدور {floorNumber} - الشقق المسموح بها في هذا الدور: {string.Join("، ", HousingStructure.ApartmentsFor(rowScheme, rowFloor))}");
+                }
 
                 if (string.IsNullOrEmpty(roomNumber))
                     AddError("RoomNumber", "رقم الغرفة مطلوب");
                 else if (!Regex.IsMatch(roomNumber, @"^\d+$"))
                     AddError("RoomNumber", "رقم الغرفة غير صحيح - يجب أن يكون رقماً فقط");
+                // ⚠️ والغرفة لازم تكون **من غرف الشقة**: في سكن الطلاب الترقيم متّصل
+                //    عبر المبنى (شقة ٥ غرفها ١٧-٢٠)، فغرفة ٣ في شقة ٥ رقم مالوش وجود.
+                //    الفحص ده مكانش موجود خالص - الشيت كان بيعدّي بأي رقم غرفة.
+                else if (int.TryParse(apartmentNumber, out var rowApt)
+                         && int.TryParse(roomNumber, out var rowRoom)
+                         && !HousingStructure.IsValidRoom(rowScheme, rowApt, rowRoom))
+                    AddError("RoomNumber", $"رقم الغرفة {roomNumber} لا ينتمي للشقة {apartmentNumber} - الغرف المسموح بها: {string.Join("، ", HousingStructure.RoomsFor(rowScheme, rowApt))}");
+
+                // ⚠️ بعد فحوص البنية عشان مانحسبش مكانًا لصفّ أرقامه غلط أصلًا.
+                //    والحدّ الأقصى مسموح: الرفع بيعمله موظف الإسكان.
+                if (!rowHasError)
+                {
+                    var roomKey = $"{buildingNumber}|{floorNumber}|{apartmentNumber}|{roomNumber}";
+                    sheetRooms.TryGetValue(roomKey, out var pendingHere);
+
+                    var capacityError = await _capacity.CheckAsync(
+                        buildingNumber, floorNumber, apartmentNumber, roomNumber,
+                        excludeStudentId: null, allowExceptionSlot: true, pendingInSameRoom: pendingHere);
+
+                    if (capacityError != null) AddError("RoomNumber", capacityError);
+                    else sheetRooms[roomKey] = pendingHere + 1;
+                }
 
                 processedStudentIds.Add(studentId);
 

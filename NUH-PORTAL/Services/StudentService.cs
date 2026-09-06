@@ -22,6 +22,10 @@ namespace NUH_PORTAL.Services
         private readonly IRepository<AccountLifecycleLog> _lifecycle;
         private readonly IAuditService _audit;
         private readonly ILookupResolver _lookups;
+        // ⚠️ الشاشة دي كانت **مافيهاش أي فحص للسكن** أصلًا: لا سعة ولا
+        //    تطابق بين الدور والشقة والغرفة. القائمة المنسدلة كانت
+        //    الحارس الوحيد، وأي نداء مباشر للـ API بيعدّيها.
+        private readonly IHousingCapacityGuard _capacity;
 
         // ⚠️ كانت هنا قائمة مباني مكتوبة بالإيد:
         //       { "40","41","42","43","65","66","67","68","69","70" }
@@ -39,6 +43,7 @@ namespace NUH_PORTAL.Services
             IRepository<AccountLifecycleLog> lifecycle,
             IAuditService audit,
             ILookupResolver lookups,
+            IHousingCapacityGuard capacity,
             IUnitOfWork unitOfWork,
             IMapper mapper) : base(unitOfWork, mapper)
         {
@@ -47,6 +52,7 @@ namespace NUH_PORTAL.Services
             _lifecycle = lifecycle;
             _audit = audit;
             _lookups = lookups;
+            _capacity = capacity;
         }
 
         public async Task<List<StudentDto>> GetStudentsAsync(bool showDeleted, string? adStatus)
@@ -268,6 +274,25 @@ namespace NUH_PORTAL.Services
                 errors.Add("الرقم الجامعي موجود بالفعل");
             if (await _students.ExistsAsync(s => s.national_id == dto.national_id && !s.IsDeleted))
                 errors.Add("رقم الهوية موجود بالفعل");
+            // ⚠️ تطابق الدور والشقة والغرفة - القاعدة من Core/HousingStructure
+            //    وأسلوب الترقيم من صفّ المبنى نفسه. المسار ده كان الوحيد اللي
+            //    بلا الفحص ده خالص: نقل السكن ورفع الإكسل بيفحصوه من زمان.
+            var scheme = await _lookups.NumberingForBuildingAsync(dto.housing_building);
+            if (!string.IsNullOrWhiteSpace(dto.floor_number) && !string.IsNullOrWhiteSpace(dto.apartment_number))
+            {
+                if (!HousingStructure.ApartmentBelongsToFloor(scheme, dto.floor_number, dto.apartment_number))
+                    errors.Add($"رقم الشقة {dto.apartment_number} لا ينتمي للدور {dto.floor_number}");
+                else if (int.TryParse(dto.apartment_number, out var cApt) && int.TryParse(dto.room_number, out var cRoom)
+                         && !HousingStructure.IsValidRoom(scheme, cApt, cRoom))
+                    errors.Add($"رقم الغرفة {dto.room_number} لا ينتمي للشقة {dto.apartment_number}");
+            }
+
+            // ⚠️ الحدّ الأقصى مسموح: ده مسار الموظف لا الطالب.
+            var capacityError = await _capacity.CheckAsync(dto.housing_building, dto.floor_number,
+                                    dto.apartment_number, dto.room_number,
+                                    excludeStudentId: null, allowExceptionSlot: true);
+            if (capacityError != null) errors.Add(capacityError);
+
             if (errors.Count > 0)
                 throw new UserFriendlyException(string.Join(" | ", errors), 400);
 
@@ -373,6 +398,24 @@ namespace NUH_PORTAL.Services
 
             if (!modified)
                 return Mapper.Map<StudentDto>(student);
+
+            // ⚠️ الفحص **بعد** ما القيم اتطبّقت على السجل لا قبلها: التعديل ممكن
+            //    يغيّر خانة واحدة بس (رقم الغرفة مثلًا)، والباقي بيفضل من السجل.
+            //    فحص الـ dto وحده كان هيقارن غرفة جديدة بمبنى فاضي.
+            //    والطالب نفسه مستثنى من العدّ - وإلا كل تعديل على ساكن بيحسبه
+            //    مرتين في غرفته.
+            {
+                var uScheme = await _lookups.NumberingForBuildingAsync(student.housing_building);
+                if (!HousingStructure.ApartmentBelongsToFloor(uScheme, student.floor_number, student.apartment_number))
+                    throw new UserFriendlyException($"رقم الشقة {student.apartment_number} لا ينتمي للدور {student.floor_number}", 400);
+                if (int.TryParse(student.apartment_number, out var uApt) && int.TryParse(student.room_number, out var uRoom)
+                    && !HousingStructure.IsValidRoom(uScheme, uApt, uRoom))
+                    throw new UserFriendlyException($"رقم الغرفة {student.room_number} لا ينتمي للشقة {student.apartment_number}", 400);
+
+                await _capacity.EnsureAsync(student.housing_building, student.floor_number,
+                                            student.apartment_number, student.room_number,
+                                            excludeStudentId: student.Id, allowExceptionSlot: true);
+            }
 
             await _lookups.ApplyAsync(student); // إعادة حساب الـ FK ids بعد تغيّر الأكواد
 

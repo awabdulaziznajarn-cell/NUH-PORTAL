@@ -18,6 +18,12 @@ namespace NUH_PORTAL.Services
     {
         private readonly IRepository<Student> _students;
         private readonly IRepository<HousingTransfer> _transfers;
+        // ⚠️ عشان أسلوب ترقيم المبنى: «شقة ٢ في الدور ٣» صحيحة في سكن
+        //    الطالبات وغلط في سكن الطلاب - والفحص لازم يعرف الاتنين.
+        private readonly ILookupResolver _lookups;
+        // ⚠️ الحارس مش شرط زيادة: النقل كان بيقدر يحطّ رابع في غرفة سعتها
+        //    تلاتة، والخريطة تفضل تورّي «تجاوزت السعة» بعد وقوعها.
+        private readonly IHousingCapacityGuard _capacity;
         private readonly IRepository<AccountLifecycleLog> _lifecycle;
         private readonly IAuditService _audit;
         private readonly IAttachmentStorage _storage;
@@ -30,6 +36,8 @@ namespace NUH_PORTAL.Services
         public SupervisorHousingTransferService(
             IRepository<Student> students,
             IRepository<HousingTransfer> transfers,
+            ILookupResolver lookups,
+            IHousingCapacityGuard capacity,
             IRepository<AccountLifecycleLog> lifecycle,
             IAuditService audit,
             IAttachmentStorage storage,
@@ -39,6 +47,8 @@ namespace NUH_PORTAL.Services
         {
             _students = students;
             _transfers = transfers;
+            _lookups = lookups;
+            _capacity = capacity;
             _lifecycle = lifecycle;
             _audit = audit;
             _storage = storage;
@@ -64,10 +74,18 @@ namespace NUH_PORTAL.Services
 
             // الشقة لازم تكون ضمن شقق الدور المختار — التحقق هنا مش في الشاشة بس،
             // عشان أي نداء مباشر للـ API مايقدرش يسكّن طالب في شقة مش في دوره.
-            if (!ApartmentBelongsToFloor(newFloor, newApartment))
+            var scheme = await _lookups.NumberingForBuildingAsync(newBuilding);
+            if (!HousingStructure.ApartmentBelongsToFloor(scheme, newFloor, newApartment))
                 throw new UserFriendlyException("رقم الشقة لا ينتمي للدور المختار", 400);
             if (string.IsNullOrEmpty(newRoom))
                 throw new UserFriendlyException("رقم الغرفة الجديدة مطلوب", 400);
+            // ⚠️ والغرفة لازم تكون **من غرف الشقة**: في سكن الطلاب رقم الغرفة
+            //    متّصل عبر المبنى (شقة ٥ غرفها ١٧-٢٠)، فغرفة ٣ في شقة ٥ رقم
+            //    مالوش وجود. الشاشة بتمنعه والخادم مكانش بيشوفه.
+            if (!int.TryParse(newApartment?.Trim(), out var __apt)
+                || !int.TryParse(newRoom.Trim(), out var __room)
+                || !HousingStructure.IsValidRoom(scheme, __apt, __room))
+                throw new UserFriendlyException("رقم الغرفة لا ينتمي للشقة المختارة", 400);
             if (string.IsNullOrEmpty(reason))
                 throw new UserFriendlyException("سبب النقل مطلوب", 400);
             if (reason == "other" && string.IsNullOrEmpty(customReason))
@@ -86,6 +104,13 @@ namespace NUH_PORTAL.Services
             var oldFloor = student.floor_number ?? "";
             var oldApartment = student.apartment_number ?? "";
             var oldRoom = student.room_number ?? "";
+
+            // ⚠️ الحدّ الأقصى مسموح هنا: النقل إجراء إداري بيعمله المشرف، وإدارة
+            //    الإسكان قالت صراحة إنه يقدر يزوّد ساكنًا فوق السعة المعتمدة.
+            //    والطالب نفسه مستثنى من العدّ - نقله لغرفته الحالية مايحسبش
+            //    مرتين (بيحصل لما المشرف يصحّح رقم دور بس).
+            await _capacity.EnsureAsync(newBuilding, newFloor, newApartment, newRoom,
+                                        excludeStudentId: student.Id, allowExceptionSlot: true);
 
             // نفس الفحص الثلاثي: الامتداد ثم الحجم ثم بصمة البايتات الأولى
             if (file != null)
@@ -204,17 +229,6 @@ namespace NUH_PORTAL.Services
                     ? Path.GetFileName(filePath)
                     : transfer.OriginalFileName
             };
-        }
-
-        // نفس قاعدة الشقق في js/housing-fields.js: الدور × 4 + 1 .. + 4
-        private const int ApartmentsPerFloor = 4;
-
-        private static bool ApartmentBelongsToFloor(string? floor, string? apartment)
-        {
-            if (!int.TryParse(floor, out var f) || f < 0) return false;
-            if (!int.TryParse(apartment, out var a)) return false;
-            var start = f * ApartmentsPerFloor + 1;
-            return a >= start && a < start + ApartmentsPerFloor;
         }
 
         // وصف موقع مقروء — «مبنى 69 · الدور 3 · شقة 15 · غرفة 3».

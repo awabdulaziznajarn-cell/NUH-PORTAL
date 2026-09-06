@@ -6775,4 +6775,136 @@ Developed by the Deanship of Digital Transformation and Knowledge Resources</val
   <data name="ui_trialMode" xml:space="preserve">
     <value>Trial run</value>
   </data>
+  <data name="Nav_HousingMap" xml:space="preserve">
+    <value>Buildings Map</value>
+  </data>
+  <data name="Nav_VerifyDoc" xml:space="preserve">
+    <value>Verify Document</value>
+  </data>
+  <data name="Page_HousingMap" xml:space="preserve">
+    <value>University Housing Buildings Map</value>
+  </data>
+  <data name="hmap_adDisabled" xml:space="preserve">
+    <value>Network account disabled</value>
+  </data>
+  <data name="hmap_buildings" xml:space="preserve">
+    <value>Buildings</value>
+  </data>
+  <data name="hmap_capacity" xml:space="preserve">
+    <value>Room capacity</value>
+  </data>
+  <data name="hmap_extraBy" xml:space="preserve">
+    <value>Above capacity by</value>
+  </data>
+  <data name="hmap_freePlaces" xml:space="preserve">
+    <value>Free</value>
+  </data>
+  <data name="hmap_lgExtra" xml:space="preserve">
+    <value>Above capacity (approved)</value>
+  </data>
+  <data name="hmap_lgFree" xml:space="preserve">
+    <value>Vacant</value>
+  </data>
+  <data name="hmap_lgFull" xml:space="preserve">
+    <value>At capacity</value>
+  </data>
+  <data name="hmap_lgOver" xml:space="preserve">
+    <value>Over capacity</value>
+  </data>
+  <data name="hmap_lgPartial" xml:space="preserve">
+    <value>Has space</value>
+  </data>
+  <data name="hmap_loadFailed" xml:space="preserve">
+    <value>Could not load the map</value>
+  </data>
+  <data name="hmap_loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+  <data name="hmap_noBuildings" xml:space="preserve">
+    <value>No buildings registered</value>
+  </data>
+  <data name="hmap_ofCapacity" xml:space="preserve">
+    <value>of</value>
+  </data>
+  <data name="hmap_orphan_floorMismatch" xml:space="preserve">
+    <value>Apartment or room out of place</value>
+  </data>
+  <data name="hmap_orphan_incomplete" xml:space="preserve">
+    <value>Incomplete data</value>
+  </data>
+  <data name="hmap_orphan_outOfRange" xml:space="preserve">
+    <value>Number out of range</value>
+  </data>
+  <data name="hmap_orphansNote" xml:space="preserve">
+    <value>Students assigned to this building with incomplete housing data or numbers outside the building's scheme - they do not appear on the map</value>
+  </data>
+  <data name="hmap_orphansTitle" xml:space="preserve">
+    <value>Rows outside the building structure</value>
+  </data>
+  <data name="hmap_overMax" xml:space="preserve">
+    <value>Beyond the allowed limit of</value>
+  </data>
+  <data name="hmap_pageSubtitle" xml:space="preserve">
+    <value>Every building by floor, apartment and room - computed from student records at view time</value>
+  </data>
+  <data name="hmap_placesWord" xml:space="preserve">
+    <value>places</value>
+  </data>
+  <data name="hmap_roomEmpty" xml:space="preserve">
+    <value>No residents in this room</value>
+  </data>
+  <data name="hmap_roomsWord" xml:space="preserve">
+    <value>rooms</value>
+  </data>
+  <data name="hmap_statEmptyRooms" xml:space="preserve">
+    <value>Fully vacant rooms</value>
+  </data>
+  <data name="hmap_statExtraRooms" xml:space="preserve">
+    <value>Rooms above capacity</value>
+  </data>
+  <data name="hmap_statFreePlaces" xml:space="preserve">
+    <value>Free places</value>
+  </data>
+  <data name="hmap_statFullRooms" xml:space="preserve">
+    <value>Rooms at capacity</value>
+  </data>
+  <data name="hmap_statOccupiedPlaces" xml:space="preserve">
+    <value>Occupied places</value>
+  </data>
+  <data name="hmap_statOverRooms" xml:space="preserve">
+    <value>Rooms over capacity</value>
+  </data>
+  <data name="hmap_upTo" xml:space="preserve">
+    <value>up to</value>
+  </data>
+  <data name="pt_decEnNotice" xml:space="preserve">
+    <value>This translation is for reference only - the Arabic text is the binding version.</value>
+  </data>
+  <data name="reg_optSelectApartmentFirst" xml:space="preserve">
+    <value>Select the apartment first</value>
+  </data>
+  <data name="ss_departedLoc" xml:space="preserve">
+    <value>Left housing</value>
+  </data>
+  <data name="ss_reason_departure_dismissed" xml:space="preserve">
+    <value>Departure - dismissed</value>
+  </data>
+  <data name="ss_reason_departure_graduated" xml:space="preserve">
+    <value>Departure - graduated</value>
+  </data>
+  <data name="ss_reason_departure_left_housing" xml:space="preserve">
+    <value>Departure - left university housing</value>
+  </data>
+  <data name="ss_reason_departure_transferred" xml:space="preserve">
+    <value>Departure - transferred to another university</value>
+  </data>
+  <data name="ss_studentNumberPlaceholder" xml:space="preserve">
+    <value>Enter the student number</value>
+  </data>
+  <data name="vfy_openRequest" xml:space="preserve">
+    <value>Open request</value>
+  </data>
+  <data name="vfy_scope" xml:space="preserve">
+    <value>Full details shown - document verification permission</value>
+  </data>
 </root>

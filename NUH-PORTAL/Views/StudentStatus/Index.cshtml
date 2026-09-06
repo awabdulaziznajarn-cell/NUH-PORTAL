@@ -9,6 +9,7 @@
         selectApartment = SharedLocalizer["reg_optSelectApartment"].Value,
         selectRoom = SharedLocalizer["reg_optSelectRoom"].Value,
         selectBuilding = SharedLocalizer["reg_optSelectBuilding"].Value,
+        selectApartmentFirst = SharedLocalizer["reg_optSelectApartmentFirst"].Value,
         ground = SharedLocalizer["reg_optFloorGround"].Value,
         preview = SharedLocalizer["att_preview"].Value,
         download = SharedLocalizer["att_download"].Value,
@@ -443,6 +444,8 @@
 
 @section Scripts {
 <script src="/i18n.js"></script>
+@* ⚠️ nuh-housing.js قبله: هو مصدر البنية (متولّد من Core/HousingStructure.cs) *@
+<script src="/js/nuh-housing.js"></script>
 <script src="/js/housing-fields.js"></script>
 <script>
   var _toastTimer = null;
@@ -750,8 +753,10 @@
   var SS_PH = @Html.Raw(__ssHousingPh);
   // الشقة بتتولد من الدور، والغرفة 1-4 — نفس قاعدة شاشات التسجيل
   NuhHousing.attach({
+    building: 'transferNewBuilding',
     floor: 'transferNewFloor', apartment: 'transferNewApartment', room: 'transferNewRoom',
-    labels: { floorFirst: SS_PH.floorFirst, selectApartment: SS_PH.selectApartment, selectRoom: SS_PH.selectRoom }
+    labels: { floorFirst: SS_PH.floorFirst, selectApartment: SS_PH.selectApartment,
+              selectRoom: SS_PH.selectRoom, selectApartmentFirst: SS_PH.selectApartmentFirst }
   });
 
   // الدور متخزّن كود ("0" = الأرضي) — بيتترجم عند العرض بس
@@ -1088,7 +1093,9 @@
       var timeStr = NuhFmt.time(dateObj);
       var userName = x.createdByName || t('ss_unknown');
       var oldLoc = locText(x.oldBuilding, x.oldFloor, x.oldApartment, x.oldRoom);
-      var newLoc = locText(x.newBuilding, x.newFloor, x.newApartment, x.newRoom);
+      // ⚠️ صفّ المغادرة (تخرّج/فصل/تحويل/ترك السكن) موقعه الجديد فاضي عن قصد -
+      //    الطالب ساب السكن ومافيش محلّ جديد. خانة فاضية كانت هتبان عطل.
+      var newLoc = locText(x.newBuilding, x.newFloor, x.newApartment, x.newRoom) || t('ss_departedLoc');
       var reasonLabel = x.customReason || getTransferReasonLabel(x.reason);
       // الرابط القديم كان بيستخدم الاسم الأصلي للملف، والملف متخزّن على الديسك
       // باسم GUID — فكان بيطلع 404 دايمًا. بيعدّي دلوقتي من endpoint بيتحقق من

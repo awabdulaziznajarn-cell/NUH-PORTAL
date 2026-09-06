@@ -1,0 +1,62 @@
+@{
+    ViewData["Title"] = SharedLocalizer["Page_HousingMap"].Value;
+}
+
+<div class="page-header">
+  <h2>@SharedLocalizer["Page_HousingMap"]</h2>
+  <p>@SharedLocalizer["hmap_pageSubtitle"]</p>
+</div>
+
+@* ⚠️ شريط المباني قبل الخريطة لا جنبها: المستخدم بيختار مبنى الأول، وكل
+   اللي تحت بيخصّ المبنى المختار وحده. شريط جانبي كان هيخلّي الاتنين
+   شكلهم متوازيين وهما مش كده. *@
+<div class="hmap-bar" id="hmapBar" role="tablist" aria-label="@SharedLocalizer["hmap_buildings"]">
+  <div class="hmap-bar-empty">@SharedLocalizer["hmap_loading"]</div>
+</div>
+
+<div class="stats-grid" id="hmapStats"></div>
+
+<div class="card" id="hmapCard" hidden>
+  <div class="card-header hmap-head">
+    <div>
+      <h3 id="hmapTitle"></h3>
+      <span class="hmap-sub" id="hmapSub"></span>
+    </div>
+    @* المفتاح جنب العنوان لا تحت الخريطة: الألوان مالهاش معنى قبل ما
+       تُقرا، والقارئ بيبص فوق الأول. *@
+    <div class="hmap-legend">
+      <span><i class="lg lg-free"></i>@SharedLocalizer["hmap_lgFree"]</span>
+      <span><i class="lg lg-part"></i>@SharedLocalizer["hmap_lgPartial"]</span>
+      <span><i class="lg lg-full"></i>@SharedLocalizer["hmap_lgFull"]</span>
+      <span><i class="lg lg-extra"></i>@SharedLocalizer["hmap_lgExtra"]</span>
+      <span><i class="lg lg-over"></i>@SharedLocalizer["hmap_lgOver"]</span>
+    </div>
+  </div>
+  <div class="card-body">
+    <div id="hmapFloors"></div>
+    <div id="hmapOrphans"></div>
+  </div>
+</div>
+
+<div class="hmap-loading" id="hmapLoading" hidden>@SharedLocalizer["hmap_loading"]</div>
+
+@* لوحة تفاصيل الغرفة - بتتفتح بالضغط على مربّع. modal مش شريط ثابت: الشاشة
+   ضيقة أصلًا بالشبكة، وشريط جانبي كان هيضغط الخريطة كل ما حد يبص على غرفة. *@
+<div class="modal-overlay" id="hmapRoomModal">
+  <div class="modal hmap-modal">
+    <div class="modal-header">
+      <h3 id="hmapRoomTitle"></h3>
+      <button type="button" class="modal-close" onclick="closeRoomPanel()" aria-label="@SharedLocalizer["hm_close"]">&times;</button>
+    </div>
+    <div class="modal-body" id="hmapRoomBody"></div>
+  </div>
+</div>
+
+@section Scripts {
+  <script src="/i18n.js"></script>
+  @* ⚠️ nuh-housing.js قبله: هو مصدر البنية (متولّد من Core/HousingStructure.cs) *@
+  <script src="/js/nuh-housing.js"></script>
+  <script>window.NUH_PERMS = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+      User.FindAll("permission").Select(c => c.Value).ToArray()));</script>
+  <script src="/js/housing-map.js" asp-append-version="true"></script>
+}

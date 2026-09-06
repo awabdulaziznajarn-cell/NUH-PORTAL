@@ -6775,4 +6775,136 @@
   <data name="ui_trialMode" xml:space="preserve">
     <value>تشغيل تجريبي</value>
   </data>
+  <data name="Nav_HousingMap" xml:space="preserve">
+    <value>خريطة المباني</value>
+  </data>
+  <data name="Nav_VerifyDoc" xml:space="preserve">
+    <value>التحقّق من وثيقة</value>
+  </data>
+  <data name="Page_HousingMap" xml:space="preserve">
+    <value>خريطة مباني الإسكان الجامعي</value>
+  </data>
+  <data name="hmap_adDisabled" xml:space="preserve">
+    <value>حساب الشبكة معطَّل</value>
+  </data>
+  <data name="hmap_buildings" xml:space="preserve">
+    <value>المباني</value>
+  </data>
+  <data name="hmap_capacity" xml:space="preserve">
+    <value>سعة الغرفة</value>
+  </data>
+  <data name="hmap_extraBy" xml:space="preserve">
+    <value>فوق السعة بـ</value>
+  </data>
+  <data name="hmap_freePlaces" xml:space="preserve">
+    <value>متسع</value>
+  </data>
+  <data name="hmap_lgExtra" xml:space="preserve">
+    <value>فوق السعة بموافقة</value>
+  </data>
+  <data name="hmap_lgFree" xml:space="preserve">
+    <value>شاغرة</value>
+  </data>
+  <data name="hmap_lgFull" xml:space="preserve">
+    <value>مكتملة</value>
+  </data>
+  <data name="hmap_lgOver" xml:space="preserve">
+    <value>تجاوزت السعة</value>
+  </data>
+  <data name="hmap_lgPartial" xml:space="preserve">
+    <value>بها متسع</value>
+  </data>
+  <data name="hmap_loadFailed" xml:space="preserve">
+    <value>تعذَّر تحميل الخريطة</value>
+  </data>
+  <data name="hmap_loading" xml:space="preserve">
+    <value>جارٍ التحميل...</value>
+  </data>
+  <data name="hmap_noBuildings" xml:space="preserve">
+    <value>لا توجد مبانٍ مسجَّلة</value>
+  </data>
+  <data name="hmap_ofCapacity" xml:space="preserve">
+    <value>من</value>
+  </data>
+  <data name="hmap_orphan_floorMismatch" xml:space="preserve">
+    <value>الشقة أو الغرفة ليست في موضعها</value>
+  </data>
+  <data name="hmap_orphan_incomplete" xml:space="preserve">
+    <value>بيانات ناقصة</value>
+  </data>
+  <data name="hmap_orphan_outOfRange" xml:space="preserve">
+    <value>رقم خارج النطاق</value>
+  </data>
+  <data name="hmap_orphansNote" xml:space="preserve">
+    <value>طلاب مسجَّلون على هذا المبنى ببيانات سكن غير مكتملة أو خارج ترقيم المبنى - لا يظهرون في الخريطة</value>
+  </data>
+  <data name="hmap_orphansTitle" xml:space="preserve">
+    <value>صفوف خارج بنية المبنى</value>
+  </data>
+  <data name="hmap_overMax" xml:space="preserve">
+    <value>تجاوزت الحدّ المسموح</value>
+  </data>
+  <data name="hmap_pageSubtitle" xml:space="preserve">
+    <value>كل مبنى بأدواره وشققه وغرفه - محسوبًا من بيانات الطلاب لحظة العرض</value>
+  </data>
+  <data name="hmap_placesWord" xml:space="preserve">
+    <value>مكان</value>
+  </data>
+  <data name="hmap_roomEmpty" xml:space="preserve">
+    <value>لا يوجد ساكنون في هذه الغرفة</value>
+  </data>
+  <data name="hmap_roomsWord" xml:space="preserve">
+    <value>غرفة</value>
+  </data>
+  <data name="hmap_statEmptyRooms" xml:space="preserve">
+    <value>غرف شاغرة تمامًا</value>
+  </data>
+  <data name="hmap_statExtraRooms" xml:space="preserve">
+    <value>غرف فوق السعة</value>
+  </data>
+  <data name="hmap_statFreePlaces" xml:space="preserve">
+    <value>أماكن شاغرة</value>
+  </data>
+  <data name="hmap_statFullRooms" xml:space="preserve">
+    <value>غرف مكتملة</value>
+  </data>
+  <data name="hmap_statOccupiedPlaces" xml:space="preserve">
+    <value>أماكن مشغولة</value>
+  </data>
+  <data name="hmap_statOverRooms" xml:space="preserve">
+    <value>غرف تجاوزت السعة</value>
+  </data>
+  <data name="hmap_upTo" xml:space="preserve">
+    <value>وحتى</value>
+  </data>
+  <data name="pt_decEnNotice" xml:space="preserve">
+    <value>الترجمة للاطّلاع فقط - النصّ العربي هو المُلزِم.</value>
+  </data>
+  <data name="reg_optSelectApartmentFirst" xml:space="preserve">
+    <value>اختر الشقة أولًا</value>
+  </data>
+  <data name="ss_departedLoc" xml:space="preserve">
+    <value>غادر السكن</value>
+  </data>
+  <data name="ss_reason_departure_dismissed" xml:space="preserve">
+    <value>مغادرة - فصل من الكلية</value>
+  </data>
+  <data name="ss_reason_departure_graduated" xml:space="preserve">
+    <value>مغادرة - تخرج من الكلية</value>
+  </data>
+  <data name="ss_reason_departure_left_housing" xml:space="preserve">
+    <value>مغادرة - ترك الإسكان الجامعي</value>
+  </data>
+  <data name="ss_reason_departure_transferred" xml:space="preserve">
+    <value>مغادرة - تحويل إلى جامعة أخرى</value>
+  </data>
+  <data name="ss_studentNumberPlaceholder" xml:space="preserve">
+    <value>أدخل الرقم الجامعي</value>
+  </data>
+  <data name="vfy_openRequest" xml:space="preserve">
+    <value>فتح الطلب</value>
+  </data>
+  <data name="vfy_scope" xml:space="preserve">
+    <value>بياناتك كاملة - صلاحية التحقّق من الوثائق</value>
+  </data>
 </root>

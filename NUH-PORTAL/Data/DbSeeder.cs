@@ -445,15 +445,38 @@ namespace NUH_PORTAL.Data
             // بتفلتر صح والقائمة الراجعة من الداتابيز غلط.
             // ملاحظة: SeedLookups بيتخطّى المبنى الموجود بالكود، فالصفوف القديمة
             // بتتصحّح بسكربت FixBuildings.sql مرة واحدة — الزرع هنا للقواعد الجديدة.
-            var buildings = new (string Code, Gender Gender)[]
+            // ⚠️ السعة وأسلوب الترقيم جزء من صفّ المبنى لا افتراض في الكود
+            //    (اتصال إدارة الإسكان): ٦٦ و٦٨ و٦٩ و٧٠ غرفها بتلاتة، و٦٥ و٦٧
+            //    باتنين والمشرف يقدر يحطّ تالت، وسكن الطالبات باتنين والمشرفة
+            //    تقدر تزوّد تالتة. والترقيم متّصل في سكن الطلاب وبيبدأ من أول
+            //    كل دور في سكن الطالبات - الشرح في Models/Enums/HousingNumbering.
+            var buildings = new (string Code, Gender Gender, int Cap, int CapMax, HousingNumbering Numbering)[]
             {
-                ("65", Gender.Male), ("66", Gender.Male), ("67", Gender.Male),
-                ("68", Gender.Male), ("69", Gender.Male), ("70", Gender.Male),
-                ("40", Gender.Female), ("41", Gender.Female), ("42", Gender.Female), ("43", Gender.Female),
+                ("65", Gender.Male, 2, 3, HousingNumbering.Continuous),
+                ("66", Gender.Male, 3, 3, HousingNumbering.Continuous),
+                ("67", Gender.Male, 2, 3, HousingNumbering.Continuous),
+                ("68", Gender.Male, 3, 3, HousingNumbering.Continuous),
+                ("69", Gender.Male, 3, 3, HousingNumbering.Continuous),
+                ("70", Gender.Male, 3, 3, HousingNumbering.Continuous),
+                ("40", Gender.Female, 2, 3, HousingNumbering.PerFloor),
+                ("41", Gender.Female, 2, 3, HousingNumbering.PerFloor),
+                ("42", Gender.Female, 2, 3, HousingNumbering.PerFloor),
+                ("43", Gender.Female, 2, 3, HousingNumbering.PerFloor),
             };
             for (var i = 0; i < buildings.Length; i++)
                 if (!db.Buildings.Any(x => x.Code == buildings[i].Code))
-                    db.Buildings.Add(new Building { Code = buildings[i].Code, ArName = "مبنى " + buildings[i].Code, EnName = "Building " + buildings[i].Code, Gender = buildings[i].Gender, DisplayOrder = i + 1, IsActive = true });
+                    db.Buildings.Add(new Building
+                    {
+                        Code = buildings[i].Code,
+                        ArName = "مبنى " + buildings[i].Code,
+                        EnName = "Building " + buildings[i].Code,
+                        Gender = buildings[i].Gender,
+                        RoomCapacity = buildings[i].Cap,
+                        RoomCapacityMax = buildings[i].CapMax,
+                        Numbering = buildings[i].Numbering,
+                        DisplayOrder = i + 1,
+                        IsActive = true
+                    });
             db.SaveChanges();
 
             var levels = new (string Code, string Ar, string En)[]

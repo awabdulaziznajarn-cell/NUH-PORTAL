@@ -13,7 +13,9 @@
   var canStudents = Perm("students.view") || Perm("students.create")
                     || Perm("students.bulkImport") || Perm("students.changeStatus")
                     || Perm("students.investigate");
-  var canRequests = Perm("requests.view") || Perm("housing.view");
+  // ⚠️ housing.occupancyMap في الشرط كمان: من غيرها المشرف اللي معاه الخريطة
+  //    وحدها كان بيلاقي المجموعة كلها مخفية - عنده البند ومش شايفه.
+  var canRequests = Perm("requests.view") || Perm("housing.view") || Perm("housing.occupancyMap");
   var canSystem   = Perm("reports.view") || Perm("auditLogs.view") || Perm("errorLogs.view")
                     || Perm("signInLog.view") || Perm("users.view") || Perm("roles.view");
   var canFaculty  = Perm("facultyHousing.view");
@@ -149,6 +151,19 @@
             <span>@SharedLocalizer["Nav_AllRequests"]</span>
             @* عدد الطلبات المستنية إجراء من المستخدم الحالي - بيتملى من الـ API تحت *@
             <span id="navRequestsBadge" style="display:none;margin-inline-start:auto;background:#d92d20;color:#fff;font-size:11px;font-weight:700;min-width:20px;height:20px;border-radius:10px;align-items:center;justify-content:center;padding:0 6px;line-height:1"></span>
+          </a>
+        }
+        @* ⚠️ بند مستقلّ لا تبويب جوّه «إدارة حسابات السكن»: الشاشتان بتجاوبوا
+           سؤالين مختلفين - دي «الغرفة دي فيها مين وفيها مكان؟» وتلك «حساب
+           الطالب ده شغّال؟».
+           ⚠️ وبصلاحية مستقلّة كمان (housing.occupancyMap): الخريطة بتعرض أسماء
+           الساكنين في كل غرفة، والمشرف الميداني هو اللي محتاجها - مش موظف
+           حسابات الشبكة. الشرح في ApplicationPermissions.ViewOccupancyMap. *@
+        @if (User.HasClaim("permission", "housing.occupancyMap"))
+        {
+          <a class="nav-item" href="/HousingMap">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+            <span>@SharedLocalizer["Nav_HousingMap"]</span>
           </a>
         }
         @if (User.HasClaim("permission", "housing.view"))

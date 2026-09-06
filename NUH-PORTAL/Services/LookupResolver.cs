@@ -1,4 +1,5 @@
 using NUH_PORTAL.Models;
+using NUH_PORTAL.Models.Enums;
 using NUH_PORTAL.Repositories.Interfaces;
 using NUH_PORTAL.Services.Interfaces;
 
@@ -51,6 +52,29 @@ namespace NUH_PORTAL.Services
             return active.Count == 0
                 ? "لا توجد مبانٍ سكنية مفعّلة في النظام - أضفها من شاشة القوائم المرجعية."
                 : "رقم المبنى السكني غير صحيح - القيم المسموح بها: " + string.Join("، ", active);
+        }
+
+        // أسلوب الترقيم من صفّ المبنى نفسه - مش مشتقّ من الجنس ولا من رقمه.
+        // ⚠️ الخريطة بتتحمّل مرة واحدة للـ scope كله: رفع الإكسل بينادي الدالة
+        //    دي **لكل صفّ**، فاستعلام لكل صفّ كان هيبقى ٥٠٠ استعلام لشيت واحد.
+        private Dictionary<string, HousingNumbering>? _numbering;
+
+        public async Task<HousingNumbering> NumberingForBuildingAsync(string? code)
+        {
+            if (string.IsNullOrWhiteSpace(code)) return HousingNumbering.Continuous;
+
+            if (_numbering == null)
+            {
+                var all = await _buildings.GetAllAsync();
+                _numbering = new Dictionary<string, HousingNumbering>();
+                foreach (var b in all)
+                {
+                    var k = Norm(b.Code);
+                    if (k.Length > 0) _numbering[k] = b.Numbering;
+                }
+            }
+
+            return _numbering.TryGetValue(Norm(code), out var n) ? n : HousingNumbering.Continuous;
         }
 
         private static Dictionary<string, int> BuildMap<T>(IEnumerable<T> items, Func<T, string?> code, Func<T, int> id)

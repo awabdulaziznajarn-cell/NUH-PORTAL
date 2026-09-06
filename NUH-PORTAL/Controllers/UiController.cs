@@ -96,6 +96,22 @@ namespace NUH_PORTAL.Controllers
         public IActionResult PledgeRulesScript() => GeneratedScript(Core.PledgeRules.ToJavaScript());
 
         // ====================================================================
+        //  GET /js/nuh-housing.js — بنية السكن: الأدوار والشقق والغرف وترقيمها.
+        //
+        //  ⚠️ نفس منطق nuh-id.js: القاعدة في Core/HousingStructure.cs والمتصفح
+        //     بياخدها متولّدة منها. قبل كده كانت مكتوبة في
+        //     wwwroot/js/housing-fields.js وحده - يعني في المتصفح بس، والخادم
+        //     مكانش يعرف إن المبنى فيه ٢٠ شقة فكان بيقبل أي رقم يوصله.
+        //     الحارس الوحيد كان القائمة المنسدلة، وده تحقّق شكلي أي حد يعدّيه.
+        //
+        //  ⚠️ AllowAnonymous لأن فورم تسجيل الطالب صفحة عامة بتحمّله.
+        // ====================================================================
+        [AllowAnonymous]
+        [HttpGet("/js/nuh-housing.js")]
+        [Produces("application/javascript")]
+        public IActionResult HousingStructureScript() => GeneratedScript(Core.HousingStructure.ToJavaScript());
+
+        // ====================================================================
         //  GET /js/nuh-trial.js — شارة «تشغيل تجريبي» لصفحات البوابة العامة.
         //
         //  ⚠️ ليه ملف متولّد لا سطر HTML في كل صفحة:

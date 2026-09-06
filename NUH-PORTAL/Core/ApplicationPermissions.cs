@@ -75,6 +75,12 @@ namespace NUH_PORTAL.Core
         // السكن وحسابات الشبكة
         public static readonly ApplicationPermission ViewHousing = new("عرض السكن والحسابات", "housing.view", HousingGroup, "شاشة «إدارة حسابات السكن» في القائمة الجانبية: عرض المباني والوحدات وحسابات الشبكة وحالتها (قراءة فقط)");
         public static readonly ApplicationPermission TransferHousing = new("نقل سكن طالب", "housing.transfer", HousingGroup, "نقل طالب من مبنى أو دور أو شقة أو غرفة إلى أخرى مع إرفاق مستند النقل");
+        // ⚠️ صلاحية مستقلّة عن housing.view عن قصد: شاشة الخريطة بتعرض **أسماء
+        //    الساكنين في كل غرفة** - يعني مين ساكن جنب مين. دي معلومة الموظف
+        //    اللي شغله حسابات الشبكة مالوش لازمة بيها، والمشرف الميداني هو
+        //    اللي محتاجها ومحتاجش يشوف حسابات الدومين. لو الاتنين على صلاحية
+        //    واحدة، منح أي واحدة منهم بيمنح التانية بالغصب.
+        public static readonly ApplicationPermission ViewOccupancyMap = new("خريطة مباني الإسكان", "housing.occupancyMap", HousingGroup, "شاشة «خريطة مباني الإسكان الجامعي» في القائمة الجانبية: كل مبنى بأدواره وشققه وغرفه، وكم ساكنًا في كل غرفة وكم مكانًا فاضيًا. الضغط على الغرفة يعرض أسماء ساكنيها وأرقامهم الجامعية");
         public static readonly ApplicationPermission ManageHousingAccounts = new("إدارة حسابات الشبكة", "housing.manageAccounts", HousingGroup, "تفعيل أو تعطيل حساب الطالب في الشبكة، تصفير كلمة مروره، وإعادة إنشاء الحساب");
         public static readonly ApplicationPermission SyncAd = new("مزامنة وإعدادات الأكتف دايركتوري", "housing.syncAd", HousingGroup, "زر «مزامنة حسابات الشبكة» وتعديل إعدادات الاتصال بالأكتف دايركتوري (مسارات الـ OU والمجموعات)");
 
@@ -109,7 +115,7 @@ namespace NUH_PORTAL.Core
             ViewAuditLogs, ViewAllAuditLogs, ViewErrorLogs, ViewSignInLog,
             ViewStudents, CreateStudents, BulkImportStudents, EditStudents, DeleteStudents, ChangeStudentStatus, OverrideStudentStatus, AllGenders, InvestigateStudents,
             ViewRequests, CreateRequests, ReviewHousing, ReviewCyber, CompleteRequests,
-            ViewHousing, TransferHousing, ManageHousingAccounts, SyncAd,
+            ViewHousing, ViewOccupancyMap, TransferHousing, ManageHousingAccounts, SyncAd,
             ViewFacultyHousing, ManageFacultyHousing, SyncFacultyHousing, ImportFacultyHousing, ConfirmFacultyOccupancy,
             ViewReports,
             ManageLookups,

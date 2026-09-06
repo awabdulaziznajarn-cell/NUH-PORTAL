@@ -48,11 +48,21 @@ namespace NUH_PORTAL.Services
                 .ToList();
         }
 
-        public async Task<List<LookupItemDto>> GetBuildingsAsync(Gender? gender)
+        public async Task<List<BuildingItemDto>> GetBuildingsAsync(Gender? gender)
         {
             var items = await _buildings.FindAllAsync(b => b.IsActive && (gender == null || b.Gender == gender));
             return items.OrderBy(b => b.DisplayOrder)
-                .Select(b => new LookupItemDto { Id = b.Id, Code = b.Code, Name = IsAr ? b.ArName : b.EnName })
+                .Select(b => new BuildingItemDto
+                {
+                    Id = b.Id,
+                    Code = b.Code,
+                    Name = IsAr ? b.ArName : b.EnName,
+                    // أسلوب الترقيم والسعة بيمشوا مع المبنى: الشاشة بتبني قوائم
+                    // الشقق والغرف منهم، فمبنى جديد بيشتغل من غير أي تعديل كود.
+                    Numbering = b.Numbering.ToString(),
+                    RoomCapacity = b.RoomCapacity,
+                    RoomCapacityMax = b.RoomCapacityMax
+                })
                 .ToList();
         }
 

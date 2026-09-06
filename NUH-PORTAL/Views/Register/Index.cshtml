@@ -26,7 +26,8 @@
         selectBuilding = SharedLocalizer["reg_optSelectBuilding"].Value,
         floorFirst = SharedLocalizer["reg_optSelectFloorFirst"].Value,
         selectApartment = SharedLocalizer["reg_optSelectApartment"].Value,
-        selectRoom = SharedLocalizer["reg_optSelectRoom"].Value
+        selectRoom = SharedLocalizer["reg_optSelectRoom"].Value,
+        selectApartmentFirst = SharedLocalizer["reg_optSelectApartmentFirst"].Value
     });
 }
 
@@ -351,6 +352,8 @@
 <script src="/i18n.js"></script>
 <script src="/lookups.js"></script>
 <script src="/js/name-fields.js"></script>
+@* ⚠️ nuh-housing.js قبله: هو مصدر البنية (متولّد من Core/HousingStructure.cs) *@
+<script src="/js/nuh-housing.js"></script>
 <script src="/js/housing-fields.js"></script>
 <script src="/js/phone-field.js"></script>
 <script>
@@ -534,8 +537,12 @@
 
   // الشقة بتتولد من الدور، والغرفة 1-4 — نفس منطق شاشة تسجيل الطالب بالحرف
   NuhHousing.attach({
+    // ⚠️ building في السلسلة: أسلوب ترقيم الشقق والغرف بيختلف من مبنى لمبنى
+    //    (سكن الطلاب متّصل، سكن الطالبات بيبدأ من أول كل دور) - js/housing-fields.js
+    building: 'housing_building',
     floor: 'floor_number', apartment: 'apartment_number', room: 'room_number',
-    labels: { floorFirst: BLD_PH.floorFirst, selectApartment: BLD_PH.selectApartment, selectRoom: BLD_PH.selectRoom }
+    labels: { floorFirst: BLD_PH.floorFirst, selectApartment: BLD_PH.selectApartment,
+              selectRoom: BLD_PH.selectRoom, selectApartmentFirst: BLD_PH.selectApartmentFirst }
   });
 
   async function lkLoadBuildings(gender) {

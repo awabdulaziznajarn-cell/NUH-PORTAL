@@ -1,49 +1,94 @@
 /* ============================================================================
-   خانات السكن المترابطة — منطق مشترك بين كل شاشات إدخال بيانات السكن.
+   خانات السكن المترابطة - منطق مشترك بين كل شاشات إدخال بيانات السكن.
    ----------------------------------------------------------------------------
-   سلسلة الاختيار:   الجنس ← المبنى   |   الدور ← الشقة   |   الغرفة 1-4 دائمًا
+   سلسلة الاختيار:   الجنس ← المبنى ← الدور ← الشقة ← الغرفة
 
-   توزيع الشقق (نفسه في كل المباني — مؤكَّد مع الجهة):
-       الأرضي (0) → 1-4      الدور 1 → 5-8      الدور 2 → 9-12
-       الدور 3   → 13-16     الدور 4 → 17-20
+   ⚠️ المبنى بقى **جزءًا من السلسلة** لا خانة سابقة لها: أسلوب ترقيم الشقق
+      والغرف بيختلف من مبنى لمبنى، فاختيار المبنى بيحدّد الأرقام اللي هتظهر
+      في الخانتين اللي بعده.
 
-   بتتحسب بالمعادلة مش بجدول مخزّن، عشان لو الأدوار أو عدد الشقق اتغيّر
-   يبقى التعديل في ثابت واحد هنا بدل ما يتعدّل في أربع شاشات.
+        سكن الطلاب  (Continuous): الترقيم متّصل عبر المبنى.
+            الأرضي شقق ١-٤ وغرفها ١-١٦، الدور ١ شقق ٥-٨ وغرفها ١٧-٣٢ ...
+        سكن الطالبات (PerFloor)  : الترقيم بيبدأ من أول كل دور.
+            كل دور شقق ١-٤، وكل شقة غرفها ١-٤.
+
+      قبل كده كانت الغرفة ١-٤ دايمًا في كل الشاشات - وده غلط في سكن الطلاب:
+      شقة ٥ غرفها ١٧-٢٠، والخانة كانت بتعرض ١-٤ فالمشرف بيسجّل رقم غرفة
+      مالوش وجود في المبنى.
+
+   ⚠️ الأرقام مش مكتوبة هنا: بتتقرا من NuhHousingStructure (/js/nuh-housing.js)
+      المتولّد من Core/HousingStructure.cs، وأسلوب كل مبنى من
+      /api/lookups/buildings. يعني الخادم والمتصفح بيقروا من نفس المصدر.
 
    ملف مشترك عن قصد: نفس القواعد لازم تسري على تسجيل الطالب لنفسه، وتسجيل
-   المشرف الفردي، وتعديل بيانات الطالب، ونقل السكن. أي نسخة منفصلة من المنطق
-   ده هتفرق عن التانية مع أول تعديل.
+   المشرف الفردي، وتعديل بيانات الطالب، ونقل السكن.
    ============================================================================ */
 (function (global) {
   'use strict';
 
-  var APARTMENTS_PER_FLOOR = 4;   // عدد الشقق في الدور الواحد
-  var ROOMS_PER_APARTMENT = 4;    // عدد الغرف في الشقة الواحدة
-  var FLOOR_CODES = ['0', '1', '2', '3', '4'];   // "0" = الأرضي
+  // ⚠️ قيم احتياطية لو السكربت المتولّد ما حمّلش: الصفحة تفضل شغّالة بالبنية
+  //    المعروفة بدل ما القوائم تطلع فاضية والمستخدم ما يقدرش يكمّل.
+  var HS = global.NuhHousingStructure || {
+    CONTINUOUS: 'Continuous', PER_FLOOR: 'PerFloor',
+    APARTMENTS_PER_FLOOR: 4, ROOMS_PER_APARTMENT: 4,
+    FLOOR_CODES: ['0', '1', '2', '3', '4'],
+    apartmentsFor: function (sc, f) {
+      var n = parseInt(f, 10); if (isNaN(n) || n < 0) return [];
+      var base = (sc === 'PerFloor') ? 1 : n * 4 + 1, o = [];
+      for (var i = 0; i < 4; i++) o.push(String(base + i));
+      return o;
+    },
+    roomsFor: function (sc, a) {
+      var n = parseInt(a, 10); if (isNaN(n) || n < 1) return [];
+      var base = (sc === 'PerFloor') ? 1 : (n - 1) * 4 + 1, o = [];
+      for (var i = 0; i < 4; i++) o.push(String(base + i));
+      return o;
+    }
+  };
 
-  // الدور → أرقام الشقق. الدور 3 مثلًا: 3*4+1 = 13 لحد 16.
-  function apartmentsFor(floor) {
-    var f = parseInt(floor, 10);
-    if (isNaN(f) || f < 0) return [];
-    var out = [];
-    var start = f * APARTMENTS_PER_FLOOR + 1;
-    for (var i = 0; i < APARTMENTS_PER_FLOOR; i++) out.push(String(start + i));
-    return out;
+  var FLOOR_CODES = HS.FLOOR_CODES;   // "0" = الأرضي
+
+  // خريطة كود المبنى ← قواعده. بتتملى مرة واحدة من القوائم المرجعية.
+  // ⚠️ مافيش أي افتراض بالجنس هنا: المبنى بيقول أسلوبه بنفسه، فمبنى جديد
+  //    بأسلوب مختلف بيشتغل من غير تعديل في الملف ده.
+  var _rules = {};
+  var _rulesReady = null;
+
+  function norm(code) { return (code == null ? '' : String(code)).trim().toLowerCase(); }
+
+  function setBuildings(list) {
+    (list || []).forEach(function (b) {
+      if (!b || !b.code) return;
+      _rules[norm(b.code)] = {
+        numbering: b.numbering || HS.CONTINUOUS,
+        capacity: b.roomCapacity || 0,
+        capacityMax: b.roomCapacityMax || 0
+      };
+    });
   }
 
-  function rooms() {
-    var out = [];
-    for (var i = 1; i <= ROOMS_PER_APARTMENT; i++) out.push(String(i));
-    return out;
+  function loadRules() {
+    if (_rulesReady) return _rulesReady;
+    _rulesReady = fetch('/api/lookups/buildings', { credentials: 'same-origin' })
+      .then(function (r) { return r.ok ? r.json() : []; })
+      .then(function (list) { setBuildings(list); })
+      .catch(function () { });
+    return _rulesReady;
+  }
+
+  function rulesFor(code) { return _rules[norm(code)] || null; }
+  function schemeFor(code) {
+    var r = rulesFor(code);
+    return r ? r.numbering : HS.CONTINUOUS;
   }
 
   function el(id) { return id ? document.getElementById(id) : null; }
 
   // بيملأ الـ select ويحافظ على القيمة الحالية *فقط* لو لسه ضمن الخيارات الجديدة.
-  // القيم القديمة الخارجة عن الترقيم (زي 101 و201) بتتشال عمدًا — المستخدم لازم
+  // القيم القديمة الخارجة عن الترقيم (زي 101 و201) بتتشال عمدًا - المستخدم لازم
   // يختار من جديد بدل ما يتحفظ رقم مش موجود في المبنى.
   // ⚠️ placeholder ممكن يكون نص جاهز (شاشات الموظفين بتمرّره مترجم من الـ resx
-  //    وقت الرندر) أو مفتاح resx (بوابة الطالب — القاموس بيوصل بعد التحميل).
+  //    وقت الرندر) أو مفتاح resx (بوابة الطالب - القاموس بيوصل بعد التحميل).
   //    مع المفتاح بنحط data-i18n على الخيار، فتبديل اللغة بيحدّثه لوحده.
   function fillSelect(sel, values, placeholder, disabled, phKey) {
     if (!sel) return;
@@ -69,7 +114,7 @@
 
   /* ربط الخانات ببعض.
      opts = {
-       floor, apartment, room   : ids الخانات (أي واحدة ممكن تتساب)
+       building, floor, apartment, room : ids الخانات (أي واحدة ممكن تتساب)
        labels:    { floorFirst, selectApartment, selectRoom }   نصوص جاهزة، أو
        labelKeys: { floorFirst, selectApartment, selectRoom }   مفاتيح resx
      }
@@ -78,37 +123,61 @@
     opts = opts || {};
     var labels = opts.labels || {};
     var keys = opts.labelKeys || {};   // بديل labels لما النص لسه ماوصلش
-    var fEl = el(opts.floor), aEl = el(opts.apartment), rEl = el(opts.room);
+    var bEl = el(opts.building), fEl = el(opts.floor), aEl = el(opts.apartment), rEl = el(opts.room);
+
+    function scheme() { return bEl ? schemeFor(bEl.value) : HS.CONTINUOUS; }
 
     function syncApartments() {
       if (!aEl) return;
       var floor = fEl ? fEl.value : '';
       if (!floor) {
-        // من غير دور مفيش شقق — القائمة تتفضّى وتتقفل بدل ما تعرض كل الأرقام
+        // من غير دور مفيش شقق - القائمة تتفضّى وتتقفل بدل ما تعرض كل الأرقام
         fillSelect(aEl, [], labels.floorFirst || '', true, keys.floorFirst);
+        syncRooms();
         return;
       }
-      fillSelect(aEl, apartmentsFor(floor), labels.selectApartment || '', false, keys.selectApartment);
+      fillSelect(aEl, HS.apartmentsFor(scheme(), floor), labels.selectApartment || '', false, keys.selectApartment);
+      syncRooms();
     }
 
-    if (rEl) fillSelect(rEl, rooms(), labels.selectRoom || '', false, keys.selectRoom);
-    syncApartments();
+    // ⚠️ الغرف بقت تابعة للشقة لا ثابتة ١-٤: في الترقيم المتّصل رقم الغرفة
+    //    بيتحدّد من رقم شقتها، فمن غير شقة مفيش غرف.
+    function syncRooms() {
+      if (!rEl) return;
+      var apt = aEl ? aEl.value : '';
+      if (!apt) {
+        fillSelect(rEl, [], labels.selectApartmentFirst || labels.selectRoom || '', true,
+                   keys.selectApartmentFirst || keys.selectRoom);
+        return;
+      }
+      fillSelect(rEl, HS.roomsFor(scheme(), apt), labels.selectRoom || '', false, keys.selectRoom);
+    }
 
+    function refresh() { syncApartments(); }
+
+    // القواعد بتوصل بعد التحميل - أول ما توصل بنعيد البناء، فالشاشة تفضل
+    // مظبوطة حتى لو المستخدم اختار قبل ما الرد يرجع.
+    loadRules().then(refresh);
+
+    refresh();
+
+    if (bEl) bEl.addEventListener('change', refresh);
     if (fEl) fEl.addEventListener('change', syncApartments);
+    if (aEl) aEl.addEventListener('change', syncRooms);
 
-    return function refresh() {
-      if (rEl) fillSelect(rEl, rooms(), labels.selectRoom || '', false, keys.selectRoom);
-      syncApartments();
-    };
+    return refresh;
   }
 
   global.NuhHousing = {
-    apartmentsFor: apartmentsFor,
-    rooms: rooms,
+    apartmentsFor: function (scheme, floor) { return HS.apartmentsFor(scheme, floor); },
+    roomsFor: function (scheme, apt) { return HS.roomsFor(scheme, apt); },
     floors: function () { return FLOOR_CODES.slice(); },
+    schemeFor: schemeFor,
+    rulesFor: rulesFor,
+    setBuildings: setBuildings,
     fillSelect: fillSelect,
     attach: attach,
-    APARTMENTS_PER_FLOOR: APARTMENTS_PER_FLOOR,
-    ROOMS_PER_APARTMENT: ROOMS_PER_APARTMENT
+    APARTMENTS_PER_FLOOR: HS.APARTMENTS_PER_FLOOR,
+    ROOMS_PER_APARTMENT: HS.ROOMS_PER_APARTMENT
   };
 })(window);

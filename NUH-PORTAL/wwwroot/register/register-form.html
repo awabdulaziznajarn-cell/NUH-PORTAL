@@ -14,6 +14,8 @@
         مكتوبة في مكان واحد بس. -->
 <script src="../js/nuh-id.js"></script>
 <script src="../i18n.js"></script>
+<!-- nuh-housing.js قبله: مصدر البنية (متولّد من Core/HousingStructure.cs) -->
+<script src="/js/nuh-housing.js"></script>
 <script src="../js/housing-fields.js"></script>
 <script src="../js/name-fields.js"></script>
 <script src="../js/phone-field.js"></script>
@@ -640,11 +642,13 @@ document.getElementById('phone').addEventListener('blur', function() {
 
 // الشقة بتتولد من الدور، والغرفة 1-4 — المنطق كله في js/housing-fields.js
 var housingRefresh = NuhHousing.attach({
+  building: 'housing_building',
   floor: 'floor_number', apartment: 'apartment_number', room: 'room_number',
   // ⚠️ labelKeys لا labels — نفس سبب الأقسام فوق بالظبط: t() هنا بتتنفّذ قبل
   //    ما القاموس يوصل، فرقم الشقة ورقم الغرفة كانوا بيظهروا للطالب بأسماء
   //    مفاتيحهم. NuhHousing بيقبل labelKeys وبيحطّ data-i18n على الخيار.
-  labelKeys: { floorFirst: 'reg_optSelectFloorFirst', selectApartment: 'reg_optSelectApartment', selectRoom: 'reg_optSelectRoom' }
+  labelKeys: { floorFirst: 'reg_optSelectFloorFirst', selectApartment: 'reg_optSelectApartment',
+               selectRoom: 'reg_optSelectRoom', selectApartmentFirst: 'reg_optSelectApartmentFirst' }
 });
 
 ['college','department','academic_level','gender','housing_building','floor_number','apartment_number','room_number'].forEach(function(id) {

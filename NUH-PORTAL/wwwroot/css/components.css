@@ -1869,3 +1869,146 @@ body.printing-pledge .pl-sheet .pl-tile{opacity:.085}
    والصنف على الحاوية لا على الخلفية نفسها عشان الشاشة تقوله مرة واحدة. */
 .chart-body.is-hbar .chart-ghost{opacity:.06;inset-block-end:-10px;inset-inline-end:-10px}
 .chart-body.is-hbar .chart-ghost svg{width:64px;height:64px}
+
+/* ==========================================================================
+   خريطة إشغال المباني (.hmap-*)
+   ------------------------------------------------------------------------
+   ⚠️ الخريطة **رسم بيانات لا زخرفة**: كل لون هنا بيقول حالة إشغال، ومفيش
+      لون واحد موجود للشكل. ده اللي بيخلّي المشرف يمسح ٨٠ غرفة بعينه من غير
+      ما يقرا رقم.
+
+   ⚠️ ومقاس المربّع ثابت لا مرن: الغرف الأربعة في الشقة لازم تبان صفًّا
+      واحدًا مهما ضاقت الشاشة، وأول ما تلفّ الشبكة بيضيع معنى «شقة».
+      الضيق بيتحلّ بتمرير أفقي داخل الدور لا بلفّ الغرف.
+   ========================================================================== */
+
+/* شريط اختيار المبنى */
+.hmap-bar{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px}
+.hmap-bar-empty,.hmap-error{font-size:13px;color:var(--gray-500);padding:14px 2px}
+.hmap-error{color:var(--red)}
+.hmap-loading{text-align:center;padding:34px;color:var(--gray-500);font-size:13px}
+
+.hmap-chip{display:flex;flex-direction:column;gap:5px;min-width:132px;
+  background:var(--white);border:1px solid var(--gray-200);border-radius:12px;
+  padding:10px 13px;cursor:pointer;font-family:inherit;text-align:start;
+  transition:border-color .15s,box-shadow .15s}
+.hmap-chip:hover{border-color:var(--gray-300);box-shadow:0 2px 10px rgba(16,70,49,.06)}
+.hmap-chip.is-on{border-color:var(--navy);box-shadow:0 0 0 3px rgba(16,70,49,.1)}
+.hmap-chip .c{font-size:13.5px;font-weight:700;color:var(--navy-dark)}
+.hmap-chip .m{font-size:11.5px;color:var(--gray-500);font-variant-numeric:tabular-nums}
+/* شريط الامتلاء: بيقول «قد إيه» من غير قراءة، والرقم فوقه بيقول بالظبط. */
+.hmap-chip .bar{display:block;height:4px;border-radius:999px;background:var(--gray-100);overflow:hidden}
+.hmap-chip .bar i{display:block;height:100%;background:var(--navy);border-radius:999px}
+
+/* ترويسة البطاقة + المفتاح */
+.hmap-head{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.hmap-sub{display:block;font-size:11.5px;color:var(--gray-500);margin-top:3px;font-variant-numeric:tabular-nums}
+.hmap-legend{display:flex;gap:14px;flex-wrap:wrap}
+.hmap-legend span{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--gray-600)}
+.hmap-legend .lg{width:12px;height:12px;border-radius:4px;border:1px solid transparent}
+.lg-free{background:var(--white);border-color:var(--gray-300)}
+.lg-part{background:#fef0c7;border-color:#f6c344}
+.lg-full{background:#d1fadf;border-color:#32a06a}
+.lg-over{background:#fee4e2;border-color:var(--red)}
+
+/* الأدوار */
+.hmap-floor{border-top:1px solid var(--gray-100);padding:16px 0}
+.hmap-floor:first-child{border-top:0;padding-top:4px}
+.hmap-floor-h{display:flex;align-items:baseline;gap:10px;margin-bottom:11px}
+.hmap-floor-h b{font-size:13.5px;font-weight:800;color:var(--navy-dark)}
+.hmap-floor-h span{font-size:11.5px;color:var(--gray-500);font-variant-numeric:tabular-nums}
+
+.hmap-apts{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:11px}
+.hmap-apt{border:1px solid var(--gray-200);border-radius:12px;padding:10px 11px 11px}
+.hmap-apt-h{font-size:11.5px;font-weight:700;color:var(--gray-600);margin-bottom:8px}
+/* ⚠️ أربعة أعمدة ثابتة: الشقة أربع غرف دايمًا، والصفّ ده هو اللي بيخلّي
+   العين تقرا «شقة» لا «مجموعة مربّعات». */
+.hmap-apt-rooms{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+
+
+/* ⚠️ الفاضية بيضا لا خضرا: «فاضي» مش نجاح، هو غياب. الخضرا للمكتملة -
+   الغرفة اللي وصلت لسعتها بالظبط وهي الحالة المطلوبة. */
+.hmap-room.is-free{background:var(--white);border-color:var(--gray-200)}
+.hmap-room.is-part{background:#fffaeb;border-color:#f6c344}
+.hmap-room.is-full{background:#ecfdf3;border-color:#32a06a}
+/* نقطة صغيرة: جوّا الغرفة ساكن حالته مغادرة - خلل بيانات مش حالة إشغال،
+   فعلامة لا لون. */
+.hmap-room.has-flag::after{content:"";position:absolute;inset-block-start:4px;inset-inline-end:4px;
+  width:5px;height:5px;border-radius:50%;background:var(--red)}
+
+/* صفوف خارج البنية */
+.hmap-orphans{margin-top:18px;border:1px solid #f6c344;background:#fffaeb;border-radius:12px;padding:13px 15px}
+.hmap-orphans-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:9px}
+.hmap-orphans-h svg{width:16px;height:16px;color:#93370d;flex-shrink:0}
+.hmap-orphans-h b{font-size:12.5px;font-weight:800;color:#93370d}
+.hmap-orphans-h span{font-size:11.5px;color:var(--gray-600)}
+.hmap-orphans ul{list-style:none;display:flex;flex-direction:column;gap:6px}
+.hmap-orphans li{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--navy-dark)}
+.hmap-orphans li b{font-weight:700}
+.hmap-orphans li .sn,.hmap-orphans li .lc{color:var(--gray-600);font-variant-numeric:tabular-nums}
+.hmap-orphans li .wy{font-size:10.5px;font-weight:700;padding:1px 8px;border-radius:999px;
+  background:#fef0c7;color:#93370d}
+
+/* لوحة الغرفة */
+.hmap-modal{max-width:440px}
+.hmap-rp-head{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:13px}
+.hmap-rp-head span{font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:999px;
+  background:var(--gray-100);color:var(--gray-700);font-variant-numeric:tabular-nums}
+.hmap-rp-head .free{background:#fffaeb;color:#93370d}
+.hmap-rp-head .fullb{background:#ecfdf3;color:#05603a}
+.hmap-rp-head .overb{background:#fef3f2;color:var(--red)}
+.hmap-rp-list{list-style:none;display:flex;flex-direction:column;gap:8px}
+.hmap-rp-list li{border:1px solid var(--gray-200);border-radius:10px;padding:9px 12px}
+.hmap-rp-list .nm{display:flex;align-items:center;gap:7px;flex-wrap:wrap;
+  font-size:13px;font-weight:700;color:var(--navy-dark)}
+.hmap-rp-list .sn{font-size:11.5px;color:var(--gray-500);margin-top:2px;font-variant-numeric:tabular-nums}
+.hmap-rp-list .st{font-size:10.5px;font-weight:700;padding:1px 8px;border-radius:999px;
+  background:#fef3f2;color:var(--red)}
+.hmap-rp-list .ad{font-size:10.5px;font-weight:700;padding:1px 8px;border-radius:999px;
+  background:var(--gray-100);color:var(--gray-600)}
+.hmap-rp-empty{font-size:13px;color:var(--gray-500);text-align:center;padding:22px 0}
+
+/* --------------------------------------------------------------------------
+   مربّع الغرفة.
+   ⚠️ نقط لا كسر «٠/٢»: الكسر كان بينعكس في الاتجاه من اليمين لليسار فيتقري
+      «٢/٠» - يعني المشغول والسعة بيتبدّلوا في عين القارئ، وده مش خطأ تنسيق
+      ده معلومة مقلوبة. والنقط بتتقري أسرع كمان: العين بتعدّها من غير ما
+      تقرا رقم، وبتخلّي الصفّ كله يتمسح بنظرة واحدة.
+   ⚠️ والمقاس أصغر ومحكوم بارتفاع ثابت لا بـ aspect-ratio: النسبة كانت
+      بتكبّر المربّع كل ما الشقة تاخد عرض أكبر، فالشاشة الواسعة كانت
+      بتديك مربّعات ضخمة فاضية.
+   -------------------------------------------------------------------------- */
+.hmap-room{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:4px;height:44px;border-radius:7px;cursor:pointer;font-family:inherit;padding:0;
+  border:1px solid var(--gray-200);background:var(--white);
+  transition:transform .12s,box-shadow .12s,border-color .12s}
+.hmap-room:hover{transform:translateY(-1px);box-shadow:0 3px 9px rgba(16,70,49,.11);z-index:1}
+.hmap-room:focus-visible{outline:2px solid var(--gold-ink);outline-offset:2px}
+.hmap-room .n{font-size:11.5px;font-weight:700;color:var(--navy-dark);line-height:1;
+  font-variant-numeric:tabular-nums}
+
+/* النقط: واحدة لكل مكان معتمد، والزيادة المسموحة بحلقة مفرغة عشان تبان
+   استثناءً لا مكانًا عاديًّا. */
+.hmap-room .d{display:flex;gap:3px;align-items:center;line-height:0}
+.hmap-room .d i{width:5px;height:5px;border-radius:50%;background:var(--gray-200);
+  border:1px solid transparent;box-sizing:border-box}
+.hmap-room .d i.on{background:var(--navy)}
+.hmap-room .d i.x{background:transparent;border-color:var(--gray-300)}
+.hmap-room .d i.on.x{background:#2e90fa;border-color:#2e90fa}
+.hmap-room .d b{font-size:9px;font-weight:800;color:var(--red);line-height:1;margin-inline-start:2px}
+
+/* ⚠️ الفاضية بيضا لا خضرا: «فاضي» مش نجاح، هو غياب. الخضرا للمكتملة -
+   الغرفة اللي وصلت لسعتها بالظبط وهي الحالة المطلوبة.
+   ⚠️ و«فوق السعة بموافقة المشرف» أزرق لا أحمر ولا أصفر: ده **إجراء مسموح**
+      بتقوله إدارة الإسكان صراحة. لو خد لون التحذير كانت الشاشة هتشتكي من
+      حاجة سليمة كل يوم، ولو خد لون المكتملة كان هيختفي. الأحمر محجوز
+      لتجاوز الحدّ - وده خلل بيانات حقيقي. */
+.lg-extra{background:#eff8ff;border-color:#2e90fa}
+.hmap-room.is-extra{background:#eff8ff;border-color:#2e90fa}
+.hmap-room.is-extra .d i{background:#b2ddff}
+.hmap-room.is-extra .d i.on{background:#2e90fa}
+.hmap-room.is-part .d i.on{background:#dc9105}
+.hmap-room.is-full .d i.on{background:#32a06a}
+.hmap-room.is-over{background:#fef3f2;border-color:var(--red)}
+.hmap-room.is-over .d i.on{background:var(--red)}
+.hmap-rp-head .extrab{background:#eff8ff;color:#175cd3}

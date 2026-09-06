@@ -42,7 +42,8 @@
     {
         floorFirst = SharedLocalizer["reg_optSelectFloorFirst"].Value,
         selectApartment = SharedLocalizer["reg_optSelectApartment"].Value,
-        selectRoom = SharedLocalizer["reg_optSelectRoom"].Value
+        selectRoom = SharedLocalizer["reg_optSelectRoom"].Value,
+        selectApartmentFirst = SharedLocalizer["reg_optSelectApartmentFirst"].Value
     });
 }
 @functions {
@@ -510,6 +511,8 @@
 <script src="/lookups.js"></script>
 
 <script src="/js/name-fields.js"></script>
+@* ⚠️ nuh-housing.js قبله: هو مصدر البنية (متولّد من Core/HousingStructure.cs) *@
+<script src="/js/nuh-housing.js"></script>
 <script src="/js/housing-fields.js"></script>
 <script src="/js/phone-field.js"></script>
 <script>
@@ -713,8 +716,10 @@
   var HOUSING_PH = @Html.Raw(__housingPh);
   // الشقة بتتولد من الدور، والغرفة 1-4 — نفس منطق شاشات التسجيل (js/housing-fields.js)
   var housingRefresh = NuhHousing.attach({
+    building: 'e_housing_building',
     floor: 'e_floor_number', apartment: 'e_apartment_number', room: 'e_room_number',
-    labels: { floorFirst: HOUSING_PH.floorFirst, selectApartment: HOUSING_PH.selectApartment, selectRoom: HOUSING_PH.selectRoom }
+    labels: { floorFirst: HOUSING_PH.floorFirst, selectApartment: HOUSING_PH.selectApartment,
+              selectRoom: HOUSING_PH.selectRoom, selectApartmentFirst: HOUSING_PH.selectApartmentFirst }
   });
 
   function setEditSelect(id, val) {
