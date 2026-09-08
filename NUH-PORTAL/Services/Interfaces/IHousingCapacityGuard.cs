@@ -16,6 +16,15 @@ namespace NUH_PORTAL.Services.Interfaces
     //     حتى لو اللي فيها خارج نطاقه. التقسيم بيخفي بيانات عن العرض، وما
     //     ينفعش يخفي مكانًا مشغولًا عن الحساب - وإلا اتنين اتسكّنوا في نفس السرير.
     // ========================================================================
+    // إشغال غرفة: السعة المعتمدة، والحدّ اللي المشرف يقدر يوصّل له، والمشغول فعلًا.
+    public record RoomOccupancy(int Capacity, int CapacityMax, int Occupied);
+
+    // إشغال غرفة داخل شقة - رقمها وعدد ساكنيها.
+    public record RoomCount(int Room, int Occupied);
+
+    // إشغال الشقة كلها: السعة واحدة لكل غرفها (خاصية المبنى)، والعدد يخصّ كل غرفة.
+    public record ApartmentOccupancy(int Capacity, int CapacityMax, IReadOnlyList<RoomCount> Rooms);
+
     public interface IHousingCapacityGuard
     {
         // بيرجّع رسالة الخطأ، أو null لو التسكين مسموح.
@@ -29,6 +38,36 @@ namespace NUH_PORTAL.Services.Interfaces
         //     ملف الإكسل بيسكّن عشرة في غرفة واحدة وكلهم لسه مش في الجدول.
         Task<string?> CheckAsync(string? buildingCode, string? floor, string? apartment, string? room,
                                  int? excludeStudentId, bool allowExceptionSlot, int pendingInSameRoom = 0);
+
+        // ====================================================================
+        //  إشغال غرفة واحدة - عدد وبس، بلا أسماء.
+        //
+        //  ⚠️ الفرق ده مقصود: اللي بيسكّن طالبًا محتاج يعرف «الغرفة فيها كام»
+        //     **قبل** ما يقرّر، لكنه مش محتاج يعرف مين. الأسماء في خريطة
+        //     المباني وليها صلاحيتها المستقلة (housing.occupancyMap)، والعدد
+        //     هنا بصلاحية التسكين نفسها - فالمشرف يشوف الضغط من غير ما نكشف
+        //     له مين ساكن جنب مين.
+        //
+        //  بيرجّع null لو الخانات ناقصة أو المبنى مش موجود.
+        // ====================================================================
+        Task<RoomOccupancy?> GetRoomAsync(string? buildingCode, string? floor, string? apartment,
+                                          string? room, int? excludeStudentId);
+
+        // ====================================================================
+        //  إشغال غرف الشقة كلها في نداء واحد.
+        //
+        //  ⚠️ المشرف بيختار الغرفة من قائمة، فمحتاج يشوف الأربعة مع بعض وهو
+        //     بيفتحها - لا يختار واحدة ويستنى الردّ ويرجع يغيّر. ونداء واحد
+        //     لا أربعة: أربعة نداءات معناها أربع لحظات بتوصل بترتيب مش مضمون،
+        //     فالغرفة الأولى ممكن تتلوّن بعد الرابعة.
+        // ====================================================================
+        //  ⚠️ excludeStudentId ضرورة لا رفاهية: إن كان المشرف يراجع طالبًا
+        //     **مقيمًا أصلًا** في هذه الشقة، فعدّه في غرفته يُظهرها مشغولة
+        //     بموضع زائد **بالنسبة إليه هو**، بينما يستثنيه التحقّق عند الحفظ
+        //     (الاستثناء نفسه في CheckAsync). فتعرض القائمة رقمًا ويحسب الحفظ
+        //     رقمًا آخر للغرفة نفسها، وهو ما يحذّر منه التعليق أعلى CountAsync.
+        Task<ApartmentOccupancy?> GetApartmentAsync(string? buildingCode, string? floor, string? apartment,
+                                                    int? excludeStudentId = null);
 
         // نفس الفحص بس بيرمي UserFriendlyException بدل ما يرجّع نصّ.
         Task EnsureAsync(string? buildingCode, string? floor, string? apartment, string? room,

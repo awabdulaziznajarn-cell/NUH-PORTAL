@@ -45,11 +45,15 @@
 }
 
 <style>
-  /* خاص بصفحة إدارة حسابات السكن — نفس ستايلات الصفحة القديمة عشان housing-management.js يشتغل زي ما هو */
-  .stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-bottom:24px}
-  .stat-card{background:var(--white);border-radius:12px;padding:16px 20px;border:1px solid var(--gray-100);box-shadow:0 2px 8px rgba(0,0,0,.04)}
-  .stat-card .stat-label{font-size:13px;color:var(--gray-500);margin-bottom:4px}
-  .stat-card .stat-value{font-size:28px;font-weight:700;color:var(--navy)}
+  /* خاصّ بشاشة إدارة حسابات الإسكان الجامعي - وما عداه في css/components.css */
+
+  /* ⚠️ أُزيلت من هنا نسخة ثانية من بطاقة الإحصاء (.stats-grid و.stat-card
+     و.stat-label و.stat-value). المكوّن معرَّف في css/components.css ويُحمَّل
+     في كل الشاشات، وهذه النسخة المحلّية كانت تُحمَّل بعده فتغلبه في هذه
+     الشاشة وحدها: عرض عمود مختلف، وحشو مختلف، ولون رقم مختلف، وتُسقط
+     position:relative وoverflow:hidden اللذين تعتمد عليهما الأيقونة الباهتة
+     في الخلفية - فتبدو البطاقة هنا غير بطاقة الشاشات الأخرى بلا سبب.
+     و.stat-value صنف ميّت أصلًا: housing-management.js يكتب .stat-num. */
 
   /* شريط أدوات المزامنة — قبل كده كانت الأزرار نص عريان جنب بعضه من غير أي
      تمييز، فمكانش باين إن دي إجراءات ولا إن التنين مختلفين عن بعض. */
@@ -67,8 +71,9 @@
   .tbtn.primary:hover{background:var(--navy-dark,#104631);border-color:var(--navy-dark,#104631)}
   .tbtn.icon-only{padding:8px 10px}
   .tbtn.is-busy svg{animation:spin 1s linear infinite}
-  .hbtn{padding:8px 16px;border:none;border-radius:8px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
-  .btn-outline{background:transparent;border:1px solid var(--gray-300);color:var(--gray-700)}
+  /* ⚠️ أُزيل من هنا تعريفا .hbtn و.btn-outline. مجموعة الأزرار الوحيدة في
+     css/site.css، وهذان كانا محبوسين في هذه الشاشة: أي زرّ يُكتب بصنفهما في
+     شاشة أخرى يخرج بلا تنسيق - وهو ما وقع فعلًا في خريطة المباني. */
   .btn-outline:hover{background:var(--gray-50)}
   .btn-sm{padding:4px 10px;font-size:12px}
   .btn-success{background:var(--green);color:var(--white)}
@@ -300,10 +305,7 @@
     @* flush: محتوى البطاقة يتولّى حوافّه بنفسه - انظر .modal-body.flush في components.css *@
     <div class="modal-body flush" id="detailsModalBody"></div>
     <div class="modal-footer">
-      <button class="hbtn btn-outline" onclick="closeModal('detailsModal')" >@SharedLocalizer["hs_close"]</button>
-      @* ⚠️ التلميحة بتربط النافذتين: الموظف بيعرف إن اللي هيضغطه هنا هيبان
-         في «سجل إجراءات الحساب» باسمه - وده بيخلّيه ياخد باله قبل ما يضغط. *@
-      <span class="hint">@SharedLocalizer["hs_footerAudited"]</span>
+      <button class="btn btn-outline" onclick="closeModal('detailsModal')" >@SharedLocalizer["hs_close"]</button>
     </div>
   </div>
 </div>
@@ -316,8 +318,7 @@
     </div>
     <div class="modal-body" id="lifecycleModalBody"></div>
     <div class="modal-footer">
-      <button class="hbtn btn-outline" onclick="closeModal('lifecycleModal')" >@SharedLocalizer["hs_close"]</button>
-      <span class="hint">@SharedLocalizer["hs_footerLog"]</span>
+      <button class="btn btn-outline" onclick="closeModal('lifecycleModal')" >@SharedLocalizer["hs_close"]</button>
     </div>
   </div>
 </div>
@@ -343,12 +344,12 @@
     <div class="modal-body">
       <div style="display:flex;gap:8px;margin-bottom:16px">
         <input type="text" id="adSearchInput" style="flex:1;padding:8px 12px;border:1px solid var(--gray-300);border-radius:8px;font-family:inherit;font-size:13px" placeholder='@(SharedLocalizer["hs_searchPlaceholder"].Value)'>
-        <button class="hbtn" style="background:var(--navy);color:#fff" onclick="performADSearch()" >@SharedLocalizer["hs_search"]</button>
+        <button class="btn btn-primary" onclick="performADSearch()" >@SharedLocalizer["hs_search"]</button>
       </div>
       <div id="adSearchResults"></div>
     </div>
     <div class="modal-footer">
-      <button class="hbtn btn-outline" onclick="closeModal('adSearchModal')" >@SharedLocalizer["hs_close"]</button>
+      <button class="btn btn-outline" onclick="closeModal('adSearchModal')" >@SharedLocalizer["hs_close"]</button>
     </div>
   </div>
 </div>
@@ -447,7 +448,7 @@
     document.getElementById('adSyncTitle').textContent = title;
     document.getElementById('adSyncBody').innerHTML = bodyHtml;
     document.getElementById('adSyncFooter').innerHTML = footerHtml ||
-      '<button class="hbtn btn-outline" onclick="closeModal(\'adSyncModal\')">' + L.close + '</button>';
+      '<button class="btn btn-outline" onclick="closeModal(\'adSyncModal\')">' + L.close + '</button>';
     openModal('adSyncModal');
   }
 
@@ -538,8 +539,8 @@
       }
 
       var footer = p.linked > 0
-        ? '<button class="hbtn btn-outline" onclick="closeModal(\'adSyncModal\')">' + L.cancel + '</button>' +
-          '<button class="hbtn" style="background:var(--navy);color:#fff" onclick="confirmAdLink()">' + L.runLink + ' (' + p.linked + ')</button>'
+        ? '<button class="btn btn-outline" onclick="closeModal(\'adSyncModal\')">' + L.cancel + '</button>' +
+          '<button class="btn btn-primary" onclick="confirmAdLink()">' + L.runLink + ' (' + p.linked + ')</button>'
         : null;
 
       showSyncModal(L.previewTitle, html, footer);

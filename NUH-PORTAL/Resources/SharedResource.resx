@@ -3031,7 +3031,7 @@
     <value>اعتماد الطلب</value>
   </data>
   <data name="rdp_actionDesc_approveToCyber" xml:space="preserve">
-    <value>الموافقة على الطلب وإرساله لمراجعة الأمن السيبراني</value>
+    <value>الموافقة على الطلب وإرساله لمراجعة ادارة الأمن السيبراني</value>
   </data>
   <data name="rdp_actionDesc_approveToNetwork" xml:space="preserve">
     <value>الموافقة على الطلب وإرساله لإنشاء حساب الشبكة</value>
@@ -6178,7 +6178,7 @@
     <value>سياسة الاستخدام</value>
   </data>
   <data name="pt_homeStudentBtn" xml:space="preserve">
-    <value>دخول بوابة الطلاب</value>
+    <value>الدخول الي الخدمات</value>
   </data>
   <data name="pt_homeStaffTitle" xml:space="preserve">
     <value>بوابة الموظفين</value>
@@ -6791,13 +6791,13 @@
     <value>المباني</value>
   </data>
   <data name="hmap_capacity" xml:space="preserve">
-    <value>سعة الغرفة</value>
+    <value>الطاقة الاستيعابية للغرفة</value>
   </data>
   <data name="hmap_extraBy" xml:space="preserve">
     <value>فوق السعة بـ</value>
   </data>
   <data name="hmap_freePlaces" xml:space="preserve">
-    <value>متسع</value>
+    <value>المتاح</value>
   </data>
   <data name="hmap_lgExtra" xml:space="preserve">
     <value>فوق السعة بموافقة</value>
@@ -6812,7 +6812,7 @@
     <value>تجاوزت السعة</value>
   </data>
   <data name="hmap_lgPartial" xml:space="preserve">
-    <value>بها متسع</value>
+    <value>بها متاح</value>
   </data>
   <data name="hmap_loadFailed" xml:space="preserve">
     <value>تعذَّر تحميل الخريطة</value>
@@ -6848,7 +6848,7 @@
     <value>كل مبنى بأدواره وشققه وغرفه - محسوبًا من بيانات الطلاب لحظة العرض</value>
   </data>
   <data name="hmap_placesWord" xml:space="preserve">
-    <value>مكان</value>
+    <value>من الطاقة الاستيعابية</value>
   </data>
   <data name="hmap_roomEmpty" xml:space="preserve">
     <value>لا يوجد ساكنون في هذه الغرفة</value>
@@ -6863,13 +6863,13 @@
     <value>غرف فوق السعة</value>
   </data>
   <data name="hmap_statFreePlaces" xml:space="preserve">
-    <value>أماكن شاغرة</value>
+    <value>الطاقة المتاحة</value>
   </data>
   <data name="hmap_statFullRooms" xml:space="preserve">
     <value>غرف مكتملة</value>
   </data>
   <data name="hmap_statOccupiedPlaces" xml:space="preserve">
-    <value>أماكن مشغولة</value>
+    <value>الطاقة المشغولة</value>
   </data>
   <data name="hmap_statOverRooms" xml:space="preserve">
     <value>غرف تجاوزت السعة</value>
@@ -6906,5 +6906,35 @@
   </data>
   <data name="vfy_scope" xml:space="preserve">
     <value>بياناتك كاملة - صلاحية التحقّق من الوثائق</value>
+  </data>
+  <data name="rdp_lbl_assignHousing" xml:space="preserve">
+    <value>تسكين الطالب</value>
+  </data>
+  <data name="rdp_hint_assignHousing" xml:space="preserve">
+    <value>اختر المبنى والدور والشقة والغرفة - الاعتماد لا يتم بدونها، والنظام يمنع الغرف المكتملة.</value>
+  </data>
+  <data name="reg_housingAssignedNote" xml:space="preserve">
+    <value>يُحدَّد سكنك (المبنى والدور والشقة والغرفة) من إدارة الإسكان الجامعي عند اعتماد طلبك، ويظهر لك في صفحة متابعة الطلب.</value>
+  </data>
+  <data name="rdp_lbl_currentHousing" xml:space="preserve">
+    <value>التسكين الحالي للطالب</value>
+  </data>
+  <data name="rdp_hint_currentHousing" xml:space="preserve">
+    <value>الحقول مضبوطة على سكنه الحالي - اعتمدها كما هي لإبقائه في غرفته، أو غيّرها لنقله إلى غرفة أخرى. سكنه الحالي غير محسوب ضمن إشغال الغرفة.</value>
+  </data>
+  <data name="hmap_freePlace" xml:space="preserve">
+    <value>شاغر</value>
+  </data>
+  <data name="hmap_extraFreePlace" xml:space="preserve">
+    <value>شاغر - ضمن الحدّ الاستثنائي</value>
+  </data>
+  <data name="hmap_extraPlace" xml:space="preserve">
+    <value>ضمن الحدّ الاستثنائي</value>
+  </data>
+  <data name="hmap_openFile" xml:space="preserve">
+    <value>ملف الطالب</value>
+  </data>
+  <data name="hmap_transfer" xml:space="preserve">
+    <value>نقل السكن</value>
   </data>
 </root>

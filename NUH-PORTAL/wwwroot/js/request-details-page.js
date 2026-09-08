@@ -615,13 +615,18 @@ function renderRequest(r) {
           '<div class="fieldpick-hint">'+t('rdp_hint_infoFields')+'</div>'+
           '<div class="fieldpick-grid" id="infoFieldsGrid"></div>'+
         '</div>'+
+        // ⚠️ التسكين جزء من الاعتماد في مرحلة إدارة الإسكان وحدها: هي اللحظة
+        //    اللي بيتقرّر فيها الطالب هيسكن فين. والطالب مابقاش يختار سكنه في
+        //    الفورم - مايعرفش هيتسكّن فين أصلًا، فكان بيخمّن والمشرف يصلّح وراه.
+        //    الشرط من جدول الانتقالات لا من اسم حالة مكتوب هنا.
+        (isHousingStage(st) ? housingAssignBox() : '')+
         '<div class="reject-reason-field" id="rejectReasonField">'+
           '<label id="reasonLabel" style="font-size:13px;font-weight:600;color:var(--navy-dark);margin-bottom:6px;display:block">'+
             t('rdp_lbl_rejectionReasonRequired')+'</label>'+
           '<textarea id="rejectReason" placeholder="'+t('rdp_ph_rejectionReason')+'" oninput="updateReviewSubmitState()"></textarea>'+
           '<div class="error-msg" id="rejectReasonError">'+t('rdp_err_rejectionReasonRequired')+'</div>'+
         '</div>'+
-        '<button class="submit-review-btn" id="submitReviewBtn" disabled onclick="submitReview(\''+st+'\')">'+
+        '<button class="btn btn-primary lg" id="submitReviewBtn" disabled onclick="submitReview(\''+st+'\')">'+
           t('rdp_btn_submitReview')+'</button>'+
       '</div></div></div>';
   }
@@ -799,6 +804,10 @@ function renderRequest(r) {
 
   loadHousingAccount(s.id);
 
+  // ⚠️ بعد ما البطاقة تترسم لا قبلها: الخانات نفسها بتتولد مع الـ HTML فوق،
+  //    والمباني بتتفلتر على جنس الطالب - مشرف قسم مايسكّنش في مبنى القسم التاني.
+  if (document.getElementById('housingAssignBox')) initHousingAssign(s);
+
 }
 
 function closeHousingLifecycle() {
@@ -888,12 +897,378 @@ var selectedDecision = null;
 // وقبل كده كان بيتبعت بملاحظات فاضية فالطالب مايعرفش يعمل إيه.
 var DECISIONS_NEEDING_NOTES = ['reject', 'request-info'];
 
+// ==========================================================================
+//  تسكين الطالب داخل بطاقة المراجعة - مرحلة إدارة الإسكان وحدها.
+//
+//  ⚠️ الشرط مشتقّ من جدول الانتقالات (window.__WF) لا من أسماء حالات مكتوبة
+//     هنا: مسار تسجيل الطالب ومسار طلب الموظف ليهم أسماء مختلفة لنفس المرحلة،
+//     وأي سلسلة شروط محلية بتفارق الجدول عند أول تعديل.
+//  ⚠️ ومحصور على مسار /api/Workflow: طلب الموظف بيتقدّم أصلًا وفيه بيانات
+//     السكن من شاشة المشرف، فمافيش حاجة تتسأل عنها تاني.
+// ==========================================================================
+function isHousingStage(status) {
+  var wf = NuhWorkflow.forStatus(status);
+  if (!wf || wf.api !== 'workflow') return false;
+  var p = wf.permissions || [];
+  for (var i = 0; i < p.length; i++) if (p[i] === 'requests.reviewHousing') return true;
+  return false;
+}
+
+function housingAssignBox() {
+  return '<div class="housing-assign" id="housingAssignBox">' +
+    '<label class="fieldpick-title">' + t('rdp_lbl_assignHousing') + '</label>' +
+    '<div class="fieldpick-hint">' + t('rdp_hint_assignHousing') + '</div>' +
+    // ⚠️ الطالب المسكَّن سلفًا: تُضبط الحقول على سكنه الحالي، وهذا السطر
+    //    يُصرّح بذلك. بدونه يرى المشرف أربع قوائم فارغة لطالب مقيم فعلًا،
+    //    فيظنّ أن النظام تركه بلا سكن ويعيد تسكينه من جديد.
+    '<div class="fieldpick-hint" id="ha_currentNote" style="display:none"></div>' +
+    '<div class="housing-assign-grid">' +
+      '<div><label for="ha_building">' + t('reg_lblBuilding') + '</label>' +
+        '<select id="ha_building"></select></div>' +
+      '<div><label for="ha_floor">' + t('reg_lblFloor') + '</label>' +
+        '<select id="ha_floor">' +
+          '<option value="">' + t('reg_optSelectFloor') + '</option>' +
+          '<option value="0">' + t('reg_optFloorGround') + '</option>' +
+          '<option value="1">1</option><option value="2">2</option>' +
+          '<option value="3">3</option><option value="4">4</option>' +
+        '</select></div>' +
+      '<div><label for="ha_apartment">' + t('reg_lblApartment') + '</label>' +
+        '<select id="ha_apartment"></select></div>' +
+      '<div><label for="ha_room">' + t('reg_lblRoom') + '</label>' +
+        '<select id="ha_room"></select></div>' +
+    '</div>' +
+  '</div>';
+}
+
+// بيتنادى بعد ما بطاقة المراجعة تترسم. الترقيم والسعة من نفس مصدر باقي
+// الشاشات (js/housing-fields.js فوق nuh-housing.js المتولّد).
+async function initHousingAssign(student) {
+  var sel = document.getElementById('ha_building');
+  if (!sel || typeof NuhHousing === 'undefined') return;
+
+  var s = student || {};
+  var gender = s.gender;
+
+  // ⚠️ يُحفظ رقم الطالب هنا ليستثنيه نداء الإشغال من العدّ، كما يستثنيه
+  //    التحقّق على الخادم. وبدونه تبدو غرفته مشغولة بموضع زائد.
+  _haStudentId = s.id || 0;
+
+  // سكنه الحالي إن وُجد - تُضبط عليه الحقول بعد بناء القوائم.
+  _haPreset = (s.housing_building && s.floor_number && s.apartment_number && s.room_number)
+    ? { building: String(s.housing_building), floor: String(s.floor_number),
+        apartment: String(s.apartment_number), room: String(s.room_number) }
+    : null;
+
+  var note = document.getElementById('ha_currentNote');
+  if (note && _haPreset) {
+    var __parts = [tf('loc_building', 'مبنى', 'Building') + ' ' + escHtml(s.housing_building)];
+    var __unit = housingUnitText(s);
+    if (__unit) __parts.push(escHtml(__unit));
+    note.innerHTML = '<strong>' + t('rdp_lbl_currentHousing') + ':</strong> ' + __parts.join(' · ') +
+                     '<br>' + t('rdp_hint_currentHousing');
+    note.style.display = '';
+  }
+
+  var list = [];
+  try {
+    var res = await fetch('/api/lookups/buildings' + (gender ? '?gender=' + encodeURIComponent(gender) : ''),
+                          { credentials: 'same-origin' });
+    if (res.ok) list = await res.json();
+  } catch (e) { }
+
+  // ⚠️ القائمة بتغذّي housing-fields بقواعد كل مبنى كمان: أسلوب الترقيم بيحدّد
+  //    أرقام الشقق والغرف، ومن غيره الخانات بتعرض أرقامًا مش موجودة في المبنى.
+  if (NuhHousing.setBuildings) NuhHousing.setBuildings(list);
+
+  sel.innerHTML = '<option value="">' + t('reg_optSelectBuilding') + '</option>';
+  list.forEach(function (b) {
+    var o = document.createElement('option');
+    o.value = b.code; o.textContent = b.name || b.code;
+    sel.appendChild(o);
+  });
+
+  NuhHousing.attach({
+    building: 'ha_building', floor: 'ha_floor', apartment: 'ha_apartment', room: 'ha_room',
+    labels: { floorFirst: t('reg_optSelectFloorFirst'), selectApartment: t('reg_optSelectApartment'),
+              selectRoom: t('reg_optSelectRoom'), selectApartmentFirst: t('reg_optSelectApartmentFirst') }
+  });
+
+  // ⚠️ NuhSelect بيشتغل تلقائيًا مرة واحدة عند تحميل الصفحة، والخانات دي
+  //    بتتولد بعد كده (بطاقة المراجعة بتترسم مع بيانات الطلب). من غير النداء
+  //    ده كانت بتفضل <select> خام يرسمه نظام التشغيل - بخط ويندوز وسطر أزرق
+  //    مالوش علاقة بألوان النظام، وسط أربع قوائم في نفس الشاشة بشكل تاني.
+  enhanceHousingSelects();
+
+  // ⚠️ الربط بالكود لا بـ onchange في الوسم: سياسة الأمان (CSP) بتشتكي من
+  //    معالِجات الأحداث المكتوبة في الوسم، وهي دلوقتي في وضع المراقبة - بس
+  //    أول ما تتفعّل بتتوقف. والربط بالكود بيشتغل في الحالتين.
+  ['ha_building', 'ha_floor', 'ha_apartment', 'ha_room'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('change', onHousingFieldChange);
+  });
+
+  // ⚠️ ونداء متأخر كمان: NuhHousing.attach بيجيب قواعد المباني من الخادم
+  //    (نداء غير متزامن) وبيعيد بناء قوائم الشقة والغرفة أول ما توصل - يعني
+  //    بعد السطر ده. من غير النداء المتأخر، الشقة اللي كانت متحدّدة بتفضل
+  //    غرفها بلا إشغال لحد ما المستخدم يغيّر حاجة.
+  watchRoomOptions();
+  applyHousingPreset();
+  refreshRoomBadges();
+  setTimeout(function () { applyHousingPreset(); refreshRoomBadges(); }, 400);
+}
+
+// ==========================================================================
+//  ضبط الحقول على السكن الحالي للطالب.
+//
+//  ⚠️ على التوالي لا دفعة واحدة: قائمة الشقق لا تُبنى إلا بعد اختيار الدور،
+//     وقائمة الغرف بعد الشقة (js/housing-fields.js). فتُضبط الحقول واحدًا
+//     تلو الآخر، ويتوقّف الضبط عند أول حقل لا تُوجد قيمته في قائمته - ثم
+//     يعيد النداء المؤجَّل المحاولة بعد وصول قواعد المباني من الخادم.
+//  ⚠️ ويُترك اختيار المستخدم إن غيّره: الدالة تُستدعى مرّتين، ولا يصحّ أن
+//     تُعيد الثانية اختياره إلى وضعه الأول.
+// ==========================================================================
+function applyHousingPreset() {
+  if (!_haPreset || _haPresetDone) return;
+
+  if (!setHousingSelect('ha_building',  _haPreset.building))  return;
+  if (!setHousingSelect('ha_floor',     _haPreset.floor))     return;
+  if (!setHousingSelect('ha_apartment', _haPreset.apartment)) return;
+  if (!setHousingSelect('ha_room',      _haPreset.room))      return;
+
+  _haPresetDone = true;
+  refreshHousingSelects();
+  updateReviewSubmitState();
+}
+
+// يضبط القيمة إن كانت موجودة في القائمة، ويُرجع false إن لم تكن قد بُنيت بعد.
+function setHousingSelect(id, value) {
+  var el = document.getElementById(id);
+  if (!el || !value) return false;
+
+  var found = false;
+  for (var i = 0; i < el.options.length; i++) {
+    if (el.options[i].value === value) { found = true; break; }
+  }
+  if (!found) return false;
+
+  if (el.value !== value) {
+    el.value = value;
+    // ⚠️ يجب إطلاق الحدث صراحةً: تغيير القيمة برمجيًا لا يولّد change،
+    //    وإطلاقه هو ما يدفع housing-fields.js لبناء القائمة التالية.
+    el.dispatchEvent(new Event('change'));
+  }
+  return true;
+}
+
+// ⚠️ enhance للعنصر الجديد، وrefresh للعنصر اللي خياراته اتغيّرت: تغيير المبنى
+//    بيعيد بناء قوائم الشقة والغرفة من housing-fields.js، والواجهة المرسومة
+//    فوقها لازم تتحدّث معاها وإلا فضلت تعرض أرقام المبنى القديم.
+function enhanceHousingSelects() {
+  var box = document.getElementById('housingAssignBox');
+  if (!box || !window.NuhSelect) return;
+  if (NuhSelect.enhance) NuhSelect.enhance(box);
+}
+
+function refreshHousingSelects() {
+  if (!window.NuhSelect || !NuhSelect.refresh) return;
+  ['ha_building', 'ha_floor', 'ha_apartment', 'ha_room'].forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) NuhSelect.refresh(el);
+  });
+}
+
+// ==========================================================================
+//  إشغال غرف الشقة - شارة جنب رقم كل غرفة في القائمة.
+//
+//  ⚠️ في القائمة لا في سطر تحتها: المشرف بيختار غرفة من أربعة، فمحتاج يشوف
+//     الأربعة وهو بيقرّر لا يعرف بعد ما يختار. السطر اللي تحت كان بيقول له
+//     «اللي اخترتها مليانة» - يعني محاولة ضايعة في كل مرة.
+//
+//  ⚠️ نداء واحد للشقة كلها: أربعة نداءات بتوصل بترتيب مش مضمون، فالغرفة
+//     الأولى ممكن تتلوّن بعد الرابعة.
+//
+//  ⚠️ والنقط نفس لغة الخريطة: مليانة = مكان مشغول، مفرغة = مكان فاضي،
+//     وحلقة = المكان الاستثنائي اللي المشرف يقدر يستخدمه. لو الرمز اتفرق
+//     بين الشاشتين، القارئ بيتعلّم لغتين لنفس المعنى.
+//
+//  ⚠️ والنقط في **نصّ الخيار نفسه** لا في سمة بيرسمها مكوّن القائمة: النصّ
+//     بيتعرض في القائمة المرسومة وفي القائمة الأصلية وفي الحقل المقفول -
+//     تلات أماكن من غير أي كود إضافي. المحاولة الأولى كانت بسمة على الخيار،
+//     وده ربط الظهور بمكوّن تاني ولحظة تحديثه، وخلّى عطل واحد يخفي المعلومة
+//     كلها من غير أثر.
+//
+//  ⚠️ و U+2068/U+2069 حوالين النقط (عزل ثنائي الاتجاه): النقط رموز محايدة،
+//     ومن غير العزل بتتلمّ مع الأرقام والعربي حواليها فترتيبها بينقلب -
+//     نفس باج «٠ / ٣٢» اللي وقعنا فيه مرتين قبل كده.
+// ==========================================================================
+var _haSeq = 0;
+var _haStudentId = 0;      // الطالب محلّ التسكين - مستثنى من عدّ الإشغال
+var _haPreset = null;      // سكنه الحالي، أو null إن لم يكن مسكَّنًا
+var _haPresetDone = false; // تمّ الضبط - فلا يُلغى اختيار المستخدم بعده
+
+// ==========================================================================
+//  تغيّرت خانة من خانات التسكين.
+//
+//  ⚠️ الاتنين مع بعض في دالة واحدة: تغيير المبنى بيعيد بناء قوائم الشقة
+//     والغرفة (من js/housing-fields.js)، فالقيم القديمة بتتلغي - ولازم زرّ
+//     الاعتماد والإشغال يتحدّثوا مع بعض، وإلا الزرّ بيفضل شغّال على اختيار
+//     مابقاش موجود.
+//
+//  ⚠️ و setTimeout مش تأخير عشوائي: housing-fields.js مربوط على نفس الحدث
+//     وبيعيد البناء. لو قرينا القيم قبله كنا هنقرا اختيارًا اتلغى بعدها
+//     بجزء من الثانية.
+// ==========================================================================
+function onHousingFieldChange() {
+  setTimeout(function () {
+    refreshHousingSelects();
+    updateReviewSubmitState();
+    refreshRoomBadges();
+  }, 0);
+}
+var _haApplying = false;   // بنكتب في الخيارات دلوقتي - المراقب يتجاهل التغيير ده
+var _haOcc = null;         // آخر إشغال وصل: { key, capacity, capacityMax, byRoom }
+
+// ==========================================================================
+//  مراقب قائمة الغرف.
+//
+//  ⚠️ ده اللي كان ناقص: js/housing-fields.js بيعيد بناء خيارات الغرفة
+//     (innerHTML) في أكتر من لحظة - مع تغيير المبنى، ومع تغيير الدور، ومع
+//     تغيير الشقة، **وكمان** لما قواعد المباني توصل من الخادم متأخرة. وكل
+//     إعادة بناء بتمسح النصّ اللي كتبناه.
+//
+//     ربط الكتابة بحدث معيّن معناه إننا بنسابق إعادة البناء - ومرة بنكسب
+//     ومرة بنخسر، وده اللي خلّى الإشغال يظهر ويختفي بلا سبب واضح.
+//
+//     المراقب بيقلب المعادلة: مش إحنا بنختار امتى نكتب، هو بيقولنا «الخيارات
+//     اتغيّرت» فنكتب بعدها مباشرة - مهما كان اللي غيّرها ومهما كان الترتيب.
+// ==========================================================================
+function watchRoomOptions() {
+  var roomSel = document.getElementById('ha_room');
+  if (!roomSel || roomSel.__nuhOccWatch || typeof MutationObserver === 'undefined') return;
+  roomSel.__nuhOccWatch = true;
+
+  new MutationObserver(function () {
+    if (_haApplying) return;   // إحنا اللي كتبنا - مش إعادة بناء
+    applyRoomOccupancy();
+  }).observe(roomSel, { childList: true });
+}
+
+// بيكتب الإشغال المحفوظ على الخيارات الحالية. بيتنادى من المراقب وبعد كل نداء.
+function applyRoomOccupancy() {
+  var roomSel = document.getElementById('ha_room');
+  if (!roomSel || !_haOcc) return;
+
+  var key = [(document.getElementById('ha_building') || {}).value,
+             (document.getElementById('ha_floor') || {}).value,
+             (document.getElementById('ha_apartment') || {}).value].join('|');
+  if (key !== _haOcc.key) return;   // الإشغال ده بتاع شقة تانية
+
+  _haApplying = true;
+  try {
+    for (var i = 0; i < roomSel.options.length; i++) {
+      var o = roomSel.options[i];
+      if (!o.value) continue;
+      var n = _haOcc.byRoom[o.value];
+      if (n === undefined) continue;
+
+      // ⚠️ سمة على الخيار لا نصّ فيه: النصّ يفضل رقم الغرفة وحده، والمؤشّر
+      //    بيرسمه مكوّن القائمة (js/select-field.js) كشرائط. كده رقم الغرفة
+      //    يفضل قابل للبحث في القائمة، والشكل واحد في كل النظام.
+      //    والمقام هو الحدّ الأقصى لا السعة: الشريحة الزيادة بتوري إن فيه
+      //    مكان استثنائي موجود أصلًا.
+      o.setAttribute('data-meter', n + '/' + _haOcc.capacityMax);
+      var tone = occupancyTone(n, _haOcc.capacity, _haOcc.capacityMax);
+      if (tone) o.setAttribute('data-meter-tone', tone);
+      else o.removeAttribute('data-meter-tone');
+
+      // العدد بالظبط لمّا يقف بالماوس - المؤشّر للمسح السريع.
+      o.title = n + ' ' + t('hmap_ofCapacity') + ' ' + _haOcc.capacity;
+    }
+  } finally { _haApplying = false; }
+
+  if (window.NuhSelect && NuhSelect.refresh) NuhSelect.refresh(roomSel);
+}
+
+// نغمة المؤشّر من حالة الغرفة - نفس ألوان خريطة المباني.
+function occupancyTone(occupied, capacity, capacityMax) {
+  if (occupied === 0) return '';
+  if (occupied > capacityMax) return 'bad';
+  if (occupied > capacity) return 'info';
+  if (occupied >= capacity) return 'ok';
+  return 'warn';
+}
+
+async function refreshRoomBadges() {
+  var roomSel = document.getElementById('ha_room');
+  if (!roomSel) return;
+
+  var building = (document.getElementById('ha_building') || {}).value || '';
+  var floor    = (document.getElementById('ha_floor') || {}).value || '';
+  var apt      = (document.getElementById('ha_apartment') || {}).value || '';
+
+  // بلا شقة مفيش غرف أصلًا - القائمة نفسها بتبقى مقفولة.
+  if (!building || !floor || !apt) return;
+
+  var seq = ++_haSeq;
+  var data = null;
+  try {
+    // ⚠️ بلا ترويسة Authorization عن قصد: الشاشة دي بتتفتح بكوكي الجلسة
+    //    (صفحة MVC)، ومُحدِّد المخطط في Program.cs بيقول إن أي طلب فيه
+    //    «Bearer» بيتقيّم بالتوكن **وحده** ويتجاهل الكوكي. فلو في المتصفح
+    //    توكن قديم من الواجهة القديمة، إرساله بيحوّل طلبًا كان هينجح بالكوكي
+    //    إلى 401. نفس أسلوب خريطة المباني بالحرف.
+    // ⚠️ والطالب نفسه مستثنى من العدّ: إن كان مقيمًا في هذه الشقة أصلًا،
+    //    فعدّه يُظهر غرفته أضيق بموضع **بالنسبة إليه هو**، والخادم يستثنيه
+    //    عند الحفظ. والرقم المعروض في القائمة يجب أن يطابق الرقم المحسوب.
+    var res = await fetch('/api/housing/room?building=' + encodeURIComponent(building) +
+                          '&floor=' + encodeURIComponent(floor) +
+                          '&apartment=' + encodeURIComponent(apt) +
+                          (_haStudentId ? '&excludeStudentId=' + encodeURIComponent(_haStudentId) : ''),
+                          { credentials: 'same-origin' });
+    if (res.ok && res.status !== 204) data = await res.json();
+  } catch (e) { }
+
+  // ⚠️ العطل ما يفضلش صامت: قبل كده لو النداء وقع، القائمة كانت بتظهر بلا
+  //    إشغال من غير أي أثر - وده خلّانا ندوّر على السبب في ثلاث جولات.
+  if (!data || !data.rooms) {
+    console.warn('[NUH] room occupancy unavailable', { building: building, floor: floor, apartment: apt });
+    return;
+  }
+  if (seq !== _haSeq) return;
+
+  var byRoom = {};
+  data.rooms.forEach(function (r) { byRoom[String(r.room)] = r.occupied; });
+
+  // ⚠️ بنخزّن الإشغال ونطبّقه من مكان واحد: المراقب بيعيد تطبيقه بعد أي إعادة
+  //    بناء للقائمة، فالمعلومة مابتضيعش مهما اتغيّر الترتيب.
+  //    والعنوان الكامل في title - النقط للمسح السريع والرقم لمّا تحتاجه.
+  _haOcc = { key: building + '|' + floor + '|' + apt, capacity: data.capacity,
+             capacityMax: data.capacityMax, byRoom: byRoom };
+  applyRoomOccupancy();
+}
+
+// القيم الأربعة، أو null لو واحدة ناقصة.
+function housingAssignValues() {
+  var box = document.getElementById('housingAssignBox');
+  if (!box) return undefined;   // مش مرحلة تسكين أصلًا
+  var v = {
+    housingBuilding: (document.getElementById('ha_building') || {}).value || '',
+    floorNumber:     (document.getElementById('ha_floor') || {}).value || '',
+    apartmentNumber: (document.getElementById('ha_apartment') || {}).value || '',
+    roomNumber:      (document.getElementById('ha_room') || {}).value || ''
+  };
+  return (v.housingBuilding && v.floorNumber && v.apartmentNumber && v.roomNumber) ? v : null;
+}
+
 function updateReviewSubmitState() {
   var btn = document.getElementById('submitReviewBtn');
   if (!btn) return;
   var ok = false;
   if (selectedDecision === 'approve') {
-    ok = true;
+    // ⚠️ الاعتماد بلا تسكين ممنوع في مرحلة الإسكان: الطلب كان بيعدّي للمرحلة
+    //    اللي بعدها وصاحبه بلا غرفة، ويخرج من الطابور فمحدش يرجعله.
+    var hv = housingAssignValues();
+    ok = (hv !== null);
   } else if (DECISIONS_NEEDING_NOTES.indexOf(selectedDecision) > -1) {
     var ta = document.getElementById('rejectReason');
     ok = !!(ta && ta.value.trim());
@@ -952,7 +1327,13 @@ function selectApprove() {
   document.getElementById('rejectReason').classList.remove('error');
   document.getElementById('rejectReasonError').style.display = 'none';
   toggleInfoFields(false);
+  toggleHousingAssign(true);
   updateReviewSubmitState();
+}
+
+function toggleHousingAssign(show) {
+  var box = document.getElementById('housingAssignBox');
+  if (box) box.classList.toggle('visible', !!show);
 }
 
 function toggleInfoFields(show) {
@@ -971,6 +1352,7 @@ function selectReject() {
   setReasonTexts('reject');
   document.getElementById('rejectReasonField').classList.add('visible');
   toggleInfoFields(false);
+  toggleHousingAssign(false);
   updateReviewSubmitState();
 }
 function selectInfo() {
@@ -985,6 +1367,7 @@ function selectInfo() {
   document.getElementById('rejectReason').classList.remove('error');
   document.getElementById('rejectReasonError').style.display = 'none';
   toggleInfoFields(true);
+  toggleHousingAssign(false);
   updateReviewSubmitState();
 }
 
@@ -999,8 +1382,12 @@ async function submitReview(currentStatus) {
   if (!wfSubmit) return;
   var reason = '';
 
+  var housing;
   if (selectedDecision === 'approve') {
     if (!wfSubmit.approveTo) return;
+    // undefined = مش مرحلة تسكين، null = مرحلة تسكين وبيانات ناقصة.
+    housing = housingAssignValues();
+    if (housing === null) return;
   } else if (selectedDecision === 'request-info') {
     if (wfSubmit.allowMoreInfo !== true) return;
     // الملاحظات هي جوهر الإجراء ده — من غيرها الطالب بيستلم "محتاجين معلومات" وبس
@@ -1033,6 +1420,11 @@ async function submitReview(currentStatus) {
       requestId, currentStatus, selectedDecision, reason,
       selectedDecision === 'request-info' ? selectedInfoFields() : null);
     if (!ep) return;
+
+    // ⚠️ التسكين بيتضاف على جسم الطلب هنا لا في NuhWorkflow.endpointFor:
+    //    الجدول ده بيوصف **الانتقالات** وبس، ولو حشرنا فيه حقول شاشة بعينها
+    //    بقى بيعرف عن الشاشات - وده أول طريق لنسخة تانية منه.
+    if (housing) Object.assign(ep.body, housing);
 
     var res = await fetch(ep.url, {
       method: ep.method,

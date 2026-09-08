@@ -21,6 +21,87 @@ namespace NUH_PORTAL.Services
 
         private static string Norm(string? v) => (v ?? "").Trim();
 
+        public async Task<RoomOccupancy?> GetRoomAsync(string? buildingCode, string? floor,
+                                                       string? apartment, string? room, int? excludeStudentId)
+        {
+            var code = Norm(buildingCode); var f = Norm(floor); var a = Norm(apartment); var r = Norm(room);
+            if (code.Length == 0 || f.Length == 0 || a.Length == 0 || r.Length == 0) return null;
+
+            var building = (await _buildings.GetAllAsync())
+                .FirstOrDefault(x => string.Equals(Norm(x.Code), code, StringComparison.OrdinalIgnoreCase));
+            if (building == null) return null;
+
+            var capacity = Math.Max(1, building.RoomCapacity);
+            var maxCapacity = Math.Max(capacity, building.RoomCapacityMax);
+
+            return new RoomOccupancy(capacity, maxCapacity, await CountAsync(building.Id, f, a, r, excludeStudentId));
+        }
+
+        public async Task<ApartmentOccupancy?> GetApartmentAsync(string? buildingCode, string? floor,
+                                                                 string? apartment, int? excludeStudentId = null)
+        {
+            var code = Norm(buildingCode); var f = Norm(floor); var a = Norm(apartment);
+            if (code.Length == 0 || f.Length == 0 || a.Length == 0) return null;
+
+            var building = (await _buildings.GetAllAsync())
+                .FirstOrDefault(x => string.Equals(Norm(x.Code), code, StringComparison.OrdinalIgnoreCase));
+            if (building == null) return null;
+
+            if (!int.TryParse(a, out var apt)) return null;
+
+            // أرقام الغرف من نفس مصدر الشاشة: أسلوب ترقيم المبنى.
+            var rooms = HousingStructure.RoomsFor(building.Numbering, apt);
+            if (rooms.Count == 0) return null;
+
+            // ⚠️ استعلام واحد بـ GroupBy لا استعلام لكل غرفة: أربع رحلات لقاعدة
+            //    البيانات عشان أربعة أرقام مالهاش لازمة، والقائمة بتتفتح كل ثانية.
+            var q = _students.Query().AsNoTracking()
+                .Where(st => !st.IsDeleted
+                             && st.BuildingId == building.Id
+                             && st.floor_number == f
+                             && st.apartment_number == a
+                             && st.room_number != null);
+
+            // ⚠️ الاستثناء نفسه الوارد في CheckAsync حرفيًا: الطالب محلّ
+            //    التسكين لا يُعدّ على نفسه. وبغير هذا السطر يرى المشرف الذي
+            //    يراجع طالبًا مقيمًا في الشقة نفسها غرفته أضيق بموضع، ثم
+            //    يقبلها الحفظ - رقمان مختلفان لغرفة واحدة في شاشة واحدة.
+            if (excludeStudentId is int ex && ex > 0)
+                q = q.Where(st => st.Id != ex);
+
+            var counts = await q
+                .GroupBy(st => st.room_number!)
+                .Select(g => new { Room = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.Room, x => x.Count);
+
+            var capacity = Math.Max(1, building.RoomCapacity);
+            var list = rooms.Select(r => new RoomCount(r,
+                            counts.TryGetValue(r.ToString(), out var n) ? n : 0)).ToList();
+
+            return new ApartmentOccupancy(capacity, Math.Max(capacity, building.RoomCapacityMax), list);
+        }
+
+        // ⚠️ العدّ في مكان واحد: الفحص والعرض لازم يقروا نفس الرقم. لو العرض
+        //    عدّ بطريقة والفحص بطريقة، المشرف بيشوف «فيها مكان» ويترفض عند
+        //    الحفظ - وساعتها بيبطّل يثق في السطر اللي فوق الخانة.
+        //    وبلا Scoped: التقسيم بيخفي بيانات عن العرض، وما ينفعش يخفي مكانًا
+        //    مشغولًا عن الحساب.
+        private async Task<int> CountAsync(int buildingId, string floor, string apartment,
+                                           string room, int? excludeStudentId)
+        {
+            var query = _students.Query().AsNoTracking()
+                .Where(s => !s.IsDeleted
+                            && s.BuildingId == buildingId
+                            && s.floor_number == floor
+                            && s.apartment_number == apartment
+                            && s.room_number == room);
+
+            if (excludeStudentId is int id && id > 0)
+                query = query.Where(s => s.Id != id);
+
+            return await query.CountAsync();
+        }
+
         public async Task<string?> CheckAsync(string? buildingCode, string? floor, string? apartment, string? room,
                                               int? excludeStudentId, bool allowExceptionSlot, int pendingInSameRoom = 0)
         {
@@ -45,20 +126,8 @@ namespace NUH_PORTAL.Services
             var maxCapacity = Math.Max(capacity, building.RoomCapacityMax);
             var limit = allowExceptionSlot ? maxCapacity : capacity;
 
-            // ⚠️ بلا Scoped: العدّ لازم يشوف كل الساكنين في الغرفة مهما كان قسمهم.
-            //    التقسيم بيخفي بيانات عن **العرض**، وما ينفعش يخفي مكانًا مشغولًا
-            //    عن **الحساب**.
-            var query = _students.Query().AsNoTracking()
-                .Where(s => !s.IsDeleted
-                            && s.BuildingId == building.Id
-                            && s.floor_number == f
-                            && s.apartment_number == apt
-                            && s.room_number == rm);
-
-            if (excludeStudentId is int id && id > 0)
-                query = query.Where(s => s.Id != id);
-
-            var taken = await query.CountAsync() + Math.Max(0, pendingInSameRoom);
+            var taken = await CountAsync(building.Id, f, apt, rm, excludeStudentId)
+                      + Math.Max(0, pendingInSameRoom);
 
             if (taken < limit) return null;
 

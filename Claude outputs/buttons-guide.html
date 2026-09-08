@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>دليل أزرار النظام</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700;800&display=swap">
+<style>
+/* ===== نفس المتغيّرات المستخدمة في النظام ===== */
+:root{
+  --navy:#104631; --navy-light:#166a45; --navy-dark:#0b3122; --green:#087443;
+  --tint:#f2f8f4; --gold:#dba102; --red:#b42318;
+  --gray-50:#f9fafb; --gray-100:#f2f4f7; --gray-200:#e4e7ec; --gray-300:#d0d5dd;
+  --gray-500:#667085; --gray-600:#475467; --gray-700:#344054; --white:#fff;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;background:#eef1f0;color:var(--navy-dark);
+  padding:26px;font-size:13.5px;line-height:1.75}
+.wrap{max-width:1000px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+h1{font-size:21px;font-weight:800}
+.lead{color:var(--gray-600);margin-top:5px;font-size:13.5px}
+.card{background:var(--white);border:1px solid var(--gray-200);border-radius:16px;overflow:hidden}
+.card > header{padding:12px 18px;background:var(--tint);border-bottom:1px solid #d6ecdf}
+.card > header h2{font-size:15px;font-weight:800}
+.pad{padding:0}
+table.g{width:100%;border-collapse:collapse}
+table.g th{background:var(--gray-50);font-size:11.5px;font-weight:700;color:var(--gray-600);
+  text-align:start;padding:8px 16px;border-bottom:1px solid var(--gray-200)}
+table.g td{padding:14px 16px;border-bottom:1px solid var(--gray-100);vertical-align:middle}
+table.g tr:last-child td{border-bottom:0}
+td.smp{width:190px}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;background:var(--gray-100);
+  padding:2px 7px;border-radius:5px;unicode-bidi:isolate;display:inline-block}
+.use{font-size:12.5px;color:var(--gray-700)}
+.use b{color:var(--navy-dark)}
+.hint{font-size:11.5px;color:var(--gray-500);margin-top:3px}
+
+/* ===== مجموعة الأزرار - منسوخة حرفيًا من css/site.css بعد التوحيد ===== */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:8px 18px;border-radius:10px;font-family:'IBM Plex Sans Arabic',sans-serif;
+  font-size:13px;font-weight:600;text-decoration:none;cursor:pointer;border:none;
+  transition:all .2s}
+.btn-primary{background:var(--navy);color:#fff}
+.btn-primary:hover{background:var(--navy-light)}
+.btn-danger{background:var(--red);color:#fff}
+.btn-danger:hover{background:#912018}
+.btn-cancel{background:var(--gray-100);color:var(--gray-700)}
+.btn-cancel:hover{background:var(--gray-200)}
+.btn-outline{background:transparent;border:1.5px solid var(--gray-200);color:var(--gray-700)}
+.btn-outline:hover{border-color:var(--navy);color:var(--navy)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+.btn.sm{padding:5px 13px;font-size:12px;border-radius:9px}
+.btn.lg,.form-actions .btn{height:46px;padding:0 28px;font-size:14px;font-weight:700}
+.btn.loading{pointer-events:none;opacity:.75}
+.btn .spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.3);
+  border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:none}
+.btn.loading .spinner{display:block}
+.btn.loading .btn-text{display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+.btn svg{width:16px;height:16px;flex-shrink:0}
+
+/* صفّ أزرار النموذج - للمعاينة */
+.form-actions{display:flex;gap:12px;justify-content:flex-end;padding:16px 18px;
+  border-top:1px solid var(--gray-100);background:var(--gray-50);border-radius:11px}
+
+/* مكوّنان خارج المجموعة */
+.row-actions{display:flex;gap:6px}
+.action-btn{display:inline-flex;align-items:center;justify-content:center;gap:4px;
+  width:30px;height:30px;border-radius:8px;border:1px solid var(--gray-200);
+  background:var(--white);color:var(--gray-600);cursor:pointer}
+.action-btn:hover{border-color:var(--navy);color:var(--navy)}
+.action-btn svg{width:15px;height:15px}
+.pager-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:34px;
+  padding:0 14px;border:1px solid var(--gray-200);border-radius:9px;background:var(--white);
+  color:var(--navy-dark);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.pager-btn:hover{background:var(--tint);border-color:var(--green);color:var(--green)}
+.note{font-size:12.5px;color:var(--gray-600);padding:12px 18px;background:var(--gray-50);
+  border-top:1px solid var(--gray-200)}
+.note b{color:var(--navy-dark)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div>
+  <h1>دليل أزرار النظام بعد التوحيد</h1>
+  <p class="lead">الأنماط أدناه منسوخة حرفيًا من <code>css/site.css</code> بعد التوحيد - ما تراه هنا هو ما سيظهر في الشاشات. مرِّر المؤشّر فوق أي زرّ لترى حالته عند التحويم.</p>
+</div>
+
+<section class="card">
+  <header><h2>الأنماط الأربعة - الدور يحدّد النمط</h2></header>
+  <div class="pad">
+    <table class="g">
+      <tr><th>الشكل</th><th>الصنف</th><th>متى يُستخدم</th></tr>
+
+      <tr>
+        <td class="smp"><button class="btn btn-primary">حفظ التغييرات</button></td>
+        <td><code>btn btn-primary</code></td>
+        <td class="use"><b>الإجراء الرئيسي في الشاشة أو النافذة - واحد لا أكثر.</b>
+          <div class="hint">حفظ · تأكيد المراجعة · اعتماد · تنفيذ المزامنة. إن وُجد زرّان أخضران متجاوران فأحدهما ليس رئيسيًا.</div></td>
+      </tr>
+
+      <tr>
+        <td class="smp"><button class="btn btn-cancel">إلغاء</button></td>
+        <td><code>btn btn-cancel</code></td>
+        <td class="use"><b>التراجع والإغلاق - رمادي مصمت.</b>
+          <div class="hint">إلغاء · إغلاق النافذة · العودة. يقف دائمًا بجانب الرئيسي لا وحده.</div></td>
+      </tr>
+
+      <tr>
+        <td class="smp"><button class="btn btn-outline">تصدير Excel</button></td>
+        <td><code>btn btn-outline</code></td>
+        <td class="use"><b>إجراء ثانوي مستقلّ - إطار بلا أرضية.</b>
+          <div class="hint">تصدير · طباعة · تحديث · فتح ملف الطالب. يظهر وحده في رأس بطاقة أو شريط أدوات، حيث لا يوجد رئيسي يقف بجانبه.</div></td>
+      </tr>
+
+      <tr>
+        <td class="smp"><button class="btn btn-danger">حذف السجل</button></td>
+        <td><code>btn btn-danger</code></td>
+        <td class="use"><b>ما لا رجعة فيه.</b>
+          <div class="hint">حذف · تعطيل حساب الشبكة · رفض نهائي. لا يُستعمل للتحذير ولا للتنبيه - للفعل المدمِّر وحده، وإلا فقد الأحمر معناه.</div></td>
+      </tr>
+    </table>
+  </div>
+  <div class="note"><b>قاعدة:</b> النمط يصف <b>دور</b> الزرّ لا لونه المطلوب. لا يُكتب لون في وسم الزرّ (<code>style="background:..."</code>) - هذه كانت طريقة شاشة حسابات الإسكان، وهي التي أنتجت أزرارًا لا تشبه بعضها.</div>
+</section>
+
+<section class="card">
+  <header><h2>المقاسات الثلاثة</h2></header>
+  <div class="pad">
+    <table class="g">
+      <tr><th>الشكل</th><th>الصنف</th><th>أين</th></tr>
+      <tr>
+        <td class="smp"><button class="btn btn-primary sm">ربط</button></td>
+        <td><code>btn btn-primary sm</code></td>
+        <td class="use">داخل صفّ جدول أو بطاقة صغيرة أو شريط تصفية - حيث الارتفاع محدود.</td>
+      </tr>
+      <tr>
+        <td class="smp"><button class="btn btn-primary">افتراضي</button></td>
+        <td><code>btn btn-primary</code></td>
+        <td class="use">الافتراضي: تذييل النوافذ، وأشرطة الأدوات، وأي مكان غير مذكور هنا.</td>
+      </tr>
+      <tr>
+        <td class="smp"><button class="btn btn-primary lg">حفظ الطالب</button></td>
+        <td><code>btn btn-primary lg</code></td>
+        <td class="use">أزرار النماذج الرئيسية (ارتفاع ٤٦). <div class="hint">وأزرار <code>.form-actions</code> تأخذ هذا المقاس تلقائيًا دون كتابة <code>lg</code> - عشرات الشاشات مكتوبة هكذا ولا داعي لتعديل وسمها.</div></td>
+      </tr>
+    </table>
+  </div>
+</section>
+
+<section class="card">
+  <header><h2>الحالات</h2></header>
+  <div class="pad">
+    <table class="g">
+      <tr><th>الشكل</th><th>الصنف</th><th>المعنى</th></tr>
+      <tr>
+        <td class="smp"><button class="btn btn-primary" disabled>تأكيد المراجعة</button></td>
+        <td><code>disabled</code></td>
+        <td class="use">شرط ناقص - كزرّ الاعتماد قبل اختيار الغرفة. شفافية ٥٠٪ ومؤشّر ممنوع.</td>
+      </tr>
+      <tr>
+        <td class="smp"><button class="btn btn-primary loading"><span class="spinner"></span><span class="btn-text">حفظ</span></button></td>
+        <td><code>btn ... loading</code></td>
+        <td class="use">الطلب جارٍ - يظهر الدوران ويختفي النصّ، والضغط معطَّل. <div class="hint">كانت هذه الحالة محصورة في أزرار النماذج وحدها، فأي زرّ خارجها لا يعرف الدوران. صارت متاحة لكل زرّ.</div></td>
+      </tr>
+      <tr>
+        <td class="smp"><button class="btn btn-outline">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          تنزيل القالب</button></td>
+        <td><code>btn ... + svg</code></td>
+        <td class="use">أيقونة قبل النصّ - مقاسها ١٦ ثابت والفجوة ٦، فلا يختلف زرّ عن زرّ.</td>
+      </tr>
+    </table>
+  </div>
+</section>
+
+<section class="card">
+  <header><h2>الصفّ في النماذج والنوافذ</h2></header>
+  <div class="pad" style="padding:18px">
+    <div class="form-actions">
+      <button class="btn btn-cancel">إلغاء</button>
+      <button class="btn btn-primary">حفظ الطالب</button>
+    </div>
+    <p class="use" style="margin-top:11px">الترتيب ثابت في النظام كلّه: <b>الرئيسي في طرف الصفّ (يسار في العربية)، والإلغاء قبله</b>. لا يُعكس الترتيب في شاشة دون أخرى - اليد تتعلّم مكان الزرّ قبل أن تقرأه العين.</p>
+  </div>
+</section>
+
+<section class="card">
+  <header><h2>مكوّنان يبقيان خارج المجموعة - وليسا استثناءً لها</h2></header>
+  <div class="pad">
+    <table class="g">
+      <tr><th>الشكل</th><th>الصنف</th><th>لماذا مستقلّ</th></tr>
+      <tr>
+        <td class="smp"><span class="row-actions">
+          <button class="action-btn" title="تعديل"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></button>
+          <button class="action-btn" title="حذف"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>
+        </span></td>
+        <td><code>action-btn</code></td>
+        <td class="use">أيقونة مربّعة داخل صفّ جدول، بلا نصّ، ومقاسها محكوم بارتفاع الصفّ. ليست زرًّا نصيًّا فلا تُحشر في مجموعته.</td>
+      </tr>
+      <tr>
+        <td class="smp"><button class="pager-btn">التالي ◀</button></td>
+        <td><code>pager-btn</code></td>
+        <td class="use">التنقّل بين الصفحات - سلوك مستقلّ (معطَّل عند آخر صفحة) وشكل خاصّ بشريط الترقيم.</td>
+      </tr>
+    </table>
+  </div>
+  <div class="note"><b>الخلاصة:</b> صنفان اثنان فقط يُكتبان لأي زرّ نصّي في النظام - <code>btn</code> ونمطه، ويُزاد المقاس عند الحاجة. وإن احتجت شكلًا غير موجود هنا، يُضاف إلى <code>css/site.css</code> نمطًا جديدًا للجميع، لا صنفًا محلّيًا في شاشة واحدة.</div>
+</section>
+
+</div>
+</body>
+</html>

@@ -37,7 +37,8 @@ namespace NUH_PORTAL.Controllers
         [HttpPost("{requestId}/approve")]
         public async Task<IActionResult> Approve(int requestId, [FromBody] WorkflowActionRequest request)
         {
-            await _service.ApproveAsync(requestId, request.Notes);
+            await _service.ApproveAsync(requestId, request.Notes,
+                request.HousingBuilding, request.FloorNumber, request.ApartmentNumber, request.RoomNumber);
             return Ok(new { message = "تم اعتماد الطلب بنجاح" });
         }
 

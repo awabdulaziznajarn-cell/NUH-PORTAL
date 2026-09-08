@@ -309,60 +309,19 @@
     </div>
     <div class="form-card-title" data-i18n="reg_sectionHousing">معلومات الإسكان</div>
   </div>
+  <!-- ⚠️ الخانات اتشالت من الفورم عن قصد: الطالب مايعرفش هيتسكّن فين أصلًا -
+       إدارة الإسكان هي اللي بتقرّر، والطالب كان بيخمّن ويكتب والمشرف يصلّح
+       وراه. فبيانات غلط كانت بتدخل النظام كل يوم ومصدر السكن يبقى تلاتة:
+       الكشف، وذاكرة الطالب، وتعديل المشرف. دلوقتي مصدر واحد: قرار الإدارة
+       وقت الاعتماد. -->
   <div class="form-card-body">
-    <div class="form-grid">
-
-      <div class="field">
-        <label for="housing_building">المبنى السكني<span class="req">*</span></label>
-        <div class="input-wrap with-icon">
-          <select id="housing_building" disabled>
-            <option value="" data-i18n="reg_optSelectGenderFirst">اختر الجنس أولاً</option>
-          </select>
-          <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-        </div>
-        <span class="field-error" id="err-housing_building" data-i18n="reg_optSelectBuilding">اختر المبنى</span>
-      </div>
-
-      <div class="field">
-        <label for="floor_number">رقم الدور<span class="req">*</span></label>
-        <div class="input-wrap with-icon">
-          <select id="floor_number">
-            <option value="" data-i18n="reg_optSelectFloor">اختر الدور</option>
-            <option value="0" data-i18n="reg_optFloorGround">الأرضي</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4">4</option>
-          </select>
-          <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-4h6v4"/></svg>
-        </div>
-        <span class="field-error" id="err-floor_number" data-i18n="reg_optSelectFloor">اختر الدور</span>
-      </div>
-
-      <div class="field">
-        <label for="apartment_number">رقم الشقة<span class="req">*</span></label>
-        <div class="input-wrap with-icon">
-          <select id="apartment_number" disabled>
-            <option value="" data-i18n="reg_optSelectFloorFirst">اختر الدور أولاً</option>
-          </select>
-          <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-        </div>
-        <span class="field-error" id="err-apartment_number" data-i18n="reg_optSelectApartment">اختر رقم الشقة</span>
-      </div>
-
-      <div class="field">
-        <label for="room_number">رقم الغرفة<span class="req">*</span></label>
-        <div class="input-wrap with-icon">
-          <select id="room_number">
-            <option value="" data-i18n="reg_optSelectRoom">اختر رقم الغرفة</option>
-          </select>
-          <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-        </div>
-        <span class="field-error" id="err-room_number" data-i18n="reg_optSelectRoom">اختر رقم الغرفة</span>
-      </div>
-
-    </div>
+    <p class="form-note" data-i18n="reg_housingAssignedNote">
+      يُحدَّد سكنك (المبنى والدور والشقة والغرفة) من إدارة الإسكان الجامعي عند
+      اعتماد طلبك، ويظهر لك في صفحة متابعة الطلب.
+    </p>
   </div>
+</div>
+
   <div class="form-actions">
     <button type="submit" id="submitBtn" class="btn btn-primary">
       <span class="btn-text" data-i18n="pt_btnSubmit">تقديم الطلب</span>
@@ -381,14 +340,6 @@ var token = localStorage.getItem('studentToken');
 var editRequestId = new URLSearchParams(window.location.search).get('edit');
 var userData = JSON.parse(localStorage.getItem('studentUser') || '{}');
 
-// ⚠️ احتياطي فقط. المباني الحقيقية تُقرأ من /api/lookups/buildings?gender=
-//    عشان أي مبنى يُضاف أو يتوقف من «القوائم المرجعية» يسري على الطالب فورًا.
-//    القائمة دي بتشتغل لو الـ API ما رجّعش حاجة، عشان التسجيل ما يقفش أبدًا.
-var MALE_BUILDINGS = ['65','66','67','68','69','70'];
-var FEMALE_BUILDINGS = ['40','41','42','43'];
-
-// المباني المحمّلة من الخادم لكل نوع (تُملأ عند اختيار الجنس)
-var LK_BUILDINGS = { male: null, female: null };
 
 // ⚠️ منطق خانات الاسم كان مكتوبًا هنا بالكامل نسخة ثانية من
 // wwwroot/js/name-fields.js: نفس التعبيرات ونفس collapse/join/split/strip.
@@ -434,42 +385,6 @@ function validateFieldMulti(id, checks) {
   if (el.value.trim()) { if (hasError) el.classList.add('error'); else el.classList.remove('error'); }
 }
 
-function updateBuildings() {
-  var gender = document.getElementById('gender').value;
-  var select = document.getElementById('housing_building');
-  var currentVal = select.value;
-  // من غير جنس مختار مفيش مباني تتعرض — قبل كده كانت بتعرض المباني كلها
-  // (65-70 و 40-43 مع بعض)، يعني الطالب يقدر يختار مبنى القسم التاني.
-  var loaded = LK_BUILDINGS[gender];
-  var bldgs = (loaded && loaded.length) ? loaded
-            : gender === 'male'   ? MALE_BUILDINGS
-            : gender === 'female' ? FEMALE_BUILDINGS
-            : [];
-
-  select.innerHTML = '';
-  var ph = document.createElement('option');
-  ph.value = '';
-  // ⚠️ كان هنا data-ar/data-en — آلية ترجمة **ثالثة** في نفس الملف، والنصّ
-  //    الإنجليزي مكتوب فيها بالإيد ('Select building') بدل ما يتقري من
-  //    الـ resx. يعني تعديل النصّ في ملف الترجمة مكانش بيوصل للقائمة دي.
-  //    بقت data-i18n زي باقي النظام: النصّ من الـ resx، وتبديل اللغة
-  //    بيحدّثه من غير كود، ولو القاموس لسه ماوصلش بيتكتب أول ما يوصل.
-  var phKey = bldgs.length ? 'reg_optSelectBuilding' : 'reg_optSelectGenderFirst';
-  ph.setAttribute('data-i18n', phKey);
-  ph.textContent = (typeof t === 'function') ? t(phKey) : '';
-  select.appendChild(ph);
-
-  bldgs.forEach(function(b) {
-    var opt = document.createElement('option');
-    opt.value = b;
-    opt.textContent = b;
-    select.appendChild(opt);
-  });
-
-  select.disabled = bldgs.length === 0;
-  // لو غيّر الجنس والمبنى القديم مش في القائمة الجديدة، الاختيار بيتلغي
-  select.value = (currentVal && bldgs.indexOf(currentVal) !== -1) ? currentVal : '';
-}
 
 // ============================================================================
 //  القوائم المرجعية من الخادم — نفس مصدر شاشة الموظف بالظبط.
@@ -508,20 +423,9 @@ async function lkLoadLevels() {
   if (i.length) Lookups.fill(lkLevel, i, { keep: lkLevel.value });
 }
 
-async function lkLoadBuildings(gender) {
-  if (gender !== 'male' && gender !== 'female') return;
-  if (LK_BUILDINGS[gender]) return;   // محمّلة قبل كده
-  var i = await Lookups.fetchList('/api/lookups/buildings?gender=' + encodeURIComponent(gender));
-  LK_BUILDINGS[gender] = i.map(function (x) { return x.code; }).filter(Boolean);
-  updateBuildings();
-}
 
 // تغيير الكلية بيحدّث الأقسام من جوّه Lookups.dependent — مفيش ربط تاني هنا.
 
-document.getElementById('gender').addEventListener('change', function () {
-  updateBuildings();
-  lkLoadBuildings(this.value);
-});
 
 // ⚠️ الوعد محفوظ لا مُهمَل: وضع التعديل بيستنّاه قبل ما يحطّ القيم المحفوظة.
 //    من غيره كانت السلسلة دي بتخلص بعد ما التعديل يحطّ القسم، وبتمسحه —
@@ -640,18 +544,11 @@ document.getElementById('phone').addEventListener('blur', function() {
   validateField('phone','val-phone', NuhPhone.VALID);
 });
 
-// الشقة بتتولد من الدور، والغرفة 1-4 — المنطق كله في js/housing-fields.js
-var housingRefresh = NuhHousing.attach({
-  building: 'housing_building',
-  floor: 'floor_number', apartment: 'apartment_number', room: 'room_number',
-  // ⚠️ labelKeys لا labels — نفس سبب الأقسام فوق بالظبط: t() هنا بتتنفّذ قبل
-  //    ما القاموس يوصل، فرقم الشقة ورقم الغرفة كانوا بيظهروا للطالب بأسماء
-  //    مفاتيحهم. NuhHousing بيقبل labelKeys وبيحطّ data-i18n على الخيار.
-  labelKeys: { floorFirst: 'reg_optSelectFloorFirst', selectApartment: 'reg_optSelectApartment',
-               selectRoom: 'reg_optSelectRoom', selectApartmentFirst: 'reg_optSelectApartmentFirst' }
-});
+// ⚠️ مافيش ربط لخانات السكن هنا: الطالب مابقاش يختار سكنه.
+//    الشاشات اللي فيها الخانات دي هي شاشات المشرف وحدها.
+var housingRefresh = function () { };
 
-['college','department','academic_level','gender','housing_building','floor_number','apartment_number','room_number'].forEach(function(id) {
+['college','department','academic_level','gender'].forEach(function(id) {
   document.getElementById(id).addEventListener('change', function() {
     var err = document.getElementById('err-' + id); if (this.value) err.classList.remove('show');
   });
@@ -663,7 +560,8 @@ function validate() {
   // خانات الاسم الستة — كلها مطلوبة، ورسالة واحدة لكل لغة
   if (!NuhName.validate('')) ok = false;
 
-  var required = ['student_id','national_id','phone','college','department','academic_level','gender','housing_building','floor_number','apartment_number','room_number'];
+  // ⚠️ خانات السكن مش في المطلوب: مابقتش في الفورم أصلًا.
+  var required = ['student_id','national_id','phone','college','department','academic_level','gender'];
   required.forEach(function(id) {
     var el = document.getElementById(id);
     var err = document.getElementById('err-' + id);
@@ -727,11 +625,6 @@ async function fillForm(data) {
   await lkReady;
 
   setSel('gender', data.gender);
-  if (data.gender) {
-    updateBuildings();                      // من الكاش فورًا لو موجود
-    await lkLoadBuildings(data.gender);     // ثم من الخادم، وبيعيد الرسم لوحده
-  }
-  setSel('housing_building', data.housing_building);
 
   setSel('college', data.college);
   if (data.college) await deptGate.refresh();
@@ -739,10 +632,7 @@ async function fillForm(data) {
 
   setSel('academic_level', data.academic_level);
 
-  setSel('floor_number', data.floor_number);
   housingRefresh();                         // بيملا الشقق حسب الدور والغرف
-  setSel('apartment_number', data.apartment_number);
-  setSel('room_number', data.room_number);
 }
 
 // ============================================================================
@@ -765,10 +655,6 @@ var EDIT_FIELD_INPUTS = {
   college:           ['college'],
   department:        ['department'],
   academic_level:    ['academic_level'],
-  housing_building:  ['housing_building'],
-  floor_number:      ['floor_number'],
-  apartment_number:  ['apartment_number'],
-  room_number:       ['room_number']
 };
 // ⚠️ الجوال مش في الجدول عن قصد: مقفول أصلًا في prefillVerifiedMobile لأنه
 //    الرقم اللي وصله رمز التحقق، والجدول ده بيقفل بس ولا بيفتح.
@@ -915,10 +801,6 @@ async function submitForm(e) {
     college: document.getElementById('college').value,
     department: document.getElementById('department').value,
     academic_level: document.getElementById('academic_level').value,
-    housing_building: document.getElementById('housing_building').value,
-    floor_number: document.getElementById('floor_number').value,
-    room_number: document.getElementById('room_number').value.trim(),
-    apartment_number: document.getElementById('apartment_number').value.trim(),
     // خانة "الحالة" اتشالت من الفورم — الطالب مالوش دعوة يحدد حالة سكنه.
     // القيمة الافتراضية بتتبعت زي ما هي عشان شكل الحمولة ما يتغيّرش على السيرفر.
     status: 'active'
@@ -1022,7 +904,6 @@ if (!editRequestId && localStorage.getItem('declAccepted') !== 'true') {
 }
 
 if (!token) { window.location.href = 'register-phone.html'; }
-updateBuildings();
 prefillVerifiedMobile();
 loadEditData();
 </script>

@@ -215,10 +215,12 @@ namespace NUH_PORTAL.Services
                 Set("college",           v => student.college = v);
                 Set("department",        v => student.department = v);
                 Set("academic_level",    v => student.academic_level = v);
-                Set("housing_building",  v => student.housing_building = v);
-                Set("floor_number",      v => student.floor_number = v);
-                Set("room_number",       v => student.room_number = v);
-                Set("apartment_number",  v => student.apartment_number = v);
+                // ⚠️ خانات السكن **مش** بتتكتب من هنا. الطريق الوحيد لتسكين طالب
+                //    هو IHousingPlacement - هو اللي بيتحقّق من ترقيم المبنى ومن
+                //    سعة الغرفة ويربط المفتاح الأجنبي. الكتابة المباشرة هنا كانت
+                //    بتعدّي الاتنين، فطلب فيه شقة ٩٩ أو غرفة مليانة كان بيتحفظ
+                //    كما هو. المستدعي (RegistrationFlowService) بينادي التسكين
+                //    بعد الدالة دي لو الحمولة فيها بيانات سكن.
             }
         }
 

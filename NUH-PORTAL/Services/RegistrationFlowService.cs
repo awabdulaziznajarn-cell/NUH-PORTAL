@@ -25,10 +25,9 @@ namespace NUH_PORTAL.Services
         private readonly IWorkflowService _workflow;
         private readonly IHttpContextAccessor _http;
         private readonly ILookupResolver _lookups;
-        // ⚠️ الطالب بيختار غرفته بنفسه في المسار ده، فالفحص هنا هو اللي
-        //    بيمنعه يحجز مكانًا مشغولًا - وبلا المكان الاستثنائي:
-        //    التسكين فوق السعة قرار إداري لا خانة في فورم.
-        private readonly IHousingCapacityGuard _capacity;
+        // ⚠️ التسكين من الطريق الواحد: RegistrationDataMapper مابقاش بيكتب
+        //    خانات السكن خالص، والكتابة كلها بتمرّ من هنا فتتفحص بنية وسعة.
+        private readonly IHousingPlacement _placement;
         private readonly UserManager<User> _userManager;
 
         public RegistrationFlowService(
@@ -41,7 +40,7 @@ namespace NUH_PORTAL.Services
             IWorkflowService workflow,
             IHttpContextAccessor http,
             ILookupResolver lookups,
-            IHousingCapacityGuard capacity,
+            IHousingPlacement placement,
             UserManager<User> userManager,
             IUnitOfWork unitOfWork,
             IMapper mapper) : base(unitOfWork, mapper)
@@ -55,7 +54,7 @@ namespace NUH_PORTAL.Services
             _workflow = workflow;
             _http = http;
             _lookups = lookups;
-            _capacity = capacity;
+            _placement = placement;
             _userManager = userManager;
         }
 
@@ -138,23 +137,33 @@ namespace NUH_PORTAL.Services
                 throw UserFriendlyException.NotFound("الطلب غير موجود");
         }
 
-        // ⚠️ فحص السكن من بيانات التسجيل - نفس الدالة في التقديم وإعادة التقديم.
-        //    من غير نسخة واحدة، إعادة التقديم كانت هتبقى باب خلفي: الطالب
-        //    يقدّم بغرفة سليمة، وبعدين «يعدّل» لغرفة مليانة.
+        // ⚠️ تسكين الطالب من بيانات التسجيل - نفس الدالة في التقديم وإعادة
+        //    التقديم. من غير نسخة واحدة، إعادة التقديم كانت هتبقى باب خلفي:
+        //    الطالب يقدّم بغرفة سليمة وبعدين «يعدّل» لغرفة مليانة.
         //
-        //    والمكان الاستثنائي مسموح للموظف وحده: هو اللي عنده قرار الإدارة،
-        //    والطالب اللي بيسجّل لنفسه لأ.
-        private async Task EnsureHousingCapacityAsync(string? registrationJson, int? excludeStudentId)
+        //  ⚠️ الحمولة بتيجي **فاضية من فورم الطالب**: هو مابقاش يختار سكنه -
+        //     مايعرفش هيتسكّن فين أصلًا، وإدارة الإسكان بتحدّده وقت الاعتماد.
+        //     ومليانة من شاشة تسجيل المشرف، لأنه هو صاحب القرار. فاضية = سيب
+        //     الخانات فاضية، مش خطأ.
+        //
+        //  ⚠️ والمكان الاستثنائي للموظف وحده: التسكين فوق السعة المعتمدة قرار
+        //     إداري لا خانة في فورم.
+        private async Task ApplyHousingFromRegistrationAsync(Student student, string? registrationJson)
         {
             if (string.IsNullOrWhiteSpace(registrationJson)) return;
 
-            await _capacity.EnsureAsync(
-                RegistrationDataMapper.Read(registrationJson, "housing_building"),
-                RegistrationDataMapper.Read(registrationJson, "floor_number"),
-                RegistrationDataMapper.Read(registrationJson, "apartment_number"),
-                RegistrationDataMapper.Read(registrationJson, "room_number"),
-                excludeStudentId,
-                allowExceptionSlot: IsStaffRole(UnitOfWork.GetCurrentUserRole()));
+            var building  = RegistrationDataMapper.Read(registrationJson, "housing_building");
+            var floor     = RegistrationDataMapper.Read(registrationJson, "floor_number");
+            var apartment = RegistrationDataMapper.Read(registrationJson, "apartment_number");
+            var room      = RegistrationDataMapper.Read(registrationJson, "room_number");
+
+            if (string.IsNullOrWhiteSpace(building) && string.IsNullOrWhiteSpace(floor)
+                && string.IsNullOrWhiteSpace(apartment) && string.IsNullOrWhiteSpace(room))
+                return;
+
+            await _placement.ApplyAsync(student, building, floor, apartment, room,
+                                        allowExceptionSlot: IsStaffRole(UnitOfWork.GetCurrentUserRole()),
+                                        source: HousingHistoryKinds.Sources.Registration);
         }
 
         public async Task<StartRegistrationResultDto> StartAsync(StartRegistrationRequest request)
@@ -197,10 +206,6 @@ namespace NUH_PORTAL.Services
             if (housed != null)
                 throw new UserFriendlyException(DuplicateMessage(housed, isOpen: false), 400);
 
-            // ⚠️ قبل المعاملة لا جوّاها: الفحص ده بيرمي ٤٠٠، ورميه جوّه المعاملة
-            //    معناه فتح وقفل معاملة على الفاضي في كل محاولة فاشلة.
-            await EnsureHousingCapacityAsync(registrationDataJson, excludeStudentId: null);
-
             // ⚠️ ومعاملة واحدة تلفّ الباقي: إنشاء الطالب وتوليد رقم الطلب وإنشاء
             //    الطلب. الترتيب فوق شال أشهر سبب لليُتم، والمعاملة بتقفل الباقي —
             //    تصادم في رقم الطلب، أو انقطاع في النص. يا الاتنين يا ولا واحد.
@@ -229,6 +234,8 @@ namespace NUH_PORTAL.Services
                 };
                 RegistrationDataMapper.Apply(student, registrationDataJson);
                 await _lookups.ApplyAsync(student); // FK ids من الأكواد (dual-write)
+                // خانات السكن مش من المابر - التسكين له طريق واحد بيتفحص فيه.
+                await ApplyHousingFromRegistrationAsync(student, registrationDataJson);
                 await _students.AddAsync(student);
                 await UnitOfWork.SaveAsync();
             }
@@ -601,11 +608,11 @@ namespace NUH_PORTAL.Services
             var student = await _students.GetByIdAsync(studentId);
             if (student == null) return;
 
-            // الطالب نفسه مستثنى من العدّ: هو ساكن الغرفة أصلًا لو ما غيّرهاش.
-            await EnsureHousingCapacityAsync(registrationJson, excludeStudentId: student.Id);
-
             RegistrationDataMapper.Apply(student, registrationJson);
             await _lookups.ApplyAsync(student);   // إعادة ربط FK من الأكواد الجديدة
+            // ⚠️ وهنا كمان: إعادة التقديم كانت هتبقى الباب الخلفي لو التسكين
+            //    اتفحص في التقديم الأول وبس.
+            await ApplyHousingFromRegistrationAsync(student, registrationJson);
             await UnitOfWork.SaveAsync();
         }
 

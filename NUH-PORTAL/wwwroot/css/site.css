@@ -601,14 +601,53 @@ th.col-code,td.col-code{white-space:nowrap}
    الاتنين انتظار بس اللي هيتحرّك مختلف. */
 .badge-need_more_info{background:var(--purple-light);color:var(--purple)}
 
-/* ---------- الأزرار ---------- */
-.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:10px;font-family:'IBM Plex Sans Arabic',sans-serif;font-size:13px;font-weight:600;text-decoration:none;cursor:pointer;border:none;transition:all .2s}
+/* ============================================================================
+   الأزرار - التعريف الوحيد في النظام.
+
+   ⚠️ كانت موزَّعة على أربعة تعريفات: هذا، و.hbtn داخل وسم <style> في شاشة
+      حسابات الإسكان، و.btn-outline مكرَّرة في css/portal.css وفي تلك الشاشة
+      بقيمتين مختلفتين، و.form-actions .btn بمقاسات ثالثة، و.submit-review-btn
+      لزرّ واحد في شاشة تفاصيل الطلب. ونتيجتها المباشرة أن زرًّا كُتب بصنف
+      مأخوذ من شاشة أخرى خرج بلا أي تنسيق: الصنف ينتقل والتعريف لا ينتقل.
+
+   ⚠️ القاعدة: .btn للشكل، ونمط واحد يحدّد الدور (primary/danger/cancel/
+      outline)، ومقاس اختياري (.sm أو .lg). ولا يُنشأ صنف زرّ جديد في أي
+      شاشة - ما يلزم من فروق يُضاف هنا نمطًا أو مقاسًا.
+
+   ⚠️ ويبقى خارج هذه المجموعة مكوّنان لأنهما ليسا زرًّا نصيًّا أصلًا:
+      .action-btn (أيقونة داخل صفّ جدول) و.pager-btn (التنقّل بين الصفحات).
+   ============================================================================ */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:8px 18px;border-radius:10px;font-family:'IBM Plex Sans Arabic',sans-serif;
+  font-size:13px;font-weight:600;text-decoration:none;cursor:pointer;border:none;
+  transition:all .2s}
 .btn-primary{background:var(--navy);color:#fff}
 .btn-primary:hover{background:var(--navy-light)}
 .btn-danger{background:var(--red);color:#fff}
 .btn-danger:hover{background:#912018}
 .btn-cancel{background:var(--gray-100);color:var(--gray-700)}
 .btn-cancel:hover{background:var(--gray-200)}
+/* الثانوي بإطار - كان معرَّفًا في css/portal.css (بوّابة الطالب) وفي شاشة
+   حسابات الإسكان بقيمتين مختلفتين، وأيٌّ منهما لا يصل إلى بقية الشاشات. */
+.btn-outline{background:transparent;border:1.5px solid var(--gray-200);color:var(--gray-700)}
+.btn-outline:hover{border-color:var(--navy);color:var(--navy)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+
+/* المقاسان: .sm داخل الجداول والصفوف، و.lg لأزرار النماذج الرئيسية.
+   ⚠️ و.form-actions .btn مذكورة مع .lg في القاعدة نفسها لا في قاعدة مستقلّة:
+      أزرار النماذج في عشرات الشاشات مكتوبة بلا صنف مقاس، وتوحيد الشكل يجب
+      ألّا يستلزم تعديل وسمها كلّه - المهمّ ألّا يبقى للمقاس تعريفان. */
+.btn.sm{padding:5px 13px;font-size:12px;border-radius:9px}
+.btn.lg,.form-actions .btn{height:46px;padding:0 28px;font-size:14px;font-weight:700}
+
+/* حالة التحميل: القاعدة كانت محصورة في .form-actions، فزرّ خارجها لا يعرف
+   الدوران. صارت على .btn نفسها. */
+.btn.loading{pointer-events:none;opacity:.75}
+.btn .spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.3);
+  border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:none}
+.btn.loading .spinner{display:block}
+.btn.loading .btn-text{display:none}
+/* ⚠️ @keyframes spin معرَّف في css/components.css - لا يُكرَّر هنا. */
 
 /* ---------- صفّ الترقيم (السابق / التالي) ---------- */
 /* ⚠️ .table-pager كانت مكتوبة في شاشتَي إسكان أعضاء هيئة التدريس وما كانش ليها

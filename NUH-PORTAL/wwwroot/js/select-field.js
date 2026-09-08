@@ -123,11 +123,42 @@ var NuhSelect = (function () {
 
     var panel = null, list = null, search = null, active = -1;
 
+    // ==========================================================================
+    //  مؤشّر سعة على الخيار (data-meter="المشغول/الإجمالي")
+    //
+    //  ⚠️ عام لا خاص بشاشة: الخيار بيقول «أنا فيّا ٢ من ٣»، والمكوّن بيرسم
+    //     شرائط صغيرة - في القائمة وفي الحقل المقفول. أول استخدام ليه تسكين
+    //     الطالب (إشغال كل غرفة جنب رقمها)، وأي شاشة تانية فيها فكرة «قد إيه
+    //     من قد إيه» بتضيف السمة وخلاص.
+    //
+    //  ⚠️ شرائط لا حروف: النقط والدوائر (●○) بتختلف من خطّ لخطّ وبتتقري رموزًا
+    //     غريبة على بعض الأجهزة، وبتتلمّ مع النصّ العربي في الاتجاه. الشرائط
+    //     عناصر مرسومة - مقاسها ولونها ثابتين، ومالهاش اتجاه أصلًا.
+    //
+    //  data-meter-tone: نغمة اختيارية (ok / warn / info / bad).
+    // ==========================================================================
+    var METER_MAX = 12;   // فوق كده مش مؤشّر - بقى جدول
+
+    function meterHtml(o) {
+      var v = o.getAttribute && o.getAttribute('data-meter');
+      if (!v) return '';
+      var parts = String(v).split('/');
+      var filled = parseInt(parts[0], 10), total = parseInt(parts[1], 10);
+      if (isNaN(filled) || isNaN(total) || total < 1 || total > METER_MAX) return '';
+
+      var tone = (o.getAttribute('data-meter-tone') || '').trim();
+      var seg = '';
+      for (var i = 1; i <= total; i++) seg += '<i' + (i <= filled ? ' class="on"' : '') + '></i>';
+      return '<span class="nsel-meter' + (tone ? ' is-' + esc(tone) : '') + '">' + seg + '</span>';
+    }
+
     function label() {
       var o = sel.options[sel.selectedIndex];
       var txt = btn.querySelector('.nsel-txt');
       if (!o) { txt.textContent = ''; txt.classList.add('is-ph'); return; }
-      txt.textContent = o.text;
+      var meter = meterHtml(o);
+      if (meter) txt.innerHTML = esc(o.text) + meter;
+      else txt.textContent = o.text;
       txt.classList.toggle('is-ph', isPlaceholder(o));
     }
 
@@ -141,7 +172,7 @@ var NuhSelect = (function () {
         html += '<div class="nsel-opt' + (i === sel.selectedIndex ? ' is-sel' : '') +
                 (isPlaceholder(o) ? ' is-ph' : '') +
                 '" data-i="' + i + '" role="option">' +
-                  '<span>' + esc(o.text) + '</span>' +
+                  '<span>' + esc(o.text) + meterHtml(o) + '</span>' +
                   '<svg class="nsel-tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
                   'stroke-width="3" stroke-linecap="round" stroke-linejoin="round">' +
                   '<polyline points="20 6 9 17 4 12"/></svg>' +

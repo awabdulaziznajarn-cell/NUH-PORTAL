@@ -49,6 +49,16 @@
       <button type="button" class="modal-close" onclick="closeRoomPanel()" aria-label="@SharedLocalizer["hm_close"]">&times;</button>
     </div>
     <div class="modal-body" id="hmapRoomBody"></div>
+    @* ⚠️ زرّ إغلاق صريح أسفل النافذة: كان الضغط على الخلفية يُغلق اللوحة،
+       والمستخدم الذي يقرأ أسماء الساكنين قد يضغط خارج الصندوق دون قصد
+       فتُغلق. صار الإغلاق بقرار: هذا الزرّ، أو × أعلى، أو مفتاح Esc. *@
+    <div class="modal-footer">
+      @* ⚠️ btn btn-cancel من css/site.css - وهو مكوّن الأزرار العام المحمَّل
+         في كل الشاشات. وكانت المحاولة الأولى .hbtn، وهي معرَّفة داخل وسم
+         <style> في شاشة حسابات الإسكان وحدها، فخرج الزرّ هنا بلا تنسيق
+         أصلًا: صنف من شاشة أخرى لا يُنقل معه تعريفه. *@
+      <button type="button" class="btn btn-cancel" onclick="closeRoomPanel()">@SharedLocalizer["hm_close"]</button>
+    </div>
   </div>
 </div>
 

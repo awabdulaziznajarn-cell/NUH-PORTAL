@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>تصميم: سجل حركة التسكين + توحيد الأزرار</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700;800&display=swap">
+<style>
+:root{
+  --navy:#104631; --navy-light:#166a45; --navy-dark:#0b3122; --green:#087443; --green-light:#ecfdf3;
+  --tint:#f2f8f4; --gold:#dba102; --amber-light:#fffaeb; --amber-ink:#93370d;
+  --blue:#175cd3; --blue-light:#eff8ff; --red:#b42318; --red-light:#fef3f2;
+  --gray-50:#f9fafb; --gray-100:#f2f4f7; --gray-200:#e4e7ec; --gray-300:#d0d5dd;
+  --gray-400:#98a2b3; --gray-500:#667085; --gray-600:#475467; --gray-700:#344054; --white:#fff;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;background:#eef1f0;color:var(--navy-dark);
+  padding:26px;line-height:1.75;font-size:13.5px}
+.wrap{max-width:1060px;margin:0 auto;display:flex;flex-direction:column;gap:24px}
+h1{font-size:21px;font-weight:800}
+.lead{font-size:13.5px;color:var(--gray-600);margin-top:6px}
+.card{background:var(--white);border:1px solid var(--gray-200);border-radius:16px;overflow:hidden}
+.card > header{padding:13px 18px;background:var(--tint);border-bottom:1px solid #d6ecdf}
+.card > header h2{font-size:15.5px;font-weight:800}
+.card > header p{font-size:12px;color:var(--gray-600);margin-top:2px}
+.pad{padding:18px}
+h3{font-size:13px;font-weight:800;color:var(--navy);margin:0 0 10px;
+  padding-inline-start:9px;border-inline-start:3px solid var(--gold)}
+.sec + .sec{margin-top:22px}
+p.tx{font-size:13px;color:var(--gray-700)}
+p.tx + p.tx{margin-top:8px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{text-align:start;padding:7px 10px;border-bottom:1px solid var(--gray-100);vertical-align:top}
+th{background:var(--gray-50);font-weight:700;color:var(--gray-600);font-size:11.5px}
+td code,code.i{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;
+  background:var(--gray-100);padding:1px 6px;border-radius:5px;unicode-bidi:isolate}
+.tbl-wrap{border:1px solid var(--gray-200);border-radius:11px;overflow:hidden}
+.muted{color:var(--gray-500)}
+.warn{background:var(--amber-light);border:1px solid #f3d38a;border-radius:11px;padding:11px 14px;
+  font-size:12.5px;color:var(--amber-ink)}
+.ok{background:var(--green-light);border:1px solid #a6ddbe;border-radius:11px;padding:11px 14px;
+  font-size:12.5px;color:#05603a}
+
+/* مسار الكتابة */
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin:4px 0 12px}
+.flow .src{background:var(--gray-50);border:1px solid var(--gray-200);border-radius:9px;
+  padding:6px 11px;font-size:11.5px;font-weight:600;color:var(--gray-700)}
+.flow .arw{color:var(--gray-400);font-weight:700}
+.flow .hub{background:var(--navy);color:#fff;border-radius:9px;padding:7px 14px;font-size:12px;font-weight:700}
+.flow .out{background:var(--tint);border:1px solid #d6ecdf;border-radius:9px;padding:6px 11px;
+  font-size:11.5px;font-weight:700;color:var(--navy-dark)}
+.srcs{display:flex;flex-direction:column;gap:6px}
+
+/* معاينة الشاشة */
+.mock{border:1px solid var(--gray-200);border-radius:13px;overflow:hidden;background:var(--white)}
+.mock .mh{padding:11px 14px;background:var(--tint);border-bottom:1px solid #d6ecdf;
+  display:flex;justify-content:space-between;align-items:center}
+.mock .mh b{font-size:13px;font-weight:800}
+.tabs{display:flex;gap:4px}
+.tabs span{font-size:11.5px;font-weight:700;color:var(--gray-500);padding:4px 11px;border-radius:99px}
+.tabs span.on{background:var(--white);color:var(--navy-dark);box-shadow:0 1px 3px rgba(0,0,0,.07)}
+.mock .mb{padding:14px}
+
+/* سطر السجل */
+.hist{list-style:none;display:flex;flex-direction:column}
+.hist li{display:grid;grid-template-columns:15px 1fr;gap:12px;padding-bottom:15px;position:relative}
+.hist li:last-child{padding-bottom:0}
+.hist li::before{content:'';position:absolute;inset-inline-start:7px;top:16px;bottom:0;width:1px;background:var(--gray-200)}
+.hist li:last-child::before{display:none}
+.hist .dot{width:15px;height:15px;border-radius:50%;background:var(--white);
+  border:2.5px solid var(--gray-300);margin-top:2px;z-index:1}
+.hist li.assigned .dot{border-color:var(--green);background:var(--green)}
+.hist li.transferred .dot{border-color:var(--blue);background:var(--blue)}
+.hist li.edited .dot{border-color:var(--gold);background:var(--gold)}
+.hist li.cleared .dot{border-color:var(--gray-400);background:var(--gray-400)}
+.hist .ln1{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;font-weight:700}
+.hist .tag{font-size:10.5px;font-weight:700;padding:1px 9px;border-radius:99px;
+  background:var(--gray-100);color:var(--gray-600)}
+.hist li.assigned .tag{background:var(--green-light);color:#05603a}
+.hist li.transferred .tag{background:var(--blue-light);color:var(--blue)}
+.hist li.edited .tag{background:var(--amber-light);color:var(--amber-ink)}
+.hist .move{font-weight:600;color:var(--navy-dark)}
+.hist .move .from{color:var(--gray-500);text-decoration:line-through;text-decoration-color:var(--gray-300)}
+.hist .ln2{font-size:11.5px;color:var(--gray-500);margin-top:3px;line-height:1.8}
+.hist .ln2 a{color:var(--navy);font-weight:700;text-decoration:none}
+
+/* الأزرار */
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:13px;
+  background:var(--gray-50);border:1px solid var(--gray-200);border-radius:11px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:10px;
+  font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:.2s}
+.btn-primary{background:var(--navy);color:#fff}
+.btn-primary:hover{background:var(--navy-light)}
+.btn-danger{background:var(--red);color:#fff}
+.btn-cancel{background:var(--gray-100);color:var(--gray-700)}
+.btn-outline{background:transparent;border:1.5px solid var(--gray-200);color:var(--gray-700)}
+.btn.sm{padding:5px 13px;font-size:12px;border-radius:9px}
+.btn.lg{height:46px;padding:0 28px;font-size:14px;font-weight:700}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.bad-sample{padding:2px 6px;font-family:inherit;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div>
+  <h1>تصميمان قبل التنفيذ</h1>
+  <p class="lead">الأول: سجل حركة التسكين. والثاني: توحيد أزرار النظام. لم يُنفَّذ شيء من الاثنين بعد - البيانات المعروضة تمثيلية.</p>
+</div>
+
+<!-- ==================== ١ - سجل حركة التسكين ==================== -->
+<section class="card">
+  <header>
+    <h2>١ - سجل حركة التسكين</h2>
+    <p>أثر دائم لكل تغيير في سكن الطالب، يُجيب عن سؤالين: «أين سكن هذا الطالب؟» و«من سكن في هذه الغرفة؟»</p>
+  </header>
+  <div class="pad">
+
+    <div class="sec">
+      <h3>المشكلة</h3>
+      <p class="tx">سكن الطالب أربعة حقول في صفّه (المبنى والدور والشقة والغرفة). أي تغيير يكتب فوق القديم فيختفي بلا أثر: الطالب الذي انتقل من غرفة إلى غرفة، والطالب الذي أُخلي سكنه عند التخرّج - كأنه لم يسكن قطّ. فسؤال «من كان في غرفة 17 الفصل الماضي» لا إجابة له في النظام اليوم.</p>
+      <p class="tx"><b>وجدول <code class="i">HousingTransfer</code> الموجود لا يكفي:</b> يسجّل نقل المشرف وحده - ومعه سببه ومستنده - ولا يسجّل التسكين الأول عند اعتماد الطلب، ولا التعديل من شاشة الطلاب، ولا الرفع الجماعي، ولا الإخلاء عند تغيير الحالة.</p>
+    </div>
+
+    <div class="sec">
+      <h3>الجدول المقترح: HousingHistory</h3>
+      <div class="tbl-wrap">
+        <table>
+          <tr><th>العمود</th><th>النوع</th><th>الغرض</th></tr>
+          <tr><td><code>Id</code></td><td>int</td><td>المفتاح</td></tr>
+          <tr><td><code>StudentId</code> + <code>StudentNumber</code></td><td>int / nvarchar</td><td>الرقم الجامعي منسوخ نصًّا: لو حُذف صفّ الطالب يبقى السجل مقروءًا</td></tr>
+          <tr><td><code>Action</code></td><td>nvarchar(20)</td><td><code>assigned</code> تسكين أول · <code>transferred</code> نقل · <code>edited</code> تصحيح · <code>cleared</code> إخلاء</td></tr>
+          <tr><td><code>FromBuilding/Floor/Apartment/Room</code></td><td>nvarchar</td><td>الموضع السابق - فارغ في التسكين الأول</td></tr>
+          <tr><td><code>ToBuilding/Floor/Apartment/Room</code></td><td>nvarchar</td><td>الموضع الجديد - فارغ في الإخلاء</td></tr>
+          <tr><td><code>Source</code></td><td>nvarchar(24)</td><td>من أين جاء التغيير: اعتماد طلب · شاشة الطلاب · رفع جماعي · نقل · تغيير حالة</td></tr>
+          <tr><td><code>Reason</code></td><td>nvarchar(400)</td><td>سبب النقل أو الحالة التي أدّت إلى الإخلاء (تخرّج، فصل…)</td></tr>
+          <tr><td><code>TransferId</code></td><td>int?</td><td>رابط إلى <code>HousingTransfer</code> حين يكون نقلًا - <b>ولا تُنسخ بياناته</b>: المستند والسبب التفصيلي يبقيان في مكانهما</td></tr>
+          <tr><td><code>CreatedBy</code> + <code>CreatedAt</code></td><td>int / datetime</td><td>من ومتى</td></tr>
+        </table>
+      </div>
+      <p class="tx" style="margin-top:9px"><span class="muted">فهرسان: <code class="i">(StudentId, CreatedAt)</code> لتاريخ الطالب، و<code class="i">(ToBuilding, ToFloor, ToApartment, ToRoom)</code> لتاريخ الغرفة.</span></p>
+    </div>
+
+    <div class="sec">
+      <h3>موضع الكتابة - واحد لا غير</h3>
+      <div class="flow">
+        <div class="srcs">
+          <span class="src">اعتماد إدارة الإسكان</span>
+          <span class="src">تسجيل / تعديل طالب</span>
+          <span class="src">الرفع الجماعي</span>
+          <span class="src">نقل السكن</span>
+          <span class="src">تغيير حالة الطالب (إخلاء)</span>
+        </div>
+        <span class="arw">◀</span>
+        <span class="hub">IHousingPlacement</span>
+        <span class="arw">◀</span>
+        <div class="srcs">
+          <span class="out">الحقول الأربعة في صفّ الطالب</span>
+          <span class="out">صفّ في HousingHistory</span>
+        </div>
+      </div>
+      <div class="ok"><b>لماذا هذا هو الشرط:</b> <code class="i">IHousingPlacement</code> هي بالفعل الطريق الوحيد لكتابة سكن أي طالب - وضعناها هكذا هذا الأسبوع. فإضافة صفّ السجل داخلها تعني أنه <b>لا يمكن</b> تغيير سكن طالب دون تسجيله، لا بالنسيان ولا بشاشة جديدة تُكتب لاحقًا. أما كتابة السجل في كل شاشة على حدة فتعني خمسة مواضع تُنسى واحدة منها.</div>
+      <p class="tx" style="margin-top:9px">ويُضاف إليها <code class="i">ClearAsync</code> لمسار الإخلاء - فحاليًا تُفرَّغ الحقول الأربعة مباشرةً عند التخرّج والفصل والتحويل وترك السكن، وهو المسار الوحيد الذي لا يمرّ بـ<code class="i">ApplyAsync</code>.</p>
+    </div>
+
+    <div class="sec">
+      <h3>أ - تاريخ الغرفة: لسان جديد في نافذة الغرفة بالخريطة</h3>
+      <div class="mock">
+        <div class="mh">
+          <b>مبنى 66 · الدور 1 · شقة 5 · غرفة 17</b>
+          <div class="tabs"><span>السكّان الحاليون</span><span class="on">سجل الغرفة</span></div>
+        </div>
+        <div class="mb">
+          <ul class="hist">
+            <li class="transferred"><span class="dot"></span><div>
+              <div class="ln1"><span class="tag">انتقل إليها</span> محمد ياسر حسين علي <span class="muted">485478547</span></div>
+              <div class="ln2"><span class="move"><span class="from">مبنى 66 · الدور 2 · شقة 9 · غرفة 33</span> ← الغرفة الحالية</span><br>7 سبتمبر 2026 - 10:14 · بواسطة Super Male · السبب: طلب الطالب · <a href="#">المستند</a></div>
+            </div></li>
+            <li class="assigned"><span class="dot"></span><div>
+              <div class="ln1"><span class="tag">سُكِّن فيها</span> أسامة محمد أحمد الطوخي <span class="muted">444444441</span></div>
+              <div class="ln2">اعتماد إدارة الإسكان للطلب 2026-000001<br>6 سبتمبر 2026 - 13:26 · بواسطة Osama Eltokhy</div>
+            </div></li>
+            <li class="cleared"><span class="dot"></span><div>
+              <div class="ln1"><span class="tag">أُخلِيت</span> عبدالله سعد القحطاني <span class="muted">441120988</span></div>
+              <div class="ln2">تغيير الحالة إلى «متخرّج»<br>12 يونيو 2026 - 09:02 · بواسطة النظام</div>
+            </div></li>
+          </ul>
+        </div>
+      </div>
+      <p class="tx" style="margin-top:9px">هذا هو التقرير الذي طلبته: الغرفة تحتفظ بتاريخها بالأسماء والأرقام الجامعية حتى بعد إخلائها. وهو محكوم بصلاحية الخريطة نفسها (<code class="i">housing.occupancyMap</code>) لأنه يكشف أسماءً.</p>
+    </div>
+
+    <div class="sec">
+      <h3>ب - تاريخ الطالب: في شاشة تحديث حالة الطالب</h3>
+      <div class="mock">
+        <div class="mh"><b>سجل تسكين الطالب - 444444441</b><span class="muted" style="font-size:11.5px">آخر 20 حركة</span></div>
+        <div class="mb">
+          <ul class="hist">
+            <li class="edited"><span class="dot"></span><div>
+              <div class="ln1"><span class="tag">تصحيح</span> تعديل رقم الدور</div>
+              <div class="ln2"><span class="move"><span class="from">الدور 2</span> ← الدور 1</span> · من شاشة الطلاب<br>6 سبتمبر 2026 - 14:40 · بواسطة Osama Eltokhy</div>
+            </div></li>
+            <li class="assigned"><span class="dot"></span><div>
+              <div class="ln1"><span class="tag">تسكين</span> مبنى 66 · الدور 1 · شقة 5 · غرفة 17</div>
+              <div class="ln2">اعتماد إدارة الإسكان للطلب 2026-000001<br>6 سبتمبر 2026 - 13:26 · بواسطة Osama Eltokhy</div>
+            </div></li>
+          </ul>
+        </div>
+      </div>
+      <div class="warn" style="margin-top:9px"><b>وهنا يُحلّ التكرار الذي سألت عنه:</b> «سجل التنقّلات» الموجود أسفل نموذج النقل في هذه الشاشة يعرض جدول <code class="i">HousingTransfer</code> وحده - أي النقل فقط. يُستبدل به هذا السجل، فيعرض <b>كل</b> حركة ومنها النقل بمستنده. جدول واحد يُقرأ، لا جدولان متجاوران يقول كلّ منهما نصف القصة.</div>
+    </div>
+
+    <div class="sec">
+      <h3>ج - ملف الطالب والتقارير</h3>
+      <p class="tx">سطر واحد في بطاقة الإسكان بملف الطالب: «سُكِّن في 6 سبتمبر 2026 - حركتان» مع رابط يفتح السجل. وفي شاشة التقارير: تقرير «حركة التسكين» بمدى تاريخي وتصفية بالمبنى والإجراء، قابل للتصدير - وهو المطلوب عند أي مساءلة أو جرد نهاية فصل.</p>
+    </div>
+
+    <div class="sec">
+      <h3>ما يلزم تنفيذه</h3>
+      <div class="tbl-wrap"><table>
+        <tr><th>الطبقة</th><th>العمل</th></tr>
+        <tr><td>قاعدة البيانات</td><td>سكربت إنشاء الجدول والفهرسين - تُراجعه وتُشغّله بنفسك كالعادة</td></tr>
+        <tr><td>النموذج والإعداد</td><td><code>Models/HousingHistory.cs</code> + <code>Data/Configurations</code> + <code>DbContext</code></td></tr>
+        <tr><td>الكتابة</td><td>داخل <code>HousingPlacementService</code> وحده، وإضافة <code>ClearAsync</code> لمسار الإخلاء في <code>StudentStatusService</code></td></tr>
+        <tr><td>القراءة</td><td><code>IHousingHistoryService</code> + منفذان: بالطالب، وبالغرفة</td></tr>
+        <tr><td>الواجهة</td><td>لسان في نافذة الغرفة · استبدال سجل التنقّلات في شاشة الحالة · سطر في ملف الطالب</td></tr>
+        <tr><td>النصوص</td><td>مفاتيح جديدة في ملفَّي <code>SharedResource</code> معًا</td></tr>
+      </table></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ==================== ٢ - توحيد الأزرار ==================== -->
+<section class="card">
+  <header>
+    <h2>٢ - توحيد أزرار النظام</h2>
+    <p>تعريف واحد في <code class="i">css/site.css</code>، وحذف ما عداه</p>
+  </header>
+  <div class="pad">
+
+    <div class="sec">
+      <h3>الحال اليوم - أربعة تعريفات لشيء واحد</h3>
+      <div class="tbl-wrap"><table>
+        <tr><th>الصنف</th><th>موضع تعريفه</th><th>المشكلة</th></tr>
+        <tr><td><code>.btn</code> + <code>primary/danger/cancel</code></td><td><code>css/site.css</code></td><td>الصحيح - يُحمَّل في كل الشاشات، ومستخدم 25 مرة</td></tr>
+        <tr><td><code>.hbtn</code></td><td>داخل <code>&lt;style&gt;</code> في شاشة حسابات الإسكان</td><td>لا وجود له خارجها - وهو ما كسر زرّ الإغلاق أمس</td></tr>
+        <tr><td><code>.btn-outline</code></td><td><b>مرّتين:</b> <code>css/portal.css</code> وشاشة حسابات الإسكان</td><td>تعريفان مختلفان، و<code>portal.css</code> لا يُحمَّل في شاشات الموظفين أصلًا</td></tr>
+        <tr><td><code>.form-actions .btn</code></td><td><code>css/components.css</code></td><td>مقاسات ثالثة (ارتفاع 46) لأزرار النماذج</td></tr>
+        <tr><td><code>.submit-review-btn</code></td><td>داخل شاشة تفاصيل الطلب</td><td>زرّ واحد بصنف خاصّ لا يشبه غيره</td></tr>
+      </table></div>
+    </div>
+
+    <div class="sec">
+      <h3>المقترح - مجموعة واحدة</h3>
+      <p class="tx" style="margin-bottom:10px"><code class="i">.btn</code> للشكل، ونمط واحد يحدّد الدور، ومقاس اختياري. لا شيء غيرها في النظام كلّه:</p>
+      <div class="btnrow">
+        <button class="btn btn-primary">إجراء رئيسي</button>
+        <button class="btn btn-cancel">إلغاء</button>
+        <button class="btn btn-outline">ثانوي بإطار</button>
+        <button class="btn btn-danger">حذف</button>
+        <button class="btn btn-primary" disabled>معطّل</button>
+      </div>
+      <div class="btnrow" style="margin-top:9px">
+        <button class="btn btn-primary sm">صغير <code style="font-size:10px;background:rgba(255,255,255,.2);color:#fff">.sm</code></button>
+        <button class="btn btn-primary">افتراضي</button>
+        <button class="btn btn-primary lg">كبير للنماذج <code style="font-size:10px;background:rgba(255,255,255,.2);color:#fff">.lg</code></button>
+      </div>
+      <div class="tbl-wrap" style="margin-top:12px"><table>
+        <tr><th>كان</th><th>يصير</th></tr>
+        <tr><td><code>.hbtn.btn-outline</code> (7 مواضع)</td><td><code>.btn.btn-outline</code></td></tr>
+        <tr><td><code>.hbtn</code> وحده (موضعان)</td><td><code>.btn.btn-cancel</code></td></tr>
+        <tr><td><code>.submit-review-btn</code></td><td><code>.btn.btn-primary.lg</code></td></tr>
+        <tr><td><code>.form-actions .btn</code></td><td><code>.btn.lg</code> - والقاعدة الخاصّة تُحذف</td></tr>
+        <tr><td><code>.btn-outline</code> في <code>portal.css</code></td><td>تبقى لبوّابة الطالب وحدها بالقيم نفسها، أو تُنقل إلى <code>site.css</code> وتُحذف</td></tr>
+        <tr><td><code>.action-btn</code> (صفوف الجداول)</td><td><b>تبقى كما هي</b> - أيقونة داخل صفّ لا زرّ نصّي، ومكوّن مستقلّ فعلًا</td></tr>
+        <tr><td><code>.pager-btn</code> (التنقّل بين الصفحات)</td><td><b>تبقى كما هي</b> - للسبب نفسه</td></tr>
+      </table></div>
+    </div>
+
+    <div class="sec">
+      <h3>الأثر والمخاطرة</h3>
+      <p class="tx">التغيير يمسّ <b>عشرة مواضع</b> في ثلاث شاشات (حسابات الإسكان، تفاصيل الطلب، خريطة المباني) وثلاثة ملفات أنماط. لا يمسّ منطقًا ولا خادمًا - أصناف CSS فقط، فأسوأ ما قد يقع أن يظهر زرّ بمقاس غير مقصود ويُضبط في دقيقة. والمكسب أن الزرّ التالي في أي شاشة يُكتب بصنف واحد معروف، فلا يتكرّر ما حدث أمس.</p>
+    </div>
+
+  </div>
+</section>
+
+</div>
+</body>
+</html>

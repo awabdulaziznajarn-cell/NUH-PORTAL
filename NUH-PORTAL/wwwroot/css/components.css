@@ -53,6 +53,27 @@
 .nsel.is-open .nsel-btn{background:var(--white);border-color:var(--navy);box-shadow:0 0 0 3px rgba(16,70,49,.12)}
 .nsel-txt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .nsel-txt.is-ph{color:var(--gray-500);font-weight:500}
+
+/* ==========================================================================
+   مؤشّر سعة على خيار القائمة (.nsel-meter)
+   ------------------------------------------------------------------------
+   ⚠️ شرائط مرسومة لا حروف: النقط والدوائر (●○) مقاسها بيختلف من خطّ لخطّ،
+      وبتطلع رموزًا غريبة على أجهزة، وبتتلمّ مع النصّ العربي في الاتجاه.
+      الشرائط عناصر - مقاسها ولونها ثابتين، ومالهاش اتجاه أصلًا.
+   ⚠️ والشريحة الفاضية بتفضل ظاهرة (رمادي فاتح) لا مخفية: «٢ من ٣» معلومتها
+      في المليان **والفاضي** مع بعض - لو الفاضي اختفى بقى «٢» وبس.
+   ========================================================================== */
+.nsel-meter{display:inline-flex;align-items:center;gap:3px;margin-inline-start:10px;
+  vertical-align:middle;flex:none}
+.nsel-meter i{width:4px;height:12px;border-radius:2px;background:var(--gray-200);
+  transition:background .15s}
+.nsel-meter i.on{background:var(--gray-500)}
+.nsel-meter.is-warn i.on{background:#dc9105}
+.nsel-meter.is-ok   i.on{background:#32a06a}
+.nsel-meter.is-info i.on{background:#2e90fa}
+.nsel-meter.is-bad  i.on{background:var(--red)}
+/* الحقل المقفول بيقصّ النصّ بثلاث نقاط - المؤشّر مايتقصّش قبله. */
+.nsel-txt{display:flex;align-items:center}
 .nsel-chev{width:16px;height:16px;flex-shrink:0;color:var(--gray-500);transition:transform .2s}
 .nsel.is-open .nsel-chev{transform:rotate(180deg);color:var(--navy)}
 .nsel-btn:disabled,.nsel-native:disabled+.nsel-btn{opacity:.55;cursor:not-allowed}
@@ -171,15 +192,10 @@
 .field-error{font-size:11px;color:#d92d20;font-weight:500;display:none}
 .field-error.show{display:block}
 
+/* ⚠️ هنا تخطيط صفّ الأزرار وحده. أما شكل الزرّ ومقاسه وحالة تحميله فمكانها
+   css/site.css - كانت مكرَّرة هنا بمقاسات ثالثة (وبصنف .btn-secondary لا
+   وجود له في مجموعة الأزرار)، فصار للنموذج زرّ يختلف عن زرّ بقية النظام. */
 .form-actions{display:flex;gap:12px;justify-content:flex-end;padding:20px 24px;border-top:1px solid var(--gray-100)}
-.form-actions .btn{padding:0 28px;height:46px;border-radius:10px;font-family:'IBM Plex Sans Arabic',sans-serif;
-  font-size:14px;font-weight:700;cursor:pointer;border:none;transition:all .2s;display:flex;align-items:center;gap:8px}
-.btn-secondary{background:var(--gray-100);color:var(--gray-700)}
-.form-actions .btn.loading{pointer-events:none;opacity:.75}
-.form-actions .btn .spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;
-  border-radius:50%;animation:spin .6s linear infinite;display:none}
-.form-actions .btn.loading .spinner{display:block}
-.form-actions .btn.loading .btn-text{display:none}
 
 @media(max-width:768px){.form-grid,.form-grid-3{grid-template-columns:1fr}}
 @media(max-width:700px){.name-row{grid-template-columns:1fr}}
@@ -513,15 +529,19 @@ td.fh-unit{white-space:nowrap;font-weight:700;color:var(--navy);width:1%}
       في components.css بينما أساسها في الشاشة - أي مُعدِّل بيلاقي نص المكوّن
       في مكان ونصّه التاني في مكان.
    ============================================================================ */
-.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
-.info-field{display:flex;flex-direction:column;padding:10px 12px;
-  border-bottom:1px solid var(--gray-100);font-size:14px;border-radius:4px;
-  margin:0 -4px;transition:background .15s}
-.info-field:hover{background:var(--row-hover)}
-.info-field:nth-last-child(-n+2):nth-child(odd){border-bottom:none}
-.info-field:last-child,.info-field:nth-last-child(2):nth-child(even){border-bottom:none}
-.info-label{font-weight:600;color:var(--gray-500);font-size:11px;margin-bottom:2px}
-.info-value{color:var(--navy-dark);font-weight:600;font-size:14px}
+/* ⚠️ أُزيلت الخطوط الفاصلة أسفل كل حقل (كانت border-bottom على .info-field).
+   على الشاشات العريضة يشغل الحقل نصف عرض البطاقة، فيمتدّ الخط مسافة فارغة
+   طويلة بين الاسم وقيمته ويتكرّر أسفل كل صفّ، فتبدو الصفحة شبكة خطوط تتوه
+   العين بينها بدل أن تقرأ. صار الفصل بالمسافة (gap) وباختلاف وزن الاسم
+   ولونه عن القيمة، وهو كافٍ ليجمع القارئ كل اسم بقيمته.
+   وعلى الشاشات العريضة ثلاثة أعمدة بدل عمودين: المعلومات نفسها في مساحة
+   أقلّ، ودون فراغ ممتدّ بين الاسم وقيمته. */
+.info-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 32px}
+.info-field{display:flex;flex-direction:column;gap:3px;min-width:0;font-size:14px}
+.info-label{font-weight:600;color:var(--gray-500);font-size:11.5px;line-height:1.6}
+.info-value{color:var(--navy-dark);font-weight:600;font-size:14px;line-height:1.7;
+  overflow-wrap:anywhere}
+@media(min-width:1200px){.info-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 
 /* ⚠️ القيمة الرقمية: نفس المقاس ونفس الوزن - الاختلاف في العائلة والعزل بس.
    العزل عشان ترتيب الأرقام ما ينعكسش داخل النصّ العربي، ومن غير
@@ -530,16 +550,13 @@ td.fh-unit{white-space:nowrap;font-weight:700;color:var(--navy);width:1%}
   font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 
 @media(max-width:640px){
-  .info-grid{grid-template-columns:1fr}
-  .info-field{border-bottom:1px solid var(--gray-100)}
-  .info-field:nth-last-child(-n+2):nth-child(odd){border-bottom:1px solid var(--gray-100)}
-  .info-field:last-child{border-bottom:none}
+  .info-grid{grid-template-columns:1fr;gap:14px}
 }
 
 /* ---------- الصف اللي اتعدّل في شاشة تفاصيل الطلب ---------- */
 /* ⚠️ border-inline-start واحدة بدل قاعدتين [dir=rtl] و[dir=ltr] - بتقلب لوحدها */
 .info-field.edited{background:var(--amber-light);border-radius:8px;padding:8px 12px;
-  margin:-8px -4px;border-inline-start:3px solid var(--gold)}
+  margin:-8px -12px;border-inline-start:3px solid var(--gold)}
 .edited-tag{display:inline-block;margin-inline-start:6px;padding:1px 8px;border-radius:20px;
   background:var(--gold);color:#3a2e08;font-size:10px;font-weight:700;vertical-align:middle}
 .edits-banner{display:flex;align-items:flex-start;gap:10px;margin:0 0 14px;padding:11px 14px;
@@ -1911,16 +1928,53 @@ body.printing-pledge .pl-sheet .pl-tile{opacity:.085}
 .lg-full{background:#d1fadf;border-color:#32a06a}
 .lg-over{background:#fee4e2;border-color:var(--red)}
 
-/* الأدوار */
-.hmap-floor{border-top:1px solid var(--gray-100);padding:16px 0}
-.hmap-floor:first-child{border-top:0;padding-top:4px}
-.hmap-floor-h{display:flex;align-items:baseline;gap:10px;margin-bottom:11px}
-.hmap-floor-h b{font-size:13.5px;font-weight:800;color:var(--navy-dark)}
-.hmap-floor-h span{font-size:11.5px;color:var(--gray-500);font-variant-numeric:tabular-nums}
+/* ============================================================================
+   الأدوار.
 
-.hmap-apts{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:11px}
-.hmap-apt{border:1px solid var(--gray-200);border-radius:12px;padding:10px 11px 11px}
-.hmap-apt-h{font-size:11.5px;font-weight:700;color:var(--gray-600);margin-bottom:8px}
+   ⚠️ كان الدور فاصلًا أفقيًا ورأسًا فوق شبكة الشقق، والثلاثة - بطاقة الشاشة
+      وصندوق الشقة ومربّع الغرفة - بخلفية بيضاء وإطار رمادي واحد. ثلاث طبقات
+      لا يفصلها شيء، فلا تجد العين حدًّا تتعلّق به، ويبدو الدور الفارغ تمامًا
+      كالدور المشغول.
+
+   ⚠️ الدور الآن كتلة مغلقة بعمود جانبي: الاسم وأشرطة الشقق المصغّرة ومؤشّر
+      الإشغال في العمود، والشقق إلى جانبه على أرضية رمادية تفصلها خيوط، فتبرز
+      مربّعات الغرف البيضاء فوقها. وأسماء الأدوار تصطفّ رأسيًا في عمود واحد
+      فتُقرأ بنظرة واحدة بدل تتبّعها بين الصفوف.
+   ============================================================================ */
+.hmap-floor{display:grid;grid-template-columns:138px 1fr;
+  border:1px solid var(--gray-200);border-radius:14px;overflow:hidden;
+  background:var(--white);margin-bottom:12px}
+.hmap-floor:last-child{margin-bottom:0}
+.hmap-floor-side{background:var(--tint);border-inline-end:1px solid #d6ecdf;
+  padding:12px 14px;display:flex;flex-direction:column;gap:7px}
+.hmap-floor-side b{font-size:13.5px;font-weight:800;color:var(--navy-dark);line-height:1.4}
+/* شريط مصغَّر لكل شقة: ممتلئة خضراء، وفيها متاح ذهبية، وشاغرة رمادية. */
+.hmap-floor-mini{display:flex;gap:3px}
+.hmap-floor-mini i{flex:1;height:18px;border-radius:3px;background:var(--gray-200)}
+.hmap-floor-mini i.on{background:var(--green)}
+.hmap-floor-mini i.part{background:var(--gold)}
+.hmap-floor-bar{display:block;height:5px;border-radius:99px;background:var(--gray-200);overflow:hidden}
+.hmap-floor-bar i{display:block;height:100%;background:var(--green);border-radius:99px}
+.hmap-floor-val{font-size:11px;color:var(--gray-500);font-variant-numeric:tabular-nums;line-height:1.6}
+
+/* ⚠️ فجوة بمقدار بكسل واحد فوق أرضية رمادية: الفاصل بين الشقق خيط لا إطار
+   حول كل شقة - إطار داخل إطار داخل إطار هو أوّل ما يجعل الشاشة تبدو مزدحمة. */
+.hmap-apts{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));
+  gap:1px;background:var(--gray-200)}
+.hmap-apt{background:var(--gray-50);padding:11px 12px 12px}
+.hmap-apt-h{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  font-size:11.5px;font-weight:700;color:var(--gray-600);margin-bottom:8px}
+.hmap-apt-h em{font-style:normal;font-size:10.5px;font-weight:600;color:var(--gray-500);
+  font-variant-numeric:tabular-nums}
+
+@media(max-width:760px){
+  .hmap-floor{grid-template-columns:1fr}
+  .hmap-floor-side{flex-direction:row;align-items:center;gap:11px;
+    border-inline-end:0;border-bottom:1px solid #d6ecdf}
+  .hmap-floor-side b{min-width:76px}
+  .hmap-floor-mini{flex:1}
+  .hmap-floor-bar{display:none}
+}
 /* ⚠️ أربعة أعمدة ثابتة: الشقة أربع غرف دايمًا، والصفّ ده هو اللي بيخلّي
    العين تقرا «شقة» لا «مجموعة مربّعات». */
 .hmap-apt-rooms{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
@@ -1957,8 +2011,35 @@ body.printing-pledge .pl-sheet .pl-tile{opacity:.085}
 .hmap-rp-head .free{background:#fffaeb;color:#93370d}
 .hmap-rp-head .fullb{background:#ecfdf3;color:#05603a}
 .hmap-rp-head .overb{background:#fef3f2;color:var(--red)}
+/* ⚠️ صفّ واحد لكل موضع في الطاقة الاستيعابية لا لكل ساكن: المشغول بإطار
+   متّصل واسم ساكنه، والشاغر بإطار متقطّع. الرقم على يمين الصفّ يعدّ المواضع
+   حتى الحدّ الأقصى، فيقرأ المشرف طاقة الغرفة من شكلها مباشرة. */
 .hmap-rp-list{list-style:none;display:flex;flex-direction:column;gap:8px}
-.hmap-rp-list li{border:1px solid var(--gray-200);border-radius:10px;padding:9px 12px}
+.hmap-rp-list li{display:flex;align-items:center;gap:11px;
+  border:1px solid var(--gray-200);border-radius:10px;padding:9px 12px}
+.hmap-rp-list li.taken{background:var(--white)}
+/* ⚠️ الصفّ الشاغر أخفّ من المشغول: ارتفاع أقلّ وإطار متقطّع وخطّ أصغر.
+   عند تساوي الوزن البصري تسحب الصفوف الفارغة الانتباه من أسماء الساكنين،
+   وهي المعلومة المقصودة من فتح النافذة. */
+.hmap-rp-list li.free{border-style:dashed;border-color:var(--gray-200);
+  background:transparent;padding:5px 12px}
+.hmap-rp-list li.free .ix{width:19px;height:19px;font-size:10px;background:transparent;
+  border:1px dashed var(--gray-300);color:var(--gray-400)}
+.hmap-rp-list li.free .nm{color:var(--gray-500);font-weight:600;font-size:12px}
+.hmap-rp-list li.free.is-extra{border-color:#b2ddff}
+.hmap-rp-list li.free.is-extra .nm{color:#175cd3}
+.hmap-rp-list .ix{flex:none;width:22px;height:22px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--gray-100);color:var(--gray-600);
+  font-size:11px;font-weight:700;font-variant-numeric:tabular-nums}
+.hmap-rp-list li.taken .ix{background:var(--tint);color:var(--navy-dark)}
+.hmap-rp-list .pi{flex:1;min-width:0}
+.hmap-rp-list .ac{flex:none;display:flex;gap:8px;flex-wrap:wrap}
+.hmap-rp-list .ac a{font-size:11.5px;font-weight:700;color:var(--navy);
+  text-decoration:none;padding:4px 9px;border-radius:8px;background:var(--gray-100)}
+.hmap-rp-list .ac a:hover{background:var(--tint)}
+.hmap-rp-list .ex{font-size:10.5px;font-weight:700;padding:1px 8px;border-radius:999px;
+  background:#eff8ff;color:#175cd3}
 .hmap-rp-list .nm{display:flex;align-items:center;gap:7px;flex-wrap:wrap;
   font-size:13px;font-weight:700;color:var(--navy-dark)}
 .hmap-rp-list .sn{font-size:11.5px;color:var(--gray-500);margin-top:2px;font-variant-numeric:tabular-nums}
@@ -2012,3 +2093,24 @@ body.printing-pledge .pl-sheet .pl-tile{opacity:.085}
 .hmap-room.is-over{background:#fef3f2;border-color:var(--red)}
 .hmap-room.is-over .d i.on{background:var(--red)}
 .hmap-rp-head .extrab{background:#eff8ff;color:#175cd3}
+
+/* ==========================================================================
+   تسكين الطالب داخل بطاقة المراجعة (.housing-assign)
+   ------------------------------------------------------------------------
+   ⚠️ مخفي لحد ما المراجع يختار «اعتماد»: هو جزء من قرار الاعتماد لا خانات
+      عامة في الشاشة. ظهوره مع «رفض» أو «طلب معلومات» كان هيسأل المراجع عن
+      غرفة وهو بيرفض الطلب أصلًا.
+   ========================================================================== */
+.housing-assign{display:none;margin-top:14px;padding:13px 15px;border:1px solid var(--gray-200);
+  border-radius:12px;background:var(--gray-50)}
+.housing-assign.visible{display:block}
+.housing-assign-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:11px;margin-top:11px}
+.housing-assign-grid label{display:block;font-size:11.5px;font-weight:600;color:var(--gray-600);margin-bottom:5px}
+.housing-assign-grid select{width:100%;padding:9px 11px;border:1px solid var(--gray-200);border-radius:9px;
+  background:var(--white);font-family:inherit;font-size:13px;color:var(--navy-dark);outline:none}
+.housing-assign-grid select:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(16,70,49,.09)}
+.housing-assign-grid select:disabled{background:var(--gray-100);color:var(--gray-500)}
+
+/* سطر توضيحي داخل بطاقة في نموذج الطالب - بديل قسم اتشال، مش تحذير. */
+.form-note{margin:0;font-size:13px;line-height:1.9;color:var(--gray-600)}
+

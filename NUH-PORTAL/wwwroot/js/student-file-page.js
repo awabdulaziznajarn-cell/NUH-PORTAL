@@ -273,10 +273,17 @@
         : tf('sf_housingMale', 'سكن الطلاب', "Men's housing");
     }
 
+    // ⚠️ الدور والشقة والغرفة من housingUnitText في i18n.js - وهي الدالة
+    //    نفسها التي تقرأ منها قائمة الطلاب وشاشة تفاصيل الطلب. كانت مكتوبة
+    //    هنا يدويًا، وأسقطت النسخة اليدوية **الدور**: فتعرض الشاشة والوثيقة
+    //    المطبوعة «مبنى 66 · شقة 5 · غرفة 17» بينما يعرض الطالب نفسه في
+    //    شاشة الطلبات «مبنى 66 · الدور 1 · شقة 5 · غرفة 17». وفي ترقيم سكن
+    //    الطالبات - حيث تبدأ الشقق من ١ في كل دور - لا تدلّ الوثيقة بغير
+    //    الدور على غرفة بعينها أصلًا.
     var housing = [];
     if (s.housing_building) housing.push(escHtml(buildingName(s.housing_building)));
-    if (s.apartment_number) housing.push(tf('loc_apartment', 'شقة', 'Apt') + ' ' + escHtml(s.apartment_number));
-    if (s.room_number) housing.push(tf('loc_room', 'غرفة', 'Room') + ' ' + escHtml(s.room_number));
+    var __unit = housingUnitText(s);
+    if (__unit) housing.push(escHtml(__unit));
 
     var academic = '<div class="card"><div class="card-header">' +
       '<div class="ch-title">' +

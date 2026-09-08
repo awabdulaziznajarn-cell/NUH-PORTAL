@@ -18,12 +18,19 @@ namespace NUH_PORTAL.Services
         private readonly IRegistrationService _registration;
         private readonly IWorkflowService _workflow;
         private readonly IAuditService _audit;
+        // ⚠️ التسكين بيتم لحظة اعتماد إدارة الإسكان: هي اللحظة اللي فيها القرار،
+        //    والخريطة قدام المشرف في نفس الشاشة. الطريق الوحيد للكتابة هو
+        //    IHousingPlacement - بنية وسعة ومفتاح أجنبي في مكان واحد.
+        private readonly IHousingPlacement _placement;
+        private readonly IRepository<Student> _students;
 
         public WorkflowActionService(
             IRepository<Request> requests,
             IRegistrationService registration,
             IWorkflowService workflow,
             IAuditService audit,
+            IHousingPlacement placement,
+            IRepository<Student> students,
             IUnitOfWork unitOfWork,
             IMapper mapper) : base(unitOfWork, mapper)
         {
@@ -31,6 +38,8 @@ namespace NUH_PORTAL.Services
             _registration = registration;
             _workflow = workflow;
             _audit = audit;
+            _placement = placement;
+            _students = students;
         }
 
         public async Task<List<QueueItemDto>> GetQueueAsync(string? stage)
@@ -130,10 +139,34 @@ namespace NUH_PORTAL.Services
         //    حتى لو الطلب لسه عند الإسكان، فبيرجع false وتطلع رسالة "لا يمكن اعتماد
         //    الطلب في المرحلة الحالية" من غير سبب واضح. دلوقتي المرحلة هي اللي بتحدّد
         //    الإجراء، والصلاحية هي اللي بتسمح بيه.
-        public async Task ApproveAsync(int requestId, string? notes)
+        public async Task ApproveAsync(int requestId, string? notes,
+                                       string? housingBuilding = null, string? floorNumber = null,
+                                       string? apartmentNumber = null, string? roomNumber = null)
         {
             var actorId = RequireActor();
             var stage = await RequireStagePermissionAsync(requestId);
+
+            // ================================================================
+            //  التسكين - جزء من اعتماد إدارة الإسكان لا خطوة مستقلّة بعده.
+            //
+            //  ⚠️ **قبل** تغيير حالة الطلب لا بعده: لو التسكين فشل (غرفة مليانة
+            //     أو رقم غلط) والحالة كانت اتغيّرت، الطلب يبقى «معتمَد من
+            //     الإسكان» وصاحبه بلا غرفة - وطلع من الطابور فمحدش هيرجعله.
+            //
+            //  ⚠️ والخانات مطلوبة في المرحلة دي وحدها: الأمن السيبراني والإكمال
+            //     مالهمش دعوة بالسكن، ولو طُلبت منهم كان لازم يعيدوا إدخاله.
+            // ================================================================
+            if (stage == "requests.reviewHousing")
+            {
+                var student = await StudentOfRequestAsync(requestId)
+                    ?? throw new UserFriendlyException("سجل الطالب غير موجود", 400);
+
+                // الحدّ الأقصى مسموح: ده قرار إدارة الإسكان نفسها.
+                await _placement.ApplyAsync(student, housingBuilding, floorNumber,
+                                            apartmentNumber, roomNumber, allowExceptionSlot: true,
+                                            source: HousingHistoryKinds.Sources.Approval);
+                await UnitOfWork.SaveAsync();
+            }
 
             var result = stage switch
             {
@@ -146,6 +179,21 @@ namespace NUH_PORTAL.Services
                 throw new UserFriendlyException("لا يمكن اعتماد الطلب في المرحلة الحالية", 400);
 
             await _audit.LogAsync("workflow_approved", "Requests", requestId);
+        }
+
+        // ⚠️ Scoped على الطالب: مشرف قسم مايسكّنش طالب القسم التاني حتى لو وصل
+        //    لرقم الطلب. نفس قاعدة باقي الشاشات (Core/GenderScope).
+        private async Task<Student?> StudentOfRequestAsync(int requestId)
+        {
+            var studentId = await _requests.Query().AsNoTracking()
+                .Where(r => r.Id == requestId)
+                .Select(r => r.StudentId)
+                .FirstOrDefaultAsync();
+
+            if (studentId <= 0) return null;
+
+            return await Scoped(_students.Query())
+                .FirstOrDefaultAsync(st => st.Id == studentId && !st.IsDeleted);
         }
 
         public async Task RejectAsync(int requestId, string? notes)

@@ -9,7 +9,13 @@ namespace NUH_PORTAL.Services.Interfaces
         Task<List<StatusCountDto>> GetQueueCountsAsync();
         // عدد الطلبات المستنية إجراء من المستخدم الحالي — للشارة في القائمة الجانبية
         Task<int> GetMyQueueCountAsync();
-        Task ApproveAsync(int requestId, string? notes);
+        // ⚠️ التسكين جزء من الاعتماد لا خطوة بعده: مرحلة إدارة الإسكان هي
+        //    اللحظة اللي بيتقرّر فيها الطالب هيسكن فين، والاعتماد بلا تسكين
+        //    كان بيخلّي طالبًا معتمَدًا بلا غرفة ومحدش فاكر يرجعله.
+        //    الخانات فاضية في المراحل التانية.
+        Task ApproveAsync(int requestId, string? notes,
+                          string? housingBuilding = null, string? floorNumber = null,
+                          string? apartmentNumber = null, string? roomNumber = null);
         Task RejectAsync(int requestId, string? notes);
         Task RequestMoreInfoAsync(int requestId, string? notes, List<string>? fields = null);
         Task<List<WorkflowHistoryItemDto>> GetHistoryAsync(int requestId);

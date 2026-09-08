@@ -131,6 +131,11 @@ namespace NUH_PORTAL.Controllers
         //     مختلفة (الرئيسية فيها شريط، صفحة الدخول مفيهاش)، والمطلوب إن
         //     الشارة تبقى في **نفس المكان** في كل شاشة.
         //
+        //  ⚠️ وفي الركن **السفلي**: الركن العلوي مزدحم في الصفحات العامة -
+        //     زرّ اللغة والشعار والترويسة كلهم فوق، والشارة كانت بتقعد فوقهم
+        //     أو جنبهم فتبان زي عنصر من الصفحة لا ملصق مؤقّت. تحت مافيش حاجة
+        //     تزاحمها في أي شاشة، فمكانها بيفضل واحد فعلًا.
+        //
         //  ⚠️ والطباعة بتخفيها: الوثائق الرسمية بتخرج نضيفة منها.
         // ====================================================================
         [AllowAnonymous]
@@ -155,7 +160,7 @@ namespace NUH_PORTAL.Controllers
             var js =
                 "(function(){'use strict';\n" +
                 "  if (document.getElementById('nuh-trial')) return;\n" +
-                "  var css = '#nuh-trial{position:fixed;top:12px;inset-inline-end:16px;z-index:9000;'\n" +
+                "  var css = '#nuh-trial{position:fixed;bottom:14px;inset-inline-end:14px;z-index:9000;'\n" +
                 "    + 'font-family:inherit;font-size:11.5px;font-weight:800;line-height:1.6;'\n" +
                 "    + 'padding:4px 12px;border-radius:99px;white-space:nowrap;pointer-events:none;'\n" +
                 "    + 'background:#fffaeb;color:#93370d;border:1px solid #f0dfa4;'\n" +

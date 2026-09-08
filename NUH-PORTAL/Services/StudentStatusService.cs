@@ -21,10 +21,10 @@ namespace NUH_PORTAL.Services
         private readonly IRepository<StudentStatusAction> _actions;
         private readonly IRepository<AccountLifecycleLog> _lifecycle;
         private readonly IRepository<StudentStatusAttachment> _attachments;
-        // ⚠️ سجل السكن كله في جدول واحد: HousingTransfers. النقل بيكتب فيه من
-        //    SupervisorHousingTransferService، والمغادرة بتكتب فيه من هنا -
-        //    فالسؤال «مين كان ساكن في الغرفة دي؟» بيتجاوب من مصدر واحد.
-        private readonly IRepository<HousingTransfer> _transfers;
+        // ⚠️ إخلاء السكن يمرّ بطريق التسكين الواحد: هو يفرّغ الحقول الخمسة
+        //    ويكتب صفّ الحركة في سجل واحد (HousingHistory)، فيُجاب سؤال «من
+        //    سكن في هذه الغرفة» من مصدر واحد مهما كان سبب المغادرة.
+        private readonly IHousingPlacement _placement;
         private readonly ActiveDirectoryService _adService;
         private readonly IAttachmentStorage _storage;
         private readonly IHttpContextAccessor _http;
@@ -62,7 +62,7 @@ namespace NUH_PORTAL.Services
             IRepository<StudentStatusAction> actions,
             IRepository<AccountLifecycleLog> lifecycle,
             IRepository<StudentStatusAttachment> attachments,
-            IRepository<HousingTransfer> transfers,
+            IHousingPlacement placement,
             ActiveDirectoryService adService,
             IAttachmentStorage storage,
             IHttpContextAccessor http,
@@ -74,7 +74,7 @@ namespace NUH_PORTAL.Services
             _actions = actions;
             _lifecycle = lifecycle;
             _attachments = attachments;
-            _transfers = transfers;
+            _placement = placement;
             _adService = adService;
             _storage = storage;
             _http = http;
@@ -187,11 +187,15 @@ namespace NUH_PORTAL.Services
             //     بيمسح النصّ (housing_building) ويسيب BuildingId شايل المبنى،
             //     ويسيب floor_number كمان - فالصفّ يفضل متناقض مع نفسه.
             //
-            //  ⚠️ والتفريغ **لا يمحو التاريخ**: قبل ما الخانات تتفضّى بيتكتب صفّ
-            //     في HousingTransfers - نفس الجدول اللي النقل بيكتب فيه - فيه
-            //     الموقع القديم ومين نفّذ وامتى، والموقع الجديد فاضي لأنه
-            //     مغادرة لا نقل. من غير الصفّ ده كان التفريغ بيمسح المعلومة
-            //     نهائيًّا، وسؤال «مين كان ساكن في الغرفة دي؟» يبقى بلا جواب.
+            //  ⚠️ والتفريغ **لا يمحو التاريخ**: الإخلاء يمرّ بـIHousingPlacement
+            //     كما يمرّ به التسكين، فيُكتب صفّ في سجل حركة التسكين
+            //     (HousingHistory) فيه الموضع المتروك وسبب المغادرة ومن نفّذ
+            //     ومتى. وبغيره يبقى سؤال «من سكن في هذه الغرفة» بلا جواب.
+            //
+            //  ⚠️ وأُزيل من هنا صفّ «مغادرة» كان يُكتب في HousingTransfers:
+            //     كان حيلة لحفظ التاريخ قبل وجود جدول السجل - صفّ نقل ليس
+            //     نقلًا، بموضع جديد فارغ. وبقاؤه مع السجل يعني تسجيل الحادثة
+            //     الواحدة في جدولين، وهو أوّل طريق إلى رقمين متعارضين.
             // ================================================================
             var hadHousing = !string.IsNullOrWhiteSpace(student.housing_building)
                              || !string.IsNullOrWhiteSpace(student.apartment_number)
@@ -204,33 +208,8 @@ namespace NUH_PORTAL.Services
 
             if (st is "left_housing" or "graduated" or "dismissed" or "transferred")
             {
-                if (hadHousing)
-                {
-                    await _transfers.AddAsync(new HousingTransfer
-                    {
-                        StudentId = student.Id,
-                        StudentNumber = student.student_id,
-                        OldBuilding = oldBuilding,
-                        OldFloor = oldFloor,
-                        OldApartment = oldApartment,
-                        OldRoom = oldRoom,
-                        // فاضية عن قصد: الطالب غادر ولا محلّ جديد له. الشاشة
-                        // بتعرض «غادر السكن» بدل موقع فاضي.
-                        NewBuilding = "",
-                        NewFloor = "",
-                        NewApartment = "",
-                        NewRoom = "",
-                        Reason = "departure_" + st,
-                        CreatedBy = actorId,
-                        CreatedAt = DateTime.UtcNow
-                    });
-                }
-
-                student.housing_building = null;
-                student.BuildingId = null;
-                student.floor_number = null;
-                student.apartment_number = null;
-                student.room_number = null;
+                await _placement.ClearAsync(student, statusAr,
+                                            HousingHistoryKinds.Sources.StatusChange);
             }
 
             await _actions.AddAsync(action);
@@ -320,9 +299,9 @@ namespace NUH_PORTAL.Services
             }
 
             await UnitOfWork.SaveAsync();
-            // ⚠️ الحقول القديمة بتتسجّل في سجل العمليات كمان (AuditChangeLogs):
-            //    الصفّ في HousingTransfers بيجاوب «الغرفة دي كان فيها مين»،
-            //    وده بيجاوب «الصفّ ده اتغيّر فيه إيه بالظبط ومين غيّره».
+            // ⚠️ والحقول القديمة تُسجَّل في سجل العمليات كذلك (AuditChangeLogs):
+            //    صفّ سجل حركة التسكين يجيب عن «من سكن في هذه الغرفة»، وهذا
+            //    يجيب عن «ما الذي تغيّر في هذا الصفّ بالضبط ومن غيّره».
             var changes = new List<AuditChangeLog>
             {
                 new() { FieldName = "student_status", OldValue = previousStatus, NewValue = st }

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>مقترحات عرض الأدوار - خريطة المباني</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --navy:#104631; --navy-dark:#0b3122; --green:#087443; --green-light:#ecfdf3;
+  --tint:#f2f8f4; --gold:#dba102; --amber-light:#fffaeb; --amber-ink:#93370d;
+  --blue:#175cd3; --blue-light:#eff8ff; --red:#b42318; --red-light:#fef3f2;
+  --gray-50:#f9fafb; --gray-100:#f2f4f7; --gray-200:#e4e7ec; --gray-300:#d0d5dd;
+  --gray-500:#667085; --gray-600:#475467; --gray-700:#344054; --white:#fff;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Sans Arabic',system-ui,sans-serif;background:#eef1f0;color:var(--navy-dark);
+  padding:26px;line-height:1.7}
+.wrap{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:26px}
+.intro h1{font-size:20px;font-weight:700}
+.intro p{font-size:13.5px;color:var(--gray-600);margin-top:6px}
+.opt{background:var(--white);border:1px solid var(--gray-200);border-radius:16px;overflow:hidden}
+.opt > header{padding:14px 18px;background:var(--tint);border-bottom:1px solid #d6ecdf;
+  display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.opt > header h2{font-size:15px;font-weight:700}
+.opt > header span{font-size:12px;color:var(--gray-600)}
+.opt .pad{padding:18px}
+.note{font-size:12.5px;color:var(--gray-600);padding:12px 18px;background:var(--gray-50);
+  border-top:1px solid var(--gray-200)}
+.note b{color:var(--navy-dark)}
+
+/* ============ مشترك: مربّع الغرفة ============ */
+.rm{border:1px solid var(--gray-200);border-radius:9px;background:var(--white);
+  min-width:58px;padding:7px 4px 6px;text-align:center;cursor:pointer;transition:.15s}
+.rm:hover{border-color:var(--navy);transform:translateY(-1px)}
+.rm b{display:block;font-size:13px;font-weight:700;color:var(--navy-dark);line-height:1.2}
+.rm .d{display:flex;gap:3px;justify-content:center;margin-top:5px}
+.rm .d i{width:5px;height:5px;border-radius:50%;background:var(--gray-300)}
+.rm .d i.on{background:var(--green)}
+.rm .d i.x{box-shadow:0 0 0 1px var(--gray-300) inset;background:transparent}
+.rm .d i.on.x{background:var(--blue)}
+.rm.part{background:var(--amber-light);border-color:#f3d38a}
+.rm.part b{color:var(--amber-ink)}
+.rm.full{background:var(--green-light);border-color:#a6ddbe}
+.rm.full b{color:#05603a}
+.rm.extra{background:var(--blue-light);border-color:#b2ddff}
+.rm.extra b{color:var(--blue)}
+
+/* ============ الخيار ١ ============ */
+.o1-floor{border-radius:14px;overflow:hidden;border:1px solid var(--gray-200);margin-bottom:14px}
+.o1-fh{display:flex;align-items:center;gap:14px;padding:9px 14px;background:var(--tint)}
+.o1-fh .nm{font-size:13.5px;font-weight:700;color:var(--navy-dark);min-width:70px}
+.o1-fh .bar{flex:1;height:6px;border-radius:99px;background:var(--gray-200);overflow:hidden}
+.o1-fh .bar i{display:block;height:100%;background:var(--green);border-radius:99px}
+.o1-fh .val{font-size:11.5px;font-weight:600;color:var(--gray-600);font-variant-numeric:tabular-nums}
+.o1-apts{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--gray-200)}
+.o1-apt{background:var(--gray-50);padding:11px 12px}
+.o1-apt .ah{font-size:11.5px;font-weight:700;color:var(--gray-600);margin-bottom:8px;
+  display:flex;justify-content:space-between;align-items:center}
+.o1-apt .ah em{font-style:normal;font-size:10.5px;font-weight:600;color:var(--gray-500)}
+.o1-rooms{display:flex;gap:7px}
+.o1-rooms .rm{flex:1}
+
+/* ============ الخيار ٢ ============ */
+.o2-floor{display:grid;grid-template-columns:132px 1fr;gap:16px;padding:14px 0;
+  border-bottom:1px solid var(--gray-200)}
+.o2-floor:last-child{border-bottom:0}
+.o2-side .nm{font-size:14px;font-weight:700;color:var(--navy-dark)}
+.o2-side .mini{display:flex;gap:2px;margin-top:8px}
+.o2-side .mini i{flex:1;height:22px;border-radius:3px;background:var(--gray-100)}
+.o2-side .mini i.on{background:var(--green)}
+.o2-side .mini i.part{background:var(--gold)}
+.o2-side .val{font-size:11px;color:var(--gray-500);margin-top:6px;font-variant-numeric:tabular-nums}
+.o2-apts{display:flex;gap:10px;flex-wrap:wrap}
+.o2-apt{flex:1;min-width:190px;background:var(--gray-50);border-radius:11px;padding:9px 11px}
+.o2-apt .ah{font-size:11px;font-weight:700;color:var(--gray-500);margin-bottom:7px}
+.o2-rooms{display:flex;gap:6px}
+.o2-rooms .rm{flex:1;min-width:0;padding:6px 2px 5px}
+
+/* ============ الخيار ٣ ============ */
+.o3-floor{margin-bottom:18px}
+.o3-fh{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.o3-fh .nm{font-size:13.5px;font-weight:700;background:var(--navy);color:#fff;
+  padding:3px 12px;border-radius:99px}
+.o3-fh .line{flex:1;height:1px;background:var(--gray-200)}
+.o3-fh .val{font-size:11.5px;color:var(--gray-500);font-variant-numeric:tabular-nums}
+.o3-grid{display:grid;grid-template-columns:repeat(16,1fr);gap:5px}
+.o3-grid .rm{min-width:0;padding:6px 2px 5px}
+.o3-grid .sep{grid-column:span 16;height:0}
+.o3-legend{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:5px}
+.o3-legend span{font-size:10.5px;font-weight:700;color:var(--gray-500);text-align:center;
+  background:var(--gray-100);border-radius:6px;padding:3px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="intro">
+    <h1>مقترحات عرض أدوار المبنى</h1>
+    <p>المشكلة في الشكل الحالي: ثلاث طبقات بيضاء متداخلة - بطاقة الشاشة، ثم صندوق الشقة، ثم مربّع الغرفة - كلّها بالخلفية نفسها والإطار نفسه، فلا تجد العين ما تتعلّق به، ويبدو المبنى الفارغ تمامًا كالمبنى المشغول. الثلاثة أدناه تعالج ذلك بطرق مختلفة. البيانات المعروضة تمثيلية.</p>
+  </div>
+
+  <!-- ================= الخيار ١ ================= -->
+  <section class="opt">
+    <header><h2>الخيار ١ - شريط الدور</h2><span>كل دور كتلة واحدة مغلقة، ورأسها يحمل مؤشّر إشغاله</span></header>
+    <div class="pad">
+
+      <div class="o1-floor">
+        <div class="o1-fh">
+          <span class="nm">الدور الأرضي</span>
+          <span class="bar"><i style="width:0%"></i></span>
+          <span class="val">0 من 32</span>
+        </div>
+        <div class="o1-apts">
+          <div class="o1-apt"><div class="ah"><span>شقة 4</span><em>0 من 8</em></div>
+            <div class="o1-rooms"><span class="rm"><b>4</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm"><b>3</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm"><b>2</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm"><b>1</b><span class="d"><i></i><i></i><i class="x"></i></span></span></div></div>
+          <div class="o1-apt"><div class="ah"><span>شقة 3</span><em>0 من 8</em></div>
+            <div class="o1-rooms"><span class="rm"><b>4</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm"><b>3</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm"><b>2</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm"><b>1</b><span class="d"><i></i><i></i><i class="x"></i></span></span></div></div>
+          <div class="o1-apt"><div class="ah"><span>شقة 2</span><em>0 من 8</em></div>
+            <div class="o1-rooms"><span class="rm"><b>4</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm"><b>3</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm"><b>2</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm"><b>1</b><span class="d"><i></i><i></i><i class="x"></i></span></span></div></div>
+          <div class="o1-apt"><div class="ah"><span>شقة 1</span><em>0 من 8</em></div>
+            <div class="o1-rooms"><span class="rm"><b>4</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm"><b>3</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm"><b>2</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm"><b>1</b><span class="d"><i></i><i></i><i class="x"></i></span></span></div></div>
+        </div>
+      </div>
+
+      <div class="o1-floor">
+        <div class="o1-fh">
+          <span class="nm">الدور 1</span>
+          <span class="bar"><i style="width:19%"></i></span>
+          <span class="val">6 من 32</span>
+        </div>
+        <div class="o1-apts">
+          <div class="o1-apt"><div class="ah"><span>شقة 8</span><em>0 من 8</em></div>
+            <div class="o1-rooms"><span class="rm"><b>32</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm"><b>31</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm"><b>30</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm"><b>29</b><span class="d"><i></i><i></i><i class="x"></i></span></span></div></div>
+          <div class="o1-apt"><div class="ah"><span>شقة 7</span><em>2 من 8</em></div>
+            <div class="o1-rooms"><span class="rm"><b>28</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm part"><b>27</b><span class="d"><i class="on"></i><i></i><i class="x"></i></span></span><span class="rm"><b>26</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm part"><b>25</b><span class="d"><i class="on"></i><i></i><i class="x"></i></span></span></div></div>
+          <div class="o1-apt"><div class="ah"><span>شقة 6</span><em>1 من 8</em></div>
+            <div class="o1-rooms"><span class="rm"><b>24</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm"><b>23</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm"><b>22</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm part"><b>21</b><span class="d"><i class="on"></i><i></i><i class="x"></i></span></span></div></div>
+          <div class="o1-apt"><div class="ah"><span>شقة 5</span><em>3 من 8</em></div>
+            <div class="o1-rooms"><span class="rm"><b>20</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm full"><b>19</b><span class="d"><i class="on"></i><i class="on"></i><i class="x"></i></span></span><span class="rm"><b>18</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm extra"><b>17</b><span class="d"><i class="on"></i><i class="on"></i><i class="on x"></i></span></span></div></div>
+        </div>
+      </div>
+
+    </div>
+    <div class="note"><b>لماذا يعمل:</b> الدور صار كتلة لها رأس ملوّن وحدود، وأرضية الشقق رمادية فاتحة تفصل بينها خيوط، فتظهر مربّعات الغرف البيضاء واضحة فوقها. ومؤشّر الإشغال في رأس الدور يجيب عن «أيّ دور فيه متاح» دون النزول إلى الغرف. <b>الكلفة:</b> ارتفاع الصفحة كما هو تقريبًا.</div>
+  </section>
+
+  <!-- ================= الخيار ٢ ================= -->
+  <section class="opt">
+    <header><h2>الخيار ٢ - عمود جانبي للدور</h2><span>اسم الدور ومؤشّره في عمود ثابت، والشقق إلى جانبه</span></header>
+    <div class="pad">
+
+      <div class="o2-floor">
+        <div class="o2-side">
+          <div class="nm">الدور الأرضي</div>
+          <div class="mini"><i></i><i></i><i></i><i></i></div>
+          <div class="val">0 من 32</div>
+        </div>
+        <div class="o2-apts">
+          <div class="o2-apt"><div class="ah">شقة 4</div><div class="o2-rooms"><span class="rm"><b>4</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm"><b>3</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm"><b>2</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm"><b>1</b><span class="d"><i></i><i></i><i class="x"></i></span></span></div></div>
+          <div class="o2-apt"><div class="ah">شقة 3</div><div class="o2-rooms"><span class="rm"><b>4</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm"><b>3</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm"><b>2</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm"><b>1</b><span class="d"><i></i><i></i><i class="x"></i></span></span></div></div>
+          <div class="o2-apt"><div class="ah">شقة 2</div><div class="o2-rooms"><span class="rm"><b>4</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm"><b>3</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm"><b>2</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm"><b>1</b><span class="d"><i></i><i></i><i class="x"></i></span></span></div></div>
+          <div class="o2-apt"><div class="ah">شقة 1</div><div class="o2-rooms"><span class="rm"><b>4</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm"><b>3</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm"><b>2</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm"><b>1</b><span class="d"><i></i><i></i><i class="x"></i></span></span></div></div>
+        </div>
+      </div>
+
+      <div class="o2-floor">
+        <div class="o2-side">
+          <div class="nm">الدور 1</div>
+          <div class="mini"><i class="on"></i><i class="part"></i><i class="part"></i><i></i></div>
+          <div class="val">6 من 32</div>
+        </div>
+        <div class="o2-apts">
+          <div class="o2-apt"><div class="ah">شقة 8</div><div class="o2-rooms"><span class="rm"><b>32</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm"><b>31</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm"><b>30</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm"><b>29</b><span class="d"><i></i><i></i><i class="x"></i></span></span></div></div>
+          <div class="o2-apt"><div class="ah">شقة 7</div><div class="o2-rooms"><span class="rm"><b>28</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm part"><b>27</b><span class="d"><i class="on"></i><i></i><i class="x"></i></span></span><span class="rm"><b>26</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm part"><b>25</b><span class="d"><i class="on"></i><i></i><i class="x"></i></span></span></div></div>
+          <div class="o2-apt"><div class="ah">شقة 6</div><div class="o2-rooms"><span class="rm"><b>24</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm"><b>23</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm"><b>22</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm part"><b>21</b><span class="d"><i class="on"></i><i></i><i class="x"></i></span></span></div></div>
+          <div class="o2-apt"><div class="ah">شقة 5</div><div class="o2-rooms"><span class="rm"><b>20</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm full"><b>19</b><span class="d"><i class="on"></i><i class="on"></i><i class="x"></i></span></span><span class="rm"><b>18</b><span class="d"><i></i><i></i><i class="x"></i></span></span><span class="rm extra"><b>17</b><span class="d"><i class="on"></i><i class="on"></i><i class="on x"></i></span></span></div></div>
+        </div>
+      </div>
+
+    </div>
+    <div class="note"><b>لماذا يعمل:</b> أسماء الأدوار تصطفّ في عمود واحد فتُقرأ رأسيًا بنظرة، وأشرطة الشقق المصغّرة تحت الاسم تعطي صورة الدور كاملة قبل النظر إلى غرفة. الشقّة صندوق رمادي بلا إطار - طبقة واحدة أقلّ. <b>الكلفة:</b> عرض الغرف يضيق قليلًا على الشاشات الصغيرة.</div>
+  </section>
+
+  <!-- ================= الخيار ٣ ================= -->
+  <section class="opt">
+    <header><h2>الخيار ٣ - شبكة الدور الكاملة</h2><span>الدور صفّ واحد من 16 غرفة، والشقق عناوين فوقه</span></header>
+    <div class="pad">
+
+      <div class="o3-floor">
+        <div class="o3-fh"><span class="nm">الدور الأرضي</span><span class="line"></span><span class="val">0 من 32 من الطاقة الاستيعابية</span></div>
+        <div class="o3-legend"><span>شقة 4</span><span>شقة 3</span><span>شقة 2</span><span>شقة 1</span></div>
+        <div class="o3-grid">
+          <span class="rm"><b>4</b></span><span class="rm"><b>3</b></span><span class="rm"><b>2</b></span><span class="rm"><b>1</b></span>
+          <span class="rm"><b>4</b></span><span class="rm"><b>3</b></span><span class="rm"><b>2</b></span><span class="rm"><b>1</b></span>
+          <span class="rm"><b>4</b></span><span class="rm"><b>3</b></span><span class="rm"><b>2</b></span><span class="rm"><b>1</b></span>
+          <span class="rm"><b>4</b></span><span class="rm"><b>3</b></span><span class="rm"><b>2</b></span><span class="rm"><b>1</b></span>
+        </div>
+      </div>
+
+      <div class="o3-floor">
+        <div class="o3-fh"><span class="nm">الدور 1</span><span class="line"></span><span class="val">6 من 32 من الطاقة الاستيعابية</span></div>
+        <div class="o3-legend"><span>شقة 8</span><span>شقة 7</span><span>شقة 6</span><span>شقة 5</span></div>
+        <div class="o3-grid">
+          <span class="rm"><b>32</b></span><span class="rm"><b>31</b></span><span class="rm"><b>30</b></span><span class="rm"><b>29</b></span>
+          <span class="rm"><b>28</b></span><span class="rm part"><b>27</b></span><span class="rm"><b>26</b></span><span class="rm part"><b>25</b></span>
+          <span class="rm"><b>24</b></span><span class="rm"><b>23</b></span><span class="rm"><b>22</b></span><span class="rm part"><b>21</b></span>
+          <span class="rm"><b>20</b></span><span class="rm full"><b>19</b></span><span class="rm"><b>18</b></span><span class="rm extra"><b>17</b></span>
+        </div>
+      </div>
+
+    </div>
+    <div class="note"><b>لماذا يعمل:</b> أعلى كثافة وأقصر صفحة - المبنى كلّه في شاشة واحدة تقريبًا، والألوان وحدها تروي حالة الإشغال. <b>الكلفة:</b> النقاط تختفي لضيق المربّع، فتصير الحالة باللون فقط - وهذا لا يكفي لمن لا يميّز الألوان، ويحتاج تعويضًا بعلامة صغيرة أو بعنوان عند الوقوف بالمؤشّر.</div>
+  </section>
+
+</div>
+</body>
+</html>

@@ -177,25 +177,50 @@
       var apts = HS.apartmentsFor(d.numbering, f);
       var floorTaken = 0, floorCap = apts.length * d.roomsPerApartment * d.roomCapacity;
 
+      // شريط مصغَّر لكل شقة في عمود الدور - يُبنى من نِسب الشقق نفسها.
+      var minis = [];
+
       var aptHtml = apts.map(function (aptStr) {
         var apt = parseInt(aptStr, 10);
+        var aptTaken = 0;
+        var aptCap = d.roomsPerApartment * d.roomCapacity;
+
         var rooms = HS.roomsFor(d.numbering, apt).map(function (roomStr) {
           var room = parseInt(roomStr, 10);
           var cell = byKey[floor + '/' + apt + '/' + room];
-          floorTaken += cell ? cell.occupants.length : 0;
+          var n = cell ? cell.occupants.length : 0;
+          floorTaken += n;
+          aptTaken += n;
           return roomBtn(d, byKey, floor, apt, room);
         }).join('');
+
+        minis.push('<i class="' + (aptTaken === 0 ? '' : (aptTaken >= aptCap ? 'on' : 'part')) + '"></i>');
+
+        // ⚠️ نصيب الشقة مكتوب في رأسها: السؤال المتكرّر «أيّ شقة فيها متاح»
+        //    كان يُجاب عنه بعدّ النقاط في ستّ عشرة غرفة.
         return '<div class="hmap-apt">' +
-                 '<div class="hmap-apt-h">' + escHtml(tf('loc_apartment', 'شقة', 'Apt') + ' ' + apt) + '</div>' +
+                 '<div class="hmap-apt-h">' +
+                   '<span>' + escHtml(tf('loc_apartment', 'شقة', 'Apt') + ' ' + apt) + '</span>' +
+                   '<em>' + escHtml(ofText(aptTaken, aptCap)) + '</em>' +
+                 '</div>' +
                  '<div class="hmap-apt-rooms">' + rooms + '</div>' +
                '</div>';
       }).join('');
 
+      var pct = floorCap > 0 ? Math.round((floorTaken / floorCap) * 100) : 0;
+
+      // ⚠️ عمود جانبي لا رأس علوي: أسماء الأدوار تصطفّ رأسيًا فتُقرأ بنظرة
+      //    واحدة، والأشرطة المصغّرة تحت الاسم تعطي صورة الدور كاملة قبل
+      //    النظر إلى غرفة بعينها.
       out.push(
         '<section class="hmap-floor">' +
-          '<div class="hmap-floor-h">' +
+          '<div class="hmap-floor-side">' +
             '<b>' + escHtml(floorLabel(floor)) + '</b>' +
-            '<span>' + escHtml(ofText(floorTaken, floorCap) + ' ' + t('hmap_placesWord')) + '</span>' +
+            '<span class="hmap-floor-mini">' + minis.join('') + '</span>' +
+            '<span class="hmap-floor-bar"><i style="width:' + Math.min(100, pct) + '%"></i></span>' +
+            '<span class="hmap-floor-val">' +
+              escHtml(ofText(floorTaken, floorCap) + ' ' + t('hmap_placesWord')) +
+            '</span>' +
           '</div>' +
           '<div class="hmap-apts">' + aptHtml + '</div>' +
         '</section>');
@@ -249,7 +274,11 @@
     })[0];
     var occ = cell ? cell.occupants : [];
 
+    // ⚠️ اسم المبنى ضمن العنوان: «الدور 1 · شقة 5 · غرفة 17» وحدها لا تدلّ
+    //    على غرفة بعينها، فالأرقام نفسها متكرّرة في كل مبنى. وهذا العنوان
+    //    يُنقل شفهيًا ويُثبت في المحاضر، فوجب أن يكون كاملًا.
     el('hmapRoomTitle').textContent =
+      (buildingName(current.code) || current.name || current.code) + ' · ' +
       floorLabel(floor) + ' · ' +
       tf('loc_apartment', 'شقة', 'Apt') + ' ' + apt + ' · ' +
       tf('loc_room', 'غرفة', 'Room') + ' ' + room;
@@ -268,32 +297,81 @@
             : '<span class="overb">' + escHtml(t('hmap_overMax')) + ' ' + current.roomCapacityMax + '</span>') +
       '</div>';
 
-    var body = occ.length
-      ? '<ul class="hmap-rp-list">' + occ.map(function (o) {
-          // ⚠️ الحالة بتظهر لو موجودة بس: الساكن العادي حالته فاضية، وشارة
-          //    «مقيم» على كل صفّ كانت هتغرّق الشارة اللي فيها معلومة فعلًا.
-          var statusBadge = o.status
-            ? '<span class="st">' + escHtml(tf('ss_status_' + o.status, o.status, o.status)) + '</span>' : '';
-          var adBadge = o.adStatus === 'disabled'
-            ? '<span class="ad">' + escHtml(t('hmap_adDisabled')) + '</span>' : '';
-          return '<li>' +
-                   '<div class="nm">' + escHtml(o.name || '') + statusBadge + adBadge + '</div>' +
-                   '<div class="sn">' + escHtml(o.studentNumber || '') + '</div>' +
-                 '</li>';
-        }).join('') + '</ul>'
-      : '<div class="hmap-rp-empty">' + escHtml(t('hmap_roomEmpty')) + '</div>';
-
-    el('hmapRoomBody').innerHTML = head + body;
+    el('hmapRoomBody').innerHTML = head + placesHtml(occ);
     el('hmapRoomModal').classList.add('show');
+  }
+
+  // ==========================================================================
+  //  عرض الغرفة بكامل طاقتها الاستيعابية لا بقائمة ساكنيها وحدهم.
+  //
+  //  ⚠️ القائمة السابقة كانت تعرض الساكنين فقط، فغرفة طاقتها ثلاثة يسكنها
+  //     اثنان تبدو مطابقة تمامًا لغرفة طاقتها اثنان مكتملة - صفّان في
+  //     الحالتين. الغرفة الآن ترسم طاقتها كاملة: المشغول باسم ساكنه،
+  //     والشاغر بإطار متقطّع. عدد الصفوف نفسه صار معلومة تُقرأ.
+  //
+  //  ⚠️ والموضع الواقع بين الطاقة المعتمدة والحدّ الأقصى يُعلَّم صراحةً بأنه
+  //     استثنائي، ليعرفه المشرف قبل استخدامه لا بعده.
+  //
+  //  ⚠️ والإجراءات روابط إلى الشاشات القائمة لا نسخة ثانية منها: «ملف
+  //     الطالب» و«نقل السكن» يفتحان الشاشة المسؤولة عن الإجراء والطالب
+  //     محدَّد فيها، فلا يتكرّر منطق النقل في الخريطة.
+  // ==========================================================================
+  function placesHtml(occ) {
+    var cap = Math.max(1, current.roomCapacity);
+    var max = Math.max(cap, current.roomCapacityMax || cap);
+    var rows = [];
+
+    occ.forEach(function (o, i) {
+      // ⚠️ الحالة تظهر عند وجودها فقط: الساكن المقيم حالته فارغة، ووسم
+      //    «مقيم» على كل صفّ يُغرِق الوسم الذي يحمل معلومة فعلية.
+      var badges =
+        (o.status ? '<span class="st">' + escHtml(tf('ss_status_' + o.status, o.status, o.status)) + '</span>' : '') +
+        (o.adStatus === 'disabled' ? '<span class="ad">' + escHtml(t('hmap_adDisabled')) + '</span>' : '') +
+        (i + 1 > cap ? '<span class="ex">' + escHtml(t('hmap_extraPlace')) + '</span>' : '');
+
+      var sn = o.studentNumber || '';
+      var acts = [];
+      if (sn && can('students.investigate'))
+        acts.push('<a href="/StudentFile?q=' + encodeURIComponent(sn) + '">' + escHtml(t('hmap_openFile')) + '</a>');
+      if (sn && can('housing.transfer'))
+        acts.push('<a href="/StudentStatus?transfer=' + encodeURIComponent(sn) + '">' + escHtml(t('hmap_transfer')) + '</a>');
+
+      rows.push('<li class="taken">' +
+        '<span class="ix">' + (i + 1) + '</span>' +
+        '<div class="pi">' +
+          '<div class="nm">' + escHtml(o.name || '') + badges + '</div>' +
+          '<div class="sn">' + escHtml(sn) + '</div>' +
+        '</div>' +
+        (acts.length ? '<div class="ac">' + acts.join('') + '</div>' : '') +
+      '</li>');
+    });
+
+    for (var i = occ.length; i < max; i++) {
+      var extra = i + 1 > cap;
+      rows.push('<li class="free' + (extra ? ' is-extra' : '') + '">' +
+        '<span class="ix">' + (i + 1) + '</span>' +
+        '<div class="pi"><div class="nm">' +
+          escHtml(extra ? t('hmap_extraFreePlace') : t('hmap_freePlace')) +
+        '</div></div>' +
+      '</li>');
+    }
+
+    return '<ul class="hmap-rp-list">' + rows.join('') + '</ul>';
+  }
+
+  // صلاحية الواجهة فقط - التحقّق الفعلي يتمّ على الخادم في كل شاشة.
+  function can(p) {
+    var list = window.NUH_PERMS || [];
+    for (var i = 0; i < list.length; i++) if (list[i] === p) return true;
+    return false;
   }
 
   window.closeRoomPanel = function () { el('hmapRoomModal').classList.remove('show'); };
 
-  // ⚠️ الضغط على الخلفية بيقفل: المستخدم بيفتح غرف كتير ورا بعض، ولو
-  //    القفل من زرار واحد بس بيبقى نقلتين لكل غرفة.
-  document.addEventListener('click', function (e) {
-    if (e.target === el('hmapRoomModal')) window.closeRoomPanel();
-  });
+  // ⚠️ الضغط على الخلفية **لا يُغلق** اللوحة: المشرف يقرأ أسماء وأرقامًا
+  //    جامعية وينقلها، وأي ضغطة خارج الصندوق كانت تُغلقها فيعيد البحث عن
+  //    الغرفة من جديد. الإغلاق بقرار صريح: زرّ «إغلاق» أسفل، أو × أعلى،
+  //    أو مفتاح Esc.
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') window.closeRoomPanel();
   });

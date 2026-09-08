@@ -3031,7 +3031,7 @@
     <value>Approve Request</value>
   </data>
   <data name="rdp_actionDesc_approveToCyber" xml:space="preserve">
-    <value>Approve and send to cyber review</value>
+    <value>Approve and send to Cyber Security Department Review</value>
   </data>
   <data name="rdp_actionDesc_approveToNetwork" xml:space="preserve">
     <value>Approve and create housing network account</value>
@@ -6178,7 +6178,7 @@
     <value>Acceptable use policy</value>
   </data>
   <data name="pt_homeStudentBtn" xml:space="preserve">
-    <value>Enter student portal</value>
+    <value>Accessing Services</value>
   </data>
   <data name="pt_homeStaffTitle" xml:space="preserve">
     <value>Staff Portal</value>
@@ -6797,7 +6797,7 @@ Developed by the Deanship of Digital Transformation and Knowledge Resources</val
     <value>Above capacity by</value>
   </data>
   <data name="hmap_freePlaces" xml:space="preserve">
-    <value>Free</value>
+    <value>Available</value>
   </data>
   <data name="hmap_lgExtra" xml:space="preserve">
     <value>Above capacity (approved)</value>
@@ -6812,7 +6812,7 @@ Developed by the Deanship of Digital Transformation and Knowledge Resources</val
     <value>Over capacity</value>
   </data>
   <data name="hmap_lgPartial" xml:space="preserve">
-    <value>Has space</value>
+    <value>Has availability</value>
   </data>
   <data name="hmap_loadFailed" xml:space="preserve">
     <value>Could not load the map</value>
@@ -6848,7 +6848,7 @@ Developed by the Deanship of Digital Transformation and Knowledge Resources</val
     <value>Every building by floor, apartment and room - computed from student records at view time</value>
   </data>
   <data name="hmap_placesWord" xml:space="preserve">
-    <value>places</value>
+    <value>of total capacity</value>
   </data>
   <data name="hmap_roomEmpty" xml:space="preserve">
     <value>No residents in this room</value>
@@ -6863,13 +6863,13 @@ Developed by the Deanship of Digital Transformation and Knowledge Resources</val
     <value>Rooms above capacity</value>
   </data>
   <data name="hmap_statFreePlaces" xml:space="preserve">
-    <value>Free places</value>
+    <value>Available capacity</value>
   </data>
   <data name="hmap_statFullRooms" xml:space="preserve">
     <value>Rooms at capacity</value>
   </data>
   <data name="hmap_statOccupiedPlaces" xml:space="preserve">
-    <value>Occupied places</value>
+    <value>Occupied capacity</value>
   </data>
   <data name="hmap_statOverRooms" xml:space="preserve">
     <value>Rooms over capacity</value>
@@ -6906,5 +6906,35 @@ Developed by the Deanship of Digital Transformation and Knowledge Resources</val
   </data>
   <data name="vfy_scope" xml:space="preserve">
     <value>Full details shown - document verification permission</value>
+  </data>
+  <data name="rdp_lbl_assignHousing" xml:space="preserve">
+    <value>Assign housing</value>
+  </data>
+  <data name="rdp_hint_assignHousing" xml:space="preserve">
+    <value>Choose building, floor, apartment and room - approval will not go through without them, and full rooms are blocked.</value>
+  </data>
+  <data name="reg_housingAssignedNote" xml:space="preserve">
+    <value>Your housing (building, floor, apartment and room) is assigned by University Housing when your request is approved, and will appear on your request tracking page.</value>
+  </data>
+  <data name="rdp_lbl_currentHousing" xml:space="preserve">
+    <value>Student's current housing</value>
+  </data>
+  <data name="rdp_hint_currentHousing" xml:space="preserve">
+    <value>The fields are preset to where the student already lives - confirm them as they are to keep the student in place, or change them to move the student to another room. The student's own place is not counted against the room's occupancy.</value>
+  </data>
+  <data name="hmap_freePlace" xml:space="preserve">
+    <value>Vacant</value>
+  </data>
+  <data name="hmap_extraFreePlace" xml:space="preserve">
+    <value>Vacant - within the exception limit</value>
+  </data>
+  <data name="hmap_extraPlace" xml:space="preserve">
+    <value>Within the exception limit</value>
+  </data>
+  <data name="hmap_openFile" xml:space="preserve">
+    <value>Student file</value>
+  </data>
+  <data name="hmap_transfer" xml:space="preserve">
+    <value>Transfer housing</value>
   </data>
 </root>

@@ -18,12 +18,9 @@ namespace NUH_PORTAL.Services
     {
         private readonly IRepository<Student> _students;
         private readonly IRepository<HousingTransfer> _transfers;
-        // ⚠️ عشان أسلوب ترقيم المبنى: «شقة ٢ في الدور ٣» صحيحة في سكن
-        //    الطالبات وغلط في سكن الطلاب - والفحص لازم يعرف الاتنين.
-        private readonly ILookupResolver _lookups;
-        // ⚠️ الحارس مش شرط زيادة: النقل كان بيقدر يحطّ رابع في غرفة سعتها
+        // ⚠️ التسكين من الطريق الواحد: النقل كان بيقدر يحطّ رابع في غرفة سعتها
         //    تلاتة، والخريطة تفضل تورّي «تجاوزت السعة» بعد وقوعها.
-        private readonly IHousingCapacityGuard _capacity;
+        private readonly IHousingPlacement _placement;
         private readonly IRepository<AccountLifecycleLog> _lifecycle;
         private readonly IAuditService _audit;
         private readonly IAttachmentStorage _storage;
@@ -36,8 +33,7 @@ namespace NUH_PORTAL.Services
         public SupervisorHousingTransferService(
             IRepository<Student> students,
             IRepository<HousingTransfer> transfers,
-            ILookupResolver lookups,
-            IHousingCapacityGuard capacity,
+            IHousingPlacement placement,
             IRepository<AccountLifecycleLog> lifecycle,
             IAuditService audit,
             IAttachmentStorage storage,
@@ -47,8 +43,7 @@ namespace NUH_PORTAL.Services
         {
             _students = students;
             _transfers = transfers;
-            _lookups = lookups;
-            _capacity = capacity;
+            _placement = placement;
             _lifecycle = lifecycle;
             _audit = audit;
             _storage = storage;
@@ -74,18 +69,9 @@ namespace NUH_PORTAL.Services
 
             // الشقة لازم تكون ضمن شقق الدور المختار — التحقق هنا مش في الشاشة بس،
             // عشان أي نداء مباشر للـ API مايقدرش يسكّن طالب في شقة مش في دوره.
-            var scheme = await _lookups.NumberingForBuildingAsync(newBuilding);
-            if (!HousingStructure.ApartmentBelongsToFloor(scheme, newFloor, newApartment))
-                throw new UserFriendlyException("رقم الشقة لا ينتمي للدور المختار", 400);
+
             if (string.IsNullOrEmpty(newRoom))
                 throw new UserFriendlyException("رقم الغرفة الجديدة مطلوب", 400);
-            // ⚠️ والغرفة لازم تكون **من غرف الشقة**: في سكن الطلاب رقم الغرفة
-            //    متّصل عبر المبنى (شقة ٥ غرفها ١٧-٢٠)، فغرفة ٣ في شقة ٥ رقم
-            //    مالوش وجود. الشاشة بتمنعه والخادم مكانش بيشوفه.
-            if (!int.TryParse(newApartment?.Trim(), out var __apt)
-                || !int.TryParse(newRoom.Trim(), out var __room)
-                || !HousingStructure.IsValidRoom(scheme, __apt, __room))
-                throw new UserFriendlyException("رقم الغرفة لا ينتمي للشقة المختارة", 400);
             if (string.IsNullOrEmpty(reason))
                 throw new UserFriendlyException("سبب النقل مطلوب", 400);
             if (reason == "other" && string.IsNullOrEmpty(customReason))
@@ -105,12 +91,13 @@ namespace NUH_PORTAL.Services
             var oldApartment = student.apartment_number ?? "";
             var oldRoom = student.room_number ?? "";
 
-            // ⚠️ الحدّ الأقصى مسموح هنا: النقل إجراء إداري بيعمله المشرف، وإدارة
-            //    الإسكان قالت صراحة إنه يقدر يزوّد ساكنًا فوق السعة المعتمدة.
-            //    والطالب نفسه مستثنى من العدّ - نقله لغرفته الحالية مايحسبش
-            //    مرتين (بيحصل لما المشرف يصحّح رقم دور بس).
-            await _capacity.EnsureAsync(newBuilding, newFloor, newApartment, newRoom,
+            // ⚠️ التحقّق قبل ما نكتب صفّ النقل: البنية والسعة مع بعض من الطريق
+            //    الواحد. الحدّ الأقصى مسموح - النقل إجراء إداري، وإدارة الإسكان
+            //    قالت صراحة إن المشرف يقدر يزوّد ساكنًا فوق السعة المعتمدة.
+            //    والطالب نفسه مستثنى من العدّ - تصحيح رقم دوره مايحسبوش مرتين.
+            var placementError = await _placement.ValidateAsync(newBuilding, newFloor, newApartment, newRoom,
                                         excludeStudentId: student.Id, allowExceptionSlot: true);
+            if (placementError != null) throw new UserFriendlyException(placementError, 400);
 
             // نفس الفحص الثلاثي: الامتداد ثم الحجم ثم بصمة البايتات الأولى
             if (file != null)
@@ -143,10 +130,17 @@ namespace NUH_PORTAL.Services
             await _transfers.AddAsync(transfer);
             await UnitOfWork.SaveAsync();
 
-            student.housing_building = newBuilding;
-            student.floor_number = newFloor;
-            student.apartment_number = newApartment;
-            student.room_number = newRoom;
+            // ⚠️ التسكين من الطريق الواحد لا كتابة مباشرة: الكتابة اليدوية هنا
+            //    كانت **بتسيب BuildingId على المبنى القديم** - الأربع خانات
+            //    بتتغيّر والمفتاح الأجنبي لأ، فالخريطة تفضل تورّي الطالب في
+            //    مبناه القديم بعد نقله. ApplyAsync بتربطه من جديد.
+            //    ⚠️ ويُمرَّر رقم صفّ النقل: صفّ سجل الحركة يشير إليه ولا ينسخ
+            //       سببه ولا مستنده - يبقيان في موضعهما الواحد.
+            await _placement.ApplyAsync(student, newBuilding, newFloor, newApartment, newRoom,
+                                        allowExceptionSlot: true,
+                                        source: HousingHistoryKinds.Sources.Transfer,
+                                        reason: reason == "other" ? customReason : reason,
+                                        transferId: transfer.Id);
 
             var reasonAr = reason switch
             {

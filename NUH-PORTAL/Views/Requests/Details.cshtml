@@ -70,9 +70,9 @@
 .reject-reason-field textarea:focus { outline:none; border-color:var(--navy); }
 .reject-reason-field textarea.error { border-color:var(--red); }
 .reject-reason-field .error-msg { font-size:11px; color:var(--red); margin-top:4px; display:none; }
-.submit-review-btn { padding:12px 28px; background:var(--navy); color:var(--white); border:none; border-radius:10px; font-family:'IBM Plex Sans Arabic',sans-serif; font-size:14px; font-weight:600; cursor:pointer; transition:all 0.2s; box-shadow:0 2px 8px rgba(16,70,49,0.2); }
-.submit-review-btn:hover { opacity:0.92; transform:translateY(-1px); box-shadow:0 4px 12px rgba(16,70,49,0.3); }
-.submit-review-btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; box-shadow:none; }
+/* ⚠️ أُزيل .submit-review-btn: صنف خاصّ بزرّ واحد يكرّر .btn.btn-primary
+   بمقاسات أخرى. الزرّ الآن «btn btn-primary lg» من مجموعة الأزرار الوحيدة
+   في css/site.css - ومنها كذلك حالة التعطيل. */
 /* ⚠️ .rejection-info اتشال - كان تصميم تالت لصندوق الملاحظة/السبب.
    التعريف الوحيد .note-block في css/components.css، والشاشة بتحمّله من التخطيط. */
 .workflow-bar { display:flex; align-items:flex-start; justify-content:space-around; padding:12px 0 4px; position:relative; overflow:visible; }
@@ -123,5 +123,13 @@
    من غير ما حد ياخد باله - والورقة بتطلع من الطابعة ناقصة. *@
 <script src="/js/nuh-qr.js" asp-append-version="true"></script>
 <script src="/js/pledge-doc.js" asp-append-version="true"></script>
-<script src="/js/request-details-page.js"></script>
+@* ⚠️ خانات التسكين في بطاقة المراجعة بتستخدم نفس منطق شاشات التسجيل:
+   nuh-housing.js (متولّد من Core/HousingStructure.cs) وفوقه housing-fields.js *@
+<script src="/js/nuh-housing.js"></script>
+@* ⚠️ asp-append-version على الاتنين: الرابط ثابت، فالمتصفح بيفضل ماسك النسخة
+   القديمة بعد أي نشر لحد ما المستخدم يعمل تحديث قسري - وده مابيحصلش. الموظف
+   بيفضل شغّال بشاشة قديمة وهو مش عارف. باقي ملفات الشاشة عليها الوسم ده أصلًا،
+   والاتنين دول كانوا ناسيينه. *@
+<script src="/js/housing-fields.js" asp-append-version="true"></script>
+<script src="/js/request-details-page.js" asp-append-version="true"></script>
 }

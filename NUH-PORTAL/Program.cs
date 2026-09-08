@@ -294,6 +294,25 @@ builder.Services.AddAuthorization(options =>
         ctx.User.HasClaim(ClaimConstants.Permission, "auditLogs.view")));
 
     // ====================================================================
+    //  إشغال غرفة واحدة (api/housing/room) - عدد وبس، بلا أسماء.
+    //
+    //  ⚠️ «أو» لا «و»: التسكين بيحصل من أربع شاشات مختلفة (اعتماد الإسكان،
+    //     تسجيل طالب، تعديل بياناته، نقل السكن)، وكل موظف عنده صلاحية واحدة
+    //     منهم لا كلهم. ولو طلبنا صلاحية الخريطة، مشرف الإسكان اللي شغله
+    //     التسكين وبس كان هيلاقي عدّاد الغرفة مكسور قدامه.
+    //
+    //  ⚠️ وسياسة مستقلّة لا صلاحية جديدة: مافيش شاشة جديدة اتفتحت هنا - دي
+    //     معلومة مساعدة جوّه شاشات قائمة، فصلاحية زيادة في كل دور كانت
+    //     هتبقى بند بلا معنى للمسؤول اللي بيوزّع الصلاحيات.
+    // ====================================================================
+    options.AddPolicy("housing.roomInfo", policy => policy.RequireAssertion(ctx =>
+        ctx.User.HasClaim(ClaimConstants.Permission, "requests.reviewHousing") ||
+        ctx.User.HasClaim(ClaimConstants.Permission, "housing.transfer") ||
+        ctx.User.HasClaim(ClaimConstants.Permission, "students.create") ||
+        ctx.User.HasClaim(ClaimConstants.Permission, "students.edit") ||
+        ctx.User.HasClaim(ClaimConstants.Permission, "housing.occupancyMap")));
+
+    // ====================================================================
     //  تسجيل طباعة وثيقة التعهّد (api/PledgeDoc).
     //
     //  ⚠️ «أو» لا «و»: الوثيقة بتتطبع من شاشتين - تفاصيل الطلب (requests.view)
@@ -488,6 +507,8 @@ builder.Services.AddScoped<ISupervisorHousingTransferService, SupervisorHousingT
 builder.Services.AddScoped<IHousingOccupancyService, HousingOccupancyService>();
 // حارس سعة الغرفة - نفس القاعدة في مسارات الكتابة الخمسة كلها.
 builder.Services.AddScoped<IHousingCapacityGuard, HousingCapacityService>();
+// تسكين طالب في غرفة - الطريق الوحيد لكتابة بيانات السكن (بنية + سعة + FK).
+builder.Services.AddScoped<IHousingPlacement, HousingPlacementService>();
 // مكان تخزين المرفقات - Singleton لأنه بيقرأ الإعدادات مرة واحدة وبعدها بيحسب مسارات بس.
 // المسار بيتظبط من Storage:AttachmentsRoot في appsettings.
 builder.Services.AddSingleton<IAttachmentStorage, AttachmentStorage>();

@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using NUH_PORTAL.Models;
@@ -30,6 +30,8 @@ namespace NUH_PORTAL.Data
         public DbSet<SMSLog> SMSLogs { get; set; }
         public DbSet<StudentStatusAttachment> StudentStatusAttachments { get; set; }
         public DbSet<HousingTransfer> HousingTransfers { get; set; }
+        // سجل حركة التسكين - الشرح الكامل في Models/HousingHistory.
+        public DbSet<HousingHistory> HousingHistory { get; set; }
 
         // سكن أعضاء هيئة التدريس — الوحدة ثابتة (FacultyUnit) والساكن متغيّر
         // (FacultyOccupancy صف لكل فترة إشغال). منفصلين تمامًا عن سكن الطلاب.
